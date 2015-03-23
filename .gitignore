@@ -1,0 +1,21 @@
+.DS_Store
+cscope.*
+tags
+data/
+bin/
+include/
+lib/
+log/
+*.o
+*.wav
+obj/
+
+# vim
+[._]*.s[a-w][a-z]
+[._]s[a-w][a-z]
+*.un~
+Session.vim
+.netrwhist
+*~
+
+html/
