@@ -29,6 +29,7 @@
 extern "C" {
 #endif
 
+#include <st_utils.h>
 #include <st_alphabet.h>
 
 #include "config.h"
@@ -50,7 +51,12 @@ typedef struct _connlm_output_opt_t_ {
     bool hs;
 } connlm_output_opt_t;
 
-typedef struct _connlm_opt_t_ {
+typedef enum _connlm_mode_t_ {
+    MODE_TRAIN,
+    MODE_TEST,
+} connlm_mode_t;
+
+typedef struct _connlm_train_opt_t_ {
     char train_file[MAX_DIR_LEN];
     char valid_file[MAX_DIR_LEN];
 
@@ -62,8 +68,10 @@ typedef struct _connlm_opt_t_ {
     bool binary;
     bool report_progress;
 
-    int rand_seed;
     bool independent;
+
+    int num_line_read;
+    bool shuffle;
 
     connlm_param_t param;
     connlm_output_opt_t output_opt;
@@ -72,6 +80,24 @@ typedef struct _connlm_opt_t_ {
     maxent_opt_t maxent_opt;
     lbl_opt_t lbl_opt;
     ffnn_opt_t ffnn_opt;
+} connlm_train_opt_t;
+
+typedef struct _connlm_test_opt_t {
+    char test_file[MAX_DIR_LEN];
+
+    char model_file[MAX_DIR_LEN];
+} connlm_test_opt_t;
+
+typedef struct _connlm_opt_t_ {
+    int mode;
+    int num_thread;
+    int max_word_per_sent;
+    int rand_seed;
+
+    union {
+        connlm_train_opt_t train_opt;
+        connlm_test_opt_t test_opt;
+    };
 } connlm_opt_t;
 
 typedef struct _word_info_t_ {
@@ -81,6 +107,12 @@ typedef struct _word_info_t_ {
 
 typedef struct _connlm_t_ {
     connlm_opt_t connlm_opt;
+
+    st_rand_t random;
+
+    FILE *text_fp;
+    int *egs;
+    int *shuffle_buf;
 
     st_alphabet_t *vocab;
     int vocab_size;

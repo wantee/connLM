@@ -37,31 +37,14 @@
 #define DEFAULT_LOGFILE         "./log/connlm.log"
 #define DEFAULT_LOGLEVEL        8
 
-typedef enum _connlm_mode_t_ {
-    MODE_TRAIN,
-    MODE_TEST,
-} connlm_mode_t;
-
 typedef struct _connlm_conf_t_ {
     char log_file[MAX_DIR_LEN];
     int  log_level;
-    int  mode;
 } connlm_conf_t;
-
-typedef struct _connlm_train_conf_t {
-    connlm_opt_t connlm_opt;
-} connlm_train_conf_t;
-
-typedef struct _connlm_test_conf_t {
-    char test_file[MAX_DIR_LEN];
-
-    char model_file[MAX_DIR_LEN];
-} connlm_test_conf_t;
 
 char g_connlm_conf_file[MAX_DIR_LEN];
 connlm_conf_t g_connlm_conf;
-connlm_train_conf_t g_connlm_train_conf;
-connlm_test_conf_t g_connlm_test_conf;
+connlm_opt_t g_connlm_opt;
 connlm_t *g_connlm;
 
 int connlm_load_conf()
@@ -92,25 +75,21 @@ int connlm_load_conf()
 
     GET_STR_CONF(pconf, "MODE", s, MAX_STCONF_LEN);
     if (strncasecmp(s, "Train", 6) == 0) {
-        g_connlm_conf.mode = MODE_TRAIN;
+        g_connlm_opt.mode = MODE_TRAIN;
     } else if (strncasecmp(s, "Test", 5) == 0) {
-        g_connlm_conf.mode = MODE_TEST;
+        g_connlm_opt.mode = MODE_TEST;
     } else {
         ST_WARNING("Unkown mode[%s]", s);
         goto STCONF_ERR;
     }
 
-    if (g_connlm_conf.mode == MODE_TRAIN) {
-        if (connlm_load_opt(&g_connlm_train_conf.connlm_opt, 
-                    pconf, "TRAIN") < 0) {
+    if (g_connlm_opt.mode == MODE_TRAIN) {
+        if (connlm_load_opt(&g_connlm_opt, pconf,
+                g_connlm_opt.mode == MODE_TRAIN ? "TRAIN" : "TEST" ) < 0) {
             ST_WARNING("Failed to connlm_load_opt");
             goto STCONF_ERR;
         }
-    } else if (g_connlm_conf.mode == MODE_TEST){
-        GET_STR_SEC_CONF(pconf, "TEST", "MODEL_FILE",
-                g_connlm_test_conf.model_file, MAX_DIR_LEN);
-        GET_STR_SEC_CONF(pconf, "TEST", "TEST_FILE",
-                g_connlm_test_conf.test_file, MAX_DIR_LEN);
+    } else if (g_connlm_opt.mode == MODE_TEST){
     }
 
     show_stconf(pconf, "connLM Config");
@@ -131,7 +110,7 @@ int init_connlm()
         goto FAILED;
     }
 
-    g_connlm = connlm_create(&g_connlm_train_conf.connlm_opt);
+    g_connlm = connlm_create(&g_connlm_opt);
     if (g_connlm == NULL) {
         ST_WARNING("Failed to connlm_create.");
         goto FAILED;
@@ -236,7 +215,7 @@ int main(int argc, char *argv[])
         goto ERR;
     }
 
-    if (g_connlm_conf.mode == MODE_TRAIN) {
+    if (g_connlm_opt.mode == MODE_TRAIN) {
         if (connlm_train(g_connlm) < 0) {
             ST_WARNING("Failed to connlm_train.");
             goto ERR;
