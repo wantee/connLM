@@ -29,7 +29,7 @@
 extern "C" {
 #endif
 
-#include <stconf.h>
+#include <st_opt.h>
 
 #include "config.h"
 
@@ -128,7 +128,7 @@ typedef struct _rnn_t_ {
     long report_progress;
 } rnn_t;
 
-int rnn_load_opt(rnn_opt_t* rnn_opt, stconf_t *pconf, const char *sec_name);
+int rnn_load_opt(rnn_opt_t* rnn_opt, st_opt_t *opt, const char *sec_name);
 
 rnn_t *rnn_create();
 #define safe_rnn_destroy(ptr) do {\

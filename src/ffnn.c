@@ -29,19 +29,21 @@
 #include <sys/time.h>
 
 #include <st_macro.h>
-#include <stlog.h>
+#include <st_log.h>
 
 #include "ffnn.h"
 
-int ffnn_load_opt(ffnn_opt_t *ffnn_opt, stconf_t *pconf, const char *sec_name)
+int ffnn_load_opt(ffnn_opt_t *ffnn_opt, st_opt_t *opt,
+        const char *sec_name)
 {
     float f;
 
-    ST_CHECK_PARAM(ffnn_opt == NULL || pconf == NULL, -1);
+    ST_CHECK_PARAM(ffnn_opt == NULL || opt == NULL, -1);
 
     memset(ffnn_opt, 0, sizeof(ffnn_opt_t));
 
-    GET_FLOAT_SEC_CONF(pconf, sec_name, "SCALE", f);
+    ST_OPT_SEC_GET_FLOAT(opt, sec_name, "SCALE", f, 1.0,
+            "Scale of FFNN model output");
     ffnn_opt->scale = (real_t)f;
 
     if (ffnn_opt->scale <= 0) {
@@ -50,7 +52,7 @@ int ffnn_load_opt(ffnn_opt_t *ffnn_opt, stconf_t *pconf, const char *sec_name)
 
     return 0;
 
-STCONF_ERR:
+ST_OPT_ERR:
     return -1;
 }
 

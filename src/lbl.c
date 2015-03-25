@@ -29,19 +29,20 @@
 #include <sys/time.h>
 
 #include <st_macro.h>
-#include <stlog.h>
+#include <st_log.h>
 
 #include "lbl.h"
 
-int lbl_load_opt(lbl_opt_t *lbl_opt, stconf_t *pconf, const char *sec_name)
+int lbl_load_opt(lbl_opt_t *lbl_opt, st_opt_t *opt, const char *sec_name)
 {
     float f;
 
-    ST_CHECK_PARAM(lbl_opt == NULL || pconf == NULL, -1);
+    ST_CHECK_PARAM(lbl_opt == NULL || opt == NULL, -1);
 
     memset(lbl_opt, 0, sizeof(lbl_opt_t));
 
-    GET_FLOAT_SEC_CONF(pconf, sec_name, "SCALE", f);
+    ST_OPT_SEC_GET_FLOAT(opt, sec_name, "SCALE", f, 1.0,
+            "Scale of LBL model output");
     lbl_opt->scale = (real_t)f;
 
     if (lbl_opt->scale <= 0) {
@@ -50,7 +51,7 @@ int lbl_load_opt(lbl_opt_t *lbl_opt, stconf_t *pconf, const char *sec_name)
 
     return 0;
 
-STCONF_ERR:
+ST_OPT_ERR:
     return -1;
 }
 

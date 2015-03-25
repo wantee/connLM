@@ -22,42 +22,9 @@
  * SOFTWARE.
  */
 
-#ifndef  _LBL_H_
-#define  _LBL_H_
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-#include <st_opt.h>
-
-#include "config.h"
-
-typedef struct _lbl_opt_t {
-    real_t scale;
-} lbl_opt_t;
-
-typedef struct _lbl_t_ {
-    lbl_opt_t lbl_opt;
-} lbl_t;
-
-int lbl_load_opt(lbl_opt_t *lbl_opt, st_opt_t *opt, const char *sec_name);
-
-lbl_t *lbl_create(lbl_opt_t *lbl_opt);
-#define safe_lbl_destroy(ptr) do {\
-    if(ptr != NULL) {\
-        lbl_destroy(ptr);\
-        safe_free(ptr);\
-        ptr = NULL;\
-    }\
-    } while(0)
-void lbl_destroy(lbl_t *lbl);
-int lbl_save(lbl_t *lbl, bool binary, FILE *fo);
-
-int lbl_train(lbl_t *lbl);
-
-#ifdef __cplusplus
+int main(int argc, const char *argv[])
+{
+    return 0;
 }
-#endif
 
-#endif
+/* vim: set expandtab ts=4 sw=4 sts=4 tw=100: */

@@ -125,13 +125,13 @@ typedef struct _connlm_t_ {
 } connlm_t;
 
 int connlm_param_load(connlm_param_t *connlm_param, 
-        stconf_t *pconf, const char *sec_name);
+        st_opt_t *opt, const char *sec_name);
 
 int connlm_output_opt_load(connlm_output_opt_t *output_opt, 
-        stconf_t *pconf, const char *sec_name);
+        st_opt_t *opt, const char *sec_name);
 
 int connlm_load_opt(connlm_opt_t *connlm_opt, 
-        stconf_t *pconf, const char *sec_name);
+        st_opt_t *opt, const char *sec_name);
 
 #define safe_connlm_destroy(ptr) do {\
     if(ptr != NULL) {\

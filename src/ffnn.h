@@ -29,7 +29,7 @@
 extern "C" {
 #endif
 
-#include <stconf.h>
+#include <st_opt.h>
 
 #include "config.h"
 
@@ -41,7 +41,8 @@ typedef struct _ffnn_t_ {
     ffnn_opt_t ffnn_opt;
 } ffnn_t;
 
-int ffnn_load_opt(ffnn_opt_t *ffnn_opt, stconf_t *pconf, const char *sec_name);
+int ffnn_load_opt(ffnn_opt_t *ffnn_opt, st_opt_t *opt,
+        const char *sec_name);
 
 ffnn_t *ffnn_create(ffnn_opt_t *ffnn_opt);
 #define safe_ffnn_destroy(ptr) do {\

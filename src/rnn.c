@@ -29,7 +29,7 @@
 #include <sys/time.h>
 
 #include <st_macro.h>
-#include <stlog.h>
+#include <st_log.h>
 
 #include "fastexp.h"
 #include "utils.h"
@@ -58,31 +58,33 @@ const unsigned int PRIMES[] = {
 
 const unsigned int PRIMES_SIZE = sizeof(PRIMES) / sizeof(PRIMES[0]);
 
-int rnn_load_opt(rnn_opt_t *rnn_opt, stconf_t *pconf, const char *sec_name)
+int rnn_load_opt(rnn_opt_t *rnn_opt, st_opt_t *opt, const char *sec_name)
 {
     float f;
 
-    ST_CHECK_PARAM(rnn_opt == NULL || pconf == NULL, -1);
+    ST_CHECK_PARAM(rnn_opt == NULL || opt == NULL, -1);
 
     memset(rnn_opt, 0, sizeof(rnn_opt_t));
 
-    GET_FLOAT_SEC_CONF(pconf, sec_name, "SCALE", f);
+    ST_OPT_SEC_GET_FLOAT(opt, sec_name, "SCALE", f, 1.0,
+            "Scale of RNN model output");
     rnn_opt->scale = (real_t)f;
 
     if (rnn_opt->scale <= 0) {
         return 0;
     }
 
-    GET_INT_SEC_CONF(pconf, sec_name, "HIDDEN_SIZE",
-            rnn_opt->hidden_size);
+    ST_OPT_SEC_GET_INT(opt, sec_name, "HIDDEN_SIZE",
+            rnn_opt->hidden_size, 15, "Size of hidden layer of RNN");
 
-    GET_INT_SEC_CONF(pconf, sec_name, "BPTT", rnn_opt->bptt);
-    GET_INT_SEC_CONF(pconf, sec_name, "BPTT_BLOCK",
-            rnn_opt->bptt_block);
+    ST_OPT_SEC_GET_INT(opt, sec_name, "BPTT", rnn_opt->bptt, 5,
+            "Time step of BPTT");
+    ST_OPT_SEC_GET_INT(opt, sec_name, "BPTT_BLOCK",
+            rnn_opt->bptt_block, 10, "Block size of BPTT");
 
     return 0;
 
-STCONF_ERR:
+ST_OPT_ERR:
     return -1;
 }
 

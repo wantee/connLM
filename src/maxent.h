@@ -29,7 +29,7 @@
 extern "C" {
 #endif
 
-#include <stconf.h>
+#include <st_opt.h>
 
 #include "config.h"
 
@@ -45,7 +45,7 @@ typedef struct _maxent_t_ {
 } maxent_t;
 
 int maxent_load_opt(maxent_opt_t *maxent_opt,
-        stconf_t *pconf, const char *sec_name);
+        st_opt_t *opt, const char *sec_name);
 
 maxent_t *maxent_create(maxent_opt_t *maxent_opt);
 #define safe_maxent_destroy(ptr) do {\

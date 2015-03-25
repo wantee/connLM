@@ -26,7 +26,7 @@
 #include <string.h>
 #include <float.h>
 
-#include <stlog.h>
+#include <st_log.h>
 
 #include "config.h"
 #include "fastexp.h"

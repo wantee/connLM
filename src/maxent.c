@@ -29,35 +29,38 @@
 #include <sys/time.h>
 
 #include <st_macro.h>
-#include <stlog.h>
+#include <st_log.h>
 
 #include "maxent.h"
 
 int maxent_load_opt(maxent_opt_t *maxent_opt,
-        stconf_t *pconf, const char *sec_name)
+        st_opt_t *opt, const char *sec_name)
 {
     float f;
     int d;
 
-    ST_CHECK_PARAM(maxent_opt == NULL || pconf == NULL, -1);
+    ST_CHECK_PARAM(maxent_opt == NULL || opt == NULL, -1);
 
     memset(maxent_opt, 0, sizeof(maxent_opt_t));
 
-    GET_FLOAT_SEC_CONF(pconf, sec_name, "SCALE", f);
+    ST_OPT_SEC_GET_FLOAT(opt, sec_name, "SCALE", f, 1.0, 
+            "Scale of MaxEnt model output");
     maxent_opt->scale = (real_t)f;
 
     if (maxent_opt->scale <= 0) {
         return 0;
     }
 
-    GET_INT_SEC_CONF(pconf, sec_name, "DIRECT_SIZE", d);
+    ST_OPT_SEC_GET_INT(opt, sec_name, "HASH_SIZE", d, 2,
+            "Size of MaxEnt hash(in millions)");
     maxent_opt->direct_size = d * 1000000;
-    GET_INT_SEC_CONF(pconf, sec_name, "DIRECT_ORDER",
-            maxent_opt->direct_order);
+    ST_OPT_SEC_GET_INT(opt, sec_name, "ORDER",
+            maxent_opt->direct_order, 3,
+            "Order of MaxEnt");
 
     return 0;
 
-STCONF_ERR:
+ST_OPT_ERR:
     return -1;
 }
 
