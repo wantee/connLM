@@ -175,13 +175,13 @@ int main(int argc, const char *argv[])
         goto ERR;
     }
 
-    st_opt_show(g_cmd_opt, "connLM Train Config");
+    st_opt_show(g_cmd_opt, "connLM Train Options");
     if (argc != 5) {
         show_usage(argv[0]);
         goto ERR;
     }
 
-    st_opt_show(g_cmd_opt, "connLM Train Config");
+    st_opt_show(g_cmd_opt, "connLM Train Options");
 
     g_connlm = connlm_create(&g_connlm_opt);
     if (g_connlm == NULL) {

@@ -156,7 +156,7 @@ static int connlm_load_train_opt(connlm_train_opt_t *train_opt,
 
     ST_OPT_SEC_GET_INT(opt, sec_name, "NUM_LINE_READ",
             train_opt->num_line_read, 10,
-            "Number of lines buffer in one read operation (in kilos)");
+            "Number of lines read a time (in kilos)");
     train_opt->num_line_read *= 1000;
     ST_OPT_SEC_GET_BOOL(opt, sec_name, "SHUFFLE",
             train_opt->shuffle, true,
