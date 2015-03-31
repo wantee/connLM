@@ -104,14 +104,14 @@ ERR:
     return NULL;
 }
 
-static int lbl_load_header(lbl_t **lbl, FILE *fp, bool *binary)
+long lbl_load_header(lbl_t **lbl, FILE *fp, bool *binary, FILE *fo)
 {
     char str[MAX_LINE_LEN];
     long sz;
     int magic_num;
     int version;
 
-    ST_CHECK_PARAM(lbl == NULL || fp == NULL
+    ST_CHECK_PARAM((lbl == NULL && fo == NULL) || fp == NULL
             || binary == NULL, -1);
 
     if (fread(&magic_num, sizeof(int), 1, fp) != 1) {
@@ -131,16 +131,25 @@ static int lbl_load_header(lbl_t **lbl, FILE *fp, bool *binary)
     }
 
     if (sz <= 0) {
-        *lbl = NULL;
+        if (lbl != NULL) {
+            *lbl = NULL;
+        }
+
+        if (fo != NULL) {
+            fprintf(fo, "\n<LBL>: None\n");
+        }
+
         return 0;
     }
 
-    *lbl = (lbl_t *)malloc(sizeof(lbl_t));
-    if (*lbl == NULL) {
-        ST_WARNING("Failed to malloc lbl_t");
-        goto ERR;
+    if (lbl != NULL) {
+        *lbl = (lbl_t *)malloc(sizeof(lbl_t));
+        if (*lbl == NULL) {
+            ST_WARNING("Failed to malloc lbl_t");
+            goto ERR;
+        }
+        memset(*lbl, 0, sizeof(lbl_t));
     }
-    memset(*lbl, 0, sizeof(lbl_t));
 
     fscanf(fp, "Version: %d\n", &version);
 
@@ -152,7 +161,14 @@ static int lbl_load_header(lbl_t **lbl, FILE *fp, bool *binary)
     fscanf(fp, "Binary: %s\n", str);
     *binary = str2bool(str);
 
-    return 0;
+    if (fo != NULL) {
+        fprintf(fo, "\n<LBL>\n");
+        fprintf(fo, "Version: %d\n", version);
+        fprintf(fo, "Binary: %s\n", bool2str(*binary));
+        fprintf(fo, "Size: %ldB\n", sz);
+    }
+
+    return sz;
 
 ERR:
     safe_lbl_destroy(*lbl);
@@ -165,7 +181,7 @@ int lbl_load(lbl_t **lbl, FILE *fp)
 
     ST_CHECK_PARAM(lbl == NULL || fp == NULL, -1);
 
-    if (lbl_load_header(lbl, fp, &binary) < 0) {
+    if (lbl_load_header(lbl, fp, &binary, NULL) < 0) {
         ST_WARNING("Failed to lbl_load_header.");
         goto ERR;
     }

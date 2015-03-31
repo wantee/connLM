@@ -94,8 +94,8 @@ ST_OPT_ERR:
 void show_usage(const char *module_name)
 {
     fprintf(stderr, "\nConnectionist Language Modelling Toolkit -- Training \n");
-    fprintf(stderr, "Version  : %s\tFile version: %d\n", CONNLM_VERSION,
-            CONNLM_FILE_VERSION);
+    fprintf(stderr, "Version  : %s\n", CONNLM_VERSION);
+    fprintf(stderr, "File version: %d\n", CONNLM_FILE_VERSION);
     fprintf(stderr, "Usage    : %s [options] <train-file> <model-in> <model-out>\n",
             module_name);
     fprintf(stderr, "\n");

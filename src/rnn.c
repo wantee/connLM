@@ -170,14 +170,14 @@ ERR:
     return NULL;
 }
 
-static int rnn_load_header(rnn_t **rnn, FILE *fp, bool *binary)
+long rnn_load_header(rnn_t **rnn, FILE *fp, bool *binary, FILE *fo)
 {
     char str[MAX_LINE_LEN];
     long sz;
     int magic_num;
     int version;
 
-    ST_CHECK_PARAM(rnn == NULL || fp == NULL
+    ST_CHECK_PARAM((rnn == NULL && fo == NULL) || fp == NULL
             || binary == NULL, -1);
 
     if (fread(&magic_num, sizeof(int), 1, fp) != 1) {
@@ -198,16 +198,23 @@ static int rnn_load_header(rnn_t **rnn, FILE *fp, bool *binary)
     }
 
     if (sz <= 0) {
-        *rnn = NULL;
+        if (rnn != NULL) {
+            *rnn = NULL;
+        }
+        if (fo != NULL) {
+            fprintf(fo, "\n<RNN>: None\n");
+        }
         return 0;
     }
 
-    *rnn = (rnn_t *)malloc(sizeof(rnn_t));
-    if (*rnn == NULL) {
-        ST_WARNING("Failed to malloc rnn_t");
-        goto ERR;
+    if (rnn != NULL) {
+        *rnn = (rnn_t *)malloc(sizeof(rnn_t));
+        if (*rnn == NULL) {
+            ST_WARNING("Failed to malloc rnn_t");
+            goto ERR;
+        }
+        memset(*rnn, 0, sizeof(rnn_t));
     }
-    memset(*rnn, 0, sizeof(rnn_t));
 
     fscanf(fp, "Version: %d\n", &version);
 
@@ -219,7 +226,14 @@ static int rnn_load_header(rnn_t **rnn, FILE *fp, bool *binary)
     fscanf(fp, "Binary: %s\n", str);
     *binary = str2bool(str);
 
-    return 0;
+    if (fo != NULL) {
+        fprintf(fo, "\n<RNN>\n");
+        fprintf(fo, "Version: %d\n", version);
+        fprintf(fo, "Binary: %s\n", bool2str(*binary));
+        fprintf(fo, "Size: %ldB\n", sz);
+    }
+
+    return sz;
 
 ERR:
     safe_rnn_destroy(*rnn);
@@ -232,7 +246,7 @@ int rnn_load(rnn_t **rnn, FILE *fp)
 
     ST_CHECK_PARAM(rnn == NULL || fp == NULL, -1);
 
-    if (rnn_load_header(rnn, fp, &binary) < 0) {
+    if (rnn_load_header(rnn, fp, &binary, NULL) < 0) {
         ST_WARNING("Failed to rnn_load_header.");
         goto ERR;
     }

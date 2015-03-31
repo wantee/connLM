@@ -371,14 +371,13 @@ ERR:
     return NULL;
 }
 
-static int connlm_load_header(connlm_t *connlm, FILE *fp, bool *binary)
+static int connlm_load_header(connlm_t *connlm, FILE *fp, FILE *fo)
 {
-    char str[MAX_LINE_LEN];
     long sz;
     int magic_num;
     int version;
 
-    ST_CHECK_PARAM(connlm == NULL || fp == NULL, -1);
+    ST_CHECK_PARAM((connlm == NULL && fo == NULL) || fp == NULL, -1);
 
     if (fread(&magic_num, sizeof(int), 1, fp) != 1) {
         ST_WARNING("NOT connlm format: Failed to load magic num.");
@@ -405,8 +404,11 @@ static int connlm_load_header(connlm_t *connlm, FILE *fp, bool *binary)
         return -1;
     }
 
-    fscanf(fp, "Binary: %s\n", str);
-    *binary = str2bool(str);
+    if (fo != NULL) {
+        fprintf(fo, "<CONNLM>\n");
+        fprintf(fo, "Version: %d\n", version);
+        fprintf(fo, "Size: %ldB\n", sz);
+    }
 
     return 0;
 }
@@ -414,7 +416,6 @@ static int connlm_load_header(connlm_t *connlm, FILE *fp, bool *binary)
 connlm_t* connlm_load(FILE *fp)
 {
     connlm_t *connlm = NULL;
-    bool binary;
 
     ST_CHECK_PARAM(fp == NULL, NULL);
 
@@ -425,7 +426,7 @@ connlm_t* connlm_load(FILE *fp)
     }
     memset(connlm, 0, sizeof(connlm_t));
 
-    if (connlm_load_header(connlm, fp, &binary) < 0) {
+    if (connlm_load_header(connlm, fp, NULL) < 0) {
         ST_WARNING("Failed to connlm_load_header.");
         goto ERR;
     }
@@ -462,7 +463,65 @@ ERR:
     return NULL;
 }
 
-static long connlm_save_header(connlm_t *connlm, FILE *fp, bool binary)
+int connlm_print_info(FILE *model_fp, FILE *fo)
+{
+    long sz;
+    bool binary;
+
+    ST_CHECK_PARAM(model_fp == NULL || fo == NULL, -1);
+
+    if (connlm_load_header(NULL, model_fp, fo) < 0) {
+        ST_WARNING("Failed to connlm_load_header.");
+        goto ERR;
+    }
+
+    sz = vocab_load_header(NULL, model_fp, &binary, fo);
+    if (sz < 0) {
+        ST_WARNING("Failed to vocab_load_header.");
+        goto ERR;
+    }
+
+    fseek(model_fp, sz, SEEK_CUR);
+
+    sz = rnn_load_header(NULL, model_fp, &binary, fo);
+    if (sz < 0) {
+        ST_WARNING("Failed to rnn_load_header.");
+        goto ERR;
+    }
+
+    fseek(model_fp, sz, SEEK_CUR);
+
+    sz = maxent_load_header(NULL, model_fp, &binary, fo);
+    if (sz < 0) {
+        ST_WARNING("Failed to maxent_load_header.");
+        goto ERR;
+    }
+
+    fseek(model_fp, sz, SEEK_CUR);
+
+    sz = lbl_load_header(NULL, model_fp, &binary, fo);
+    if (sz < 0) {
+        ST_WARNING("Failed to lbl_load_header.");
+        goto ERR;
+    }
+
+    fseek(model_fp, sz, SEEK_CUR);
+
+    sz = ffnn_load_header(NULL, model_fp, &binary, fo);
+    if (sz < 0) {
+        ST_WARNING("Failed to ffnn_load_header.");
+        goto ERR;
+    }
+
+    fflush(fo);
+
+    return 0;
+
+ERR:
+    return -1;
+}
+
+static long connlm_save_header(connlm_t *connlm, FILE *fp)
 {
     long sz_pos;
 
@@ -478,7 +537,6 @@ static long connlm_save_header(connlm_t *connlm, FILE *fp, bool binary)
     fseek(fp, sizeof(long), SEEK_CUR);
 
     fprintf(fp, "Version: %d\n", CONNLM_FILE_VERSION);
-    fprintf(fp, "Binary: %s\n", bool2str(binary));
 
     return sz_pos;
 }
@@ -491,7 +549,7 @@ int connlm_save(connlm_t *connlm, FILE *fp, bool binary)
 
     ST_CHECK_PARAM(connlm == NULL || fp == NULL, -1);
 
-    sz_pos = connlm_save_header(connlm, fp, binary);
+    sz_pos = connlm_save_header(connlm, fp);
     if (sz_pos < 0) {
         ST_WARNING("Failed to connlm_save_header.");
         return -1;

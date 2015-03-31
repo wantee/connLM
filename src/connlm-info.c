@@ -22,9 +22,113 @@
  * SOFTWARE.
  */
 
+#include <st_io.h>
+
+#include "utils.h"
+#include "connlm.h"
+
+#define DEFAULT_LOGFILE         "-"
+#define DEFAULT_LOGLEVEL        8
+
+char g_log_file[MAX_DIR_LEN];
+int  g_log_level;
+bool g_binary;
+
+st_opt_t *g_cmd_opt;
+
+int connlm_parse_opt(int *argc, const char *argv[])
+{
+    bool b;
+
+    g_cmd_opt = st_opt_create();
+    if (g_cmd_opt == NULL) {
+        ST_WARNING("Failed to st_opt_create.");
+        goto ST_OPT_ERR;
+    }
+
+    if (st_opt_parse(g_cmd_opt, argc, argv) < 0) {
+        ST_WARNING("Failed to st_opt_parse.");
+        goto ST_OPT_ERR;
+    }
+
+    ST_OPT_GET_STR(g_cmd_opt, "LOG_FILE",
+            g_log_file, MAX_DIR_LEN, DEFAULT_LOGFILE, "Log file");
+    ST_OPT_GET_INT(g_cmd_opt, "LOG_LEVEL", g_log_level,
+                     DEFAULT_LOGLEVEL, "Log level (1-8)");
+
+    if (st_log_open(g_log_file, g_log_level) != 0) {
+        ST_WARNING("Failed to open log connlm-vocab");
+        goto ST_OPT_ERR;
+    }
+
+    if (st_opt_get_bool(g_cmd_opt, NULL, "help", &b, false,
+                "Print help") < 0) {
+        ST_WARNING("Failed to st_opt_get_bool for help");
+        goto ST_OPT_ERR;
+    }
+
+    return (b ? 1 : 0);
+
+ST_OPT_ERR:
+    return -1;
+}
+
+void show_usage(const char *module_name)
+{
+    fprintf(stderr, "\nConnectionist Language Modelling Toolkit -- Information \n");
+    fprintf(stderr, "Version  : %s\n", CONNLM_VERSION);
+    fprintf(stderr, "File version: %d\n", CONNLM_FILE_VERSION);
+    fprintf(stderr, "Usage    : %s [options] <model>\n",
+            module_name);
+    fprintf(stderr, "\n");
+    fprintf(stderr, "Options  : \n");
+    st_opt_show_usage(g_cmd_opt, stderr);
+}
+
 int main(int argc, const char *argv[])
 {
+    FILE *fp = NULL;
+    int ret;
+
+    ret = connlm_parse_opt(&argc, argv);
+    if (ret < 0) {
+        show_usage(argv[0]);
+        goto ERR;
+    } if (ret == 1) {
+        show_usage(argv[0]);
+        goto ERR;
+    }
+
+    if (argc != 2) {
+        show_usage(argv[0]);
+        goto ERR;
+    }
+
+    st_opt_show(g_cmd_opt, "connLM Info Options");
+
+    fp = st_fopen(argv[1], "rb");
+    if (fp == NULL) {
+        ST_WARNING("Failed to st_fopen. [%s]", argv[1]);
+        goto ERR;
+    }
+
+    if (connlm_print_info(fp, stdout) < 0) {
+        ST_WARNING("Failed to connlm_load_info.");
+        goto ERR;
+    }
+    safe_st_fclose(fp);
+
+    safe_st_opt_destroy(g_cmd_opt);
+
+    st_log_close(0);
     return 0;
+
+  ERR:
+    safe_st_fclose(fp);
+    safe_st_opt_destroy(g_cmd_opt);
+
+    st_log_close(1);
+    return -1;
 }
 
 /* vim: set expandtab ts=4 sw=4 sts=4 tw=100: */

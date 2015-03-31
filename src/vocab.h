@@ -46,6 +46,8 @@ typedef struct _word_info_t_ {
 typedef struct _vocab_t_ {
     vocab_opt_t vocab_opt;
 
+    int vocab_size;
+
     st_alphabet_t *alphabet;
     word_info_t *word_infos;
 } vocab_t;
@@ -63,6 +65,7 @@ vocab_t *vocab_create(vocab_opt_t *vocab_opt);
 void vocab_destroy(vocab_t *vocab);
 vocab_t* vocab_dup(vocab_t *v);
 
+long vocab_load_header(vocab_t **vocab, FILE *fp, bool *binary, FILE *fo);
 int vocab_load(vocab_t **vocab, FILE *fp);
 int vocab_save(vocab_t *vocab, FILE *fp, bool binary);
 
@@ -70,7 +73,6 @@ int vocab_learn(vocab_t *vocab, FILE *fp);
 
 int vocab_get_id(vocab_t *vocab, const char *word);
 char* vocab_get_word(vocab_t *vocab, int id);
-int vocab_get_size(vocab_t *vocab);
 int vocab_add_word(vocab_t *vocab, const char* word);
 
 #ifdef __cplusplus

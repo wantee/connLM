@@ -58,6 +58,7 @@ maxent_t *maxent_create(maxent_opt_t *maxent_opt);
 void maxent_destroy(maxent_t *maxent);
 maxent_t* maxent_dup(maxent_t *m);
 
+long maxent_load_header(maxent_t **maxent, FILE *fp, bool *binary, FILE *fo);
 int maxent_load(maxent_t **maxent, FILE *fp);
 int maxent_save(maxent_t *maxent, FILE *fp, bool binary);
 

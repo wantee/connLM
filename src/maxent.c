@@ -113,14 +113,14 @@ ERR:
     return NULL;
 }
 
-static int maxent_load_header(maxent_t **maxent, FILE *fp, bool *binary)
+long maxent_load_header(maxent_t **maxent, FILE *fp, bool *binary, FILE *fo)
 {
     char str[MAX_LINE_LEN];
     long sz;
     int magic_num;
     int version;
 
-    ST_CHECK_PARAM(maxent == NULL || fp == NULL
+    ST_CHECK_PARAM((maxent == NULL && fo == NULL) || fp == NULL
             || binary == NULL, -1);
 
     if (fread(&magic_num, sizeof(int), 1, fp) != 1) {
@@ -140,16 +140,25 @@ static int maxent_load_header(maxent_t **maxent, FILE *fp, bool *binary)
     }
 
     if (sz <= 0) {
-        *maxent = NULL;
+        if (maxent != NULL) {
+            *maxent = NULL;
+        }
+
+        if (fo != NULL) {
+            fprintf(fo, "\n<MAXENT>: None\n");
+        }
+
         return 0;
     }
 
-    *maxent = (maxent_t *)malloc(sizeof(maxent_t));
-    if (*maxent == NULL) {
-        ST_WARNING("Failed to malloc maxent_t");
-        goto ERR;
+    if (maxent != NULL) {
+        *maxent = (maxent_t *)malloc(sizeof(maxent_t));
+        if (*maxent == NULL) {
+            ST_WARNING("Failed to malloc maxent_t");
+            goto ERR;
+        }
+        memset(*maxent, 0, sizeof(maxent_t));
     }
-    memset(*maxent, 0, sizeof(maxent_t));
 
     fscanf(fp, "Version: %d\n", &version);
 
@@ -161,7 +170,14 @@ static int maxent_load_header(maxent_t **maxent, FILE *fp, bool *binary)
     fscanf(fp, "Binary: %s\n", str);
     *binary = str2bool(str);
 
-    return 0;
+    if (fo != NULL) {
+        fprintf(fo, "\n<MAXENT>\n");
+        fprintf(fo, "Version: %d\n", version);
+        fprintf(fo, "Binary: %s\n", bool2str(*binary));
+        fprintf(fo, "Size: %ldB\n", sz);
+    }
+
+    return sz;
 
 ERR:
     safe_maxent_destroy(*maxent);
@@ -174,7 +190,7 @@ int maxent_load(maxent_t **maxent, FILE *fp)
 
     ST_CHECK_PARAM(maxent == NULL || fp == NULL, -1);
 
-    if (maxent_load_header(maxent, fp, &binary) < 0) {
+    if (maxent_load_header(maxent, fp, &binary, NULL) < 0) {
         ST_WARNING("Failed to maxent_load_header.");
         goto ERR;
     }

@@ -54,6 +54,7 @@ lbl_t *lbl_create(lbl_opt_t *lbl_opt);
 void lbl_destroy(lbl_t *lbl);
 lbl_t* lbl_dup(lbl_t *l);
 
+long lbl_load_header(lbl_t **lbl, FILE *fp, bool *binary, FILE *fo);
 int lbl_load(lbl_t **lbl, FILE *fp);
 int lbl_save(lbl_t *lbl, FILE *fp, bool binary);
 

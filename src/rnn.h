@@ -141,6 +141,7 @@ rnn_t *rnn_create();
 void rnn_destroy(rnn_t *rnn);
 rnn_t* rnn_dup(rnn_t *r);
 
+long rnn_load_header(rnn_t **rnn, FILE *fp, bool *binary, FILE *fo);
 int rnn_load(rnn_t **rnn, FILE *fp);
 int rnn_save(rnn_t *rnn, FILE *fp, bool binary);
 

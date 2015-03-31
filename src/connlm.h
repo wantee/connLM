@@ -116,6 +116,8 @@ connlm_t *connlm_new(vocab_t *vocab, rnn_t *rnn, maxent_t *maxent,
 connlm_t* connlm_load(FILE *fp);
 int connlm_save(connlm_t *connlm, FILE *fp, bool binary);
 
+int connlm_print_info(FILE *model_fp, FILE *fo);
+
 int connlm_train(connlm_t *connlm);
 int connlm_test(connlm_t *connlm);
 
