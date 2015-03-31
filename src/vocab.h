@@ -22,43 +22,56 @@
  * SOFTWARE.
  */
 
-#ifndef  _FFNN_H_
-#define  _FFNN_H_
+#ifndef  _VOCAB_H_
+#define  _VOCAB_H_
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 #include <st_opt.h>
+#include <st_alphabet.h>
 
 #include "config.h"
 
-typedef struct _ffnn_opt_t {
-    real_t scale;
-} ffnn_opt_t;
+typedef struct _vocab_opt_t_ {
+    int max_word_num;
+} vocab_opt_t;
 
-typedef struct _ffnn_t_ {
-    ffnn_opt_t ffnn_opt;
-} ffnn_t;
+typedef struct _word_info_t_ {
+    int id;
+    unsigned long cnt;
+} word_info_t;
 
-int ffnn_load_opt(ffnn_opt_t *ffnn_opt, st_opt_t *opt,
+typedef struct _vocab_t_ {
+    vocab_opt_t vocab_opt;
+
+    st_alphabet_t *alphabet;
+    word_info_t *word_infos;
+} vocab_t;
+
+int vocab_load_opt(vocab_opt_t *vocab_opt, st_opt_t *opt,
         const char *sec_name);
-
-ffnn_t *ffnn_create(ffnn_opt_t *ffnn_opt);
-#define safe_ffnn_destroy(ptr) do {\
+vocab_t *vocab_create(vocab_opt_t *vocab_opt);
+#define safe_vocab_destroy(ptr) do {\
     if(ptr != NULL) {\
-        ffnn_destroy(ptr);\
+        vocab_destroy(ptr);\
         safe_free(ptr);\
         ptr = NULL;\
     }\
     } while(0)
-void ffnn_destroy(ffnn_t *ffnn);
-ffnn_t* ffnn_dup(ffnn_t *f);
+void vocab_destroy(vocab_t *vocab);
+vocab_t* vocab_dup(vocab_t *v);
 
-int ffnn_load(ffnn_t **ffnn, FILE *fp);
-int ffnn_save(ffnn_t *ffnn, FILE *fp, bool binary);
+int vocab_load(vocab_t **vocab, FILE *fp);
+int vocab_save(vocab_t *vocab, FILE *fp, bool binary);
 
-int ffnn_train(ffnn_t *ffnn);
+int vocab_learn(vocab_t *vocab, FILE *fp);
+
+int vocab_get_id(vocab_t *vocab, const char *word);
+char* vocab_get_word(vocab_t *vocab, int id);
+int vocab_get_size(vocab_t *vocab);
+int vocab_add_word(vocab_t *vocab, const char* word);
 
 #ifdef __cplusplus
 }

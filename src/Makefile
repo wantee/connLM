@@ -15,7 +15,6 @@ CFLAGS += -D REAL_TYPE=float
 BINDIR=../bin
 CFLAGS += -g -Wall -Winline -pipe -Wno-narrowing 
 #CFLAGS += -Ofast -march=native -funroll-loops -ffast-math
-#CFLAGS += -D_MAT_X_VEC_DEBfloafloat
 #CFLAGS += -D_MAT_X_VEC_RAW_
 
 #CFLAGS += -D_TIME_PROF_
@@ -31,7 +30,7 @@ SO_OBJ = ./so_obj
 
 TARGET_INC = connlm.h rnn.h maxent.h lbl.h ffnn.h
 
-OBJ_SO = utils.o rnn.o maxent.o lbl.o ffnn.o connlm.o
+OBJ_SO = utils.o vocab.o rnn.o maxent.o lbl.o ffnn.o connlm.o
 
 ifeq ($(UNAME_S),Darwin)
 TARGET_SO = libconnlm.dylib
@@ -41,7 +40,8 @@ TARGET_SO = libconnlm.so
 SO_FLAGS = -shared
 endif
 
-TARGET_BIN = connlm-train connlm-test connlm-info connlm-copy
+TARGET_BIN = connlm-train connlm-test connlm-info connlm-copy \
+             connlm-vocab
 
 .PHONY: all clean preparedir
 

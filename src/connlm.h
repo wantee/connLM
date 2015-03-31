@@ -33,6 +33,7 @@ extern "C" {
 #include <st_alphabet.h>
 
 #include "config.h"
+#include "vocab.h"
 #include "rnn.h"
 #include "maxent.h"
 #include "lbl.h"
@@ -51,21 +52,11 @@ typedef struct _connlm_output_opt_t_ {
     bool hs;
 } connlm_output_opt_t;
 
-typedef enum _connlm_mode_t_ {
-    MODE_TRAIN,
-    MODE_TEST,
-} connlm_mode_t;
+typedef struct _connlm_opt_t_ {
+    int num_thread;
+    int max_word_per_sent;
+    int rand_seed;
 
-typedef struct _connlm_train_opt_t_ {
-    char train_file[MAX_DIR_LEN];
-    char valid_file[MAX_DIR_LEN];
-
-    int max_word_num;
-
-    char in_model_file[MAX_DIR_LEN];
-    char out_model_file[MAX_DIR_LEN];
-
-    bool binary;
     bool report_progress;
 
     bool independent;
@@ -80,44 +71,18 @@ typedef struct _connlm_train_opt_t_ {
     maxent_opt_t maxent_opt;
     lbl_opt_t lbl_opt;
     ffnn_opt_t ffnn_opt;
-} connlm_train_opt_t;
-
-typedef struct _connlm_test_opt_t {
-    char test_file[MAX_DIR_LEN];
-
-    char model_file[MAX_DIR_LEN];
-} connlm_test_opt_t;
-
-typedef struct _connlm_opt_t_ {
-    int mode;
-    int num_thread;
-    int max_word_per_sent;
-    int rand_seed;
-
-    union {
-        connlm_train_opt_t train_opt;
-        connlm_test_opt_t test_opt;
-    };
 } connlm_opt_t;
-
-typedef struct _word_info_t_ {
-    int id;
-    unsigned long cnt;
-} word_info_t;
 
 typedef struct _connlm_t_ {
     connlm_opt_t connlm_opt;
 
-    st_rand_t random;
+    unsigned random;
 
     FILE *text_fp;
     int *egs;
     int *shuffle_buf;
 
-    st_alphabet_t *vocab;
-    int vocab_size;
-    word_info_t *word_infos;
-
+    vocab_t *vocab;
     rnn_t *rnn;
     maxent_t *maxent;
     lbl_t *lbl;
@@ -142,7 +107,14 @@ int connlm_load_opt(connlm_opt_t *connlm_opt,
     } while(0)
 void connlm_destroy(connlm_t *connlm);
 
-connlm_t *connlm_create(connlm_opt_t *connlm_opt);
+int connlm_setup_train(connlm_t *connlm, connlm_opt_t *connlm_opt,
+        const char *train_file);
+
+connlm_t *connlm_new(vocab_t *vocab, rnn_t *rnn, maxent_t *maxent,
+        lbl_t* lbl, ffnn_t *ffnn);
+
+connlm_t* connlm_load(FILE *fp);
+int connlm_save(connlm_t *connlm, FILE *fp, bool binary);
 
 int connlm_train(connlm_t *connlm);
 int connlm_test(connlm_t *connlm);

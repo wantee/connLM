@@ -139,7 +139,10 @@ rnn_t *rnn_create();
     }\
     } while(0)
 void rnn_destroy(rnn_t *rnn);
-int rnn_save(rnn_t * rnn, bool binary, FILE *fo);
+rnn_t* rnn_dup(rnn_t *r);
+
+int rnn_load(rnn_t **rnn, FILE *fp);
+int rnn_save(rnn_t *rnn, FILE *fp, bool binary);
 
 int rnn_train(rnn_t * rnn);
 

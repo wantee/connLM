@@ -303,17 +303,3 @@ void softmax(real_t *vec, int vec_size)
 
 }
 
-int goto_delimiter(int delim, FILE * fi)
-{
-    int ch = 0;
-
-    while (ch != delim) {
-        ch = fgetc(fi);
-        if (feof(fi)) {
-            return -1;
-        }
-    }
-
-    return 0;
-}
-

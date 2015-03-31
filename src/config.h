@@ -29,7 +29,9 @@
 extern "C" {
 #endif
 
-#define VERSION   "0.1"
+#define CONNLM_VERSION   "0.1"
+
+#define CONNLM_FILE_VERSION   1
 
 #ifndef REAL_TYPE
 #define REAL_TYPE double

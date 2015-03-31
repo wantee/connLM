@@ -32,6 +32,8 @@
 
 #include "connlm.h"
 
+static const int CONNLM_MAGIC_NUM = 626140498;
+
 int connlm_param_load(connlm_param_t *connlm_param, 
         st_opt_t *opt, const char *sec_name)
 {
@@ -81,19 +83,19 @@ ST_OPT_ERR:
     return -1;
 }
 
-static int connlm_load_train_opt(connlm_train_opt_t *train_opt, 
+int connlm_load_opt(connlm_opt_t *connlm_opt, 
         st_opt_t *opt, const char *sec_name)
 {
     char name[MAX_ST_CONF_LEN];
 
-    ST_CHECK_PARAM(train_opt == NULL || opt == NULL, -1);
+    ST_CHECK_PARAM(connlm_opt == NULL || opt == NULL, -1);
 
     if (sec_name == NULL || sec_name[0] == '\0') {
         snprintf(name, MAX_ST_CONF_LEN, "RNN");
     } else {
         snprintf(name, MAX_ST_CONF_LEN, "%s/RNN", sec_name);
     }
-    if (rnn_load_opt(&train_opt->rnn_opt, opt, name) < 0) {
+    if (rnn_load_opt(&connlm_opt->rnn_opt, opt, name) < 0) {
         ST_WARNING("Failed to rnn_load_opt.");
         goto ST_OPT_ERR;
     }
@@ -103,7 +105,7 @@ static int connlm_load_train_opt(connlm_train_opt_t *train_opt,
     } else {
         snprintf(name, MAX_ST_CONF_LEN, "%s/MAXENT", sec_name);
     }
-    if (maxent_load_opt(&train_opt->maxent_opt, opt, name) < 0) {
+    if (maxent_load_opt(&connlm_opt->maxent_opt, opt, name) < 0) {
         ST_WARNING("Failed to maxent_load_opt.");
         goto ST_OPT_ERR;
     }
@@ -113,7 +115,7 @@ static int connlm_load_train_opt(connlm_train_opt_t *train_opt,
     } else {
         snprintf(name, MAX_ST_CONF_LEN, "%s/LBL", sec_name);
     }
-    if (lbl_load_opt(&train_opt->lbl_opt, opt, name) < 0) {
+    if (lbl_load_opt(&connlm_opt->lbl_opt, opt, name) < 0) {
         ST_WARNING("Failed to lbl_load_opt.");
         goto ST_OPT_ERR;
     }
@@ -123,12 +125,12 @@ static int connlm_load_train_opt(connlm_train_opt_t *train_opt,
     } else {
         snprintf(name, MAX_ST_CONF_LEN, "%s/FFNN", sec_name);
     }
-    if (ffnn_load_opt(&train_opt->ffnn_opt, opt, name) < 0) {
+    if (ffnn_load_opt(&connlm_opt->ffnn_opt, opt, name) < 0) {
         ST_WARNING("Failed to ffnn_load_opt.");
         goto ST_OPT_ERR;
     }
 
-    if (connlm_param_load(&train_opt->param, opt, sec_name) < 0) {
+    if (connlm_param_load(&connlm_opt->param, opt, sec_name) < 0) {
         ST_WARNING("Failed to connlm_param_load.");
         goto ST_OPT_ERR;
     }
@@ -138,65 +140,9 @@ static int connlm_load_train_opt(connlm_train_opt_t *train_opt,
     } else {
         snprintf(name, MAX_ST_CONF_LEN, "%s/OUTPUT", sec_name);
     }
-    if (connlm_output_opt_load(&train_opt->output_opt, opt, name) < 0) {
+    if (connlm_output_opt_load(&connlm_opt->output_opt, opt, name) < 0) {
         ST_WARNING("Failed to connlm_output_opt_load.");
         goto ST_OPT_ERR;
-    }
-
-    ST_OPT_SEC_GET_INT(opt, sec_name, "MAX_WORD_NUM",
-            train_opt->max_word_num, 1000000, 
-            "Maximum number of words in Vocabulary");
-
-    ST_OPT_SEC_GET_BOOL(opt, sec_name, "BINARY",
-            train_opt->binary, true,
-            "Save file as binary format");
-    ST_OPT_SEC_GET_BOOL(opt, sec_name, "REPORT_PROGRESS",
-            train_opt->report_progress, false,
-            "Report training progress");
-
-    ST_OPT_SEC_GET_INT(opt, sec_name, "NUM_LINE_READ",
-            train_opt->num_line_read, 10,
-            "Number of lines read a time (in kilos)");
-    train_opt->num_line_read *= 1000;
-    ST_OPT_SEC_GET_BOOL(opt, sec_name, "SHUFFLE",
-            train_opt->shuffle, true,
-            "Shuffle after reading");
-
-    return 0;
-
-ST_OPT_ERR:
-    return -1;
-}
-
-static int connlm_load_test_opt(connlm_test_opt_t *test_opt, 
-        st_opt_t *opt, const char *sec_name)
-{
-    ST_CHECK_PARAM(test_opt == NULL || opt == NULL, -1);
-
-
-    return 0;
-}
-
-int connlm_load_opt(connlm_opt_t *connlm_opt, 
-        st_opt_t *opt, const char *sec_name)
-{
-    ST_CHECK_PARAM(connlm_opt == NULL || opt == NULL, -1);
-
-    if (connlm_opt->mode == MODE_TRAIN) {
-        if (connlm_load_train_opt(&connlm_opt->train_opt,
-                    opt, sec_name) < 0) {
-            ST_WARNING("Failed to connlm_load_train_opt");
-            return -1;
-        }
-    } else if (connlm_opt->mode == MODE_TEST){
-        if (connlm_load_test_opt(&connlm_opt->test_opt,
-                    opt, sec_name) < 0) {
-            ST_WARNING("Failed to connlm_load_test_opt");
-            return -1;
-        }
-    } else {
-        ST_WARNING("Unknown mode[%d]", connlm_opt->mode);
-        return -1;
     }
 
     ST_OPT_SEC_GET_INT(opt, sec_name, "NUM_THREAD",
@@ -207,194 +153,58 @@ int connlm_load_opt(connlm_opt_t *connlm_opt,
             connlm_opt->max_word_per_sent, 256,
             "Maximum words in one sentence");
 
+    ST_OPT_SEC_GET_BOOL(opt, sec_name, "REPORT_PROGRESS",
+            connlm_opt->report_progress, false,
+            "Report training progress");
+
+    ST_OPT_SEC_GET_INT(opt, sec_name, "NUM_LINE_READ",
+            connlm_opt->num_line_read, 10,
+            "Number of lines read a time (in kilos)");
+    connlm_opt->num_line_read *= 1000;
+    ST_OPT_SEC_GET_BOOL(opt, sec_name, "SHUFFLE",
+            connlm_opt->shuffle, true,
+            "Shuffle after reading");
+
     return 0;
 
 ST_OPT_ERR:
     return -1;
 }
 
-static int connlm_sort_vocab(connlm_t * connlm)
+int connlm_setup_train(connlm_t *connlm, connlm_opt_t *connlm_opt,
+        const char *train_file)
 {
-    word_info_t swap;
-    st_alphabet_t *v = NULL;
-    char *word;
-    int a, b, max;
+    ST_CHECK_PARAM(connlm == NULL || connlm_opt == NULL
+            || train_file == NULL, -1);
 
-    ST_CHECK_PARAM(connlm == NULL, -1);
+    connlm->connlm_opt = *connlm_opt;
 
-    for (a = 1; a < connlm->vocab_size; a++) {
-        max = a;
-        for (b = a + 1; b < connlm->vocab_size; b++) {
-            if (connlm->word_infos[max].cnt < connlm->word_infos[b].cnt) {
-                max = b;
-            }
-        }
+    connlm->random = connlm_opt->rand_seed;
 
-        if (max == a) {
-            continue;
-        }
-
-        swap = connlm->word_infos[max];
-        connlm->word_infos[max] = connlm->word_infos[a];
-        connlm->word_infos[a] = swap;
-    }
-
-    v = st_alphabet_create(connlm->vocab_size);
-    if (v == NULL) {
-        ST_WARNING("Failed to st_alphabet_create vocab.");
+    connlm->text_fp = st_fopen(train_file, "rb");
+    if (connlm->text_fp == NULL) {
+        ST_WARNING("Failed to open train file[%s]", train_file);
         return -1;
     }
 
-    for (a = 0; a < connlm->vocab_size; a++) {
-        word = st_alphabet_get_label(connlm->vocab, connlm->word_infos[a].id);
-        if (word == NULL) {
-            ST_WARNING("Failed to st_alphabet_get_label[%d].",
-                       connlm->word_infos[a].id);
-            goto ERR;
-        }
-
-        if (st_alphabet_add_label(v, word) < 0) {
-            ST_WARNING("Failed to st_alphabet_add_label[%s].", word);
-            goto ERR;
-        }
-    }
-
-    safe_st_alphabet_destroy(connlm->vocab);
-    connlm->vocab = v;
-
-    return 0;
-
-  ERR:
-    safe_st_alphabet_destroy(v);
-    return -1;
-}
-
-static int connlm_read_word(char *word, size_t word_len, FILE * fp)
-{
-    size_t a;
-    int ch;
-
-    ST_CHECK_PARAM(word == NULL || word_len <= 0 || fp == NULL, -1);
-
-    a = 0;
-    while (!feof(fp)) {
-        ch = fgetc(fp);
-
-        if (ch == 13) {
-            continue;
-        }
-
-        if ((ch == ' ') || (ch == '\t') || (ch == '\n')) {
-            if (a > 0) {
-                if (ch == '\n') {
-                    ungetc(ch, fp);
-                }
-                break;
-            }
-
-            if (ch == '\n') {
-                strncpy(word, "</s>", word_len);
-                word[word_len - 1] = '\0';
-                return 0;
-            } else {
-                continue;
-            }
-        }
-
-        word[a] = ch;
-        a++;
-
-        if (a >= word_len) {
-            a--;
-        }
-    }
-
-    word[a] = '\0';
-
-    return 0;
-}
-
-int connlm_learn_vocab(connlm_t *connlm)
-{
-    char word[MAX_SYM_LEN];
-    FILE *fp = NULL;
-    connlm_train_opt_t *train_opt;
-
-    int words = 0;
-    int id;
-
-    ST_CHECK_PARAM(connlm == NULL, -1);
-
-    train_opt = &connlm->connlm_opt.train_opt;
-    fp = fopen(train_opt->train_file, "rb");
-    if (fp == NULL) {
-        ST_WARNING("Failed to open train file[%s].", 
-                train_opt->train_file);
+    connlm->egs = (int *)malloc(sizeof(int)
+            *connlm_opt->num_line_read*connlm_opt->max_word_per_sent);
+    if (connlm->egs == NULL) {
+        ST_WARNING("Failed to malloc egs");
         return -1;
     }
 
-    connlm->vocab = st_alphabet_create(train_opt->max_word_num);
-    if (connlm->vocab == NULL) {
-        ST_WARNING("Failed to st_alphabet_create.");
-        goto ERR;
-    }
-
-    connlm->word_infos = (word_info_t *) malloc(sizeof(word_info_t) 
-            * train_opt->max_word_num);
-    if (connlm->word_infos == NULL) {
-        ST_WARNING("Failed to malloc word_infos.");
-        goto ERR;
-    }
-    memset(connlm->word_infos, 0, sizeof(word_info_t) 
-            * train_opt->max_word_num);
-
-    if (st_alphabet_add_label(connlm->vocab, "</s>") != 0) {
-        ST_WARNING("Failed to st_alphabet_add_label.");
-        goto ERR;
-    }
-    connlm->word_infos[0].id = 0;
-    connlm->word_infos[0].cnt = 0;
-
-    words = 0;
-    while (1) {
-        if (connlm_read_word(word, MAX_SYM_LEN, fp) < 0) {
-            ST_WARNING("Failed to connlm_read_word.");
-            goto ERR;
-        }
-
-        if (feof(fp)) {
-            break;
-        }
-
-        words++;
-
-        id = st_alphabet_get_index(connlm->vocab, word);
-        if (id == -1) {
-            id = st_alphabet_add_label(connlm->vocab, word);
-            if (id < 0) {
-                ST_WARNING("Failed to st_alphabet_add_label.");
-                goto ERR;
-            }
-
-            connlm->word_infos[id].id = id;
-            connlm->word_infos[id].cnt = 1;
-        } else {
-            connlm->word_infos[id].cnt++;
+    if (connlm_opt->shuffle) {
+        connlm->shuffle_buf = (int *)malloc(sizeof(int)
+                *connlm_opt->num_line_read);
+        if (connlm->shuffle_buf == NULL) {
+            ST_WARNING("Failed to malloc shuffle_buf");
+            return -1;
         }
     }
 
-    safe_fclose(fp);
 
-    connlm->vocab_size = st_alphabet_get_label_num(connlm->vocab);
-    connlm_sort_vocab(connlm);
-
-    return 0;
-
-  ERR:
-    safe_fclose(fp);
-    safe_st_alphabet_destroy(connlm->vocab);
-    safe_free(connlm->word_infos);
-    return -1;
+return 0;
 }
 
 static int connlm_get_egs(connlm_t *connlm)
@@ -402,7 +212,7 @@ static int connlm_get_egs(connlm_t *connlm)
     char line[MAX_LINE_LEN];
     char word[MAX_LINE_LEN];
 
-    connlm_train_opt_t *train_opt;
+    connlm_opt_t *connlm_opt;
     int *eg;
     char *p;
 
@@ -413,28 +223,24 @@ static int connlm_get_egs(connlm_t *connlm)
 
     ST_CHECK_PARAM(connlm == NULL, -1);
 
-    train_opt = &connlm->connlm_opt.train_opt;
+    connlm_opt = &connlm->connlm_opt;
     max_word_per_sent = connlm->connlm_opt.max_word_per_sent;
 
-    if (train_opt->shuffle) {
-        for (i = 0; i < train_opt->num_line_read; i++) {
+    if (connlm_opt->shuffle) {
+        for (i = 0; i < connlm_opt->num_line_read; i++) {
             connlm->shuffle_buf[i] = i;
         }
 
-        st_shuffle_rand(connlm->shuffle_buf, train_opt->num_line_read,
+        st_shuffle_r(connlm->shuffle_buf, connlm_opt->num_line_read,
                 &connlm->random);
-        for (i = 0; i < train_opt->num_line_read; i++) {
-            printf("%d\n", connlm->shuffle_buf[i]);
-        }
     }
 
-    for (i = 0; i < train_opt->num_line_read; i++) {
+    for (i = 0; i < connlm_opt->num_line_read; i++) {
         connlm->egs[i*max_word_per_sent] = -1;
     }
 
     num_sents = 0;
-    while (fgets(line, MAX_LINE_LEN, connlm->text_fp))
-    {
+    while (fgets(line, MAX_LINE_LEN, connlm->text_fp)) {
         remove_newline(line);
 
         if (line[0] == '\0') {
@@ -449,7 +255,7 @@ static int connlm_get_egs(connlm_t *connlm)
             if (*p == ' ' || *p == '\t') {
                 if (i > 0) {
                     word[i] = '\0';
-                    eg[w] = st_alphabet_get_index(connlm->vocab, word);
+                    eg[w] = vocab_get_id(connlm->vocab, word);
                     if (eg[w] < 0) {
                         ST_WARNING("Failed to st_alphabet_get_index "
                                 "for word[%s]", word);
@@ -462,18 +268,18 @@ static int connlm_get_egs(connlm_t *connlm)
                     }
                     i = 0;
                 }
-                p++;
-                continue;
+            } else {
+                word[i] = *p;
+                i++;
             }
-
-            word[i] = *p;
-            i++;
-            while (*p != ' ' && *p != '\t') {
+            p++;
+            while (*p == ' ' && *p == '\t') {
+                p++;
             }
         }
 
         num_sents++;
-        if (num_sents >= train_opt->num_line_read) {
+        if (num_sents >= connlm_opt->num_line_read) {
             break;
         }
 
@@ -491,8 +297,7 @@ void connlm_destroy(connlm_t *connlm)
         return;
     }
 
-    safe_st_alphabet_destroy(connlm->vocab);
-    safe_free(connlm->word_infos);
+    safe_vocab_destroy(connlm->vocab);
 
     safe_st_fclose(connlm->text_fp);
     safe_free(connlm->egs);
@@ -504,53 +309,149 @@ void connlm_destroy(connlm_t *connlm)
     safe_ffnn_destroy(connlm->ffnn);
 }
 
-connlm_t *connlm_create(connlm_opt_t *connlm_opt)
+connlm_t *connlm_new(vocab_t *vocab, rnn_t *rnn, maxent_t *maxent,
+        lbl_t* lbl, ffnn_t *ffnn)
 {
     connlm_t *connlm = NULL;
-    connlm_train_opt_t *train_opt;
-    connlm_test_opt_t *test_opt;
 
-    ST_CHECK_PARAM(connlm_opt == NULL, NULL);
+    ST_CHECK_PARAM(vocab == NULL && rnn == NULL && maxent == NULL
+            && lbl == NULL && ffnn == NULL, NULL);
 
     connlm = (connlm_t *)malloc(sizeof(connlm_t));
     if (connlm == NULL) {
         ST_WARNING("Failed to malloc connlm_t");
         goto ERR;
     }
+    memset(connlm, 0, sizeof(connlm_t));
 
-    connlm->connlm_opt = *connlm_opt;
-    connlm->random = connlm_opt->rand_seed;
-
-    if (connlm_opt->mode == MODE_TRAIN) {
-        train_opt = &connlm_opt->train_opt;
-
-        connlm->text_fp = st_fopen(train_opt->train_file, "rb");
-        if (connlm->text_fp == NULL) {
-            ST_WARNING("Failed to open train file[%s]",
-                    train_opt->train_file);
+    if (vocab != NULL) {
+        connlm->vocab = vocab_dup(vocab);
+        if (connlm->vocab == NULL) {
+            ST_WARNING("Failed to vocab_dup.");
             goto ERR;
         }
+    }
 
-        connlm->egs = (int *)malloc(sizeof(int)
-                *train_opt->num_line_read*connlm_opt->max_word_per_sent);
-        if (connlm->egs == NULL) {
-            ST_WARNING("Failed to malloc egs");
+    if (rnn != NULL) {
+        connlm->rnn = rnn_dup(rnn);
+        if (connlm->rnn == NULL) {
+            ST_WARNING("Failed to rnn_dup.");
             goto ERR;
         }
+    }
 
-        if (train_opt->shuffle) {
-            connlm->shuffle_buf = (int *)malloc(sizeof(int)
-                    *train_opt->num_line_read);
-            if (connlm->shuffle_buf == NULL) {
-                ST_WARNING("Failed to malloc shuffle_buf");
-                goto ERR;
-            }
+    if (maxent != NULL) {
+        connlm->maxent = maxent_dup(maxent);
+        if (connlm->maxent == NULL) {
+            ST_WARNING("Failed to maxent_dup.");
+            goto ERR;
         }
+    }
 
-    } else if (connlm_opt->mode == MODE_TEST) {
-        test_opt = &connlm_opt->test_opt;
-    } else {
-        ST_WARNING("Unknown mode[%d]", connlm_opt->mode);
+    if (lbl != NULL) {
+        connlm->lbl = lbl_dup(lbl);
+        if (connlm->lbl == NULL) {
+            ST_WARNING("Failed to lbl_dup.");
+            goto ERR;
+        }
+    }
+
+    if (ffnn != NULL) {
+        connlm->ffnn = ffnn_dup(ffnn);
+        if (connlm->ffnn == NULL) {
+            ST_WARNING("Failed to ffnn_dup.");
+            goto ERR;
+        }
+    }
+
+    return connlm;
+
+ERR:
+    safe_connlm_destroy(connlm);
+    return NULL;
+}
+
+static int connlm_load_header(connlm_t *connlm, FILE *fp, bool *binary)
+{
+    char str[MAX_LINE_LEN];
+    long sz;
+    int magic_num;
+    int version;
+
+    ST_CHECK_PARAM(connlm == NULL || fp == NULL, -1);
+
+    if (fread(&magic_num, sizeof(int), 1, fp) != 1) {
+        ST_WARNING("NOT connlm format: Failed to load magic num.");
+        return -1;
+    }
+
+    if (CONNLM_MAGIC_NUM != magic_num) {
+        ST_WARNING("NOT connlm format, magic num wrong.");
+        return -2;
+    }
+
+    fscanf(fp, "\n<CONNLM>\n");
+
+    if (fread(&sz, sizeof(long), 1, fp) != 1) {
+        ST_WARNING("Failed to read size.");
+        return -1;
+    }
+
+    fscanf(fp, "Version: %d\n", &version);
+
+    if (version > CONNLM_FILE_VERSION) {
+        ST_WARNING("Too high file versoin[%d], "
+                "please update connlm toolkit");
+        return -1;
+    }
+
+    fscanf(fp, "Binary: %s\n", str);
+    *binary = str2bool(str);
+
+    return 0;
+}
+
+connlm_t* connlm_load(FILE *fp)
+{
+    connlm_t *connlm = NULL;
+    bool binary;
+
+    ST_CHECK_PARAM(fp == NULL, NULL);
+
+    connlm = (connlm_t *)malloc(sizeof(connlm_t));
+    if (connlm == NULL) {
+        ST_WARNING("Failed to malloc connlm_t");
+        goto ERR;
+    }
+    memset(connlm, 0, sizeof(connlm_t));
+
+    if (connlm_load_header(connlm, fp, &binary) < 0) {
+        ST_WARNING("Failed to connlm_load_header.");
+        goto ERR;
+    }
+
+    if (vocab_load(&connlm->vocab, fp) < 0) {
+        ST_WARNING("Failed to vocab_load.");
+        goto ERR;
+    }
+
+    if (rnn_load(&connlm->rnn, fp) < 0) {
+        ST_WARNING("Failed to rnn_load.");
+        goto ERR;
+    }
+
+    if (maxent_load(&connlm->maxent, fp) < 0) {
+        ST_WARNING("Failed to maxent_load.");
+        goto ERR;
+    }
+
+    if (lbl_load(&connlm->lbl, fp) < 0) {
+        ST_WARNING("Failed to lbl_load.");
+        goto ERR;
+    }
+
+    if (ffnn_load(&connlm->ffnn, fp) < 0) {
+        ST_WARNING("Failed to ffnn_load.");
         goto ERR;
     }
 
@@ -559,6 +460,79 @@ connlm_t *connlm_create(connlm_opt_t *connlm_opt)
 ERR:
     safe_connlm_destroy(connlm);
     return NULL;
+}
+
+static long connlm_save_header(connlm_t *connlm, FILE *fp, bool binary)
+{
+    long sz_pos;
+
+    ST_CHECK_PARAM(connlm == NULL || fp == NULL, -1);
+
+    if (fwrite(&CONNLM_MAGIC_NUM, sizeof(int), 1, fp) != 1) {
+        ST_WARNING("Failed to write magic num.");
+        return -1;
+    }
+    fprintf(fp, "\n<CONNLM>\n");
+
+    sz_pos = ftell(fp);
+    fseek(fp, sizeof(long), SEEK_CUR);
+
+    fprintf(fp, "Version: %d\n", CONNLM_FILE_VERSION);
+    fprintf(fp, "Binary: %s\n", bool2str(binary));
+
+    return sz_pos;
+}
+
+int connlm_save(connlm_t *connlm, FILE *fp, bool binary)
+{
+    long sz;
+    long sz_pos;
+    long fpos;
+
+    ST_CHECK_PARAM(connlm == NULL || fp == NULL, -1);
+
+    sz_pos = connlm_save_header(connlm, fp, binary);
+    if (sz_pos < 0) {
+        ST_WARNING("Failed to connlm_save_header.");
+        return -1;
+    }
+
+    fpos = ftell(fp);
+    if (vocab_save(connlm->vocab, fp, binary) < 0) {
+        ST_WARNING("Failed to vocab_save.");
+        return -1;
+    }
+
+    if (rnn_save(connlm->rnn, fp, binary) < 0) {
+        ST_WARNING("Failed to rnn_save.");
+        return -1;
+    }
+
+    if (maxent_save(connlm->maxent, fp, binary) < 0) {
+        ST_WARNING("Failed to maxent_save.");
+        return -1;
+    }
+
+    if (lbl_save(connlm->lbl, fp, binary) < 0) {
+        ST_WARNING("Failed to lbl_save.");
+        return -1;
+    }
+
+    if (ffnn_save(connlm->ffnn, fp, binary) < 0) {
+        ST_WARNING("Failed to ffnn_save.");
+        return -1;
+    }
+
+    sz = ftell(fp) - fpos;
+    fpos = ftell(fp);
+    fseek(fp, sz_pos, SEEK_SET);
+    if (fwrite(&sz, sizeof(long), 1, fp) != 1) {
+        ST_WARNING("Failed to write size.");
+        return -1;
+    }
+    fseek(fp, fpos, SEEK_SET);
+
+    return 0;
 }
 
 int connlm_train(connlm_t *connlm)

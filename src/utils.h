@@ -39,8 +39,6 @@ void sigmoid(real_t *vec, int vec_size);
 
 void softmax(real_t *vec, int vec_size);
 
-int goto_delimiter(int delim, FILE * fi);
-
 #ifdef __cplusplus
 }
 #endif

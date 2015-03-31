@@ -22,13 +22,6 @@
  * SOFTWARE.
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-
-#include <st_opt.h>
-#include <st_log.h>
 #include <st_io.h>
 
 #include "utils.h"
@@ -43,8 +36,9 @@ bool g_binary;
 
 st_opt_t *g_cmd_opt;
 
-connlm_opt_t g_connlm_opt;
 connlm_t *g_connlm;
+vocab_opt_t g_vocab_opt;
+vocab_t *g_vocab;
 
 int connlm_parse_opt(int *argc, const char *argv[])
 {
@@ -66,13 +60,13 @@ int connlm_parse_opt(int *argc, const char *argv[])
     ST_OPT_GET_INT(g_cmd_opt, "LOG_LEVEL", g_log_level,
                      DEFAULT_LOGLEVEL, "Log level (1-8)");
 
-    if (st_log_open_mt(g_log_file, g_log_level) != 0) {
-        ST_WARNING("Failed to open log connlm-train");
+    if (st_log_open(g_log_file, g_log_level) != 0) {
+        ST_WARNING("Failed to open log connlm-vocab");
         goto ST_OPT_ERR;
     }
 
-    if (connlm_load_opt(&g_connlm_opt, g_cmd_opt, NULL) < 0) {
-        ST_WARNING("Failed to connlm_load_opt");
+    if (vocab_load_opt(&g_vocab_opt, g_cmd_opt, NULL) < 0) {
+        ST_WARNING("Failed to vocab_load_opt");
         goto ST_OPT_ERR;
     }
 
@@ -93,10 +87,10 @@ ST_OPT_ERR:
 
 void show_usage(const char *module_name)
 {
-    fprintf(stderr, "\nConnectionist Language Modelling Toolkit -- Training \n");
+    fprintf(stderr, "\nConnectionist Language Modelling Toolkit -- Vocabulary \n");
     fprintf(stderr, "Version  : %s\tFile version: %d\n", CONNLM_VERSION,
             CONNLM_FILE_VERSION);
-    fprintf(stderr, "Usage    : %s [options] <train-file> <model-in> <model-out>\n",
+    fprintf(stderr, "Usage    : %s [options] <train-file> <model-out>\n",
             module_name);
     fprintf(stderr, "\n");
     fprintf(stderr, "Options  : \n");
@@ -105,6 +99,7 @@ void show_usage(const char *module_name)
 
 int main(int argc, const char *argv[])
 {
+    char filename[MAX_DIR_LEN];
     FILE *fp = NULL;
     int ret;
 
@@ -117,39 +112,40 @@ int main(int argc, const char *argv[])
         goto ERR;
     }
 
-    if (argc != 4) {
+    if (argc != 3) {
         show_usage(argv[0]);
         goto ERR;
     }
 
-    st_opt_show(g_cmd_opt, "connLM Train Options");
+    st_opt_show(g_cmd_opt, "connLM Vocab Options");
 
-    fp = st_fopen(argv[2], "rb");
-    if (fp == NULL) {
-        ST_WARNING("Failed to st_fopen. [%s]", argv[4]);
+    g_vocab = vocab_create(&g_vocab_opt);
+    if (g_vocab == NULL) {
+        ST_WARNING("Failed to vocab_create.");
         goto ERR;
     }
 
-    g_connlm = connlm_load(fp);
-    if (g_connlm == NULL) {
-        ST_WARNING("Failed to connlm_load.");
+    fp = st_fopen(argv[1], "rb");
+    if (fp == NULL) {
+        ST_WARNING("Failed to st_fopen. [%s]", filename);
+        goto ERR;
+    }
+
+    if (vocab_learn(g_vocab, fp) < 0) {
+        ST_WARNING("Failed to vocab_learn.");
         goto ERR;
     }
     safe_st_fclose(fp);
 
-    if (connlm_setup_train(g_connlm, &g_connlm_opt, argv[1]) < 0) {
-        ST_WARNING("Failed to connlm_setup_train.");
+    g_connlm = connlm_new(g_vocab, NULL, NULL, NULL, NULL);
+    if (g_connlm == NULL) {
+        ST_WARNING("Failed to connlm_new.");
         goto ERR;
     }
 
-    if (connlm_train(g_connlm) < 0) {
-        ST_WARNING("Failed to connlm_train.");
-        goto ERR;
-    }
-
-    fp = st_fopen(argv[3], "wb");
+    fp = st_fopen(argv[2], "wb");
     if (fp == NULL) {
-        ST_WARNING("Failed to st_fopen. [%s]", argv[4]);
+        ST_WARNING("Failed to st_fopen. [%s]", argv[2]);
         goto ERR;
     }
 
@@ -157,9 +153,10 @@ int main(int argc, const char *argv[])
         ST_WARNING("Failed to connlm_save.");
         goto ERR;
     }
-    safe_st_fclose(fp);
 
+    safe_st_fclose(fp);
     safe_st_opt_destroy(g_cmd_opt);
+    safe_vocab_destroy(g_vocab);
     safe_connlm_destroy(g_connlm);
 
     st_log_close(0);
@@ -168,6 +165,7 @@ int main(int argc, const char *argv[])
   ERR:
     safe_st_fclose(fp);
     safe_st_opt_destroy(g_cmd_opt);
+    safe_vocab_destroy(g_vocab);
     safe_connlm_destroy(g_connlm);
 
     st_log_close(1);

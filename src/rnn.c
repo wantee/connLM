@@ -35,6 +35,8 @@
 #include "utils.h"
 #include "rnn.h"
 
+static const int RNN_MAGIC_NUM = 626140498 + 2;
+
 #ifdef _TIME_PROF_
 extern long long matXvec_total;
 extern long long vecXmat_total;
@@ -145,6 +147,173 @@ void rnn_destroy(rnn_t *rnn)
     safe_free(rnn->er_bptt_h);
     safe_free(rnn->wt_bptt_ih_w);
     safe_free(rnn->wt_bptt_ih_h);
+}
+
+rnn_t* rnn_dup(rnn_t *r)
+{
+    rnn_t *rnn = NULL;
+
+    ST_CHECK_PARAM(r == NULL, NULL);
+
+    rnn = (rnn_t *) malloc(sizeof(rnn_t));
+    if (rnn == NULL) {
+        ST_WARNING("Falied to malloc rnn_t.");
+        goto ERR;
+    }
+
+    *rnn = *r;
+
+    return rnn;
+
+ERR:
+    safe_rnn_destroy(rnn);
+    return NULL;
+}
+
+static int rnn_load_header(rnn_t **rnn, FILE *fp, bool *binary)
+{
+    char str[MAX_LINE_LEN];
+    long sz;
+    int magic_num;
+    int version;
+
+    ST_CHECK_PARAM(rnn == NULL || fp == NULL
+            || binary == NULL, -1);
+
+    if (fread(&magic_num, sizeof(int), 1, fp) != 1) {
+        ST_WARNING("NOT rnn format: Failed to load magic num.");
+        return -1;
+    }
+
+    if (RNN_MAGIC_NUM != magic_num) {
+        ST_WARNING("NOT rnn format, magic num wrong.");
+        return -2;
+    }
+
+    fscanf(fp, "\n<RNN>\n");
+
+    if (fread(&sz, sizeof(long), 1, fp) != 1) {
+        ST_WARNING("Failed to read size.");
+        return -1;
+    }
+
+    if (sz <= 0) {
+        *rnn = NULL;
+        return 0;
+    }
+
+    *rnn = (rnn_t *)malloc(sizeof(rnn_t));
+    if (*rnn == NULL) {
+        ST_WARNING("Failed to malloc rnn_t");
+        goto ERR;
+    }
+    memset(*rnn, 0, sizeof(rnn_t));
+
+    fscanf(fp, "Version: %d\n", &version);
+
+    if (version > CONNLM_FILE_VERSION) {
+        ST_WARNING("Too high file versoin[%d].");
+        goto ERR;
+    }
+
+    fscanf(fp, "Binary: %s\n", str);
+    *binary = str2bool(str);
+
+    return 0;
+
+ERR:
+    safe_rnn_destroy(*rnn);
+    return -1;
+}
+
+int rnn_load(rnn_t **rnn, FILE *fp)
+{
+    bool binary;
+
+    ST_CHECK_PARAM(rnn == NULL || fp == NULL, -1);
+
+    if (rnn_load_header(rnn, fp, &binary) < 0) {
+        ST_WARNING("Failed to rnn_load_header.");
+        goto ERR;
+    }
+
+    if (*rnn == NULL) {
+        return 0;
+    }
+
+    if (binary) {
+    } else {
+    }
+
+    return 0;
+
+ERR:
+    safe_rnn_destroy(*rnn);
+    return -1;
+}
+
+static long rnn_save_header(rnn_t *rnn, FILE *fp, bool binary)
+{
+    long sz_pos;
+
+    ST_CHECK_PARAM(fp == NULL, -1);
+
+    if (fwrite(&RNN_MAGIC_NUM, sizeof(int), 1, fp) != 1) {
+        ST_WARNING("Failed to write magic num.");
+        return -1;
+    }
+    fprintf(fp, "\n<RNN>\n");
+
+    if (rnn == NULL) {
+        sz_pos = 0;
+        if (fwrite(&sz_pos, sizeof(long), 1, fp) != 1) {
+            ST_WARNING("Failed to write size.");
+            return -1;
+        }
+        return 0;
+    }
+
+    sz_pos = ftell(fp);
+    fseek(fp, sizeof(long), SEEK_CUR);
+
+    fprintf(fp, "Version: %d\n", CONNLM_FILE_VERSION);
+    fprintf(fp, "Binary: %s\n", bool2str(binary));
+
+    return sz_pos;
+}
+
+int rnn_save(rnn_t *rnn, FILE *fp, bool binary)
+{
+    long sz;
+    long sz_pos;
+    long fpos;
+
+    ST_CHECK_PARAM(fp == NULL, -1);
+
+    sz_pos = rnn_save_header(rnn, fp, binary);
+    if (sz_pos < 0) {
+        ST_WARNING("Failed to rnn_save_header.");
+        return -1;
+    } else if (sz_pos == 0) {
+        return 0;
+    }
+
+    fpos = ftell(fp);
+
+    if (binary) {
+    } else {
+    }
+
+    sz = ftell(fp) - fpos;
+    fpos = ftell(fp);
+    fseek(fp, sz_pos, SEEK_SET);
+    if (fwrite(&sz, sizeof(long), 1, fp) != 1) {
+        ST_WARNING("Failed to write size.");
+        return -1;
+    }
+    fseek(fp, fpos, SEEK_SET);
+
+    return 0;
 }
 
 /*

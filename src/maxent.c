@@ -33,6 +33,8 @@
 
 #include "maxent.h"
 
+static const int MAXENT_MAGIC_NUM = 626140498 + 3;
+
 int maxent_load_opt(maxent_opt_t *maxent_opt,
         st_opt_t *opt, const char *sec_name)
 {
@@ -88,6 +90,171 @@ void maxent_destroy(maxent_t *maxent)
     if (maxent == NULL) {
         return;
     }
+}
+
+maxent_t* maxent_dup(maxent_t *m)
+{
+    maxent_t *maxent = NULL;
+
+    ST_CHECK_PARAM(m == NULL, NULL);
+
+    maxent = (maxent_t *) malloc(sizeof(maxent_t));
+    if (maxent == NULL) {
+        ST_WARNING("Falied to malloc maxent_t.");
+        goto ERR;
+    }
+
+    *maxent = *m;
+
+    return maxent;
+
+ERR:
+    safe_maxent_destroy(maxent);
+    return NULL;
+}
+
+static int maxent_load_header(maxent_t **maxent, FILE *fp, bool *binary)
+{
+    char str[MAX_LINE_LEN];
+    long sz;
+    int magic_num;
+    int version;
+
+    ST_CHECK_PARAM(maxent == NULL || fp == NULL
+            || binary == NULL, -1);
+
+    if (fread(&magic_num, sizeof(int), 1, fp) != 1) {
+        ST_WARNING("NOT maxent format: Failed to load magic num.");
+        return -1;
+    }
+
+    if (MAXENT_MAGIC_NUM != magic_num) {
+        ST_WARNING("NOT maxent format, magic num wrong.");
+        return -2;
+    }
+    fscanf(fp, "\n<MAXENT>\n");
+
+    if (fread(&sz, sizeof(long), 1, fp) != 1) {
+        ST_WARNING("Failed to read size.");
+        return -1;
+    }
+
+    if (sz <= 0) {
+        *maxent = NULL;
+        return 0;
+    }
+
+    *maxent = (maxent_t *)malloc(sizeof(maxent_t));
+    if (*maxent == NULL) {
+        ST_WARNING("Failed to malloc maxent_t");
+        goto ERR;
+    }
+    memset(*maxent, 0, sizeof(maxent_t));
+
+    fscanf(fp, "Version: %d\n", &version);
+
+    if (version > CONNLM_FILE_VERSION) {
+        ST_WARNING("Too high file versoin[%d].");
+        goto ERR;
+    }
+
+    fscanf(fp, "Binary: %s\n", str);
+    *binary = str2bool(str);
+
+    return 0;
+
+ERR:
+    safe_maxent_destroy(*maxent);
+    return -1;
+}
+
+int maxent_load(maxent_t **maxent, FILE *fp)
+{
+    bool binary;
+
+    ST_CHECK_PARAM(maxent == NULL || fp == NULL, -1);
+
+    if (maxent_load_header(maxent, fp, &binary) < 0) {
+        ST_WARNING("Failed to maxent_load_header.");
+        goto ERR;
+    }
+
+    if (*maxent == NULL) {
+        return 0;
+    }
+
+    if (binary) {
+    } else {
+    }
+    return 0;
+
+ERR:
+    safe_maxent_destroy(*maxent);
+    return -1;
+}
+
+static long maxent_save_header(maxent_t *maxent, FILE *fp, bool binary)
+{
+    long sz_pos;
+
+    ST_CHECK_PARAM(fp == NULL, -1);
+
+    if (fwrite(&MAXENT_MAGIC_NUM, sizeof(int), 1, fp) != 1) {
+        ST_WARNING("Failed to write magic num.");
+        return -1;
+    }
+    fprintf(fp, "\n<MAXENT>\n");
+
+    if (maxent == NULL) {
+        sz_pos = 0;
+        if (fwrite(&sz_pos, sizeof(long), 1, fp) != 1) {
+            ST_WARNING("Failed to write size.");
+            return -1;
+        }
+        return 0;
+    }
+
+    sz_pos = ftell(fp);
+    fseek(fp, sizeof(long), SEEK_CUR);
+
+    fprintf(fp, "Version: %d\n", CONNLM_FILE_VERSION);
+    fprintf(fp, "Binary: %s\n", bool2str(binary));
+
+    return sz_pos;
+}
+
+int maxent_save(maxent_t *maxent, FILE *fp, bool binary)
+{
+    long sz;
+    long sz_pos;
+    long fpos;
+
+    ST_CHECK_PARAM(fp == NULL, -1);
+
+    sz_pos = maxent_save_header(maxent, fp, binary);
+    if (sz_pos < 0) {
+        ST_WARNING("Failed to maxent_save_header.");
+        return -1;
+    } else if (sz_pos == 0) {
+        return 0;
+    }
+
+    fpos = ftell(fp);
+
+    if (binary) {
+    } else {
+    }
+
+    sz = ftell(fp) - fpos;
+    fpos = ftell(fp);
+    fseek(fp, sz_pos, SEEK_SET);
+    if (fwrite(&sz, sizeof(long), 1, fp) != 1) {
+        ST_WARNING("Failed to write size.");
+        return -1;
+    }
+    fseek(fp, fpos, SEEK_SET);
+
+    return 0;
 }
 
 int maxent_train(maxent_t *maxent)
