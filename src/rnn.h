@@ -141,9 +141,10 @@ rnn_t *rnn_create();
 void rnn_destroy(rnn_t *rnn);
 rnn_t* rnn_dup(rnn_t *r);
 
-long rnn_load_header(rnn_t **rnn, FILE *fp, bool *binary, FILE *fo);
-int rnn_load(rnn_t **rnn, FILE *fp);
-int rnn_save(rnn_t *rnn, FILE *fp, bool binary);
+int rnn_load_header(rnn_t **rnn, FILE *fp, bool *binary, FILE *fo_info);
+int rnn_load_body(rnn_t *rnn, FILE *fp, bool binary);
+int rnn_save_header(rnn_t *rnn, FILE *fp, bool binary);
+int rnn_save_body(rnn_t *rnn, FILE *fp, bool binary);
 
 int rnn_train(rnn_t * rnn);
 

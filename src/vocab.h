@@ -66,8 +66,9 @@ void vocab_destroy(vocab_t *vocab);
 vocab_t* vocab_dup(vocab_t *v);
 
 long vocab_load_header(vocab_t **vocab, FILE *fp, bool *binary, FILE *fo);
-int vocab_load(vocab_t **vocab, FILE *fp);
-int vocab_save(vocab_t *vocab, FILE *fp, bool binary);
+int vocab_load_body(vocab_t *vocab, FILE *fp, bool binary);
+int vocab_save_header(vocab_t *vocab, FILE *fp, bool binary);
+int vocab_save_body(vocab_t *vocab, FILE *fp, bool binary);
 
 int vocab_learn(vocab_t *vocab, FILE *fp);
 

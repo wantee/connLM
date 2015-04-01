@@ -57,7 +57,7 @@ int connlm_parse_opt(int *argc, const char *argv[])
                      DEFAULT_LOGLEVEL, "Log level (1-8)");
 
     if (st_log_open(g_log_file, g_log_level) != 0) {
-        ST_WARNING("Failed to open log connlm-vocab");
+        ST_WARNING("Failed to open log");
         goto ST_OPT_ERR;
     }
 
@@ -75,7 +75,8 @@ ST_OPT_ERR:
 
 void show_usage(const char *module_name)
 {
-    fprintf(stderr, "\nConnectionist Language Modelling Toolkit -- Information \n");
+    fprintf(stderr, "\nConnectionist Language Modelling Toolkit\n");
+    fprintf(stderr, "  -- Print Information\n");
     fprintf(stderr, "Version  : %s\n", CONNLM_VERSION);
     fprintf(stderr, "File version: %d\n", CONNLM_FILE_VERSION);
     fprintf(stderr, "Usage    : %s [options] <model>\n",
@@ -113,7 +114,7 @@ int main(int argc, const char *argv[])
     }
 
     if (connlm_print_info(fp, stdout) < 0) {
-        ST_WARNING("Failed to connlm_load_info.");
+        ST_WARNING("Failed to connlm_print_info.");
         goto ERR;
     }
     safe_st_fclose(fp);

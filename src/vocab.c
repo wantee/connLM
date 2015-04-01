@@ -143,140 +143,94 @@ ERR:
     return NULL;
 }
 
-long vocab_load_header(vocab_t **vocab, FILE *fp, bool *binary, FILE *fo)
+long vocab_load_header(vocab_t **vocab, FILE *fp, bool *binary,
+        FILE *fo_info)
 {
-    char str[MAX_LINE_LEN];
-    long sz;
-    int magic_num;
-    int version;
+    char line[MAX_LINE_LEN];
     int vocab_size;
+    union {
+        char str[4];
+        int magic_num;
+    } flag;
 
-    ST_CHECK_PARAM((vocab == NULL && fo == NULL) || fp == NULL
+    ST_CHECK_PARAM((vocab == NULL && fo_info == NULL) || fp == NULL
             || binary == NULL, -1);
 
-    if (fread(&magic_num, sizeof(int), 1, fp) != 1) {
-        ST_WARNING("NOT vocab format: Failed to load magic num.");
+    if (fread(&flag.magic_num, sizeof(int), 1, fp) != 1) {
+        ST_WARNING("Failed to load magic num.");
         return -1;
     }
 
-    if (VOCAB_MAGIC_NUM != magic_num) {
-        ST_WARNING("NOT vocab format, magic num wrong.");
+    if (strncmp(flag.str, "    ", 4) == 0) {
+        *binary = false;
+    } else if (VOCAB_MAGIC_NUM != flag.magic_num) {
+        ST_WARNING("magic num wrong.");
         return -2;
-    }
-
-    fscanf(fp, "\n<VOCAB>\n");
-
-    if (fread(&sz, sizeof(long), 1, fp) != 1) {
-        ST_WARNING("Failed to read size.");
-        return -1;
-    }
-
-    if (sz <= 0) {
-        if (vocab != NULL) {
-            *vocab = NULL;
-        }
-
-        if (fo != NULL) {
-            fprintf(fo, "\n<VOCAB>: None\n");
-        }
-        return 0;
+    } else {
+        *binary = true;
     }
 
     if (vocab != NULL) {
-        *vocab = (vocab_t *)malloc(sizeof(vocab_t));
-        if (*vocab == NULL) {
-            ST_WARNING("Failed to malloc vocab_t");
-            goto ERR;
+        *vocab = NULL;
+    }
+    
+    if (*binary) {
+        if (fread(&vocab_size, sizeof(int), 1, fp) != 1) {
+            ST_WARNING("Failed to read vocab size.");
+            return -1;
         }
-        memset(*vocab, 0, sizeof(vocab_t));
+
+        if (vocab != NULL) {
+            *vocab = (vocab_t *)malloc(sizeof(vocab_t));
+            if (*vocab == NULL) {
+                ST_WARNING("Failed to malloc vocab_t");
+                goto ERR;
+            }
+            memset(*vocab, 0, sizeof(vocab_t));
+        }
+    } else {
+        if (fgets(line, MAX_LINE_LEN, fp) == NULL) {
+            ST_WARNING("Failed to read flag.");
+            return -1;
+        }
+
+        if (fgets(line, MAX_LINE_LEN, fp) == NULL) {
+            ST_WARNING("Failed to read flag.");
+            return -1;
+        }
+        if (strncmp(line, "<VOCAB>", 7) != 0) {
+            ST_WARNING("flag error.[%s]", line);
+            return -1;
+        }
+
+        if (vocab != NULL) {
+            *vocab = (vocab_t *)malloc(sizeof(vocab_t));
+            if (*vocab == NULL) {
+                ST_WARNING("Failed to malloc vocab_t");
+                goto ERR;
+            }
+            memset(*vocab, 0, sizeof(vocab_t));
+        }
+
+        if (fgets(line, MAX_LINE_LEN, fp) == NULL) {
+            ST_WARNING("Failed to read vocab_size.");
+            return -1;
+        }
+        if (sscanf(line, "Vocab size: %d", &vocab_size) != 1) {
+            ST_WARNING("Failed to parse vocab_size.[%s]", line);
+            return -1;
+        }
     }
 
-    fscanf(fp, "Version: %d\n", &version);
-
-    if (version > CONNLM_FILE_VERSION) {
-        ST_WARNING("Too high file versoin[%d].");
-        goto ERR;
-    }
-
-    fscanf(fp, "Binary: %s\n", str);
-    *binary = str2bool(str);
-
-    fscanf(fp, "Vocab size: %d\n", &vocab_size);
     if (vocab != NULL) {
         (*vocab)->vocab_size = vocab_size;
     }
 
-    if (fo != NULL) {
-        fprintf(fo, "\n<VOCAB>\n");
-        fprintf(fo, "Version: %d\n", version);
-        fprintf(fo, "Binary: %s\n", bool2str(*binary));
-        fprintf(fo, "Size: %ldB\n", sz);
-        fprintf(fo, "Vocab size: %d\n", vocab_size);
+    if (fo_info != NULL) {
+        fprintf(fo_info, "\n<VOCAB>\n");
+        fprintf(fo_info, "Vocab size: %d\n", vocab_size);
     }
 
-    return sz;
-
-ERR:
-    safe_vocab_destroy(*vocab);
-    return -1;
-}
-
-int vocab_load(vocab_t **vocab, FILE *fp)
-{
-    int i;
-
-    bool binary;
-
-    ST_CHECK_PARAM(vocab == NULL || fp == NULL, -1);
-
-    if (vocab_load_header(vocab, fp, &binary, NULL) < 0) {
-        ST_WARNING("Failed to vocab_load_header.");
-        goto ERR;
-    }
-
-    if (*vocab == NULL) {
-        return 0;
-    }
-
-    if (binary) {
-        (*vocab)->alphabet = st_alphabet_load_from_bin(fp); 
-        if ((*vocab)->alphabet == NULL) {
-            ST_WARNING("Failed to st_alphabet_load_from_bin.");
-            goto ERR;
-        }
-
-        (*vocab)->word_infos = (word_info_t *)malloc(sizeof(word_info_t)
-                * (*vocab)->vocab_size);
-        if ((*vocab)->word_infos == NULL) {
-            ST_WARNING("Failed to malloc word_infos.");
-            goto ERR;
-        }
-
-        if (fread((*vocab)->word_infos, sizeof(word_info_t),
-                    (*vocab)->vocab_size, fp) != (*vocab)->vocab_size) {
-            ST_WARNING("Failed to write word infos.");
-            goto ERR;
-        }
-    } else {
-        (*vocab)->alphabet = st_alphabet_load_from_txt(fp);
-        if ((*vocab)->alphabet == NULL) {
-            ST_WARNING("Failed to st_alphabet_load_from_txt.");
-            goto ERR;
-        }
-
-        (*vocab)->word_infos = (word_info_t *)malloc(sizeof(word_info_t)
-                * (*vocab)->vocab_size);
-        if ((*vocab)->word_infos == NULL) {
-            ST_WARNING("Failed to malloc word_infos.");
-            goto ERR;
-        }
-
-        fscanf(fp, "Word infos:\n");
-        for (i = 0; i < (*vocab)->vocab_size; i++) {
-            fscanf(fp, "\t%d\t%ld\n", &((*vocab)->word_infos[i].id),
-                    &((*vocab)->word_infos[i].cnt));
-        }
-    }
     return 0;
 
 ERR:
@@ -284,55 +238,126 @@ ERR:
     return -1;
 }
 
-static long vocab_save_header(vocab_t *vocab, FILE *fp, bool binary)
+int vocab_load_body(vocab_t *vocab, FILE *fp, bool binary)
 {
-    long sz_pos;
+    char line[MAX_LINE_LEN];
+    int i;
 
-    ST_CHECK_PARAM(fp == NULL, -1);
+    ST_CHECK_PARAM(vocab == NULL || fp == NULL, -1);
 
-    if (fwrite(&VOCAB_MAGIC_NUM, sizeof(int), 1, fp) != 1) {
-        ST_WARNING("Failed to write magic num.");
-        return -1;
-    }
-    fprintf(fp, "\n<VOCAB>\n");
+    vocab->alphabet = NULL;
+    vocab->word_infos = NULL;
 
-    if (vocab == NULL) {
-        sz_pos = 0;
-        if (fwrite(&sz_pos, sizeof(long), 1, fp) != 1) {
-            ST_WARNING("Failed to write size.");
-            return -1;
+    if (binary) {
+        vocab->alphabet = st_alphabet_load_from_bin(fp); 
+        if (vocab->alphabet == NULL) {
+            ST_WARNING("Failed to st_alphabet_load_from_bin.");
+            goto ERR;
         }
-        return 0;
+
+        vocab->word_infos = (word_info_t *)malloc(sizeof(word_info_t)
+                * vocab->vocab_size);
+        if (vocab->word_infos == NULL) {
+            ST_WARNING("Failed to malloc word_infos.");
+            goto ERR;
+        }
+
+        if (fread(vocab->word_infos, sizeof(word_info_t),
+                    vocab->vocab_size, fp) != vocab->vocab_size) {
+            ST_WARNING("Failed to write word infos.");
+            goto ERR;
+        }
+    } else {
+        if (fgets(line, MAX_LINE_LEN, fp) == NULL) {
+            ST_WARNING("Failed to read body flag.");
+            goto ERR;
+        }
+        if (strncmp(line, "<VOCAB-DATA>", 12) != 0) {
+            ST_WARNING("body flag error.[%s]", line);
+            goto ERR;
+        }
+
+        vocab->alphabet = st_alphabet_load_from_txt(fp);
+        if (vocab->alphabet == NULL) {
+            ST_WARNING("Failed to st_alphabet_load_from_txt.");
+            goto ERR;
+        }
+
+        vocab->word_infos = (word_info_t *)malloc(sizeof(word_info_t)
+                * vocab->vocab_size);
+        if (vocab->word_infos == NULL) {
+            ST_WARNING("Failed to malloc word_infos.");
+            goto ERR;
+        }
+
+        if (fgets(line, MAX_LINE_LEN, fp) == NULL) {
+            ST_WARNING("Failed to read word info flag.");
+            goto ERR;
+        }
+        if (strncmp(line, "Word infos:", 11) != 0) {
+            ST_WARNING("word info flag error.[%s]", line);
+            goto ERR;
+        }
+
+        for (i = 0; i < vocab->vocab_size; i++) {
+            if (fgets(line, MAX_LINE_LEN, fp) == NULL) {
+                ST_WARNING("Failed to read word info.[%d]", i);
+                goto ERR;
+            }
+            if (sscanf(line, "\t%d\t%ld\n", &(vocab->word_infos[i].id),
+                    &(vocab->word_infos[i].cnt)) != 2) {
+                ST_WARNING("Failed to parse word info.[%s]", line);
+                goto ERR;
+            }
+        }
     }
 
-    sz_pos = ftell(fp);
-    fseek(fp, sizeof(long), SEEK_CUR);
-
-    fprintf(fp, "Version: %d\n", CONNLM_FILE_VERSION);
-    fprintf(fp, "Binary: %s\n", bool2str(binary));
-    fprintf(fp, "Vocab size: %d\n", vocab->vocab_size);
-
-    return sz_pos;
+    return 0;
+ERR:
+    safe_st_alphabet_destroy(vocab->alphabet);
+    safe_free(vocab->word_infos);
+    return -1;
 }
 
-int vocab_save(vocab_t *vocab, FILE *fp, bool binary)
+int vocab_save_header(vocab_t *vocab, FILE *fp, bool binary)
 {
-    long sz;
-    long sz_pos;
-    long fpos;
+    ST_CHECK_PARAM(fp == NULL, -1);
+
+    if (binary) {
+        if (fwrite(&VOCAB_MAGIC_NUM, sizeof(int), 1, fp) != 1) {
+            ST_WARNING("Failed to write magic num.");
+            return -1;
+        }
+        if (vocab == NULL) {
+            return 0;
+        }
+
+        if (fwrite(&vocab->vocab_size, sizeof(int), 1, fp) != 1) {
+            ST_WARNING("Failed to write vocab size.");
+            return -1;
+        }
+    } else {
+        fprintf(fp, "    \n<VOCAB>\n");
+
+        if (vocab == NULL) {
+            return 0;
+        }
+
+        fprintf(fp, "Vocab size: %d\n", vocab->vocab_size);
+    }
+
+    return 0;
+}
+
+int vocab_save_body(vocab_t *vocab, FILE *fp, bool binary)
+{
     int i;
 
     ST_CHECK_PARAM(fp == NULL, -1);
 
-    sz_pos = vocab_save_header(vocab, fp, binary);
-    if (sz_pos < 0) {
-        ST_WARNING("Failed to vocab_save_header.");
-        return -1;
-    } else if (sz_pos == 0) {
+    if (vocab == NULL) {
         return 0;
     }
-
-    fpos = ftell(fp);
 
     if (binary) {
         if (st_alphabet_save_bin(vocab->alphabet, fp) < 0) {
@@ -346,6 +371,8 @@ int vocab_save(vocab_t *vocab, FILE *fp, bool binary)
             return -1;
         }
     } else {
+        fprintf(fp, "<VOCAB-DATA>\n");
+
         if (st_alphabet_save_txt(vocab->alphabet, fp) < 0) {
             ST_WARNING("Failed to st_alphabet_save_txt.");
             return -1;
@@ -357,15 +384,6 @@ int vocab_save(vocab_t *vocab, FILE *fp, bool binary)
                     vocab->word_infos[i].cnt);
         }
     }
-
-    sz = ftell(fp) - fpos;
-    fpos = ftell(fp);
-    fseek(fp, sz_pos, SEEK_SET);
-    if (fwrite(&sz, sizeof(long), 1, fp) != 1) {
-        ST_WARNING("Failed to write size.");
-        return -1;
-    }
-    fseek(fp, fpos, SEEK_SET);
 
     return 0;
 }

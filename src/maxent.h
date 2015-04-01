@@ -36,8 +36,8 @@ extern "C" {
 typedef struct _maxent_opt_t {
     real_t scale;
 
-    long long direct_size;
-    int direct_order;
+    long long size;
+    int order;
 } maxent_opt_t;
 
 typedef struct _maxent_t_ {
@@ -58,9 +58,11 @@ maxent_t *maxent_create(maxent_opt_t *maxent_opt);
 void maxent_destroy(maxent_t *maxent);
 maxent_t* maxent_dup(maxent_t *m);
 
-long maxent_load_header(maxent_t **maxent, FILE *fp, bool *binary, FILE *fo);
-int maxent_load(maxent_t **maxent, FILE *fp);
-int maxent_save(maxent_t *maxent, FILE *fp, bool binary);
+int maxent_load_header(maxent_t **maxent, FILE *fp,
+        bool *binary, FILE *fo_info);
+int maxent_load_body(maxent_t *maxent, FILE *fp, bool binary);
+int maxent_save_header(maxent_t *maxent, FILE *fp, bool binary);
+int maxent_save_body(maxent_t *maxent, FILE *fp, bool binary);
 
 int maxent_train(maxent_t *maxent);
 

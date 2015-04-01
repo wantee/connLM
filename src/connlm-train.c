@@ -67,7 +67,7 @@ int connlm_parse_opt(int *argc, const char *argv[])
                      DEFAULT_LOGLEVEL, "Log level (1-8)");
 
     if (st_log_open_mt(g_log_file, g_log_level) != 0) {
-        ST_WARNING("Failed to open log connlm-train");
+        ST_WARNING("Failed to open log");
         goto ST_OPT_ERR;
     }
 
@@ -93,7 +93,8 @@ ST_OPT_ERR:
 
 void show_usage(const char *module_name)
 {
-    fprintf(stderr, "\nConnectionist Language Modelling Toolkit -- Training \n");
+    fprintf(stderr, "\nConnectionist Language Modelling Toolkit\n"); 
+    fprintf(stderr, "  -- Train Models\n");
     fprintf(stderr, "Version  : %s\n", CONNLM_VERSION);
     fprintf(stderr, "File version: %d\n", CONNLM_FILE_VERSION);
     fprintf(stderr, "Usage    : %s [options] <train-file> <model-in> <model-out>\n",

@@ -105,95 +105,113 @@ ERR:
     return NULL;
 }
 
-long ffnn_load_header(ffnn_t **ffnn, FILE *fp, bool *binary, FILE *fo)
+int ffnn_load_header(ffnn_t **ffnn, FILE *fp, bool *binary, FILE *fo_info)
 {
-    char str[MAX_LINE_LEN];
-    long sz;
-    int magic_num;
-    int version;
+    char line[MAX_LINE_LEN];
+    union {
+        char str[4];
+        int magic_num;
+    } flag;
 
-    ST_CHECK_PARAM((ffnn == NULL && fo == NULL) || fp == NULL
+    real_t scale;
+
+    ST_CHECK_PARAM((ffnn == NULL && fo_info == NULL) || fp == NULL
             || binary == NULL, -1);
 
-    if (fread(&magic_num, sizeof(int), 1, fp) != 1) {
-        ST_WARNING("NOT ffnn format: Failed to load magic num.");
+    if (fread(&flag.magic_num, sizeof(int), 1, fp) != 1) {
+        ST_WARNING("Failed to load magic num.");
         return -1;
     }
 
-    if (FFNN_MAGIC_NUM != magic_num) {
-        ST_WARNING("NOT ffnn format, magic num wrong.");
+    if (strncmp(flag.str, "    ", 4) == 0) {
+        *binary = false;
+    } else if (FFNN_MAGIC_NUM != flag.magic_num) {
+        ST_WARNING("magic num wrong.");
         return -2;
-    }
-    fscanf(fp, "\n<FFNN>\n");
-
-    if (fread(&sz, sizeof(long), 1, fp) != 1) {
-        ST_WARNING("Failed to read size.");
-        return -1;
-    }
-
-    if (sz <= 0) {
-        if (ffnn != NULL) {
-            *ffnn = NULL;
-        }
-
-        if (fo != NULL) {
-            fprintf(fo, "\n<FFNN>: None\n");
-        }
-
-        return 0;
+    } else {
+        *binary = true;
     }
 
     if (ffnn != NULL) {
-        *ffnn = (ffnn_t *)malloc(sizeof(ffnn_t));
-        if (*ffnn == NULL) {
-            ST_WARNING("Failed to malloc ffnn_t");
+        *ffnn = NULL;
+    }
+
+    if (*binary) {
+        if (fread(&scale, sizeof(real_t), 1, fp) != 1) {
+            ST_WARNING("Failed to read scale.");
             goto ERR;
         }
-        memset(*ffnn, 0, sizeof(ffnn_t));
-    }
 
-    fscanf(fp, "Version: %d\n", &version);
+        if (scale <= 0) {
+            if (ffnn != NULL) {
+                *ffnn = NULL;
+            }
+            if (fo_info != NULL) {
+                fprintf(fo_info, "\n<FFNN>: None\n");
+            }
+            return 0;
+        }
 
-    if (version > CONNLM_FILE_VERSION) {
-        ST_WARNING("Too high file versoin[%d].");
-        goto ERR;
-    }
-
-    fscanf(fp, "Binary: %s\n", str);
-    *binary = str2bool(str);
-
-    if (fo != NULL) {
-        fprintf(fo, "\n<FFNN>\n");
-        fprintf(fo, "Version: %d\n", version);
-        fprintf(fo, "Binary: %s\n", bool2str(*binary));
-        fprintf(fo, "Size: %ldB\n", sz);
-    }
-
-    return sz;
-
-ERR:
-    safe_ffnn_destroy(*ffnn);
-    return -1;
-}
-
-int ffnn_load(ffnn_t **ffnn, FILE *fp)
-{
-    bool binary;
-
-    ST_CHECK_PARAM(ffnn == NULL || fp == NULL, -1);
-
-    if (ffnn_load_header(ffnn, fp, &binary, NULL) < 0) {
-        ST_WARNING("Failed to ffnn_load_header.");
-        goto ERR;
-    }
-
-    if (*ffnn == NULL) {
-        return 0;
-    }
-
-    if (binary) {
+        if (ffnn != NULL) {
+            *ffnn = (ffnn_t *)malloc(sizeof(ffnn_t));
+            if (*ffnn == NULL) {
+                ST_WARNING("Failed to malloc ffnn_t");
+                goto ERR;
+            }
+            memset(*ffnn, 0, sizeof(ffnn_t));
+        }
     } else {
+        if (fgets(line, MAX_LINE_LEN, fp) == NULL) {
+            ST_WARNING("Failed to read flag.");
+            goto ERR;
+        }
+
+        if (fgets(line, MAX_LINE_LEN, fp) == NULL) {
+            ST_WARNING("Failed to read flag.");
+            goto ERR;
+        }
+        if (strncmp(line, "<FFNN>", 6) != 0) {
+            ST_WARNING("flag error.[%s]", line);
+            goto ERR;
+        }
+
+        if (fgets(line, MAX_LINE_LEN, fp) == NULL) {
+            ST_WARNING("Failed to read scale.");
+            goto ERR;
+        }
+        if (sscanf(line, "Scale: %f\n", &scale) != 1) {
+            ST_WARNING("Failed to parse scale.[%s]", line);
+            goto ERR;
+        }
+
+        if (scale <= 0) {
+            if (ffnn != NULL) {
+                *ffnn = NULL;
+            }
+
+            if (fo_info != NULL) {
+                fprintf(fo_info, "\n<FFNN>: None\n");
+            }
+            return 0;
+        }
+        if (ffnn != NULL) {
+            *ffnn = (ffnn_t *)malloc(sizeof(ffnn_t));
+            if (*ffnn == NULL) {
+                ST_WARNING("Failed to malloc ffnn_t");
+                goto ERR;
+            }
+            memset(*ffnn, 0, sizeof(ffnn_t));
+        }
     }
+
+    if (ffnn != NULL) {
+        (*ffnn)->ffnn_opt.scale = scale;
+    }
+
+    if (fo_info != NULL) {
+        fprintf(fo_info, "\n<FFNN>: %g\n", scale);
+    }
+
     return 0;
 
 ERR:
@@ -201,66 +219,73 @@ ERR:
     return -1;
 }
 
-static long ffnn_save_header(ffnn_t *ffnn, FILE *fp, bool binary)
+int ffnn_load_body(ffnn_t *ffnn, FILE *fp, bool binary)
 {
-    long sz_pos;
+    char line[MAX_LINE_LEN];
 
-    ST_CHECK_PARAM(fp == NULL, -1);
-
-    if (fwrite(&FFNN_MAGIC_NUM, sizeof(int), 1, fp) != 1) {
-        ST_WARNING("Failed to write magic num.");
-        return -1;
-    }
-    fprintf(fp, "\n<FFNN>\n");
-
-    if (ffnn == NULL) {
-        sz_pos = 0;
-        if (fwrite(&sz_pos, sizeof(long), 1, fp) != 1) {
-            ST_WARNING("Failed to write size.");
-            return -1;
-        }
-        return 0;
-    }
-
-    sz_pos = ftell(fp);
-    fseek(fp, sizeof(long), SEEK_CUR);
-
-    fprintf(fp, "Version: %d\n", CONNLM_FILE_VERSION);
-    fprintf(fp, "Binary: %s\n", bool2str(binary));
-
-    return sz_pos;
-}
-
-int ffnn_save(ffnn_t *ffnn, FILE *fp, bool binary)
-{
-    long sz;
-    long sz_pos;
-    long fpos;
-
-    ST_CHECK_PARAM(fp == NULL, -1);
-
-    sz_pos = ffnn_save_header(ffnn, fp, binary);
-    if (sz_pos < 0) {
-        ST_WARNING("Failed to ffnn_save_header.");
-        return -1;
-    } else if (sz_pos == 0) {
-        return 0;
-    }
-
-    fpos = ftell(fp);
+    ST_CHECK_PARAM(ffnn == NULL || fp == NULL, -1);
 
     if (binary) {
     } else {
+        if (fgets(line, MAX_LINE_LEN, fp) == NULL) {
+            ST_WARNING("Failed to read body flag.");
+            goto ERR;
+        }
+        if (strncmp(line, "<FFNN-DATA>", 11) != 0) {
+            ST_WARNING("body flag error.[%s]", line);
+            goto ERR;
+        }
+
     }
 
-    sz = ftell(fp) - fpos;
-    fpos = ftell(fp);
-    fseek(fp, sz_pos, SEEK_SET);
-    if (fwrite(&sz, sizeof(long), 1, fp) != 1) {
-        ST_WARNING("Failed to write size.");
-        return -1;
+    return 0;
+
+ERR:
+    return -1;
+}
+
+int ffnn_save_header(ffnn_t *ffnn, FILE *fp, bool binary)
+{
+    real_t scale;
+
+    ST_CHECK_PARAM(fp == NULL, -1);
+
+    if (binary) { 
+        if (fwrite(&FFNN_MAGIC_NUM, sizeof(int), 1, fp) != 1) {
+            ST_WARNING("Failed to write magic num.");
+            return -1;
+        }
+
+        if (ffnn == NULL) {
+            scale = 0;
+            if (fwrite(&scale, sizeof(real_t), 1, fp) != 1) {
+                ST_WARNING("Failed to write scale.");
+                return -1;
+            }
+            return 0;
+        }
+    } else {
+        fprintf(fp, "    \n<FFNN>\n");
+
+        if (ffnn == NULL) {
+            fprintf(fp, "Scale: 0\n");
+            return 0;
+        } 
+            
+        fprintf(fp, "Scale: %g\n", ffnn->ffnn_opt.scale);
     }
-    fseek(fp, fpos, SEEK_SET);
+
+    return 0;
+}
+
+int ffnn_save_body(ffnn_t *ffnn, FILE *fp, bool binary)
+{
+    ST_CHECK_PARAM(ffnn == NULL || fp == NULL, -1);
+
+    if (binary) {
+    } else {
+        fprintf(fp, "<FFNN-DATA>\n");
+    }
 
     return 0;
 }

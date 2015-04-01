@@ -55,9 +55,10 @@ ffnn_t *ffnn_create(ffnn_opt_t *ffnn_opt);
 void ffnn_destroy(ffnn_t *ffnn);
 ffnn_t* ffnn_dup(ffnn_t *f);
 
-long ffnn_load_header(ffnn_t **ffnn, FILE *fp, bool *binary, FILE *fo);
-int ffnn_load(ffnn_t **ffnn, FILE *fp);
-int ffnn_save(ffnn_t *ffnn, FILE *fp, bool binary);
+int ffnn_load_header(ffnn_t **ffnn, FILE *fp, bool *binary, FILE *fo_info);
+int ffnn_load_body(ffnn_t *ffnn, FILE *fp, bool binary);
+int ffnn_save_header(ffnn_t *ffnn, FILE *fp, bool binary);
+int ffnn_save_body(ffnn_t *ffnn, FILE *fp, bool binary);
 
 int ffnn_train(ffnn_t *ffnn);
 
