@@ -27,6 +27,7 @@
 #include <string.h>
 #include <unistd.h>
 
+#include <st_log.h>
 #include <st_opt.h>
 #include <st_io.h>
 

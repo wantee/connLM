@@ -22,16 +22,12 @@
  * SOFTWARE.
  */
 
+#include <st_log.h>
 #include <st_io.h>
 
 #include "utils.h"
 #include "connlm.h"
 
-#define DEFAULT_LOGFILE         "-"
-#define DEFAULT_LOGLEVEL        8
-
-char g_log_file[MAX_DIR_LEN];
-int  g_log_level;
 bool g_binary;
 
 st_opt_t *g_cmd_opt;
@@ -39,6 +35,7 @@ connlm_t *g_connlm;
 
 int connlm_parse_opt(int *argc, const char *argv[])
 {
+    st_log_opt_t log_opt;
     bool b;
 
     g_cmd_opt = st_opt_create();
@@ -52,12 +49,12 @@ int connlm_parse_opt(int *argc, const char *argv[])
         goto ST_OPT_ERR;
     }
 
-    ST_OPT_GET_STR(g_cmd_opt, "LOG_FILE",
-            g_log_file, MAX_DIR_LEN, DEFAULT_LOGFILE, "Log file");
-    ST_OPT_GET_INT(g_cmd_opt, "LOG_LEVEL", g_log_level,
-                     DEFAULT_LOGLEVEL, "Log level (1-8)");
+    if (st_log_load_opt(&log_opt, g_cmd_opt, NULL) < 0) {
+        ST_WARNING("Failed to st_log_load_opt");
+        goto ST_OPT_ERR;
+    }
 
-    if (st_log_open(g_log_file, g_log_level) != 0) {
+    if (st_log_open(&log_opt) != 0) {
         ST_WARNING("Failed to open log");
         goto ST_OPT_ERR;
     }
