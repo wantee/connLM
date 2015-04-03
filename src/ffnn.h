@@ -32,9 +32,12 @@ extern "C" {
 #include <st_opt.h>
 
 #include "config.h"
+#include "nn.h"
 
 typedef struct _ffnn_opt_t {
     real_t scale;
+
+    nn_param_t param;
 } ffnn_opt_t;
 
 typedef struct _ffnn_t_ {
@@ -42,14 +45,14 @@ typedef struct _ffnn_t_ {
 } ffnn_t;
 
 int ffnn_load_opt(ffnn_opt_t *ffnn_opt, st_opt_t *opt,
-        const char *sec_name);
+        const char *sec_name, nn_param_t *param);
 
 ffnn_t *ffnn_create(ffnn_opt_t *ffnn_opt);
 #define safe_ffnn_destroy(ptr) do {\
-    if(ptr != NULL) {\
+    if((ptr) != NULL) {\
         ffnn_destroy(ptr);\
         safe_free(ptr);\
-        ptr = NULL;\
+        (ptr) = NULL;\
     }\
     } while(0)
 void ffnn_destroy(ffnn_t *ffnn);

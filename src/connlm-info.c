@@ -76,7 +76,7 @@ void show_usage(const char *module_name)
     fprintf(stderr, "  -- Print Information\n");
     fprintf(stderr, "Version  : %s\n", CONNLM_VERSION);
     fprintf(stderr, "File version: %d\n", CONNLM_FILE_VERSION);
-    fprintf(stderr, "Usage    : %s [options] <model>\n",
+    fprintf(stderr, "Usage    : %s [options] <model0> [<model1> <model2> ...]\n",
             module_name);
     fprintf(stderr, "\n");
     fprintf(stderr, "Options  : \n");
@@ -87,6 +87,7 @@ int main(int argc, const char *argv[])
 {
     FILE *fp = NULL;
     int ret;
+    int i;
 
     ret = connlm_parse_opt(&argc, argv);
     if (ret < 0) {
@@ -97,24 +98,27 @@ int main(int argc, const char *argv[])
         goto ERR;
     }
 
-    if (argc != 2) {
+    if (argc < 2) {
         show_usage(argv[0]);
         goto ERR;
     }
 
     st_opt_show(g_cmd_opt, "connLM Info Options");
 
-    fp = st_fopen(argv[1], "rb");
-    if (fp == NULL) {
-        ST_WARNING("Failed to st_fopen. [%s]", argv[1]);
-        goto ERR;
-    }
+    for (i = 1; i < argc; i++) {
+        fp = st_fopen(argv[i], "rb");
+        if (fp == NULL) {
+            ST_WARNING("Failed to st_fopen. [%s]", argv[i]);
+            goto ERR;
+        }
 
-    if (connlm_print_info(fp, stdout) < 0) {
-        ST_WARNING("Failed to connlm_print_info.");
-        goto ERR;
+        fprintf(stdout, "\nModel \"%s\":\n", argv[i]);
+        if (connlm_print_info(fp, stdout) < 0) {
+            ST_WARNING("Failed to connlm_print_info.");
+            goto ERR;
+        }
+        safe_st_fclose(fp);
     }
-    safe_st_fclose(fp);
 
     safe_st_opt_destroy(g_cmd_opt);
 

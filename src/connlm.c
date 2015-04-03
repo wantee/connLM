@@ -35,55 +35,6 @@
 
 static const int CONNLM_MAGIC_NUM = 626140498;
 
-int connlm_param_load(connlm_param_t *connlm_param, 
-        st_opt_t *opt, const char *sec_name)
-{
-    float f;
-
-    ST_CHECK_PARAM(connlm_param == NULL || opt == NULL, -1);
-
-    ST_OPT_SEC_GET_FLOAT(opt, sec_name, "LEARN_RATE", f, 0.1,
-            "Learning rate");
-    connlm_param->learn_rate = (real_t)f;
-
-    ST_OPT_SEC_GET_FLOAT(opt, sec_name, "L1_PENALTY", f, 0.0,
-            "L1 penalty (promote sparsity)");
-    connlm_param->l1_penalty = (real_t)f;
-
-    ST_OPT_SEC_GET_FLOAT(opt, sec_name, "L2_PENALTY", f, 0.0,
-            "L2 penalty (weight decay)");
-    connlm_param->l2_penalty = (real_t)f;
-
-    ST_OPT_SEC_GET_FLOAT(opt, sec_name, "MOMENTUM", f, 0.0,
-            "Momentum");
-    connlm_param->momentum = (real_t)f;
-
-    ST_OPT_SEC_GET_FLOAT(opt, sec_name, "GRADIENT_CUTOFF", f, 0.0,
-            "Cutoff of gradient");
-    connlm_param->gradient_cutoff = (real_t)f;
-
-    return 0;
-ST_OPT_ERR:
-    return -1;
-}
-
-int connlm_output_opt_load(connlm_output_opt_t *output_opt, 
-        st_opt_t *opt, const char *sec_name)
-{
-    ST_CHECK_PARAM(output_opt == NULL || opt == NULL, -1);
-
-    ST_OPT_SEC_GET_INT(opt, sec_name, "CLASSE_SIZE",
-            output_opt->class_size, 100, "Size of class layer");
-
-    ST_OPT_SEC_GET_BOOL(opt, sec_name, "HS",
-            output_opt->hs, true, "Hierarchical softmax");
-
-    return 0;
-
-ST_OPT_ERR:
-    return -1;
-}
-
 int connlm_load_opt(connlm_opt_t *connlm_opt, 
         st_opt_t *opt, const char *sec_name)
 {
@@ -91,58 +42,8 @@ int connlm_load_opt(connlm_opt_t *connlm_opt,
 
     ST_CHECK_PARAM(connlm_opt == NULL || opt == NULL, -1);
 
-    if (sec_name == NULL || sec_name[0] == '\0') {
-        snprintf(name, MAX_ST_CONF_LEN, "RNN");
-    } else {
-        snprintf(name, MAX_ST_CONF_LEN, "%s/RNN", sec_name);
-    }
-    if (rnn_load_opt(&connlm_opt->rnn_opt, opt, name) < 0) {
-        ST_WARNING("Failed to rnn_load_opt.");
-        goto ST_OPT_ERR;
-    }
-
-    if (sec_name == NULL || sec_name[0] == '\0') {
-        snprintf(name, MAX_ST_CONF_LEN, "MAXENT");
-    } else {
-        snprintf(name, MAX_ST_CONF_LEN, "%s/MAXENT", sec_name);
-    }
-    if (maxent_load_opt(&connlm_opt->maxent_opt, opt, name) < 0) {
-        ST_WARNING("Failed to maxent_load_opt.");
-        goto ST_OPT_ERR;
-    }
-
-    if (sec_name == NULL || sec_name[0] == '\0') {
-        snprintf(name, MAX_ST_CONF_LEN, "LBL");
-    } else {
-        snprintf(name, MAX_ST_CONF_LEN, "%s/LBL", sec_name);
-    }
-    if (lbl_load_opt(&connlm_opt->lbl_opt, opt, name) < 0) {
-        ST_WARNING("Failed to lbl_load_opt.");
-        goto ST_OPT_ERR;
-    }
-
-    if (sec_name == NULL || sec_name[0] == '\0') {
-        snprintf(name, MAX_ST_CONF_LEN, "FFNN");
-    } else {
-        snprintf(name, MAX_ST_CONF_LEN, "%s/FFNN", sec_name);
-    }
-    if (ffnn_load_opt(&connlm_opt->ffnn_opt, opt, name) < 0) {
-        ST_WARNING("Failed to ffnn_load_opt.");
-        goto ST_OPT_ERR;
-    }
-
-    if (connlm_param_load(&connlm_opt->param, opt, sec_name) < 0) {
-        ST_WARNING("Failed to connlm_param_load.");
-        goto ST_OPT_ERR;
-    }
-
-    if (sec_name == NULL || sec_name[0] == '\0') {
-        snprintf(name, MAX_ST_CONF_LEN, "OUTPUT");
-    } else {
-        snprintf(name, MAX_ST_CONF_LEN, "%s/OUTPUT", sec_name);
-    }
-    if (connlm_output_opt_load(&connlm_opt->output_opt, opt, name) < 0) {
-        ST_WARNING("Failed to connlm_output_opt_load.");
+    if (nn_param_load(&connlm_opt->param, opt, sec_name, NULL) < 0) {
+        ST_WARNING("Failed to nn_param_load.");
         goto ST_OPT_ERR;
     }
 
@@ -166,6 +67,60 @@ int connlm_load_opt(connlm_opt_t *connlm_opt,
             connlm_opt->shuffle, true,
             "Shuffle after reading");
 
+    if (sec_name == NULL || sec_name[0] == '\0') {
+        snprintf(name, MAX_ST_CONF_LEN, "OUTPUT");
+    } else {
+        snprintf(name, MAX_ST_CONF_LEN, "%s/OUTPUT", sec_name);
+    }
+    if (output_load_opt(&connlm_opt->output_opt, opt, name) < 0) {
+        ST_WARNING("Failed to output_opt_load.");
+        goto ST_OPT_ERR;
+    }
+
+    if (sec_name == NULL || sec_name[0] == '\0') {
+        snprintf(name, MAX_ST_CONF_LEN, "RNN");
+    } else {
+        snprintf(name, MAX_ST_CONF_LEN, "%s/RNN", sec_name);
+    }
+    if (rnn_load_opt(&connlm_opt->rnn_opt, opt, name,
+                &connlm_opt->param) < 0) {
+        ST_WARNING("Failed to rnn_load_opt.");
+        goto ST_OPT_ERR;
+    }
+
+    if (sec_name == NULL || sec_name[0] == '\0') {
+        snprintf(name, MAX_ST_CONF_LEN, "MAXENT");
+    } else {
+        snprintf(name, MAX_ST_CONF_LEN, "%s/MAXENT", sec_name);
+    }
+    if (maxent_load_opt(&connlm_opt->maxent_opt, opt, name,
+                &connlm_opt->param) < 0) {
+        ST_WARNING("Failed to maxent_load_opt.");
+        goto ST_OPT_ERR;
+    }
+
+    if (sec_name == NULL || sec_name[0] == '\0') {
+        snprintf(name, MAX_ST_CONF_LEN, "LBL");
+    } else {
+        snprintf(name, MAX_ST_CONF_LEN, "%s/LBL", sec_name);
+    }
+    if (lbl_load_opt(&connlm_opt->lbl_opt, opt, name,
+                &connlm_opt->param) < 0) {
+        ST_WARNING("Failed to lbl_load_opt.");
+        goto ST_OPT_ERR;
+    }
+
+    if (sec_name == NULL || sec_name[0] == '\0') {
+        snprintf(name, MAX_ST_CONF_LEN, "FFNN");
+    } else {
+        snprintf(name, MAX_ST_CONF_LEN, "%s/FFNN", sec_name);
+    }
+    if (ffnn_load_opt(&connlm_opt->ffnn_opt, opt, name,
+                &connlm_opt->param) < 0) {
+        ST_WARNING("Failed to ffnn_load_opt.");
+        goto ST_OPT_ERR;
+    }
+
     return 0;
 
 ST_OPT_ERR:
@@ -182,17 +137,21 @@ int connlm_setup_train(connlm_t *connlm, connlm_opt_t *connlm_opt,
 
     connlm->random = connlm_opt->rand_seed;
 
+    connlm->text_fp = NULL;
+    connlm->egs = NULL;
+    connlm->shuffle_buf = NULL;
+
     connlm->text_fp = st_fopen(train_file, "rb");
     if (connlm->text_fp == NULL) {
         ST_WARNING("Failed to open train file[%s]", train_file);
-        return -1;
+        goto ERR;
     }
 
     connlm->egs = (int *)malloc(sizeof(int)
             *connlm_opt->num_line_read*connlm_opt->max_word_per_sent);
     if (connlm->egs == NULL) {
         ST_WARNING("Failed to malloc egs");
-        return -1;
+        goto ERR;
     }
 
     if (connlm_opt->shuffle) {
@@ -200,12 +159,23 @@ int connlm_setup_train(connlm_t *connlm, connlm_opt_t *connlm_opt,
                 *connlm_opt->num_line_read);
         if (connlm->shuffle_buf == NULL) {
             ST_WARNING("Failed to malloc shuffle_buf");
-            return -1;
+            goto ERR;
         }
     }
 
+    if (rnn_setup_train(&connlm->rnn, &connlm_opt->rnn_opt) < 0) {
+        ST_WARNING("Failed to rnn_setup_train.");
+        goto ERR;
+    }
 
-return 0;
+    return 0;
+
+ERR:
+    safe_st_fclose(connlm->text_fp);
+    safe_free(connlm->egs);
+    safe_free(connlm->shuffle_buf);
+
+    return -1;
 }
 
 static int connlm_get_egs(connlm_t *connlm)
@@ -298,24 +268,26 @@ void connlm_destroy(connlm_t *connlm)
         return;
     }
 
-    safe_vocab_destroy(connlm->vocab);
 
     safe_st_fclose(connlm->text_fp);
     safe_free(connlm->egs);
     safe_free(connlm->shuffle_buf);
 
+    safe_vocab_destroy(connlm->vocab);
+    safe_output_destroy(connlm->output);
     safe_rnn_destroy(connlm->rnn);
     safe_maxent_destroy(connlm->maxent);
     safe_lbl_destroy(connlm->lbl);
     safe_ffnn_destroy(connlm->ffnn);
 }
 
-connlm_t *connlm_new(vocab_t *vocab, rnn_t *rnn, maxent_t *maxent,
-        lbl_t* lbl, ffnn_t *ffnn)
+connlm_t *connlm_new(vocab_t *vocab, output_t *output,
+        rnn_t *rnn, maxent_t *maxent, lbl_t* lbl, ffnn_t *ffnn)
 {
     connlm_t *connlm = NULL;
 
-    ST_CHECK_PARAM(vocab == NULL && rnn == NULL && maxent == NULL
+    ST_CHECK_PARAM(vocab == NULL && output == NULL 
+            && rnn == NULL && maxent == NULL
             && lbl == NULL && ffnn == NULL, NULL);
 
     connlm = (connlm_t *)malloc(sizeof(connlm_t));
@@ -333,6 +305,13 @@ connlm_t *connlm_new(vocab_t *vocab, rnn_t *rnn, maxent_t *maxent,
         }
     }
 
+    if (output != NULL) {
+        connlm->output = output_dup(output);
+        if (connlm->output == NULL) {
+            ST_WARNING("Failed to output_dup.");
+            goto ERR;
+        }
+    }
     if (rnn != NULL) {
         connlm->rnn = rnn_dup(rnn);
         if (connlm->rnn == NULL) {
@@ -462,6 +441,16 @@ static int connlm_load_header(connlm_t *connlm, FILE *fp,
         return -1;
     }
 
+    if (output_load_header((connlm == NULL) ? NULL : &connlm->output,
+                fp, binary, fo_info) < 0) {
+        ST_WARNING("Failed to output_load_header.");
+        return -1;
+    }
+    if (*binary != b) {
+        ST_WARNING("Both binary and text format in one file.");
+        return -1;
+    }
+
     if (rnn_load_header((connlm == NULL) ? NULL : &connlm->rnn,
                 fp, binary, fo_info) < 0) {
         ST_WARNING("Failed to rnn_load_header.");
@@ -520,6 +509,12 @@ static int connlm_load_body(connlm_t *connlm, FILE *fp, bool binary)
         }
     }
 
+    if (connlm->output != NULL) {
+        if (output_load_body(connlm->output, fp, binary) < 0) {
+            ST_WARNING("Failed to output_load_body.");
+            return -1;
+        }
+    }
     if (connlm->rnn != NULL) {
         if (rnn_load_body(connlm->rnn, fp, binary) < 0) {
             ST_WARNING("Failed to rnn_load_body.");
@@ -623,6 +618,11 @@ static int connlm_save_header(connlm_t *connlm, FILE *fp, bool binary)
         return -1;
     }
 
+    if (output_save_header(connlm->output, fp, binary) < 0) {
+        ST_WARNING("Failed to output_save_header.");
+        return -1;
+    }
+
     if (rnn_save_header(connlm->rnn, fp, binary) < 0) {
         ST_WARNING("Failed to rnn_save_header.");
         return -1;
@@ -657,6 +657,12 @@ static int connlm_save_body(connlm_t *connlm, FILE *fp, bool binary)
         }
     }
 
+    if (connlm->output != NULL) {
+        if (output_save_body(connlm->output, fp, binary) < 0) {
+            ST_WARNING("Failed to output_save_body.");
+            return -1;
+        }
+    }
     if (connlm->rnn != NULL) {
         if (rnn_save_body(connlm->rnn, fp, binary) < 0) {
             ST_WARNING("Failed to rnn_save_body.");

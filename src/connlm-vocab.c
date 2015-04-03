@@ -34,7 +34,7 @@ st_opt_t *g_cmd_opt;
 
 connlm_t *g_connlm;
 vocab_opt_t g_vocab_opt;
-vocab_t *g_vocab;
+output_opt_t g_output_opt;
 
 int connlm_parse_opt(int *argc, const char *argv[])
 {
@@ -64,6 +64,11 @@ int connlm_parse_opt(int *argc, const char *argv[])
 
     if (vocab_load_opt(&g_vocab_opt, g_cmd_opt, NULL) < 0) {
         ST_WARNING("Failed to vocab_load_opt");
+        goto ST_OPT_ERR;
+    }
+
+    if (output_load_opt(&g_output_opt, g_cmd_opt, NULL) < 0) {
+        ST_WARNING("Failed to output_load_opt");
         goto ST_OPT_ERR;
     }
 
@@ -100,6 +105,8 @@ int main(int argc, const char *argv[])
     char filename[MAX_DIR_LEN];
     FILE *fp = NULL;
     int ret;
+    vocab_t *vocab = NULL;
+    output_t *output = NULL;
 
     ret = connlm_parse_opt(&argc, argv);
     if (ret < 0) {
@@ -117,8 +124,9 @@ int main(int argc, const char *argv[])
 
     st_opt_show(g_cmd_opt, "connLM Vocab Options");
 
-    g_vocab = vocab_create(&g_vocab_opt);
-    if (g_vocab == NULL) {
+    ST_NOTICE("Learning Vocab..");
+    vocab = vocab_create(&g_vocab_opt);
+    if (vocab == NULL) {
         ST_WARNING("Failed to vocab_create.");
         goto ERR;
     }
@@ -129,13 +137,25 @@ int main(int argc, const char *argv[])
         goto ERR;
     }
 
-    if (vocab_learn(g_vocab, fp) < 0) {
+    if (vocab_learn(vocab, fp) < 0) {
         ST_WARNING("Failed to vocab_learn.");
         goto ERR;
     }
     safe_st_fclose(fp);
 
-    g_connlm = connlm_new(g_vocab, NULL, NULL, NULL, NULL);
+    ST_NOTICE("Generating Output Layer...");
+    output = output_create(&g_output_opt, vocab->vocab_size);
+    if (output == NULL) {
+        ST_WARNING("Failed to output_create.");
+        goto ERR;
+    }
+
+    if (output_generate(output, vocab->cnts) < 0) {
+        ST_WARNING("Failed to output_generate.");
+        goto ERR;
+    }
+
+    g_connlm = connlm_new(vocab, output, NULL, NULL, NULL, NULL);
     if (g_connlm == NULL) {
         ST_WARNING("Failed to connlm_new.");
         goto ERR;
@@ -154,7 +174,7 @@ int main(int argc, const char *argv[])
 
     safe_st_fclose(fp);
     safe_st_opt_destroy(g_cmd_opt);
-    safe_vocab_destroy(g_vocab);
+    safe_vocab_destroy(vocab);
     safe_connlm_destroy(g_connlm);
 
     st_log_close(0);
@@ -163,7 +183,8 @@ int main(int argc, const char *argv[])
   ERR:
     safe_st_fclose(fp);
     safe_st_opt_destroy(g_cmd_opt);
-    safe_vocab_destroy(g_vocab);
+    safe_vocab_destroy(vocab);
+    safe_output_destroy(output);
     safe_connlm_destroy(g_connlm);
 
     st_log_close(1);

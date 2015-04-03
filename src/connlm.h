@@ -34,23 +34,12 @@ extern "C" {
 
 #include "config.h"
 #include "vocab.h"
+#include "nn.h"
 #include "rnn.h"
 #include "maxent.h"
 #include "lbl.h"
 #include "ffnn.h"
-
-typedef struct _connlm_param_t_ {
-    real_t learn_rate;
-    real_t l1_penalty;
-    real_t l2_penalty;
-    real_t momentum;
-    real_t gradient_cutoff;
-} connlm_param_t;
-
-typedef struct _connlm_output_opt_t_ {
-    int class_size;
-    bool hs;
-} connlm_output_opt_t;
+#include "output.h"
 
 typedef struct _connlm_opt_t_ {
     int num_thread;
@@ -64,8 +53,8 @@ typedef struct _connlm_opt_t_ {
     int num_line_read;
     bool shuffle;
 
-    connlm_param_t param;
-    connlm_output_opt_t output_opt;
+    nn_param_t param;
+    output_opt_t output_opt;
 
     rnn_opt_t rnn_opt;
     maxent_opt_t maxent_opt;
@@ -82,6 +71,7 @@ typedef struct _connlm_t_ {
     int *egs;
     int *shuffle_buf;
 
+    output_t *output;
     vocab_t *vocab;
     rnn_t *rnn;
     maxent_t *maxent;
@@ -89,20 +79,14 @@ typedef struct _connlm_t_ {
     ffnn_t *ffnn;
 } connlm_t;
 
-int connlm_param_load(connlm_param_t *connlm_param, 
-        st_opt_t *opt, const char *sec_name);
-
-int connlm_output_opt_load(connlm_output_opt_t *output_opt, 
-        st_opt_t *opt, const char *sec_name);
-
 int connlm_load_opt(connlm_opt_t *connlm_opt, 
         st_opt_t *opt, const char *sec_name);
 
 #define safe_connlm_destroy(ptr) do {\
-    if(ptr != NULL) {\
+    if((ptr) != NULL) {\
         connlm_destroy(ptr);\
         safe_free(ptr);\
-        ptr = NULL;\
+        (ptr) = NULL;\
     }\
     } while(0)
 void connlm_destroy(connlm_t *connlm);
@@ -110,8 +94,8 @@ void connlm_destroy(connlm_t *connlm);
 int connlm_setup_train(connlm_t *connlm, connlm_opt_t *connlm_opt,
         const char *train_file);
 
-connlm_t *connlm_new(vocab_t *vocab, rnn_t *rnn, maxent_t *maxent,
-        lbl_t* lbl, ffnn_t *ffnn);
+connlm_t *connlm_new(vocab_t *vocab, output_t *output,
+        rnn_t *rnn, maxent_t *maxent, lbl_t* lbl, ffnn_t *ffnn);
 
 connlm_t* connlm_load(FILE *fp);
 int connlm_save(connlm_t *connlm, FILE *fp, bool binary);

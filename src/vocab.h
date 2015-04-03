@@ -38,28 +38,23 @@ typedef struct _vocab_opt_t_ {
     int max_word_num;
 } vocab_opt_t;
 
-typedef struct _word_info_t_ {
-    int id;
-    unsigned long cnt;
-} word_info_t;
-
 typedef struct _vocab_t_ {
     vocab_opt_t vocab_opt;
 
     int vocab_size;
 
     st_alphabet_t *alphabet;
-    word_info_t *word_infos;
+    count_t *cnts;
 } vocab_t;
 
 int vocab_load_opt(vocab_opt_t *vocab_opt, st_opt_t *opt,
         const char *sec_name);
 vocab_t *vocab_create(vocab_opt_t *vocab_opt);
 #define safe_vocab_destroy(ptr) do {\
-    if(ptr != NULL) {\
+    if((ptr) != NULL) {\
         vocab_destroy(ptr);\
         safe_free(ptr);\
-        ptr = NULL;\
+        (ptr) = NULL;\
     }\
     } while(0)
 void vocab_destroy(vocab_t *vocab);

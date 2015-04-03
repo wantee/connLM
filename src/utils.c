@@ -303,3 +303,8 @@ void softmax(real_t *vec, int vec_size)
 
 }
 
+real_t rrandom(real_t min, real_t max)
+{
+    return rand() / (real_t) RAND_MAX *(max - min) + min;
+}
+

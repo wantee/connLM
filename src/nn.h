@@ -22,28 +22,36 @@
  * SOFTWARE.
  */
 
-#ifndef  _CONNLM_CONFIG_H_
-#define  _CONNLM_CONFIG_H_
+#ifndef  _NN_H_
+#define  _NN_H_
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#define CONNLM_VERSION   "0.1"
+#include <st_opt.h>
 
-#define CONNLM_FILE_VERSION   1
+#include "config.h"
 
-#ifndef REAL_TYPE
-#define REAL_TYPE double
-#endif
+typedef struct _nn_param_t_ {
+    real_t learn_rate;
+    real_t l1_penalty;
+    real_t l2_penalty;
+    real_t momentum;
+    real_t gradient_cutoff;
+} nn_param_t;
 
-typedef REAL_TYPE real_t;
+typedef struct _nn_t_ {
+} nn_t;
 
-typedef unsigned long count_t;
+int nn_param_load(nn_param_t *nn_param, 
+        st_opt_t *opt, const char *sec_name, nn_param_t *parent_param);
+
+int nn_forward(nn_t *nn);
+int nn_backprop(nn_t *nn);
 
 #ifdef __cplusplus
 }
 #endif
 
 #endif
-

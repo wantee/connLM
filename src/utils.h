@@ -39,6 +39,8 @@ void sigmoid(real_t *vec, int vec_size);
 
 void softmax(real_t *vec, int vec_size);
 
+real_t rrandom(real_t min, real_t max);
+
 #ifdef __cplusplus
 }
 #endif

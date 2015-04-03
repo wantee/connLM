@@ -32,23 +32,27 @@ extern "C" {
 #include <st_opt.h>
 
 #include "config.h"
+#include "nn.h"
 
 typedef struct _lbl_opt_t {
     real_t scale;
+
+    nn_param_t param;
 } lbl_opt_t;
 
 typedef struct _lbl_t_ {
     lbl_opt_t lbl_opt;
 } lbl_t;
 
-int lbl_load_opt(lbl_opt_t *lbl_opt, st_opt_t *opt, const char *sec_name);
+int lbl_load_opt(lbl_opt_t *lbl_opt, st_opt_t *opt, const char *sec_name,
+        nn_param_t *param);
 
 lbl_t *lbl_create(lbl_opt_t *lbl_opt);
 #define safe_lbl_destroy(ptr) do {\
-    if(ptr != NULL) {\
+    if((ptr) != NULL) {\
         lbl_destroy(ptr);\
         safe_free(ptr);\
-        ptr = NULL;\
+        (ptr) = NULL;\
     }\
     } while(0)
 void lbl_destroy(lbl_t *lbl);

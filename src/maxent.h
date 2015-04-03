@@ -32,12 +32,15 @@ extern "C" {
 #include <st_opt.h>
 
 #include "config.h"
+#include "nn.h"
 
 typedef struct _maxent_opt_t {
     real_t scale;
 
     long long size;
     int order;
+
+    nn_param_t param;
 } maxent_opt_t;
 
 typedef struct _maxent_t_ {
@@ -45,14 +48,14 @@ typedef struct _maxent_t_ {
 } maxent_t;
 
 int maxent_load_opt(maxent_opt_t *maxent_opt,
-        st_opt_t *opt, const char *sec_name);
+        st_opt_t *opt, const char *sec_name, nn_param_t *param);
 
 maxent_t *maxent_create(maxent_opt_t *maxent_opt);
 #define safe_maxent_destroy(ptr) do {\
-    if(ptr != NULL) {\
+    if((ptr) != NULL) {\
         maxent_destroy(ptr);\
         safe_free(ptr);\
-        ptr = NULL;\
+        (ptr) = NULL;\
     }\
     } while(0)
 void maxent_destroy(maxent_t *maxent);

@@ -22,28 +22,59 @@
  * SOFTWARE.
  */
 
-#ifndef  _CONNLM_CONFIG_H_
-#define  _CONNLM_CONFIG_H_
+#ifndef  _OUTPUT_H_
+#define  _OUTPUT_H_
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#define CONNLM_VERSION   "0.1"
+#include <st_opt.h>
+#include <st_alphabet.h>
 
-#define CONNLM_FILE_VERSION   1
+#include "config.h"
 
-#ifndef REAL_TYPE
-#define REAL_TYPE double
-#endif
+typedef struct _output_opt_t_ {
+    int class_size;
+    bool hs;
+} output_opt_t;
 
-typedef REAL_TYPE real_t;
+typedef struct _output_t_ {
+    output_opt_t output_opt;
 
-typedef unsigned long count_t;
+    int output_size;
+
+    // for classes
+    int *w2c;                   // word to class map
+    int *c2w_s;                 // start for class to word map
+    int *c2w_e;                 // end for class to word map
+
+} output_t;
+
+int output_load_opt(output_opt_t *output_opt, st_opt_t *opt,
+        const char *sec_name);
+
+output_t *output_create(output_opt_t *output_opt, int output_size);
+#define safe_output_destroy(ptr) do {\
+    if((ptr) != NULL) {\
+        output_destroy(ptr);\
+        safe_free(ptr);\
+        (ptr) = NULL;\
+    }\
+    } while(0)
+void output_destroy(output_t *output);
+output_t* output_dup(output_t *v);
+
+long output_load_header(output_t **output, FILE *fp,
+        bool *binary, FILE *fo);
+int output_load_body(output_t *output, FILE *fp, bool binary);
+int output_save_header(output_t *output, FILE *fp, bool binary);
+int output_save_body(output_t *output, FILE *fp, bool binary);
+
+int output_generate(output_t *output, count_t *word_cnts);
 
 #ifdef __cplusplus
 }
 #endif
 
 #endif
-

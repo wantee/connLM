@@ -35,7 +35,8 @@
 
 static const int LBL_MAGIC_NUM = 626140498 + 4;
 
-int lbl_load_opt(lbl_opt_t *lbl_opt, st_opt_t *opt, const char *sec_name)
+int lbl_load_opt(lbl_opt_t *lbl_opt, st_opt_t *opt, const char *sec_name,
+        nn_param_t *param)
 {
     float f;
 
@@ -49,6 +50,11 @@ int lbl_load_opt(lbl_opt_t *lbl_opt, st_opt_t *opt, const char *sec_name)
 
     if (lbl_opt->scale <= 0) {
         return 0;
+    }
+
+    if (nn_param_load(&lbl_opt->param, opt, sec_name, param) < 0) {
+        ST_WARNING("Failed to nn_param_load.");
+        goto ST_OPT_ERR;
     }
 
     return 0;
@@ -142,22 +148,10 @@ int lbl_load_header(lbl_t **lbl, FILE *fp, bool *binary, FILE *fo_info)
         }
 
         if (scale <= 0) {
-            if (lbl != NULL) {
-                *lbl = NULL;
-            }
             if (fo_info != NULL) {
                 fprintf(fo_info, "\n<LBL>: None\n");
             }
             return 0;
-        }
-
-        if (lbl != NULL) {
-            *lbl = (lbl_t *)malloc(sizeof(lbl_t));
-            if (*lbl == NULL) {
-                ST_WARNING("Failed to malloc lbl_t");
-                goto ERR;
-            }
-            memset(*lbl, 0, sizeof(lbl_t));
         }
     } else {
         if (fgets(line, MAX_LINE_LEN, fp) == NULL) {
@@ -184,26 +178,21 @@ int lbl_load_header(lbl_t **lbl, FILE *fp, bool *binary, FILE *fo_info)
         }
 
         if (scale <= 0) {
-            if (lbl != NULL) {
-                *lbl = NULL;
-            }
-
             if (fo_info != NULL) {
                 fprintf(fo_info, "\n<LBL>: None\n");
             }
             return 0;
         }
-        if (lbl != NULL) {
-            *lbl = (lbl_t *)malloc(sizeof(lbl_t));
-            if (*lbl == NULL) {
-                ST_WARNING("Failed to malloc lbl_t");
-                goto ERR;
-            }
-            memset(*lbl, 0, sizeof(lbl_t));
-        }
     }
 
     if (lbl != NULL) {
+        *lbl = (lbl_t *)malloc(sizeof(lbl_t));
+        if (*lbl == NULL) {
+            ST_WARNING("Failed to malloc lbl_t");
+            goto ERR;
+        }
+        memset(*lbl, 0, sizeof(lbl_t));
+
         (*lbl)->lbl_opt.scale = scale;
     }
 
@@ -221,10 +210,21 @@ ERR:
 int lbl_load_body(lbl_t *lbl, FILE *fp, bool binary)
 {
     char line[MAX_LINE_LEN];
+    int n;
 
     ST_CHECK_PARAM(lbl == NULL || fp == NULL, -1);
 
     if (binary) {
+        if (fread(&n, sizeof(int), 1, fp) != 1) {
+            ST_WARNING("Failed to read magic num.");
+            goto ERR;
+        }
+
+        if (n != 2 * LBL_MAGIC_NUM) {
+            ST_WARNING("Magic num error.");
+            goto ERR;
+        }
+
     } else {
         if (fgets(line, MAX_LINE_LEN, fp) == NULL) {
             ST_WARNING("Failed to read body flag.");
@@ -279,9 +279,16 @@ int lbl_save_header(lbl_t *lbl, FILE *fp, bool binary)
 
 int lbl_save_body(lbl_t *lbl, FILE *fp, bool binary)
 {
+    int n;
+
     ST_CHECK_PARAM(lbl == NULL || fp == NULL, -1);
 
     if (binary) {
+        n = 2 * LBL_MAGIC_NUM;
+        if (fwrite(&n, sizeof(int), 1, fp) != 1) {
+            ST_WARNING("Failed to write magic num.");
+            return -1;
+        }
     } else {
         fprintf(fp, "<LBL-DATA>\n");
     }

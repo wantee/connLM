@@ -32,6 +32,7 @@ extern "C" {
 #include <st_opt.h>
 
 #include "config.h"
+#include "nn.h"
 
 typedef unsigned long long hash_t;
 
@@ -42,6 +43,8 @@ typedef struct _rnn_opt_t {
 
     int bptt;
     int bptt_block;
+
+    nn_param_t param;
 } rnn_opt_t;
 
 typedef struct _rnn_t_ {
@@ -83,11 +86,6 @@ typedef struct _rnn_t_ {
 
     int independent;
 
-    int *cnts;                  // word counts
-    int *w2c;                   // word to class map
-    int *c2w_s;                 // start for class to word map
-    int *c2w_e;                 // end for class to word map
-
     // input layer
     //real_t *ac_i_w;             // word vector
     //real_t *er_i_w;
@@ -128,14 +126,15 @@ typedef struct _rnn_t_ {
     long report_progress;
 } rnn_t;
 
-int rnn_load_opt(rnn_opt_t* rnn_opt, st_opt_t *opt, const char *sec_name);
+int rnn_load_opt(rnn_opt_t* rnn_opt, st_opt_t *opt, const char *sec_name,
+        nn_param_t *param);
 
 rnn_t *rnn_create();
 #define safe_rnn_destroy(ptr) do {\
-    if(ptr != NULL) {\
+    if((ptr) != NULL) {\
         rnn_destroy(ptr);\
         safe_free(ptr);\
-        ptr = NULL;\
+        (ptr) = NULL;\
     }\
     } while(0)
 void rnn_destroy(rnn_t *rnn);
@@ -146,6 +145,7 @@ int rnn_load_body(rnn_t *rnn, FILE *fp, bool binary);
 int rnn_save_header(rnn_t *rnn, FILE *fp, bool binary);
 int rnn_save_body(rnn_t *rnn, FILE *fp, bool binary);
 
+int rnn_setup_train(rnn_t **rnn, rnn_opt_t *rnn_opt);
 int rnn_train(rnn_t * rnn);
 
 #ifdef __cplusplus
