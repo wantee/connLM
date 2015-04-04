@@ -109,19 +109,6 @@ int maxent_init(maxent_t **pmaxent, maxent_opt_t *maxent_opt)
         goto ERR;
     }
 
-    maxent->hist = (int *) malloc(sizeof(int) * maxent_opt->order);
-    if (maxent->hist == NULL) {
-        ST_WARNING("Failed to malloc hist.");
-        goto ERR;
-    }
-
-    maxent->hash = (hash_t *) malloc(sizeof(hash_t)
-            * maxent_opt->order);
-    if (maxent->hash == NULL) {
-        ST_WARNING("Failed to malloc hash.");
-        goto ERR;
-    }
-
     for (i = 0; i < maxent_opt->size; i++) {
         maxent->wt[i] = 0;
     }
@@ -293,7 +280,17 @@ int maxent_load_body(maxent_t *maxent, FILE *fp, bool binary)
 {
     int n;
 
+    size_t i;
+    size_t sz;
+
     ST_CHECK_PARAM(maxent == NULL || fp == NULL, -1);
+
+    sz = maxent->maxent_opt.size;
+    maxent->wt = (real_t *) malloc(sizeof(real_t) * sz);
+    if (maxent->wt == NULL) {
+        ST_WARNING("Failed to malloc wt.");
+        goto ERR;
+    }
 
     if (binary) {
         if (fread(&n, sizeof(int), 1, fp) != 1) {
@@ -306,16 +303,30 @@ int maxent_load_body(maxent_t *maxent, FILE *fp, bool binary)
             goto ERR;
         }
 
+        sz = maxent->maxent_opt.size;
+        if (fread(maxent->wt, sizeof(real_t), sz, fp) != sz) {
+            ST_WARNING("Failed to read weight.");
+            goto ERR;
+        }
     } else {
         if (st_readline(fp, "<MAXENT-DATA>") != 0) {
             ST_WARNING("body flag error.");
             goto ERR;
+        }
+
+        sz = maxent->maxent_opt.size;
+        for (i = 0; i < sz; i++) {
+            if (st_readline(fp, REAL_FMT, maxent->wt + i) != 1) {
+                ST_WARNING("Failed to read weight.");
+                goto ERR;
+            }
         }
     }
 
     return 0;
 
 ERR:
+    safe_free(maxent->wt);
     return -1;
 }
 
@@ -374,6 +385,9 @@ int maxent_save_body(maxent_t *maxent, FILE *fp, bool binary)
 {
     int n;
 
+    size_t i;
+    size_t sz;
+
     ST_CHECK_PARAM(maxent == NULL || fp == NULL, -1);
 
     if (binary) {
@@ -382,14 +396,25 @@ int maxent_save_body(maxent_t *maxent, FILE *fp, bool binary)
             ST_WARNING("Failed to write magic num.");
             return -1;
         }
+
+        sz = maxent->maxent_opt.size;
+        if (fwrite(maxent->wt, sizeof(real_t), sz, fp) != sz) {
+            ST_WARNING("Failed to write weight.");
+            return -1;
+        }
     } else {
         fprintf(fp, "<MAXENT-DATA>\n");
+
+        sz = maxent->maxent_opt.size;
+        for (i = 0; i < sz; i++) {
+            fprintf(fp, REAL_FMT "\n", maxent->wt[i]);
+        }
     }
 
     return 0;
 }
 
-int maxent_setup_train(maxent_t **maxent, maxent_opt_t *maxent_opt)
+int maxent_setup_train(maxent_t *maxent, maxent_opt_t *maxent_opt)
 {
     ST_CHECK_PARAM(maxent == NULL || maxent_opt == NULL, -1);
 
@@ -397,7 +422,23 @@ int maxent_setup_train(maxent_t **maxent, maxent_opt_t *maxent_opt)
         return 0;
     }
 
+    maxent->hist = (int *) malloc(sizeof(int) * maxent_opt->order);
+    if (maxent->hist == NULL) {
+        ST_WARNING("Failed to malloc hist.");
+        goto ERR;
+    }
+
+    maxent->hash = (hash_t *) malloc(sizeof(hash_t) * maxent_opt->order);
+    if (maxent->hash == NULL) {
+        ST_WARNING("Failed to malloc hash.");
+        goto ERR;
+    }
+
     return 0;
+ERR:
+    safe_free(maxent->hist);
+    safe_free(maxent->hash);
+    return -1;
 }
 
 int maxent_forward(maxent_t *maxent, int word)

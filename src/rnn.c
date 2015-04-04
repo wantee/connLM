@@ -134,53 +134,12 @@ int rnn_init(rnn_t **prnn, rnn_opt_t *rnn_opt,
     rnn->class_size = class_size;
     rnn->vocab_size = vocab_size;
 
-    rnn->ac_i_h = (real_t *) malloc(sizeof(real_t)*rnn_opt->hidden_size);
-    if (rnn->ac_i_h == NULL) {
-        ST_WARNING("Failed to malloc ac_i_h.");
-        goto ERR;
-    }
-
-    rnn->er_i_h = (real_t *) malloc(sizeof(real_t)*rnn_opt->hidden_size);
-    if (rnn->er_i_h == NULL) {
-        ST_WARNING("Failed to malloc er_i_h.");
-        goto ERR;
-    }
-
-    rnn->ac_h = (real_t *) malloc(sizeof(real_t) * rnn_opt->hidden_size);
-    if (rnn->ac_h == NULL) {
-        ST_WARNING("Failed to malloc ac_h.");
-        goto ERR;
-    }
-
-    rnn->er_h = (real_t *) malloc(sizeof(real_t) * rnn_opt->hidden_size);
-    if (rnn->er_h == NULL) {
-        ST_WARNING("Failed to malloc er_h.");
-        goto ERR;
-    }
-
     if (class_size > 0) {
-        rnn->ac_o_c = (real_t *) malloc(sizeof(real_t) * class_size);
-        if (rnn->ac_o_c == NULL) {
-            ST_WARNING("Failed to malloc ac_o_c.");
-            goto ERR;
-        }
-
-        rnn->er_o_c = (real_t *) malloc(sizeof(real_t) * class_size);
-        if (rnn->er_o_c == NULL) {
-            ST_WARNING("Failed to malloc er_o_c.");
-            goto ERR;
-        }
-
         sz = rnn_opt->hidden_size * class_size;
         rnn->wt_ho_c = (real_t *) malloc(sizeof(real_t) * sz);
         if (rnn->wt_ho_c == NULL) {
             ST_WARNING("Failed to malloc wt_ho_c.");
             goto ERR;
-        }
-
-        for (i = 0; i < class_size; i++) {
-            rnn->ac_o_c[i] = 0;
-            rnn->er_o_c[i] = 0;
         }
 
         for (i = 0; i < class_size; i++) {
@@ -190,18 +149,6 @@ int rnn_init(rnn_t **prnn, rnn_opt_t *rnn_opt,
             }
         }
 
-    }
-
-    rnn->ac_o_w = (real_t *) malloc(sizeof(real_t) * vocab_size);
-    if (rnn->ac_o_w == NULL) {
-        ST_WARNING("Failed to malloc ac_o_w.");
-        goto ERR;
-    }
-
-    rnn->er_o_w = (real_t *) malloc(sizeof(real_t) * vocab_size);
-    if (rnn->er_o_w == NULL) {
-        ST_WARNING("Failed to malloc er_o_w.");
-        goto ERR;
     }
 
     sz = vocab_size * rnn_opt->hidden_size;
@@ -223,82 +170,6 @@ int rnn_init(rnn_t **prnn, rnn_opt_t *rnn_opt,
     if (rnn->wt_ho_w == NULL) {
         ST_WARNING("Failed to malloc wt_ho_w.");
         goto ERR;
-    }
-
-    if (rnn->bptt > 1) {
-        rnn->bptt_hist = (int *) malloc(sizeof(int)
-                * (rnn_opt->bptt + rnn_opt->bptt_block));
-        if (rnn->bptt_hist == NULL) {
-            ST_WARNING("Failed to malloc bptt_hist.");
-            goto ERR;
-        }
-
-        sz = rnn_opt->hidden_size * (rnn_opt->bptt + rnn_opt->bptt_block);
-        rnn->ac_bptt_h = (real_t *) malloc(sizeof(real_t) * sz);
-        if (rnn->ac_bptt_h == NULL) {
-            ST_WARNING("Failed to malloc ac_bptt_h.");
-            goto ERR;
-        }
-
-        sz = rnn_opt->hidden_size * (rnn_opt->bptt_block);
-        rnn->er_bptt_h = (real_t *) malloc(sizeof(real_t) * sz);
-        if (rnn->er_bptt_h == NULL) {
-            ST_WARNING("Failed to malloc er_bptt_h.");
-            goto ERR;
-        }
-
-        sz = vocab_size * rnn_opt->hidden_size;
-        rnn->wt_bptt_ih_w = (real_t *) malloc(sizeof(real_t) * sz);
-        if (rnn->wt_bptt_ih_w == NULL) {
-            ST_WARNING("Failed to malloc wt_bptt_ih_w.");
-            goto ERR;
-        }
-
-        sz = rnn_opt->hidden_size * rnn_opt->hidden_size;
-        rnn->wt_bptt_ih_h = (real_t *) malloc(sizeof(real_t) * sz);
-        if (rnn->wt_bptt_ih_h == NULL) {
-            ST_WARNING("Failed to malloc wt_bptt_ih_h.");
-            goto ERR;
-        }
-
-        for (i = 0; i < (rnn_opt->bptt + rnn_opt->bptt_block); i++) {
-            rnn->bptt_hist[i] = -1;
-        }
-
-        sz = rnn_opt->hidden_size * (rnn_opt->bptt + rnn_opt->bptt_block);
-        for (i = 0; i < sz; i++) {
-            rnn->ac_bptt_h[i] = 0;
-        }
-
-        sz = rnn_opt->hidden_size * rnn_opt->bptt_block;
-        for (i = 0; i < sz; i++) {
-            rnn->er_bptt_h[i] = 0;
-        }
-
-        sz = vocab_size*rnn_opt->hidden_size;
-        for (i = 0; i < sz; i++) {
-            rnn->wt_bptt_ih_w[i] = 0;
-        }
-
-        sz = rnn_opt->hidden_size*rnn_opt->hidden_size;
-        for (i = 0; i < sz; i++) {
-            rnn->wt_bptt_ih_h[i] = 0;
-        }
-    }
-
-    for (i = 0; i < rnn_opt->hidden_size; i++) {
-        rnn->ac_i_h[i] = 0;
-        rnn->er_i_h[i] = 0;
-    }
-
-    for (i = 0; i < rnn_opt->hidden_size; i++) {
-        rnn->ac_h[i] = 0;
-        rnn->er_h[i] = 0;
-    }
-
-    for (i = 0; i < vocab_size; i++) {
-        rnn->ac_o_w[i] = 0;
-        rnn->er_o_w[i] = 0;
     }
 
     for (i = 0; i < rnn_opt->hidden_size; i++) {
@@ -815,15 +686,169 @@ int rnn_save_body(rnn_t *rnn, FILE *fp, bool binary)
     return 0;
 }
 
-int rnn_setup_train(rnn_t **rnn, rnn_opt_t *rnn_opt)
+int rnn_setup_train(rnn_t *rnn, rnn_opt_t *rnn_opt)
 {
+    size_t i;
+    size_t sz;
+
     ST_CHECK_PARAM(rnn == NULL || rnn_opt == NULL, -1);
 
     if (rnn_opt->scale <= 0) {
         return 0;
     }
 
+    rnn->ac_i_h = (real_t *) malloc(sizeof(real_t)*rnn_opt->hidden_size);
+    if (rnn->ac_i_h == NULL) {
+        ST_WARNING("Failed to malloc ac_i_h.");
+        goto ERR;
+    }
+
+    rnn->er_i_h = (real_t *) malloc(sizeof(real_t)*rnn_opt->hidden_size);
+    if (rnn->er_i_h == NULL) {
+        ST_WARNING("Failed to malloc er_i_h.");
+        goto ERR;
+    }
+
+    rnn->ac_h = (real_t *) malloc(sizeof(real_t) * rnn_opt->hidden_size);
+    if (rnn->ac_h == NULL) {
+        ST_WARNING("Failed to malloc ac_h.");
+        goto ERR;
+    }
+
+    rnn->er_h = (real_t *) malloc(sizeof(real_t) * rnn_opt->hidden_size);
+    if (rnn->er_h == NULL) {
+        ST_WARNING("Failed to malloc er_h.");
+        goto ERR;
+    }
+
+    if (rnn->class_size > 0) {
+        rnn->ac_o_c = (real_t *) malloc(sizeof(real_t) * rnn->class_size);
+        if (rnn->ac_o_c == NULL) {
+            ST_WARNING("Failed to malloc ac_o_c.");
+            goto ERR;
+        }
+
+        rnn->er_o_c = (real_t *) malloc(sizeof(real_t) * rnn->class_size);
+        if (rnn->er_o_c == NULL) {
+            ST_WARNING("Failed to malloc er_o_c.");
+            goto ERR;
+        }
+
+        for (i = 0; i < rnn->class_size; i++) {
+            rnn->ac_o_c[i] = 0;
+            rnn->er_o_c[i] = 0;
+        }
+    }
+
+    rnn->ac_o_w = (real_t *) malloc(sizeof(real_t) * rnn->vocab_size);
+    if (rnn->ac_o_w == NULL) {
+        ST_WARNING("Failed to malloc ac_o_w.");
+        goto ERR;
+    }
+
+    rnn->er_o_w = (real_t *) malloc(sizeof(real_t) * rnn->vocab_size);
+    if (rnn->er_o_w == NULL) {
+        ST_WARNING("Failed to malloc er_o_w.");
+        goto ERR;
+    }
+
+    if (rnn->bptt > 1) {
+        rnn->bptt_hist = (int *) malloc(sizeof(int)
+                * (rnn_opt->bptt + rnn_opt->bptt_block));
+        if (rnn->bptt_hist == NULL) {
+            ST_WARNING("Failed to malloc bptt_hist.");
+            goto ERR;
+        }
+
+        sz = rnn_opt->hidden_size * (rnn_opt->bptt + rnn_opt->bptt_block);
+        rnn->ac_bptt_h = (real_t *) malloc(sizeof(real_t) * sz);
+        if (rnn->ac_bptt_h == NULL) {
+            ST_WARNING("Failed to malloc ac_bptt_h.");
+            goto ERR;
+        }
+
+        sz = rnn_opt->hidden_size * (rnn_opt->bptt_block);
+        rnn->er_bptt_h = (real_t *) malloc(sizeof(real_t) * sz);
+        if (rnn->er_bptt_h == NULL) {
+            ST_WARNING("Failed to malloc er_bptt_h.");
+            goto ERR;
+        }
+
+        sz = rnn->vocab_size * rnn_opt->hidden_size;
+        rnn->wt_bptt_ih_w = (real_t *) malloc(sizeof(real_t) * sz);
+        if (rnn->wt_bptt_ih_w == NULL) {
+            ST_WARNING("Failed to malloc wt_bptt_ih_w.");
+            goto ERR;
+        }
+
+        sz = rnn_opt->hidden_size * rnn_opt->hidden_size;
+        rnn->wt_bptt_ih_h = (real_t *) malloc(sizeof(real_t) * sz);
+        if (rnn->wt_bptt_ih_h == NULL) {
+            ST_WARNING("Failed to malloc wt_bptt_ih_h.");
+            goto ERR;
+        }
+
+        for (i = 0; i < (rnn_opt->bptt + rnn_opt->bptt_block); i++) {
+            rnn->bptt_hist[i] = -1;
+        }
+
+        sz = rnn_opt->hidden_size * (rnn_opt->bptt + rnn_opt->bptt_block);
+        for (i = 0; i < sz; i++) {
+            rnn->ac_bptt_h[i] = 0;
+        }
+
+        sz = rnn_opt->hidden_size * rnn_opt->bptt_block;
+        for (i = 0; i < sz; i++) {
+            rnn->er_bptt_h[i] = 0;
+        }
+
+        sz = rnn->vocab_size*rnn_opt->hidden_size;
+        for (i = 0; i < sz; i++) {
+            rnn->wt_bptt_ih_w[i] = 0;
+        }
+
+        sz = rnn_opt->hidden_size*rnn_opt->hidden_size;
+        for (i = 0; i < sz; i++) {
+            rnn->wt_bptt_ih_h[i] = 0;
+        }
+    }
+
+    for (i = 0; i < rnn_opt->hidden_size; i++) {
+        rnn->ac_i_h[i] = 0;
+        rnn->er_i_h[i] = 0;
+    }
+
+    for (i = 0; i < rnn_opt->hidden_size; i++) {
+        rnn->ac_h[i] = 0;
+        rnn->er_h[i] = 0;
+    }
+
+    for (i = 0; i < rnn->vocab_size; i++) {
+        rnn->ac_o_w[i] = 0;
+        rnn->er_o_w[i] = 0;
+    }
+
     return 0;
+
+ERR:
+    safe_free(rnn->ac_i_h);
+    safe_free(rnn->er_i_h);
+    safe_free(rnn->ac_h);
+    safe_free(rnn->er_h);
+
+    safe_free(rnn->ac_o_c);
+    safe_free(rnn->er_o_c);
+
+    safe_free(rnn->ac_o_w);
+    safe_free(rnn->er_o_w);
+
+    safe_free(rnn->bptt_hist);
+    safe_free(rnn->ac_bptt_h);
+    safe_free(rnn->er_bptt_h);
+    safe_free(rnn->wt_bptt_ih_w);
+    safe_free(rnn->wt_bptt_ih_h);
+
+    return -1;
 }
 
 int rnn_forward(rnn_t *rnn, int word)

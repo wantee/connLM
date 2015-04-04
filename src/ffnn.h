@@ -65,7 +65,7 @@ int ffnn_load_body(ffnn_t *ffnn, FILE *fp, bool binary);
 int ffnn_save_header(ffnn_t *ffnn, FILE *fp, bool binary);
 int ffnn_save_body(ffnn_t *ffnn, FILE *fp, bool binary);
 
-int ffnn_setup_train(ffnn_t **ffnn, ffnn_opt_t *ffnn_opt);
+int ffnn_setup_train(ffnn_t *ffnn, ffnn_opt_t *ffnn_opt);
 int ffnn_forward(ffnn_t *ffnn, int word);
 
 #ifdef __cplusplus

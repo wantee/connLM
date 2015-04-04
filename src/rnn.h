@@ -118,7 +118,7 @@ int rnn_load_body(rnn_t *rnn, FILE *fp, bool binary);
 int rnn_save_header(rnn_t *rnn, FILE *fp, bool binary);
 int rnn_save_body(rnn_t *rnn, FILE *fp, bool binary);
 
-int rnn_setup_train(rnn_t **rnn, rnn_opt_t *rnn_opt);
+int rnn_setup_train(rnn_t *rnn, rnn_opt_t *rnn_opt);
 int rnn_forward(rnn_t *rnn, int word);
 
 #ifdef __cplusplus

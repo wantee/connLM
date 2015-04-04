@@ -307,7 +307,7 @@ int lbl_save_body(lbl_t *lbl, FILE *fp, bool binary)
     return 0;
 }
 
-int lbl_setup_train(lbl_t **lbl, lbl_opt_t *lbl_opt)
+int lbl_setup_train(lbl_t *lbl, lbl_opt_t *lbl_opt)
 {
     ST_CHECK_PARAM(lbl == NULL || lbl_opt == NULL, -1);
 

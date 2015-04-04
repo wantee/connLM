@@ -308,7 +308,7 @@ int ffnn_save_body(ffnn_t *ffnn, FILE *fp, bool binary)
     return 0;
 }
 
-int ffnn_setup_train(ffnn_t **ffnn, ffnn_opt_t *ffnn_opt)
+int ffnn_setup_train(ffnn_t *ffnn, ffnn_opt_t *ffnn_opt)
 {
     ST_CHECK_PARAM(ffnn == NULL || ffnn_opt == NULL, -1);
 

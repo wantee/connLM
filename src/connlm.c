@@ -42,6 +42,9 @@ int connlm_load_model_opt(connlm_opt_t *connlm_opt,
 
     ST_CHECK_PARAM(connlm_opt == NULL || opt == NULL, -1);
 
+    ST_OPT_SEC_GET_INT(opt, sec_name, "RANDOM_SEED",
+            connlm_opt->rand_seed, 1, "Random seed");
+
     if (sec_name == NULL || sec_name[0] == '\0') {
         snprintf(name, MAX_ST_CONF_LEN, "RNN");
     } else {
@@ -206,15 +209,26 @@ int connlm_setup_train(connlm_t *connlm, connlm_opt_t *connlm_opt,
         }
     }
 
-    if (rnn_setup_train(&connlm->rnn, &connlm_opt->rnn_opt) < 0) {
+    if (rnn_setup_train(connlm->rnn, &connlm_opt->rnn_opt) < 0) {
         ST_WARNING("Failed to rnn_setup_train.");
         goto ERR;
     }
 
-    if (maxent_setup_train(&connlm->maxent, &connlm_opt->maxent_opt) < 0) {
+    if (maxent_setup_train(connlm->maxent, &connlm_opt->maxent_opt) < 0) {
         ST_WARNING("Failed to maxent_setup_train.");
         goto ERR;
     }
+
+    if (lbl_setup_train(connlm->lbl, &connlm_opt->lbl_opt) < 0) {
+        ST_WARNING("Failed to lbl_setup_train.");
+        goto ERR;
+    }
+
+    if (ffnn_setup_train(connlm->ffnn, &connlm_opt->ffnn_opt) < 0) {
+        ST_WARNING("Failed to ffnn_setup_train.");
+        goto ERR;
+    }
+
     return 0;
 
 ERR:
@@ -247,6 +261,8 @@ void connlm_destroy(connlm_t *connlm)
 int connlm_init(connlm_t *connlm, connlm_opt_t *connlm_opt)
 {
     ST_CHECK_PARAM(connlm == NULL || connlm_opt == NULL, -1);
+
+    srand(connlm_opt->rand_seed);
 
     if (rnn_init(&connlm->rnn, &connlm_opt->rnn_opt,
             connlm->output->output_opt.class_size,
