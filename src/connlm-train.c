@@ -41,7 +41,7 @@ st_opt_t *g_cmd_opt;
 connlm_opt_t g_connlm_opt;
 connlm_t *g_connlm;
 
-int connlm_parse_opt(int *argc, const char *argv[])
+int connlm_train_parse_opt(int *argc, const char *argv[])
 {
     st_log_opt_t log_opt;
     bool b;
@@ -67,8 +67,8 @@ int connlm_parse_opt(int *argc, const char *argv[])
         goto ST_OPT_ERR;
     }
 
-    if (connlm_load_opt(&g_connlm_opt, g_cmd_opt, NULL) < 0) {
-        ST_WARNING("Failed to connlm_load_opt");
+    if (connlm_load_train_opt(&g_connlm_opt, g_cmd_opt, NULL) < 0) {
+        ST_WARNING("Failed to connlm_load_train_opt");
         goto ST_OPT_ERR;
     }
 
@@ -89,15 +89,10 @@ ST_OPT_ERR:
 
 void show_usage(const char *module_name)
 {
-    fprintf(stderr, "\nConnectionist Language Modelling Toolkit\n"); 
-    fprintf(stderr, "  -- Train Models\n");
-    fprintf(stderr, "Version  : %s\n", CONNLM_VERSION);
-    fprintf(stderr, "File version: %d\n", CONNLM_FILE_VERSION);
-    fprintf(stderr, "Usage    : %s [options] <train-file> <model-in> <model-out>\n",
-            module_name);
-    fprintf(stderr, "\n");
-    fprintf(stderr, "Options  : \n");
-    st_opt_show_usage(g_cmd_opt, stderr);
+    connlm_show_usage(module_name,
+            "Train Model",
+            "<train-file> <model-in> <model-out>",
+            g_cmd_opt);
 }
 
 int main(int argc, const char *argv[])
@@ -105,7 +100,7 @@ int main(int argc, const char *argv[])
     FILE *fp = NULL;
     int ret;
 
-    ret = connlm_parse_opt(&argc, argv);
+    ret = connlm_train_parse_opt(&argc, argv);
     if (ret < 0) {
         show_usage(argv[0]);
         goto ERR;

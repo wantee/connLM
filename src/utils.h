@@ -41,6 +41,9 @@ void softmax(real_t *vec, int vec_size);
 
 real_t rrandom(real_t min, real_t max);
 
+void connlm_show_usage(const char *module_name, const char *header,
+        const char *usage, st_opt_t *opt);
+
 #ifdef __cplusplus
 }
 #endif

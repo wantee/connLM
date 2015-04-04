@@ -10,7 +10,13 @@ endif
 LDFLAGS += -lstutils -lpthread
 LDFLAGS += -Wl,-rpath '-Wl,$$ORIGIN'
 
-CFLAGS += -D REAL_TYPE=float
+real_type=float
+CFLAGS += -D REAL_TYPE=$(real_type)
+ifeq ($(real_type), double)
+CFLAGS += -D REAL_FMT="\"%lf\""
+else
+CFLAGS += -D REAL_FMT="\"%f\""
+endif
 
 BINDIR=../bin
 CFLAGS += -g -Wall -Winline -pipe -Wno-narrowing 
@@ -41,7 +47,7 @@ SO_FLAGS = -shared
 endif
 
 TARGET_BIN = connlm-train connlm-test connlm-info connlm-copy \
-             connlm-vocab
+             connlm-vocab connlm-init
 
 .PHONY: all clean preparedir
 

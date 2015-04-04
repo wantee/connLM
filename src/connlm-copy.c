@@ -31,9 +31,8 @@
 bool g_binary;
 
 st_opt_t *g_cmd_opt;
-connlm_t *g_connlm;
 
-int connlm_parse_opt(int *argc, const char *argv[])
+int connlm_copy_parse_opt(int *argc, const char *argv[])
 {
     st_log_opt_t log_opt;
     bool b;
@@ -76,23 +75,19 @@ ST_OPT_ERR:
 
 void show_usage(const char *module_name)
 {
-    fprintf(stderr, "\nConnectionist Language Modelling Toolkit\n");
-    fprintf(stderr, "  -- Copy Models\n");
-    fprintf(stderr, "Version  : %s\n", CONNLM_VERSION);
-    fprintf(stderr, "File version: %d\n", CONNLM_FILE_VERSION);
-    fprintf(stderr, "Usage    : %s [options] <model-in> <model-out>\n",
-            module_name);
-    fprintf(stderr, "\n");
-    fprintf(stderr, "Options  : \n");
-    st_opt_show_usage(g_cmd_opt, stderr);
+    connlm_show_usage(module_name,
+            "Copy Models",
+            "<model-in> <model-out>",
+            g_cmd_opt);
 }
 
 int main(int argc, const char *argv[])
 {
     FILE *fp = NULL;
+    connlm_t *connlm = NULL;
     int ret;
 
-    ret = connlm_parse_opt(&argc, argv);
+    ret = connlm_copy_parse_opt(&argc, argv);
     if (ret < 0) {
         show_usage(argv[0]);
         goto ERR;
@@ -114,8 +109,8 @@ int main(int argc, const char *argv[])
         goto ERR;
     }
 
-    g_connlm = connlm_load(fp);
-    if (g_connlm == NULL) {
+    connlm = connlm_load(fp);
+    if (connlm == NULL) {
         ST_WARNING("Failed to connlm_load.");
         goto ERR;
     }
@@ -127,14 +122,14 @@ int main(int argc, const char *argv[])
         goto ERR;
     }
 
-    if (connlm_save(g_connlm, fp, g_binary) < 0) {
+    if (connlm_save(connlm, fp, g_binary) < 0) {
         ST_WARNING("Failed to connlm_save.");
         goto ERR;
     }
 
     safe_st_fclose(fp);
     safe_st_opt_destroy(g_cmd_opt);
-    safe_connlm_destroy(g_connlm);
+    safe_connlm_destroy(connlm);
 
     st_log_close(0);
     return 0;
@@ -142,7 +137,7 @@ int main(int argc, const char *argv[])
   ERR:
     safe_st_fclose(fp);
     safe_st_opt_destroy(g_cmd_opt);
-    safe_connlm_destroy(g_connlm);
+    safe_connlm_destroy(connlm);
 
     st_log_close(1);
     return -1;

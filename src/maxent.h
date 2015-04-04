@@ -34,6 +34,8 @@ extern "C" {
 #include "config.h"
 #include "nn.h"
 
+typedef unsigned long long hash_t;
+
 typedef struct _maxent_opt_t {
     real_t scale;
 
@@ -45,12 +47,18 @@ typedef struct _maxent_opt_t {
 
 typedef struct _maxent_t_ {
     maxent_opt_t maxent_opt;
+
+    real_t *wt;
+    int *hist;
+    hash_t *hash;
 } maxent_t;
 
-int maxent_load_opt(maxent_opt_t *maxent_opt,
+int maxent_load_model_opt(maxent_opt_t *maxent_opt,
+        st_opt_t *opt, const char *sec_name);
+int maxent_load_train_opt(maxent_opt_t *maxent_opt,
         st_opt_t *opt, const char *sec_name, nn_param_t *param);
 
-maxent_t *maxent_create(maxent_opt_t *maxent_opt);
+int maxent_init(maxent_t **pmaxent, maxent_opt_t *maxent_opt);
 #define safe_maxent_destroy(ptr) do {\
     if((ptr) != NULL) {\
         maxent_destroy(ptr);\
@@ -67,7 +75,8 @@ int maxent_load_body(maxent_t *maxent, FILE *fp, bool binary);
 int maxent_save_header(maxent_t *maxent, FILE *fp, bool binary);
 int maxent_save_body(maxent_t *maxent, FILE *fp, bool binary);
 
-int maxent_train(maxent_t *maxent);
+int maxent_setup_train(maxent_t **maxent, maxent_opt_t *maxent_opt);
+int maxent_forward(maxent_t *maxent, int word);
 
 #ifdef __cplusplus
 }

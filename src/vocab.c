@@ -251,7 +251,7 @@ int vocab_load_body(vocab_t *vocab, FILE *fp, bool binary)
             goto ERR;
         }
 
-        if (n != 2 * VOCAB_MAGIC_NUM) {
+        if (n != -VOCAB_MAGIC_NUM) {
             ST_WARNING("Magic num error.");
             goto ERR;
         }
@@ -365,7 +365,7 @@ int vocab_save_body(vocab_t *vocab, FILE *fp, bool binary)
     }
 
     if (binary) {
-        n = 2 * VOCAB_MAGIC_NUM;
+        n = -VOCAB_MAGIC_NUM;
         if (fwrite(&n, sizeof(int), 1, fp) != 1) {
             ST_WARNING("Failed to write magic num.");
             return -1;

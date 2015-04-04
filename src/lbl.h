@@ -44,10 +44,12 @@ typedef struct _lbl_t_ {
     lbl_opt_t lbl_opt;
 } lbl_t;
 
-int lbl_load_opt(lbl_opt_t *lbl_opt, st_opt_t *opt, const char *sec_name,
-        nn_param_t *param);
+int lbl_load_model_opt(lbl_opt_t *lbl_opt, st_opt_t *opt,
+        const char *sec_name);
+int lbl_load_train_opt(lbl_opt_t *lbl_opt, st_opt_t *opt,
+        const char *sec_name, nn_param_t *param);
 
-lbl_t *lbl_create(lbl_opt_t *lbl_opt);
+int lbl_init(lbl_t **plbl, lbl_opt_t *lbl_opt);
 #define safe_lbl_destroy(ptr) do {\
     if((ptr) != NULL) {\
         lbl_destroy(ptr);\
@@ -63,7 +65,8 @@ int lbl_load_body(lbl_t *lbl, FILE *fp, bool binary);
 int lbl_save_header(lbl_t *lbl, FILE *fp, bool binary);
 int lbl_save_body(lbl_t *lbl, FILE *fp, bool binary);
 
-int lbl_train(lbl_t *lbl);
+int lbl_setup_train(lbl_t **lbl, lbl_opt_t *lbl_opt);
+int lbl_forward(lbl_t *lbl, int word);
 
 #ifdef __cplusplus
 }

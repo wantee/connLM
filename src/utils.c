@@ -308,3 +308,18 @@ real_t rrandom(real_t min, real_t max)
     return rand() / (real_t) RAND_MAX *(max - min) + min;
 }
 
+void connlm_show_usage(const char *module_name, const char *header,
+        const char *usage, st_opt_t *opt)
+{
+    fprintf(stderr, "\nConnectionist Language Modelling Toolkit\n");
+    fprintf(stderr, "  -- %s\n", header);
+    fprintf(stderr, "Version  : %s\n", CONNLM_VERSION);
+    fprintf(stderr, "File version: %d\n", CONNLM_FILE_VERSION);
+    fprintf(stderr, "Real type: %s\n",
+            (sizeof(real_t) == sizeof(double)) ? "double" : "float");
+    fprintf(stderr, "Usage    : %s [options] %s\n", module_name, usage);
+    fprintf(stderr, "\n");
+    fprintf(stderr, "Options  : \n");
+    st_opt_show_usage(opt, stderr);
+}
+

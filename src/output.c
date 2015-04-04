@@ -312,7 +312,7 @@ int output_load_body(output_t *output, FILE *fp, bool binary)
             goto ERR;
         }
 
-        if (n != 2 * OUTPUT_MAGIC_NUM) {
+        if (n != -OUTPUT_MAGIC_NUM) {
             ST_WARNING("Magic num error.");
             goto ERR;
         }
@@ -460,7 +460,7 @@ int output_save_body(output_t *output, FILE *fp, bool binary)
     }
 
     if (binary) {
-        n = 2 * OUTPUT_MAGIC_NUM;
+        n = -OUTPUT_MAGIC_NUM;
         if (fwrite(&n, sizeof(int), 1, fp) != 1) {
             ST_WARNING("Failed to write magic num.");
             return -1;

@@ -79,7 +79,10 @@ typedef struct _connlm_t_ {
     ffnn_t *ffnn;
 } connlm_t;
 
-int connlm_load_opt(connlm_opt_t *connlm_opt, 
+int connlm_load_model_opt(connlm_opt_t *connlm_opt, 
+        st_opt_t *opt, const char *sec_name);
+
+int connlm_load_train_opt(connlm_opt_t *connlm_opt, 
         st_opt_t *opt, const char *sec_name);
 
 #define safe_connlm_destroy(ptr) do {\
@@ -91,6 +94,7 @@ int connlm_load_opt(connlm_opt_t *connlm_opt,
     } while(0)
 void connlm_destroy(connlm_t *connlm);
 
+int connlm_init(connlm_t *connlm, connlm_opt_t *connlm_opt);
 int connlm_setup_train(connlm_t *connlm, connlm_opt_t *connlm_opt,
         const char *train_file);
 

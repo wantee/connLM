@@ -32,11 +32,9 @@ bool g_binary;
 
 st_opt_t *g_cmd_opt;
 
-connlm_t *g_connlm;
-vocab_opt_t g_vocab_opt;
-output_opt_t g_output_opt;
+connlm_opt_t g_connlm_opt;
 
-int connlm_vocab_parse_opt(int *argc, const char *argv[])
+int connlm_init_parse_opt(int *argc, const char *argv[])
 {
     st_log_opt_t log_opt;
     bool b;
@@ -62,13 +60,8 @@ int connlm_vocab_parse_opt(int *argc, const char *argv[])
         goto ST_OPT_ERR;
     }
 
-    if (vocab_load_opt(&g_vocab_opt, g_cmd_opt, NULL) < 0) {
-        ST_WARNING("Failed to vocab_load_opt");
-        goto ST_OPT_ERR;
-    }
-
-    if (output_load_opt(&g_output_opt, g_cmd_opt, NULL) < 0) {
-        ST_WARNING("Failed to output_load_opt");
+    if (connlm_load_model_opt(&g_connlm_opt, g_cmd_opt, NULL) < 0) {
+        ST_WARNING("Failed to connlm_load_model_opt");
         goto ST_OPT_ERR;
     }
 
@@ -90,20 +83,18 @@ ST_OPT_ERR:
 void show_usage(const char *module_name)
 {
     connlm_show_usage(module_name,
-            "Learn Vocabulary",
-            "<train-file> <model-out>",
+            "Initialise Model",
+            "<model-in> <model-out>",
             g_cmd_opt);
 }
 
 int main(int argc, const char *argv[])
 {
-    char filename[MAX_DIR_LEN];
     FILE *fp = NULL;
+    connlm_t *connlm = NULL;
     int ret;
-    vocab_t *vocab = NULL;
-    output_t *output = NULL;
 
-    ret = connlm_vocab_parse_opt(&argc, argv);
+    ret = connlm_init_parse_opt(&argc, argv);
     if (ret < 0) {
         show_usage(argv[0]);
         goto ERR;
@@ -117,42 +108,24 @@ int main(int argc, const char *argv[])
         goto ERR;
     }
 
-    st_opt_show(g_cmd_opt, "connLM Vocab Options");
-
-    ST_NOTICE("Learning Vocab..");
-    vocab = vocab_create(&g_vocab_opt);
-    if (vocab == NULL) {
-        ST_WARNING("Failed to vocab_create.");
-        goto ERR;
-    }
+    st_opt_show(g_cmd_opt, "connLM Init Options");
 
     fp = st_fopen(argv[1], "rb");
     if (fp == NULL) {
-        ST_WARNING("Failed to st_fopen. [%s]", filename);
+        ST_WARNING("Failed to st_fopen. [%s]", argv[1]);
         goto ERR;
     }
 
-    if (vocab_learn(vocab, fp) < 0) {
-        ST_WARNING("Failed to vocab_learn.");
+    connlm = connlm_load(fp);
+    if (connlm == NULL) {
+        ST_WARNING("Failed to connlm_load.");
         goto ERR;
     }
     safe_st_fclose(fp);
 
-    ST_NOTICE("Generating Output Layer...");
-    output = output_create(&g_output_opt, vocab->vocab_size);
-    if (output == NULL) {
-        ST_WARNING("Failed to output_create.");
-        goto ERR;
-    }
-
-    if (output_generate(output, vocab->cnts) < 0) {
-        ST_WARNING("Failed to output_generate.");
-        goto ERR;
-    }
-
-    g_connlm = connlm_new(vocab, output, NULL, NULL, NULL, NULL);
-    if (g_connlm == NULL) {
-        ST_WARNING("Failed to connlm_new.");
+    ST_NOTICE("Initialising Model..");
+    if (connlm_init(connlm, &g_connlm_opt) < 0) {
+        ST_WARNING("Failed to connlm_create.");
         goto ERR;
     }
 
@@ -162,15 +135,14 @@ int main(int argc, const char *argv[])
         goto ERR;
     }
 
-    if (connlm_save(g_connlm, fp, g_binary) < 0) {
+    if (connlm_save(connlm, fp, g_binary) < 0) {
         ST_WARNING("Failed to connlm_save.");
         goto ERR;
     }
 
     safe_st_fclose(fp);
     safe_st_opt_destroy(g_cmd_opt);
-    safe_vocab_destroy(vocab);
-    safe_connlm_destroy(g_connlm);
+    safe_connlm_destroy(connlm);
 
     st_log_close(0);
     return 0;
@@ -178,9 +150,7 @@ int main(int argc, const char *argv[])
   ERR:
     safe_st_fclose(fp);
     safe_st_opt_destroy(g_cmd_opt);
-    safe_vocab_destroy(vocab);
-    safe_output_destroy(output);
-    safe_connlm_destroy(g_connlm);
+    safe_connlm_destroy(connlm);
 
     st_log_close(1);
     return -1;

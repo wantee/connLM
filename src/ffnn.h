@@ -44,10 +44,12 @@ typedef struct _ffnn_t_ {
     ffnn_opt_t ffnn_opt;
 } ffnn_t;
 
-int ffnn_load_opt(ffnn_opt_t *ffnn_opt, st_opt_t *opt,
+int ffnn_load_model_opt(ffnn_opt_t *ffnn_opt, st_opt_t *opt,
+        const char *sec_name);
+int ffnn_load_train_opt(ffnn_opt_t *ffnn_opt, st_opt_t *opt,
         const char *sec_name, nn_param_t *param);
 
-ffnn_t *ffnn_create(ffnn_opt_t *ffnn_opt);
+int ffnn_init(ffnn_t **pffnn, ffnn_opt_t *ffnn_opt);
 #define safe_ffnn_destroy(ptr) do {\
     if((ptr) != NULL) {\
         ffnn_destroy(ptr);\
@@ -63,7 +65,8 @@ int ffnn_load_body(ffnn_t *ffnn, FILE *fp, bool binary);
 int ffnn_save_header(ffnn_t *ffnn, FILE *fp, bool binary);
 int ffnn_save_body(ffnn_t *ffnn, FILE *fp, bool binary);
 
-int ffnn_train(ffnn_t *ffnn);
+int ffnn_setup_train(ffnn_t **ffnn, ffnn_opt_t *ffnn_opt);
+int ffnn_forward(ffnn_t *ffnn, int word);
 
 #ifdef __cplusplus
 }

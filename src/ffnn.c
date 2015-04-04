@@ -29,20 +29,19 @@
 #include <sys/time.h>
 
 #include <st_macro.h>
+#include <st_utils.h>
 #include <st_log.h>
 
 #include "ffnn.h"
 
 static const int FFNN_MAGIC_NUM = 626140498 + 5;
 
-int ffnn_load_opt(ffnn_opt_t *ffnn_opt, st_opt_t *opt,
-        const char *sec_name, nn_param_t *param)
+int ffnn_load_model_opt(ffnn_opt_t *ffnn_opt, st_opt_t *opt,
+        const char *sec_name)
 {
     float f;
 
     ST_CHECK_PARAM(ffnn_opt == NULL || opt == NULL, -1);
-
-    memset(ffnn_opt, 0, sizeof(ffnn_opt_t));
 
     ST_OPT_SEC_GET_FLOAT(opt, sec_name, "SCALE", f, 1.0,
             "Scale of FFNN model output");
@@ -51,6 +50,17 @@ int ffnn_load_opt(ffnn_opt_t *ffnn_opt, st_opt_t *opt,
     if (ffnn_opt->scale <= 0) {
         return 0;
     }
+
+    return 0;
+
+ST_OPT_ERR:
+    return -1;
+}
+
+int ffnn_load_train_opt(ffnn_opt_t *ffnn_opt, st_opt_t *opt,
+        const char *sec_name, nn_param_t *param)
+{
+    ST_CHECK_PARAM(ffnn_opt == NULL || opt == NULL, -1);
 
     if (nn_param_load(&ffnn_opt->param, opt, sec_name, param) < 0) {
         ST_WARNING("Failed to nn_param_load.");
@@ -63,11 +73,17 @@ ST_OPT_ERR:
     return -1;
 }
 
-ffnn_t *ffnn_create(ffnn_opt_t *ffnn_opt)
+int ffnn_init(ffnn_t **pffnn, ffnn_opt_t *ffnn_opt)
 {
     ffnn_t *ffnn = NULL;
 
-    ST_CHECK_PARAM(ffnn_opt == NULL, NULL);
+    ST_CHECK_PARAM(pffnn == NULL || ffnn_opt == NULL, -1);
+
+    *pffnn = NULL;
+
+    if (ffnn_opt->scale <= 0) {
+        return 0;
+    }
 
     ffnn = (ffnn_t *) malloc(sizeof(ffnn_t));
     if (ffnn == NULL) {
@@ -76,10 +92,16 @@ ffnn_t *ffnn_create(ffnn_opt_t *ffnn_opt)
     }
     memset(ffnn, 0, sizeof(ffnn_t));
 
-    return ffnn;
-  ERR:
+    ffnn->ffnn_opt = *ffnn_opt;
+
+
+    *pffnn = ffnn;
+
+    return 0;
+
+ERR:
     safe_ffnn_destroy(ffnn);
-    return NULL;
+    return -1;
 }
 
 void ffnn_destroy(ffnn_t *ffnn)
@@ -112,7 +134,6 @@ ERR:
 
 int ffnn_load_header(ffnn_t **ffnn, FILE *fp, bool *binary, FILE *fo_info)
 {
-    char line[MAX_LINE_LEN];
     union {
         char str[4];
         int magic_num;
@@ -154,26 +175,17 @@ int ffnn_load_header(ffnn_t **ffnn, FILE *fp, bool *binary, FILE *fo_info)
             return 0;
         }
     } else {
-        if (fgets(line, MAX_LINE_LEN, fp) == NULL) {
-            ST_WARNING("Failed to read flag.");
+        if (st_readline(fp, "    ") != 0) {
+            ST_WARNING("Failed to read tag.");
+            goto ERR;
+        }
+        if (st_readline(fp, "<FFNN>") != 0) {
+            ST_WARNING("tag error.");
             goto ERR;
         }
 
-        if (fgets(line, MAX_LINE_LEN, fp) == NULL) {
-            ST_WARNING("Failed to read flag.");
-            goto ERR;
-        }
-        if (strncmp(line, "<FFNN>", 6) != 0) {
-            ST_WARNING("flag error.[%s]", line);
-            goto ERR;
-        }
-
-        if (fgets(line, MAX_LINE_LEN, fp) == NULL) {
-            ST_WARNING("Failed to read scale.");
-            goto ERR;
-        }
-        if (sscanf(line, "Scale: %f\n", &scale) != 1) {
-            ST_WARNING("Failed to parse scale.[%s]", line);
+        if (st_readline(fp, "Scale: " REAL_FMT, &scale) != 1) {
+            ST_WARNING("Failed to parse scale.");
             goto ERR;
         }
 
@@ -209,7 +221,6 @@ ERR:
 
 int ffnn_load_body(ffnn_t *ffnn, FILE *fp, bool binary)
 {
-    char line[MAX_LINE_LEN];
     int n;
 
     ST_CHECK_PARAM(ffnn == NULL || fp == NULL, -1);
@@ -220,18 +231,14 @@ int ffnn_load_body(ffnn_t *ffnn, FILE *fp, bool binary)
             goto ERR;
         }
 
-        if (n != 2 * FFNN_MAGIC_NUM) {
+        if (n != -FFNN_MAGIC_NUM) {
             ST_WARNING("Magic num error.");
             goto ERR;
         }
 
     } else {
-        if (fgets(line, MAX_LINE_LEN, fp) == NULL) {
-            ST_WARNING("Failed to read body flag.");
-            goto ERR;
-        }
-        if (strncmp(line, "<FFNN-DATA>", 11) != 0) {
-            ST_WARNING("body flag error.[%s]", line);
+        if (st_readline(fp, "<FFNN-DATA>") != 0) {
+            ST_WARNING("body flag error.");
             goto ERR;
         }
 
@@ -263,6 +270,11 @@ int ffnn_save_header(ffnn_t *ffnn, FILE *fp, bool binary)
             }
             return 0;
         }
+
+        if (fwrite(&ffnn->ffnn_opt.scale, sizeof(real_t), 1, fp) != 1) {
+            ST_WARNING("Failed to write scale.");
+            return -1;
+        }
     } else {
         fprintf(fp, "    \n<FFNN>\n");
 
@@ -284,7 +296,7 @@ int ffnn_save_body(ffnn_t *ffnn, FILE *fp, bool binary)
     ST_CHECK_PARAM(ffnn == NULL || fp == NULL, -1);
 
     if (binary) {
-        n = 2 * FFNN_MAGIC_NUM;
+        n = -FFNN_MAGIC_NUM;
         if (fwrite(&n, sizeof(int), 1, fp) != 1) {
             ST_WARNING("Failed to write magic num.");
             return -1;
@@ -296,9 +308,20 @@ int ffnn_save_body(ffnn_t *ffnn, FILE *fp, bool binary)
     return 0;
 }
 
-int ffnn_train(ffnn_t *ffnn)
+int ffnn_setup_train(ffnn_t **ffnn, ffnn_opt_t *ffnn_opt)
 {
-    ST_CHECK_PARAM(ffnn == NULL, -1);
+    ST_CHECK_PARAM(ffnn == NULL || ffnn_opt == NULL, -1);
+
+    if (ffnn_opt->scale <= 0) {
+        return 0;
+    }
+
+    return 0;
+}
+
+int ffnn_forward(ffnn_t *ffnn, int word)
+{
+    ST_CHECK_PARAM(ffnn == NULL || word < 0, -1);
 
     return 0;
 }

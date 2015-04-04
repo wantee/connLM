@@ -29,21 +29,20 @@
 #include <sys/time.h>
 
 #include <st_macro.h>
+#include <st_utils.h>
 #include <st_log.h>
 
 #include "maxent.h"
 
 static const int MAXENT_MAGIC_NUM = 626140498 + 3;
 
-int maxent_load_opt(maxent_opt_t *maxent_opt,
-        st_opt_t *opt, const char *sec_name, nn_param_t *param)
+int maxent_load_model_opt(maxent_opt_t *maxent_opt,
+        st_opt_t *opt, const char *sec_name)
 {
     float f;
     int d;
 
     ST_CHECK_PARAM(maxent_opt == NULL || opt == NULL, -1);
-
-    memset(maxent_opt, 0, sizeof(maxent_opt_t));
 
     ST_OPT_SEC_GET_FLOAT(opt, sec_name, "SCALE", f, 1.0, 
             "Scale of MaxEnt model output");
@@ -60,6 +59,17 @@ int maxent_load_opt(maxent_opt_t *maxent_opt,
             maxent_opt->order, 3,
             "Order of MaxEnt");
 
+    return 0;
+
+ST_OPT_ERR:
+    return -1;
+}
+
+int maxent_load_train_opt(maxent_opt_t *maxent_opt,
+        st_opt_t *opt, const char *sec_name, nn_param_t *param)
+{
+    ST_CHECK_PARAM(maxent_opt == NULL || opt == NULL, -1);
+
     if (nn_param_load(&maxent_opt->param, opt, sec_name, param) < 0) {
         ST_WARNING("Failed to nn_param_load.");
         goto ST_OPT_ERR;
@@ -71,11 +81,18 @@ ST_OPT_ERR:
     return -1;
 }
 
-maxent_t *maxent_create(maxent_opt_t *maxent_opt)
+int maxent_init(maxent_t **pmaxent, maxent_opt_t *maxent_opt)
 {
     maxent_t *maxent = NULL;
+    int i;
 
-    ST_CHECK_PARAM(maxent_opt == NULL, NULL);
+    ST_CHECK_PARAM(pmaxent == NULL || maxent_opt == NULL, -1);
+
+    *pmaxent = NULL;
+
+    if (maxent_opt->scale <= 0) {
+        return 0;
+    }
 
     maxent = (maxent_t *) malloc(sizeof(maxent_t));
     if (maxent == NULL) {
@@ -84,10 +101,38 @@ maxent_t *maxent_create(maxent_opt_t *maxent_opt)
     }
     memset(maxent, 0, sizeof(maxent_t));
 
-    return maxent;
-  ERR:
+    maxent->maxent_opt = *maxent_opt;
+
+    maxent->wt = (real_t *) malloc(sizeof(real_t)*maxent_opt->size);
+    if (maxent->wt == NULL) {
+        ST_WARNING("Failed to malloc wt.");
+        goto ERR;
+    }
+
+    maxent->hist = (int *) malloc(sizeof(int) * maxent_opt->order);
+    if (maxent->hist == NULL) {
+        ST_WARNING("Failed to malloc hist.");
+        goto ERR;
+    }
+
+    maxent->hash = (hash_t *) malloc(sizeof(hash_t)
+            * maxent_opt->order);
+    if (maxent->hash == NULL) {
+        ST_WARNING("Failed to malloc hash.");
+        goto ERR;
+    }
+
+    for (i = 0; i < maxent_opt->size; i++) {
+        maxent->wt[i] = 0;
+    }
+
+    *pmaxent = maxent;
+
+    return 0;
+
+ERR:
     safe_maxent_destroy(maxent);
-    return NULL;
+    return -1;
 }
 
 void maxent_destroy(maxent_t *maxent)
@@ -95,6 +140,10 @@ void maxent_destroy(maxent_t *maxent)
     if (maxent == NULL) {
         return;
     }
+
+    safe_free(maxent->wt);
+    safe_free(maxent->hist);
+    safe_free(maxent->hash);
 }
 
 maxent_t* maxent_dup(maxent_t *m)
@@ -110,6 +159,14 @@ maxent_t* maxent_dup(maxent_t *m)
     }
 
     *maxent = *m;
+    maxent->maxent_opt = m->maxent_opt;
+
+    maxent->wt = (real_t *) malloc(sizeof(real_t)*m->maxent_opt.size);
+    if (maxent->wt == NULL) {
+        ST_WARNING("Failed to malloc wt.");
+        goto ERR;
+    }
+    memcpy(maxent->wt, m->wt, sizeof(real_t)*m->maxent_opt.size);
 
     return maxent;
 
@@ -121,7 +178,6 @@ ERR:
 int maxent_load_header(maxent_t **maxent, FILE *fp,
         bool *binary, FILE *fo_info)
 {
-    char line[MAX_LINE_LEN];
     union {
         char str[4];
         int magic_num;
@@ -175,26 +231,17 @@ int maxent_load_header(maxent_t **maxent, FILE *fp,
             goto ERR;
         }
     } else {
-        if (fgets(line, MAX_LINE_LEN, fp) == NULL) {
-            ST_WARNING("Failed to read flag.");
+        if (st_readline(fp, "    ") != 0) {
+            ST_WARNING("Failed to read tag.");
+            goto ERR;
+        }
+        if (st_readline(fp, "<MAXENT>") != 0) {
+            ST_WARNING("tag error");
             goto ERR;
         }
 
-        if (fgets(line, MAX_LINE_LEN, fp) == NULL) {
-            ST_WARNING("Failed to read flag.");
-            goto ERR;
-        }
-        if (strncmp(line, "<MAXENT>", 8) != 0) {
-            ST_WARNING("flag error.[%s]", line);
-            goto ERR;
-        }
-
-        if (fgets(line, MAX_LINE_LEN, fp) == NULL) {
+        if (st_readline(fp, "Scale: " REAL_FMT, &scale) != 1) {
             ST_WARNING("Failed to read scale.");
-            goto ERR;
-        }
-        if (sscanf(line, "Scale: %f\n", &scale) != 1) {
-            ST_WARNING("Failed to parse scale.[%s]", line);
             goto ERR;
         }
 
@@ -205,21 +252,13 @@ int maxent_load_header(maxent_t **maxent, FILE *fp,
             return 0;
         }
 
-        if (fgets(line, MAX_LINE_LEN, fp) == NULL) {
-            ST_WARNING("Failed to read size.");
-            goto ERR;
-        }
-        if (sscanf(line, "Size: %lld\n", &size) != 1) {
-            ST_WARNING("Failed to parse size.[%s]", line);
+        if (st_readline(fp, "Size: %lld", &size) != 1) {
+            ST_WARNING("Failed to read size");
             goto ERR;
         }
 
-        if (fgets(line, MAX_LINE_LEN, fp) == NULL) {
+        if (st_readline(fp, "Order: %d", &order) != 1) {
             ST_WARNING("Failed to read order.");
-            goto ERR;
-        }
-        if (sscanf(line, "Order: %d", &order) != 1) {
-            ST_WARNING("Failed to parse order.[%s]", line);
             goto ERR;
         }
     }
@@ -252,7 +291,6 @@ ERR:
 
 int maxent_load_body(maxent_t *maxent, FILE *fp, bool binary)
 {
-    char line[MAX_LINE_LEN];
     int n;
 
     ST_CHECK_PARAM(maxent == NULL || fp == NULL, -1);
@@ -263,18 +301,14 @@ int maxent_load_body(maxent_t *maxent, FILE *fp, bool binary)
             goto ERR;
         }
 
-        if (n != 2 * MAXENT_MAGIC_NUM) {
+        if (n != -MAXENT_MAGIC_NUM) {
             ST_WARNING("Magic num error.");
             goto ERR;
         }
 
     } else {
-        if (fgets(line, MAX_LINE_LEN, fp) == NULL) {
-            ST_WARNING("Failed to read body flag.");
-            goto ERR;
-        }
-        if (strncmp(line, "<MAXENT-DATA>", 13) != 0) {
-            ST_WARNING("body flag error.[%s]", line);
+        if (st_readline(fp, "<MAXENT-DATA>") != 0) {
+            ST_WARNING("body flag error.");
             goto ERR;
         }
     }
@@ -305,6 +339,10 @@ int maxent_save_header(maxent_t *maxent, FILE *fp, bool binary)
             return 0;
         }
 
+        if (fwrite(&maxent->maxent_opt.scale, sizeof(real_t), 1, fp) != 1) {
+            ST_WARNING("Failed to write scale.");
+            return -1;
+        }
         if (fwrite(&maxent->maxent_opt.size, sizeof(long long),
                     1, fp) != 1) {
             ST_WARNING("Failed to write size.");
@@ -339,7 +377,7 @@ int maxent_save_body(maxent_t *maxent, FILE *fp, bool binary)
     ST_CHECK_PARAM(maxent == NULL || fp == NULL, -1);
 
     if (binary) {
-        n = 2 * MAXENT_MAGIC_NUM;
+        n = -MAXENT_MAGIC_NUM;
         if (fwrite(&n, sizeof(int), 1, fp) != 1) {
             ST_WARNING("Failed to write magic num.");
             return -1;
@@ -351,9 +389,20 @@ int maxent_save_body(maxent_t *maxent, FILE *fp, bool binary)
     return 0;
 }
 
-int maxent_train(maxent_t *maxent)
+int maxent_setup_train(maxent_t **maxent, maxent_opt_t *maxent_opt)
 {
-    ST_CHECK_PARAM(maxent == NULL, -1);
+    ST_CHECK_PARAM(maxent == NULL || maxent_opt == NULL, -1);
+
+    if (maxent_opt->scale <= 0) {
+        return 0;
+    }
+
+    return 0;
+}
+
+int maxent_forward(maxent_t *maxent, int word)
+{
+    ST_CHECK_PARAM(maxent == NULL || word < 0, -1);
 
     return 0;
 }
