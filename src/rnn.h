@@ -32,59 +32,29 @@ extern "C" {
 #include <st_opt.h>
 
 #include "config.h"
-#include "nn.h"
+#include "param.h"
 #include "output.h"
 
-typedef struct _rnn_opt_t {
+typedef struct _rnn_model_opt_t {
     real_t scale;
 
     int hidden_size;
+} rnn_model_opt_t;
 
+typedef struct _rnn_train_opt_t {
     int bptt;
     int bptt_block;
 
-    nn_param_t param;
-} rnn_opt_t;
+    param_t param;
+} rnn_train_opt_t;
 
 typedef struct _rnn_t_ {
-    rnn_opt_t rnn_opt;
-
-    int iter;
-    double logp;
-    double llogp;
-
-    long counter;
-    long train_cur_pos;
-    long train_words;
-    long anti_k;
+    rnn_model_opt_t model_opt;
 
     int vocab_size;
     int class_size;
 
-    int bptt;
-    int bptt_block;
-
-    int *bptt_hist;
-    real_t *ac_bptt_h;
-    real_t *er_bptt_h;
-    real_t *wt_bptt_ih_w;
-    real_t *wt_bptt_ih_h;
-
-    // input layer
-    //real_t *ac_i_w;             // word vector
-    //real_t *er_i_w;
-    real_t *ac_i_h;             // hidden layer for last time step
-    real_t *er_i_h;
-
-    // hidden layer
-    real_t *ac_h;
-    real_t *er_h;
-
-    // output layer
-    real_t *ac_o_c;             // class part
-    real_t *er_o_c;
-    real_t *ac_o_w;             // word part
-    real_t *er_o_w;
+    output_t *output;
 
     // weights between input and hidden layer
     real_t *wt_ih_w;            // word vs hidden
@@ -93,15 +63,30 @@ typedef struct _rnn_t_ {
     // weights between hidden and output layer
     real_t *wt_ho_c;            // hidden vs class
     real_t *wt_ho_w;            // hidden vs word
+
+    rnn_train_opt_t train_opt;
+
+    int *bptt_hist;
+    real_t *ac_bptt_h;
+    real_t *er_bptt_h;
+    real_t *wt_bptt_ih_w;
+    real_t *wt_bptt_ih_h;
+
+    // input layer
+    real_t *ac_i_h;             // hidden layer for last time step
+    real_t *er_i_h;
+
+    // hidden layer
+    real_t *ac_h;
+    real_t *er_h;
 } rnn_t;
 
-int rnn_load_model_opt(rnn_opt_t *rnn_opt, st_opt_t *opt,
+int rnn_load_model_opt(rnn_model_opt_t *model_opt, st_opt_t *opt,
         const char *sec_name);
-int rnn_load_train_opt(rnn_opt_t *rnn_opt, st_opt_t *opt,
-        const char *sec_name, nn_param_t *param);
+int rnn_load_train_opt(rnn_train_opt_t *train_opt, st_opt_t *opt,
+        const char *sec_name, param_t *param);
 
-int rnn_init(rnn_t **prnn, rnn_opt_t *rnn_opt,
-        int class_size, int vocab_size);
+int rnn_init(rnn_t **prnn, rnn_model_opt_t *rnn_opt, output_t *output);
 
 #define safe_rnn_destroy(ptr) do {\
     if((ptr) != NULL) {\
@@ -118,8 +103,10 @@ int rnn_load_body(rnn_t *rnn, FILE *fp, bool binary);
 int rnn_save_header(rnn_t *rnn, FILE *fp, bool binary);
 int rnn_save_body(rnn_t *rnn, FILE *fp, bool binary);
 
-int rnn_setup_train(rnn_t *rnn, rnn_opt_t *rnn_opt);
+int rnn_setup_train(rnn_t *rnn, rnn_train_opt_t *train_opt,
+        output_t *output);
 int rnn_forward(rnn_t *rnn, int word);
+int rnn_backprop(rnn_t *rnn, int word);
 
 #ifdef __cplusplus
 }

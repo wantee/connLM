@@ -35,7 +35,7 @@
 
 static const int CONNLM_MAGIC_NUM = 626140498;
 
-int connlm_load_model_opt(connlm_opt_t *connlm_opt, 
+int connlm_load_model_opt(connlm_model_opt_t *connlm_opt, 
         st_opt_t *opt, const char *sec_name)
 {
     char name[MAX_ST_CONF_LEN];
@@ -91,15 +91,15 @@ ST_OPT_ERR:
     return -1;
 }
 
-int connlm_load_train_opt(connlm_opt_t *connlm_opt, 
+int connlm_load_train_opt(connlm_train_opt_t *connlm_opt, 
         st_opt_t *opt, const char *sec_name)
 {
     char name[MAX_ST_CONF_LEN];
 
     ST_CHECK_PARAM(connlm_opt == NULL || opt == NULL, -1);
 
-    if (nn_param_load(&connlm_opt->param, opt, sec_name, NULL) < 0) {
-        ST_WARNING("Failed to nn_param_load.");
+    if (param_load(&connlm_opt->param, opt, sec_name, NULL) < 0) {
+        ST_WARNING("Failed to param_load.");
         goto ST_OPT_ERR;
     }
 
@@ -173,72 +173,6 @@ ST_OPT_ERR:
     return -1;
 }
 
-int connlm_setup_train(connlm_t *connlm, connlm_opt_t *connlm_opt,
-        const char *train_file)
-{
-    ST_CHECK_PARAM(connlm == NULL || connlm_opt == NULL
-            || train_file == NULL, -1);
-
-    connlm->connlm_opt = *connlm_opt;
-
-    connlm->random = connlm_opt->rand_seed;
-
-    connlm->text_fp = NULL;
-    connlm->egs = NULL;
-    connlm->shuffle_buf = NULL;
-
-    connlm->text_fp = st_fopen(train_file, "rb");
-    if (connlm->text_fp == NULL) {
-        ST_WARNING("Failed to open train file[%s]", train_file);
-        goto ERR;
-    }
-
-    connlm->egs = (int *)malloc(sizeof(int)
-            *connlm_opt->num_line_read*connlm_opt->max_word_per_sent);
-    if (connlm->egs == NULL) {
-        ST_WARNING("Failed to malloc egs");
-        goto ERR;
-    }
-
-    if (connlm_opt->shuffle) {
-        connlm->shuffle_buf = (int *)malloc(sizeof(int)
-                *connlm_opt->num_line_read);
-        if (connlm->shuffle_buf == NULL) {
-            ST_WARNING("Failed to malloc shuffle_buf");
-            goto ERR;
-        }
-    }
-
-    if (rnn_setup_train(connlm->rnn, &connlm_opt->rnn_opt) < 0) {
-        ST_WARNING("Failed to rnn_setup_train.");
-        goto ERR;
-    }
-
-    if (maxent_setup_train(connlm->maxent, &connlm_opt->maxent_opt) < 0) {
-        ST_WARNING("Failed to maxent_setup_train.");
-        goto ERR;
-    }
-
-    if (lbl_setup_train(connlm->lbl, &connlm_opt->lbl_opt) < 0) {
-        ST_WARNING("Failed to lbl_setup_train.");
-        goto ERR;
-    }
-
-    if (ffnn_setup_train(connlm->ffnn, &connlm_opt->ffnn_opt) < 0) {
-        ST_WARNING("Failed to ffnn_setup_train.");
-        goto ERR;
-    }
-
-    return 0;
-
-ERR:
-    safe_st_fclose(connlm->text_fp);
-    safe_free(connlm->egs);
-    safe_free(connlm->shuffle_buf);
-
-    return -1;
-}
-
 void connlm_destroy(connlm_t *connlm)
 {
     if (connlm == NULL) {
@@ -258,30 +192,32 @@ void connlm_destroy(connlm_t *connlm)
     safe_ffnn_destroy(connlm->ffnn);
 }
 
-int connlm_init(connlm_t *connlm, connlm_opt_t *connlm_opt)
+int connlm_init(connlm_t *connlm, connlm_model_opt_t *connlm_opt)
 {
     ST_CHECK_PARAM(connlm == NULL || connlm_opt == NULL, -1);
 
+    connlm->model_opt = *connlm_opt;
     srand(connlm_opt->rand_seed);
 
     if (rnn_init(&connlm->rnn, &connlm_opt->rnn_opt,
-            connlm->output->output_opt.class_size,
-            connlm->output->output_size) < 0) {
+            connlm->output) < 0) {
         ST_WARNING("Failed to rnn_init.");
         goto ERR;
     }
 
-    if (maxent_init(&connlm->maxent, &connlm_opt->maxent_opt) < 0) {
+    if (maxent_init(&connlm->maxent, &connlm_opt->maxent_opt,
+                connlm->output) < 0) {
         ST_WARNING("Failed to maxent_init.");
         goto ERR;
     }
 
-    if (lbl_init(&connlm->lbl, &connlm_opt->lbl_opt) < 0) {
+    if (lbl_init(&connlm->lbl, &connlm_opt->lbl_opt, connlm->output) < 0) {
         ST_WARNING("Failed to lbl_init.");
         goto ERR;
     }
 
-    if (ffnn_init(&connlm->ffnn, &connlm_opt->ffnn_opt) < 0) {
+    if (ffnn_init(&connlm->ffnn, &connlm_opt->ffnn_opt,
+                connlm->output) < 0) {
         ST_WARNING("Failed to ffnn_init.");
         goto ERR;
     }
@@ -760,7 +696,7 @@ static int connlm_get_egs(connlm_t *connlm)
     char line[MAX_LINE_LEN];
     char word[MAX_LINE_LEN];
 
-    connlm_opt_t *connlm_opt;
+    connlm_train_opt_t *train_opt;
     int *eg;
     char *p;
 
@@ -771,19 +707,19 @@ static int connlm_get_egs(connlm_t *connlm)
 
     ST_CHECK_PARAM(connlm == NULL, -1);
 
-    connlm_opt = &connlm->connlm_opt;
-    max_word_per_sent = connlm->connlm_opt.max_word_per_sent;
+    train_opt = &connlm->train_opt;
+    max_word_per_sent = train_opt->max_word_per_sent;
 
-    if (connlm_opt->shuffle) {
-        for (i = 0; i < connlm_opt->num_line_read; i++) {
+    if (train_opt->shuffle) {
+        for (i = 0; i < train_opt->num_line_read; i++) {
             connlm->shuffle_buf[i] = i;
         }
 
-        st_shuffle_r(connlm->shuffle_buf, connlm_opt->num_line_read,
+        st_shuffle_r(connlm->shuffle_buf, train_opt->num_line_read,
                 &connlm->random);
     }
 
-    for (i = 0; i < connlm_opt->num_line_read; i++) {
+    for (i = 0; i < train_opt->num_line_read; i++) {
         connlm->egs[i*max_word_per_sent] = -1;
     }
 
@@ -830,7 +766,7 @@ static int connlm_get_egs(connlm_t *connlm)
         }
 
         num_sents++;
-        if (num_sents >= connlm_opt->num_line_read) {
+        if (num_sents >= train_opt->num_line_read) {
             break;
         }
 
@@ -840,6 +776,89 @@ SKIP:
     }
 
     return num_sents;
+}
+
+int connlm_setup_train(connlm_t *connlm, connlm_train_opt_t *connlm_opt,
+        const char *train_file)
+{
+    ST_CHECK_PARAM(connlm == NULL || connlm_opt == NULL
+            || train_file == NULL, -1);
+
+    connlm->train_opt = *connlm_opt;
+
+    connlm->random = connlm_opt->rand_seed;
+
+    connlm->text_fp = NULL;
+    connlm->egs = NULL;
+    connlm->shuffle_buf = NULL;
+
+    connlm->text_fp = st_fopen(train_file, "rb");
+    if (connlm->text_fp == NULL) {
+        ST_WARNING("Failed to open train file[%s]", train_file);
+        goto ERR;
+    }
+
+    connlm->egs = (int *)malloc(sizeof(int)
+            *connlm_opt->num_line_read*connlm_opt->max_word_per_sent);
+    if (connlm->egs == NULL) {
+        ST_WARNING("Failed to malloc egs");
+        goto ERR;
+    }
+
+    if (connlm_opt->shuffle) {
+        connlm->shuffle_buf = (int *)malloc(sizeof(int)
+                *connlm_opt->num_line_read);
+        if (connlm->shuffle_buf == NULL) {
+            ST_WARNING("Failed to malloc shuffle_buf");
+            goto ERR;
+        }
+    }
+
+    if (output_setup_train(connlm->output) < 0) {
+        ST_WARNING("Failed to output_setup_train.");
+        goto ERR;
+    }
+
+    if (connlm->rnn != NULL) {
+        if (rnn_setup_train(connlm->rnn, &connlm_opt->rnn_opt,
+                    connlm->output) < 0) {
+            ST_WARNING("Failed to rnn_setup_train.");
+            goto ERR;
+        }
+    }
+
+    if (connlm->maxent != NULL) {
+        if (maxent_setup_train(connlm->maxent, &connlm_opt->maxent_opt,
+                    connlm->output) < 0) {
+            ST_WARNING("Failed to maxent_setup_train.");
+            goto ERR;
+        }
+    }
+
+    if (connlm->lbl != NULL) {
+        if (lbl_setup_train(connlm->lbl, &connlm_opt->lbl_opt,
+                    connlm->output) < 0) {
+            ST_WARNING("Failed to lbl_setup_train.");
+            goto ERR;
+        }
+    }
+
+    if (connlm->ffnn != NULL) {
+        if (ffnn_setup_train(connlm->ffnn, &connlm_opt->ffnn_opt,
+                    connlm->output) < 0) {
+            ST_WARNING("Failed to ffnn_setup_train.");
+            goto ERR;
+        }
+    }
+
+    return 0;
+
+ERR:
+    safe_st_fclose(connlm->text_fp);
+    safe_free(connlm->egs);
+    safe_free(connlm->shuffle_buf);
+
+    return -1;
 }
 
 int connlm_forward(connlm_t *connlm, int word)
@@ -874,12 +893,52 @@ int connlm_forward(connlm_t *connlm, int word)
         }
     }
 
+    if (output_activate(connlm->output, word) < 0) {
+        ST_WARNING("Failed to output_activate.");
+        return -1;
+    }
+
+    return 0;
+}
+
+int connlm_backprop(connlm_t *connlm, int word)
+{
+    ST_CHECK_PARAM(connlm == NULL || word < 0, -1);
+
+    if (connlm->rnn != NULL) {
+        if (rnn_backprop(connlm->rnn, word) < 0) {
+            ST_WARNING("Failed to rnn_backprop.");
+            return -1;
+        }
+    }
+
+    if (connlm->maxent != NULL) {
+        if (maxent_backprop(connlm->maxent, word) < 0) {
+            ST_WARNING("Failed to maxent_backprop.");
+            return -1;
+        }
+    }
+
+    if (connlm->lbl != NULL) {
+        if (lbl_backprop(connlm->lbl, word) < 0) {
+            ST_WARNING("Failed to lbl_backprop.");
+            return -1;
+        }
+    }
+
+    if (connlm->ffnn != NULL) {
+        if (ffnn_backprop(connlm->ffnn, word) < 0) {
+            ST_WARNING("Failed to ffnn_backprop.");
+            return -1;
+        }
+    }
+
     return 0;
 }
 
 int connlm_train(connlm_t *connlm)
 {
-    connlm_opt_t *connlm_opt;
+    connlm_train_opt_t *train_opt;
     int *eg;
 
     int max_word_per_sent;
@@ -888,8 +947,8 @@ int connlm_train(connlm_t *connlm)
 
     ST_CHECK_PARAM(connlm == NULL, -1);
 
-    connlm_opt = &connlm->connlm_opt;
-    max_word_per_sent = connlm->connlm_opt.max_word_per_sent;
+    train_opt = &connlm->train_opt;
+    max_word_per_sent = connlm->train_opt.max_word_per_sent;
 
     while (!feof(connlm->text_fp)) {
         if (connlm_get_egs(connlm) < 0) {
@@ -897,7 +956,7 @@ int connlm_train(connlm_t *connlm)
             return -1;
         }
 
-        for (i = 0; i < connlm_opt->num_line_read; i++) {
+        for (i = 0; i < train_opt->num_line_read; i++) {
             eg = connlm->egs + max_word_per_sent * i;
             if (eg[0] < 0) {
                 continue;
@@ -907,6 +966,16 @@ int connlm_train(connlm_t *connlm)
             while (j < max_word_per_sent && eg[j] >= 0) {
                 if (connlm_forward(connlm, eg[j]) < 0) {
                     ST_WARNING("Failed to connlm_forward.");
+                    return -1;
+                }
+
+                if (output_loss(connlm->output, eg[j]) < 0) {
+                    ST_WARNING("Failed to output_loss.");
+                    return -1;
+                }
+
+                if (connlm_backprop(connlm, eg[j]) < 0) {
+                    ST_WARNING("Failed to connlm_backprop.");
                     return -1;
                 }
                 j++;

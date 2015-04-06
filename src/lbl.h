@@ -32,24 +32,30 @@ extern "C" {
 #include <st_opt.h>
 
 #include "config.h"
-#include "nn.h"
+#include "param.h"
+#include "output.h"
 
-typedef struct _lbl_opt_t {
+typedef struct _lbl_model_opt_t {
     real_t scale;
+} lbl_model_opt_t;
 
-    nn_param_t param;
-} lbl_opt_t;
+typedef struct _lbl_train_opt_t {
+    param_t param;
+} lbl_train_opt_t;
 
 typedef struct _lbl_t_ {
-    lbl_opt_t lbl_opt;
+    lbl_model_opt_t model_opt;
+    output_t *output;
+
+    lbl_train_opt_t train_opt;
 } lbl_t;
 
-int lbl_load_model_opt(lbl_opt_t *lbl_opt, st_opt_t *opt,
+int lbl_load_model_opt(lbl_model_opt_t *model_opt, st_opt_t *opt,
         const char *sec_name);
-int lbl_load_train_opt(lbl_opt_t *lbl_opt, st_opt_t *opt,
-        const char *sec_name, nn_param_t *param);
+int lbl_load_train_opt(lbl_train_opt_t *train_opt, st_opt_t *opt,
+        const char *sec_name, param_t *param);
 
-int lbl_init(lbl_t **plbl, lbl_opt_t *lbl_opt);
+int lbl_init(lbl_t **plbl, lbl_model_opt_t *model_opt, output_t *output);
 #define safe_lbl_destroy(ptr) do {\
     if((ptr) != NULL) {\
         lbl_destroy(ptr);\
@@ -65,8 +71,10 @@ int lbl_load_body(lbl_t *lbl, FILE *fp, bool binary);
 int lbl_save_header(lbl_t *lbl, FILE *fp, bool binary);
 int lbl_save_body(lbl_t *lbl, FILE *fp, bool binary);
 
-int lbl_setup_train(lbl_t *lbl, lbl_opt_t *lbl_opt);
+int lbl_setup_train(lbl_t *lbl, lbl_train_opt_t *train_opt,
+        output_t *output);
 int lbl_forward(lbl_t *lbl, int word);
+int lbl_backprop(lbl_t *lbl, int word);
 
 #ifdef __cplusplus
 }

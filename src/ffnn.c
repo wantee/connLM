@@ -36,18 +36,18 @@
 
 static const int FFNN_MAGIC_NUM = 626140498 + 5;
 
-int ffnn_load_model_opt(ffnn_opt_t *ffnn_opt, st_opt_t *opt,
+int ffnn_load_model_opt(ffnn_model_opt_t *model_opt, st_opt_t *opt,
         const char *sec_name)
 {
     float f;
 
-    ST_CHECK_PARAM(ffnn_opt == NULL || opt == NULL, -1);
+    ST_CHECK_PARAM(model_opt == NULL || opt == NULL, -1);
 
     ST_OPT_SEC_GET_FLOAT(opt, sec_name, "SCALE", f, 1.0,
             "Scale of FFNN model output");
-    ffnn_opt->scale = (real_t)f;
+    model_opt->scale = (real_t)f;
 
-    if (ffnn_opt->scale <= 0) {
+    if (model_opt->scale <= 0) {
         return 0;
     }
 
@@ -57,13 +57,13 @@ ST_OPT_ERR:
     return -1;
 }
 
-int ffnn_load_train_opt(ffnn_opt_t *ffnn_opt, st_opt_t *opt,
-        const char *sec_name, nn_param_t *param)
+int ffnn_load_train_opt(ffnn_train_opt_t *train_opt, st_opt_t *opt,
+        const char *sec_name, param_t *param)
 {
-    ST_CHECK_PARAM(ffnn_opt == NULL || opt == NULL, -1);
+    ST_CHECK_PARAM(train_opt == NULL || opt == NULL, -1);
 
-    if (nn_param_load(&ffnn_opt->param, opt, sec_name, param) < 0) {
-        ST_WARNING("Failed to nn_param_load.");
+    if (param_load(&train_opt->param, opt, sec_name, param) < 0) {
+        ST_WARNING("Failed to param_load.");
         goto ST_OPT_ERR;
     }
 
@@ -73,15 +73,15 @@ ST_OPT_ERR:
     return -1;
 }
 
-int ffnn_init(ffnn_t **pffnn, ffnn_opt_t *ffnn_opt)
+int ffnn_init(ffnn_t **pffnn, ffnn_model_opt_t *model_opt, output_t *output)
 {
     ffnn_t *ffnn = NULL;
 
-    ST_CHECK_PARAM(pffnn == NULL || ffnn_opt == NULL, -1);
+    ST_CHECK_PARAM(pffnn == NULL || model_opt == NULL, -1);
 
     *pffnn = NULL;
 
-    if (ffnn_opt->scale <= 0) {
+    if (model_opt->scale <= 0) {
         return 0;
     }
 
@@ -92,7 +92,8 @@ int ffnn_init(ffnn_t **pffnn, ffnn_opt_t *ffnn_opt)
     }
     memset(ffnn, 0, sizeof(ffnn_t));
 
-    ffnn->ffnn_opt = *ffnn_opt;
+    ffnn->model_opt = *model_opt;
+    ffnn->output = output;
 
 
     *pffnn = ffnn;
@@ -205,7 +206,7 @@ int ffnn_load_header(ffnn_t **ffnn, FILE *fp, bool *binary, FILE *fo_info)
         }
         memset(*ffnn, 0, sizeof(ffnn_t));
 
-        (*ffnn)->ffnn_opt.scale = scale;
+        (*ffnn)->model_opt.scale = scale;
     }
 
     if (fo_info != NULL) {
@@ -271,7 +272,7 @@ int ffnn_save_header(ffnn_t *ffnn, FILE *fp, bool binary)
             return 0;
         }
 
-        if (fwrite(&ffnn->ffnn_opt.scale, sizeof(real_t), 1, fp) != 1) {
+        if (fwrite(&ffnn->model_opt.scale, sizeof(real_t), 1, fp) != 1) {
             ST_WARNING("Failed to write scale.");
             return -1;
         }
@@ -283,7 +284,7 @@ int ffnn_save_header(ffnn_t *ffnn, FILE *fp, bool binary)
             return 0;
         } 
             
-        fprintf(fp, "Scale: %g\n", ffnn->ffnn_opt.scale);
+        fprintf(fp, "Scale: %g\n", ffnn->model_opt.scale);
     }
 
     return 0;
@@ -308,18 +309,25 @@ int ffnn_save_body(ffnn_t *ffnn, FILE *fp, bool binary)
     return 0;
 }
 
-int ffnn_setup_train(ffnn_t *ffnn, ffnn_opt_t *ffnn_opt)
+int ffnn_setup_train(ffnn_t *ffnn, ffnn_train_opt_t *train_opt,
+        output_t *output)
 {
-    ST_CHECK_PARAM(ffnn == NULL || ffnn_opt == NULL, -1);
+    ST_CHECK_PARAM(ffnn == NULL || train_opt == NULL, -1);
 
-    if (ffnn_opt->scale <= 0) {
-        return 0;
-    }
+    ffnn->train_opt = *train_opt;
+    ffnn->output = output;
 
     return 0;
 }
 
 int ffnn_forward(ffnn_t *ffnn, int word)
+{
+    ST_CHECK_PARAM(ffnn == NULL || word < 0, -1);
+
+    return 0;
+}
+
+int ffnn_backprop(ffnn_t *ffnn, int word)
 {
     ST_CHECK_PARAM(ffnn == NULL || word < 0, -1);
 

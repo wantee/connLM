@@ -29,9 +29,9 @@
 #include <st_macro.h>
 #include <st_log.h>
 
-#include "nn.h"
+#include "param.h"
 
-static nn_param_t def_param = {
+static param_t def_param = {
     .learn_rate = 0.1,
     .l1_penalty = 0.0,
     .l2_penalty = 0.0,
@@ -39,59 +39,75 @@ static nn_param_t def_param = {
     .gradient_cutoff = 0.0,
 };
 
-int nn_param_load(nn_param_t *nn_param, 
-        st_opt_t *opt, const char *sec_name, nn_param_t *parent_param)
+int param_load(param_t *param, st_opt_t *opt, const char *sec_name,
+        param_t *parent_param)
 {
     float f;
 
-    ST_CHECK_PARAM(nn_param == NULL || opt == NULL, -1);
+    ST_CHECK_PARAM(param == NULL || opt == NULL, -1);
 
     if (parent_param == NULL) {
-        *nn_param = def_param;
+        *param = def_param;
     } else {
-        *nn_param = *parent_param;
+        *param = *parent_param;
     }
 
     ST_OPT_SEC_GET_FLOAT(opt, sec_name, "LEARN_RATE", f,
-            (float)nn_param->learn_rate,
+            (float)param->learn_rate,
             "Learning rate");
-    nn_param->learn_rate = (real_t)f;
+    param->learn_rate = (real_t)f;
 
     ST_OPT_SEC_GET_FLOAT(opt, sec_name, "L1_PENALTY", f, 
-            (float)nn_param->l1_penalty,
+            (float)param->l1_penalty,
             "L1 penalty (promote sparsity)");
-    nn_param->l1_penalty = (real_t)f;
+    param->l1_penalty = (real_t)f;
 
     ST_OPT_SEC_GET_FLOAT(opt, sec_name, "L2_PENALTY", f,
-            (float)nn_param->l2_penalty,
+            (float)param->l2_penalty,
             "L2 penalty (weight decay)");
-    nn_param->l2_penalty = (real_t)f;
+    param->l2_penalty = (real_t)f;
 
     ST_OPT_SEC_GET_FLOAT(opt, sec_name, "MOMENTUM", f,
-            (float)nn_param->momentum,
+            (float)param->momentum,
             "Momentum");
-    nn_param->momentum = (real_t)f;
+    param->momentum = (real_t)f;
 
     ST_OPT_SEC_GET_FLOAT(opt, sec_name, "GRADIENT_CUTOFF", f,
-            (float)nn_param->gradient_cutoff,
+            (float)param->gradient_cutoff,
             "Cutoff of gradient");
-    nn_param->gradient_cutoff = (real_t)f;
+    param->gradient_cutoff = (real_t)f;
 
     return 0;
 ST_OPT_ERR:
     return -1;
 }
 
-int nn_forward(nn_t *nn)
+int param_update(param_t *param, real_t *wt, real_t *er, real_t *x,
+        int er_size, int wt_row, int wt_start)
 {
-    ST_CHECK_PARAM(nn == NULL, -1);
+    real_t *w;
 
-    return 0;
-}
+    int r;
+    int i;
+    int j;
 
-int nn_backprop(nn_t *nn)
-{
-    ST_CHECK_PARAM(nn == NULL, -1);
+    if (wt_row < 0) {
+        j = wt_start;
+        for (i = 0; i < er_size; i++) {
+            wt[j] += param->learn_rate * er[i] * ((x == NULL) ? 1 : x[i])
+                - param->l2_penalty * wt[j];
+            j++;
+            j %= (-wt_row);
+        }
+    } else {
+        for (r = 0; r < wt_row; r++) {
+            w = wt + r * er_size;
+            for (i = 0; i < er_size; i++) {
+                w[i] += param->learn_rate * er[i] * ((x == NULL) ? 1 : x[i])
+                    - param->l2_penalty * w[i];
+            }
+        }
+    }
 
     return 0;
 }

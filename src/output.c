@@ -31,6 +31,7 @@
 #include <st_macro.h>
 #include <st_log.h>
 
+#include "utils.h"
 #include "output.h"
 
 static const int OUTPUT_MAGIC_NUM = 626140498 + 6;
@@ -83,6 +84,12 @@ void output_destroy(output_t *output)
     safe_free(output->w2c);
     safe_free(output->c2w_s);
     safe_free(output->c2w_e);
+
+    safe_free(output->ac_o_c);
+    safe_free(output->er_o_c);
+    safe_free(output->ac_o_w);
+    safe_free(output->er_o_w);
+
 }
 
 output_t* output_dup(output_t *o)
@@ -580,4 +587,124 @@ ERR:
     safe_free(output->c2w_s);
     safe_free(output->c2w_e);
     return -1;
+}
+
+int output_setup_train(output_t *output)
+{
+    int class_size;
+
+    int i;
+
+    ST_CHECK_PARAM(output == NULL, -1);
+
+    class_size = output->output_opt.class_size;
+    if (class_size > 0) {
+        output->ac_o_c = (real_t *) malloc(sizeof(real_t) * class_size);
+        if (output->ac_o_c == NULL) {
+            ST_WARNING("Failed to malloc ac_o_c.");
+            goto ERR;
+        }
+
+        output->er_o_c = (real_t *) malloc(sizeof(real_t) * class_size);
+        if (output->er_o_c == NULL) {
+            ST_WARNING("Failed to malloc er_o_c.");
+            goto ERR;
+        }
+
+        for (i = 0; i < class_size; i++) {
+            output->ac_o_c[i] = 0;
+            output->er_o_c[i] = 0;
+        }
+    }
+
+    output->ac_o_w = (real_t *) malloc(sizeof(real_t)*output->output_size);
+    if (output->ac_o_w == NULL) {
+        ST_WARNING("Failed to malloc ac_o_w.");
+        goto ERR;
+    }
+
+    output->er_o_w = (real_t *) malloc(sizeof(real_t)*output->output_size);
+    if (output->er_o_w == NULL) {
+        ST_WARNING("Failed to malloc er_o_w.");
+        goto ERR;
+    }
+
+    for (i = 0; i < output->output_size; i++) {
+        output->ac_o_w[i] = 0;
+        output->er_o_w[i] = 0;
+    }
+
+    return 0;
+
+ERR:
+    safe_free(output->ac_o_c);
+    safe_free(output->er_o_c);
+    safe_free(output->ac_o_w);
+    safe_free(output->er_o_w);
+
+    return -1;
+}
+
+int output_activate(output_t *output, int word)
+{
+    int c;
+    int s;
+    int e;
+
+    ST_CHECK_PARAM(output == NULL, -1);
+
+    if (word < 0) {
+        return 0;
+    }
+
+    if (output->output_opt.class_size > 0) {
+        c = output->w2c[word];
+        s = output->c2w_s[c];
+        e = output->c2w_e[c];
+        
+        softmax(output->ac_o_c, output->output_opt.class_size);
+    } else {
+        s = 0;
+        e = output->output_size;
+    }
+
+    softmax(output->ac_o_w + s, e - s);
+
+    return 0;
+}
+
+int output_loss(output_t *output, int word)
+{
+    int c;
+    int s;
+    int e;
+
+    int o;
+
+    ST_CHECK_PARAM(output == NULL, -1);
+
+    if (word < 0) {
+        return 0;
+    }
+
+    if (output->output_opt.class_size > 0) {
+        c = output->w2c[word];
+        s = output->c2w_s[c];
+        e = output->c2w_e[c];
+        
+        for (o = 0; o < output->output_opt.class_size; o++) {
+            output->er_o_c[o] = (0 - output->ac_o_c[o]);
+        }
+        output->er_o_c[c] = (1 - output->ac_o_c[c]);
+    } else {
+        s = 0;
+        e = output->output_size;
+    }
+
+    for (o = s; o < e; o++) {
+        output->er_o_w[o] = (0 - output->ac_o_w[o]);
+    }
+    output->er_o_w[word] = (1 - output->ac_o_w[word]);
+
+    return 0;
 }

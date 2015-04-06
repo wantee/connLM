@@ -170,6 +170,7 @@ int main(int argc, const char *argv[])
     safe_st_fclose(fp);
     safe_st_opt_destroy(g_cmd_opt);
     safe_vocab_destroy(vocab);
+    safe_output_destroy(output);
     safe_connlm_destroy(g_connlm);
 
     st_log_close(0);

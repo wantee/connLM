@@ -29,7 +29,11 @@
 extern "C" {
 #endif
 
+#include <st_opt.h>
+
 #include "config.h"
+
+#define exp10(a) pow(10.0, a)
 
 void matXvec(real_t *dst, real_t *mat, real_t *vec, int mat_wid, int vec_size);
 

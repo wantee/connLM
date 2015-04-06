@@ -34,36 +34,45 @@ extern "C" {
 
 #include "config.h"
 #include "vocab.h"
-#include "nn.h"
+#include "output.h"
+#include "param.h"
 #include "rnn.h"
 #include "maxent.h"
 #include "lbl.h"
 #include "ffnn.h"
-#include "output.h"
 
-typedef struct _connlm_opt_t_ {
+typedef struct _connlm_model_opt_t_ {
+    int rand_seed;
+
+    output_opt_t output_opt;
+
+    rnn_model_opt_t rnn_opt;
+    maxent_model_opt_t maxent_opt;
+    lbl_model_opt_t lbl_opt;
+    ffnn_model_opt_t ffnn_opt;
+} connlm_model_opt_t;
+
+typedef struct _connlm_train_opt_t_ {
+    param_t param;
+
     int num_thread;
     int max_word_per_sent;
     int rand_seed;
-
+ 
     bool report_progress;
-
-    bool independent;
 
     int num_line_read;
     bool shuffle;
 
-    nn_param_t param;
-    output_opt_t output_opt;
-
-    rnn_opt_t rnn_opt;
-    maxent_opt_t maxent_opt;
-    lbl_opt_t lbl_opt;
-    ffnn_opt_t ffnn_opt;
-} connlm_opt_t;
+    rnn_train_opt_t rnn_opt;
+    maxent_train_opt_t maxent_opt;
+    lbl_train_opt_t lbl_opt;
+    ffnn_train_opt_t ffnn_opt;
+} connlm_train_opt_t;
 
 typedef struct _connlm_t_ {
-    connlm_opt_t connlm_opt;
+    connlm_model_opt_t model_opt;
+    connlm_train_opt_t train_opt;
 
     unsigned random;
 
@@ -79,10 +88,10 @@ typedef struct _connlm_t_ {
     ffnn_t *ffnn;
 } connlm_t;
 
-int connlm_load_model_opt(connlm_opt_t *connlm_opt, 
+int connlm_load_model_opt(connlm_model_opt_t *connlm_opt, 
         st_opt_t *opt, const char *sec_name);
 
-int connlm_load_train_opt(connlm_opt_t *connlm_opt, 
+int connlm_load_train_opt(connlm_train_opt_t *train_opt, 
         st_opt_t *opt, const char *sec_name);
 
 #define safe_connlm_destroy(ptr) do {\
@@ -94,8 +103,8 @@ int connlm_load_train_opt(connlm_opt_t *connlm_opt,
     } while(0)
 void connlm_destroy(connlm_t *connlm);
 
-int connlm_init(connlm_t *connlm, connlm_opt_t *connlm_opt);
-int connlm_setup_train(connlm_t *connlm, connlm_opt_t *connlm_opt,
+int connlm_init(connlm_t *connlm, connlm_model_opt_t *model_opt);
+int connlm_setup_train(connlm_t *connlm, connlm_train_opt_t *train_opt,
         const char *train_file);
 
 connlm_t *connlm_new(vocab_t *vocab, output_t *output,

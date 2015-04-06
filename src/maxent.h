@@ -32,33 +32,50 @@ extern "C" {
 #include <st_opt.h>
 
 #include "config.h"
-#include "nn.h"
+#include "param.h"
+#include "output.h"
 
 typedef unsigned long long hash_t;
+typedef long long hash_size_t;
+#define HASH_SIZE_FMT "%lld"
 
-typedef struct _maxent_opt_t {
+typedef struct _maxent_model_opt_t {
     real_t scale;
 
-    long long size;
+    hash_size_t sz_w;
+    hash_size_t sz_c;
     int order;
+} maxent_model_opt_t;
 
-    nn_param_t param;
-} maxent_opt_t;
+typedef struct _maxent_train_opt_t {
+    param_t param;
+} maxent_train_opt_t;
 
 typedef struct _maxent_t_ {
-    maxent_opt_t maxent_opt;
+    maxent_model_opt_t model_opt;
 
-    real_t *wt;
+    int vocab_size;
+    int class_size;
+
+    real_t *wt_c;
+    real_t *wt_w;
+
+    output_t *output;
+
+    maxent_train_opt_t train_opt;
     int *hist;
-    hash_t *hash;
+    // neuron actived by a n-gram feature of history
+    hash_t *hash_c; 
+    hash_t *hash_w; 
 } maxent_t;
 
-int maxent_load_model_opt(maxent_opt_t *maxent_opt,
+int maxent_load_model_opt(maxent_model_opt_t *model_opt,
         st_opt_t *opt, const char *sec_name);
-int maxent_load_train_opt(maxent_opt_t *maxent_opt,
-        st_opt_t *opt, const char *sec_name, nn_param_t *param);
+int maxent_load_train_opt(maxent_train_opt_t *train_opt,
+        st_opt_t *opt, const char *sec_name, param_t *param);
 
-int maxent_init(maxent_t **pmaxent, maxent_opt_t *maxent_opt);
+int maxent_init(maxent_t **pmaxent, maxent_model_opt_t *model_opt,
+        output_t *output);
 #define safe_maxent_destroy(ptr) do {\
     if((ptr) != NULL) {\
         maxent_destroy(ptr);\
@@ -75,8 +92,10 @@ int maxent_load_body(maxent_t *maxent, FILE *fp, bool binary);
 int maxent_save_header(maxent_t *maxent, FILE *fp, bool binary);
 int maxent_save_body(maxent_t *maxent, FILE *fp, bool binary);
 
-int maxent_setup_train(maxent_t *maxent, maxent_opt_t *maxent_opt);
+int maxent_setup_train(maxent_t *maxent, maxent_train_opt_t *train_opt,
+        output_t *output);
 int maxent_forward(maxent_t *maxent, int word);
+int maxent_backprop(maxent_t *maxent, int word);
 
 #ifdef __cplusplus
 }

@@ -38,7 +38,7 @@ bool g_binary;
 
 st_opt_t *g_cmd_opt;
 
-connlm_opt_t g_connlm_opt;
+connlm_train_opt_t g_train_opt;
 connlm_t *g_connlm;
 
 int connlm_train_parse_opt(int *argc, const char *argv[])
@@ -67,7 +67,7 @@ int connlm_train_parse_opt(int *argc, const char *argv[])
         goto ST_OPT_ERR;
     }
 
-    if (connlm_load_train_opt(&g_connlm_opt, g_cmd_opt, NULL) < 0) {
+    if (connlm_load_train_opt(&g_train_opt, g_cmd_opt, NULL) < 0) {
         ST_WARNING("Failed to connlm_load_train_opt");
         goto ST_OPT_ERR;
     }
@@ -129,7 +129,7 @@ int main(int argc, const char *argv[])
     }
     safe_st_fclose(fp);
 
-    if (connlm_setup_train(g_connlm, &g_connlm_opt, argv[1]) < 0) {
+    if (connlm_setup_train(g_connlm, &g_train_opt, argv[1]) < 0) {
         ST_WARNING("Failed to connlm_setup_train.");
         goto ERR;
     }

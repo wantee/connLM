@@ -34,9 +34,10 @@ OUTINCDIR = ../include/connlm
 BIN_OBJ = ./bin_obj
 SO_OBJ = ./so_obj
 
-TARGET_INC = connlm.h vocab.h output.h nn.h rnn.h maxent.h lbl.h ffnn.h
+TARGET_INC = connlm.h vocab.h output.h param.h rnn.h maxent.h lbl.h ffnn.h
 
-OBJ_SO = utils.o vocab.o output.o nn.o rnn.o maxent.o lbl.o ffnn.o connlm.o 
+OBJ_SO = utils.o vocab.o output.o param.o rnn.o maxent.o lbl.o ffnn.o \
+         connlm.o 
 
 ifeq ($(UNAME_S),Darwin)
 TARGET_SO = libconnlm.dylib

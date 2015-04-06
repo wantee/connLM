@@ -32,24 +32,32 @@ extern "C" {
 #include <st_opt.h>
 
 #include "config.h"
-#include "nn.h"
+#include "param.h"
+#include "output.h"
 
-typedef struct _ffnn_opt_t {
+typedef struct _ffnn_model_opt_t {
     real_t scale;
+} ffnn_model_opt_t;
 
-    nn_param_t param;
-} ffnn_opt_t;
+typedef struct _ffnn_train_opt_t {
+    param_t param;
+} ffnn_train_opt_t;
 
 typedef struct _ffnn_t_ {
-    ffnn_opt_t ffnn_opt;
+    ffnn_model_opt_t model_opt;
+    output_t *output;
+
+
+    ffnn_train_opt_t train_opt;
 } ffnn_t;
 
-int ffnn_load_model_opt(ffnn_opt_t *ffnn_opt, st_opt_t *opt,
+int ffnn_load_model_opt(ffnn_model_opt_t *model_opt, st_opt_t *opt,
         const char *sec_name);
-int ffnn_load_train_opt(ffnn_opt_t *ffnn_opt, st_opt_t *opt,
-        const char *sec_name, nn_param_t *param);
+int ffnn_load_train_opt(ffnn_train_opt_t *train_opt, st_opt_t *opt,
+        const char *sec_name, param_t *param);
 
-int ffnn_init(ffnn_t **pffnn, ffnn_opt_t *ffnn_opt);
+int ffnn_init(ffnn_t **pffnn, ffnn_model_opt_t *model_opt,
+        output_t *output);
 #define safe_ffnn_destroy(ptr) do {\
     if((ptr) != NULL) {\
         ffnn_destroy(ptr);\
@@ -65,8 +73,10 @@ int ffnn_load_body(ffnn_t *ffnn, FILE *fp, bool binary);
 int ffnn_save_header(ffnn_t *ffnn, FILE *fp, bool binary);
 int ffnn_save_body(ffnn_t *ffnn, FILE *fp, bool binary);
 
-int ffnn_setup_train(ffnn_t *ffnn, ffnn_opt_t *ffnn_opt);
+int ffnn_setup_train(ffnn_t *ffnn, ffnn_train_opt_t *train_opt,
+        output_t *output);
 int ffnn_forward(ffnn_t *ffnn, int word);
+int ffnn_backprop(ffnn_t *ffnn, int word);
 
 #ifdef __cplusplus
 }

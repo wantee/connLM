@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef  _NN_H_
-#define  _NN_H_
+#ifndef  _PARAM_H_
+#define  _PARAM_H_
 
 #ifdef __cplusplus
 extern "C" {
@@ -33,22 +33,19 @@ extern "C" {
 
 #include "config.h"
 
-typedef struct _nn_param_t_ {
+typedef struct _param_t_ {
     real_t learn_rate;
     real_t l1_penalty;
     real_t l2_penalty;
     real_t momentum;
     real_t gradient_cutoff;
-} nn_param_t;
+} param_t;
 
-typedef struct _nn_t_ {
-} nn_t;
+int param_load(param_t *param, st_opt_t *opt, const char *sec_name,
+        param_t *parent_param);
 
-int nn_param_load(nn_param_t *nn_param, 
-        st_opt_t *opt, const char *sec_name, nn_param_t *parent_param);
-
-int nn_forward(nn_t *nn);
-int nn_backprop(nn_t *nn);
+int param_update(param_t *param, real_t *wt, real_t *er, real_t *x,
+        int er_size, int wt_row, int wt_start);
 
 #ifdef __cplusplus
 }

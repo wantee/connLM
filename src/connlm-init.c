@@ -32,7 +32,7 @@ bool g_binary;
 
 st_opt_t *g_cmd_opt;
 
-connlm_opt_t g_connlm_opt;
+connlm_model_opt_t g_model_opt;
 
 int connlm_init_parse_opt(int *argc, const char *argv[])
 {
@@ -60,7 +60,7 @@ int connlm_init_parse_opt(int *argc, const char *argv[])
         goto ST_OPT_ERR;
     }
 
-    if (connlm_load_model_opt(&g_connlm_opt, g_cmd_opt, NULL) < 0) {
+    if (connlm_load_model_opt(&g_model_opt, g_cmd_opt, NULL) < 0) {
         ST_WARNING("Failed to connlm_load_model_opt");
         goto ST_OPT_ERR;
     }
@@ -124,7 +124,7 @@ int main(int argc, const char *argv[])
     safe_st_fclose(fp);
 
     ST_NOTICE("Initialising Model..");
-    if (connlm_init(connlm, &g_connlm_opt) < 0) {
+    if (connlm_init(connlm, &g_model_opt) < 0) {
         ST_WARNING("Failed to connlm_create.");
         goto ERR;
     }

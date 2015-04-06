@@ -44,6 +44,12 @@ typedef struct _output_t_ {
 
     int output_size;
 
+    // neurons
+    real_t *ac_o_w;             // word part
+    real_t *er_o_w;
+    real_t *ac_o_c;             // class part
+    real_t *er_o_c;
+
     // for classes
     int *w2c;                   // word to class map
     int *c2w_s;                 // start for class to word map
@@ -72,6 +78,10 @@ int output_save_header(output_t *output, FILE *fp, bool binary);
 int output_save_body(output_t *output, FILE *fp, bool binary);
 
 int output_generate(output_t *output, count_t *word_cnts);
+
+int output_setup_train(output_t *output);
+int output_activate(output_t *output, int word);
+int output_loss(output_t *output, int word);
 
 #ifdef __cplusplus
 }
