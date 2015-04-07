@@ -589,62 +589,6 @@ ERR:
     return -1;
 }
 
-int output_setup_train(output_t *output)
-{
-    int class_size;
-
-    int i;
-
-    ST_CHECK_PARAM(output == NULL, -1);
-
-    class_size = output->output_opt.class_size;
-    if (class_size > 0) {
-        output->ac_o_c = (real_t *) malloc(sizeof(real_t) * class_size);
-        if (output->ac_o_c == NULL) {
-            ST_WARNING("Failed to malloc ac_o_c.");
-            goto ERR;
-        }
-
-        output->er_o_c = (real_t *) malloc(sizeof(real_t) * class_size);
-        if (output->er_o_c == NULL) {
-            ST_WARNING("Failed to malloc er_o_c.");
-            goto ERR;
-        }
-
-        for (i = 0; i < class_size; i++) {
-            output->ac_o_c[i] = 0;
-            output->er_o_c[i] = 0;
-        }
-    }
-
-    output->ac_o_w = (real_t *) malloc(sizeof(real_t)*output->output_size);
-    if (output->ac_o_w == NULL) {
-        ST_WARNING("Failed to malloc ac_o_w.");
-        goto ERR;
-    }
-
-    output->er_o_w = (real_t *) malloc(sizeof(real_t)*output->output_size);
-    if (output->er_o_w == NULL) {
-        ST_WARNING("Failed to malloc er_o_w.");
-        goto ERR;
-    }
-
-    for (i = 0; i < output->output_size; i++) {
-        output->ac_o_w[i] = 0;
-        output->er_o_w[i] = 0;
-    }
-
-    return 0;
-
-ERR:
-    safe_free(output->ac_o_c);
-    safe_free(output->er_o_c);
-    safe_free(output->ac_o_w);
-    safe_free(output->er_o_w);
-
-    return -1;
-}
-
 int output_activate(output_t *output, int word)
 {
     int c;
@@ -708,3 +652,223 @@ int output_loss(output_t *output, int word)
 
     return 0;
 }
+
+real_t output_get_prob(output_t *output, int word)
+{
+    return output->ac_o_c[output->w2c[word]] * output->ac_o_w[word];
+}
+
+int output_setup_train(output_t *output)
+{
+    int class_size;
+
+    int i;
+
+    ST_CHECK_PARAM(output == NULL, -1);
+
+    class_size = output->output_opt.class_size;
+    if (class_size > 0) {
+        output->ac_o_c = (real_t *) malloc(sizeof(real_t) * class_size);
+        if (output->ac_o_c == NULL) {
+            ST_WARNING("Failed to malloc ac_o_c.");
+            goto ERR;
+        }
+
+        output->er_o_c = (real_t *) malloc(sizeof(real_t) * class_size);
+        if (output->er_o_c == NULL) {
+            ST_WARNING("Failed to malloc er_o_c.");
+            goto ERR;
+        }
+
+        for (i = 0; i < class_size; i++) {
+            output->ac_o_c[i] = 0;
+            output->er_o_c[i] = 0;
+        }
+    }
+
+    output->ac_o_w = (real_t *) malloc(sizeof(real_t)*output->output_size);
+    if (output->ac_o_w == NULL) {
+        ST_WARNING("Failed to malloc ac_o_w.");
+        goto ERR;
+    }
+
+    output->er_o_w = (real_t *) malloc(sizeof(real_t)*output->output_size);
+    if (output->er_o_w == NULL) {
+        ST_WARNING("Failed to malloc er_o_w.");
+        goto ERR;
+    }
+
+    for (i = 0; i < output->output_size; i++) {
+        output->ac_o_w[i] = 0;
+        output->er_o_w[i] = 0;
+    }
+
+    return 0;
+
+ERR:
+    safe_free(output->ac_o_c);
+    safe_free(output->er_o_c);
+    safe_free(output->ac_o_w);
+    safe_free(output->er_o_w);
+
+    return -1;
+}
+
+int output_reset_train(output_t *output)
+{
+#if 0
+    int class_size;
+
+    int i;
+
+    ST_CHECK_PARAM(output == NULL, -1);
+
+    class_size = output->output_opt.class_size;
+    if (class_size > 0) {
+        for (i = 0; i < class_size; i++) {
+            output->ac_o_c[i] = 0;
+            output->er_o_c[i] = 0;
+        }
+    }
+
+    for (i = 0; i < output->output_size; i++) {
+        output->ac_o_w[i] = 0;
+        output->er_o_w[i] = 0;
+    }
+#endif
+
+    return 0;
+}
+
+int output_clear_train(output_t *output, int word)
+{
+    int class_size;
+
+    int c;
+    int s;
+    int e;
+
+    int i;
+
+    ST_CHECK_PARAM(output == NULL, -1);
+
+    if (word < 0) {
+        return 0;
+    }
+
+    class_size = output->output_opt.class_size;
+    if (class_size > 0) {
+        for (i = 0; i < class_size; i++) {
+            output->ac_o_c[i] = 0;
+            output->er_o_c[i] = 0;
+        }
+    }
+
+    c = output->w2c[word];
+    s = output->c2w_s[c];
+    e = output->c2w_e[c];
+    for (i = s; i < e; i++) {
+        output->ac_o_w[i] = 0;
+        output->er_o_w[i] = 0;
+    }
+
+    return 0;
+}
+
+int output_setup_test(output_t *output)
+{
+    int class_size;
+
+    int i;
+
+    ST_CHECK_PARAM(output == NULL, -1);
+
+    class_size = output->output_opt.class_size;
+    if (class_size > 0) {
+        output->ac_o_c = (real_t *) malloc(sizeof(real_t) * class_size);
+        if (output->ac_o_c == NULL) {
+            ST_WARNING("Failed to malloc ac_o_c.");
+            goto ERR;
+        }
+
+        for (i = 0; i < class_size; i++) {
+            output->ac_o_c[i] = 0;
+        }
+    }
+
+    output->ac_o_w = (real_t *) malloc(sizeof(real_t)*output->output_size);
+    if (output->ac_o_w == NULL) {
+        ST_WARNING("Failed to malloc ac_o_w.");
+        goto ERR;
+    }
+
+    for (i = 0; i < output->output_size; i++) {
+        output->ac_o_w[i] = 0;
+    }
+
+    return 0;
+
+ERR:
+    safe_free(output->ac_o_c);
+    safe_free(output->ac_o_w);
+
+    return -1;
+}
+
+int output_reset_test(output_t *output)
+{
+#if 0
+    int class_size;
+
+    int i;
+
+    ST_CHECK_PARAM(output == NULL, -1);
+
+    class_size = output->output_opt.class_size;
+    if (class_size > 0) {
+        for (i = 0; i < class_size; i++) {
+            output->ac_o_c[i] = 0;
+        }
+    }
+
+    for (i = 0; i < output->output_size; i++) {
+        output->ac_o_w[i] = 0;
+    }
+#endif
+
+    return 0;
+}
+
+int output_clear_test(output_t *output, int word)
+{
+    int class_size;
+
+    int c;
+    int s;
+    int e;
+
+    int i;
+
+    ST_CHECK_PARAM(output == NULL, -1);
+
+    if (word < 0) {
+        return 0;
+    }
+
+    class_size = output->output_opt.class_size;
+    if (class_size > 0) {
+        for (i = 0; i < class_size; i++) {
+            output->ac_o_c[i] = 0;
+        }
+    }
+
+    c = output->w2c[word];
+    s = output->c2w_s[c];
+    e = output->c2w_e[c];
+    for (i = s; i < e; i++) {
+        output->ac_o_w[i] = 0;
+    }
+
+    return 0;
+}
+

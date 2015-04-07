@@ -70,9 +70,19 @@ typedef struct _connlm_train_opt_t_ {
     ffnn_train_opt_t ffnn_opt;
 } connlm_train_opt_t;
 
+typedef struct _connlm_test_opt_t_ {
+    int num_thread;
+    int max_word_per_sent;
+
+    int num_line_read;
+
+    real_t oov_penalty;
+} connlm_test_opt_t;
+
 typedef struct _connlm_t_ {
     connlm_model_opt_t model_opt;
     connlm_train_opt_t train_opt;
+    connlm_test_opt_t test_opt;
 
     unsigned random;
 
@@ -94,6 +104,9 @@ int connlm_load_model_opt(connlm_model_opt_t *connlm_opt,
 int connlm_load_train_opt(connlm_train_opt_t *train_opt, 
         st_opt_t *opt, const char *sec_name);
 
+int connlm_load_test_opt(connlm_test_opt_t *test_opt, 
+        st_opt_t *opt, const char *sec_name);
+
 #define safe_connlm_destroy(ptr) do {\
     if((ptr) != NULL) {\
         connlm_destroy(ptr);\
@@ -104,8 +117,6 @@ int connlm_load_train_opt(connlm_train_opt_t *train_opt,
 void connlm_destroy(connlm_t *connlm);
 
 int connlm_init(connlm_t *connlm, connlm_model_opt_t *model_opt);
-int connlm_setup_train(connlm_t *connlm, connlm_train_opt_t *train_opt,
-        const char *train_file);
 
 connlm_t *connlm_new(vocab_t *vocab, output_t *output,
         rnn_t *rnn, maxent_t *maxent, lbl_t* lbl, ffnn_t *ffnn);
@@ -115,8 +126,61 @@ int connlm_save(connlm_t *connlm, FILE *fp, bool binary);
 
 int connlm_print_info(FILE *model_fp, FILE *fo);
 
+/**
+ * Forward propagate
+ */
+int connlm_forward(connlm_t *connlm, int word);
+
+/**
+ * Backpropagate
+ */
+int connlm_backprop(connlm_t *connlm, int word);
+
+/**
+ * Setup training.
+ */
+int connlm_setup_train(connlm_t *connlm, connlm_train_opt_t *train_opt,
+        const char *train_file);
+
+/**
+ * Reset training.
+ * Called every sentence.
+ */
+int connlm_reset_train(connlm_t *connlm);
+
+/**
+ * Clear training.
+ * Called every word.
+ */
+int connlm_clear_train(connlm_t *connlm, int word);
+
+/**
+ * Training
+ */
 int connlm_train(connlm_t *connlm);
-int connlm_test(connlm_t *connlm);
+
+/**
+ * Setup testing.
+ */
+int connlm_setup_test(connlm_t *connlm, connlm_test_opt_t *test_opt,
+        const char *test_file);
+
+/**
+ * Reset testing.
+ * Called every sentence.
+ */
+int connlm_reset_test(connlm_t *connlm);
+
+/**
+ * Clear testing.
+ * Called every word.
+ */
+int connlm_clear_test(connlm_t *connlm, int word);
+
+/**
+ * Test
+ */
+int connlm_test(connlm_t *connlm, FILE *fp_log);
 
 #ifdef __cplusplus
 }

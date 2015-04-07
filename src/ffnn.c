@@ -309,6 +309,28 @@ int ffnn_save_body(ffnn_t *ffnn, FILE *fp, bool binary)
     return 0;
 }
 
+int ffnn_forward(ffnn_t *ffnn, int word)
+{
+    ST_CHECK_PARAM(ffnn == NULL, -1);
+
+    if (word < 0) {
+        return 0;
+    }
+
+    return 0;
+}
+
+int ffnn_backprop(ffnn_t *ffnn, int word)
+{
+    ST_CHECK_PARAM(ffnn == NULL, -1);
+
+    if (word < 0) {
+        return 0;
+    }
+
+    return 0;
+}
+
 int ffnn_setup_train(ffnn_t *ffnn, ffnn_train_opt_t *train_opt,
         output_t *output)
 {
@@ -320,16 +342,39 @@ int ffnn_setup_train(ffnn_t *ffnn, ffnn_train_opt_t *train_opt,
     return 0;
 }
 
-int ffnn_forward(ffnn_t *ffnn, int word)
+int ffnn_reset_train(ffnn_t *ffnn)
 {
-    ST_CHECK_PARAM(ffnn == NULL || word < 0, -1);
+    ST_CHECK_PARAM(ffnn == NULL, -1);
 
     return 0;
 }
 
-int ffnn_backprop(ffnn_t *ffnn, int word)
+int ffnn_clear_train(ffnn_t *ffnn, int word)
 {
-    ST_CHECK_PARAM(ffnn == NULL || word < 0, -1);
+    ST_CHECK_PARAM(ffnn == NULL, -1);
+
+    return 0;
+}
+
+int ffnn_setup_test(ffnn_t *ffnn, output_t *output)
+{
+    ST_CHECK_PARAM(ffnn == NULL || output == NULL, -1);
+
+    ffnn->output = output;
+
+    return 0;
+}
+
+int ffnn_reset_test(ffnn_t *ffnn)
+{
+    ST_CHECK_PARAM(ffnn == NULL, -1);
+
+    return 0;
+}
+
+int ffnn_clear_test(ffnn_t *ffnn, int word)
+{
+    ST_CHECK_PARAM(ffnn == NULL, -1);
 
     return 0;
 }

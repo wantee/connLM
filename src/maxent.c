@@ -588,70 +588,6 @@ int maxent_save_body(maxent_t *maxent, FILE *fp, bool binary)
     return 0;
 }
 
-static bool maxent_check_output(maxent_t *maxent, output_t *output)
-{
-    ST_CHECK_PARAM(maxent == NULL || output == NULL, false);
-
-    if (maxent->class_size != output->output_opt.class_size) {
-        ST_WARNING("Class size not match");
-        return false;
-    } else if (maxent->vocab_size != output->output_size) {
-        ST_WARNING("Vocab size not match");
-        return false;
-    }
-
-    return true;
-}
-
-int maxent_setup_train(maxent_t *maxent, maxent_train_opt_t *train_opt,
-        output_t *output)
-{
-    int order;
-    int i;
-
-    ST_CHECK_PARAM(maxent == NULL || train_opt == NULL
-            || output == NULL, -1);
-
-    if (!maxent_check_output(maxent, output)) {
-        ST_WARNING("Output layer not match.");
-        return -1;
-    }
-
-    maxent->train_opt = *train_opt;
-    maxent->output = output;
-
-    order = maxent->model_opt.order;
-    maxent->hist = (int *) malloc(sizeof(int) * order);
-    if (maxent->hist == NULL) {
-        ST_WARNING("Failed to malloc hist.");
-        goto ERR;
-    }
-    for (i = 0; i < order; i++) {
-        maxent->hist[i] = -1;
-    }
-
-    maxent->hash_w = (hash_t *) malloc(sizeof(hash_t) * order);
-    if (maxent->hash_w == NULL) {
-        ST_WARNING("Failed to malloc hash_w.");
-        goto ERR;
-    }
-
-    if (maxent->class_size > 0) {
-        maxent->hash_c = (hash_t *) malloc(sizeof(hash_t) * order);
-        if (maxent->hash_c == NULL) {
-            ST_WARNING("Failed to malloc hash_c.");
-            goto ERR;
-        }
-    }
-
-    return 0;
-ERR:
-    safe_free(maxent->hist);
-    safe_free(maxent->hash_w);
-    safe_free(maxent->hash_c);
-    return -1;
-}
-
 static int maxent_get_hash(hash_t *hash, hash_t init_val,
         int *hist, int order)
 {
@@ -879,6 +815,156 @@ int maxent_backprop(maxent_t *maxent, int word)
         return -1;
     }
 
+    return 0;
+}
+
+static bool maxent_check_output(maxent_t *maxent, output_t *output)
+{
+    ST_CHECK_PARAM(maxent == NULL || output == NULL, false);
+
+    if (maxent->class_size != output->output_opt.class_size) {
+        ST_WARNING("Class size not match");
+        return false;
+    } else if (maxent->vocab_size != output->output_size) {
+        ST_WARNING("Vocab size not match");
+        return false;
+    }
+
+    return true;
+}
+
+int maxent_setup_train(maxent_t *maxent, maxent_train_opt_t *train_opt,
+        output_t *output)
+{
+    int order;
+    int i;
+
+    ST_CHECK_PARAM(maxent == NULL || train_opt == NULL
+            || output == NULL, -1);
+
+    if (!maxent_check_output(maxent, output)) {
+        ST_WARNING("Output layer not match.");
+        return -1;
+    }
+
+    maxent->train_opt = *train_opt;
+    maxent->output = output;
+
+    order = maxent->model_opt.order;
+    maxent->hist = (int *) malloc(sizeof(int) * order);
+    if (maxent->hist == NULL) {
+        ST_WARNING("Failed to malloc hist.");
+        goto ERR;
+    }
+    for (i = 0; i < order; i++) {
+        maxent->hist[i] = -1;
+    }
+
+    maxent->hash_w = (hash_t *) malloc(sizeof(hash_t) * order);
+    if (maxent->hash_w == NULL) {
+        ST_WARNING("Failed to malloc hash_w.");
+        goto ERR;
+    }
+
+    if (maxent->class_size > 0) {
+        maxent->hash_c = (hash_t *) malloc(sizeof(hash_t) * order);
+        if (maxent->hash_c == NULL) {
+            ST_WARNING("Failed to malloc hash_c.");
+            goto ERR;
+        }
+    }
+
+    return 0;
+ERR:
+    safe_free(maxent->hist);
+    safe_free(maxent->hash_w);
+    safe_free(maxent->hash_c);
+    return -1;
+}
+
+int maxent_reset_train(maxent_t *maxent)
+{
+    int order;
+    int i;
+
+    ST_CHECK_PARAM(maxent == NULL, -1);
+
+    order = maxent->model_opt.order;
+    for (i = 0; i < order; i++) {
+        maxent->hist[i] = -1;
+    }
+
+    return 0;
+}
+
+int maxent_clear_train(maxent_t *maxent, int word)
+{
+    return 0;
+}
+
+int maxent_setup_test(maxent_t *maxent, output_t *output)
+{
+    int order;
+    int i;
+
+    ST_CHECK_PARAM(maxent == NULL || output == NULL, -1);
+
+    if (!maxent_check_output(maxent, output)) {
+        ST_WARNING("Output layer not match.");
+        return -1;
+    }
+
+    maxent->output = output;
+
+    order = maxent->model_opt.order;
+    maxent->hist = (int *) malloc(sizeof(int) * order);
+    if (maxent->hist == NULL) {
+        ST_WARNING("Failed to malloc hist.");
+        goto ERR;
+    }
+    for (i = 0; i < order; i++) {
+        maxent->hist[i] = -1;
+    }
+
+    maxent->hash_w = (hash_t *) malloc(sizeof(hash_t) * order);
+    if (maxent->hash_w == NULL) {
+        ST_WARNING("Failed to malloc hash_w.");
+        goto ERR;
+    }
+
+    if (maxent->class_size > 0) {
+        maxent->hash_c = (hash_t *) malloc(sizeof(hash_t) * order);
+        if (maxent->hash_c == NULL) {
+            ST_WARNING("Failed to malloc hash_c.");
+            goto ERR;
+        }
+    }
+
+    return 0;
+ERR:
+    safe_free(maxent->hist);
+    safe_free(maxent->hash_w);
+    safe_free(maxent->hash_c);
+    return -1;
+}
+
+int maxent_reset_test(maxent_t *maxent)
+{
+    int order;
+    int i;
+
+    ST_CHECK_PARAM(maxent == NULL, -1);
+
+    order = maxent->model_opt.order;
+    for (i = 0; i < order; i++) {
+        maxent->hist[i] = -1;
+    }
+
+    return 0;
+}
+
+int maxent_clear_test(maxent_t *maxent, int word)
+{
     return 0;
 }
 

@@ -92,10 +92,17 @@ int maxent_load_body(maxent_t *maxent, FILE *fp, bool binary);
 int maxent_save_header(maxent_t *maxent, FILE *fp, bool binary);
 int maxent_save_body(maxent_t *maxent, FILE *fp, bool binary);
 
-int maxent_setup_train(maxent_t *maxent, maxent_train_opt_t *train_opt,
-        output_t *output);
 int maxent_forward(maxent_t *maxent, int word);
 int maxent_backprop(maxent_t *maxent, int word);
+
+int maxent_setup_train(maxent_t *maxent, maxent_train_opt_t *train_opt,
+        output_t *output);
+int maxent_reset_train(maxent_t *maxent);
+int maxent_clear_train(maxent_t *maxent, int word);
+
+int maxent_setup_test(maxent_t *maxent, output_t *output);
+int maxent_reset_test(maxent_t *maxent);
+int maxent_clear_test(maxent_t *maxent, int word);
 
 #ifdef __cplusplus
 }

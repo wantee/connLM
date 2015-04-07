@@ -40,6 +40,7 @@ extern "C" {
 typedef REAL_TYPE real_t;
 
 typedef unsigned long count_t;
+#define COUNT_FMT "%lu"
 
 #ifdef __cplusplus
 }

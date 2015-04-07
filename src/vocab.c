@@ -565,6 +565,9 @@ int vocab_learn(vocab_t *vocab, FILE *fp)
 
     vocab->vocab_size = st_alphabet_get_label_num(vocab->alphabet);
 
+    ST_NOTICE("Words: " COUNT_FMT, words);
+    ST_NOTICE("Vocab Size: %d", vocab->vocab_size);
+
     if (vocab_sort(vocab, word_infos) < 0) {
         ST_WARNING("Failed to vocab_sort.");
         goto ERR;

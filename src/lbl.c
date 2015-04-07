@@ -308,6 +308,28 @@ int lbl_save_body(lbl_t *lbl, FILE *fp, bool binary)
     return 0;
 }
 
+int lbl_forward(lbl_t *lbl, int word)
+{
+    ST_CHECK_PARAM(lbl == NULL, -1);
+
+    if (word < 0) {
+        return 0;
+    }
+
+    return 0;
+}
+
+int lbl_backprop(lbl_t *lbl, int word)
+{
+    ST_CHECK_PARAM(lbl == NULL, -1);
+
+    if (word < 0) {
+        return 0;
+    }
+
+    return 0;
+}
+
 int lbl_setup_train(lbl_t *lbl, lbl_train_opt_t *train_opt,
         output_t *output)
 {
@@ -320,16 +342,39 @@ int lbl_setup_train(lbl_t *lbl, lbl_train_opt_t *train_opt,
     return 0;
 }
 
-int lbl_forward(lbl_t *lbl, int word)
+int lbl_reset_train(lbl_t *lbl)
 {
-    ST_CHECK_PARAM(lbl == NULL || word < 0, -1);
+    ST_CHECK_PARAM(lbl == NULL, -1);
 
     return 0;
 }
 
-int lbl_backprop(lbl_t *lbl, int word)
+int lbl_clear_train(lbl_t *lbl, int word)
 {
-    ST_CHECK_PARAM(lbl == NULL || word < 0, -1);
+    ST_CHECK_PARAM(lbl == NULL, -1);
+
+    return 0;
+}
+
+int lbl_setup_test(lbl_t *lbl, output_t *output)
+{
+    ST_CHECK_PARAM(lbl == NULL || output == NULL, -1);
+
+    lbl->output = output;
+
+    return 0;
+}
+
+int lbl_reset_test(lbl_t *lbl)
+{
+    ST_CHECK_PARAM(lbl == NULL, -1);
+
+    return 0;
+}
+
+int lbl_clear_test(lbl_t *lbl, int word)
+{
+    ST_CHECK_PARAM(lbl == NULL, -1);
 
     return 0;
 }

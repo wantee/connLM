@@ -71,10 +71,17 @@ int lbl_load_body(lbl_t *lbl, FILE *fp, bool binary);
 int lbl_save_header(lbl_t *lbl, FILE *fp, bool binary);
 int lbl_save_body(lbl_t *lbl, FILE *fp, bool binary);
 
-int lbl_setup_train(lbl_t *lbl, lbl_train_opt_t *train_opt,
-        output_t *output);
 int lbl_forward(lbl_t *lbl, int word);
 int lbl_backprop(lbl_t *lbl, int word);
+
+int lbl_setup_train(lbl_t *lbl, lbl_train_opt_t *train_opt,
+        output_t *output);
+int lbl_reset_train(lbl_t *lbl);
+int lbl_clear_train(lbl_t *lbl, int word);
+
+int lbl_setup_test(lbl_t *lbl, output_t *output);
+int lbl_reset_test(lbl_t *lbl);
+int lbl_clear_test(lbl_t *lbl, int word);
 
 #ifdef __cplusplus
 }

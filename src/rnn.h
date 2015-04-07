@@ -103,10 +103,17 @@ int rnn_load_body(rnn_t *rnn, FILE *fp, bool binary);
 int rnn_save_header(rnn_t *rnn, FILE *fp, bool binary);
 int rnn_save_body(rnn_t *rnn, FILE *fp, bool binary);
 
-int rnn_setup_train(rnn_t *rnn, rnn_train_opt_t *train_opt,
-        output_t *output);
 int rnn_forward(rnn_t *rnn, int word);
 int rnn_backprop(rnn_t *rnn, int word);
+
+int rnn_setup_train(rnn_t *rnn, rnn_train_opt_t *train_opt,
+        output_t *output);
+int rnn_reset_train(rnn_t *rnn);
+int rnn_clear_train(rnn_t *rnn, int word);
+
+int rnn_setup_test(rnn_t *rnn, output_t *output);
+int rnn_reset_test(rnn_t *rnn);
+int rnn_clear_test(rnn_t *rnn, int word);
 
 #ifdef __cplusplus
 }

@@ -97,7 +97,6 @@ void show_usage(const char *module_name)
 
 int main(int argc, const char *argv[])
 {
-    char filename[MAX_DIR_LEN];
     FILE *fp = NULL;
     int ret;
     vocab_t *vocab = NULL;
@@ -128,12 +127,12 @@ int main(int argc, const char *argv[])
 
     fp = st_fopen(argv[1], "rb");
     if (fp == NULL) {
-        ST_WARNING("Failed to st_fopen. [%s]", filename);
+        ST_WARNING("Failed to st_fopen. [%s]", argv[1]);
         goto ERR;
     }
 
     if (vocab_learn(vocab, fp) < 0) {
-        ST_WARNING("Failed to vocab_learn.");
+        ST_WARNING("Failed to vocab_learn. [%s]", argv[1]);
         goto ERR;
     }
     safe_st_fclose(fp);
@@ -163,7 +162,7 @@ int main(int argc, const char *argv[])
     }
 
     if (connlm_save(g_connlm, fp, g_binary) < 0) {
-        ST_WARNING("Failed to connlm_save.");
+        ST_WARNING("Failed to connlm_save. [%s]", argv[2]);
         goto ERR;
     }
 
@@ -176,7 +175,7 @@ int main(int argc, const char *argv[])
     st_log_close(0);
     return 0;
 
-  ERR:
+ERR:
     safe_st_fclose(fp);
     safe_st_opt_destroy(g_cmd_opt);
     safe_vocab_destroy(vocab);

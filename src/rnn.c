@@ -668,6 +668,28 @@ int rnn_save_body(rnn_t *rnn, FILE *fp, bool binary)
     return 0;
 }
 
+int rnn_forward(rnn_t *rnn, int word)
+{
+    ST_CHECK_PARAM(rnn == NULL, -1);
+
+    if (word < 0) {
+        return 0;
+    }
+
+    return 0;
+}
+
+int rnn_backprop(rnn_t *rnn, int word)
+{
+    ST_CHECK_PARAM(rnn == NULL, -1);
+
+    if (word < 0) {
+        return 0;
+    }
+
+    return 0;
+}
+
 static bool rnn_check_output(rnn_t *rnn, output_t *output)
 {
     ST_CHECK_PARAM(rnn == NULL || output == NULL, false);
@@ -816,16 +838,136 @@ ERR:
     return -1;
 }
 
-int rnn_forward(rnn_t *rnn, int word)
+int rnn_reset_train(rnn_t *rnn)
 {
-    ST_CHECK_PARAM(rnn == NULL || word < 0, -1);
+    size_t i;
+    size_t sz;
+
+    rnn_train_opt_t *train_opt;
+    int hidden_size;
+
+    ST_CHECK_PARAM(rnn == NULL, -1);
+
+    train_opt = &rnn->train_opt;
+
+    hidden_size = rnn->model_opt.hidden_size;
+
+    if (train_opt->bptt > 1) {
+        for (i = 0; i < (train_opt->bptt + train_opt->bptt_block); i++) {
+            rnn->bptt_hist[i] = -1;
+        }
+
+        sz = hidden_size * (train_opt->bptt + train_opt->bptt_block);
+        for (i = 0; i < sz; i++) {
+            rnn->ac_bptt_h[i] = 0;
+        }
+
+        sz = hidden_size * train_opt->bptt_block;
+        for (i = 0; i < sz; i++) {
+            rnn->er_bptt_h[i] = 0;
+        }
+
+        sz = rnn->vocab_size * hidden_size;
+        for (i = 0; i < sz; i++) {
+            rnn->wt_bptt_ih_w[i] = 0;
+        }
+
+        sz = hidden_size * hidden_size;
+        for (i = 0; i < sz; i++) {
+            rnn->wt_bptt_ih_h[i] = 0;
+        }
+    }
+
+    for (i = 0; i < hidden_size; i++) {
+        rnn->ac_i_h[i] = 0.1;
+        rnn->er_i_h[i] = 0;
+    }
+
+    for (i = 0; i < hidden_size; i++) {
+        rnn->ac_h[i] = 0;
+        rnn->er_h[i] = 0;
+    }
 
     return 0;
 }
 
-int rnn_backprop(rnn_t *rnn, int word)
+int rnn_clear_train(rnn_t *rnn, int word)
 {
-    ST_CHECK_PARAM(rnn == NULL || word < 0, -1);
+    ST_CHECK_PARAM(rnn == NULL, -1);
+
+    return 0;
+}
+
+int rnn_setup_test(rnn_t *rnn, output_t *output)
+{
+    size_t i;
+
+    int hidden_size;
+
+    ST_CHECK_PARAM(rnn == NULL || output == NULL, -1);
+
+    if (!rnn_check_output(rnn, output)) {
+        ST_WARNING("Output layer not match.");
+        return -1;
+    }
+
+    rnn->output = output;
+
+    hidden_size = rnn->model_opt.hidden_size;
+
+    rnn->ac_i_h = (real_t *) malloc(sizeof(real_t) * hidden_size);
+    if (rnn->ac_i_h == NULL) {
+        ST_WARNING("Failed to malloc ac_i_h.");
+        goto ERR;
+    }
+
+    rnn->ac_h = (real_t *) malloc(sizeof(real_t) * hidden_size);
+    if (rnn->ac_h == NULL) {
+        ST_WARNING("Failed to malloc ac_h.");
+        goto ERR;
+    }
+
+    for (i = 0; i < hidden_size; i++) {
+        rnn->ac_i_h[i] = 0.1;
+    }
+
+    for (i = 0; i < hidden_size; i++) {
+        rnn->ac_h[i] = 0;
+    }
+
+    return 0;
+
+ERR:
+    safe_free(rnn->ac_i_h);
+    safe_free(rnn->ac_h);
+
+    return -1;
+}
+
+int rnn_reset_test(rnn_t *rnn)
+{
+    size_t i;
+
+    int hidden_size;
+
+    ST_CHECK_PARAM(rnn == NULL, -1);
+
+    hidden_size = rnn->model_opt.hidden_size;
+
+    for (i = 0; i < hidden_size; i++) {
+        rnn->ac_i_h[i] = 0.1;
+    }
+
+    for (i = 0; i < hidden_size; i++) {
+        rnn->ac_h[i] = 0;
+    }
+
+    return 0;
+}
+
+int rnn_clear_test(rnn_t *rnn, int word)
+{
+    ST_CHECK_PARAM(rnn == NULL, -1);
 
     return 0;
 }

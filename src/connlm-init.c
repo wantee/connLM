@@ -118,7 +118,7 @@ int main(int argc, const char *argv[])
 
     connlm = connlm_load(fp);
     if (connlm == NULL) {
-        ST_WARNING("Failed to connlm_load.");
+        ST_WARNING("Failed to connlm_load. [%s]", argv[1]);
         goto ERR;
     }
     safe_st_fclose(fp);
@@ -136,7 +136,7 @@ int main(int argc, const char *argv[])
     }
 
     if (connlm_save(connlm, fp, g_binary) < 0) {
-        ST_WARNING("Failed to connlm_save.");
+        ST_WARNING("Failed to connlm_save. [%s]", argv[2]);
         goto ERR;
     }
 
@@ -147,7 +147,7 @@ int main(int argc, const char *argv[])
     st_log_close(0);
     return 0;
 
-  ERR:
+ERR:
     safe_st_fclose(fp);
     safe_st_opt_destroy(g_cmd_opt);
     safe_connlm_destroy(connlm);

@@ -109,7 +109,7 @@ int main(int argc, const char *argv[])
 
         fprintf(stdout, "\nModel \"%s\":\n", argv[i]);
         if (connlm_print_info(fp, stdout) < 0) {
-            ST_WARNING("Failed to connlm_print_info.");
+            ST_WARNING("Failed to connlm_print_info. [%s]", argv[i]);
             goto ERR;
         }
         safe_st_fclose(fp);
@@ -120,7 +120,7 @@ int main(int argc, const char *argv[])
     st_log_close(0);
     return 0;
 
-  ERR:
+ERR:
     safe_st_fclose(fp);
     safe_st_opt_destroy(g_cmd_opt);
 
