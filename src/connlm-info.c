@@ -86,7 +86,6 @@ int main(int argc, const char *argv[])
 
     ret = connlm_info_parse_opt(&argc, argv);
     if (ret < 0) {
-        show_usage(argv[0]);
         goto ERR;
     } if (ret == 1) {
         show_usage(argv[0]);

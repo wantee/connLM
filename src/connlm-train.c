@@ -35,6 +35,7 @@
 #include "connlm.h"
 
 bool g_binary;
+bool g_dry_run;
 
 st_opt_t *g_cmd_opt;
 
@@ -75,6 +76,9 @@ int connlm_train_parse_opt(int *argc, const char *argv[])
     ST_OPT_SEC_GET_BOOL(g_cmd_opt, NULL, "BINARY", g_binary, true,
             "Save file as binary format");
 
+    ST_OPT_SEC_GET_BOOL(g_cmd_opt, NULL, "DRY_RUN", g_dry_run, false,
+            "Read config and exit");
+
     if (st_opt_get_bool(g_cmd_opt, NULL, "help", &b, false,
                 "Print help") < 0) {
         ST_WARNING("Failed to st_opt_get_bool for help");
@@ -102,11 +106,15 @@ int main(int argc, const char *argv[])
 
     ret = connlm_train_parse_opt(&argc, argv);
     if (ret < 0) {
-        show_usage(argv[0]);
         goto ERR;
     } if (ret == 1) {
         show_usage(argv[0]);
         goto ERR;
+    }
+
+    if (g_dry_run) {
+        st_opt_show(g_cmd_opt, "connLM Train Options");
+        return 0;
     }
 
     if (argc != 4) {
@@ -115,6 +123,8 @@ int main(int argc, const char *argv[])
     }
 
     st_opt_show(g_cmd_opt, "connLM Train Options");
+    ST_CLEAN("Train: %s, Model-in: %s, Model-out: %s", 
+            argv[1], argv[2], argv[3]);
 
     fp = st_fopen(argv[2], "rb");
     if (fp == NULL) {

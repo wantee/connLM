@@ -99,7 +99,6 @@ int main(int argc, const char *argv[])
 
     ret = connlm_test_parse_opt(&argc, argv);
     if (ret < 0) {
-        show_usage(argv[0]);
         goto ERR;
     } if (ret == 1) {
         show_usage(argv[0]);
@@ -112,6 +111,7 @@ int main(int argc, const char *argv[])
     }
 
     st_opt_show(g_cmd_opt, "connLM Test Options");
+    ST_CLEAN("Model: %s, Test: %s", argv[1], argv[2]);
 
     fp = st_fopen(argv[1], "rb");
     if (fp == NULL) {

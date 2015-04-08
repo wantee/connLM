@@ -29,6 +29,7 @@
 #include "connlm.h"
 
 bool g_binary;
+count_t g_max_word_num;
 
 st_opt_t *g_cmd_opt;
 
@@ -39,6 +40,7 @@ output_opt_t g_output_opt;
 int connlm_vocab_parse_opt(int *argc, const char *argv[])
 {
     st_log_opt_t log_opt;
+    unsigned long ul;
     bool b;
 
     g_cmd_opt = st_opt_create();
@@ -75,6 +77,10 @@ int connlm_vocab_parse_opt(int *argc, const char *argv[])
     ST_OPT_SEC_GET_BOOL(g_cmd_opt, NULL, "BINARY", g_binary, true,
             "Save file as binary format");
 
+    ST_OPT_SEC_GET_ULONG(g_cmd_opt, NULL, "MAX_WORD_NUM", ul, 0, 
+        "Maximum number of words used to learn vocab. 0 denotes no limit");
+    g_max_word_num = (count_t)ul;
+
     if (st_opt_get_bool(g_cmd_opt, NULL, "help", &b, false,
                 "Print help") < 0) {
         ST_WARNING("Failed to st_opt_get_bool for help");
@@ -104,7 +110,6 @@ int main(int argc, const char *argv[])
 
     ret = connlm_vocab_parse_opt(&argc, argv);
     if (ret < 0) {
-        show_usage(argv[0]);
         goto ERR;
     } if (ret == 1) {
         show_usage(argv[0]);
@@ -117,6 +122,7 @@ int main(int argc, const char *argv[])
     }
 
     st_opt_show(g_cmd_opt, "connLM Vocab Options");
+    ST_CLEAN("Train: %s, Model: %s", argv[1], argv[2]);
 
     ST_NOTICE("Learning Vocab..");
     vocab = vocab_create(&g_vocab_opt);
@@ -131,7 +137,7 @@ int main(int argc, const char *argv[])
         goto ERR;
     }
 
-    if (vocab_learn(vocab, fp) < 0) {
+    if (vocab_learn(vocab, fp, g_max_word_num) < 0) {
         ST_WARNING("Failed to vocab_learn. [%s]", argv[1]);
         goto ERR;
     }

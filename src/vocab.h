@@ -35,7 +35,7 @@ extern "C" {
 #include "config.h"
 
 typedef struct _vocab_opt_t_ {
-    int max_word_num;
+    int max_vocab_size;
 } vocab_opt_t;
 
 typedef struct _vocab_t_ {
@@ -65,7 +65,7 @@ int vocab_load_body(vocab_t *vocab, FILE *fp, bool binary);
 int vocab_save_header(vocab_t *vocab, FILE *fp, bool binary);
 int vocab_save_body(vocab_t *vocab, FILE *fp, bool binary);
 
-int vocab_learn(vocab_t *vocab, FILE *fp);
+int vocab_learn(vocab_t *vocab, FILE *fp, count_t max_word_num);
 
 int vocab_get_id(vocab_t *vocab, const char *word);
 char* vocab_get_word(vocab_t *vocab, int id);

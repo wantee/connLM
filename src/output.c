@@ -41,7 +41,7 @@ int output_load_opt(output_opt_t *output_opt, st_opt_t *opt,
 {
     ST_CHECK_PARAM(output_opt == NULL || opt == NULL, -1);
 
-    ST_OPT_SEC_GET_INT(opt, sec_name, "CLASSE_SIZE",
+    ST_OPT_SEC_GET_INT(opt, sec_name, "CLASS_SIZE",
             output_opt->class_size, 100, "Size of class layer");
 
     ST_OPT_SEC_GET_BOOL(opt, sec_name, "HS",

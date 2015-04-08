@@ -28,6 +28,7 @@
 #include <unistd.h>
 #include <math.h>
 
+#include <st_macro.h>
 #include <st_log.h>
 #include <st_opt.h>
 #include <st_io.h>
@@ -1068,10 +1069,15 @@ int connlm_train(connlm_t *connlm)
     int i;
     int j;
 
+    struct timeval tts_train, tte_train;
+    long ms;
+
     ST_CHECK_PARAM(connlm == NULL, -1);
 
     train_opt = &connlm->train_opt;
     max_word_per_sent = connlm->train_opt.max_word_per_sent;
+
+    gettimeofday(&tts_train, NULL);
 
     words = 0;
     logp = 0;
@@ -1094,7 +1100,7 @@ int connlm_train(connlm_t *connlm)
             }
 
             j = 0;
-            while (j < max_word_per_sent && eg[j] >= 0) {
+            while (eg[j] >= 0 && j < max_word_per_sent) {
                 if (connlm_clear_train(connlm, eg[j]) < 0) {
                     ST_WARNING("connlm_clear_train.");
                     return -1;
@@ -1126,6 +1132,16 @@ int connlm_train(connlm_t *connlm)
             }
         }
     }
+
+    gettimeofday(&tte_train, NULL);
+    ms = TIMEDIFF(tts_train, tte_train);
+
+    ST_NOTICE("Finish train in %ldms.", ms);
+    ST_NOTICE("Words: " COUNT_FMT ", words/sec: %.1f", words,
+            words / ((double) ms / 1000.0));
+    ST_NOTICE("Log prob: %f", logp);
+    ST_NOTICE("Entropy: %f", -logp / log10(2) / words);
+    ST_NOTICE("PPL: %f", exp10(-logp / (real_t) words));
 
     return 0;
 }
@@ -1291,6 +1307,9 @@ int connlm_test(connlm_t *connlm, FILE *fp_log)
     int i;
     int j;
 
+    struct timeval tts_test, tte_test;
+    long ms;
+
     ST_CHECK_PARAM(connlm == NULL, -1);
 
     test_opt = &connlm->test_opt;
@@ -1300,6 +1319,8 @@ int connlm_test(connlm_t *connlm, FILE *fp_log)
         fprintf(fp_log, "Index   P(NET)          Word\n");
         fprintf(fp_log, "----------------------------------\n");
     }
+
+    gettimeofday(&tts_test, NULL);
 
     words = 0;
     oovs = 0;
@@ -1321,7 +1342,7 @@ int connlm_test(connlm_t *connlm, FILE *fp_log)
             }
 
             j = 0;
-            while (j < max_word_per_sent && eg[j] != -2) {
+            while (eg[j] != -2 && j < max_word_per_sent) {
                 if (connlm_clear_test(connlm, eg[j]) < 0) {
                     ST_WARNING("connlm_clear_test.");
                     return -1;
@@ -1366,15 +1387,24 @@ int connlm_test(connlm_t *connlm, FILE *fp_log)
         }
     }
 
-    ST_NOTICE("Words: " COUNT_FMT "    OOVs: " COUNT_FMT, words, oovs);
-    ST_NOTICE("Log prob: %f\n", logp);
-    ST_NOTICE("PPL: %f\n", exp10(-logp / (real_t) words));
+    gettimeofday(&tte_test, NULL);
+    ms = TIMEDIFF(tts_test, tte_test);
+
+    ST_NOTICE("Finish test in %ldms.", ms);
+
+    ST_NOTICE("Words: " COUNT_FMT "    OOVs: " COUNT_FMT
+            ", words/sec: %.1f", words, oovs,
+             words / ((double) ms / 1000));
+    ST_NOTICE("Log prob: %f", logp);
+    ST_NOTICE("Entropy: %f", -logp / log10(2) / words);
+    ST_NOTICE("PPL: %f", exp10(-logp / (real_t) words));
 
     if (fp_log != NULL) {
         fprintf(fp_log, "\nSummary:\n");
         fprintf(fp_log, "Words: " COUNT_FMT "    OOVs: " COUNT_FMT,
                 words, oovs);
         fprintf(fp_log, "Log prob: %f\n", logp);
+        fprintf(fp_log, "Entropy: %f\n", -logp / log10(2) / words);
         fprintf(fp_log, "PPL: %f\n", exp10(-logp / (real_t) words));
     }
 

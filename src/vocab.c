@@ -42,9 +42,9 @@ int vocab_load_opt(vocab_opt_t *vocab_opt, st_opt_t *opt,
 
     memset(vocab_opt, 0, sizeof(vocab_opt_t));
 
-    ST_OPT_SEC_GET_INT(opt, sec_name, "MAX_WORD_NUM",
-            vocab_opt->max_word_num, 1000000, 
-            "Maximum number of words in Vocabulary");
+    ST_OPT_SEC_GET_INT(opt, sec_name, "MAX_VOCAB_SIZE",
+            vocab_opt->max_vocab_size, 1000000, 
+            "Maximum size of Vocabulary");
 
     return 0;
 
@@ -67,7 +67,7 @@ vocab_t *vocab_create(vocab_opt_t *vocab_opt)
 
     vocab->vocab_opt = *vocab_opt;
 
-    vocab->alphabet = st_alphabet_create(vocab_opt->max_word_num);
+    vocab->alphabet = st_alphabet_create(vocab_opt->max_vocab_size);
     if (vocab->alphabet == NULL) {
         ST_WARNING("Failed to st_alphabet_create.");
         goto ERR;
@@ -514,7 +514,7 @@ static int vocab_read_word(char *word, size_t word_len, FILE * fp)
     return 0;
 }
 
-int vocab_learn(vocab_t *vocab, FILE *fp)
+int vocab_learn(vocab_t *vocab, FILE *fp, count_t max_word_num)
 {
     char word[MAX_SYM_LEN];
 
@@ -525,12 +525,12 @@ int vocab_learn(vocab_t *vocab, FILE *fp)
     ST_CHECK_PARAM(vocab == NULL || fp == NULL, -1);
 
     word_infos = (word_info_t *) malloc(sizeof(word_info_t) 
-            * vocab->vocab_opt.max_word_num);
+            * vocab->vocab_opt.max_vocab_size);
     if (word_infos == NULL) {
         ST_WARNING("Failed to malloc word_infos.");
         goto ERR;
     }
-    memset(word_infos, 0, sizeof(word_info_t)*vocab->vocab_opt.max_word_num);
+    memset(word_infos, 0, sizeof(word_info_t)*vocab->vocab_opt.max_vocab_size);
 
     word_infos[0].id = 0;
     word_infos[0].cnt = 0;
@@ -546,8 +546,6 @@ int vocab_learn(vocab_t *vocab, FILE *fp)
             break;
         }
 
-        words++;
-
         id = vocab_get_id(vocab, word);
         if (id == -1) {
             id = vocab_add_word(vocab, word);
@@ -560,6 +558,11 @@ int vocab_learn(vocab_t *vocab, FILE *fp)
             word_infos[id].cnt = 1;
         } else {
             word_infos[id].cnt++;
+        }
+
+        words++;
+        if (max_word_num > 0 && words >= max_word_num) {
+            break;
         }
     }
 
