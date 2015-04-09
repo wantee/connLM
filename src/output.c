@@ -653,9 +653,17 @@ int output_loss(output_t *output, int word)
     return 0;
 }
 
-real_t output_get_prob(output_t *output, int word)
+double output_get_prob(output_t *output, int word)
 {
-    return output->ac_o_c[output->w2c[word]] * output->ac_o_w[word];
+    double p = 1;
+
+    if (output->output_opt.class_size > 0) {
+        p *= output->ac_o_c[output->w2c[word]];
+    }
+
+    p *= output->ac_o_w[word];
+
+    return p;
 }
 
 int output_setup_train(output_t *output)
@@ -740,7 +748,7 @@ int output_reset_train(output_t *output)
     return 0;
 }
 
-int output_clear_train(output_t *output, int word)
+int output_start_train(output_t *output, int word)
 {
     int class_size;
 
@@ -762,15 +770,26 @@ int output_clear_train(output_t *output, int word)
             output->ac_o_c[i] = 0;
             output->er_o_c[i] = 0;
         }
+
+        c = output->w2c[word];
+        s = output->c2w_s[c];
+        e = output->c2w_e[c];
+    } else {
+        s = 0;
+        e = output->output_size;
     }
 
-    c = output->w2c[word];
-    s = output->c2w_s[c];
-    e = output->c2w_e[c];
     for (i = s; i < e; i++) {
         output->ac_o_w[i] = 0;
         output->er_o_w[i] = 0;
     }
+
+    return 0;
+}
+
+int output_end_train(output_t *output, int word)
+{
+    ST_CHECK_PARAM(output == NULL, -1);
 
     return 0;
 }
@@ -839,7 +858,7 @@ int output_reset_test(output_t *output)
     return 0;
 }
 
-int output_clear_test(output_t *output, int word)
+int output_start_test(output_t *output, int word)
 {
     int class_size;
 
@@ -860,14 +879,25 @@ int output_clear_test(output_t *output, int word)
         for (i = 0; i < class_size; i++) {
             output->ac_o_c[i] = 0;
         }
+
+        c = output->w2c[word];
+        s = output->c2w_s[c];
+        e = output->c2w_e[c];
+    } else {
+        s = 0;
+        e = output->output_size;
     }
 
-    c = output->w2c[word];
-    s = output->c2w_s[c];
-    e = output->c2w_e[c];
     for (i = s; i < e; i++) {
         output->ac_o_w[i] = 0;
     }
+
+    return 0;
+}
+
+int output_end_test(output_t *output, int word)
+{
+    ST_CHECK_PARAM(output == NULL, -1);
 
     return 0;
 }

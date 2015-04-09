@@ -783,7 +783,7 @@ static int connlm_get_egs(connlm_t *connlm, int max_word_per_sent,
 
                     i = 0;
                     w++;
-                    if (w > max_word_per_sent) {
+                    if (w > max_word_per_sent - 1) {
                         goto SKIP;
                     }
                 }
@@ -812,8 +812,13 @@ static int connlm_get_egs(connlm_t *connlm, int max_word_per_sent,
 
             i = 0;
             w++;
+            if (w > max_word_per_sent - 1) {
+                goto SKIP;
+            }
         }
 
+        eg[w] = 0; // </s>
+        w++;
         if (w < max_word_per_sent) {
             eg[w] = -2;
         }
@@ -956,39 +961,79 @@ int connlm_reset_train(connlm_t *connlm)
     return 0;
 }
 
-int connlm_clear_train(connlm_t *connlm, int word)
+int connlm_start_train(connlm_t *connlm, int word)
 {
     ST_CHECK_PARAM(connlm == NULL, -1);
 
-    if (output_clear_train(connlm->output, word) < 0) {
-        ST_WARNING("Failed to output_clear_train.");
+    if (output_start_train(connlm->output, word) < 0) {
+        ST_WARNING("Failed to output_start_train.");
         return -1;
     }
 
     if (connlm->rnn != NULL) {
-        if (rnn_clear_train(connlm->rnn, word) < 0) {
-            ST_WARNING("Failed to rnn_clear_train.");
+        if (rnn_start_train(connlm->rnn, word) < 0) {
+            ST_WARNING("Failed to rnn_start_train.");
             return -1;
         }
     }
 
     if (connlm->maxent != NULL) {
-        if (maxent_clear_train(connlm->maxent, word) < 0) {
-            ST_WARNING("Failed to maxent_clear_train.");
+        if (maxent_start_train(connlm->maxent, word) < 0) {
+            ST_WARNING("Failed to maxent_start_train.");
             return -1;
         }
     }
 
     if (connlm->lbl != NULL) {
-        if (lbl_clear_train(connlm->lbl, word) < 0) {
-            ST_WARNING("Failed to lbl_clear_train.");
+        if (lbl_start_train(connlm->lbl, word) < 0) {
+            ST_WARNING("Failed to lbl_start_train.");
             return -1;
         }
     }
 
     if (connlm->ffnn != NULL) {
-        if (ffnn_clear_train(connlm->ffnn, word) < 0) {
-            ST_WARNING("Failed to ffnn_clear_train.");
+        if (ffnn_start_train(connlm->ffnn, word) < 0) {
+            ST_WARNING("Failed to ffnn_start_train.");
+            return -1;
+        }
+    }
+
+    return 0;
+}
+
+int connlm_end_train(connlm_t *connlm, int word)
+{
+    ST_CHECK_PARAM(connlm == NULL, -1);
+
+    if (output_end_train(connlm->output, word) < 0) {
+        ST_WARNING("Failed to output_end_train.");
+        return -1;
+    }
+
+    if (connlm->rnn != NULL) {
+        if (rnn_end_train(connlm->rnn, word) < 0) {
+            ST_WARNING("Failed to rnn_end_train.");
+            return -1;
+        }
+    }
+
+    if (connlm->maxent != NULL) {
+        if (maxent_end_train(connlm->maxent, word) < 0) {
+            ST_WARNING("Failed to maxent_end_train.");
+            return -1;
+        }
+    }
+
+    if (connlm->lbl != NULL) {
+        if (lbl_end_train(connlm->lbl, word) < 0) {
+            ST_WARNING("Failed to lbl_end_train.");
+            return -1;
+        }
+    }
+
+    if (connlm->ffnn != NULL) {
+        if (ffnn_end_train(connlm->ffnn, word) < 0) {
+            ST_WARNING("Failed to ffnn_end_train.");
             return -1;
         }
     }
@@ -1084,7 +1129,6 @@ int connlm_train(connlm_t *connlm)
     count_t words;
     count_t sents;
     double logp;
-    real_t p;
 
     int max_word_per_sent;
     int i;
@@ -1124,8 +1168,8 @@ int connlm_train(connlm_t *connlm)
             sents++;
             j = 0;
             while (eg[j] >= 0 && j < max_word_per_sent) {
-                if (connlm_clear_train(connlm, eg[j]) < 0) {
-                    ST_WARNING("connlm_clear_train.");
+                if (connlm_start_train(connlm, eg[j]) < 0) {
+                    ST_WARNING("connlm_start_train.");
                     return -1;
                 }
 
@@ -1134,23 +1178,33 @@ int connlm_train(connlm_t *connlm)
                     return -1;
                 }
 
-                p = output_get_prob(connlm->output, eg[j]);
-                logp += log10(p);
+                logp += log10(output_get_prob(connlm->output, eg[j]));
 
                 if ((logp != logp) || (isinf(logp))) {
-                    ST_WARNING("Numerical error. "
-                            "p_class(%d) = %g, p_word(%d) = %g",
-                            connlm->output->w2c[eg[j]],
-                            connlm->output->ac_o_c[connlm->output->w2c[eg[j]]],
-                            eg[j], connlm->output->ac_o_w[eg[j]]);
+                    if (connlm->output->output_opt.class_size > 0) {
+                        ST_WARNING("Numerical error. "
+                                "p_class(%d) = %g, p_word(%d) = %g",
+                                connlm->output->w2c[eg[j]],
+                                connlm->output->ac_o_c[connlm->output->w2c[eg[j]]],
+                                eg[j], connlm->output->ac_o_w[eg[j]]);
+                    } else {
+                        ST_WARNING("Numerical error. p_word(%d) = %g",
+                                eg[j], connlm->output->ac_o_w[eg[j]]);
+                    }
                     return -1;
                 }
-                words++;
 
                 if (connlm_backprop(connlm, eg[j]) < 0) {
                     ST_WARNING("Failed to connlm_backprop.");
                     return -1;
                 }
+
+                if (connlm_end_train(connlm, eg[j]) < 0) {
+                    ST_WARNING("connlm_end_train.");
+                    return -1;
+                }
+
+                words++;
                 j++;
             }
         }
@@ -1163,7 +1217,7 @@ int connlm_train(connlm_t *connlm)
     ST_NOTICE("Words: " COUNT_FMT ", Sentences: " COUNT_FMT
             ", words/sec: %.1f", words, sents,
             words / ((double) ms / 1000.0));
-    ST_NOTICE("Log prob: %f", logp);
+    ST_NOTICE("LogP: %f", logp);
     ST_NOTICE("Entropy: %f", -logp / log10(2) / words);
     ST_NOTICE("PPL: %f", exp10(-logp / (real_t) words));
 
@@ -1276,39 +1330,79 @@ int connlm_reset_test(connlm_t *connlm)
     return 0;
 }
 
-int connlm_clear_test(connlm_t *connlm, int word)
+int connlm_start_test(connlm_t *connlm, int word)
 {
     ST_CHECK_PARAM(connlm == NULL, -1);
 
-    if (output_clear_test(connlm->output, word) < 0) {
-        ST_WARNING("Failed to output_clear_test.");
+    if (output_start_test(connlm->output, word) < 0) {
+        ST_WARNING("Failed to output_start_test.");
         return -1;
     }
 
     if (connlm->rnn != NULL) {
-        if (rnn_clear_test(connlm->rnn, word) < 0) {
-            ST_WARNING("Failed to rnn_clear_test.");
+        if (rnn_start_test(connlm->rnn, word) < 0) {
+            ST_WARNING("Failed to rnn_start_test.");
             return -1;
         }
     }
 
     if (connlm->maxent != NULL) {
-        if (maxent_clear_test(connlm->maxent, word) < 0) {
-            ST_WARNING("Failed to maxent_clear_test.");
+        if (maxent_start_test(connlm->maxent, word) < 0) {
+            ST_WARNING("Failed to maxent_start_test.");
             return -1;
         }
     }
 
     if (connlm->lbl != NULL) {
-        if (lbl_clear_test(connlm->lbl, word) < 0) {
-            ST_WARNING("Failed to lbl_clear_test.");
+        if (lbl_start_test(connlm->lbl, word) < 0) {
+            ST_WARNING("Failed to lbl_start_test.");
             return -1;
         }
     }
 
     if (connlm->ffnn != NULL) {
-        if (ffnn_clear_test(connlm->ffnn, word) < 0) {
-            ST_WARNING("Failed to ffnn_clear_test.");
+        if (ffnn_start_test(connlm->ffnn, word) < 0) {
+            ST_WARNING("Failed to ffnn_start_test.");
+            return -1;
+        }
+    }
+
+    return 0;
+}
+
+int connlm_end_test(connlm_t *connlm, int word)
+{
+    ST_CHECK_PARAM(connlm == NULL, -1);
+
+    if (output_end_test(connlm->output, word) < 0) {
+        ST_WARNING("Failed to output_end_test.");
+        return -1;
+    }
+
+    if (connlm->rnn != NULL) {
+        if (rnn_end_test(connlm->rnn, word) < 0) {
+            ST_WARNING("Failed to rnn_end_test.");
+            return -1;
+        }
+    }
+
+    if (connlm->maxent != NULL) {
+        if (maxent_end_test(connlm->maxent, word) < 0) {
+            ST_WARNING("Failed to maxent_end_test.");
+            return -1;
+        }
+    }
+
+    if (connlm->lbl != NULL) {
+        if (lbl_end_test(connlm->lbl, word) < 0) {
+            ST_WARNING("Failed to lbl_end_test.");
+            return -1;
+        }
+    }
+
+    if (connlm->ffnn != NULL) {
+        if (ffnn_end_test(connlm->ffnn, word) < 0) {
+            ST_WARNING("Failed to ffnn_end_test.");
             return -1;
         }
     }
@@ -1370,8 +1464,8 @@ int connlm_test(connlm_t *connlm, FILE *fp_log)
             sents++;
             j = 0;
             while (eg[j] != -2 && j < max_word_per_sent) {
-                if (connlm_clear_test(connlm, eg[j]) < 0) {
-                    ST_WARNING("connlm_clear_test.");
+                if (connlm_start_test(connlm, eg[j]) < 0) {
+                    ST_WARNING("connlm_start_test.");
                     return -1;
                 }
 
@@ -1388,14 +1482,25 @@ int connlm_test(connlm_t *connlm, FILE *fp_log)
                     logp += log10(p);
 
                     if ((logp != logp) || (isinf(logp))) {
-                        ST_WARNING("Numerical error. "
-                          "p_class(%d) = %g, p_word(%d) = %g",
-                          connlm->output->w2c[eg[j]],
-                          connlm->output->ac_o_c[connlm->output->w2c[eg[j]]],
-                          eg[j], connlm->output->ac_o_w[eg[j]]);
+                        if (connlm->output->output_opt.class_size > 0) {
+                            ST_WARNING("Numerical error. "
+                                    "p_class(%d) = %g, p_word(%d) = %g",
+                                    connlm->output->w2c[eg[j]],
+                                    connlm->output->ac_o_c[connlm->output->w2c[eg[j]]],
+                                    eg[j], connlm->output->ac_o_w[eg[j]]);
+                        } else {
+                            ST_WARNING("Numerical error. p_word(%d) = %g",
+                                    eg[j], connlm->output->ac_o_w[eg[j]]);
+                        }
                         return -1;
                     }
                 }
+
+                if (connlm_end_test(connlm, eg[j]) < 0) {
+                    ST_WARNING("connlm_end_test.");
+                    return -1;
+                }
+
                 words++;
 
                 if (fp_log != NULL) {
@@ -1423,7 +1528,7 @@ int connlm_test(connlm_t *connlm, FILE *fp_log)
             "    Sentences: " COUNT_FMT
             ", words/sec: %.1f", words, oovs, sents,
              words / ((double) ms / 1000));
-    ST_NOTICE("Log prob: %f", logp);
+    ST_NOTICE("LogP: %f", logp);
     ST_NOTICE("Entropy: %f", -logp / log10(2) / words);
     ST_NOTICE("PPL: %f", exp10(-logp / (real_t) words));
 
@@ -1431,7 +1536,7 @@ int connlm_test(connlm_t *connlm, FILE *fp_log)
         fprintf(fp_log, "\nSummary:\n");
         fprintf(fp_log, "Words: " COUNT_FMT "    OOVs: " COUNT_FMT,
                 words, oovs);
-        fprintf(fp_log, "Log prob: %f\n", logp);
+        fprintf(fp_log, "LogP: %f\n", logp);
         fprintf(fp_log, "Entropy: %f\n", -logp / log10(2) / words);
         fprintf(fp_log, "PPL: %f\n", exp10(-logp / (real_t) words));
     }

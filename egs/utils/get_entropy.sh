@@ -5,5 +5,5 @@ if [ $# -ne 1 ]; then
     exit 1
 fi
 
-cat $1 | grep -o 'Entropy: [0-9\.]*' | tail -n 1 | awk -F":" '{print $2}'
+cat $1 | grep -o 'Entropy: [-+0-9\.]*' | tail -n 1 | awk -F":" '{print $2}'
 

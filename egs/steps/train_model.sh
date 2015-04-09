@@ -84,6 +84,8 @@ for iter in $(seq -w $max_iters); do
 
   tr_loss=`../utils/get_entropy.sh $log_dir/train.${iter}.log`
   echo -n "Train Entropy $(printf "%.4f" $tr_loss), "
+  echo -n "lr($(printf "%.6g" $lr_rnn)/$(printf "%.6g" $lr_maxent)"
+  echo -n "/$(printf "%.6g" $lr_lbl)/$(printf "%.6g" $lr_ffnn)), "
   
   connlm-test --log-file="$log_dir/valid.${iter}.log" \
              --config="$test_config" \

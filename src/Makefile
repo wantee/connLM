@@ -20,7 +20,7 @@ endif
 
 BINDIR=../bin
 CFLAGS += -g -Wall -Winline -pipe -Wno-narrowing 
-#CFLAGS += -Ofast -march=native -funroll-loops -ffast-math
+CFLAGS += -Ofast -march=native -funroll-loops -ffast-math
 #CFLAGS += -D_MAT_X_VEC_RAW_
 
 #CFLAGS += -D_TIME_PROF_

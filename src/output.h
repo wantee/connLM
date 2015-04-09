@@ -81,15 +81,17 @@ int output_generate(output_t *output, count_t *word_cnts);
 
 int output_activate(output_t *output, int word);
 int output_loss(output_t *output, int word);
-real_t output_get_prob(output_t *output, int word);
+double output_get_prob(output_t *output, int word);
 
 int output_setup_train(output_t *output);
 int output_reset_train(output_t *output);
-int output_clear_train(output_t *output, int word);
+int output_start_train(output_t *output, int word);
+int output_end_train(output_t *output, int word);
 
 int output_setup_test(output_t *output);
 int output_reset_test(output_t *output);
-int output_clear_test(output_t *output, int word);
+int output_start_test(output_t *output, int word);
+int output_end_test(output_t *output, int word);
 
 #ifdef __cplusplus
 }

@@ -687,36 +687,31 @@ int maxent_forward(maxent_t *maxent, int word)
     int s;
     int e;
 
-    int i;
-
     ST_CHECK_PARAM(maxent == NULL, -1);
 
-    if (word >= 0) {
-        if (maxent->class_size > 0) {
-            c = maxent->output->w2c[word];
-            s = maxent->output->c2w_s[c];
-            e = maxent->output->c2w_e[c];
+    if (word < 0) {
+        return 0;
+    }
 
-            if (maxent_forward_class(maxent) < 0) {
-                ST_WARNING("Failed to maxent_forward_class.");
-                return -1;
-            }
-        } else {
-            c = 0;
-            s = 0;
-            e = maxent->vocab_size;
-        }
+    if (maxent->class_size > 0) {
+        c = maxent->output->w2c[word];
+        s = maxent->output->c2w_s[c];
+        e = maxent->output->c2w_e[c];
 
-        if (maxent_forward_word(maxent, c, s, e) < 0) {
-            ST_WARNING("Failed to maxent_forward_word.");
+        if (maxent_forward_class(maxent) < 0) {
+            ST_WARNING("Failed to maxent_forward_class.");
             return -1;
         }
+    } else {
+        c = 0;
+        s = 0;
+        e = maxent->vocab_size;
     }
 
-    for (i = maxent->model_opt.order - 1; i > 0; i--) {
-        maxent->hist[i] = maxent->hist[i - 1];
+    if (maxent_forward_word(maxent, c, s, e) < 0) {
+        ST_WARNING("Failed to maxent_forward_word.");
+        return -1;
     }
-    maxent->hist[0] = word;
 
     return 0;
 }
@@ -897,8 +892,26 @@ int maxent_reset_train(maxent_t *maxent)
     return 0;
 }
 
-int maxent_clear_train(maxent_t *maxent, int word)
+int maxent_start_train(maxent_t *maxent, int word)
 {
+    return 0;
+}
+
+int maxent_end_train(maxent_t *maxent, int word)
+{
+    int i;
+
+    ST_CHECK_PARAM(maxent == NULL, -1);
+
+    if (word < 0) {
+        return 0;
+    }
+
+    for (i = maxent->model_opt.order - 1; i > 0; i--) {
+        maxent->hist[i] = maxent->hist[i - 1];
+    }
+    maxent->hist[0] = word;
+
     return 0;
 }
 
@@ -963,8 +976,26 @@ int maxent_reset_test(maxent_t *maxent)
     return 0;
 }
 
-int maxent_clear_test(maxent_t *maxent, int word)
+int maxent_start_test(maxent_t *maxent, int word)
 {
+    return 0;
+}
+
+int maxent_end_test(maxent_t *maxent, int word)
+{
+    int i;
+
+    ST_CHECK_PARAM(maxent == NULL, -1);
+
+    if (word < 0) {
+        return 0;
+    }
+
+    for (i = maxent->model_opt.order - 1; i > 0; i--) {
+        maxent->hist[i] = maxent->hist[i - 1];
+    }
+    maxent->hist[0] = word;
+
     return 0;
 }
 

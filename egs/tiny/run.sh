@@ -4,7 +4,7 @@ train_file=./data/train
 valid_file=./data/valid
 test_file=./data/test
 
-../steps/learn_vocab.sh $train_file exp/vocab.clm || exit 1;
+../steps/learn_vocab.sh $train_file $valid_file exp/vocab.clm || exit 1;
 
 ../steps/init_model.sh --config-file ./conf/init.conf\
         exp/vocab.clm exp/init.clm $test_file || exit 1;

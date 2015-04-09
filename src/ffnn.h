@@ -79,11 +79,13 @@ int ffnn_backprop(ffnn_t *ffnn, int word);
 int ffnn_setup_train(ffnn_t *ffnn, ffnn_train_opt_t *train_opt,
         output_t *output);
 int ffnn_reset_train(ffnn_t *ffnn);
-int ffnn_clear_train(ffnn_t *ffnn, int word);
+int ffnn_start_train(ffnn_t *ffnn, int word);
+int ffnn_end_train(ffnn_t *ffnn, int word);
 
 int ffnn_setup_test(ffnn_t *ffnn, output_t *output);
 int ffnn_reset_test(ffnn_t *ffnn);
-int ffnn_clear_test(ffnn_t *ffnn, int word);
+int ffnn_start_test(ffnn_t *ffnn, int word);
+int ffnn_end_test(ffnn_t *ffnn, int word);
 
 #ifdef __cplusplus
 }

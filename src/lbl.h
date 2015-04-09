@@ -77,11 +77,13 @@ int lbl_backprop(lbl_t *lbl, int word);
 int lbl_setup_train(lbl_t *lbl, lbl_train_opt_t *train_opt,
         output_t *output);
 int lbl_reset_train(lbl_t *lbl);
-int lbl_clear_train(lbl_t *lbl, int word);
+int lbl_start_train(lbl_t *lbl, int word);
+int lbl_end_train(lbl_t *lbl, int word);
 
 int lbl_setup_test(lbl_t *lbl, output_t *output);
 int lbl_reset_test(lbl_t *lbl);
-int lbl_clear_test(lbl_t *lbl, int word);
+int lbl_start_test(lbl_t *lbl, int word);
+int lbl_end_test(lbl_t *lbl, int word);
 
 #ifdef __cplusplus
 }

@@ -109,11 +109,13 @@ int rnn_backprop(rnn_t *rnn, int word);
 int rnn_setup_train(rnn_t *rnn, rnn_train_opt_t *train_opt,
         output_t *output);
 int rnn_reset_train(rnn_t *rnn);
-int rnn_clear_train(rnn_t *rnn, int word);
+int rnn_start_train(rnn_t *rnn, int word);
+int rnn_end_train(rnn_t *rnn, int word);
 
 int rnn_setup_test(rnn_t *rnn, output_t *output);
 int rnn_reset_test(rnn_t *rnn);
-int rnn_clear_test(rnn_t *rnn, int word);
+int rnn_start_test(rnn_t *rnn, int word);
+int rnn_end_test(rnn_t *rnn, int word);
 
 #ifdef __cplusplus
 }

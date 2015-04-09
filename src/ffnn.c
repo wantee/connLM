@@ -349,7 +349,14 @@ int ffnn_reset_train(ffnn_t *ffnn)
     return 0;
 }
 
-int ffnn_clear_train(ffnn_t *ffnn, int word)
+int ffnn_start_train(ffnn_t *ffnn, int word)
+{
+    ST_CHECK_PARAM(ffnn == NULL, -1);
+
+    return 0;
+}
+
+int ffnn_end_train(ffnn_t *ffnn, int word)
 {
     ST_CHECK_PARAM(ffnn == NULL, -1);
 
@@ -372,7 +379,14 @@ int ffnn_reset_test(ffnn_t *ffnn)
     return 0;
 }
 
-int ffnn_clear_test(ffnn_t *ffnn, int word)
+int ffnn_start_test(ffnn_t *ffnn, int word)
+{
+    ST_CHECK_PARAM(ffnn == NULL, -1);
+
+    return 0;
+}
+
+int ffnn_end_test(ffnn_t *ffnn, int word)
 {
     ST_CHECK_PARAM(ffnn == NULL, -1);
 
