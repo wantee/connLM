@@ -781,21 +781,39 @@ static int connlm_get_egs(connlm_t *connlm, int max_word_per_sent,
                         }
                     }
 
+                    i = 0;
                     w++;
                     if (w > max_word_per_sent) {
                         goto SKIP;
                     }
-                    i = 0;
+                }
+
+                while (*p == ' ' || *p == '\t') {
+                    p++;
                 }
             } else {
                 word[i] = *p;
                 i++;
-            }
-            p++;
-            while (*p == ' ' && *p == '\t') {
                 p++;
             }
         }
+        if (i > 0) {
+            word[i] = '\0';
+            eg[w] = vocab_get_id(connlm->vocab, word);
+            if (eg[w] < 0) {
+                if (skip_oov) {
+                    ST_WARNING("Failed to st_alphabet_get_index "
+                            "for word[%s]", word);
+                    goto SKIP;
+                } else {
+                    eg[w] = -1;
+                }
+            }
+
+            i = 0;
+            w++;
+        }
+
         if (w < max_word_per_sent) {
             eg[w] = -2;
         }
@@ -816,6 +834,8 @@ SKIP:
 int connlm_setup_train(connlm_t *connlm, connlm_train_opt_t *train_opt,
         const char *train_file)
 {
+    size_t sz;
+
     ST_CHECK_PARAM(connlm == NULL || train_opt == NULL
             || train_file == NULL, -1);
 
@@ -833,10 +853,10 @@ int connlm_setup_train(connlm_t *connlm, connlm_train_opt_t *train_opt,
         goto ERR;
     }
 
-    connlm->egs = (int *)malloc(sizeof(int)
-            *train_opt->num_line_read*train_opt->max_word_per_sent);
+    sz = train_opt->num_line_read*train_opt->max_word_per_sent;
+    connlm->egs = (int *)malloc(sizeof(int) * sz);
     if (connlm->egs == NULL) {
-        ST_WARNING("Failed to malloc egs");
+        ST_WARNING("Failed to malloc egs. sz[%zu]", sz);
         goto ERR;
     }
 
@@ -1062,6 +1082,7 @@ int connlm_train(connlm_t *connlm)
     int *eg;
 
     count_t words;
+    count_t sents;
     double logp;
     real_t p;
 
@@ -1080,9 +1101,10 @@ int connlm_train(connlm_t *connlm)
     gettimeofday(&tts_train, NULL);
 
     words = 0;
+    sents = 0;
     logp = 0;
     while (!feof(connlm->text_fp)) {
-        if (connlm_get_egs(connlm, train_opt->max_word_per_sent,
+        if (connlm_get_egs(connlm, max_word_per_sent,
                     train_opt->num_line_read, true) < 0) {
             ST_WARNING("Failed to connlm_get_egs.");
             return -1;
@@ -1099,6 +1121,7 @@ int connlm_train(connlm_t *connlm)
                 return -1;
             }
 
+            sents++;
             j = 0;
             while (eg[j] >= 0 && j < max_word_per_sent) {
                 if (connlm_clear_train(connlm, eg[j]) < 0) {
@@ -1137,7 +1160,8 @@ int connlm_train(connlm_t *connlm)
     ms = TIMEDIFF(tts_train, tte_train);
 
     ST_NOTICE("Finish train in %ldms.", ms);
-    ST_NOTICE("Words: " COUNT_FMT ", words/sec: %.1f", words,
+    ST_NOTICE("Words: " COUNT_FMT ", Sentences: " COUNT_FMT
+            ", words/sec: %.1f", words, sents,
             words / ((double) ms / 1000.0));
     ST_NOTICE("Log prob: %f", logp);
     ST_NOTICE("Entropy: %f", -logp / log10(2) / words);
@@ -1298,6 +1322,7 @@ int connlm_test(connlm_t *connlm, FILE *fp_log)
     int *eg;
 
     count_t words;
+    count_t sents;
     count_t oovs;
     double logp;
     real_t p;
@@ -1323,6 +1348,7 @@ int connlm_test(connlm_t *connlm, FILE *fp_log)
     gettimeofday(&tts_test, NULL);
 
     words = 0;
+    sents = 0;
     oovs = 0;
     logp = 0;
     while (!feof(connlm->text_fp)) {
@@ -1341,6 +1367,7 @@ int connlm_test(connlm_t *connlm, FILE *fp_log)
                 return -1;
             }
 
+            sents++;
             j = 0;
             while (eg[j] != -2 && j < max_word_per_sent) {
                 if (connlm_clear_test(connlm, eg[j]) < 0) {
@@ -1393,7 +1420,8 @@ int connlm_test(connlm_t *connlm, FILE *fp_log)
     ST_NOTICE("Finish test in %ldms.", ms);
 
     ST_NOTICE("Words: " COUNT_FMT "    OOVs: " COUNT_FMT
-            ", words/sec: %.1f", words, oovs,
+            "    Sentences: " COUNT_FMT
+            ", words/sec: %.1f", words, oovs, sents,
              words / ((double) ms / 1000));
     ST_NOTICE("Log prob: %f", logp);
     ST_NOTICE("Entropy: %f", -logp / log10(2) / words);

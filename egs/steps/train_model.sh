@@ -63,6 +63,7 @@ echo "Prerun Valid Entropy: $(printf "%.4f" $loss)"
 halving=0
 [ -e $dir/.halving ] && halving=$(cat $dir/.halving)
 
+rand_seed=1
 for iter in $(seq -w $max_iters); do
   echo -n "ITERATION $iter: "
   mdl_next=${iter}.clm
@@ -75,8 +76,11 @@ for iter in $(seq -w $max_iters); do
              --maxent^learn-rate=$lr_maxent \
              --lbl^learn-rate=$lr_lbl \
              --ffnn^learn-rate=$lr_ffnn \
+             --random-seed=$rand_seed \
              "$train_file" "$dir/$mdl_best" "$dir/$mdl_next" \
   || exit 1; 
+
+  rand_seed=$((rand_seed+1))
 
   tr_loss=`../utils/get_entropy.sh $log_dir/train.${iter}.log`
   echo -n "Train Entropy $(printf "%.4f" $tr_loss), "
