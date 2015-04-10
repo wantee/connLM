@@ -603,7 +603,7 @@ static int maxent_get_hash(hash_t *hash, hash_t init_val,
             return a;
         }
 
-        hash[a] = PRIMES[0] * PRIMES[1] * init_val;
+        hash[a] = hash[0];
         for (b = 1; b <= a; b++) {
             hash[a] += PRIMES[(a*PRIMES[b] + b) % PRIMES_SIZE]
                 * (hash_t)(hist[b-1] + 1);
@@ -629,6 +629,9 @@ static int maxent_forward_class(maxent_t *maxent)
         ST_WARNING("Failed to maxent_get_hash.");
         return -1;
     }
+#ifndef _MAXENT_BP_CALC_HASH_
+    maxent->hash_order_c = order;
+#endif
 
     for (a = 0; a < order; a++) {
         maxent->hash_c[a] = maxent->hash_c[a] % maxent->model_opt.sz_c;
@@ -640,7 +643,9 @@ static int maxent_forward_class(maxent_t *maxent)
             maxent->output->ac_o_c[o] += maxent->model_opt.scale 
                 * maxent->wt_c[h];
             h++;
-            h %= maxent->model_opt.sz_c;
+            if (h >= maxent->model_opt.sz_c) {
+                h = 0;
+            }
         }
     }
 
@@ -663,6 +668,9 @@ static int maxent_forward_word(maxent_t *maxent, int c, int s, int e)
         ST_WARNING("Failed to maxent_get_hash.");
         return -1;
     }
+#ifndef _MAXENT_BP_CALC_HASH_
+    maxent->hash_order_w = order;
+#endif
 
     for (a = 0; a < order; a++) {
         maxent->hash_w[a] %= maxent->model_opt.sz_w;
@@ -674,7 +682,9 @@ static int maxent_forward_word(maxent_t *maxent, int c, int s, int e)
             maxent->output->ac_o_w[o] += maxent->model_opt.scale 
                 * maxent->wt_w[h];
             h++;
-            h %= maxent->model_opt.sz_w;
+            if (h >= maxent->model_opt.sz_w) {
+                h = 0;
+            }
         }
     }
 
@@ -724,6 +734,7 @@ static int maxent_backprop_class(maxent_t *maxent)
 
     ST_CHECK_PARAM(maxent == NULL, -1);
 
+#ifdef _MAXENT_BP_CALC_HASH_
     order = maxent_get_hash(maxent->hash_c, (hash_t)1,
             maxent->hist, maxent->model_opt.order);
     if (order < 0) {
@@ -734,6 +745,9 @@ static int maxent_backprop_class(maxent_t *maxent)
     for (a = 0; a < order; a++) {
         maxent->hash_c[a] %= maxent->model_opt.sz_c;
     }
+#else
+    order = maxent->hash_order_c;
+#endif
 
     for (a = 0; a < order; a++) {
         param_update(&maxent->train_opt.param,
@@ -754,6 +768,7 @@ static int maxent_backprop_word(maxent_t *maxent, int c, int s, int e)
 
     int a;
 
+#ifdef _MAXENT_BP_CALC_HASH_
     order = maxent_get_hash(maxent->hash_w, (hash_t)(c + 1),
                 maxent->hist, maxent->model_opt.order);
     if (order < 0) {
@@ -764,6 +779,9 @@ static int maxent_backprop_word(maxent_t *maxent, int c, int s, int e)
     for (a = 0; a < order; a++) {
         maxent->hash_w[a] %= maxent->model_opt.sz_w;
     }
+#else
+    order = maxent->hash_order_w;
+#endif
 
     for (a = 0; a < order; a++) {
         param_update(&maxent->train_opt.param,

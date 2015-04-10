@@ -83,9 +83,12 @@ for iter in $(seq -w $max_iters); do
   rand_seed=$((rand_seed+1))
 
   tr_loss=`../utils/get_entropy.sh $log_dir/train.${iter}.log`
-  echo -n "Train Entropy $(printf "%.4f" $tr_loss), "
+  wpc=`../utils/get_wpc.sh $log_dir/train.${iter}.log`
+  wpc=`bc <<< "scale=1; $wpc / 1000"`k
+  echo -n "TrEnt $(printf "%.4f" $tr_loss), "
   echo -n "lr($(printf "%.6g" $lr_rnn)/$(printf "%.6g" $lr_maxent)"
   echo -n "/$(printf "%.6g" $lr_lbl)/$(printf "%.6g" $lr_ffnn)), "
+  echo -n "W/s $wpc, "
   
   connlm-test --log-file="$log_dir/valid.${iter}.log" \
              --config="$test_config" \
@@ -93,7 +96,7 @@ for iter in $(seq -w $max_iters); do
   || exit 1; 
   
   loss_new=`../utils/get_entropy.sh $log_dir/valid.${iter}.log`
-  echo "Valid Entropy: $(printf "%.4f" $loss_new)"
+  echo "CVEnt: $(printf "%.4f" $loss_new)"
 
   # accept or reject new parameters (based on objective function)
   loss_prev=$loss

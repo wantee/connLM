@@ -67,6 +67,10 @@ typedef struct _maxent_t_ {
     // neuron actived by a n-gram feature of history
     hash_t *hash_c; 
     hash_t *hash_w; 
+#ifndef _MAXENT_BP_CALC_HASH_
+    int hash_order_c;
+    int hash_order_w;
+#endif
 } maxent_t;
 
 int maxent_load_model_opt(maxent_model_opt_t *model_opt,

@@ -87,24 +87,54 @@ int param_update(param_t *param, real_t *wt, real_t *er, real_t *x,
 {
     real_t *w;
 
+    real_t lr;
+    real_t l2;
+
     int r;
     int i;
     int j;
 
+    lr = param->learn_rate;
+    l2 = param->l2_penalty;
+
     if (wt_row < 0) {
+        wt_row = - wt_row;
         j = wt_start;
-        for (i = 0; i < er_size; i++) {
-            wt[j] += param->learn_rate * er[i] * ((x == NULL) ? 1 : x[i])
-                - param->l2_penalty * wt[j];
-            j++;
-            j %= (-wt_row);
+        if (x == NULL) {
+            for (i = 0; i < er_size; i++) {
+                wt[j] += lr * er[i] // * 1.0
+                    - l2 * wt[j];
+                j++;
+                if (j >= wt_row) {
+                    j = 0;
+                }
+            }
+        } else {
+            for (i = 0; i < er_size; i++) {
+                wt[j] += lr * er[i] * x[i]
+                    - l2 * wt[j];
+                j++;
+                if (j >= wt_row) {
+                    j = 0;
+                }
+            }
         }
     } else {
-        for (r = 0; r < wt_row; r++) {
-            w = wt + r * er_size;
-            for (i = 0; i < er_size; i++) {
-                w[i] += param->learn_rate * er[i] * ((x == NULL) ? 1 : x[i])
-                    - param->l2_penalty * w[i];
+        if (x == NULL) {
+            for (r = 0; r < wt_row; r++) {
+                w = wt + r * er_size;
+                for (i = 0; i < er_size; i++) {
+                    w[i] += lr * er[i] // *  1.0 
+                        - l2 * w[i];
+                }
+            }
+        } else {
+            for (r = 0; r < wt_row; r++) {
+                w = wt + r * er_size;
+                for (i = 0; i < er_size; i++) {
+                    w[i] += lr * er[i] * x[i]
+                        - l2 * w[i];
+                }
             }
         }
     }
