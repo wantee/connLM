@@ -751,10 +751,12 @@ static int maxent_backprop_class(maxent_t *maxent)
 
     for (a = 0; a < order; a++) {
         param_update(&maxent->train_opt.param,
+                &maxent->param_arg_c,
                 maxent->wt_c,
                 maxent->output->er_o_c,
-                NULL,
+                maxent->model_opt.scale,
                 maxent->class_size,
+                NULL,
                 -maxent->model_opt.sz_c,
                 maxent->hash_c[a]);
     }
@@ -785,10 +787,12 @@ static int maxent_backprop_word(maxent_t *maxent, int c, int s, int e)
 
     for (a = 0; a < order; a++) {
         param_update(&maxent->train_opt.param,
+                &maxent->param_arg_w,
                 maxent->wt_w,
                 maxent->output->er_o_w + s, 
-                NULL,
+                maxent->model_opt.scale,
                 e - s, 
+                NULL,
                 -maxent->model_opt.sz_w,
                 maxent->hash_w[a]);
     }
@@ -863,6 +867,8 @@ int maxent_setup_train(maxent_t *maxent, maxent_train_opt_t *train_opt,
     maxent->train_opt = *train_opt;
     maxent->output = output;
 
+    param_arg_clear(&maxent->param_arg_w);
+
     order = maxent->model_opt.order;
     maxent->hist = (int *) malloc(sizeof(int) * order);
     if (maxent->hist == NULL) {
@@ -880,6 +886,8 @@ int maxent_setup_train(maxent_t *maxent, maxent_train_opt_t *train_opt,
     }
 
     if (maxent->class_size > 0) {
+        param_arg_clear(&maxent->param_arg_c);
+
         maxent->hash_c = (hash_t *) malloc(sizeof(hash_t) * order);
         if (maxent->hash_c == NULL) {
             ST_WARNING("Failed to malloc hash_c.");

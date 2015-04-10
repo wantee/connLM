@@ -63,6 +63,9 @@ typedef struct _maxent_t_ {
     output_t *output;
 
     maxent_train_opt_t train_opt;
+    param_arg_t param_arg_c;
+    param_arg_t param_arg_w;
+
     int *hist;
     // neuron actived by a n-gram feature of history
     hash_t *hash_c; 

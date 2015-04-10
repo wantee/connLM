@@ -3,11 +3,11 @@
 # Begin configuration section.
 train_config=./conf/train.conf
 test_config=./conf/test.conf
-max_iters=20
+max_iters=50
 min_iters=0 # keep training, disable weight rejection, start learn-rate halving as usual,
 keep_lr_iters=0 # fix learning rate for N initial epochs,
-start_halving_impr=0.01
-end_halving_impr=0.001
+start_halving_impr=0.003
+end_halving_impr=0.0003
 halving_factor=0.5
 # end configuration sections
 

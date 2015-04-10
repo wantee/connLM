@@ -37,15 +37,22 @@ typedef struct _param_t_ {
     real_t learn_rate;
     real_t l1_penalty;
     real_t l2_penalty;
+    int l2_gap;
     real_t momentum;
-    real_t gradient_cutoff;
 } param_t;
+
+typedef struct _param_arg_t_ {
+    int l2_step;
+} param_arg_t;
+
+void param_arg_clear(param_arg_t *arg);
 
 int param_load(param_t *param, st_opt_t *opt, const char *sec_name,
         param_t *parent_param);
 
-int param_update(param_t *param, real_t *wt, real_t *er, real_t *x,
-        int er_size, int wt_row, int wt_start);
+void param_update(param_t *param, param_arg_t *arg,
+        real_t *wt, real_t *er, real_t er_scale,
+        int er_size, real_t *in, int in_size, int wt_start);
 
 #ifdef __cplusplus
 }

@@ -35,8 +35,8 @@ static param_t def_param = {
     .learn_rate = 0.1,
     .l1_penalty = 0.0,
     .l2_penalty = 0.0,
+    .l2_gap = 1,
     .momentum = 0.0,
-    .gradient_cutoff = 0.0,
 };
 
 int param_load(param_t *param, st_opt_t *opt, const char *sec_name,
@@ -67,78 +67,116 @@ int param_load(param_t *param, st_opt_t *opt, const char *sec_name,
             "L2 penalty (weight decay)");
     param->l2_penalty = (real_t)f;
 
+    ST_OPT_SEC_GET_INT(opt, sec_name, "L2_GAP", param->l2_gap,
+            param->l2_gap,
+            "Number of words between two consecutive L2 regularization");
+
     ST_OPT_SEC_GET_FLOAT(opt, sec_name, "MOMENTUM", f,
             (float)param->momentum,
             "Momentum");
     param->momentum = (real_t)f;
-
-    ST_OPT_SEC_GET_FLOAT(opt, sec_name, "GRADIENT_CUTOFF", f,
-            (float)param->gradient_cutoff,
-            "Cutoff of gradient");
-    param->gradient_cutoff = (real_t)f;
 
     return 0;
 ST_OPT_ERR:
     return -1;
 }
 
-int param_update(param_t *param, real_t *wt, real_t *er, real_t *x,
-        int er_size, int wt_row, int wt_start)
+void param_arg_clear(param_arg_t *arg)
+{
+    arg->l2_step = 0;
+}
+
+/**
+ * update weight using parameters.
+ * 
+ * in is [ in_size x 1 ];
+ *  
+ *
+ * er_size > 0 && in_size > 0: er is [ 1 x er_size ]; wt is [ er_size x in_size ]; if in == NULL: in is one-shot vector
+ * er_size > 0 && in_size < 0: er is [ 1 x er_size ]; wt is hash based 1d vector start from hash_start; in is one-shot vector
+ * er_size < 0 && in_size > 0: er is delta-weight matrix [ er_size x in_size ]; wt is [ er_size x in_size ]; 
+ * er_size < 0 && in_size < 0: er is delta-weight matrix [ er_size x in_size ]; wt is [ er_size x in_size ]; in is one-shot vector
+ */
+void param_update(param_t *param, param_arg_t *arg,
+        real_t *wt, real_t *er, real_t er_scale,
+        int er_size, real_t *in, int in_size, int hash_start)
 {
     real_t *w;
+    real_t *delta_w;
 
     real_t lr;
     real_t l2;
 
-    int r;
     int i;
     int j;
 
     lr = param->learn_rate;
     l2 = param->l2_penalty;
 
-    if (wt_row < 0) {
-        wt_row = - wt_row;
-        j = wt_start;
-        if (x == NULL) {
-            for (i = 0; i < er_size; i++) {
-                wt[j] += lr * er[i] // * 1.0
-                    - l2 * wt[j];
-                j++;
-                if (j >= wt_row) {
-                    j = 0;
-                }
-            }
-        } else {
-            for (i = 0; i < er_size; i++) {
-                wt[j] += lr * er[i] * x[i]
-                    - l2 * wt[j];
-                j++;
-                if (j >= wt_row) {
-                    j = 0;
-                }
-            }
+    if (param->l2_gap > 1 && arg != NULL) {
+        if (arg->l2_step != 0) {
+            l2 = 0.0;
         }
-    } else {
-        if (x == NULL) {
-            for (r = 0; r < wt_row; r++) {
-                w = wt + r * er_size;
-                for (i = 0; i < er_size; i++) {
-                    w[i] += lr * er[i] // *  1.0 
-                        - l2 * w[i];
-                }
-            }
-        } else {
-            for (r = 0; r < wt_row; r++) {
-                w = wt + r * er_size;
-                for (i = 0; i < er_size; i++) {
-                    w[i] += lr * er[i] * x[i]
-                        - l2 * w[i];
-                }
-            }
+        arg->l2_step++;
+        if (arg->l2_step >= param->l2_gap) {
+            arg->l2_step = 0;
         }
     }
 
-    return 0;
+    if (er_size > 0 && in_size > 0) {
+        if (in == NULL) {
+            i = 0;
+            for (j = 0; j < er_size; j++) {
+                wt[i] += lr * er[j] * er_scale
+                    - l2 * wt[i];
+                i += in_size;
+            }
+        } else {
+            w = wt;
+            for (j = 0; j < er_size; j++) {
+                for (i = 0; i < in_size; i++) {
+                    w[i] += lr * er[j] * er_scale * in[i]
+                        - l2 * w[i];
+                }
+                w += in_size;
+            }
+        }
+    } else if (er_size > 0 && in_size < 0) {
+        in_size = - in_size;
+        i = hash_start;
+        for (j = 0; j < er_size; j++) {
+            wt[i] += lr * er[j] * er_scale // * 1.0
+                - l2 * wt[i];
+            i++;
+            if (i >= in_size) {
+                i = 0;
+            }
+        }
+    } else if (er_size < 0 && in_size > 0) {
+        er_size = - er_size;
+        w = wt;
+        delta_w = er;
+
+        for (j = 0; j < er_size; j++) {
+            for (i = 0; i < in_size; i++) {
+                w[i] += lr * delta_w[i] * er_scale
+                    - l2 * w[i];
+            }
+            w += in_size;
+            delta_w += in_size;
+        }
+    } else {
+        in_size = - in_size;
+        er_size = - er_size;
+        w = wt;
+        delta_w = er;
+
+        i = 0;
+        for (j = 0; j < er_size; j++) {
+            w[i] += lr * delta_w[i] * er_scale
+                - l2 * w[i];
+            i += in_size;
+        }
+    }
 }
 

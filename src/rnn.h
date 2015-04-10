@@ -45,6 +45,7 @@ typedef struct _rnn_train_opt_t {
     int bptt;
     int bptt_block;
 
+    real_t er_cutoff;
     param_t param;
 } rnn_train_opt_t;
 
@@ -56,6 +57,8 @@ typedef struct _rnn_t_ {
 
     output_t *output;
 
+    int last_word;
+
     // weights between input and hidden layer
     real_t *wt_ih_w;            // word vs hidden
     real_t *wt_ih_h;            // hidden vs hidden
@@ -65,6 +68,11 @@ typedef struct _rnn_t_ {
     real_t *wt_ho_w;            // hidden vs word
 
     rnn_train_opt_t train_opt;
+    param_arg_t arg_ih_w;
+    param_arg_t arg_ih_h;
+    param_arg_t arg_ho_c;
+    param_arg_t arg_ho_w;
+    int step;
 
     int *bptt_hist;
     real_t *ac_bptt_h;
@@ -110,6 +118,7 @@ int rnn_setup_train(rnn_t *rnn, rnn_train_opt_t *train_opt,
         output_t *output);
 int rnn_reset_train(rnn_t *rnn);
 int rnn_start_train(rnn_t *rnn, int word);
+int rnn_fwd_bp(rnn_t *rnn, int word);
 int rnn_end_train(rnn_t *rnn, int word);
 
 int rnn_setup_test(rnn_t *rnn, output_t *output);

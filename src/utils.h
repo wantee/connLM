@@ -35,9 +35,11 @@ extern "C" {
 
 #define exp10(a) pow(10.0, a)
 
-void matXvec(real_t *dst, real_t *mat, real_t *vec, int mat_wid, int vec_size);
+void matXvec(real_t *dst, real_t *mat, real_t *vec,
+        int mat_wid, int vec_size, real_t scale);
 
-void vecXmat(real_t *dst, real_t *vec, real_t *mat, int mat_col, int vec_size);
+void vecXmat(real_t *dst, real_t *vec, real_t *mat,
+        int mat_col, int vec_size, real_t scale);
 
 void sigmoid(real_t *vec, int vec_size);
 

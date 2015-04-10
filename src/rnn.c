@@ -65,12 +65,18 @@ ST_OPT_ERR:
 int rnn_load_train_opt(rnn_train_opt_t *train_opt, st_opt_t *opt,
         const char *sec_name, param_t *param)
 {
+    float f;
+
     ST_CHECK_PARAM(train_opt == NULL || opt == NULL, -1);
 
     ST_OPT_SEC_GET_INT(opt, sec_name, "BPTT", train_opt->bptt, 5,
             "Time step of BPTT");
     ST_OPT_SEC_GET_INT(opt, sec_name, "BPTT_BLOCK",
             train_opt->bptt_block, 10, "Block size of BPTT");
+
+    ST_OPT_SEC_GET_FLOAT(opt, sec_name, "ERR_CUTOFF", f,
+            50, "Cutoff of error");
+    train_opt->er_cutoff = (real_t)f;
 
     if (param_load(&train_opt->param, opt, sec_name, param) < 0) {
         ST_WARNING("Failed to nn_param_load.");
@@ -88,7 +94,6 @@ int rnn_init(rnn_t **prnn, rnn_model_opt_t *model_opt, output_t *output)
     rnn_t *rnn = NULL;
 
     size_t i;
-    size_t j;
     size_t sz;
 
     int class_size;
@@ -137,7 +142,27 @@ int rnn_init(rnn_t **prnn, rnn_model_opt_t *model_opt, output_t *output)
         goto ERR;
     }
 
+    sz = model_opt->hidden_size * vocab_size;
+    for (i = 0; i < sz; i++) {
+        rnn->wt_ih_w[i] = rrandom(-0.1, 0.1) 
+            + rrandom(-0.1, 0.1) + rrandom(-0.1, 0.1);
+    }
+
+    sz = model_opt->hidden_size * model_opt->hidden_size;
+    for (i = 0; i < sz; i++) {
+        rnn->wt_ih_h[i] = rrandom(-0.1, 0.1) 
+            + rrandom(-0.1, 0.1) + rrandom(-0.1, 0.1);
+    }
+
+    sz = vocab_size * model_opt->hidden_size;
+    for (i = 0; i < sz; i++) {
+        rnn->wt_ho_w[i] = rrandom(-0.1, 0.1) 
+            + rrandom(-0.1, 0.1) + rrandom(-0.1, 0.1);
+    }
+
     if (class_size > 0) {
+        param_arg_clear(&rnn->arg_ho_c);
+
         sz = model_opt->hidden_size * class_size;
         rnn->wt_ho_c = (real_t *) malloc(sizeof(real_t) * sz);
         if (rnn->wt_ho_c == NULL) {
@@ -145,31 +170,10 @@ int rnn_init(rnn_t **prnn, rnn_model_opt_t *model_opt, output_t *output)
             goto ERR;
         }
 
-        for (i = 0; i < class_size; i++) {
-            for (j = 0; j < model_opt->hidden_size; j++) {
-                rnn->wt_ho_c[j + i*model_opt->hidden_size] =
-                    rrandom(-0.1, 0.1) + rrandom(-0.1, 0.1) + rrandom(-0.1, 0.1);
-            }
-        }
-
-    }
-
-    for (i = 0; i < model_opt->hidden_size; i++) {
-        for (j = 0; j < vocab_size; j++) {
-            rnn->wt_ih_w[j + i*vocab_size] =
-                rrandom(-0.1, 0.1) + rrandom(-0.1, 0.1) + rrandom(-0.1, 0.1);
-        }
-
-        for (j = 0; j < model_opt->hidden_size; j++) {
-            rnn->wt_ih_h[j + i*model_opt->hidden_size] =
-                rrandom(-0.1, 0.1) + rrandom(-0.1, 0.1) + rrandom(-0.1, 0.1);
-        }
-    }
-
-    for (i = 0; i < vocab_size; i++) {
-        for (j = 0; j < model_opt->hidden_size; j++) {
-            rnn->wt_ho_w[j + i*model_opt->hidden_size] =
-                rrandom(-0.1, 0.1) + rrandom(-0.1, 0.1) + rrandom(-0.1, 0.1);
+        sz = class_size * model_opt->hidden_size;
+        for (i = 0; i < sz; i++) {
+            rnn->wt_ho_c[i] = rrandom(-0.1, 0.1) 
+                + rrandom(-0.1, 0.1) + rrandom(-0.1, 0.1);
         }
     }
 
@@ -670,21 +674,290 @@ int rnn_save_body(rnn_t *rnn, FILE *fp, bool binary)
 
 int rnn_forward(rnn_t *rnn, int word)
 {
+    int hidden_size;
+
+    int h;
+    int i;
+
+    int c;
+    int s;
+    int e;
+
+    ST_CHECK_PARAM(rnn == NULL, -1);
+
+    hidden_size = rnn->model_opt.hidden_size;
+
+    for (h = 0; h < hidden_size; h++) {
+        rnn->ac_h[h] = 0;
+    }
+
+    // PROPAGATE input -> hidden
+    matXvec(rnn->ac_h, rnn->wt_ih_h, rnn->ac_i_h,
+            hidden_size, hidden_size, 1.0);
+
+
+    if (rnn->last_word >= 0) {
+        i = rnn->last_word;
+        for (h = 0; h < hidden_size; h++) {
+            rnn->ac_h[h] += rnn->wt_ih_w[i];
+            i += rnn->vocab_size;
+        }
+    }
+
+    // ACTIVATE hidden
+    sigmoid(rnn->ac_h, hidden_size);
+
+    // PROPAGATE hidden -> output (class)
+    if (rnn->class_size > 0) {
+        matXvec(rnn->output->ac_o_c, rnn->wt_ho_c, rnn->ac_h,
+                rnn->class_size, hidden_size, rnn->model_opt.scale);
+    }
+
+    // PROPAGATE hidden -> output (word)
+    if (word < 0) {
+        return 0;
+    }
+
+    c = rnn->output->w2c[word];
+    s = rnn->output->c2w_s[c];
+    e = rnn->output->c2w_e[c];
+
+    matXvec(rnn->output->ac_o_w + s, rnn->wt_ho_w + s * hidden_size,
+            rnn->ac_h, e - s, hidden_size, rnn->model_opt.scale);
+
+    return 0;
+}
+
+static void propagate_error(real_t *dst, real_t *vec, real_t *mat,
+        int mat_col, int in_vec_size, real_t er_cutoff, real_t scale)
+{
+    int a;
+
+    vecXmat(dst, vec, mat, mat_col, in_vec_size, scale);
+
+    if (er_cutoff > 0) {
+        for (a = 0; a < mat_col; a++) {
+            if (dst[a] > er_cutoff) {
+                dst[a] = er_cutoff;
+            } else if (dst[a] < -er_cutoff) {
+                dst[a] = -er_cutoff;
+            }
+        }
+    }
+}
+
+int rnn_backprop(rnn_t *rnn, int word)
+{
+    int bptt;
+    int bptt_block;
+    int hidden_size;
+
+    int c;
+    int s;
+    int e;
+
+    int h;
+    int t;
+    int i;
+
     ST_CHECK_PARAM(rnn == NULL, -1);
 
     if (word < 0) {
         return 0;
     }
 
-    return 0;
-}
+    bptt = rnn->train_opt.bptt;
+    bptt_block = rnn->train_opt.bptt_block;
+    hidden_size = rnn->model_opt.hidden_size;
 
-int rnn_backprop(rnn_t *rnn, int word)
-{
-    ST_CHECK_PARAM(rnn == NULL, -1);
+    c = rnn->output->w2c[word];
+    s = rnn->output->c2w_s[c];
+    e = rnn->output->c2w_e[c];
 
-    if (word < 0) {
-        return 0;
+    for (h = 0; h < hidden_size; h++) {
+        rnn->er_h[h] = 0;
+    }
+
+    // BACK-PROPAGATE output -> hidden (word)
+    propagate_error(rnn->er_h, rnn->output->er_o_w + s,
+            rnn->wt_ho_w + s * hidden_size,
+            hidden_size, e - s, rnn->train_opt.er_cutoff,
+            rnn->model_opt.scale);
+
+    param_update(&rnn->train_opt.param,
+            &rnn->arg_ho_w,
+            rnn->wt_ho_w + s * hidden_size,
+            rnn->output->er_o_w + s, 
+            1.0, 
+            e - s, 
+            rnn->ac_h,
+            hidden_size,
+            -1);
+
+    if (rnn->class_size > 0) {
+        // BACK-PROPAGATE output -> hidden (class)
+        propagate_error(rnn->er_h, rnn->output->er_o_c, rnn->wt_ho_c,
+                hidden_size, rnn->class_size, rnn->train_opt.er_cutoff,
+                rnn->model_opt.scale);
+
+        param_update(&rnn->train_opt.param,
+                &rnn->arg_ho_c,
+                rnn->wt_ho_c,
+                rnn->output->er_o_c, 
+                1.0, 
+                rnn->class_size, 
+                rnn->ac_h,
+                hidden_size,
+                -1);
+    }
+
+    // BACK-PROPAGATE hidden -> input
+    if (bptt <= 1) { // normal BP
+        // error derivation
+        for (h = 0; h < hidden_size; h++) {
+            rnn->er_h[h] *= rnn->ac_h[h] * (1 - rnn->ac_h[h]);
+        }
+
+        // weight update (word -> hidden)
+        if (rnn->last_word >= 0) {
+            param_update(&rnn->train_opt.param,
+                    &rnn->arg_ih_w,
+                    rnn->wt_ih_w + rnn->last_word,
+                    rnn->er_h, 
+                    1.0, 
+                    hidden_size, 
+                    NULL,
+                    rnn->vocab_size,
+                    -1);
+        }
+
+        // weight update (hidden -> hidden)
+        param_update(&rnn->train_opt.param,
+                &rnn->arg_ih_h,
+                rnn->wt_ih_h,
+                rnn->er_h, 
+                1.0, 
+                hidden_size, 
+                rnn->ac_i_h,
+                hidden_size,
+                -1);
+    } else { // BPTT
+        for (h = 0; h < hidden_size; h++) {
+            rnn->ac_bptt_h[h] = rnn->ac_h[h];
+            rnn->er_bptt_h[h] = rnn->er_h[h];
+        }
+
+        rnn->step++;
+        if (rnn->step >= bptt_block) {
+            rnn->step = 0;
+        }
+
+        if (rnn->step == 0 || word == 0) {
+            for (t = 0; t < bptt + bptt_block - 2; t++) {
+                // error derivation
+                for (h = 0; h < hidden_size; h++) {
+                    rnn->er_h[h] *= rnn->ac_h[h] * (1 - rnn->ac_h[h]);
+                }
+
+                // back-propagate errors hidden -> input
+                // weight update (word)
+                if (rnn->bptt_hist[t] != -1) {
+                    i = rnn->bptt_hist[t];
+                    for (h = 0; h < hidden_size; h++) {
+                        rnn->wt_bptt_ih_w[i] += rnn->er_h[h];
+                        i += rnn->vocab_size;
+                    }
+                }
+
+                for(i = 0; i < hidden_size; i++) {
+                    rnn->er_i_h[i] = 0;
+                }
+
+                // error propagation (hidden)
+                propagate_error(rnn->er_i_h, rnn->er_h,
+                        rnn->wt_ih_h, hidden_size,
+                        hidden_size, rnn->train_opt.er_cutoff, 1.0);
+
+                // weight update (hidden)
+                for (i = 0; i < hidden_size; i++) {
+                    for (h = 0; h < hidden_size; h++) {
+                        rnn->wt_bptt_ih_h[i + h*hidden_size] +=
+                            rnn->er_h[h]*rnn->ac_i_h[i];
+                    }
+                }
+
+                //propagate error from time T-n to T-n-1
+                if (t < bptt_block - 1) {
+                    i = (t + 1) * hidden_size;
+                    for (h = 0; h < hidden_size; h++) {
+                        rnn->er_h[h] = rnn->er_i_h[h]
+                            + rnn->er_bptt_h[i + h];
+                    }
+                } else {
+                    for (h = 0; h < hidden_size; h++) {
+                        rnn->er_h[h] = rnn->er_i_h[h];
+                    }
+                }
+
+                if (t < bptt + bptt_block - 3) {
+                    i = (t + 1) * hidden_size;
+                    for (h = 0; h < hidden_size; h++) {
+                        rnn->ac_h[h] = rnn->ac_bptt_h[i + h];
+                    }
+                    i = (t + 2) * hidden_size;
+                    for (h = 0; h < hidden_size; h++) {
+                        rnn->ac_i_h[h] = rnn->ac_bptt_h[i + h];
+                    }
+                }
+            }
+
+            // Clear buffers
+            for (h = 0; h < bptt_block * hidden_size; h++) {
+                rnn->er_bptt_h[h] = 0;
+            }
+
+            for (h = 0; h < hidden_size; h++) {
+                rnn->ac_h[h] = rnn->ac_bptt_h[h];
+            }
+
+            // update weight input -> hidden (hidden)
+            param_update(&rnn->train_opt.param,
+                    &rnn->arg_ih_h,
+                    rnn->wt_ih_h,
+                    rnn->wt_bptt_ih_h,
+                    1.0,
+                    -hidden_size, 
+                    NULL,
+                    hidden_size,
+                    -1);
+
+            for (i = 0; i < hidden_size; i++) {
+                for (h = 0; h < hidden_size; h++) {
+                    rnn->wt_bptt_ih_h[i + h * hidden_size] = 0;
+                }
+            }
+
+            // update weight input -> hidden (word)
+            for (t = 0; t < bptt + bptt_block - 2; t++) {
+                if (rnn->bptt_hist[t] != -1) {
+                    param_update(&rnn->train_opt.param,
+                            &rnn->arg_ih_w,
+                            rnn->wt_ih_w + rnn->bptt_hist[t],
+                            rnn->wt_bptt_ih_w + rnn->bptt_hist[t],
+                            1.0,
+                            -hidden_size, 
+                            NULL,
+                            -rnn->vocab_size,
+                            -1);
+
+                    i = rnn->bptt_hist[t];
+                    for (h = 0; h < hidden_size; h++) {
+                        rnn->wt_bptt_ih_w[i] = 0;
+                        i += rnn->vocab_size;
+                    }
+                }
+            }
+        }
     }
 
     return 0;
@@ -708,7 +981,6 @@ static bool rnn_check_output(rnn_t *rnn, output_t *output)
 int rnn_setup_train(rnn_t *rnn, rnn_train_opt_t *train_opt,
         output_t *output)
 {
-    size_t i;
     size_t sz;
 
     int hidden_size;
@@ -724,17 +996,15 @@ int rnn_setup_train(rnn_t *rnn, rnn_train_opt_t *train_opt,
     rnn->output = output;
     rnn->train_opt = *train_opt;
 
+    param_arg_clear(&rnn->arg_ih_w);
+    param_arg_clear(&rnn->arg_ih_h);
+    param_arg_clear(&rnn->arg_ho_w);
+
     hidden_size = rnn->model_opt.hidden_size;
 
     rnn->ac_i_h = (real_t *) malloc(sizeof(real_t) * hidden_size);
     if (rnn->ac_i_h == NULL) {
         ST_WARNING("Failed to malloc ac_i_h.");
-        goto ERR;
-    }
-
-    rnn->er_i_h = (real_t *) malloc(sizeof(real_t) * hidden_size);
-    if (rnn->er_i_h == NULL) {
-        ST_WARNING("Failed to malloc er_i_h.");
         goto ERR;
     }
 
@@ -751,8 +1021,14 @@ int rnn_setup_train(rnn_t *rnn, rnn_train_opt_t *train_opt,
     }
 
     if (train_opt->bptt > 1) {
-        rnn->bptt_hist = (int *) malloc(sizeof(int)
-                * (train_opt->bptt + train_opt->bptt_block));
+        rnn->er_i_h = (real_t *) malloc(sizeof(real_t) * hidden_size);
+        if (rnn->er_i_h == NULL) {
+            ST_WARNING("Failed to malloc er_i_h.");
+            goto ERR;
+        }
+
+        sz = train_opt->bptt + train_opt->bptt_block;
+        rnn->bptt_hist = (int *) malloc(sizeof(int) * sz);
         if (rnn->bptt_hist == NULL) {
             ST_WARNING("Failed to malloc bptt_hist.");
             goto ERR;
@@ -764,6 +1040,7 @@ int rnn_setup_train(rnn_t *rnn, rnn_train_opt_t *train_opt,
             ST_WARNING("Failed to malloc ac_bptt_h.");
             goto ERR;
         }
+        memset(rnn->ac_bptt_h, 0, sizeof(real_t) * sz);
 
         sz = hidden_size * (train_opt->bptt_block);
         rnn->er_bptt_h = (real_t *) malloc(sizeof(real_t) * sz);
@@ -771,6 +1048,7 @@ int rnn_setup_train(rnn_t *rnn, rnn_train_opt_t *train_opt,
             ST_WARNING("Failed to malloc er_bptt_h.");
             goto ERR;
         }
+        memset(rnn->er_bptt_h, 0, sizeof(real_t) * sz);
 
         sz = rnn->vocab_size * hidden_size;
         rnn->wt_bptt_ih_w = (real_t *) malloc(sizeof(real_t) * sz);
@@ -778,6 +1056,7 @@ int rnn_setup_train(rnn_t *rnn, rnn_train_opt_t *train_opt,
             ST_WARNING("Failed to malloc wt_bptt_ih_w.");
             goto ERR;
         }
+        memset(rnn->wt_bptt_ih_w, 0, sizeof(real_t) * sz);
 
         sz = hidden_size * hidden_size;
         rnn->wt_bptt_ih_h = (real_t *) malloc(sizeof(real_t) * sz);
@@ -785,40 +1064,7 @@ int rnn_setup_train(rnn_t *rnn, rnn_train_opt_t *train_opt,
             ST_WARNING("Failed to malloc wt_bptt_ih_h.");
             goto ERR;
         }
-
-        for (i = 0; i < (train_opt->bptt + train_opt->bptt_block); i++) {
-            rnn->bptt_hist[i] = -1;
-        }
-
-        sz = hidden_size * (train_opt->bptt + train_opt->bptt_block);
-        for (i = 0; i < sz; i++) {
-            rnn->ac_bptt_h[i] = 0;
-        }
-
-        sz = hidden_size * train_opt->bptt_block;
-        for (i = 0; i < sz; i++) {
-            rnn->er_bptt_h[i] = 0;
-        }
-
-        sz = rnn->vocab_size * hidden_size;
-        for (i = 0; i < sz; i++) {
-            rnn->wt_bptt_ih_w[i] = 0;
-        }
-
-        sz = hidden_size * hidden_size;
-        for (i = 0; i < sz; i++) {
-            rnn->wt_bptt_ih_h[i] = 0;
-        }
-    }
-
-    for (i = 0; i < hidden_size; i++) {
-        rnn->ac_i_h[i] = 0.1;
-        rnn->er_i_h[i] = 0;
-    }
-
-    for (i = 0; i < hidden_size; i++) {
-        rnn->ac_h[i] = 0;
-        rnn->er_h[i] = 0;
+        memset(rnn->wt_bptt_ih_h, 0, sizeof(real_t) * sz);
     }
 
     return 0;
@@ -841,7 +1087,6 @@ ERR:
 int rnn_reset_train(rnn_t *rnn)
 {
     size_t i;
-    size_t sz;
 
     rnn_train_opt_t *train_opt;
     int hidden_size;
@@ -852,41 +1097,18 @@ int rnn_reset_train(rnn_t *rnn)
 
     hidden_size = rnn->model_opt.hidden_size;
 
+    rnn->step = -1;
     if (train_opt->bptt > 1) {
         for (i = 0; i < (train_opt->bptt + train_opt->bptt_block); i++) {
             rnn->bptt_hist[i] = -1;
-        }
-
-        sz = hidden_size * (train_opt->bptt + train_opt->bptt_block);
-        for (i = 0; i < sz; i++) {
-            rnn->ac_bptt_h[i] = 0;
-        }
-
-        sz = hidden_size * train_opt->bptt_block;
-        for (i = 0; i < sz; i++) {
-            rnn->er_bptt_h[i] = 0;
-        }
-
-        sz = rnn->vocab_size * hidden_size;
-        for (i = 0; i < sz; i++) {
-            rnn->wt_bptt_ih_w[i] = 0;
-        }
-
-        sz = hidden_size * hidden_size;
-        for (i = 0; i < sz; i++) {
-            rnn->wt_bptt_ih_h[i] = 0;
         }
     }
 
     for (i = 0; i < hidden_size; i++) {
         rnn->ac_i_h[i] = 0.1;
-        rnn->er_i_h[i] = 0;
     }
 
-    for (i = 0; i < hidden_size; i++) {
-        rnn->ac_h[i] = 0;
-        rnn->er_h[i] = 0;
-    }
+    rnn->last_word = -1;
 
     return 0;
 }
@@ -898,17 +1120,60 @@ int rnn_start_train(rnn_t *rnn, int word)
     return 0;
 }
 
+int rnn_fwd_bp(rnn_t *rnn, int word) 
+{
+    int bptt;
+    int bptt_block;
+    int hidden_size;
+
+    int a;
+    int b;
+
+    ST_CHECK_PARAM(rnn == NULL, -1);
+
+    bptt = rnn->train_opt.bptt;
+    bptt_block = rnn->train_opt.bptt_block;
+    hidden_size = rnn->model_opt.hidden_size;
+
+    if (bptt > 1) {
+        for (a = bptt + bptt_block - 1; a > 0; a--) {
+            rnn->bptt_hist[a] = rnn->bptt_hist[a - 1];
+        }
+        rnn->bptt_hist[0] = rnn->last_word;
+
+        for (a = bptt + bptt_block - 1; a > 0; a--) {
+            for (b = 0; b < hidden_size; b++) {
+                rnn->ac_bptt_h[a*hidden_size + b] =
+                    rnn->ac_bptt_h[(a-1)*hidden_size + b];
+            }
+        }
+
+        for (a = bptt_block - 1; a > 0; a--) {
+            for (b = 0; b < hidden_size; b++) {
+                rnn->er_bptt_h[a*hidden_size + b] =
+                    rnn->er_bptt_h[(a-1)*hidden_size + b];
+            }
+        }
+    }
+
+    return 0;
+}
+
 int rnn_end_train(rnn_t *rnn, int word)
 {
     ST_CHECK_PARAM(rnn == NULL, -1);
+
+    rnn->last_word = word;
+
+    // copy hidden layer to input
+    memcpy(rnn->ac_i_h, rnn->ac_h,
+            rnn->model_opt.hidden_size * sizeof(real_t));
 
     return 0;
 }
 
 int rnn_setup_test(rnn_t *rnn, output_t *output)
 {
-    size_t i;
-
     int hidden_size;
 
     ST_CHECK_PARAM(rnn == NULL || output == NULL, -1);
@@ -934,14 +1199,6 @@ int rnn_setup_test(rnn_t *rnn, output_t *output)
         goto ERR;
     }
 
-    for (i = 0; i < hidden_size; i++) {
-        rnn->ac_i_h[i] = 0.1;
-    }
-
-    for (i = 0; i < hidden_size; i++) {
-        rnn->ac_h[i] = 0;
-    }
-
     return 0;
 
 ERR:
@@ -965,9 +1222,7 @@ int rnn_reset_test(rnn_t *rnn)
         rnn->ac_i_h[i] = 0.1;
     }
 
-    for (i = 0; i < hidden_size; i++) {
-        rnn->ac_h[i] = 0;
-    }
+    rnn->last_word = -1;
 
     return 0;
 }
@@ -982,6 +1237,12 @@ int rnn_start_test(rnn_t *rnn, int word)
 int rnn_end_test(rnn_t *rnn, int word)
 {
     ST_CHECK_PARAM(rnn == NULL, -1);
+
+    rnn->last_word = word;
+
+    // copy hidden layer to input
+    memcpy(rnn->ac_i_h, rnn->ac_h,
+            rnn->model_opt.hidden_size * sizeof(real_t));
 
     return 0;
 }

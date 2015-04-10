@@ -1081,6 +1081,20 @@ int connlm_forward(connlm_t *connlm, int word)
     return 0;
 }
 
+int connlm_fwd_bp(connlm_t *connlm, int word)
+{
+    ST_CHECK_PARAM(connlm == NULL, -1);
+
+    if (connlm->rnn != NULL) {
+        if (rnn_fwd_bp(connlm->rnn, word) < 0) {
+            ST_WARNING("Failed to rnn_fwd_bp.");
+            return -1;
+        }
+    }
+
+    return 0;
+}
+
 int connlm_backprop(connlm_t *connlm, int word)
 {
     ST_CHECK_PARAM(connlm == NULL, -1);
@@ -1191,6 +1205,11 @@ int connlm_train(connlm_t *connlm)
                         ST_WARNING("Numerical error. p_word(%d) = %g",
                                 eg[j], connlm->output->ac_o_w[eg[j]]);
                     }
+                    return -1;
+                }
+
+                if (connlm_fwd_bp(connlm, eg[j]) < 0) {
+                    ST_WARNING("Failed to connlm_fwd_bp.");
                     return -1;
                 }
 

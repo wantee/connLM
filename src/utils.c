@@ -43,7 +43,8 @@ struct timeval softmax_start, softmax_end;
 long long softmax_total = 0;
 #endif
 
-void matXvec(real_t *dst, real_t *mat, real_t *vec, int mat_row, int in_vec_size)
+void matXvec(real_t *dst, real_t *mat, real_t *vec,
+        int mat_row, int in_vec_size, real_t scale)
 {
     int i;
     int j;
@@ -55,9 +56,8 @@ void matXvec(real_t *dst, real_t *mat, real_t *vec, int mat_row, int in_vec_size
 #ifdef _MAT_X_VEC_OPENMP_
 #elif defined(_MAT_X_VEC_RAW_)
     for (i = 0; i < mat_row; i++) {
-        dst[i] = 0.0;
         for (j = 0; j < in_vec_size; j++) {
-            dst[i] += vec[j] * mat[i*in_vec_size + j];
+            dst[i] += vec[j] * mat[i*in_vec_size + j] * scale;
         }
     }
 #else
@@ -96,21 +96,20 @@ void matXvec(real_t *dst, real_t *mat, real_t *vec, int mat_row, int in_vec_size
             t7 += vec[j] * mat[(i * N + 7)*in_vec_size + j];
         }
 
-        dst[i * N + 0] = t0;
-        dst[i * N + 1] = t1;
-        dst[i * N + 2] = t2;
-        dst[i * N + 3] = t3;
+        dst[i * N + 0] += t0 * scale;
+        dst[i * N + 1] += t1 * scale;
+        dst[i * N + 2] += t2 * scale;
+        dst[i * N + 3] += t3 * scale;
 
-        dst[i * N + 4] = t4;
-        dst[i * N + 5] = t5;
-        dst[i * N + 6] = t6;
-        dst[i * N + 7] = t7;
+        dst[i * N + 4] += t4 * scale;
+        dst[i * N + 5] += t5 * scale;
+        dst[i * N + 6] += t6 * scale;
+        dst[i * N + 7] += t7 * scale;
     }
 
     for (i = i * N; i < mat_row; i++) {
-        dst[i] = 0.0;
         for (j = 0; j < in_vec_size; j++) {
-            dst[i] += vec[j] * mat[i*in_vec_size + j];
+            dst[i] += vec[j] * mat[i*in_vec_size + j] * scale;
         }
     }
 #endif
@@ -148,7 +147,8 @@ void matXvec(real_t *dst, real_t *mat, real_t *vec, int mat_row, int in_vec_size
 #endif
 }
 
-void vecXmat(real_t *dst, real_t *vec, real_t *mat, int mat_col, int in_vec_size)
+void vecXmat(real_t *dst, real_t *vec, real_t *mat,
+        int mat_col, int in_vec_size, real_t scale)
 {
     int i;
     int j;
@@ -161,7 +161,7 @@ void vecXmat(real_t *dst, real_t *vec, real_t *mat, int mat_col, int in_vec_size
 #elif defined(_MAT_X_VEC_RAW_)
     for (i = 0; i < mat_col; i++) {
         for (j = 0; j < in_vec_size; j++) {
-            dst[i] += vec[j] * mat[j*mat_col + i];
+            dst[i] += vec[j] * mat[j*mat_col + i] * scale;
         }
     }
 #else
@@ -200,20 +200,20 @@ void vecXmat(real_t *dst, real_t *vec, real_t *mat, int mat_col, int in_vec_size
             t7 += vec[j] * mat[(i * N + 7) + j*mat_col];
         }
 
-        dst[i * N + 0] += t0;
-        dst[i * N + 1] += t1;
-        dst[i * N + 2] += t2;
-        dst[i * N + 3] += t3;
+        dst[i * N + 0] += t0 * scale;
+        dst[i * N + 1] += t1 * scale;
+        dst[i * N + 2] += t2 * scale;
+        dst[i * N + 3] += t3 * scale;
 
-        dst[i * N + 4] += t4;
-        dst[i * N + 5] += t5;
-        dst[i * N + 6] += t6;
-        dst[i * N + 7] += t7;
+        dst[i * N + 4] += t4 * scale;
+        dst[i * N + 5] += t5 * scale;
+        dst[i * N + 6] += t6 * scale;
+        dst[i * N + 7] += t7 * scale;
     }
 
     for (i = i * N; i < mat_col; i++) {
         for (j = 0; j < in_vec_size; j++) {
-            dst[i] += vec[j] * mat[i + j*mat_col];
+            dst[i] += vec[j] * mat[i + j*mat_col] * scale;
         }
     }
 #endif
