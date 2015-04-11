@@ -101,8 +101,11 @@ void show_usage(const char *module_name)
 
 int main(int argc, const char *argv[])
 {
+    char args[1024];
     FILE *fp = NULL;
     int ret;
+
+    (void)st_escape_args(argc, argv, args, 1024);
 
     ret = connlm_train_parse_opt(&argc, argv);
     if (ret < 0) {
@@ -122,6 +125,7 @@ int main(int argc, const char *argv[])
         goto ERR;
     }
 
+    ST_CLEAN("Command-line: %s", args);
     st_opt_show(g_cmd_opt, "connLM Train Options");
     ST_CLEAN("Train: %s, Model-in: %s, Model-out: %s", 
             argv[1], argv[2], argv[3]);
