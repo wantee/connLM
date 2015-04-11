@@ -73,6 +73,7 @@ typedef struct _rnn_t_ {
     param_arg_t arg_ho_c;
     param_arg_t arg_ho_w;
     int step;
+    int block_step;
 
     int *bptt_hist;
     real_t *ac_bptt_h;

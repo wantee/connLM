@@ -767,7 +767,7 @@ int rnn_backprop(rnn_t *rnn, int word)
     }
 
     bptt = rnn->train_opt.bptt;
-    bptt_block = rnn->train_opt.bptt_block;
+    bptt_block = max(1, rnn->train_opt.bptt_block);
     hidden_size = rnn->model_opt.hidden_size;
 
     c = rnn->output->w2c[word];
@@ -784,6 +784,7 @@ int rnn_backprop(rnn_t *rnn, int word)
             hidden_size, e - s, rnn->train_opt.er_cutoff,
             rnn->model_opt.scale);
 
+    // weight update (output -> hidden)
     param_update(&rnn->train_opt.param,
             &rnn->arg_ho_w,
             rnn->wt_ho_w + s * hidden_size,
@@ -793,6 +794,7 @@ int rnn_backprop(rnn_t *rnn, int word)
             rnn->ac_h,
             hidden_size,
             -1);
+
 
     if (rnn->class_size > 0) {
         // BACK-PROPAGATE output -> hidden (class)
@@ -847,13 +849,16 @@ int rnn_backprop(rnn_t *rnn, int word)
             rnn->er_bptt_h[h] = rnn->er_h[h];
         }
 
-        rnn->step++;
-        if (rnn->step >= bptt_block) {
-            rnn->step = 0;
-        }
+        rnn->block_step++;
 
-        if (rnn->step == 0 || word == 0) {
-            for (t = 0; t < bptt + bptt_block - 2; t++) {
+        if (rnn->step % bptt_block == 0 || word == 0) {
+            bptt_block = min(bptt_block, rnn->block_step);
+            bptt = min(rnn->step - bptt_block, bptt);
+            if (bptt < 1) {
+                bptt = 1;
+            }
+            rnn->block_step = 0;
+            for (t = 0; t < bptt + bptt_block - 1; t++) {
                 // error derivation
                 for (h = 0; h < hidden_size; h++) {
                     rnn->er_h[h] *= rnn->ac_h[h] * (1 - rnn->ac_h[h]);
@@ -899,7 +904,7 @@ int rnn_backprop(rnn_t *rnn, int word)
                     }
                 }
 
-                if (t < bptt + bptt_block - 3) {
+                if (t < bptt + bptt_block - 2) {
                     i = (t + 1) * hidden_size;
                     for (h = 0; h < hidden_size; h++) {
                         rnn->ac_h[h] = rnn->ac_bptt_h[i + h];
@@ -909,11 +914,6 @@ int rnn_backprop(rnn_t *rnn, int word)
                         rnn->ac_i_h[h] = rnn->ac_bptt_h[i + h];
                     }
                 }
-            }
-
-            // Clear buffers
-            for (h = 0; h < bptt_block * hidden_size; h++) {
-                rnn->er_bptt_h[h] = 0;
             }
 
             for (h = 0; h < hidden_size; h++) {
@@ -938,7 +938,7 @@ int rnn_backprop(rnn_t *rnn, int word)
             }
 
             // update weight input -> hidden (word)
-            for (t = 0; t < bptt + bptt_block - 2; t++) {
+            for (t = 0; t < bptt + bptt_block - 1; t++) {
                 if (rnn->bptt_hist[t] != -1) {
                     param_update(&rnn->train_opt.param,
                             &rnn->arg_ih_w,
@@ -1027,7 +1027,7 @@ int rnn_setup_train(rnn_t *rnn, rnn_train_opt_t *train_opt,
             goto ERR;
         }
 
-        sz = train_opt->bptt + train_opt->bptt_block;
+        sz = train_opt->bptt + train_opt->bptt_block - 1;
         rnn->bptt_hist = (int *) malloc(sizeof(int) * sz);
         if (rnn->bptt_hist == NULL) {
             ST_WARNING("Failed to malloc bptt_hist.");
@@ -1097,10 +1097,14 @@ int rnn_reset_train(rnn_t *rnn)
 
     hidden_size = rnn->model_opt.hidden_size;
 
-    rnn->step = -1;
     if (train_opt->bptt > 1) {
-        for (i = 0; i < (train_opt->bptt + train_opt->bptt_block); i++) {
+        rnn->step = 0;
+        rnn->block_step = 0;
+        for (i = 0; i < train_opt->bptt + train_opt->bptt_block - 1; i++) {
             rnn->bptt_hist[i] = -1;
+        }
+        for (i = 0; i < hidden_size; i++) {
+            rnn->ac_bptt_h[i] = 0.1;
         }
     }
 
@@ -1136,24 +1140,29 @@ int rnn_fwd_bp(rnn_t *rnn, int word)
     hidden_size = rnn->model_opt.hidden_size;
 
     if (bptt > 1) {
-        for (a = bptt + bptt_block - 1; a > 0; a--) {
+        a = min(rnn->step, bptt + bptt_block - 2);
+        for (; a > 0; a--) {
             rnn->bptt_hist[a] = rnn->bptt_hist[a - 1];
         }
         rnn->bptt_hist[0] = rnn->last_word;
 
-        for (a = bptt + bptt_block - 1; a > 0; a--) {
+        a = min(rnn->step + 1, bptt + bptt_block - 1);
+        for (; a > 0; a--) {
             for (b = 0; b < hidden_size; b++) {
                 rnn->ac_bptt_h[a*hidden_size + b] =
                     rnn->ac_bptt_h[(a-1)*hidden_size + b];
             }
         }
 
-        for (a = bptt_block - 1; a > 0; a--) {
+        a = min(rnn->step, bptt_block - 1);
+        for (; a > 0; a--) {
             for (b = 0; b < hidden_size; b++) {
                 rnn->er_bptt_h[a*hidden_size + b] =
                     rnn->er_bptt_h[(a-1)*hidden_size + b];
             }
         }
+
+        rnn->step++;
     }
 
     return 0;
