@@ -687,14 +687,11 @@ int rnn_forward(rnn_t *rnn, int word)
 
     hidden_size = rnn->model_opt.hidden_size;
 
-    for (h = 0; h < hidden_size; h++) {
-        rnn->ac_h[h] = 0;
-    }
+    memset(rnn->ac_h, 0, sizeof(real_t)*hidden_size);
 
     // PROPAGATE input -> hidden
     matXvec(rnn->ac_h, rnn->wt_ih_h, rnn->ac_i_h,
             hidden_size, hidden_size, 1.0);
-
 
     if (rnn->last_word >= 0) {
         i = rnn->last_word;
@@ -774,9 +771,7 @@ int rnn_backprop(rnn_t *rnn, int word)
     s = rnn->output->c2w_s[c];
     e = rnn->output->c2w_e[c];
 
-    for (h = 0; h < hidden_size; h++) {
-        rnn->er_h[h] = 0;
-    }
+    memset(rnn->er_h, 0, sizeof(real_t) * hidden_size);
 
     // BACK-PROPAGATE output -> hidden (word)
     propagate_error(rnn->er_h, rnn->output->er_o_w + s,
@@ -794,7 +789,6 @@ int rnn_backprop(rnn_t *rnn, int word)
             rnn->ac_h,
             hidden_size,
             -1);
-
 
     if (rnn->class_size > 0) {
         // BACK-PROPAGATE output -> hidden (class)
@@ -844,10 +838,8 @@ int rnn_backprop(rnn_t *rnn, int word)
                 hidden_size,
                 -1);
     } else { // BPTT
-        for (h = 0; h < hidden_size; h++) {
-            rnn->ac_bptt_h[h] = rnn->ac_h[h];
-            rnn->er_bptt_h[h] = rnn->er_h[h];
-        }
+        memcpy(rnn->ac_bptt_h, rnn->ac_h, sizeof(real_t) * hidden_size);
+        memcpy(rnn->er_bptt_h, rnn->er_h, sizeof(real_t) * hidden_size);
 
         rnn->block_step++;
 
@@ -874,9 +866,7 @@ int rnn_backprop(rnn_t *rnn, int word)
                     }
                 }
 
-                for(i = 0; i < hidden_size; i++) {
-                    rnn->er_i_h[i] = 0;
-                }
+                memset(rnn->er_i_h, 0, sizeof(real_t) * hidden_size);
 
                 // error propagation (hidden)
                 propagate_error(rnn->er_i_h, rnn->er_h,
@@ -899,26 +889,22 @@ int rnn_backprop(rnn_t *rnn, int word)
                             + rnn->er_bptt_h[i + h];
                     }
                 } else {
-                    for (h = 0; h < hidden_size; h++) {
-                        rnn->er_h[h] = rnn->er_i_h[h];
-                    }
+                    memcpy(rnn->er_h, rnn->er_i_h,
+                            sizeof(real_t) * hidden_size);
                 }
 
                 if (t < bptt + bptt_block - 2) {
                     i = (t + 1) * hidden_size;
-                    for (h = 0; h < hidden_size; h++) {
-                        rnn->ac_h[h] = rnn->ac_bptt_h[i + h];
-                    }
+                    memcpy(rnn->ac_h, rnn->ac_bptt_h + i,
+                            sizeof(real_t) * hidden_size);
                     i = (t + 2) * hidden_size;
-                    for (h = 0; h < hidden_size; h++) {
-                        rnn->ac_i_h[h] = rnn->ac_bptt_h[i + h];
-                    }
+                    memcpy(rnn->ac_i_h, rnn->ac_bptt_h + i,
+                            sizeof(real_t) * hidden_size);
                 }
             }
 
-            for (h = 0; h < hidden_size; h++) {
-                rnn->ac_h[h] = rnn->ac_bptt_h[h];
-            }
+            memcpy(rnn->ac_h, rnn->ac_bptt_h,
+                    sizeof(real_t) * hidden_size);
 
             // update weight input -> hidden (hidden)
             param_update(&rnn->train_opt.param,
@@ -931,11 +917,8 @@ int rnn_backprop(rnn_t *rnn, int word)
                     hidden_size,
                     -1);
 
-            for (i = 0; i < hidden_size; i++) {
-                for (h = 0; h < hidden_size; h++) {
-                    rnn->wt_bptt_ih_h[i + h * hidden_size] = 0;
-                }
-            }
+            memset(rnn->wt_bptt_ih_h, 0,
+                    sizeof(real_t) * hidden_size * hidden_size);
 
             // update weight input -> hidden (word)
             for (t = 0; t < bptt + bptt_block - 1; t++) {
