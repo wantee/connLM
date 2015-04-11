@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Begin configuration section.
-config_file=./conf/init.conf
+config_file=""
 # end configuration sections
 
 echo "$0 $@"  # Print the command line for logging
@@ -9,29 +9,34 @@ echo "$0 $@"  # Print the command line for logging
 
 . ../utils/parse_options.sh || exit 1
 
-if [ $# -lt 2 ]; then 
-  echo "usage: $0 <model-in> <model-out> [test-file]"
-  echo "e.g.: $0 exp/0.clm exp/1.clm data/test"
+if [ $# -ne 2 ]; then 
+  echo "usage: $0 <vocab-clm> <exp-dir>"
+  echo "e.g.: $0 exp/vocab.clm exp/rnn"
   echo "options: "
-  echo "     --config-file <config-file>         # default: ./conf/init.conf, config file."
+  echo "     --config-file <config-file>         # config file."
   exit 1;
 fi
 
-log_file=log/init.log
-test_log_file=log/init.test.log
 
-model_in=$1
-model_out=$2
-test_file=$3
+vocab=$1
+dir=$2
 
-mkdir -p `dirname $model_in`
-mkdir -p `dirname $model_out`
+log_file=$dir/log/init.log
+model_out=$dir/init.clm
 
-echo "**Initializing model $model_in to $model_out ..."
+mkdir -p $dir
+
+echo "**Initializing model $vocab to $model_out ..."
+if [ -z $config_file ]; then
+connlm-init --log-file=$log_file \
+           $vocab $model_out \
+|| exit 1; 
+else
 connlm-init --log-file=$log_file \
            --config=$config_file \
-           $model_in $model_out \
+           $vocab $model_out \
 || exit 1; 
+fi
 
 exit 0;
 

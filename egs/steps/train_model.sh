@@ -16,9 +16,9 @@ echo "$0 $@"  # Print the command line for logging
 
 . ../utils/parse_options.sh || exit 1
 
-if [ $# -ne 4 ]; then 
-  echo "usage: $0 <train-file> <valid-file> <model-dir> <model-init>"
-  echo "e.g.: $0 data/train data/valid exp init.clm"
+if [ $# -ne 3 ]; then 
+  echo "usage: $0 <train-file> <valid-file> <exp-dir>"
+  echo "e.g.: $0 data/train data/valid exp/rnn"
   echo "options: "
   echo "     --train-config <config-file>         # default: ./conf/train.conf, trian config file."
   echo "     --test-config <config-file>          # default: ./conf/test.conf, valid config file."
@@ -31,12 +31,12 @@ if [ $# -ne 4 ]; then
   exit 1;
 fi
 
-log_dir=log
-
 train_file=$1
 valid_file=$2
 dir=$3
-mdl_init=$4
+mdl_init=init.clm
+
+log_dir=$dir/log
 
 if [ ! -e $dir/.learn_rate ]; then
   connlm-train --dry-run=true --log-file="$log_dir/conf.log" \
