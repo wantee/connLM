@@ -88,13 +88,13 @@ void show_usage(const char *module_name)
 {
     connlm_show_usage(module_name,
             "Test Model",
-            "<model> <test-file>",
+            "<model> <test-file> [prob-log]",
             g_cmd_opt);
 }
 
 int main(int argc, const char *argv[])
 {
-    char args[1024];
+    char args[1024] = "";
     FILE *fp = NULL;
     int ret;
 

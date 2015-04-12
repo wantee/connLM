@@ -43,12 +43,16 @@ typedef struct _ffnn_train_opt_t {
     param_t param;
 } ffnn_train_opt_t;
 
+typedef struct _ffnn_neuron_t_ {
+} ffnn_neuron_t;
+
 typedef struct _ffnn_t_ {
     ffnn_model_opt_t model_opt;
     output_t *output;
 
-
     ffnn_train_opt_t train_opt;
+    ffnn_neuron_t *neurons;
+    int num_thrs;
 } ffnn_t;
 
 int ffnn_load_model_opt(ffnn_model_opt_t *model_opt, st_opt_t *opt,
@@ -73,19 +77,19 @@ int ffnn_load_body(ffnn_t *ffnn, FILE *fp, bool binary);
 int ffnn_save_header(ffnn_t *ffnn, FILE *fp, bool binary);
 int ffnn_save_body(ffnn_t *ffnn, FILE *fp, bool binary);
 
-int ffnn_forward(ffnn_t *ffnn, int word);
-int ffnn_backprop(ffnn_t *ffnn, int word);
+int ffnn_forward(ffnn_t *ffnn, int word, int tid);
+int ffnn_backprop(ffnn_t *ffnn, int word, int tid);
 
 int ffnn_setup_train(ffnn_t *ffnn, ffnn_train_opt_t *train_opt,
-        output_t *output);
-int ffnn_reset_train(ffnn_t *ffnn);
-int ffnn_start_train(ffnn_t *ffnn, int word);
-int ffnn_end_train(ffnn_t *ffnn, int word);
+        output_t *output, int num_thrs);
+int ffnn_reset_train(ffnn_t *ffnn, int tid);
+int ffnn_start_train(ffnn_t *ffnn, int word, int tid);
+int ffnn_end_train(ffnn_t *ffnn, int word, int tid);
 
-int ffnn_setup_test(ffnn_t *ffnn, output_t *output);
-int ffnn_reset_test(ffnn_t *ffnn);
-int ffnn_start_test(ffnn_t *ffnn, int word);
-int ffnn_end_test(ffnn_t *ffnn, int word);
+int ffnn_setup_test(ffnn_t *ffnn, output_t *output, int num_thrs);
+int ffnn_reset_test(ffnn_t *ffnn, int tid);
+int ffnn_start_test(ffnn_t *ffnn, int word, int tid);
+int ffnn_end_test(ffnn_t *ffnn, int word, int tid);
 
 #ifdef __cplusplus
 }

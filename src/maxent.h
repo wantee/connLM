@@ -51,6 +51,20 @@ typedef struct _maxent_train_opt_t {
     param_t param;
 } maxent_train_opt_t;
 
+typedef struct _maxent_neuron_t_ {
+    param_arg_t param_arg_c;
+    param_arg_t param_arg_w;
+
+    int *hist;
+    // neuron actived by a n-gram feature of history
+    hash_t *hash_c; 
+    hash_t *hash_w; 
+#ifndef _MAXENT_BP_CALC_HASH_
+    int hash_order_c;
+    int hash_order_w;
+#endif
+} maxent_neuron_t;
+
 typedef struct _maxent_t_ {
     maxent_model_opt_t model_opt;
 
@@ -63,17 +77,8 @@ typedef struct _maxent_t_ {
     output_t *output;
 
     maxent_train_opt_t train_opt;
-    param_arg_t param_arg_c;
-    param_arg_t param_arg_w;
-
-    int *hist;
-    // neuron actived by a n-gram feature of history
-    hash_t *hash_c; 
-    hash_t *hash_w; 
-#ifndef _MAXENT_BP_CALC_HASH_
-    int hash_order_c;
-    int hash_order_w;
-#endif
+    maxent_neuron_t *neurons;
+    int num_thrs;
 } maxent_t;
 
 int maxent_load_model_opt(maxent_model_opt_t *model_opt,
@@ -99,19 +104,19 @@ int maxent_load_body(maxent_t *maxent, FILE *fp, bool binary);
 int maxent_save_header(maxent_t *maxent, FILE *fp, bool binary);
 int maxent_save_body(maxent_t *maxent, FILE *fp, bool binary);
 
-int maxent_forward(maxent_t *maxent, int word);
-int maxent_backprop(maxent_t *maxent, int word);
+int maxent_forward(maxent_t *maxent, int word, int tid);
+int maxent_backprop(maxent_t *maxent, int word, int tid);
 
 int maxent_setup_train(maxent_t *maxent, maxent_train_opt_t *train_opt,
-        output_t *output);
-int maxent_reset_train(maxent_t *maxent);
-int maxent_start_train(maxent_t *maxent, int word);
-int maxent_end_train(maxent_t *maxent, int word);
+        output_t *output, int num_thrs);
+int maxent_reset_train(maxent_t *maxent, int tid);
+int maxent_start_train(maxent_t *maxent, int word, int tid);
+int maxent_end_train(maxent_t *maxent, int word, int tid);
 
-int maxent_setup_test(maxent_t *maxent, output_t *output);
-int maxent_reset_test(maxent_t *maxent);
-int maxent_start_test(maxent_t *maxent, int word);
-int maxent_end_test(maxent_t *maxent, int word);
+int maxent_setup_test(maxent_t *maxent, output_t *output, int num_thrs);
+int maxent_reset_test(maxent_t *maxent, int tid);
+int maxent_start_test(maxent_t *maxent, int word, int tid);
+int maxent_end_test(maxent_t *maxent, int word, int tid);
 
 #ifdef __cplusplus
 }

@@ -29,6 +29,8 @@
 extern "C" {
 #endif
 
+#include <pthread.h>
+
 #include <st_utils.h>
 #include <st_alphabet.h>
 
@@ -59,8 +61,6 @@ typedef struct _connlm_train_opt_t_ {
     int max_word_per_sent;
     int rand_seed;
  
-    bool report_progress;
-
     int num_line_read;
     bool shuffle;
 
@@ -79,6 +79,21 @@ typedef struct _connlm_test_opt_t_ {
     real_t oov_penalty;
 } connlm_test_opt_t;
 
+struct _connlm_t_;
+typedef struct _connlm_thread_t_ {
+    struct _connlm_t_ *connlm;
+    int tid;
+
+    int eg_s;
+    int eg_e;
+
+    count_t words;
+    count_t sents;
+    double logp;
+
+    count_t oovs;
+} connlm_thr_t;
+
 typedef struct _connlm_t_ {
     connlm_model_opt_t model_opt;
     connlm_train_opt_t train_opt;
@@ -87,8 +102,15 @@ typedef struct _connlm_t_ {
     unsigned random;
 
     FILE *text_fp;
+    off_t fsize;
     int *egs;
     int *shuffle_buf;
+
+    pthread_t *pts;
+    int err;
+    connlm_thr_t *thrs;
+    FILE *fp_log;
+    pthread_mutex_t fp_lock;
 
     output_t *output;
     vocab_t *vocab;
@@ -129,12 +151,12 @@ int connlm_print_info(FILE *model_fp, FILE *fo);
 /**
  * Forward propagate
  */
-int connlm_forward(connlm_t *connlm, int word);
+int connlm_forward(connlm_t *connlm, int word, int tid);
 
 /**
  * Backpropagate
  */
-int connlm_backprop(connlm_t *connlm, int word);
+int connlm_backprop(connlm_t *connlm, int word, int tid);
 
 /**
  * Setup training.
@@ -146,13 +168,22 @@ int connlm_setup_train(connlm_t *connlm, connlm_train_opt_t *train_opt,
  * Reset training.
  * Called every sentence.
  */
-int connlm_reset_train(connlm_t *connlm);
+int connlm_reset_train(connlm_t *connlm, int tid);
 
 /**
- * Clear training.
- * Called every word.
+ * Start training a word.
  */
-int connlm_clear_train(connlm_t *connlm, int word);
+int connlm_start_train(connlm_t *connlm, int word, int tid);
+
+/**
+ * End training a word.
+ */
+int connlm_end_train(connlm_t *connlm, int word, int tid);
+
+/**
+ * Between forward and backprop during training a word.
+ */
+int connlm_fwd_bp(connlm_t *connlm, int word, int tid);
 
 /**
  * Training
@@ -169,16 +200,20 @@ int connlm_setup_test(connlm_t *connlm, connlm_test_opt_t *test_opt,
  * Reset testing.
  * Called every sentence.
  */
-int connlm_reset_test(connlm_t *connlm);
+int connlm_reset_test(connlm_t *connlm, int tid);
 
 /**
- * Clear testing.
- * Called every word.
+ * Start testing a word.
  */
-int connlm_clear_test(connlm_t *connlm, int word);
+int connlm_start_test(connlm_t *connlm, int word, int tid);
 
 /**
- * Test
+ * End testing a word.
+ */
+int connlm_end_test(connlm_t *connlm, int word, int tid);
+
+/**
+ * Testing
  */
 int connlm_test(connlm_t *connlm, FILE *fp_log);
 

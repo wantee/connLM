@@ -4,6 +4,9 @@ train_file=./data/train
 valid_file=./data/valid
 test_file=./data/test
 
+tr_thr=4
+test_thr=4
+
 . ../utils/parse_range.sh || exit 1
 
 if [ $# -eq 1 -a "$1" == "--help" ]; then 
@@ -29,9 +32,12 @@ dir=exp/maxent
 
 ../steps/train_model.sh --train-config $conf_dir/train.conf \
         --test-config ./conf/test.conf \
+        --train-threads $tr_thr \
+        --test-threads $test_thr \
         $train_file $valid_file $dir || exit 1;
 
 ../steps/test_model.sh --config-file ./conf/test.conf \
+        --test-threads $test_thr \
         $dir $test_file || exit 1;
 fi
 
@@ -45,9 +51,12 @@ dir=exp/rnn
 
 ../steps/train_model.sh --train-config $conf_dir/train.conf \
         --test-config ./conf/test.conf \
+        --train-threads $tr_thr \
+        --test-threads $test_thr \
         $train_file $valid_file $dir || exit 1;
 
 ../steps/test_model.sh --config-file ./conf/test.conf \
+        --test-threads $test_thr \
         $dir $test_file || exit 1;
 fi
 
@@ -61,8 +70,11 @@ dir=exp/rnn+maxent
 
 ../steps/train_model.sh --train-config $conf_dir/train.conf \
         --test-config ./conf/test.conf \
+        --train-threads $tr_thr \
+        --test-threads $test_thr \
         $train_file $valid_file $dir || exit 1;
 
 ../steps/test_model.sh --config-file ./conf/test.conf \
+        --test-threads $test_thr \
         $dir $test_file || exit 1;
 fi

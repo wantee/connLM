@@ -161,8 +161,6 @@ int rnn_init(rnn_t **prnn, rnn_model_opt_t *model_opt, output_t *output)
     }
 
     if (class_size > 0) {
-        param_arg_clear(&rnn->arg_ho_c);
-
         sz = model_opt->hidden_size * class_size;
         rnn->wt_ho_c = (real_t *) malloc(sizeof(real_t) * sz);
         if (rnn->wt_ho_c == NULL) {
@@ -188,15 +186,11 @@ ERR:
 
 void rnn_destroy(rnn_t *rnn)
 {
+    int i;
+
     if (rnn == NULL) {
         return;
     }
-
-    safe_free(rnn->ac_i_h);
-    safe_free(rnn->er_i_h);
-
-    safe_free(rnn->ac_h);
-    safe_free(rnn->er_h);
 
     safe_free(rnn->wt_ih_w);
     safe_free(rnn->wt_ih_h);
@@ -204,11 +198,20 @@ void rnn_destroy(rnn_t *rnn)
     safe_free(rnn->wt_ho_c);
     safe_free(rnn->wt_ho_w);
 
-    safe_free(rnn->bptt_hist);
-    safe_free(rnn->ac_bptt_h);
-    safe_free(rnn->er_bptt_h);
-    safe_free(rnn->wt_bptt_ih_w);
-    safe_free(rnn->wt_bptt_ih_h);
+    for (i = 0; i < rnn->num_thrs; i++) {
+        safe_free(rnn->neurons[i].ac_i_h);
+        safe_free(rnn->neurons[i].er_i_h);
+        safe_free(rnn->neurons[i].ac_h);
+        safe_free(rnn->neurons[i].er_h);
+
+        safe_free(rnn->neurons[i].bptt_hist);
+        safe_free(rnn->neurons[i].ac_bptt_h);
+        safe_free(rnn->neurons[i].er_bptt_h);
+        safe_free(rnn->neurons[i].wt_bptt_ih_w);
+        safe_free(rnn->neurons[i].wt_bptt_ih_h);
+    }
+    safe_free(rnn->neurons);
+
 }
 
 rnn_t* rnn_dup(rnn_t *r)
@@ -672,8 +675,10 @@ int rnn_save_body(rnn_t *rnn, FILE *fp, bool binary)
     return 0;
 }
 
-int rnn_forward(rnn_t *rnn, int word)
+int rnn_forward(rnn_t *rnn, int word, int tid)
 {
+    rnn_neuron_t *neu;
+    output_neuron_t *output_neu;
     int hidden_size;
 
     int h;
@@ -683,30 +688,32 @@ int rnn_forward(rnn_t *rnn, int word)
     int s;
     int e;
 
-    ST_CHECK_PARAM(rnn == NULL, -1);
+    ST_CHECK_PARAM(rnn == NULL || tid < 0, -1);
 
+    neu = rnn->neurons + tid;
+    output_neu = rnn->output->neurons + tid;
     hidden_size = rnn->model_opt.hidden_size;
 
-    memset(rnn->ac_h, 0, sizeof(real_t)*hidden_size);
+    memset(neu->ac_h, 0, sizeof(real_t)*hidden_size);
 
     // PROPAGATE input -> hidden
-    matXvec(rnn->ac_h, rnn->wt_ih_h, rnn->ac_i_h,
+    matXvec(neu->ac_h, rnn->wt_ih_h, neu->ac_i_h,
             hidden_size, hidden_size, 1.0);
 
-    if (rnn->last_word >= 0) {
-        i = rnn->last_word;
+    if (neu->last_word >= 0) {
+        i = neu->last_word;
         for (h = 0; h < hidden_size; h++) {
-            rnn->ac_h[h] += rnn->wt_ih_w[i];
+            neu->ac_h[h] += rnn->wt_ih_w[i];
             i += rnn->vocab_size;
         }
     }
 
     // ACTIVATE hidden
-    sigmoid(rnn->ac_h, hidden_size);
+    sigmoid(neu->ac_h, hidden_size);
 
     // PROPAGATE hidden -> output (class)
     if (rnn->class_size > 0) {
-        matXvec(rnn->output->ac_o_c, rnn->wt_ho_c, rnn->ac_h,
+        matXvec(output_neu->ac_o_c, rnn->wt_ho_c, neu->ac_h,
                 rnn->class_size, hidden_size, rnn->model_opt.scale);
     }
 
@@ -719,8 +726,8 @@ int rnn_forward(rnn_t *rnn, int word)
     s = rnn->output->c2w_s[c];
     e = rnn->output->c2w_e[c];
 
-    matXvec(rnn->output->ac_o_w + s, rnn->wt_ho_w + s * hidden_size,
-            rnn->ac_h, e - s, hidden_size, rnn->model_opt.scale);
+    matXvec(output_neu->ac_o_w + s, rnn->wt_ho_w + s * hidden_size,
+            neu->ac_h, e - s, hidden_size, rnn->model_opt.scale);
 
     return 0;
 }
@@ -743,8 +750,10 @@ static void propagate_error(real_t *dst, real_t *vec, real_t *mat,
     }
 }
 
-int rnn_backprop(rnn_t *rnn, int word)
+int rnn_backprop(rnn_t *rnn, int word, int tid)
 {
+    rnn_neuron_t *neu;
+    output_neuron_t *output_neu;
     int bptt;
     int bptt_block;
     int hidden_size;
@@ -757,11 +766,14 @@ int rnn_backprop(rnn_t *rnn, int word)
     int t;
     int i;
 
-    ST_CHECK_PARAM(rnn == NULL, -1);
+    ST_CHECK_PARAM(rnn == NULL || tid < 0, -1);
 
     if (word < 0) {
         return 0;
     }
+
+    neu = rnn->neurons + tid;
+    output_neu = rnn->output->neurons + tid;
 
     bptt = rnn->train_opt.bptt;
     bptt_block = max(1, rnn->train_opt.bptt_block);
@@ -771,38 +783,38 @@ int rnn_backprop(rnn_t *rnn, int word)
     s = rnn->output->c2w_s[c];
     e = rnn->output->c2w_e[c];
 
-    memset(rnn->er_h, 0, sizeof(real_t) * hidden_size);
+    memset(neu->er_h, 0, sizeof(real_t) * hidden_size);
 
     // BACK-PROPAGATE output -> hidden (word)
-    propagate_error(rnn->er_h, rnn->output->er_o_w + s,
+    propagate_error(neu->er_h, output_neu->er_o_w + s,
             rnn->wt_ho_w + s * hidden_size,
             hidden_size, e - s, rnn->train_opt.er_cutoff,
             rnn->model_opt.scale);
 
     // weight update (output -> hidden)
     param_update(&rnn->train_opt.param,
-            &rnn->arg_ho_w,
+            &neu->arg_ho_w,
             rnn->wt_ho_w + s * hidden_size,
-            rnn->output->er_o_w + s, 
+            output_neu->er_o_w + s, 
             1.0, 
             e - s, 
-            rnn->ac_h,
+            neu->ac_h,
             hidden_size,
             -1);
 
     if (rnn->class_size > 0) {
         // BACK-PROPAGATE output -> hidden (class)
-        propagate_error(rnn->er_h, rnn->output->er_o_c, rnn->wt_ho_c,
+        propagate_error(neu->er_h, output_neu->er_o_c, rnn->wt_ho_c,
                 hidden_size, rnn->class_size, rnn->train_opt.er_cutoff,
                 rnn->model_opt.scale);
 
         param_update(&rnn->train_opt.param,
-                &rnn->arg_ho_c,
+                &neu->arg_ho_c,
                 rnn->wt_ho_c,
-                rnn->output->er_o_c, 
+                output_neu->er_o_c, 
                 1.0, 
                 rnn->class_size, 
-                rnn->ac_h,
+                neu->ac_h,
                 hidden_size,
                 -1);
     }
@@ -811,15 +823,15 @@ int rnn_backprop(rnn_t *rnn, int word)
     if (bptt <= 1) { // normal BP
         // error derivation
         for (h = 0; h < hidden_size; h++) {
-            rnn->er_h[h] *= rnn->ac_h[h] * (1 - rnn->ac_h[h]);
+            neu->er_h[h] *= neu->ac_h[h] * (1 - neu->ac_h[h]);
         }
 
         // weight update (word -> hidden)
-        if (rnn->last_word >= 0) {
+        if (neu->last_word >= 0) {
             param_update(&rnn->train_opt.param,
-                    &rnn->arg_ih_w,
-                    rnn->wt_ih_w + rnn->last_word,
-                    rnn->er_h, 
+                    &neu->arg_ih_w,
+                    rnn->wt_ih_w + neu->last_word,
+                    neu->er_h, 
                     1.0, 
                     hidden_size, 
                     NULL,
@@ -829,55 +841,55 @@ int rnn_backprop(rnn_t *rnn, int word)
 
         // weight update (hidden -> hidden)
         param_update(&rnn->train_opt.param,
-                &rnn->arg_ih_h,
+                &neu->arg_ih_h,
                 rnn->wt_ih_h,
-                rnn->er_h, 
+                neu->er_h, 
                 1.0, 
                 hidden_size, 
-                rnn->ac_i_h,
+                neu->ac_i_h,
                 hidden_size,
                 -1);
     } else { // BPTT
-        memcpy(rnn->ac_bptt_h, rnn->ac_h, sizeof(real_t) * hidden_size);
-        memcpy(rnn->er_bptt_h, rnn->er_h, sizeof(real_t) * hidden_size);
+        memcpy(neu->ac_bptt_h, neu->ac_h, sizeof(real_t) * hidden_size);
+        memcpy(neu->er_bptt_h, neu->er_h, sizeof(real_t) * hidden_size);
 
-        rnn->block_step++;
+        neu->block_step++;
 
-        if (rnn->step % bptt_block == 0 || word == 0) {
-            bptt_block = min(bptt_block, rnn->block_step);
-            bptt = min(rnn->step - bptt_block, bptt);
+        if (neu->step % bptt_block == 0 || word == 0) {
+            bptt_block = min(bptt_block, neu->block_step);
+            bptt = min(neu->step - bptt_block, bptt);
             if (bptt < 1) {
                 bptt = 1;
             }
-            rnn->block_step = 0;
+            neu->block_step = 0;
             for (t = 0; t < bptt + bptt_block - 1; t++) {
                 // error derivation
                 for (h = 0; h < hidden_size; h++) {
-                    rnn->er_h[h] *= rnn->ac_h[h] * (1 - rnn->ac_h[h]);
+                    neu->er_h[h] *= neu->ac_h[h] * (1 - neu->ac_h[h]);
                 }
 
                 // back-propagate errors hidden -> input
                 // weight update (word)
-                if (rnn->bptt_hist[t] != -1) {
-                    i = rnn->bptt_hist[t];
+                if (neu->bptt_hist[t] != -1) {
+                    i = neu->bptt_hist[t];
                     for (h = 0; h < hidden_size; h++) {
-                        rnn->wt_bptt_ih_w[i] += rnn->er_h[h];
+                        neu->wt_bptt_ih_w[i] += neu->er_h[h];
                         i += rnn->vocab_size;
                     }
                 }
 
-                memset(rnn->er_i_h, 0, sizeof(real_t) * hidden_size);
+                memset(neu->er_i_h, 0, sizeof(real_t) * hidden_size);
 
                 // error propagation (hidden)
-                propagate_error(rnn->er_i_h, rnn->er_h,
+                propagate_error(neu->er_i_h, neu->er_h,
                         rnn->wt_ih_h, hidden_size,
                         hidden_size, rnn->train_opt.er_cutoff, 1.0);
 
                 // weight update (hidden)
                 for (i = 0; i < hidden_size; i++) {
                     for (h = 0; h < hidden_size; h++) {
-                        rnn->wt_bptt_ih_h[i + h*hidden_size] +=
-                            rnn->er_h[h]*rnn->ac_i_h[i];
+                        neu->wt_bptt_ih_h[i + h*hidden_size] +=
+                            neu->er_h[h]*neu->ac_i_h[i];
                     }
                 }
 
@@ -885,57 +897,57 @@ int rnn_backprop(rnn_t *rnn, int word)
                 if (t < bptt_block - 1) {
                     i = (t + 1) * hidden_size;
                     for (h = 0; h < hidden_size; h++) {
-                        rnn->er_h[h] = rnn->er_i_h[h]
-                            + rnn->er_bptt_h[i + h];
+                        neu->er_h[h] = neu->er_i_h[h]
+                            + neu->er_bptt_h[i + h];
                     }
                 } else {
-                    memcpy(rnn->er_h, rnn->er_i_h,
+                    memcpy(neu->er_h, neu->er_i_h,
                             sizeof(real_t) * hidden_size);
                 }
 
                 if (t < bptt + bptt_block - 2) {
                     i = (t + 1) * hidden_size;
-                    memcpy(rnn->ac_h, rnn->ac_bptt_h + i,
+                    memcpy(neu->ac_h, neu->ac_bptt_h + i,
                             sizeof(real_t) * hidden_size);
                     i = (t + 2) * hidden_size;
-                    memcpy(rnn->ac_i_h, rnn->ac_bptt_h + i,
+                    memcpy(neu->ac_i_h, neu->ac_bptt_h + i,
                             sizeof(real_t) * hidden_size);
                 }
             }
 
-            memcpy(rnn->ac_h, rnn->ac_bptt_h,
+            memcpy(neu->ac_h, neu->ac_bptt_h,
                     sizeof(real_t) * hidden_size);
 
             // update weight input -> hidden (hidden)
             param_update(&rnn->train_opt.param,
-                    &rnn->arg_ih_h,
+                    &neu->arg_ih_h,
                     rnn->wt_ih_h,
-                    rnn->wt_bptt_ih_h,
+                    neu->wt_bptt_ih_h,
                     1.0,
                     -hidden_size, 
                     NULL,
                     hidden_size,
                     -1);
 
-            memset(rnn->wt_bptt_ih_h, 0,
+            memset(neu->wt_bptt_ih_h, 0,
                     sizeof(real_t) * hidden_size * hidden_size);
 
             // update weight input -> hidden (word)
             for (t = 0; t < bptt + bptt_block - 1; t++) {
-                if (rnn->bptt_hist[t] != -1) {
+                if (neu->bptt_hist[t] != -1) {
                     param_update(&rnn->train_opt.param,
-                            &rnn->arg_ih_w,
-                            rnn->wt_ih_w + rnn->bptt_hist[t],
-                            rnn->wt_bptt_ih_w + rnn->bptt_hist[t],
+                            &neu->arg_ih_w,
+                            rnn->wt_ih_w + neu->bptt_hist[t],
+                            neu->wt_bptt_ih_w + neu->bptt_hist[t],
                             1.0,
                             -hidden_size, 
                             NULL,
                             -rnn->vocab_size,
                             -1);
 
-                    i = rnn->bptt_hist[t];
+                    i = neu->bptt_hist[t];
                     for (h = 0; h < hidden_size; h++) {
-                        rnn->wt_bptt_ih_w[i] = 0;
+                        neu->wt_bptt_ih_w[i] = 0;
                         i += rnn->vocab_size;
                     }
                 }
@@ -962,14 +974,17 @@ static bool rnn_check_output(rnn_t *rnn, output_t *output)
 }
 
 int rnn_setup_train(rnn_t *rnn, rnn_train_opt_t *train_opt,
-        output_t *output)
+        output_t *output, int num_thrs)
 {
+    rnn_neuron_t *neu;
     size_t sz;
 
     int hidden_size;
+    int i;
+    int t;
 
     ST_CHECK_PARAM(rnn == NULL || train_opt == NULL
-            || output == NULL, -1);
+            || output == NULL || num_thrs < 0, -1);
 
     if (!rnn_check_output(rnn, output)) {
         ST_WARNING("Output layer not match.");
@@ -979,136 +994,155 @@ int rnn_setup_train(rnn_t *rnn, rnn_train_opt_t *train_opt,
     rnn->output = output;
     rnn->train_opt = *train_opt;
 
-    param_arg_clear(&rnn->arg_ih_w);
-    param_arg_clear(&rnn->arg_ih_h);
-    param_arg_clear(&rnn->arg_ho_w);
+    rnn->num_thrs = num_thrs;
+    sz = sizeof(rnn_neuron_t) * num_thrs;
+    rnn->neurons = (rnn_neuron_t *)malloc(sz);
+    if (rnn->neurons == NULL) {
+        ST_WARNING("Failed to malloc neurons.");
+        goto ERR;
+    }
+    memset(rnn->neurons, 0, sz);
 
     hidden_size = rnn->model_opt.hidden_size;
+    for (t = 0; t < num_thrs; t++) {
+        neu = rnn->neurons + t;
 
-    rnn->ac_i_h = (real_t *) malloc(sizeof(real_t) * hidden_size);
-    if (rnn->ac_i_h == NULL) {
-        ST_WARNING("Failed to malloc ac_i_h.");
-        goto ERR;
-    }
+        param_arg_clear(&neu->arg_ih_w);
+        param_arg_clear(&neu->arg_ih_h);
+        param_arg_clear(&neu->arg_ho_w);
+        param_arg_clear(&neu->arg_ho_c);
 
-    rnn->ac_h = (real_t *) malloc(sizeof(real_t) * hidden_size);
-    if (rnn->ac_h == NULL) {
-        ST_WARNING("Failed to malloc ac_h.");
-        goto ERR;
-    }
-
-    rnn->er_h = (real_t *) malloc(sizeof(real_t) * hidden_size);
-    if (rnn->er_h == NULL) {
-        ST_WARNING("Failed to malloc er_h.");
-        goto ERR;
-    }
-
-    if (train_opt->bptt > 1) {
-        rnn->er_i_h = (real_t *) malloc(sizeof(real_t) * hidden_size);
-        if (rnn->er_i_h == NULL) {
-            ST_WARNING("Failed to malloc er_i_h.");
+        neu->ac_i_h = (real_t *) malloc(sizeof(real_t) * hidden_size);
+        if (neu->ac_i_h == NULL) {
+            ST_WARNING("Failed to malloc ac_i_h.");
             goto ERR;
         }
 
-        sz = train_opt->bptt + train_opt->bptt_block - 1;
-        rnn->bptt_hist = (int *) malloc(sizeof(int) * sz);
-        if (rnn->bptt_hist == NULL) {
-            ST_WARNING("Failed to malloc bptt_hist.");
+        neu->ac_h = (real_t *) malloc(sizeof(real_t) * hidden_size);
+        if (neu->ac_h == NULL) {
+            ST_WARNING("Failed to malloc ac_h.");
             goto ERR;
         }
 
-        sz = hidden_size * (train_opt->bptt + train_opt->bptt_block);
-        rnn->ac_bptt_h = (real_t *) malloc(sizeof(real_t) * sz);
-        if (rnn->ac_bptt_h == NULL) {
-            ST_WARNING("Failed to malloc ac_bptt_h.");
+        neu->er_h = (real_t *) malloc(sizeof(real_t) * hidden_size);
+        if (neu->er_h == NULL) {
+            ST_WARNING("Failed to malloc er_h.");
             goto ERR;
         }
-        memset(rnn->ac_bptt_h, 0, sizeof(real_t) * sz);
 
-        sz = hidden_size * (train_opt->bptt_block);
-        rnn->er_bptt_h = (real_t *) malloc(sizeof(real_t) * sz);
-        if (rnn->er_bptt_h == NULL) {
-            ST_WARNING("Failed to malloc er_bptt_h.");
-            goto ERR;
-        }
-        memset(rnn->er_bptt_h, 0, sizeof(real_t) * sz);
+        if (train_opt->bptt > 1) {
+            neu->er_i_h = (real_t *) malloc(sizeof(real_t) * hidden_size);
+            if (neu->er_i_h == NULL) {
+                ST_WARNING("Failed to malloc er_i_h.");
+                goto ERR;
+            }
 
-        sz = rnn->vocab_size * hidden_size;
-        rnn->wt_bptt_ih_w = (real_t *) malloc(sizeof(real_t) * sz);
-        if (rnn->wt_bptt_ih_w == NULL) {
-            ST_WARNING("Failed to malloc wt_bptt_ih_w.");
-            goto ERR;
-        }
-        memset(rnn->wt_bptt_ih_w, 0, sizeof(real_t) * sz);
+            sz = train_opt->bptt + train_opt->bptt_block - 1;
+            neu->bptt_hist = (int *) malloc(sizeof(int) * sz);
+            if (neu->bptt_hist == NULL) {
+                ST_WARNING("Failed to malloc bptt_hist.");
+                goto ERR;
+            }
 
-        sz = hidden_size * hidden_size;
-        rnn->wt_bptt_ih_h = (real_t *) malloc(sizeof(real_t) * sz);
-        if (rnn->wt_bptt_ih_h == NULL) {
-            ST_WARNING("Failed to malloc wt_bptt_ih_h.");
-            goto ERR;
+            sz = hidden_size * (train_opt->bptt + train_opt->bptt_block);
+            neu->ac_bptt_h = (real_t *) malloc(sizeof(real_t) * sz);
+            if (neu->ac_bptt_h == NULL) {
+                ST_WARNING("Failed to malloc ac_bptt_h.");
+                goto ERR;
+            }
+            memset(neu->ac_bptt_h, 0, sizeof(real_t) * sz);
+
+            sz = hidden_size * (train_opt->bptt_block);
+            neu->er_bptt_h = (real_t *) malloc(sizeof(real_t) * sz);
+            if (neu->er_bptt_h == NULL) {
+                ST_WARNING("Failed to malloc er_bptt_h.");
+                goto ERR;
+            }
+            memset(neu->er_bptt_h, 0, sizeof(real_t) * sz);
+
+            sz = rnn->vocab_size * hidden_size;
+            neu->wt_bptt_ih_w = (real_t *) malloc(sizeof(real_t) * sz);
+            if (neu->wt_bptt_ih_w == NULL) {
+                ST_WARNING("Failed to malloc wt_bptt_ih_w.");
+                goto ERR;
+            }
+            memset(neu->wt_bptt_ih_w, 0, sizeof(real_t) * sz);
+
+            sz = hidden_size * hidden_size;
+            neu->wt_bptt_ih_h = (real_t *) malloc(sizeof(real_t) * sz);
+            if (neu->wt_bptt_ih_h == NULL) {
+                ST_WARNING("Failed to malloc wt_bptt_ih_h.");
+                goto ERR;
+            }
+            memset(neu->wt_bptt_ih_h, 0, sizeof(real_t) * sz);
         }
-        memset(rnn->wt_bptt_ih_h, 0, sizeof(real_t) * sz);
     }
 
     return 0;
 
 ERR:
-    safe_free(rnn->ac_i_h);
-    safe_free(rnn->er_i_h);
-    safe_free(rnn->ac_h);
-    safe_free(rnn->er_h);
+    for (i = 0; i < rnn->num_thrs; i++) {
+        safe_free(rnn->neurons[i].ac_i_h);
+        safe_free(rnn->neurons[i].er_i_h);
+        safe_free(rnn->neurons[i].ac_h);
+        safe_free(rnn->neurons[i].er_h);
 
-    safe_free(rnn->bptt_hist);
-    safe_free(rnn->ac_bptt_h);
-    safe_free(rnn->er_bptt_h);
-    safe_free(rnn->wt_bptt_ih_w);
-    safe_free(rnn->wt_bptt_ih_h);
+        safe_free(rnn->neurons[i].bptt_hist);
+        safe_free(rnn->neurons[i].ac_bptt_h);
+        safe_free(rnn->neurons[i].er_bptt_h);
+        safe_free(rnn->neurons[i].wt_bptt_ih_w);
+        safe_free(rnn->neurons[i].wt_bptt_ih_h);
+    }
+    safe_free(rnn->neurons);
 
     return -1;
 }
 
-int rnn_reset_train(rnn_t *rnn)
+int rnn_reset_train(rnn_t *rnn, int tid)
 {
+    rnn_neuron_t *neu;
     size_t i;
 
     rnn_train_opt_t *train_opt;
     int hidden_size;
 
-    ST_CHECK_PARAM(rnn == NULL, -1);
+    ST_CHECK_PARAM(rnn == NULL || tid < 0, -1);
 
+    neu = rnn->neurons + tid;
     train_opt = &rnn->train_opt;
 
     hidden_size = rnn->model_opt.hidden_size;
 
     if (train_opt->bptt > 1) {
-        rnn->step = 0;
-        rnn->block_step = 0;
+        neu->step = 0;
+        neu->block_step = 0;
         for (i = 0; i < train_opt->bptt + train_opt->bptt_block - 1; i++) {
-            rnn->bptt_hist[i] = -1;
+            neu->bptt_hist[i] = -1;
         }
         for (i = 0; i < hidden_size; i++) {
-            rnn->ac_bptt_h[i] = 0.1;
+            neu->ac_bptt_h[i] = 0.1;
         }
     }
 
     for (i = 0; i < hidden_size; i++) {
-        rnn->ac_i_h[i] = 0.1;
+        neu->ac_i_h[i] = 0.1;
     }
 
-    rnn->last_word = -1;
+    neu->last_word = -1;
 
     return 0;
 }
 
-int rnn_start_train(rnn_t *rnn, int word)
+int rnn_start_train(rnn_t *rnn, int word, int tid)
 {
     ST_CHECK_PARAM(rnn == NULL, -1);
 
     return 0;
 }
 
-int rnn_fwd_bp(rnn_t *rnn, int word) 
+int rnn_fwd_bp(rnn_t *rnn, int word, int tid) 
 {
+    rnn_neuron_t *neu;
     int bptt;
     int bptt_block;
     int hidden_size;
@@ -1116,59 +1150,70 @@ int rnn_fwd_bp(rnn_t *rnn, int word)
     int a;
     int b;
 
-    ST_CHECK_PARAM(rnn == NULL, -1);
+    ST_CHECK_PARAM(rnn == NULL || tid < 0, -1);
 
+    neu = rnn->neurons + tid;
     bptt = rnn->train_opt.bptt;
     bptt_block = rnn->train_opt.bptt_block;
     hidden_size = rnn->model_opt.hidden_size;
 
     if (bptt > 1) {
-        a = min(rnn->step, bptt + bptt_block - 2);
+        a = min(neu->step, bptt + bptt_block - 2);
         for (; a > 0; a--) {
-            rnn->bptt_hist[a] = rnn->bptt_hist[a - 1];
+            neu->bptt_hist[a] = neu->bptt_hist[a - 1];
         }
-        rnn->bptt_hist[0] = rnn->last_word;
+        neu->bptt_hist[0] = neu->last_word;
 
-        a = min(rnn->step + 1, bptt + bptt_block - 1);
+        a = min(neu->step + 1, bptt + bptt_block - 1);
         for (; a > 0; a--) {
             for (b = 0; b < hidden_size; b++) {
-                rnn->ac_bptt_h[a*hidden_size + b] =
-                    rnn->ac_bptt_h[(a-1)*hidden_size + b];
+                neu->ac_bptt_h[a*hidden_size + b] =
+                    neu->ac_bptt_h[(a-1)*hidden_size + b];
             }
         }
 
-        a = min(rnn->step, bptt_block - 1);
+        a = min(neu->step, bptt_block - 1);
         for (; a > 0; a--) {
             for (b = 0; b < hidden_size; b++) {
-                rnn->er_bptt_h[a*hidden_size + b] =
-                    rnn->er_bptt_h[(a-1)*hidden_size + b];
+                neu->er_bptt_h[a*hidden_size + b] =
+                    neu->er_bptt_h[(a-1)*hidden_size + b];
             }
         }
 
-        rnn->step++;
+        neu->step++;
     }
 
     return 0;
 }
 
-int rnn_end_train(rnn_t *rnn, int word)
+int rnn_end_train(rnn_t *rnn, int word, int tid)
 {
-    ST_CHECK_PARAM(rnn == NULL, -1);
+    rnn_neuron_t *neu;
 
-    rnn->last_word = word;
+    ST_CHECK_PARAM(rnn == NULL || tid < 0, -1);
+
+    neu = rnn->neurons + tid;
+
+    neu->last_word = word;
 
     // copy hidden layer to input
-    memcpy(rnn->ac_i_h, rnn->ac_h,
+    memcpy(neu->ac_i_h, neu->ac_h,
             rnn->model_opt.hidden_size * sizeof(real_t));
 
     return 0;
 }
 
-int rnn_setup_test(rnn_t *rnn, output_t *output)
+int rnn_setup_test(rnn_t *rnn, output_t *output, int num_thrs)
 {
+    rnn_neuron_t *neu;
+
+    size_t sz;
+    int i;
+    int t;
+
     int hidden_size;
 
-    ST_CHECK_PARAM(rnn == NULL || output == NULL, -1);
+    ST_CHECK_PARAM(rnn == NULL || output == NULL || num_thrs < 0, -1);
 
     if (!rnn_check_output(rnn, output)) {
         ST_WARNING("Output layer not match.");
@@ -1177,63 +1222,86 @@ int rnn_setup_test(rnn_t *rnn, output_t *output)
 
     rnn->output = output;
 
-    hidden_size = rnn->model_opt.hidden_size;
-
-    rnn->ac_i_h = (real_t *) malloc(sizeof(real_t) * hidden_size);
-    if (rnn->ac_i_h == NULL) {
-        ST_WARNING("Failed to malloc ac_i_h.");
+    rnn->num_thrs = num_thrs;
+    sz = sizeof(rnn_neuron_t) * num_thrs;
+    rnn->neurons = (rnn_neuron_t *)malloc(sz);
+    if (rnn->neurons == NULL) {
+        ST_WARNING("Failed to malloc neurons.");
         goto ERR;
     }
+    memset(rnn->neurons, 0, sz);
 
-    rnn->ac_h = (real_t *) malloc(sizeof(real_t) * hidden_size);
-    if (rnn->ac_h == NULL) {
-        ST_WARNING("Failed to malloc ac_h.");
-        goto ERR;
+    hidden_size = rnn->model_opt.hidden_size;
+    for (t = 0; t < num_thrs; t++) {
+        neu = rnn->neurons + t;
+
+        neu->ac_i_h = (real_t *) malloc(sizeof(real_t) * hidden_size);
+        if (neu->ac_i_h == NULL) {
+            ST_WARNING("Failed to malloc ac_i_h.");
+            goto ERR;
+        }
+
+        neu->ac_h = (real_t *) malloc(sizeof(real_t) * hidden_size);
+        if (neu->ac_h == NULL) {
+            ST_WARNING("Failed to malloc ac_h.");
+            goto ERR;
+        }
     }
 
     return 0;
 
 ERR:
-    safe_free(rnn->ac_i_h);
-    safe_free(rnn->ac_h);
+    for (i = 0; i < rnn->num_thrs; i++) {
+        safe_free(rnn->neurons[i].ac_i_h);
+        safe_free(rnn->neurons[i].ac_h);
+    }
+    safe_free(rnn->neurons);
 
     return -1;
 }
 
-int rnn_reset_test(rnn_t *rnn)
+int rnn_reset_test(rnn_t *rnn, int tid)
 {
+    rnn_neuron_t *neu;
+
     size_t i;
 
     int hidden_size;
 
-    ST_CHECK_PARAM(rnn == NULL, -1);
+    ST_CHECK_PARAM(rnn == NULL || tid < 0, -1);
+
+    neu = rnn->neurons + tid;
 
     hidden_size = rnn->model_opt.hidden_size;
 
     for (i = 0; i < hidden_size; i++) {
-        rnn->ac_i_h[i] = 0.1;
+        neu->ac_i_h[i] = 0.1;
     }
 
-    rnn->last_word = -1;
+    neu->last_word = -1;
 
     return 0;
 }
 
-int rnn_start_test(rnn_t *rnn, int word)
+int rnn_start_test(rnn_t *rnn, int word, int tid)
 {
     ST_CHECK_PARAM(rnn == NULL, -1);
 
     return 0;
 }
 
-int rnn_end_test(rnn_t *rnn, int word)
+int rnn_end_test(rnn_t *rnn, int word, int tid)
 {
-    ST_CHECK_PARAM(rnn == NULL, -1);
+    rnn_neuron_t *neu;
 
-    rnn->last_word = word;
+    ST_CHECK_PARAM(rnn == NULL || tid < 0, -1);
+
+    neu = rnn->neurons + tid;
+
+    neu->last_word = word;
 
     // copy hidden layer to input
-    memcpy(rnn->ac_i_h, rnn->ac_h,
+    memcpy(neu->ac_i_h, neu->ac_h,
             rnn->model_opt.hidden_size * sizeof(real_t));
 
     return 0;

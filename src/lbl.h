@@ -43,11 +43,16 @@ typedef struct _lbl_train_opt_t {
     param_t param;
 } lbl_train_opt_t;
 
+typedef struct _lbl_neuron_t_ {
+} lbl_neuron_t;
+
 typedef struct _lbl_t_ {
     lbl_model_opt_t model_opt;
     output_t *output;
 
     lbl_train_opt_t train_opt;
+    lbl_neuron_t *neurons;
+    int num_thrs;
 } lbl_t;
 
 int lbl_load_model_opt(lbl_model_opt_t *model_opt, st_opt_t *opt,
@@ -71,19 +76,19 @@ int lbl_load_body(lbl_t *lbl, FILE *fp, bool binary);
 int lbl_save_header(lbl_t *lbl, FILE *fp, bool binary);
 int lbl_save_body(lbl_t *lbl, FILE *fp, bool binary);
 
-int lbl_forward(lbl_t *lbl, int word);
-int lbl_backprop(lbl_t *lbl, int word);
+int lbl_forward(lbl_t *lbl, int word, int tid);
+int lbl_backprop(lbl_t *lbl, int word, int tid);
 
 int lbl_setup_train(lbl_t *lbl, lbl_train_opt_t *train_opt,
-        output_t *output);
-int lbl_reset_train(lbl_t *lbl);
-int lbl_start_train(lbl_t *lbl, int word);
-int lbl_end_train(lbl_t *lbl, int word);
+        output_t *output, int num_thrs);
+int lbl_reset_train(lbl_t *lbl, int tid);
+int lbl_start_train(lbl_t *lbl, int word, int tid);
+int lbl_end_train(lbl_t *lbl, int word, int tid);
 
-int lbl_setup_test(lbl_t *lbl, output_t *output);
-int lbl_reset_test(lbl_t *lbl);
-int lbl_start_test(lbl_t *lbl, int word);
-int lbl_end_test(lbl_t *lbl, int word);
+int lbl_setup_test(lbl_t *lbl, output_t *output, int num_thrs);
+int lbl_reset_test(lbl_t *lbl, int tid);
+int lbl_start_test(lbl_t *lbl, int word, int tid);
+int lbl_end_test(lbl_t *lbl, int word, int tid);
 
 #ifdef __cplusplus
 }

@@ -3,6 +3,8 @@
 # Begin configuration section.
 train_config=./conf/train.conf
 test_config=./conf/test.conf
+train_threads=1
+test_threads=1
 max_iters=50
 min_iters=0 # keep training, disable weight rejection, start learn-rate halving as usual,
 keep_lr_iters=0 # fix learning rate for N initial epochs,
@@ -23,6 +25,8 @@ if [ $# -ne 3 ]; then
   echo "     --train-config <config-file>         # default: ./conf/train.conf, trian config file."
   echo "     --test-config <config-file>          # default: ./conf/test.conf, valid config file."
   echo "     --max-iters <number>                 # default: 20, maximum number of iterations"
+  echo "     --train-threads <number>             # default: 1, number of training threads"
+  echo "     --test-threads <number>              # default: 1, number of testing threads"
   echo "     --min-iters <number>                 # default: 0, minimum number of iterations"
   echo "     --keep-lr-iters <number>             # default: 0, fix learning rate for N initial iterations"
   echo "     --start-halving-impr <value>         # default: 0.01, improvement starting halving"
@@ -54,6 +58,7 @@ mdl_best=$mdl_init
 
 connlm-test --log-file="$log_dir/valid.prerun.log" \
            --config="$test_config" \
+           --num-thread=$test_threads \
            "$dir/$mdl_best" "$valid_file" \
 || exit 1; 
 
@@ -72,6 +77,7 @@ for iter in $(seq -w $max_iters); do
   
   connlm-train --log-file="$log_dir/train.${iter}.log" \
              --config="$train_config" \
+             --num-thread=$train_threads \
              --rnn^learn-rate=$lr_rnn \
              --maxent^learn-rate=$lr_maxent \
              --lbl^learn-rate=$lr_lbl \
@@ -92,6 +98,7 @@ for iter in $(seq -w $max_iters); do
   
   connlm-test --log-file="$log_dir/valid.${iter}.log" \
              --config="$test_config" \
+             --num-thread=$test_threads \
              "$dir/$mdl_next" "$valid_file" \
   || exit 1; 
   

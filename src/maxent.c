@@ -162,6 +162,8 @@ ERR:
 
 void maxent_destroy(maxent_t *maxent)
 {
+    int i;
+
     if (maxent == NULL) {
         return;
     }
@@ -169,9 +171,12 @@ void maxent_destroy(maxent_t *maxent)
     safe_free(maxent->wt_w);
     safe_free(maxent->wt_c);
 
-    safe_free(maxent->hist);
-    safe_free(maxent->hash_c);
-    safe_free(maxent->hash_w);
+    for (i = 0; i < maxent->num_thrs; i++) {
+        safe_free(maxent->neurons[i].hist);
+        safe_free(maxent->neurons[i].hash_w);
+        safe_free(maxent->neurons[i].hash_c);
+    }
+    safe_free(maxent->neurons);
 }
 
 maxent_t* maxent_dup(maxent_t *m)
@@ -613,34 +618,40 @@ static int maxent_get_hash(hash_t *hash, hash_t init_val,
     return order;
 }
 
-static int maxent_forward_class(maxent_t *maxent)
+static int maxent_forward_class(maxent_t *maxent, int tid)
 {
+    maxent_neuron_t *neu;
+    output_neuron_t *output_neu;
+
     hash_t h;
     int order;
 
     int a;
     int o;
 
-    ST_CHECK_PARAM(maxent == NULL, -1);
+    ST_CHECK_PARAM(maxent == NULL || tid < 0, -1);
 
-    order = maxent_get_hash(maxent->hash_c, (hash_t)1,
-            maxent->hist, maxent->model_opt.order);
+    neu = maxent->neurons + tid;
+    output_neu = maxent->output->neurons + tid;
+
+    order = maxent_get_hash(neu->hash_c, (hash_t)1,
+            neu->hist, maxent->model_opt.order);
     if (order < 0) {
         ST_WARNING("Failed to maxent_get_hash.");
         return -1;
     }
 #ifndef _MAXENT_BP_CALC_HASH_
-    maxent->hash_order_c = order;
+    neu->hash_order_c = order;
 #endif
 
     for (a = 0; a < order; a++) {
-        maxent->hash_c[a] = maxent->hash_c[a] % maxent->model_opt.sz_c;
+        neu->hash_c[a] = neu->hash_c[a] % maxent->model_opt.sz_c;
     }
 
     for (a = 0; a < order; a++) {
-        h = maxent->hash_c[a];
+        h = neu->hash_c[a];
         for (o = 0; o < maxent->class_size; o++) {
-            maxent->output->ac_o_c[o] += maxent->model_opt.scale 
+            output_neu->ac_o_c[o] += maxent->model_opt.scale 
                 * maxent->wt_c[h];
             h++;
             if (h >= maxent->model_opt.sz_c) {
@@ -652,34 +663,41 @@ static int maxent_forward_class(maxent_t *maxent)
     return 0;
 }
 
-static int maxent_forward_word(maxent_t *maxent, int c, int s, int e)
+static int maxent_forward_word(maxent_t *maxent, int c, int s, int e,
+        int tid)
 {
+    maxent_neuron_t *neu;
+    output_neuron_t *output_neu;
+
     hash_t h;
     int order;
 
     int a;
     int o;
 
-    ST_CHECK_PARAM(maxent == NULL, -1);
+    ST_CHECK_PARAM(maxent == NULL || tid < 0, -1);
 
-    order = maxent_get_hash(maxent->hash_w, (hash_t)(c + 1),
-            maxent->hist, maxent->model_opt.order);
+    neu = maxent->neurons + tid;
+    output_neu = maxent->output->neurons + tid;
+
+    order = maxent_get_hash(neu->hash_w, (hash_t)(c + 1),
+            neu->hist, maxent->model_opt.order);
     if (order < 0) {
         ST_WARNING("Failed to maxent_get_hash.");
         return -1;
     }
 #ifndef _MAXENT_BP_CALC_HASH_
-    maxent->hash_order_w = order;
+    neu->hash_order_w = order;
 #endif
 
     for (a = 0; a < order; a++) {
-        maxent->hash_w[a] %= maxent->model_opt.sz_w;
+        neu->hash_w[a] %= maxent->model_opt.sz_w;
     }
 
     for (a = 0; a < order; a++) {
-        h = maxent->hash_w[a];
+        h = neu->hash_w[a];
         for (o = s; o < e; o++) {
-            maxent->output->ac_o_w[o] += maxent->model_opt.scale 
+            output_neu->ac_o_w[o] += maxent->model_opt.scale 
                 * maxent->wt_w[h];
             h++;
             if (h >= maxent->model_opt.sz_w) {
@@ -691,13 +709,13 @@ static int maxent_forward_word(maxent_t *maxent, int c, int s, int e)
     return 0;
 }
 
-int maxent_forward(maxent_t *maxent, int word)
+int maxent_forward(maxent_t *maxent, int word, int tid)
 {
     int c;
     int s;
     int e;
 
-    ST_CHECK_PARAM(maxent == NULL, -1);
+    ST_CHECK_PARAM(maxent == NULL || tid < 0, -1);
 
     if (word < 0) {
         return 0;
@@ -708,7 +726,7 @@ int maxent_forward(maxent_t *maxent, int word)
         s = maxent->output->c2w_s[c];
         e = maxent->output->c2w_e[c];
 
-        if (maxent_forward_class(maxent) < 0) {
+        if (maxent_forward_class(maxent, tid) < 0) {
             ST_WARNING("Failed to maxent_forward_class.");
             return -1;
         }
@@ -718,7 +736,7 @@ int maxent_forward(maxent_t *maxent, int word)
         e = maxent->vocab_size;
     }
 
-    if (maxent_forward_word(maxent, c, s, e) < 0) {
+    if (maxent_forward_word(maxent, c, s, e, tid) < 0) {
         ST_WARNING("Failed to maxent_forward_word.");
         return -1;
     }
@@ -726,87 +744,102 @@ int maxent_forward(maxent_t *maxent, int word)
     return 0;
 }
 
-static int maxent_backprop_class(maxent_t *maxent)
+static int maxent_backprop_class(maxent_t *maxent, int tid)
 {
+    maxent_neuron_t *neu;
+    output_neuron_t *output_neu;
+
     int order;
 
     int a;
 
-    ST_CHECK_PARAM(maxent == NULL, -1);
+    ST_CHECK_PARAM(maxent == NULL || tid < 0, -1);
+
+    neu = maxent->neurons + tid;
+    output_neu = maxent->output->neurons + tid;
 
 #ifdef _MAXENT_BP_CALC_HASH_
-    order = maxent_get_hash(maxent->hash_c, (hash_t)1,
-            maxent->hist, maxent->model_opt.order);
+    order = maxent_get_hash(neu->hash_c, (hash_t)1,
+            neu->hist, maxent->model_opt.order);
     if (order < 0) {
         ST_WARNING("Failed to maxent_get_hash.");
         return -1;
     }
 
     for (a = 0; a < order; a++) {
-        maxent->hash_c[a] %= maxent->model_opt.sz_c;
+        neu->hash_c[a] %= maxent->model_opt.sz_c;
     }
 #else
-    order = maxent->hash_order_c;
+    order = neu->hash_order_c;
 #endif
 
     for (a = 0; a < order; a++) {
         param_update(&maxent->train_opt.param,
-                &maxent->param_arg_c,
+                &neu->param_arg_c,
                 maxent->wt_c,
-                maxent->output->er_o_c,
+                output_neu->er_o_c,
                 maxent->model_opt.scale,
                 maxent->class_size,
                 NULL,
                 -maxent->model_opt.sz_c,
-                maxent->hash_c[a]);
+                neu->hash_c[a]);
     }
 
     return 0;
 }
 
-static int maxent_backprop_word(maxent_t *maxent, int c, int s, int e)
+static int maxent_backprop_word(maxent_t *maxent, int c, int s, int e,
+        int tid)
 {
+    maxent_neuron_t *neu;
+    output_neuron_t *output_neu;
+
     int order;
 
     int a;
 
+    ST_CHECK_PARAM(maxent == NULL || tid < 0, -1);
+
+    neu = maxent->neurons + tid;
+    output_neu = maxent->output->neurons + tid;
+
 #ifdef _MAXENT_BP_CALC_HASH_
-    order = maxent_get_hash(maxent->hash_w, (hash_t)(c + 1),
-                maxent->hist, maxent->model_opt.order);
+    order = maxent_get_hash(neu->hash_w, (hash_t)(c + 1),
+                neu->hist, maxent->model_opt.order);
     if (order < 0) {
         ST_WARNING("Failed to maxent_get_hash.");
         return -1;
     }
 
     for (a = 0; a < order; a++) {
-        maxent->hash_w[a] %= maxent->model_opt.sz_w;
+        neu->hash_w[a] %= maxent->model_opt.sz_w;
     }
 #else
-    order = maxent->hash_order_w;
+    order = neu->hash_order_w;
 #endif
 
     for (a = 0; a < order; a++) {
         param_update(&maxent->train_opt.param,
-                &maxent->param_arg_w,
+                &neu->param_arg_w,
                 maxent->wt_w,
-                maxent->output->er_o_w + s, 
+                output_neu->er_o_w + s, 
                 maxent->model_opt.scale,
                 e - s, 
                 NULL,
                 -maxent->model_opt.sz_w,
-                maxent->hash_w[a]);
+                neu->hash_w[a]);
     }
 
     return 0;
 }
 
-int maxent_backprop(maxent_t *maxent, int word)
+int maxent_backprop(maxent_t *maxent, int word, int tid)
 {
     int c;
     int s;
     int e;
 
-    ST_CHECK_PARAM(maxent == NULL, -1);
+    ST_CHECK_PARAM(maxent == NULL || tid < 0, -1);
 
     if (word < 0) {
         return 0;
@@ -817,7 +850,7 @@ int maxent_backprop(maxent_t *maxent, int word)
         s = maxent->output->c2w_s[c];
         e = maxent->output->c2w_e[c];
 
-        if (maxent_backprop_class(maxent) < 0) {
+        if (maxent_backprop_class(maxent, tid) < 0) {
             ST_WARNING("Failed to maxent_backprop_class.");
             return -1;
         }
@@ -827,7 +860,7 @@ int maxent_backprop(maxent_t *maxent, int word)
         e = maxent->vocab_size;
     }
 
-    if (maxent_backprop_word(maxent, c, s, e) < 0) {
+    if (maxent_backprop_word(maxent, c, s, e, tid) < 0) {
         ST_WARNING("Failed to maxent_backprop_word.");
         return -1;
     }
@@ -851,13 +884,18 @@ static bool maxent_check_output(maxent_t *maxent, output_t *output)
 }
 
 int maxent_setup_train(maxent_t *maxent, maxent_train_opt_t *train_opt,
-        output_t *output)
+        output_t *output, int num_thrs)
 {
+    maxent_neuron_t *neu;
+
+    size_t sz;
+
     int order;
     int i;
+    int t;
 
     ST_CHECK_PARAM(maxent == NULL || train_opt == NULL
-            || output == NULL, -1);
+            || output == NULL || num_thrs < 0, -1);
 
     if (!maxent_check_output(maxent, output)) {
         ST_WARNING("Output layer not match.");
@@ -867,86 +905,116 @@ int maxent_setup_train(maxent_t *maxent, maxent_train_opt_t *train_opt,
     maxent->train_opt = *train_opt;
     maxent->output = output;
 
-    param_arg_clear(&maxent->param_arg_w);
+    maxent->num_thrs = num_thrs;
+    sz = sizeof(maxent_neuron_t) * num_thrs;
+    maxent->neurons = (maxent_neuron_t *)malloc(sz);
+    if (maxent->neurons == NULL) {
+        ST_WARNING("Failed to malloc neurons.");
+        goto ERR;
+    }
+    memset(maxent->neurons, 0, sz);
 
     order = maxent->model_opt.order;
-    maxent->hist = (int *) malloc(sizeof(int) * order);
-    if (maxent->hist == NULL) {
-        ST_WARNING("Failed to malloc hist.");
-        goto ERR;
-    }
-    for (i = 0; i < order; i++) {
-        maxent->hist[i] = -1;
-    }
+    for (t = 0; t < num_thrs; t++) {
+        neu = maxent->neurons + t;
 
-    maxent->hash_w = (hash_t *) malloc(sizeof(hash_t) * order);
-    if (maxent->hash_w == NULL) {
-        ST_WARNING("Failed to malloc hash_w.");
-        goto ERR;
-    }
+        param_arg_clear(&neu->param_arg_w);
 
-    if (maxent->class_size > 0) {
-        param_arg_clear(&maxent->param_arg_c);
-
-        maxent->hash_c = (hash_t *) malloc(sizeof(hash_t) * order);
-        if (maxent->hash_c == NULL) {
-            ST_WARNING("Failed to malloc hash_c.");
+        neu->hist = (int *) malloc(sizeof(int) * order);
+        if (neu->hist == NULL) {
+            ST_WARNING("Failed to malloc hist.");
             goto ERR;
+        }
+        for (i = 0; i < order; i++) {
+            neu->hist[i] = -1;
+        }
+
+        neu->hash_w = (hash_t *) malloc(sizeof(hash_t) * order);
+        if (neu->hash_w == NULL) {
+            ST_WARNING("Failed to malloc hash_w.");
+            goto ERR;
+        }
+
+        if (maxent->class_size > 0) {
+            param_arg_clear(&neu->param_arg_c);
+
+            neu->hash_c = (hash_t *) malloc(sizeof(hash_t) * order);
+            if (neu->hash_c == NULL) {
+                ST_WARNING("Failed to malloc hash_c.");
+                goto ERR;
+            }
         }
     }
 
     return 0;
 ERR:
-    safe_free(maxent->hist);
-    safe_free(maxent->hash_w);
-    safe_free(maxent->hash_c);
+    for (i = 0; i < maxent->num_thrs; i++) {
+        safe_free(maxent->neurons[i].hist);
+        safe_free(maxent->neurons[i].hash_w);
+        safe_free(maxent->neurons[i].hash_c);
+    }
+    safe_free(maxent->neurons);
+
     return -1;
 }
 
-int maxent_reset_train(maxent_t *maxent)
+int maxent_reset_train(maxent_t *maxent, int tid)
 {
+    maxent_neuron_t *neu;
+
     int order;
     int i;
 
-    ST_CHECK_PARAM(maxent == NULL, -1);
+    ST_CHECK_PARAM(maxent == NULL || tid < 0, -1);
+
+    neu = maxent->neurons + tid;
 
     order = maxent->model_opt.order;
     for (i = 0; i < order; i++) {
-        maxent->hist[i] = -1;
+        neu->hist[i] = -1;
     }
 
     return 0;
 }
 
-int maxent_start_train(maxent_t *maxent, int word)
+int maxent_start_train(maxent_t *maxent, int word, int tid)
 {
     return 0;
 }
 
-int maxent_end_train(maxent_t *maxent, int word)
+int maxent_end_train(maxent_t *maxent, int word, int tid)
 {
+    maxent_neuron_t *neu;
+
     int i;
 
-    ST_CHECK_PARAM(maxent == NULL, -1);
+    ST_CHECK_PARAM(maxent == NULL || tid < 0, -1);
 
     if (word < 0) {
         return 0;
     }
 
+    neu = maxent->neurons + tid;
+
     for (i = maxent->model_opt.order - 1; i > 0; i--) {
-        maxent->hist[i] = maxent->hist[i - 1];
+        neu->hist[i] = neu->hist[i - 1];
     }
-    maxent->hist[0] = word;
+    neu->hist[0] = word;
 
     return 0;
 }
 
-int maxent_setup_test(maxent_t *maxent, output_t *output)
+int maxent_setup_test(maxent_t *maxent, output_t *output, int num_thrs)
 {
+    maxent_neuron_t *neu;
+
+    size_t sz;
+
     int order;
     int i;
+    int t;
 
-    ST_CHECK_PARAM(maxent == NULL || output == NULL, -1);
+    ST_CHECK_PARAM(maxent == NULL || output == NULL || num_thrs < 0, -1);
 
     if (!maxent_check_output(maxent, output)) {
         ST_WARNING("Output layer not match.");
@@ -955,72 +1023,97 @@ int maxent_setup_test(maxent_t *maxent, output_t *output)
 
     maxent->output = output;
 
+    maxent->num_thrs = num_thrs;
+    sz = sizeof(maxent_neuron_t) * num_thrs;
+    maxent->neurons = (maxent_neuron_t *)malloc(sz);
+    if (maxent->neurons == NULL) {
+        ST_WARNING("Failed to malloc neurons.");
+        goto ERR;
+    }
+    memset(maxent->neurons, 0, sz);
+
     order = maxent->model_opt.order;
-    maxent->hist = (int *) malloc(sizeof(int) * order);
-    if (maxent->hist == NULL) {
-        ST_WARNING("Failed to malloc hist.");
-        goto ERR;
-    }
-    for (i = 0; i < order; i++) {
-        maxent->hist[i] = -1;
-    }
+    for (t = 0; t < num_thrs; t++) {
+        neu = maxent->neurons + t;
 
-    maxent->hash_w = (hash_t *) malloc(sizeof(hash_t) * order);
-    if (maxent->hash_w == NULL) {
-        ST_WARNING("Failed to malloc hash_w.");
-        goto ERR;
-    }
-
-    if (maxent->class_size > 0) {
-        maxent->hash_c = (hash_t *) malloc(sizeof(hash_t) * order);
-        if (maxent->hash_c == NULL) {
-            ST_WARNING("Failed to malloc hash_c.");
+        neu->hist = (int *) malloc(sizeof(int) * order);
+        if (neu->hist == NULL) {
+            ST_WARNING("Failed to malloc hist.");
             goto ERR;
+        }
+        for (i = 0; i < order; i++) {
+            neu->hist[i] = -1;
+        }
+
+        neu->hash_w = (hash_t *) malloc(sizeof(hash_t) * order);
+        if (neu->hash_w == NULL) {
+            ST_WARNING("Failed to malloc hash_w.");
+            goto ERR;
+        }
+
+        if (maxent->class_size > 0) {
+            neu->hash_c = (hash_t *) malloc(sizeof(hash_t) * order);
+            if (neu->hash_c == NULL) {
+                ST_WARNING("Failed to malloc hash_c.");
+                goto ERR;
+            }
         }
     }
 
     return 0;
 ERR:
-    safe_free(maxent->hist);
-    safe_free(maxent->hash_w);
-    safe_free(maxent->hash_c);
+    for (i = 0; i < maxent->num_thrs; i++) {
+        safe_free(maxent->neurons[i].hist);
+        safe_free(maxent->neurons[i].hash_w);
+        safe_free(maxent->neurons[i].hash_c);
+    }
+    safe_free(maxent->neurons);
+
     return -1;
 }
 
-int maxent_reset_test(maxent_t *maxent)
+int maxent_reset_test(maxent_t *maxent, int tid)
 {
+    maxent_neuron_t *neu;
+
     int order;
     int i;
 
-    ST_CHECK_PARAM(maxent == NULL, -1);
+    ST_CHECK_PARAM(maxent == NULL || tid < 0, -1);
+
+    neu = maxent->neurons + tid;
 
     order = maxent->model_opt.order;
     for (i = 0; i < order; i++) {
-        maxent->hist[i] = -1;
+        neu->hist[i] = -1;
     }
 
     return 0;
 }
 
-int maxent_start_test(maxent_t *maxent, int word)
+int maxent_start_test(maxent_t *maxent, int word, int tid)
 {
     return 0;
 }
 
-int maxent_end_test(maxent_t *maxent, int word)
+int maxent_end_test(maxent_t *maxent, int word, int tid)
 {
+    maxent_neuron_t *neu;
+
     int i;
 
-    ST_CHECK_PARAM(maxent == NULL, -1);
+    ST_CHECK_PARAM(maxent == NULL || tid < 0, -1);
 
     if (word < 0) {
         return 0;
     }
 
+    neu = maxent->neurons + tid;
+
     for (i = maxent->model_opt.order - 1; i > 0; i--) {
-        maxent->hist[i] = maxent->hist[i - 1];
+        neu->hist[i] = neu->hist[i - 1];
     }
-    maxent->hist[0] = word;
+    neu->hist[0] = word;
 
     return 0;
 }

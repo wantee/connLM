@@ -90,7 +90,7 @@ void show_usage(const char *module_name)
 
 int main(int argc, const char *argv[])
 {
-    char args[1024];
+    char args[1024] = "";
     FILE *fp = NULL;
     connlm_t *connlm = NULL;
     int ret;

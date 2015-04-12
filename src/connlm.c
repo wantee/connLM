@@ -114,10 +114,6 @@ int connlm_load_train_opt(connlm_train_opt_t *train_opt,
             train_opt->max_word_per_sent, 256,
             "Maximum words in one sentence");
 
-    ST_OPT_SEC_GET_BOOL(opt, sec_name, "REPORT_PROGRESS",
-            train_opt->report_progress, false,
-            "Report training progress");
-
     ST_OPT_SEC_GET_INT(opt, sec_name, "NUM_LINE_READ",
             train_opt->num_line_read, 10,
             "Number of lines read a time (in kilos)");
@@ -210,6 +206,8 @@ void connlm_destroy(connlm_t *connlm)
         return;
     }
 
+    safe_free(connlm->pts);
+    safe_free(connlm->thrs);
 
     safe_st_fclose(connlm->text_fp);
     safe_free(connlm->egs);
@@ -840,17 +838,40 @@ int connlm_setup_train(connlm_t *connlm, connlm_train_opt_t *train_opt,
         const char *train_file)
 {
     size_t sz;
+    int num_thrs;
 
     ST_CHECK_PARAM(connlm == NULL || train_opt == NULL
             || train_file == NULL, -1);
 
     connlm->train_opt = *train_opt;
 
+    if (connlm->train_opt.num_thread < 1) {
+        connlm->train_opt.num_thread = 1;
+    }
+    num_thrs = connlm->train_opt.num_thread;
+
     connlm->random = train_opt->rand_seed;
 
+    connlm->pts = NULL;
     connlm->text_fp = NULL;
     connlm->egs = NULL;
     connlm->shuffle_buf = NULL;
+
+    connlm->pts = (pthread_t *)malloc(num_thrs * sizeof(pthread_t));
+    if (connlm->pts == NULL) {
+        ST_WARNING("Failed to malloc pts");
+        goto ERR;
+    }
+
+    sz = sizeof(connlm_thr_t) * num_thrs;
+    connlm->thrs = (connlm_thr_t *)malloc(sz);
+    if (connlm->thrs == NULL) {
+        ST_WARNING("Failed to malloc thrs");
+        goto ERR;
+    }
+    memset(connlm->thrs, 0, sz);
+
+    connlm->fsize = st_fsize(train_file);
 
     connlm->text_fp = st_fopen(train_file, "rb");
     if (connlm->text_fp == NULL) {
@@ -874,14 +895,14 @@ int connlm_setup_train(connlm_t *connlm, connlm_train_opt_t *train_opt,
         }
     }
 
-    if (output_setup_train(connlm->output) < 0) {
+    if (output_setup_train(connlm->output, num_thrs) < 0) {
         ST_WARNING("Failed to output_setup_train.");
         goto ERR;
     }
 
     if (connlm->rnn != NULL) {
         if (rnn_setup_train(connlm->rnn, &train_opt->rnn_opt,
-                    connlm->output) < 0) {
+                    connlm->output, num_thrs) < 0) {
             ST_WARNING("Failed to rnn_setup_train.");
             goto ERR;
         }
@@ -889,7 +910,7 @@ int connlm_setup_train(connlm_t *connlm, connlm_train_opt_t *train_opt,
 
     if (connlm->maxent != NULL) {
         if (maxent_setup_train(connlm->maxent, &train_opt->maxent_opt,
-                    connlm->output) < 0) {
+                    connlm->output, num_thrs) < 0) {
             ST_WARNING("Failed to maxent_setup_train.");
             goto ERR;
         }
@@ -897,7 +918,7 @@ int connlm_setup_train(connlm_t *connlm, connlm_train_opt_t *train_opt,
 
     if (connlm->lbl != NULL) {
         if (lbl_setup_train(connlm->lbl, &train_opt->lbl_opt,
-                    connlm->output) < 0) {
+                    connlm->output, num_thrs) < 0) {
             ST_WARNING("Failed to lbl_setup_train.");
             goto ERR;
         }
@@ -905,7 +926,7 @@ int connlm_setup_train(connlm_t *connlm, connlm_train_opt_t *train_opt,
 
     if (connlm->ffnn != NULL) {
         if (ffnn_setup_train(connlm->ffnn, &train_opt->ffnn_opt,
-                    connlm->output) < 0) {
+                    connlm->output, num_thrs) < 0) {
             ST_WARNING("Failed to ffnn_setup_train.");
             goto ERR;
         }
@@ -914,6 +935,8 @@ int connlm_setup_train(connlm_t *connlm, connlm_train_opt_t *train_opt,
     return 0;
 
 ERR:
+    safe_free(connlm->pts);
+    safe_free(connlm->thrs);
     safe_st_fclose(connlm->text_fp);
     safe_free(connlm->egs);
     safe_free(connlm->shuffle_buf);
@@ -921,38 +944,38 @@ ERR:
     return -1;
 }
 
-int connlm_reset_train(connlm_t *connlm)
+int connlm_reset_train(connlm_t *connlm, int tid)
 {
     ST_CHECK_PARAM(connlm == NULL, -1);
 
-    if (output_reset_train(connlm->output) < 0) {
+    if (output_reset_train(connlm->output, tid) < 0) {
         ST_WARNING("Failed to output_reset_train.");
         return -1;
     }
 
     if (connlm->rnn != NULL) {
-        if (rnn_reset_train(connlm->rnn) < 0) {
+        if (rnn_reset_train(connlm->rnn, tid) < 0) {
             ST_WARNING("Failed to rnn_reset_train.");
             return -1;
         }
     }
 
     if (connlm->maxent != NULL) {
-        if (maxent_reset_train(connlm->maxent) < 0) {
+        if (maxent_reset_train(connlm->maxent, tid) < 0) {
             ST_WARNING("Failed to maxent_reset_train.");
             return -1;
         }
     }
 
     if (connlm->lbl != NULL) {
-        if (lbl_reset_train(connlm->lbl) < 0) {
+        if (lbl_reset_train(connlm->lbl, tid) < 0) {
             ST_WARNING("Failed to lbl_reset_train.");
             return -1;
         }
     }
 
     if (connlm->ffnn != NULL) {
-        if (ffnn_reset_train(connlm->ffnn) < 0) {
+        if (ffnn_reset_train(connlm->ffnn, tid) < 0) {
             ST_WARNING("Failed to ffnn_reset_train.");
             return -1;
         }
@@ -961,38 +984,38 @@ int connlm_reset_train(connlm_t *connlm)
     return 0;
 }
 
-int connlm_start_train(connlm_t *connlm, int word)
+int connlm_start_train(connlm_t *connlm, int word, int tid)
 {
     ST_CHECK_PARAM(connlm == NULL, -1);
 
-    if (output_start_train(connlm->output, word) < 0) {
+    if (output_start_train(connlm->output, word, tid) < 0) {
         ST_WARNING("Failed to output_start_train.");
         return -1;
     }
 
     if (connlm->rnn != NULL) {
-        if (rnn_start_train(connlm->rnn, word) < 0) {
+        if (rnn_start_train(connlm->rnn, word, tid) < 0) {
             ST_WARNING("Failed to rnn_start_train.");
             return -1;
         }
     }
 
     if (connlm->maxent != NULL) {
-        if (maxent_start_train(connlm->maxent, word) < 0) {
+        if (maxent_start_train(connlm->maxent, word, tid) < 0) {
             ST_WARNING("Failed to maxent_start_train.");
             return -1;
         }
     }
 
     if (connlm->lbl != NULL) {
-        if (lbl_start_train(connlm->lbl, word) < 0) {
+        if (lbl_start_train(connlm->lbl, word, tid) < 0) {
             ST_WARNING("Failed to lbl_start_train.");
             return -1;
         }
     }
 
     if (connlm->ffnn != NULL) {
-        if (ffnn_start_train(connlm->ffnn, word) < 0) {
+        if (ffnn_start_train(connlm->ffnn, word, tid) < 0) {
             ST_WARNING("Failed to ffnn_start_train.");
             return -1;
         }
@@ -1001,38 +1024,38 @@ int connlm_start_train(connlm_t *connlm, int word)
     return 0;
 }
 
-int connlm_end_train(connlm_t *connlm, int word)
+int connlm_end_train(connlm_t *connlm, int word, int tid)
 {
     ST_CHECK_PARAM(connlm == NULL, -1);
 
-    if (output_end_train(connlm->output, word) < 0) {
+    if (output_end_train(connlm->output, word, tid) < 0) {
         ST_WARNING("Failed to output_end_train.");
         return -1;
     }
 
     if (connlm->rnn != NULL) {
-        if (rnn_end_train(connlm->rnn, word) < 0) {
+        if (rnn_end_train(connlm->rnn, word, tid) < 0) {
             ST_WARNING("Failed to rnn_end_train.");
             return -1;
         }
     }
 
     if (connlm->maxent != NULL) {
-        if (maxent_end_train(connlm->maxent, word) < 0) {
+        if (maxent_end_train(connlm->maxent, word, tid) < 0) {
             ST_WARNING("Failed to maxent_end_train.");
             return -1;
         }
     }
 
     if (connlm->lbl != NULL) {
-        if (lbl_end_train(connlm->lbl, word) < 0) {
+        if (lbl_end_train(connlm->lbl, word, tid) < 0) {
             ST_WARNING("Failed to lbl_end_train.");
             return -1;
         }
     }
 
     if (connlm->ffnn != NULL) {
-        if (ffnn_end_train(connlm->ffnn, word) < 0) {
+        if (ffnn_end_train(connlm->ffnn, word, tid) < 0) {
             ST_WARNING("Failed to ffnn_end_train.");
             return -1;
         }
@@ -1041,39 +1064,39 @@ int connlm_end_train(connlm_t *connlm, int word)
     return 0;
 }
 
-int connlm_forward(connlm_t *connlm, int word)
+int connlm_forward(connlm_t *connlm, int word, int tid)
 {
     ST_CHECK_PARAM(connlm == NULL, -1);
 
     if (connlm->rnn != NULL) {
-        if (rnn_forward(connlm->rnn, word) < 0) {
+        if (rnn_forward(connlm->rnn, word, tid) < 0) {
             ST_WARNING("Failed to rnn_forward.");
             return -1;
         }
     }
 
     if (connlm->maxent != NULL) {
-        if (maxent_forward(connlm->maxent, word) < 0) {
+        if (maxent_forward(connlm->maxent, word, tid) < 0) {
             ST_WARNING("Failed to maxent_forward.");
             return -1;
         }
     }
 
     if (connlm->lbl != NULL) {
-        if (lbl_forward(connlm->lbl, word) < 0) {
+        if (lbl_forward(connlm->lbl, word, tid) < 0) {
             ST_WARNING("Failed to lbl_forward.");
             return -1;
         }
     }
 
     if (connlm->ffnn != NULL) {
-        if (ffnn_forward(connlm->ffnn, word) < 0) {
+        if (ffnn_forward(connlm->ffnn, word, tid) < 0) {
             ST_WARNING("Failed to ffnn_forward.");
             return -1;
         }
     }
 
-    if (output_activate(connlm->output, word) < 0) {
+    if (output_activate(connlm->output, word, tid) < 0) {
         ST_WARNING("Failed to output_activate.");
         return -1;
     }
@@ -1081,12 +1104,12 @@ int connlm_forward(connlm_t *connlm, int word)
     return 0;
 }
 
-int connlm_fwd_bp(connlm_t *connlm, int word)
+int connlm_fwd_bp(connlm_t *connlm, int word, int tid)
 {
     ST_CHECK_PARAM(connlm == NULL, -1);
 
     if (connlm->rnn != NULL) {
-        if (rnn_fwd_bp(connlm->rnn, word) < 0) {
+        if (rnn_fwd_bp(connlm->rnn, word, tid) < 0) {
             ST_WARNING("Failed to rnn_fwd_bp.");
             return -1;
         }
@@ -1095,38 +1118,38 @@ int connlm_fwd_bp(connlm_t *connlm, int word)
     return 0;
 }
 
-int connlm_backprop(connlm_t *connlm, int word)
+int connlm_backprop(connlm_t *connlm, int word, int tid)
 {
     ST_CHECK_PARAM(connlm == NULL, -1);
 
-    if (output_loss(connlm->output, word) < 0) {
+    if (output_loss(connlm->output, word, tid) < 0) {
         ST_WARNING("Failed to output_loss.");
         return -1;
     }
 
     if (connlm->rnn != NULL) {
-        if (rnn_backprop(connlm->rnn, word) < 0) {
+        if (rnn_backprop(connlm->rnn, word, tid) < 0) {
             ST_WARNING("Failed to rnn_backprop.");
             return -1;
         }
     }
 
     if (connlm->maxent != NULL) {
-        if (maxent_backprop(connlm->maxent, word) < 0) {
+        if (maxent_backprop(connlm->maxent, word, tid) < 0) {
             ST_WARNING("Failed to maxent_backprop.");
             return -1;
         }
     }
 
     if (connlm->lbl != NULL) {
-        if (lbl_backprop(connlm->lbl, word) < 0) {
+        if (lbl_backprop(connlm->lbl, word, tid) < 0) {
             ST_WARNING("Failed to lbl_backprop.");
             return -1;
         }
     }
 
     if (connlm->ffnn != NULL) {
-        if (ffnn_backprop(connlm->ffnn, word) < 0) {
+        if (ffnn_backprop(connlm->ffnn, word, tid) < 0) {
             ST_WARNING("Failed to ffnn_backprop.");
             return -1;
         }
@@ -1135,8 +1158,12 @@ int connlm_backprop(connlm_t *connlm, int word)
     return 0;
 }
 
-int connlm_train(connlm_t *connlm)
+static void* connlm_train_thread(void *args)
 {
+    connlm_t *connlm;
+    connlm_thr_t *thr;
+    int tid;
+
     connlm_train_opt_t *train_opt;
     int *eg;
 
@@ -1147,6 +1174,121 @@ int connlm_train(connlm_t *connlm)
     int max_word_per_sent;
     int i;
     int j;
+
+    struct timeval tts, tte;
+    long ms;
+
+    ST_CHECK_PARAM(args == NULL, NULL);
+
+    thr = (connlm_thr_t *)args;
+    connlm = thr->connlm;
+    tid = thr->tid;
+
+    train_opt = &connlm->train_opt;
+    max_word_per_sent = connlm->train_opt.max_word_per_sent;
+
+    gettimeofday(&tts, NULL);
+
+    words = 0;
+    sents = 0;
+    logp = 0.0;
+    for (i = thr->eg_s; i < thr->eg_e; i++) {
+        eg = connlm->egs + max_word_per_sent * i;
+        if (eg[0] < 0) {
+            continue;
+        }
+
+        if (connlm_reset_train(connlm, tid) < 0) {
+            ST_WARNING("Failed to connlm_reset_train.");
+            goto ERR;
+        }
+
+        sents++;
+        j = 0;
+        while (eg[j] >= 0 && j < max_word_per_sent) {
+            if (connlm_start_train(connlm, eg[j], tid) < 0) {
+                ST_WARNING("connlm_start_train.");
+                goto ERR;
+            }
+
+            if (connlm_forward(connlm, eg[j], tid) < 0) {
+                ST_WARNING("Failed to connlm_forward.");
+                goto ERR;
+            }
+
+            logp += log10(output_get_prob(connlm->output, eg[j], tid));
+
+            if ((logp != logp) || (isinf(logp))) {
+                if (connlm->output->output_opt.class_size > 0) {
+                    ST_WARNING("Numerical error. tid[%d], "
+                            "p_class(%d) = %g, p_word(%d) = %g", tid,
+                            connlm->output->w2c[eg[j]],
+                            output_get_class_prob(connlm->output,
+                                eg[j], tid),
+                            eg[j], 
+                            output_get_word_prob(connlm->output,
+                                eg[j], tid));
+                } else {
+                    ST_WARNING("Numerical error. tid[%d], p_word(%d) = %g",
+                            tid, eg[j], 
+                            output_get_word_prob(connlm->output,
+                                eg[j], tid));
+                }
+                goto ERR;
+            }
+
+            if (connlm_fwd_bp(connlm, eg[j], tid) < 0) {
+                ST_WARNING("Failed to connlm_fwd_bp.");
+                goto ERR;
+            }
+
+            if (connlm_backprop(connlm, eg[j], tid) < 0) {
+                ST_WARNING("Failed to connlm_backprop.");
+                goto ERR;
+            }
+
+            if (connlm_end_train(connlm, eg[j], tid) < 0) {
+                ST_WARNING("connlm_end_train.");
+                goto ERR;
+            }
+
+            words++;
+            j++;
+        }
+    }
+
+    thr->words = words;
+    thr->sents = sents;
+    thr->logp = logp;
+
+    gettimeofday(&tte, NULL);
+    ms = TIMEDIFF(tts, tte);
+
+    ST_TRACE("Thread: %d, Words: " COUNT_FMT
+            ", Sentences: " COUNT_FMT ", words/sec: %.1f, "
+            "LogP: %f, Entropy: %f, PPL: %f", tid,
+            words, sents, words / ((double) ms / 1000.0),
+            logp, -logp / log10(2) / words,
+            exp10(-logp / (double) words));
+
+    return NULL;
+ERR:
+    connlm->err = -1;
+    return NULL;
+}
+
+int connlm_train(connlm_t *connlm)
+{
+    connlm_train_opt_t *train_opt;
+
+    count_t words;
+    count_t sents;
+    double logp;
+
+    int max_word_per_sent;
+    int i;
+    int total_eg_sents;
+    int eg_sents;
 
     struct timeval tts_train, tte_train;
     long ms;
@@ -1161,71 +1303,65 @@ int connlm_train(connlm_t *connlm)
     words = 0;
     sents = 0;
     logp = 0;
+    connlm->err = 0;
     while (!feof(connlm->text_fp)) {
-        if (connlm_get_egs(connlm, max_word_per_sent,
-                    train_opt->num_line_read, true) < 0) {
+        total_eg_sents = connlm_get_egs(connlm, max_word_per_sent,
+                train_opt->num_line_read, true);
+        if (total_eg_sents < 0) {
             ST_WARNING("Failed to connlm_get_egs.");
             return -1;
         }
 
-        for (i = 0; i < train_opt->num_line_read; i++) {
-            eg = connlm->egs + max_word_per_sent * i;
-            if (eg[0] < 0) {
-                continue;
-            }
+        if (train_opt->shuffle) {
+            total_eg_sents = train_opt->num_line_read;
+        }
+        eg_sents = total_eg_sents / train_opt->num_thread;
+        for (i = 0; i < train_opt->num_thread; i++) {
+            connlm->thrs[i].eg_s = i * eg_sents;
+            connlm->thrs[i].eg_e = (i + 1) * eg_sents;
+        }
+        connlm->thrs[i - 1].eg_e = total_eg_sents;
 
-            if (connlm_reset_train(connlm) < 0) {
-                ST_WARNING("Failed to connlm_reset_train.");
-                return -1;
-            }
+        for (i = 0; i < train_opt->num_thread; i++) {
+            connlm->thrs[i].connlm = connlm;
+            connlm->thrs[i].tid = i;
+            pthread_create(connlm->pts + i, NULL, connlm_train_thread,
+                    (void *)(connlm->thrs + i));
+        }
 
-            sents++;
-            j = 0;
-            while (eg[j] >= 0 && j < max_word_per_sent) {
-                if (connlm_start_train(connlm, eg[j]) < 0) {
-                    ST_WARNING("connlm_start_train.");
-                    return -1;
-                }
+        for (i = 0; i < train_opt->num_thread; i++) {
+            pthread_join(connlm->pts[i], NULL);
+        }
 
-                if (connlm_forward(connlm, eg[j]) < 0) {
-                    ST_WARNING("Failed to connlm_forward.");
-                    return -1;
-                }
+        if (connlm->err < 0) {
+            ST_WARNING("Training error.");
+            return -1;
+        }
 
-                logp += log10(output_get_prob(connlm->output, eg[j]));
+        for (i = 0; i < train_opt->num_thread; i++) {
+            words += connlm->thrs[i].words;
+            sents += connlm->thrs[i].sents;
+            logp += connlm->thrs[i].logp;
+        }
 
-                if ((logp != logp) || (isinf(logp))) {
-                    if (connlm->output->output_opt.class_size > 0) {
-                        ST_WARNING("Numerical error. "
-                                "p_class(%d) = %g, p_word(%d) = %g",
-                                connlm->output->w2c[eg[j]],
-                                connlm->output->ac_o_c[connlm->output->w2c[eg[j]]],
-                                eg[j], connlm->output->ac_o_w[eg[j]]);
-                    } else {
-                        ST_WARNING("Numerical error. p_word(%d) = %g",
-                                eg[j], connlm->output->ac_o_w[eg[j]]);
-                    }
-                    return -1;
-                }
+        gettimeofday(&tte_train, NULL);
+        ms = TIMEDIFF(tts_train, tte_train);
 
-                if (connlm_fwd_bp(connlm, eg[j]) < 0) {
-                    ST_WARNING("Failed to connlm_fwd_bp.");
-                    return -1;
-                }
-
-                if (connlm_backprop(connlm, eg[j]) < 0) {
-                    ST_WARNING("Failed to connlm_backprop.");
-                    return -1;
-                }
-
-                if (connlm_end_train(connlm, eg[j]) < 0) {
-                    ST_WARNING("connlm_end_train.");
-                    return -1;
-                }
-
-                words++;
-                j++;
-            }
+        if (connlm->fsize > 0) {
+            ST_TRACE("Total progress: %.2f%%. Words: " COUNT_FMT
+                    ", Sentences: " COUNT_FMT ", words/sec: %.1f, "
+                    "LogP: %f, Entropy: %f, PPL: %f", 
+                    ftell(connlm->text_fp) / (double) connlm->fsize * 100,
+                    words, sents, words / ((double) ms / 1000.0),
+                    logp, -logp / log10(2) / words,
+                    exp10(-logp / (double) words));
+        } else {
+            ST_TRACE("Total progress: Words: " COUNT_FMT
+                    ", Sentences: " COUNT_FMT ", words/sec: %.1f, "
+                    "LogP: %f, Entropy: %f, PPL: %f", 
+                    words, sents, words / ((double) ms / 1000.0),
+                    logp, -logp / log10(2) / words,
+                    exp10(-logp / (double) words));
         }
     }
 
@@ -1238,7 +1374,7 @@ int connlm_train(connlm_t *connlm)
             words / ((double) ms / 1000.0));
     ST_NOTICE("LogP: %f", logp);
     ST_NOTICE("Entropy: %f", -logp / log10(2) / words);
-    ST_NOTICE("PPL: %f", exp10(-logp / (real_t) words));
+    ST_NOTICE("PPL: %f", exp10(-logp / (double) words));
 
     return 0;
 }
@@ -1246,13 +1382,38 @@ int connlm_train(connlm_t *connlm)
 int connlm_setup_test(connlm_t *connlm, connlm_test_opt_t *test_opt,
         const char *test_file)
 {
+    size_t sz;
+
+    int num_thrs;
+
     ST_CHECK_PARAM(connlm == NULL || test_opt == NULL
             || test_file == NULL, -1);
 
     connlm->test_opt = *test_opt;
 
+    if (connlm->test_opt.num_thread < 1) {
+        connlm->test_opt.num_thread = 1;
+    }
+    num_thrs = connlm->test_opt.num_thread;
+
+    connlm->pts = NULL;
+    connlm->thrs = NULL;
     connlm->text_fp = NULL;
     connlm->egs = NULL;
+
+    connlm->pts = (pthread_t *)malloc(num_thrs * sizeof(pthread_t));
+    if (connlm->pts == NULL) {
+        ST_WARNING("Failed to malloc pts");
+        goto ERR;
+    }
+
+    sz = sizeof(connlm_thr_t) * num_thrs;
+    connlm->thrs = (connlm_thr_t *)malloc(sz);
+    if (connlm->thrs == NULL) {
+        ST_WARNING("Failed to malloc thrs");
+        goto ERR;
+    }
+    memset(connlm->thrs, 0, sz);
 
     connlm->text_fp = st_fopen(test_file, "rb");
     if (connlm->text_fp == NULL) {
@@ -1267,34 +1428,35 @@ int connlm_setup_test(connlm_t *connlm, connlm_test_opt_t *test_opt,
         goto ERR;
     }
 
-    if (output_setup_test(connlm->output) < 0) {
+    if (output_setup_test(connlm->output, num_thrs) < 0) {
         ST_WARNING("Failed to output_setup_test.");
         goto ERR;
     }
 
     if (connlm->rnn != NULL) {
-        if (rnn_setup_test(connlm->rnn, connlm->output) < 0) {
-            ST_WARNING("Failed to rnn_setup_train.");
+        if (rnn_setup_test(connlm->rnn, connlm->output, num_thrs) < 0) {
+            ST_WARNING("Failed to rnn_setup_test.");
             goto ERR;
         }
     }
 
     if (connlm->maxent != NULL) {
-        if (maxent_setup_test(connlm->maxent, connlm->output) < 0) {
+        if (maxent_setup_test(connlm->maxent, connlm->output,
+                    num_thrs) < 0) {
             ST_WARNING("Failed to maxent_setup_test.");
             goto ERR;
         }
     }
 
     if (connlm->lbl != NULL) {
-        if (lbl_setup_test(connlm->lbl, connlm->output) < 0) {
+        if (lbl_setup_test(connlm->lbl, connlm->output, num_thrs) < 0) {
             ST_WARNING("Failed to lbl_setup_test.");
             goto ERR;
         }
     }
 
     if (connlm->ffnn != NULL) {
-        if (ffnn_setup_test(connlm->ffnn, connlm->output) < 0) {
+        if (ffnn_setup_test(connlm->ffnn, connlm->output, num_thrs) < 0) {
             ST_WARNING("Failed to ffnn_setup_test.");
             goto ERR;
         }
@@ -1309,38 +1471,38 @@ ERR:
     return -1;
 }
 
-int connlm_reset_test(connlm_t *connlm)
+int connlm_reset_test(connlm_t *connlm, int tid)
 {
     ST_CHECK_PARAM(connlm == NULL, -1);
 
-    if (output_reset_test(connlm->output) < 0) {
+    if (output_reset_test(connlm->output, tid) < 0) {
         ST_WARNING("Failed to output_reset_test.");
         return -1;
     }
 
     if (connlm->rnn != NULL) {
-        if (rnn_reset_test(connlm->rnn) < 0) {
+        if (rnn_reset_test(connlm->rnn, tid) < 0) {
             ST_WARNING("Failed to rnn_reset_test.");
             return -1;
         }
     }
 
     if (connlm->maxent != NULL) {
-        if (maxent_reset_test(connlm->maxent) < 0) {
+        if (maxent_reset_test(connlm->maxent, tid) < 0) {
             ST_WARNING("Failed to maxent_reset_test.");
             return -1;
         }
     }
 
     if (connlm->lbl != NULL) {
-        if (lbl_reset_test(connlm->lbl) < 0) {
+        if (lbl_reset_test(connlm->lbl, tid) < 0) {
             ST_WARNING("Failed to lbl_reset_test.");
             return -1;
         }
     }
 
     if (connlm->ffnn != NULL) {
-        if (ffnn_reset_test(connlm->ffnn) < 0) {
+        if (ffnn_reset_test(connlm->ffnn, tid) < 0) {
             ST_WARNING("Failed to ffnn_reset_test.");
             return -1;
         }
@@ -1349,38 +1511,38 @@ int connlm_reset_test(connlm_t *connlm)
     return 0;
 }
 
-int connlm_start_test(connlm_t *connlm, int word)
+int connlm_start_test(connlm_t *connlm, int word, int tid)
 {
     ST_CHECK_PARAM(connlm == NULL, -1);
 
-    if (output_start_test(connlm->output, word) < 0) {
+    if (output_start_test(connlm->output, word, tid) < 0) {
         ST_WARNING("Failed to output_start_test.");
         return -1;
     }
 
     if (connlm->rnn != NULL) {
-        if (rnn_start_test(connlm->rnn, word) < 0) {
+        if (rnn_start_test(connlm->rnn, word, tid) < 0) {
             ST_WARNING("Failed to rnn_start_test.");
             return -1;
         }
     }
 
     if (connlm->maxent != NULL) {
-        if (maxent_start_test(connlm->maxent, word) < 0) {
+        if (maxent_start_test(connlm->maxent, word, tid) < 0) {
             ST_WARNING("Failed to maxent_start_test.");
             return -1;
         }
     }
 
     if (connlm->lbl != NULL) {
-        if (lbl_start_test(connlm->lbl, word) < 0) {
+        if (lbl_start_test(connlm->lbl, word, tid) < 0) {
             ST_WARNING("Failed to lbl_start_test.");
             return -1;
         }
     }
 
     if (connlm->ffnn != NULL) {
-        if (ffnn_start_test(connlm->ffnn, word) < 0) {
+        if (ffnn_start_test(connlm->ffnn, word, tid) < 0) {
             ST_WARNING("Failed to ffnn_start_test.");
             return -1;
         }
@@ -1389,38 +1551,38 @@ int connlm_start_test(connlm_t *connlm, int word)
     return 0;
 }
 
-int connlm_end_test(connlm_t *connlm, int word)
+int connlm_end_test(connlm_t *connlm, int word, int tid)
 {
     ST_CHECK_PARAM(connlm == NULL, -1);
 
-    if (output_end_test(connlm->output, word) < 0) {
+    if (output_end_test(connlm->output, word, tid) < 0) {
         ST_WARNING("Failed to output_end_test.");
         return -1;
     }
 
     if (connlm->rnn != NULL) {
-        if (rnn_end_test(connlm->rnn, word) < 0) {
+        if (rnn_end_test(connlm->rnn, word, tid) < 0) {
             ST_WARNING("Failed to rnn_end_test.");
             return -1;
         }
     }
 
     if (connlm->maxent != NULL) {
-        if (maxent_end_test(connlm->maxent, word) < 0) {
+        if (maxent_end_test(connlm->maxent, word, tid) < 0) {
             ST_WARNING("Failed to maxent_end_test.");
             return -1;
         }
     }
 
     if (connlm->lbl != NULL) {
-        if (lbl_end_test(connlm->lbl, word) < 0) {
+        if (lbl_end_test(connlm->lbl, word, tid) < 0) {
             ST_WARNING("Failed to lbl_end_test.");
             return -1;
         }
     }
 
     if (connlm->ffnn != NULL) {
-        if (ffnn_end_test(connlm->ffnn, word) < 0) {
+        if (ffnn_end_test(connlm->ffnn, word, tid) < 0) {
             ST_WARNING("Failed to ffnn_end_test.");
             return -1;
         }
@@ -1429,8 +1591,12 @@ int connlm_end_test(connlm_t *connlm, int word)
     return 0;
 }
 
-int connlm_test(connlm_t *connlm, FILE *fp_log)
+static void* connlm_test_thread(void *args)
 {
+    connlm_t *connlm;
+    connlm_thr_t *thr;
+    int tid;
+
     connlm_test_opt_t *test_opt;
     int *eg;
 
@@ -1438,12 +1604,122 @@ int connlm_test(connlm_t *connlm, FILE *fp_log)
     count_t sents;
     count_t oovs;
     double logp;
-    real_t p;
 
-    int num_sents;
+    double p;
+
     int max_word_per_sent;
     int i;
     int j;
+
+    ST_CHECK_PARAM(args == NULL, NULL);
+
+    thr = (connlm_thr_t *)args;
+    connlm = thr->connlm;
+    tid = thr->tid;
+
+    test_opt = &connlm->test_opt;
+    max_word_per_sent = connlm->test_opt.max_word_per_sent;
+
+    words = 0;
+    sents = 0;
+    oovs = 0;
+    logp = 0.0;
+    for (i = thr->eg_s; i < thr->eg_e; i++) {
+        eg = connlm->egs + max_word_per_sent * i;
+
+        if (connlm_reset_test(connlm, tid) < 0) {
+            ST_WARNING("Failed to connlm_reset_test.");
+            goto ERR;
+        }
+
+        sents++;
+        j = 0;
+        while (eg[j] != -2 && j < max_word_per_sent) {
+            if (connlm_start_test(connlm, eg[j], tid) < 0) {
+                ST_WARNING("connlm_start_test.");
+                goto ERR;
+            }
+
+            if (connlm_forward(connlm, eg[j], tid) < 0) {
+                ST_WARNING("Failed to connlm_forward.");
+                goto ERR;
+            }
+
+            if (eg[j] == -1) {
+                logp += test_opt->oov_penalty;
+                oovs++;
+            } else {
+                p = output_get_prob(connlm->output, eg[j], tid);
+                logp += log10(p);
+
+                if ((logp != logp) || (isinf(logp))) {
+                    if (connlm->output->output_opt.class_size > 0) {
+                        ST_WARNING("Numerical error. tid[%d], "
+                                "p_class(%d) = %g, p_word(%d) = %g", tid,
+                                connlm->output->w2c[eg[j]],
+                                output_get_class_prob(connlm->output,
+                                    eg[j], tid),
+                                eg[j], 
+                                output_get_word_prob(connlm->output,
+                                    eg[j], tid));
+                    } else {
+                        ST_WARNING("Numerical error. tid[%d], p_word(%d) = %g",
+                                tid, eg[j], 
+                                output_get_word_prob(connlm->output,
+                                    eg[j], tid));
+                    }
+                    goto ERR;
+                }
+            }
+
+            if (connlm_end_test(connlm, eg[j], tid) < 0) {
+                ST_WARNING("connlm_end_test.");
+                goto ERR;
+            }
+
+            words++;
+
+            if (connlm->fp_log != NULL) {
+                (void)pthread_mutex_lock(&connlm->fp_lock);
+                if (eg[j] != -1) {
+                    fprintf(connlm->fp_log, "%d\t%.10f\t%s", eg[j], p,
+                            vocab_get_word(connlm->vocab, eg[j]));
+                } else {
+                    fprintf(connlm->fp_log, "-1\t0\t\t<OOV>");
+                }
+
+                fprintf(connlm->fp_log, "\n");
+                (void)pthread_mutex_unlock(&connlm->fp_lock);
+            }
+
+            j++;
+        }
+    }
+
+    thr->words = words;
+    thr->sents = sents;
+    thr->oovs = oovs;
+    thr->logp = logp;
+
+    return NULL;
+ERR:
+    connlm->err = -1;
+    return NULL;
+}
+
+int connlm_test(connlm_t *connlm, FILE *fp_log)
+{
+    connlm_test_opt_t *test_opt;
+
+    count_t words;
+    count_t sents;
+    count_t oovs;
+    double logp;
+
+    int num_sents;
+    int eg_sents;
+    int max_word_per_sent;
+    int i;
 
     struct timeval tts_test, tte_test;
     long ms;
@@ -1454,6 +1730,8 @@ int connlm_test(connlm_t *connlm, FILE *fp_log)
     max_word_per_sent = connlm->test_opt.max_word_per_sent;
 
     if (fp_log != NULL) {
+        connlm->fp_log = fp_log;
+        pthread_mutex_init(&connlm->fp_lock, NULL);
         fprintf(fp_log, "Index   P(NET)          Word\n");
         fprintf(fp_log, "----------------------------------\n");
     }
@@ -1472,71 +1750,38 @@ int connlm_test(connlm_t *connlm, FILE *fp_log)
             return -1;
         }
 
-        for (i = 0; i < num_sents; i++) {
-            eg = connlm->egs + max_word_per_sent * i;
+        eg_sents = num_sents / test_opt->num_thread;
+        for (i = 0; i < test_opt->num_thread; i++) {
+            connlm->thrs[i].eg_s = i * eg_sents;
+            connlm->thrs[i].eg_e = (i + 1) * eg_sents;
+        }
+        connlm->thrs[i - 1].eg_e = num_sents;
 
-            if (connlm_reset_test(connlm) < 0) {
-                ST_WARNING("Failed to connlm_reset_test.");
-                return -1;
-            }
+        for (i = 0; i < test_opt->num_thread; i++) {
+            connlm->thrs[i].connlm = connlm;
+            connlm->thrs[i].tid = i;
+            pthread_create(connlm->pts + i, NULL, connlm_test_thread,
+                    (void *)(connlm->thrs + i));
+        }
 
-            sents++;
-            j = 0;
-            while (eg[j] != -2 && j < max_word_per_sent) {
-                if (connlm_start_test(connlm, eg[j]) < 0) {
-                    ST_WARNING("connlm_start_test.");
-                    return -1;
-                }
+        for (i = 0; i < test_opt->num_thread; i++) {
+            pthread_join(connlm->pts[i], NULL);
+        }
 
-                if (connlm_forward(connlm, eg[j]) < 0) {
-                    ST_WARNING("Failed to connlm_forward.");
-                    return -1;
-                }
+        if (connlm->err < 0) {
+            ST_WARNING("Training error.");
+            return -1;
+        }
 
-                if (eg[j] == -1) {
-                    logp += test_opt->oov_penalty;
-                    oovs++;
-                } else {
-                    p = output_get_prob(connlm->output, eg[j]);
-                    logp += log10(p);
-
-                    if ((logp != logp) || (isinf(logp))) {
-                        if (connlm->output->output_opt.class_size > 0) {
-                            ST_WARNING("Numerical error. "
-                                    "p_class(%d) = %g, p_word(%d) = %g",
-                                    connlm->output->w2c[eg[j]],
-                                    connlm->output->ac_o_c[connlm->output->w2c[eg[j]]],
-                                    eg[j], connlm->output->ac_o_w[eg[j]]);
-                        } else {
-                            ST_WARNING("Numerical error. p_word(%d) = %g",
-                                    eg[j], connlm->output->ac_o_w[eg[j]]);
-                        }
-                        return -1;
-                    }
-                }
-
-                if (connlm_end_test(connlm, eg[j]) < 0) {
-                    ST_WARNING("connlm_end_test.");
-                    return -1;
-                }
-
-                words++;
-
-                if (fp_log != NULL) {
-                    if (eg[j] != -1) {
-                        fprintf(fp_log, "%d\t%.10f\t%s", eg[j], p,
-                                vocab_get_word(connlm->vocab, eg[j]));
-                    } else {
-                        fprintf(fp_log, "-1\t0\t\t<OOV>");
-                    }
-
-                    fprintf(fp_log, "\n");
-                }
-
-                j++;
-            }
+        for (i = 0; i < test_opt->num_thread; i++) {
+            words += connlm->thrs[i].words;
+            sents += connlm->thrs[i].sents;
+            oovs += connlm->thrs[i].oovs;
+            logp += connlm->thrs[i].logp;
         }
     }
+
+    pthread_mutex_destroy(&connlm->fp_lock);
 
     gettimeofday(&tte_test, NULL);
     ms = TIMEDIFF(tts_test, tte_test);
@@ -1549,19 +1794,18 @@ int connlm_test(connlm_t *connlm, FILE *fp_log)
              words / ((double) ms / 1000));
     ST_NOTICE("LogP: %f", logp);
     ST_NOTICE("Entropy: %f", -logp / log10(2) / words);
-    ST_NOTICE("PPL: %f", exp10(-logp / (real_t) words));
+    ST_NOTICE("PPL: %f", exp10(-logp / (double) words));
 
     if (fp_log != NULL) {
         fprintf(fp_log, "\nSummary:\n");
-        fprintf(fp_log, "Words: " COUNT_FMT "    OOVs: " COUNT_FMT,
+        fprintf(fp_log, "Words: " COUNT_FMT "    OOVs: " COUNT_FMT "\n",
                 words, oovs);
         fprintf(fp_log, "LogP: %f\n", logp);
         fprintf(fp_log, "Entropy: %f\n", -logp / log10(2) / words);
-        fprintf(fp_log, "PPL: %f\n", exp10(-logp / (real_t) words));
+        fprintf(fp_log, "PPL: %f\n", exp10(-logp / (double) words));
     }
 
     return 0;
 }
-
 /* vim: set expandtab ts=4 sw=4 sts=4 tw=100: */
 

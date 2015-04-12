@@ -2,6 +2,7 @@
 
 # Begin configuration section.
 config_file=""
+test_threads=1
 # end configuration sections
 
 echo "$0 $@"  # Print the command line for logging
@@ -14,6 +15,7 @@ if [ $# -ne 2 ]; then
   echo "e.g.: $0 exp/rnn data/test"
   echo "options: "
   echo "     --config-file <config-file>         # config file."
+  echo "     --test-threads <number>             # default: 1, number of testing threads"
   exit 1;
 fi
 
@@ -41,6 +43,9 @@ echo "Test Entropy: $(printf "%.4f" $ent)"
 
 ppl=`../utils/get_value.sh "PPL" $log_file`
 echo "Test PPL: $(printf "%.4f" $ppl)"
+
+wpc=`../utils/get_value.sh "words/sec" $log_file`
+echo "Test Speed: $(bc <<< "scale=1; $wpc / 1000")k words/sec"
 echo "================================="
 
 exit 0;

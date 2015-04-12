@@ -110,6 +110,8 @@ void lbl_destroy(lbl_t *lbl)
     if (lbl == NULL) {
         return;
     }
+
+    safe_free(lbl->neurons);
 }
 
 lbl_t* lbl_dup(lbl_t *l)
@@ -308,9 +310,9 @@ int lbl_save_body(lbl_t *lbl, FILE *fp, bool binary)
     return 0;
 }
 
-int lbl_forward(lbl_t *lbl, int word)
+int lbl_forward(lbl_t *lbl, int word, int tid)
 {
-    ST_CHECK_PARAM(lbl == NULL, -1);
+    ST_CHECK_PARAM(lbl == NULL || tid < 0, -1);
 
     if (word < 0) {
         return 0;
@@ -319,9 +321,9 @@ int lbl_forward(lbl_t *lbl, int word)
     return 0;
 }
 
-int lbl_backprop(lbl_t *lbl, int word)
+int lbl_backprop(lbl_t *lbl, int word, int tid)
 {
-    ST_CHECK_PARAM(lbl == NULL, -1);
+    ST_CHECK_PARAM(lbl == NULL || tid < 0, -1);
 
     if (word < 0) {
         return 0;
@@ -331,64 +333,94 @@ int lbl_backprop(lbl_t *lbl, int word)
 }
 
 int lbl_setup_train(lbl_t *lbl, lbl_train_opt_t *train_opt,
-        output_t *output)
+        output_t *output, int num_thrs)
 {
+    size_t sz;
+
     ST_CHECK_PARAM(lbl == NULL || train_opt == NULL
-            || output == NULL, -1);
+            || output == NULL || num_thrs < 0, -1);
 
     lbl->train_opt = *train_opt;
     lbl->output = output;
 
+    lbl->num_thrs = num_thrs;
+    sz = sizeof(lbl_neuron_t) * num_thrs;
+    lbl->neurons = (lbl_neuron_t *)malloc(sz);
+    if (lbl->neurons == NULL) {
+        ST_WARNING("Failed to malloc neurons.");
+        goto ERR;
+    }
+    memset(lbl->neurons, 0, sz);
+
+    return 0;
+
+ERR:
+    safe_free(lbl->neurons);
+    return -1;
+}
+
+int lbl_reset_train(lbl_t *lbl, int tid)
+{
+    ST_CHECK_PARAM(lbl == NULL || tid < 0, -1);
+
     return 0;
 }
 
-int lbl_reset_train(lbl_t *lbl)
+int lbl_start_train(lbl_t *lbl, int word, int tid)
 {
-    ST_CHECK_PARAM(lbl == NULL, -1);
+    ST_CHECK_PARAM(lbl == NULL || tid < 0, -1);
 
     return 0;
 }
 
-int lbl_start_train(lbl_t *lbl, int word)
+int lbl_end_train(lbl_t *lbl, int word, int tid)
 {
-    ST_CHECK_PARAM(lbl == NULL, -1);
+    ST_CHECK_PARAM(lbl == NULL || tid < 0, -1);
 
     return 0;
 }
 
-int lbl_end_train(lbl_t *lbl, int word)
+int lbl_setup_test(lbl_t *lbl, output_t *output, int num_thrs)
 {
-    ST_CHECK_PARAM(lbl == NULL, -1);
+    size_t sz;
 
-    return 0;
-}
-
-int lbl_setup_test(lbl_t *lbl, output_t *output)
-{
-    ST_CHECK_PARAM(lbl == NULL || output == NULL, -1);
+    ST_CHECK_PARAM(lbl == NULL || output == NULL || num_thrs < 0, -1);
 
     lbl->output = output;
 
+    lbl->num_thrs = num_thrs;
+    sz = sizeof(lbl_neuron_t) * num_thrs;
+    lbl->neurons = (lbl_neuron_t *)malloc(sz);
+    if (lbl->neurons == NULL) {
+        ST_WARNING("Failed to malloc neurons.");
+        goto ERR;
+    }
+    memset(lbl->neurons, 0, sz);
+
+    return 0;
+
+ERR:
+    safe_free(lbl->neurons);
+    return -1;
+}
+
+int lbl_reset_test(lbl_t *lbl, int tid)
+{
+    ST_CHECK_PARAM(lbl == NULL || tid < 0, -1);
+
     return 0;
 }
 
-int lbl_reset_test(lbl_t *lbl)
+int lbl_start_test(lbl_t *lbl, int word, int tid)
 {
-    ST_CHECK_PARAM(lbl == NULL, -1);
+    ST_CHECK_PARAM(lbl == NULL || tid < 0, -1);
 
     return 0;
 }
 
-int lbl_start_test(lbl_t *lbl, int word)
+int lbl_end_test(lbl_t *lbl, int word, int tid)
 {
-    ST_CHECK_PARAM(lbl == NULL, -1);
-
-    return 0;
-}
-
-int lbl_end_test(lbl_t *lbl, int word)
-{
-    ST_CHECK_PARAM(lbl == NULL, -1);
+    ST_CHECK_PARAM(lbl == NULL || tid < 0, -1);
 
     return 0;
 }

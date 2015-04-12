@@ -49,25 +49,9 @@ typedef struct _rnn_train_opt_t {
     param_t param;
 } rnn_train_opt_t;
 
-typedef struct _rnn_t_ {
-    rnn_model_opt_t model_opt;
-
-    int vocab_size;
-    int class_size;
-
-    output_t *output;
-
+typedef struct _rnn_neuron_t {
     int last_word;
 
-    // weights between input and hidden layer
-    real_t *wt_ih_w;            // word vs hidden
-    real_t *wt_ih_h;            // hidden vs hidden
-
-    // weights between hidden and output layer
-    real_t *wt_ho_c;            // hidden vs class
-    real_t *wt_ho_w;            // hidden vs word
-
-    rnn_train_opt_t train_opt;
     param_arg_t arg_ih_w;
     param_arg_t arg_ih_h;
     param_arg_t arg_ho_c;
@@ -88,6 +72,28 @@ typedef struct _rnn_t_ {
     // hidden layer
     real_t *ac_h;
     real_t *er_h;
+} rnn_neuron_t;
+
+typedef struct _rnn_t_ {
+    rnn_model_opt_t model_opt;
+
+    int vocab_size;
+    int class_size;
+
+    output_t *output;
+
+    // weights between input and hidden layer
+    real_t *wt_ih_w;            // word vs hidden
+    real_t *wt_ih_h;            // hidden vs hidden
+
+    // weights between hidden and output layer
+    real_t *wt_ho_c;            // hidden vs class
+    real_t *wt_ho_w;            // hidden vs word
+
+    rnn_train_opt_t train_opt;
+
+    rnn_neuron_t *neurons;
+    int num_thrs;
 } rnn_t;
 
 int rnn_load_model_opt(rnn_model_opt_t *model_opt, st_opt_t *opt,
@@ -112,20 +118,20 @@ int rnn_load_body(rnn_t *rnn, FILE *fp, bool binary);
 int rnn_save_header(rnn_t *rnn, FILE *fp, bool binary);
 int rnn_save_body(rnn_t *rnn, FILE *fp, bool binary);
 
-int rnn_forward(rnn_t *rnn, int word);
-int rnn_backprop(rnn_t *rnn, int word);
+int rnn_forward(rnn_t *rnn, int word, int tid);
+int rnn_backprop(rnn_t *rnn, int word, int tid);
 
 int rnn_setup_train(rnn_t *rnn, rnn_train_opt_t *train_opt,
-        output_t *output);
-int rnn_reset_train(rnn_t *rnn);
-int rnn_start_train(rnn_t *rnn, int word);
-int rnn_fwd_bp(rnn_t *rnn, int word);
-int rnn_end_train(rnn_t *rnn, int word);
+        output_t *output, int num_thrs);
+int rnn_reset_train(rnn_t *rnn, int tid);
+int rnn_start_train(rnn_t *rnn, int word, int tid);
+int rnn_fwd_bp(rnn_t *rnn, int word, int tid);
+int rnn_end_train(rnn_t *rnn, int word, int tid);
 
-int rnn_setup_test(rnn_t *rnn, output_t *output);
-int rnn_reset_test(rnn_t *rnn);
-int rnn_start_test(rnn_t *rnn, int word);
-int rnn_end_test(rnn_t *rnn, int word);
+int rnn_setup_test(rnn_t *rnn, output_t *output, int num_thrs);
+int rnn_reset_test(rnn_t *rnn, int tid);
+int rnn_start_test(rnn_t *rnn, int word, int tid);
+int rnn_end_test(rnn_t *rnn, int word, int tid);
 
 #ifdef __cplusplus
 }

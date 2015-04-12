@@ -77,6 +77,8 @@ output_t *output_create(output_opt_t *output_opt, int output_size)
 
 void output_destroy(output_t *output)
 {
+    int i;
+
     if (output == NULL) {
         return;
     }
@@ -85,11 +87,13 @@ void output_destroy(output_t *output)
     safe_free(output->c2w_s);
     safe_free(output->c2w_e);
 
-    safe_free(output->ac_o_c);
-    safe_free(output->er_o_c);
-    safe_free(output->ac_o_w);
-    safe_free(output->er_o_w);
-
+    for (i = 0; i < output->num_thrs; i++) {
+        safe_free(output->neurons[i].ac_o_c);
+        safe_free(output->neurons[i].er_o_c);
+        safe_free(output->neurons[i].ac_o_w);
+        safe_free(output->neurons[i].er_o_w);
+    }
+    safe_free(output->neurons);
 }
 
 output_t* output_dup(output_t *o)
@@ -589,140 +593,189 @@ ERR:
     return -1;
 }
 
-int output_activate(output_t *output, int word)
+int output_activate(output_t *output, int word, int tid)
 {
+    output_neuron_t *neu;
+
     int c;
     int s;
     int e;
 
-    ST_CHECK_PARAM(output == NULL, -1);
+    ST_CHECK_PARAM(output == NULL || tid < 0, -1);
 
     if (word < 0) {
         return 0;
     }
 
+    neu = output->neurons + tid;
     if (output->output_opt.class_size > 0) {
         c = output->w2c[word];
         s = output->c2w_s[c];
         e = output->c2w_e[c];
         
-        softmax(output->ac_o_c, output->output_opt.class_size);
+        softmax(neu->ac_o_c, output->output_opt.class_size);
     } else {
         s = 0;
         e = output->output_size;
     }
 
-    softmax(output->ac_o_w + s, e - s);
+    softmax(neu->ac_o_w + s, e - s);
 
     return 0;
 }
 
-int output_loss(output_t *output, int word)
+int output_loss(output_t *output, int word, int tid)
 {
+    output_neuron_t *neu;
+    
     int c;
     int s;
     int e;
 
     int o;
 
-    ST_CHECK_PARAM(output == NULL, -1);
+    ST_CHECK_PARAM(output == NULL || tid < 0, -1);
 
     if (word < 0) {
         return 0;
     }
 
+    neu = output->neurons + tid;
     if (output->output_opt.class_size > 0) {
         c = output->w2c[word];
         s = output->c2w_s[c];
         e = output->c2w_e[c];
         
         for (o = 0; o < output->output_opt.class_size; o++) {
-            output->er_o_c[o] = (0 - output->ac_o_c[o]);
+            neu->er_o_c[o] = (0 - neu->ac_o_c[o]);
         }
-        output->er_o_c[c] = (1 - output->ac_o_c[c]);
+        neu->er_o_c[c] = (1 - neu->ac_o_c[c]);
     } else {
         s = 0;
         e = output->output_size;
     }
 
     for (o = s; o < e; o++) {
-        output->er_o_w[o] = (0 - output->ac_o_w[o]);
+        neu->er_o_w[o] = (0 - neu->ac_o_w[o]);
     }
-    output->er_o_w[word] = (1 - output->ac_o_w[word]);
+    neu->er_o_w[word] = (1 - neu->ac_o_w[word]);
 
     return 0;
 }
 
-double output_get_prob(output_t *output, int word)
+double output_get_prob(output_t *output, int word, int tid)
 {
+    output_neuron_t *neu;
     double p = 1;
 
+    neu = output->neurons + tid;
     if (output->output_opt.class_size > 0) {
-        p *= output->ac_o_c[output->w2c[word]];
+        p *= neu->ac_o_c[output->w2c[word]];
     }
 
-    p *= output->ac_o_w[word];
+    p *= neu->ac_o_w[word];
 
     return p;
 }
 
-int output_setup_train(output_t *output)
+double output_get_class_prob(output_t *output, int word, int tid)
 {
+    output_neuron_t *neu;
+
+    neu = output->neurons + tid;
+    if (output->output_opt.class_size > 0) {
+        return neu->ac_o_c[output->w2c[word]];
+    }
+
+    return 0;
+}
+
+double output_get_word_prob(output_t *output, int word, int tid)
+{
+    output_neuron_t *neu;
+
+    neu = output->neurons + tid;
+
+    return neu->ac_o_w[word];
+}
+
+int output_setup_train(output_t *output, int num_thrs)
+{
+    output_neuron_t *neu;
+    size_t sz;
+
     int class_size;
 
     int i;
+    int t;
 
-    ST_CHECK_PARAM(output == NULL, -1);
+    ST_CHECK_PARAM(output == NULL || num_thrs < 0, -1);
+
+    output->num_thrs = num_thrs;
+    sz = sizeof(output_neuron_t) * num_thrs;
+    output->neurons = (output_neuron_t *)malloc(sz);
+    if (output->neurons == NULL) {
+        ST_WARNING("Failed to malloc neurons.");
+        goto ERR;
+    }
+    memset(output->neurons, 0, sz);
 
     class_size = output->output_opt.class_size;
-    if (class_size > 0) {
-        output->ac_o_c = (real_t *) malloc(sizeof(real_t) * class_size);
-        if (output->ac_o_c == NULL) {
-            ST_WARNING("Failed to malloc ac_o_c.");
+
+    for (t = 0; t < num_thrs; t++) {
+        neu = output->neurons + t;
+        if (class_size > 0) {
+            neu->ac_o_c = (real_t *) malloc(sizeof(real_t) * class_size);
+            if (neu->ac_o_c == NULL) {
+                ST_WARNING("Failed to malloc ac_o_c.");
+                goto ERR;
+            }
+
+            neu->er_o_c = (real_t *) malloc(sizeof(real_t) * class_size);
+            if (neu->er_o_c == NULL) {
+                ST_WARNING("Failed to malloc er_o_c.");
+                goto ERR;
+            }
+
+            for (i = 0; i < class_size; i++) {
+                neu->ac_o_c[i] = 0;
+                neu->er_o_c[i] = 0;
+            }
+        }
+
+        neu->ac_o_w = (real_t *) malloc(sizeof(real_t)*output->output_size);
+        if (neu->ac_o_w == NULL) {
+            ST_WARNING("Failed to malloc ac_o_w.");
             goto ERR;
         }
 
-        output->er_o_c = (real_t *) malloc(sizeof(real_t) * class_size);
-        if (output->er_o_c == NULL) {
-            ST_WARNING("Failed to malloc er_o_c.");
+        neu->er_o_w = (real_t *) malloc(sizeof(real_t)*output->output_size);
+        if (neu->er_o_w == NULL) {
+            ST_WARNING("Failed to malloc er_o_w.");
             goto ERR;
         }
 
-        for (i = 0; i < class_size; i++) {
-            output->ac_o_c[i] = 0;
-            output->er_o_c[i] = 0;
+        for (i = 0; i < output->output_size; i++) {
+            neu->ac_o_w[i] = 0;
+            neu->er_o_w[i] = 0;
         }
-    }
-
-    output->ac_o_w = (real_t *) malloc(sizeof(real_t)*output->output_size);
-    if (output->ac_o_w == NULL) {
-        ST_WARNING("Failed to malloc ac_o_w.");
-        goto ERR;
-    }
-
-    output->er_o_w = (real_t *) malloc(sizeof(real_t)*output->output_size);
-    if (output->er_o_w == NULL) {
-        ST_WARNING("Failed to malloc er_o_w.");
-        goto ERR;
-    }
-
-    for (i = 0; i < output->output_size; i++) {
-        output->ac_o_w[i] = 0;
-        output->er_o_w[i] = 0;
     }
 
     return 0;
 
 ERR:
-    safe_free(output->ac_o_c);
-    safe_free(output->er_o_c);
-    safe_free(output->ac_o_w);
-    safe_free(output->er_o_w);
+    for (i = 0; i < output->num_thrs; i++) {
+        safe_free(output->neurons[i].ac_o_c);
+        safe_free(output->neurons[i].er_o_c);
+        safe_free(output->neurons[i].ac_o_w);
+        safe_free(output->neurons[i].er_o_w);
+    }
+    safe_free(output->neurons);
 
     return -1;
 }
 
-int output_reset_train(output_t *output)
+int output_reset_train(output_t *output, int tid)
 {
 #if 0
     int class_size;
@@ -748,8 +801,9 @@ int output_reset_train(output_t *output)
     return 0;
 }
 
-int output_start_train(output_t *output, int word)
+int output_start_train(output_t *output, int word, int tid)
 {
+    output_neuron_t *neu;
     int class_size;
 
     int c;
@@ -758,17 +812,18 @@ int output_start_train(output_t *output, int word)
 
     int i;
 
-    ST_CHECK_PARAM(output == NULL, -1);
+    ST_CHECK_PARAM(output == NULL || tid < 0, -1);
 
     if (word < 0) {
         return 0;
     }
 
+    neu = output->neurons + tid;
     class_size = output->output_opt.class_size;
     if (class_size > 0) {
         for (i = 0; i < class_size; i++) {
-            output->ac_o_c[i] = 0;
-            output->er_o_c[i] = 0;
+            neu->ac_o_c[i] = 0;
+            neu->er_o_c[i] = 0;
         }
 
         c = output->w2c[word];
@@ -780,61 +835,84 @@ int output_start_train(output_t *output, int word)
     }
 
     for (i = s; i < e; i++) {
-        output->ac_o_w[i] = 0;
-        output->er_o_w[i] = 0;
+        neu->ac_o_w[i] = 0;
+        neu->er_o_w[i] = 0;
     }
 
     return 0;
 }
 
-int output_end_train(output_t *output, int word)
+int output_end_train(output_t *output, int word, int tid)
 {
     ST_CHECK_PARAM(output == NULL, -1);
 
     return 0;
 }
 
-int output_setup_test(output_t *output)
+int output_setup_test(output_t *output, int num_thrs)
 {
+    output_neuron_t *neu;
+    size_t sz;
+
     int class_size;
 
     int i;
+    int t;
 
-    ST_CHECK_PARAM(output == NULL, -1);
+    ST_CHECK_PARAM(output == NULL || num_thrs < 0, -1);
+
+    output->num_thrs = num_thrs;
+    sz = sizeof(output_neuron_t) * num_thrs;
+    output->neurons = (output_neuron_t *)malloc(sz);
+    if (output->neurons == NULL) {
+        ST_WARNING("Failed to malloc output neurons.");
+        goto ERR;
+    }
+    memset(output->neurons, 0, sz);
 
     class_size = output->output_opt.class_size;
-    if (class_size > 0) {
-        output->ac_o_c = (real_t *) malloc(sizeof(real_t) * class_size);
-        if (output->ac_o_c == NULL) {
-            ST_WARNING("Failed to malloc ac_o_c.");
+
+    for (t = 0; t < num_thrs; t++) {
+        neu = output->neurons + t;
+
+        if (class_size > 0) {
+            neu->ac_o_c = (real_t *) malloc(sizeof(real_t) * class_size);
+            if (neu->ac_o_c == NULL) {
+                ST_WARNING("Failed to malloc ac_o_c.");
+                goto ERR;
+            }
+
+            for (i = 0; i < class_size; i++) {
+                neu->ac_o_c[i] = 0;
+            }
+        }
+
+        neu->ac_o_w = (real_t *)malloc(sizeof(real_t)*output->output_size);
+        if (neu->ac_o_w == NULL) {
+            ST_WARNING("Failed to malloc ac_o_w.");
             goto ERR;
         }
 
-        for (i = 0; i < class_size; i++) {
-            output->ac_o_c[i] = 0;
+        for (i = 0; i < output->output_size; i++) {
+            neu->ac_o_w[i] = 0;
         }
-    }
-
-    output->ac_o_w = (real_t *) malloc(sizeof(real_t)*output->output_size);
-    if (output->ac_o_w == NULL) {
-        ST_WARNING("Failed to malloc ac_o_w.");
-        goto ERR;
-    }
-
-    for (i = 0; i < output->output_size; i++) {
-        output->ac_o_w[i] = 0;
     }
 
     return 0;
 
 ERR:
-    safe_free(output->ac_o_c);
-    safe_free(output->ac_o_w);
+    for (i = 0; i < output->num_thrs; i++) {
+        safe_free(output->neurons[i].ac_o_c);
+        safe_free(output->neurons[i].er_o_c);
+        safe_free(output->neurons[i].ac_o_w);
+        safe_free(output->neurons[i].er_o_w);
+    }
+    safe_free(output->neurons);
 
     return -1;
 }
 
-int output_reset_test(output_t *output)
+int output_reset_test(output_t *output, int tid)
 {
 #if 0
     int class_size;
@@ -858,8 +936,9 @@ int output_reset_test(output_t *output)
     return 0;
 }
 
-int output_start_test(output_t *output, int word)
+int output_start_test(output_t *output, int word, int tid)
 {
+    output_neuron_t *neu;
     int class_size;
 
     int c;
@@ -868,16 +947,17 @@ int output_start_test(output_t *output, int word)
 
     int i;
 
-    ST_CHECK_PARAM(output == NULL, -1);
+    ST_CHECK_PARAM(output == NULL || tid < 0, -1);
 
     if (word < 0) {
         return 0;
     }
 
+    neu = output->neurons + tid;
     class_size = output->output_opt.class_size;
     if (class_size > 0) {
         for (i = 0; i < class_size; i++) {
-            output->ac_o_c[i] = 0;
+            neu->ac_o_c[i] = 0;
         }
 
         c = output->w2c[word];
@@ -889,13 +969,13 @@ int output_start_test(output_t *output, int word)
     }
 
     for (i = s; i < e; i++) {
-        output->ac_o_w[i] = 0;
+        neu->ac_o_w[i] = 0;
     }
 
     return 0;
 }
 
-int output_end_test(output_t *output, int word)
+int output_end_test(output_t *output, int word, int tid)
 {
     ST_CHECK_PARAM(output == NULL, -1);
 

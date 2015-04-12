@@ -39,22 +39,25 @@ typedef struct _output_opt_t_ {
     bool hs;
 } output_opt_t;
 
+typedef struct _output_neuron_t_ {
+    real_t *ac_o_w;             // word part
+    real_t *er_o_w;
+    real_t *ac_o_c;             // class part
+    real_t *er_o_c;
+} output_neuron_t;
+
 typedef struct _output_t_ {
     output_opt_t output_opt;
 
     int output_size;
 
-    // neurons
-    real_t *ac_o_w;             // word part
-    real_t *er_o_w;
-    real_t *ac_o_c;             // class part
-    real_t *er_o_c;
+    output_neuron_t *neurons;
+    int num_thrs;
 
     // for classes
     int *w2c;                   // word to class map
     int *c2w_s;                 // start for class to word map
     int *c2w_e;                 // end for class to word map
-
 } output_t;
 
 int output_load_opt(output_opt_t *output_opt, st_opt_t *opt,
@@ -79,19 +82,21 @@ int output_save_body(output_t *output, FILE *fp, bool binary);
 
 int output_generate(output_t *output, count_t *word_cnts);
 
-int output_activate(output_t *output, int word);
-int output_loss(output_t *output, int word);
-double output_get_prob(output_t *output, int word);
+int output_activate(output_t *output, int word, int tid);
+int output_loss(output_t *output, int word, int tid);
+double output_get_prob(output_t *output, int word, int tid);
+double output_get_class_prob(output_t *output, int word, int tid);
+double output_get_word_prob(output_t *output, int word, int tid);
 
-int output_setup_train(output_t *output);
-int output_reset_train(output_t *output);
-int output_start_train(output_t *output, int word);
-int output_end_train(output_t *output, int word);
+int output_setup_train(output_t *output, int num_thrs);
+int output_reset_train(output_t *output, int tid);
+int output_start_train(output_t *output, int word, int tid);
+int output_end_train(output_t *output, int word, int tid);
 
-int output_setup_test(output_t *output);
-int output_reset_test(output_t *output);
-int output_start_test(output_t *output, int word);
-int output_end_test(output_t *output, int word);
+int output_setup_test(output_t *output, int num_thrs);
+int output_reset_test(output_t *output, int tid);
+int output_start_test(output_t *output, int word, int tid);
+int output_end_test(output_t *output, int word, int tid);
 
 #ifdef __cplusplus
 }

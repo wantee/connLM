@@ -309,9 +309,9 @@ int ffnn_save_body(ffnn_t *ffnn, FILE *fp, bool binary)
     return 0;
 }
 
-int ffnn_forward(ffnn_t *ffnn, int word)
+int ffnn_forward(ffnn_t *ffnn, int word, int tid)
 {
-    ST_CHECK_PARAM(ffnn == NULL, -1);
+    ST_CHECK_PARAM(ffnn == NULL || tid < 0, -1);
 
     if (word < 0) {
         return 0;
@@ -320,9 +320,9 @@ int ffnn_forward(ffnn_t *ffnn, int word)
     return 0;
 }
 
-int ffnn_backprop(ffnn_t *ffnn, int word)
+int ffnn_backprop(ffnn_t *ffnn, int word, int tid)
 {
-    ST_CHECK_PARAM(ffnn == NULL, -1);
+    ST_CHECK_PARAM(ffnn == NULL || tid < 0, -1);
 
     if (word < 0) {
         return 0;
@@ -332,63 +332,94 @@ int ffnn_backprop(ffnn_t *ffnn, int word)
 }
 
 int ffnn_setup_train(ffnn_t *ffnn, ffnn_train_opt_t *train_opt,
-        output_t *output)
+        output_t *output, int num_thrs)
 {
-    ST_CHECK_PARAM(ffnn == NULL || train_opt == NULL, -1);
+    size_t sz;
+
+    ST_CHECK_PARAM(ffnn == NULL || train_opt == NULL
+            || output == NULL || num_thrs < 0, -1);
 
     ffnn->train_opt = *train_opt;
     ffnn->output = output;
 
+    ffnn->num_thrs = num_thrs;
+    sz = sizeof(ffnn_neuron_t) * num_thrs;
+    ffnn->neurons = (ffnn_neuron_t *)malloc(sz);
+    if (ffnn->neurons == NULL) {
+        ST_WARNING("Failed to malloc neurons.");
+        goto ERR;
+    }
+    memset(ffnn->neurons, 0, sz);
+
+    return 0;
+
+ERR:
+    safe_free(ffnn->neurons);
+    return -1;
+}
+
+int ffnn_reset_train(ffnn_t *ffnn, int tid)
+{
+    ST_CHECK_PARAM(ffnn == NULL || tid < 0, -1);
+
     return 0;
 }
 
-int ffnn_reset_train(ffnn_t *ffnn)
+int ffnn_start_train(ffnn_t *ffnn, int word, int tid)
 {
-    ST_CHECK_PARAM(ffnn == NULL, -1);
+    ST_CHECK_PARAM(ffnn == NULL || tid < 0, -1);
 
     return 0;
 }
 
-int ffnn_start_train(ffnn_t *ffnn, int word)
+int ffnn_end_train(ffnn_t *ffnn, int word, int tid)
 {
-    ST_CHECK_PARAM(ffnn == NULL, -1);
+    ST_CHECK_PARAM(ffnn == NULL || tid < 0, -1);
 
     return 0;
 }
 
-int ffnn_end_train(ffnn_t *ffnn, int word)
+int ffnn_setup_test(ffnn_t *ffnn, output_t *output, int num_thrs)
 {
-    ST_CHECK_PARAM(ffnn == NULL, -1);
+    size_t sz;
 
-    return 0;
-}
-
-int ffnn_setup_test(ffnn_t *ffnn, output_t *output)
-{
-    ST_CHECK_PARAM(ffnn == NULL || output == NULL, -1);
+    ST_CHECK_PARAM(ffnn == NULL || output == NULL || num_thrs < 0, -1);
 
     ffnn->output = output;
 
+    ffnn->num_thrs = num_thrs;
+    sz = sizeof(ffnn_neuron_t) * num_thrs;
+    ffnn->neurons = (ffnn_neuron_t *)malloc(sz);
+    if (ffnn->neurons == NULL) {
+        ST_WARNING("Failed to malloc neurons.");
+        goto ERR;
+    }
+    memset(ffnn->neurons, 0, sz);
+
+    return 0;
+
+ERR:
+    safe_free(ffnn->neurons);
+    return -1;
+}
+
+int ffnn_reset_test(ffnn_t *ffnn, int tid)
+{
+    ST_CHECK_PARAM(ffnn == NULL || tid < 0, -1);
+
     return 0;
 }
 
-int ffnn_reset_test(ffnn_t *ffnn)
+int ffnn_start_test(ffnn_t *ffnn, int word, int tid)
 {
-    ST_CHECK_PARAM(ffnn == NULL, -1);
+    ST_CHECK_PARAM(ffnn == NULL || tid < 0, -1);
 
     return 0;
 }
 
-int ffnn_start_test(ffnn_t *ffnn, int word)
+int ffnn_end_test(ffnn_t *ffnn, int word, int tid)
 {
-    ST_CHECK_PARAM(ffnn == NULL, -1);
-
-    return 0;
-}
-
-int ffnn_end_test(ffnn_t *ffnn, int word)
-{
-    ST_CHECK_PARAM(ffnn == NULL, -1);
+    ST_CHECK_PARAM(ffnn == NULL || tid < 0, -1);
 
     return 0;
 }
