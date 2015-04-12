@@ -57,7 +57,7 @@ connlm-test --log-file="$log_dir/valid.prerun.log" \
            "$dir/$mdl_best" "$valid_file" \
 || exit 1; 
 
-loss=`../utils/get_entropy.sh $log_dir/valid.prerun.log`
+loss=`../utils/get_value.sh "Entropy" $log_dir/valid.prerun.log`
 echo "Prerun Valid Entropy: $(printf "%.4f" $loss)"
 
 halving=0
@@ -82,8 +82,8 @@ for iter in $(seq -w $max_iters); do
 
   rand_seed=$((rand_seed+1))
 
-  tr_loss=`../utils/get_entropy.sh $log_dir/train.${iter}.log`
-  wpc=`../utils/get_wpc.sh $log_dir/train.${iter}.log`
+  tr_loss=`../utils/get_value.sh "Entropy" $log_dir/train.${iter}.log`
+  wpc=`../utils/get_value.sh "words/sec" $log_dir/train.${iter}.log`
   wpc=`bc <<< "scale=1; $wpc / 1000"`k
   echo -n "TrEnt $(printf "%.4f" $tr_loss), "
   echo -n "lr($(printf "%.6g" $lr_rnn)/$(printf "%.6g" $lr_maxent)"
@@ -95,7 +95,7 @@ for iter in $(seq -w $max_iters); do
              "$dir/$mdl_next" "$valid_file" \
   || exit 1; 
   
-  loss_new=`../utils/get_entropy.sh $log_dir/valid.${iter}.log`
+  loss_new=`../utils/get_value.sh "Entropy" $log_dir/valid.${iter}.log`
   echo "CVEnt: $(printf "%.4f" $loss_new)"
 
   # accept or reject new parameters (based on objective function)

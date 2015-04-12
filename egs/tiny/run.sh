@@ -20,6 +20,7 @@ echo "Learning vocab..."
 fi
 
 if in_range 2 $steps; then
+echo
 echo "Training MaxEnt ..."
 conf_dir=./conf/maxent
 dir=exp/maxent
@@ -29,9 +30,13 @@ dir=exp/maxent
 ../steps/train_model.sh --train-config $conf_dir/train.conf \
         --test-config ./conf/test.conf \
         $train_file $valid_file $dir || exit 1;
+
+../steps/test_model.sh --config-file ./conf/test.conf \
+        $dir $test_file || exit 1;
 fi
 
 if in_range 3 $steps; then
+echo
 echo "Training RNN ..."
 conf_dir=./conf/rnn
 dir=exp/rnn
@@ -41,9 +46,13 @@ dir=exp/rnn
 ../steps/train_model.sh --train-config $conf_dir/train.conf \
         --test-config ./conf/test.conf \
         $train_file $valid_file $dir || exit 1;
+
+../steps/test_model.sh --config-file ./conf/test.conf \
+        $dir $test_file || exit 1;
 fi
 
 if in_range 4 $steps; then
+echo
 echo "Training RNN+MaxEnt ..."
 conf_dir=./conf/rnn+maxent
 dir=exp/rnn+maxent
@@ -53,4 +62,7 @@ dir=exp/rnn+maxent
 ../steps/train_model.sh --train-config $conf_dir/train.conf \
         --test-config ./conf/test.conf \
         $train_file $valid_file $dir || exit 1;
+
+../steps/test_model.sh --config-file ./conf/test.conf \
+        $dir $test_file || exit 1;
 fi
