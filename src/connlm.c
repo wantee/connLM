@@ -1164,7 +1164,6 @@ static void* connlm_train_thread(void *args)
     connlm_thr_t *thr;
     int tid;
 
-    connlm_train_opt_t *train_opt;
     int *eg;
 
     count_t words;
@@ -1184,7 +1183,6 @@ static void* connlm_train_thread(void *args)
     connlm = thr->connlm;
     tid = thr->tid;
 
-    train_opt = &connlm->train_opt;
     max_word_per_sent = connlm->train_opt.max_word_per_sent;
 
     gettimeofday(&tts, NULL);
@@ -1285,7 +1283,6 @@ int connlm_train(connlm_t *connlm)
     count_t sents;
     double logp;
 
-    int max_word_per_sent;
     int i;
     int total_eg_sents;
     int eg_sents;
@@ -1296,7 +1293,6 @@ int connlm_train(connlm_t *connlm)
     ST_CHECK_PARAM(connlm == NULL, -1);
 
     train_opt = &connlm->train_opt;
-    max_word_per_sent = connlm->train_opt.max_word_per_sent;
 
     gettimeofday(&tts_train, NULL);
 
@@ -1305,7 +1301,8 @@ int connlm_train(connlm_t *connlm)
     logp = 0;
     connlm->err = 0;
     while (!feof(connlm->text_fp)) {
-        total_eg_sents = connlm_get_egs(connlm, max_word_per_sent,
+        total_eg_sents = connlm_get_egs(connlm,
+                train_opt->max_word_per_sent,
                 train_opt->num_line_read, true);
         if (total_eg_sents < 0) {
             ST_WARNING("Failed to connlm_get_egs.");
@@ -1718,7 +1715,6 @@ int connlm_test(connlm_t *connlm, FILE *fp_log)
 
     int num_sents;
     int eg_sents;
-    int max_word_per_sent;
     int i;
 
     struct timeval tts_test, tte_test;
@@ -1727,7 +1723,6 @@ int connlm_test(connlm_t *connlm, FILE *fp_log)
     ST_CHECK_PARAM(connlm == NULL, -1);
 
     test_opt = &connlm->test_opt;
-    max_word_per_sent = connlm->test_opt.max_word_per_sent;
 
     if (fp_log != NULL) {
         connlm->fp_log = fp_log;

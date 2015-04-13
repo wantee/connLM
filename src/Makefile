@@ -7,6 +7,8 @@ else
 LDFLAGS+=-lm
 endif
 
+CFLAGS += -I../tools/stutils/include/stutils/
+LDFLAGS += -L../tools/stutils/lib/
 LDFLAGS += -lstutils -lpthread
 LDFLAGS += -Wl,-rpath '-Wl,$$ORIGIN'
 
@@ -85,6 +87,7 @@ clean:
 	rm -rf ${BINDIR}
 	rm -rf ${OUTLIBDIR}
 	rm -rf ${OUTINCDIR}
+	rm -rf ../include
 	rm -f tags cscope.*
 
 gen-doc:
