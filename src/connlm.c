@@ -1645,6 +1645,7 @@ static void* connlm_test_thread(void *args)
             if (eg[j] == -1) {
                 logp += test_opt->oov_penalty;
                 oovs++;
+                p = 0;
             } else {
                 p = output_get_prob(connlm->output, eg[j], tid);
                 logp += log10(p);
