@@ -175,7 +175,7 @@ ST_OPT_ERR:
 int connlm_load_test_opt(connlm_test_opt_t *test_opt, 
         st_opt_t *opt, const char *sec_name)
 {
-    float f;
+    double d;
 
     ST_CHECK_PARAM(test_opt == NULL || opt == NULL, -1);
 
@@ -190,9 +190,9 @@ int connlm_load_test_opt(connlm_test_opt_t *test_opt,
             "Number of lines read a time (in kilos)");
     test_opt->num_line_read *= 1000;
 
-    ST_OPT_SEC_GET_FLOAT(opt, sec_name, "OOV_PENALTY",
-            f, -8, "Penalty of OOV");
-    test_opt->oov_penalty = (real_t)f;
+    ST_OPT_SEC_GET_DOUBLE(opt, sec_name, "OOV_PENALTY",
+            d, -8, "Penalty of OOV");
+    test_opt->oov_penalty = (real_t)d;
 
     return 0;
 

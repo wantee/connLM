@@ -42,7 +42,7 @@ static param_t def_param = {
 int param_load(param_t *param, st_opt_t *opt, const char *sec_name,
         param_t *parent_param)
 {
-    float f;
+    double d;
 
     ST_CHECK_PARAM(param == NULL || opt == NULL, -1);
 
@@ -52,29 +52,29 @@ int param_load(param_t *param, st_opt_t *opt, const char *sec_name,
         *param = *parent_param;
     }
 
-    ST_OPT_SEC_GET_FLOAT(opt, sec_name, "LEARN_RATE", f,
-            (float)param->learn_rate,
+    ST_OPT_SEC_GET_DOUBLE(opt, sec_name, "LEARN_RATE", d,
+            (double)param->learn_rate,
             "Learning rate");
-    param->learn_rate = (real_t)f;
+    param->learn_rate = (real_t)d;
 
-    ST_OPT_SEC_GET_FLOAT(opt, sec_name, "L1_PENALTY", f, 
-            (float)param->l1_penalty,
+    ST_OPT_SEC_GET_DOUBLE(opt, sec_name, "L1_PENALTY", d, 
+            (double)param->l1_penalty,
             "L1 penalty (promote sparsity)");
-    param->l1_penalty = (real_t)f;
+    param->l1_penalty = (real_t)d;
 
-    ST_OPT_SEC_GET_FLOAT(opt, sec_name, "L2_PENALTY", f,
-            (float)param->l2_penalty,
+    ST_OPT_SEC_GET_DOUBLE(opt, sec_name, "L2_PENALTY", d,
+            (double)param->l2_penalty,
             "L2 penalty (weight decay)");
-    param->l2_penalty = (real_t)f;
+    param->l2_penalty = (real_t)d;
 
     ST_OPT_SEC_GET_INT(opt, sec_name, "L2_GAP", param->l2_gap,
             param->l2_gap,
             "Number of words between two consecutive L2 regularization");
 
-    ST_OPT_SEC_GET_FLOAT(opt, sec_name, "MOMENTUM", f,
-            (float)param->momentum,
+    ST_OPT_SEC_GET_DOUBLE(opt, sec_name, "MOMENTUM", d,
+            (double)param->momentum,
             "Momentum");
-    param->momentum = (real_t)f;
+    param->momentum = (real_t)d;
 
     return 0;
 ST_OPT_ERR:

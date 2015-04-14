@@ -39,13 +39,13 @@ static const int LBL_MAGIC_NUM = 626140498 + 4;
 int lbl_load_model_opt(lbl_model_opt_t *model_opt, st_opt_t *opt,
         const char *sec_name)
 {
-    float f;
+    double d;
 
     ST_CHECK_PARAM(model_opt == NULL || opt == NULL, -1);
 
-    ST_OPT_SEC_GET_FLOAT(opt, sec_name, "SCALE", f, 1.0,
+    ST_OPT_SEC_GET_DOUBLE(opt, sec_name, "SCALE", d, 1.0,
             "Scale of LBL model output");
-    model_opt->scale = (real_t)f;
+    model_opt->scale = (real_t)d;
 
     if (model_opt->scale <= 0) {
         return 0;

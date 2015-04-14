@@ -41,13 +41,13 @@ static const int RNN_MAGIC_NUM = 626140498 + 2;
 int rnn_load_model_opt(rnn_model_opt_t *model_opt, st_opt_t *opt,
         const char *sec_name)
 {
-    float f;
+    double d;
 
     ST_CHECK_PARAM(model_opt == NULL || opt == NULL, -1);
 
-    ST_OPT_SEC_GET_FLOAT(opt, sec_name, "SCALE", f, 1.0,
+    ST_OPT_SEC_GET_DOUBLE(opt, sec_name, "SCALE", d, 1.0,
             "Scale of RNN model output");
-    model_opt->scale = (real_t)f;
+    model_opt->scale = (real_t)d;
 
     if (model_opt->scale <= 0) {
         return 0;
@@ -65,7 +65,7 @@ ST_OPT_ERR:
 int rnn_load_train_opt(rnn_train_opt_t *train_opt, st_opt_t *opt,
         const char *sec_name, param_t *param)
 {
-    float f;
+    double d;
 
     ST_CHECK_PARAM(train_opt == NULL || opt == NULL, -1);
 
@@ -74,9 +74,9 @@ int rnn_load_train_opt(rnn_train_opt_t *train_opt, st_opt_t *opt,
     ST_OPT_SEC_GET_INT(opt, sec_name, "BPTT_BLOCK",
             train_opt->bptt_block, 10, "Block size of BPTT");
 
-    ST_OPT_SEC_GET_FLOAT(opt, sec_name, "ERR_CUTOFF", f,
+    ST_OPT_SEC_GET_DOUBLE(opt, sec_name, "ERR_CUTOFF", d,
             50, "Cutoff of error");
-    train_opt->er_cutoff = (real_t)f;
+    train_opt->er_cutoff = (real_t)d;
 
     if (param_load(&train_opt->param, opt, sec_name, param) < 0) {
         ST_WARNING("Failed to nn_param_load.");

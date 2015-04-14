@@ -4,8 +4,8 @@ train_file=./data/train
 valid_file=./data/valid
 test_file=./data/test
 
-tr_thr=4
-test_thr=4
+tr_thr=1
+test_thr=1
 
 stepnames[1]="Learn Vocab"
 stepnames[2]="Train MaxEnt model"

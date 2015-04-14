@@ -50,14 +50,14 @@ const unsigned int PRIMES_SIZE = sizeof(PRIMES) / sizeof(PRIMES[0]);
 int maxent_load_model_opt(maxent_model_opt_t *model_opt,
         st_opt_t *opt, const char *sec_name)
 {
-    float f;
-    int d;
+    double d;
+    int n;
 
     ST_CHECK_PARAM(model_opt == NULL || opt == NULL, -1);
 
-    ST_OPT_SEC_GET_FLOAT(opt, sec_name, "SCALE", f, 1.0, 
+    ST_OPT_SEC_GET_DOUBLE(opt, sec_name, "SCALE", d, 1.0, 
             "Scale of MaxEnt model output");
-    model_opt->scale = (real_t)f;
+    model_opt->scale = (real_t)d;
 
     if (model_opt->scale <= 0) {
         return 0;
@@ -67,13 +67,13 @@ int maxent_load_model_opt(maxent_model_opt_t *model_opt,
             model_opt->order, 3,
             "Order of MaxEnt");
 
-    ST_OPT_SEC_GET_INT(opt, sec_name, "WORD_HASH_SIZE", d, 1,
+    ST_OPT_SEC_GET_INT(opt, sec_name, "WORD_HASH_SIZE", n, 1,
             "Size of MaxEnt hash for words(in millions)");
-    model_opt->sz_w = d * 1000000;
+    model_opt->sz_w = n * 1000000;
 
-    ST_OPT_SEC_GET_INT(opt, sec_name, "CLASS_HASH_SIZE", d, 1,
+    ST_OPT_SEC_GET_INT(opt, sec_name, "CLASS_HASH_SIZE", n, 1,
             "Size of MaxEnt hash for classes(in millions)");
-    model_opt->sz_c = d * 1000000;
+    model_opt->sz_c = n * 1000000;
 
     return 0;
 
