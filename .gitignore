@@ -6,6 +6,7 @@ bin/
 include/
 lib/
 log/
+tools/
 *.o
 *.wav
 obj/
