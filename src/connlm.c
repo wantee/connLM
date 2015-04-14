@@ -723,7 +723,8 @@ int connlm_save(connlm_t *connlm, FILE *fp, bool binary)
 static int connlm_get_egs(connlm_t *connlm, int max_word_per_sent,
         int num_line_read, bool skip_oov)
 {
-    char line[MAX_LINE_LEN];
+    char *line = NULL;
+    size_t line_sz = 0;
     char word[MAX_LINE_LEN];
 
     int *eg;
@@ -748,7 +749,7 @@ static int connlm_get_egs(connlm_t *connlm, int max_word_per_sent,
     }
 
     num_sents = 0;
-    while (fgets(line, MAX_LINE_LEN, connlm->text_fp)) {
+    while (st_fgets(&line, &line_sz, connlm->text_fp)) {
         remove_newline(line);
 
         if (line[0] == '\0') {
@@ -831,6 +832,7 @@ SKIP:
         eg[0] = -2;
     }
 
+    safe_free(line);
     return num_sents;
 }
 

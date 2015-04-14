@@ -30,6 +30,7 @@
 
 #include <st_macro.h>
 #include <st_log.h>
+#include <st_utils.h>
 
 #include "vocab.h"
 
@@ -133,7 +134,6 @@ ERR:
 long vocab_load_header(vocab_t **vocab, FILE *fp, bool *binary,
         FILE *fo_info)
 {
-    char line[MAX_LINE_LEN];
     union {
         char str[4];
         int magic_num;
@@ -175,26 +175,13 @@ long vocab_load_header(vocab_t **vocab, FILE *fp, bool *binary,
             return 0;
         }
     } else {
-        if (fgets(line, MAX_LINE_LEN, fp) == NULL) {
-            ST_WARNING("Failed to read flag.");
+        if (st_readline(fp, "<VOCAB>") != 0) {
+            ST_WARNING("flag error.");
             return -1;
         }
 
-        if (fgets(line, MAX_LINE_LEN, fp) == NULL) {
-            ST_WARNING("Failed to read flag.");
-            return -1;
-        }
-        if (strncmp(line, "<VOCAB>", 7) != 0) {
-            ST_WARNING("flag error.[%s]", line);
-            return -1;
-        }
-
-        if (fgets(line, MAX_LINE_LEN, fp) == NULL) {
-            ST_WARNING("Failed to read vocab_size.");
-            return -1;
-        }
-        if (sscanf(line, "Vocab size: %d", &vocab_size) != 1) {
-            ST_WARNING("Failed to parse vocab_size.[%s]", line);
+        if (st_readline(fp, "Vocab size: %d", &vocab_size) != 1) {
+            ST_WARNING("Failed to parse vocab_size.");
             return -1;
         }
 
@@ -231,7 +218,6 @@ ERR:
 
 int vocab_load_body(vocab_t *vocab, FILE *fp, bool binary)
 {
-    char line[MAX_LINE_LEN];
     int n;
 
     int i;
@@ -274,12 +260,8 @@ int vocab_load_body(vocab_t *vocab, FILE *fp, bool binary)
             goto ERR;
         }
     } else {
-        if (fgets(line, MAX_LINE_LEN, fp) == NULL) {
-            ST_WARNING("Failed to read body flag.");
-            goto ERR;
-        }
-        if (strncmp(line, "<VOCAB-DATA>", 12) != 0) {
-            ST_WARNING("body flag error.[%s]", line);
+        if (st_readline(fp, "<VOCAB-DATA>") != 0) {
+            ST_WARNING("body flag error.");
             goto ERR;
         }
 
@@ -295,22 +277,14 @@ int vocab_load_body(vocab_t *vocab, FILE *fp, bool binary)
             goto ERR;
         }
 
-        if (fgets(line, MAX_LINE_LEN, fp) == NULL) {
-            ST_WARNING("Failed to read word cnts flag.");
-            goto ERR;
-        }
-        if (strncmp(line, "Word Counts:", 12) != 0) {
-            ST_WARNING("word cnts flag error.[%s]", line);
+        if (st_readline(fp, "Word Counts:") != 0) {
+            ST_WARNING("word cnts flag error.");
             goto ERR;
         }
 
         for (i = 0; i < vocab->vocab_size; i++) {
-            if (fgets(line, MAX_LINE_LEN, fp) == NULL) {
-                ST_WARNING("Failed to read word cnts.[%d]", i);
-                goto ERR;
-            }
-            if (sscanf(line, "\t%*d\t%lu\n", vocab->cnts + i) != 1) {
-                ST_WARNING("Failed to parse word cnts.[%s]", line);
+            if (st_readline(fp, "\t%*d\t%lu\n", vocab->cnts + i) != 1) {
+                ST_WARNING("Failed to parse word cnts.");
                 goto ERR;
             }
         }

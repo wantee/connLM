@@ -293,10 +293,6 @@ int maxent_load_header(maxent_t **maxent, FILE *fp,
             }
         }
     } else {
-        if (st_readline(fp, "    ") != 0) {
-            ST_WARNING("Failed to read tag.");
-            goto ERR;
-        }
         if (st_readline(fp, "<MAXENT>") != 0) {
             ST_WARNING("tag error");
             goto ERR;

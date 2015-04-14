@@ -21,7 +21,7 @@ CFLAGS += -D REAL_FMT="\"%f\""
 endif
 
 BINDIR=../bin
-CFLAGS += -g -Wall -Winline -pipe -Wno-narrowing 
+CFLAGS += -g -Wall -Winline -pipe 
 CFLAGS += -Ofast -march=native -funroll-loops -ffast-math
 #CFLAGS += -D_MAT_X_VEC_RAW_
 

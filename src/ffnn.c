@@ -176,10 +176,6 @@ int ffnn_load_header(ffnn_t **ffnn, FILE *fp, bool *binary, FILE *fo_info)
             return 0;
         }
     } else {
-        if (st_readline(fp, "    ") != 0) {
-            ST_WARNING("Failed to read tag.");
-            goto ERR;
-        }
         if (st_readline(fp, "<FFNN>") != 0) {
             ST_WARNING("tag error.");
             goto ERR;

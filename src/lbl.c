@@ -178,10 +178,6 @@ int lbl_load_header(lbl_t **lbl, FILE *fp, bool *binary, FILE *fo_info)
             return 0;
         }
     } else {
-        if (st_readline(fp, "    ") != 0) {
-            ST_WARNING("Failed to read tag.");
-            goto ERR;
-        }
         if (st_readline(fp, "<LBL>") != 0) {
             ST_WARNING("tag error");
             goto ERR;

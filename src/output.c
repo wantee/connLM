@@ -30,6 +30,7 @@
 
 #include <st_macro.h>
 #include <st_log.h>
+#include <st_utils.h>
 
 #include "utils.h"
 #include "output.h"
@@ -143,7 +144,6 @@ ERR:
 long output_load_header(output_t **output, FILE *fp, bool *binary,
         FILE *fo_info)
 {
-    char line[MAX_LINE_LEN];
     char sym[MAX_LINE_LEN];
     union {
         char str[4];
@@ -198,27 +198,14 @@ long output_load_header(output_t **output, FILE *fp, bool *binary,
             return -1;
         }
     } else {
-        if (fgets(line, MAX_LINE_LEN, fp) == NULL) {
-            ST_WARNING("Failed to read flag.");
-            return -1;
+        if (st_readline(fp, "<OUTPUT>") != 0) {
+            ST_WARNING("tag error.");
+            goto ERR;
         }
 
-        if (fgets(line, MAX_LINE_LEN, fp) == NULL) {
-            ST_WARNING("Failed to read flag.");
-            return -1;
-        }
-        if (strncmp(line, "<OUTPUT>", 7) != 0) {
-            ST_WARNING("flag error.[%s]", line);
-            return -1;
-        }
-
-        if (fgets(line, MAX_LINE_LEN, fp) == NULL) {
-            ST_WARNING("Failed to read output_size.");
-            return -1;
-        }
-        if (sscanf(line, "Output size: %d", &output_size) != 1) {
-            ST_WARNING("Failed to parse output_size.[%s]", line);
-            return -1;
+        if (st_readline(fp, "Output size: %d", &output_size) != 1) {
+            ST_WARNING("Failed to parse output_size.");
+            goto ERR;
         }
 
         if (output_size <= 0) {
@@ -228,21 +215,13 @@ long output_load_header(output_t **output, FILE *fp, bool *binary,
             return 0;
         }
 
-        if (fgets(line, MAX_LINE_LEN, fp) == NULL) {
-            ST_WARNING("Failed to read class size.");
-            return -1;
-        }
-        if (sscanf(line, "Class size: %d", &class_size) != 1) {
-            ST_WARNING("Failed to parse class size.[%s]", line);
+        if (st_readline(fp, "Class size: %d", &class_size) != 1) {
+            ST_WARNING("Failed to parse class size.");
             return -1;
         }
 
-        if (fgets(line, MAX_LINE_LEN, fp) == NULL) {
-            ST_WARNING("Failed to read hs.");
-            return -1;
-        }
-        if (sscanf(line, "HS: %s", sym) != 1) {
-            ST_WARNING("Failed to parse hs.[%s]", line);
+        if (st_readline(fp, "HS: %s", sym) != 1) {
+            ST_WARNING("Failed to parse hs.");
             return -1;
         }
         hs = str2bool(sym);
@@ -277,7 +256,6 @@ ERR:
 
 int output_load_body(output_t *output, FILE *fp, bool binary)
 {
-    char line[MAX_LINE_LEN];
     int n;
 
     int i;
@@ -348,51 +326,31 @@ int output_load_body(output_t *output, FILE *fp, bool binary)
             }
         }
     } else {
-        if (fgets(line, MAX_LINE_LEN, fp) == NULL) {
-            ST_WARNING("Failed to read body flag.");
-            goto ERR;
-        }
-        if (strncmp(line, "<OUTPUT-DATA>", 12) != 0) {
-            ST_WARNING("body flag error.[%s]", line);
+        if (st_readline(fp, "<OUTPUT-DATA>") != 0) {
+            ST_WARNING("body flag error.");
             goto ERR;
         }
 
         if (class_size > 0) {
-            if (fgets(line, MAX_LINE_LEN, fp) == NULL) {
-                ST_WARNING("Failed to read w2c flag.");
-                goto ERR;
-            }
-            if (strncmp(line, "Words to Classes:", 17) != 0) {
-                ST_WARNING("w2c flag error.[%s]", line);
+            if (st_readline(fp, "Words to Classes:") != 0) {
+                ST_WARNING("w2c flag error.");
                 goto ERR;
             }
             for (i = 0; i < output->output_size; i++) {
-                if (fgets(line, MAX_LINE_LEN, fp) == NULL) {
-                    ST_WARNING("Failed to read w2c[%d].", i);
-                    goto ERR;
-                }
-                if (sscanf(line, "\t%*d\t%d", output->w2c + i) != 1) {
-                    ST_WARNING("Failed to parse w2c.[%s]", line);
+                if (st_readline(fp, "\t%*d\t%d", output->w2c + i) != 1) {
+                    ST_WARNING("Failed to parse w2c.");
                     goto ERR;
                 }
             }
 
-            if (fgets(line, MAX_LINE_LEN, fp) == NULL) {
-                ST_WARNING("Failed to read c2w flag.");
-                goto ERR;
-            }
-            if (strncmp(line, "Classes to Words:", 17) != 0) {
-                ST_WARNING("c2w flag error.[%s]", line);
+            if (st_readline(fp, "Classes to Words:") != 0) {
+                ST_WARNING("c2w flag error.");
                 goto ERR;
             }
             for (i = 0; i < class_size; i++) {
-                if (fgets(line, MAX_LINE_LEN, fp) == NULL) {
-                    ST_WARNING("Failed to read c2w[%d].", i);
-                    goto ERR;
-                }
-                if (sscanf(line, "\t%*d\t%d\t%d", output->c2w_s + i,
+                if (st_readline(fp, "\t%*d\t%d\t%d", output->c2w_s + i,
                             output->c2w_e + i) != 2) {
-                    ST_WARNING("Failed to parse c2w.[%s]", line);
+                    ST_WARNING("Failed to parse c2w.");
                     goto ERR;
                 }
             }

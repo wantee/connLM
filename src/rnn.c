@@ -334,11 +334,6 @@ int rnn_load_header(rnn_t **rnn, FILE *fp, bool *binary, FILE *fo_info)
             goto ERR;
         }
     } else {
-        if (st_readline(fp, "    ") != 0) {
-            ST_WARNING("Failed to read tag.");
-            goto ERR;
-        }
-
         if (st_readline(fp, "<RNN>") != 0) {
             ST_WARNING("tag error.");
             goto ERR;
