@@ -42,6 +42,10 @@ typedef REAL_TYPE real_t;
 typedef unsigned long count_t;
 #define COUNT_FMT "%lu"
 
+typedef unsigned long long hash_t;
+typedef long long hash_size_t;
+#define HASH_SIZE_FMT "%lld"
+
 #ifdef __cplusplus
 }
 #endif

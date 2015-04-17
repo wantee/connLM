@@ -157,7 +157,7 @@ if [ $mdl_best != $mdl_init ]; then
   ( cd $dir; ln -s $mdl_best final.clm; )
   echo "Succeeded training the Neural Network : $dir/final.clm"
 else
-  "Error training neural network..."
+  echo "Error training neural network."
   exit 1
 fi
 exit 0;

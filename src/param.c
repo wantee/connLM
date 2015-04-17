@@ -99,7 +99,8 @@ void param_arg_clear(param_arg_t *arg)
  */
 void param_update(param_t *param, param_arg_t *arg,
         real_t *wt, real_t *er, real_t er_scale,
-        int er_size, real_t *in, int in_size, int hash_start)
+        int er_size, real_t *in, hash_size_t in_size,
+        hash_size_t hash_start)
 {
     real_t *w;
     real_t *delta_w;
@@ -107,7 +108,7 @@ void param_update(param_t *param, param_arg_t *arg,
     real_t lr;
     real_t l2;
 
-    int i;
+    hash_size_t i;
     int j;
 
     lr = param->learn_rate;

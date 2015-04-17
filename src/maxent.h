@@ -35,10 +35,6 @@ extern "C" {
 #include "param.h"
 #include "output.h"
 
-typedef unsigned long long hash_t;
-typedef long long hash_size_t;
-#define HASH_SIZE_FMT "%lld"
-
 typedef struct _maxent_model_opt_t {
     real_t scale;
 
