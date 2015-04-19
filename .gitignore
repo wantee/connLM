@@ -11,6 +11,8 @@ corpus/
 *.o
 *.wav
 obj/
+*.log
+valgrind.out
 
 # vim
 [._]*.s[a-w][a-z]

@@ -39,6 +39,7 @@ typedef struct _param_t_ {
     real_t l2_penalty;
     int l2_gap;
     real_t momentum;
+    int mini_batch;
 } param_t;
 
 typedef struct _param_arg_t_ {
@@ -49,6 +50,9 @@ void param_arg_clear(param_arg_t *arg);
 
 int param_load(param_t *param, st_opt_t *opt, const char *sec_name,
         param_t *parent_param);
+
+void param_acc_wt(real_t *wt, real_t *er, int er_size, real_t *in,
+        hash_size_t in_size, hash_size_t hash_start);
 
 void param_update(param_t *param, param_arg_t *arg,
         real_t *wt, real_t *er, real_t er_scale,

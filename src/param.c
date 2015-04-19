@@ -37,6 +37,7 @@ static param_t def_param = {
     .l2_penalty = 0.0,
     .l2_gap = 1,
     .momentum = 0.0,
+    .mini_batch = 0,
 };
 
 int param_load(param_t *param, st_opt_t *opt, const char *sec_name,
@@ -76,6 +77,10 @@ int param_load(param_t *param, st_opt_t *opt, const char *sec_name,
             "Momentum");
     param->momentum = (real_t)d;
 
+    ST_OPT_SEC_GET_INT(opt, sec_name, "MINI_BATCH", param->mini_batch,
+            param->mini_batch,
+            "Mini-batch size");
+
     return 0;
 ST_OPT_ERR:
     return -1;
@@ -84,6 +89,78 @@ ST_OPT_ERR:
 void param_arg_clear(param_arg_t *arg)
 {
     arg->l2_step = 0;
+}
+
+/**
+ * accumulate weights
+ * 
+ * in is [ in_size x 1 ];
+ *  
+ *
+ * er_size > 0 && in_size > 0: er is [ 1 x er_size ]; wt is [ er_size x in_size ]; if in == NULL: in is one-shot vector
+ * er_size > 0 && in_size < 0: er is [ 1 x er_size ]; wt is hash based 1d vector start from hash_start; in is one-shot vector
+ * er_size < 0 && in_size > 0: er is delta-weight matrix [ er_size x in_size ]; wt is [ er_size x in_size ]; 
+ * er_size < 0 && in_size < 0: er is delta-weight matrix [ er_size x in_size ]; wt is [ er_size x in_size ]; in is one-shot vector
+ */
+void param_acc_wt(real_t *wt, real_t *er, int er_size, real_t *in,
+        hash_size_t in_size, hash_size_t hash_start)
+{
+    real_t *w;
+    real_t *delta_w;
+
+    hash_size_t i;
+    int j;
+
+    if (er_size > 0 && in_size > 0) {
+        if (in == NULL) {
+            i = 0;
+            for (j = 0; j < er_size; j++) {
+                wt[i] += er[j];
+                i += in_size;
+            }
+        } else {
+            w = wt;
+            for (j = 0; j < er_size; j++) {
+                for (i = 0; i < in_size; i++) {
+                    w[i] += er[j] * in[i];
+                }
+                w += in_size;
+            }
+        }
+    } else if (er_size > 0 && in_size < 0) {
+        in_size = - in_size;
+        i = hash_start;
+        for (j = 0; j < er_size; j++) {
+            wt[i] +=  er[j];
+            i++;
+            if (i >= in_size) {
+                i = 0;
+            }
+        }
+    } else if (er_size < 0 && in_size > 0) {
+        er_size = - er_size;
+        w = wt;
+        delta_w = er;
+
+        for (j = 0; j < er_size; j++) {
+            for (i = 0; i < in_size; i++) {
+                w[i] += delta_w[i];
+            }
+            w += in_size;
+            delta_w += in_size;
+        }
+    } else {
+        in_size = - in_size;
+        er_size = - er_size;
+        w = wt;
+        delta_w = er;
+
+        i = 0;
+        for (j = 0; j < er_size; j++) {
+            w[i] += delta_w[i];
+            i += in_size;
+        }
+    }
 }
 
 /**

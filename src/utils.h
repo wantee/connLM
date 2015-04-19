@@ -50,6 +50,8 @@ real_t rrandom(real_t min, real_t max);
 void connlm_show_usage(const char *module_name, const char *header,
         const char *usage, st_opt_t *opt);
 
+void int_sort(int *A, size_t n);
+
 #ifdef __cplusplus
 }
 #endif

@@ -323,3 +323,16 @@ void connlm_show_usage(const char *module_name, const char *header,
     st_opt_show_usage(opt, stderr);
 }
 
+int int_comp(const void *elem1, const void *elem2) 
+{
+    int f = *((int*)elem1);
+    int s = *((int*)elem2);
+    if (f > s) return  1;
+    if (f < s) return -1;
+    return 0;
+}
+
+void int_sort(int *A, size_t n)
+{
+    qsort(A, n, sizeof(int), int_comp);
+}

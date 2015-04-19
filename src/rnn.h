@@ -72,6 +72,15 @@ typedef struct _rnn_neuron_t {
     // hidden layer
     real_t *ac_h;
     real_t *er_h;
+
+    // caches for mini-batch
+    int mini_step;
+    int *mini_hist;
+    real_t *wt_ih_w;
+    real_t *wt_ih_h;
+
+    real_t *wt_ho_c;
+    real_t *wt_ho_w;
 } rnn_neuron_t;
 
 typedef struct _rnn_t_ {
