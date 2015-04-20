@@ -817,7 +817,7 @@ int rnn_backprop(rnn_t *rnn, int word, int tid)
                 &neu->arg_ho_w,
                 rnn->wt_ho_w + s * hidden_size,
                 output_neu->er_o_w + s, 
-                1.0, 
+                rnn->model_opt.scale, 
                 e - s, 
                 neu->ac_h,
                 hidden_size,
@@ -842,7 +842,7 @@ int rnn_backprop(rnn_t *rnn, int word, int tid)
                     &neu->arg_ho_c,
                     rnn->wt_ho_c,
                     output_neu->er_o_c, 
-                    1.0, 
+                    rnn->model_opt.scale, 
                     rnn->class_size, 
                     neu->ac_h,
                     hidden_size,
@@ -1340,7 +1340,7 @@ int rnn_end_train(rnn_t *rnn, int word, int tid)
 
     if (mini_batch > 0) {
         memmove(neu->mini_hist + 1, neu->mini_hist,
-                sizeof(int)*(min(neu->step, mini_batch)));
+                sizeof(int)*(min(neu->mini_step, mini_batch)));
         neu->mini_hist[0] = word;
 
         neu->mini_step++;
@@ -1366,17 +1366,12 @@ int rnn_end_train(rnn_t *rnn, int word, int tid)
                             &neu->arg_ho_w,
                             rnn->wt_ho_w + s * hidden_size,
                             neu->wt_ho_w + s * hidden_size,
-                            1.0, 
+                            rnn->model_opt.scale,
                             -(e - s), 
                             NULL,
                             hidden_size,
                             -1);
 
-                    /*
-                    memcpy(neu->wt_ho_w + s * hidden_size,
-                           rnn->wt_ho_w + s * hidden_size,
-                           sizeof(real_t) * (e-s) * hidden_size);
-                    */
                     memset(neu->wt_ho_w + s * hidden_size,
                            0,
                            sizeof(real_t) * (e-s) * hidden_size);
@@ -1386,16 +1381,12 @@ int rnn_end_train(rnn_t *rnn, int word, int tid)
                         &neu->arg_ho_c,
                         rnn->wt_ho_c,
                         neu->wt_ho_c, 
-                        1.0, 
+                        rnn->model_opt.scale,
                         -rnn->class_size, 
                         NULL,
                         hidden_size,
                         -1);
 
-                /*
-                memcpy(neu->wt_ho_c, rnn->wt_ho_c,
-                        sizeof(real_t) * rnn->class_size * hidden_size);
-                */
                 memset(neu->wt_ho_c, 0,
                         sizeof(real_t) * rnn->class_size * hidden_size);
             } else {
@@ -1403,15 +1394,12 @@ int rnn_end_train(rnn_t *rnn, int word, int tid)
                         &neu->arg_ho_w,
                         rnn->wt_ho_w,
                         neu->wt_ho_w, 
-                        1.0, 
+                        rnn->model_opt.scale,
                         -rnn->vocab_size, 
                         NULL,
                         hidden_size,
                         -1);
-                /*
-                memcpy(neu->wt_ho_w, rnn->wt_ho_w,
-                        sizeof(real_t) * rnn->vocab_size * hidden_size);
-                */
+
                 memset(neu->wt_ho_w, 0,
                         sizeof(real_t) * rnn->vocab_size * hidden_size);
             }
@@ -1436,13 +1424,6 @@ int rnn_end_train(rnn_t *rnn, int word, int tid)
                         -rnn->vocab_size,
                         -1);
 
-                /*
-                a = w;
-                for (h = 0; h < hidden_size; h++) {
-                    neu->wt_ih_w[a] = rnn->wt_ih_w[a];
-                    a += rnn->vocab_size;
-                }
-                */
                 a = w;
                 for (h = 0; h < hidden_size; h++) {
                     neu->wt_ih_w[a] = 0;
@@ -1459,10 +1440,7 @@ int rnn_end_train(rnn_t *rnn, int word, int tid)
                     NULL,
                     hidden_size,
                     -1);
-            /*
-            memcpy(neu->wt_ih_h, rnn->wt_ih_h,
-                    sizeof(real_t) * hidden_size * hidden_size);
-            */
+
             memset(neu->wt_ih_h, 0,
                     sizeof(real_t) * hidden_size * hidden_size);
         }
