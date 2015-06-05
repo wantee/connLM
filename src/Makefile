@@ -26,7 +26,10 @@ else
 CFLAGS += -O3
 endif
 CFLAGS += -g -Wall -Winline -pipe 
-CFLAGS += -march=native -funroll-loops -ffast-math
+CFLAGS += -march=native -funroll-loops 
+# comment out following line will give a little speed improvement,
+# but with non-deterministic floating point numerical result
+CFLAGS += -fno-fast-math
 
 #CFLAGS += -D_MAT_X_VEC_RAW_
 

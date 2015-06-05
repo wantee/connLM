@@ -1,0 +1,11 @@
+language: c
+compiler:
+  - clang
+  - gcc
+install:
+  - cd src; ./autogen.sh; cd -
+  - make -C src
+script: 
+  - source tools/shutils/shutils.sh
+  - cd egs/tiny; shu-testing
+
