@@ -27,6 +27,7 @@
 #include <float.h>
 
 #include <st_log.h>
+#include <st_utils.h>
 
 #include "config.h"
 #include "fastexp.h"
@@ -305,7 +306,7 @@ void softmax(real_t *vec, int vec_size)
 
 real_t rrandom(real_t min, real_t max)
 {
-    return rand() / (real_t) RAND_MAX *(max - min) + min;
+    return st_rand() / (real_t) ST_RAND_MAX *(max - min) + min;
 }
 
 void connlm_show_usage(const char *module_name, const char *header,

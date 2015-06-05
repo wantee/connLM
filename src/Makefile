@@ -20,9 +20,14 @@ else
 CFLAGS += -D REAL_FMT="\"%f\""
 endif
 
-BINDIR=../bin
+ifeq ($(shell echo 'int main(){return 0;}' | gcc -xc - -Ofast -o /dev/null >/dev/null 2>&1 ; echo $$?),0)
+CFLAGS += -Ofast
+else
+CFLAGS += -O3
+endif
 CFLAGS += -g -Wall -Winline -pipe 
-CFLAGS += -Ofast -march=native -funroll-loops -ffast-math
+CFLAGS += -march=native -funroll-loops -ffast-math
+
 #CFLAGS += -D_MAT_X_VEC_RAW_
 
 #CFLAGS += -D_TIME_PROF_

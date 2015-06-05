@@ -226,7 +226,7 @@ int connlm_init(connlm_t *connlm, connlm_model_opt_t *model_opt)
     ST_CHECK_PARAM(connlm == NULL || model_opt == NULL, -1);
 
     connlm->model_opt = *model_opt;
-    srand(model_opt->rand_seed);
+    st_srand(model_opt->rand_seed);
 
     if (rnn_init(&connlm->rnn, &model_opt->rnn_opt,
             connlm->output) < 0) {
