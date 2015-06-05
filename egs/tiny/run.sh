@@ -14,12 +14,12 @@ stepnames[4]="Train RNN+MaxEnt model"
 
 steps_len=${#stepnames[*]}
 
-. ../utils/parse_range.sh || exit 1
+. ../utils/path.sh || exit 1
 
-if [ $# -gt 1 -o "$1" == "--help" ]; then 
+if [ $# -gt 1 ] || ! [[ $1 =~ ^[0-9]*$ ]] || [ "$1" == "--help" ]; then 
   echo "usage: $0 [steps]"
   echo "e.g.: $0 -3,5,7-9,10-"
-  echo "  stpes could be 1-$steps_len:"
+  echo "  stpes could be a number range within 1-$steps_len:"
   st=1
   while [ $st -le $steps_len ]
   do
@@ -32,14 +32,14 @@ fi
 steps=$1
 
 st=1
-if in_range $st $steps; then
+if shu-in-range $st $steps; then
 echo
 echo "Step $st: ${stepnames[$st]} ..."
 ../steps/learn_vocab.sh $train_file $valid_file exp || exit 1;
 fi
 ((st++))
 
-if in_range $st $steps; then
+if shu-in-range $st $steps; then
 echo
 echo "Step $st: ${stepnames[$st]} ..."
 conf_dir=./conf/maxent
@@ -59,7 +59,7 @@ dir=exp/maxent
 fi
 ((st++))
 
-if in_range $st $steps; then
+if shu-in-range $st $steps; then
 echo
 echo "Step $st: ${stepnames[$st]} ..."
 conf_dir=./conf/rnn
@@ -79,7 +79,7 @@ dir=exp/rnn
 fi
 ((st++))
 
-if in_range $st $steps; then
+if shu-in-range $st $steps; then
 echo
 echo "Step $st: ${stepnames[$st]} ..."
 conf_dir=./conf/rnn+maxent

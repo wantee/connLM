@@ -14,7 +14,7 @@ halving_factor=0.5
 # end configuration sections
 
 echo "$0 $@"  # Print the command line for logging
-[ -f path.sh ] && . ./path.sh
+[ -f ../utils/path.sh ] && . ../utils/path.sh
 
 . ../utils/parse_options.sh || exit 1
 
@@ -154,7 +154,7 @@ done
 
 # select the best network
 if [ $mdl_best != $mdl_init ]; then 
-  ( cd $dir; ln -s $mdl_best final.clm; )
+  ( cd $dir; ln -sf $mdl_best final.clm; )
   echo "Succeeded training the Neural Network : $dir/final.clm"
 else
   echo "Error training neural network."

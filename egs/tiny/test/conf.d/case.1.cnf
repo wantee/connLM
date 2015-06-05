@@ -1,0 +1,7 @@
+name="All models" 
+
+before="if [ -d exp ]; then shu-err 'Please backup your exp dir'; exit 1; fi; mkdir -p test/output && ./test/normalize_log.sh < test/expected/all.log > test/expected/all_norm.log"
+
+script="./run.sh > test/output/all.log && ./test/normalize_log.sh < test/output/all.log > test/output/all_norm.log"
+
+compare=("expected/all_norm.log:test/output/all_norm.log")

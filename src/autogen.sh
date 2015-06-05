@@ -14,6 +14,10 @@ if [ ! -e "$ST_UTILS_ROOT/include/stutils/st_macro.h" ]; then
   make
 fi
 
+SH_UTILS_ROOT=$PWD/../tools/shutils
+if [ ! -e "$SH_UTILS_ROOT/shutils.sh" ]; then
+  git clone https://github.com/wantee/shutils $SH_UTILS_ROOT
+fi
 echo "Finish autogen"
 exit 0
 

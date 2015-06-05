@@ -5,7 +5,7 @@ config_file=""
 # end configuration sections
 
 echo "$0 $@"  # Print the command line for logging
-[ -f path.sh ] && . ./path.sh
+[ -f ../utils/path.sh ] && . ../utils/path.sh
 
 . ../utils/parse_options.sh || exit 1
 
@@ -37,6 +37,12 @@ cat $valid_file $train_file | connlm-vocab --log-file=$log_file \
            - $model_file \
 || exit 1; 
 fi
+
+words=`../utils/get_value.sh "Words" $log_file`
+size=`../utils/get_value.sh "Vocab Size" $log_file`
+echo "Succeeded learning vocab: "
+echo "  Words: $words"
+echo "  Vocab size: $size"
 
 exit 0;
 

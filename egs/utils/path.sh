@@ -21,3 +21,6 @@ if [ "$USE_VAL" -eq 1 ]; then
   done
   . ../utils/valgrind.sh
 fi
+
+. $PWD/../../tools/shutils/shutils.sh
+
