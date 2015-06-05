@@ -17,15 +17,26 @@ connLM is a Connectionist Language Modelling Toolkit, implementing several neura
 
 ## Usage
 ### Build
-Get the `stutils` library from [GitHub](https://github.com/wantee/stutils), following the instruction to build the library and setting the proper environment variables to make your `gcc` can find them.
 
-Then build the toolkit,
+Run following commands to build this project:
 
 ```shell
 $ git clone https://github.com/wantee/connLM.git
 $ cd connLM/src
+$ ./autogen.sh
 $ make
 ```
+
+Quick tests:
+
+```shell
+$ cd $CONNLM_HOME
+$ source tools/shutils/shutils.sh
+$ cd egs/tiny
+$ shu-testing
+```
+
+Normally the tests should be passed. However, there may be differences between the output and the expected, which may be caused by floating point operations. If the differences are small, this should not be a problem.
 
 ## License
 
