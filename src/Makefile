@@ -20,16 +20,16 @@ else
 CFLAGS += -D REAL_FMT="\"%f\""
 endif
 
-ifeq ($(shell echo 'int main(){return 0;}' | gcc -xc - -Ofast -o /dev/null >/dev/null 2>&1 ; echo $$?),0)
-CFLAGS += -Ofast
-else
-CFLAGS += -O3
-endif
 CFLAGS += -g -Wall -Winline -pipe 
-CFLAGS += -march=native -funroll-loops 
-# comment out following line will give a little speed improvement,
-# but with non-deterministic floating point numerical result
-CFLAGS += -fno-fast-math
+
+ifndef CONNLM_NO_OPT 
+  ifeq ($(shell echo 'int main(){return 0;}' | gcc -xc - -Ofast -o /dev/null >/dev/null 2>&1 ; echo $$?),0)
+  CFLAGS += -Ofast
+  else
+  CFLAGS += -O3
+  endif
+  CFLAGS += -march=native -funroll-loops -ffast-math
+endif
 
 #CFLAGS += -D_MAT_X_VEC_RAW_
 
