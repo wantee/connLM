@@ -64,6 +64,7 @@ typedef struct _rnn_neuron_t {
     real_t *er_bptt_h;
     real_t *wt_bptt_ih_w;
     real_t *wt_bptt_ih_h;
+    bool *dirty_word;
 
     // input layer
     real_t *ac_i_h;             // hidden layer for last time step
@@ -74,8 +75,10 @@ typedef struct _rnn_neuron_t {
     real_t *er_h;
 
     // caches for mini-batch
-    int mini_step;
     int *mini_hist;
+    int mini_step;
+    bool *dirty_class;
+
     real_t *wt_ih_w;
     real_t *wt_ih_h;
 

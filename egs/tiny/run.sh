@@ -14,9 +14,9 @@ stepnames[4]="Train RNN+MaxEnt model"
 
 steps_len=${#stepnames[*]}
 
-. ../utils/path.sh || exit 1
+. ../steps/path.sh || exit 1
 
-if [ $# -gt 1 ] || ! [[ $1 =~ ^[0-9]*$ ]] || [ "$1" == "--help" ]; then 
+if [ $# -gt 1 ] || ! shu-valid-range $1 || [ "$1" == "--help" ]; then 
   echo "usage: $0 [steps]"
   echo "e.g.: $0 -3,5,7-9,10-"
   echo "  stpes could be a number range within 1-$steps_len:"

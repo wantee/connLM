@@ -31,12 +31,16 @@ Quick tests:
 
 ```shell
 $ cd $CONNLM_HOME
+$ make clean
+$ CONNLM_NO_OPT=1 make -C src
 $ source tools/shutils/shutils.sh
 $ cd egs/tiny
 $ shu-testing
 ```
 
 Normally the tests should be passed. However, there may be differences between the output and the expected, which may be caused by floating point operations. If the differences are small, this should not be a problem.
+
+After tests, one should rebuild the binaries for speed up: `make clean && make`.
 
 ## License
 

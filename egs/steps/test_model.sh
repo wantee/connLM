@@ -6,7 +6,8 @@ test_threads=1
 # end configuration sections
 
 echo "$0 $@"  # Print the command line for logging
-[ -f ../utils/path.sh ] && . ../utils/path.sh
+[ -f `dirname $0`/path.sh ] && . `dirname $0`/path.sh
+[ -f ./path.sh ] && . ./path.sh
 
 . ../utils/parse_options.sh || exit 1
 

@@ -209,8 +209,10 @@ void rnn_destroy(rnn_t *rnn)
         safe_free(rnn->neurons[i].er_bptt_h);
         safe_free(rnn->neurons[i].wt_bptt_ih_w);
         safe_free(rnn->neurons[i].wt_bptt_ih_h);
+        safe_free(rnn->neurons[i].dirty_word);
 
         safe_free(rnn->neurons[i].mini_hist);
+        safe_free(rnn->neurons[i].dirty_class);
         safe_free(rnn->neurons[i].wt_ih_w);
         safe_free(rnn->neurons[i].wt_ih_h);
         safe_free(rnn->neurons[i].wt_ho_c);
@@ -770,6 +772,7 @@ int rnn_backprop(rnn_t *rnn, int word, int tid)
     int h;
     int t;
     int i;
+    int w;
 
     param_t param;
 
@@ -992,32 +995,50 @@ int rnn_backprop(rnn_t *rnn, int word, int tid)
 
             // update weight input -> hidden (word)
             for (t = 0; t < bptt + bptt_block - 1; t++) {
-                if (neu->bptt_hist[t] != -1) {
-                    if (param.mini_batch > 0) {
-                        param_acc_wt(neu->wt_ih_w + neu->bptt_hist[t],
-                                neu->wt_bptt_ih_w + neu->bptt_hist[t],
-                                -hidden_size, 
-                                NULL,
-                                -rnn->vocab_size,
-                                -1);
-                    } else {
-                        param_update(&param,
-                                &neu->arg_ih_w,
-                                rnn->wt_ih_w + neu->bptt_hist[t],
-                                neu->wt_bptt_ih_w + neu->bptt_hist[t],
-                                1.0,
-                                -hidden_size, 
-                                NULL,
-                                -rnn->vocab_size,
-                                -1);
-                    }
-
-                    i = neu->bptt_hist[t];
-                    for (h = 0; h < hidden_size; h++) {
-                        neu->wt_bptt_ih_w[i] = 0;
-                        i += rnn->vocab_size;
-                    }
+                w = neu->bptt_hist[t];
+                if (w == -1) {
+                    continue;
                 }
+
+                if (neu->dirty_word[w]) {
+                    continue;
+                }
+
+                neu->dirty_word[w] = true;
+
+                if (param.mini_batch > 0) {
+                    param_acc_wt(neu->wt_ih_w + w,
+                            neu->wt_bptt_ih_w + w,
+                            -hidden_size, 
+                            NULL,
+                            -rnn->vocab_size,
+                            -1);
+                } else {
+                    param_update(&param,
+                            &neu->arg_ih_w,
+                            rnn->wt_ih_w + w,
+                            neu->wt_bptt_ih_w + w,
+                            1.0,
+                            -hidden_size, 
+                            NULL,
+                            -rnn->vocab_size,
+                            -1);
+                }
+
+                i = w;
+                for (h = 0; h < hidden_size; h++) {
+                    neu->wt_bptt_ih_w[i] = 0;
+                    i += rnn->vocab_size;
+                }
+            }
+
+            for (t = 0; t < bptt + bptt_block - 1; t++) {
+                w = neu->bptt_hist[t];
+                if (w == -1) {
+                    continue;
+                }
+
+                neu->dirty_word[w] = false;
             }
         }
     }
@@ -1177,6 +1198,14 @@ int rnn_setup_train(rnn_t *rnn, rnn_train_opt_t *train_opt,
                     goto ERR;
                 }
                 memset(neu->wt_ho_c, 0, sizeof(real_t) * sz);
+
+                sz = rnn->class_size;
+                neu->dirty_class = (bool *) malloc(sizeof(bool) * sz);
+                if (neu->dirty_class == NULL) {
+                    ST_WARNING("Failed to malloc dirty_class.");
+                    goto ERR;
+                }
+                memset(neu->dirty_class, 0, sizeof(bool)*sz);
             }
 
             sz = train_opt->param.mini_batch + 1;
@@ -1185,6 +1214,16 @@ int rnn_setup_train(rnn_t *rnn, rnn_train_opt_t *train_opt,
                 ST_WARNING("Failed to malloc mini_hist.");
                 goto ERR;
             }
+        }
+
+        if (train_opt->bptt > 1 || train_opt->param.mini_batch > 0) {
+            sz = rnn->vocab_size;
+            neu->dirty_word = (bool *) malloc(sizeof(bool) * sz);
+            if (neu->dirty_word == NULL) {
+                ST_WARNING("Failed to malloc dirty_word.");
+                goto ERR;
+            }
+            memset(neu->dirty_word, 0, sizeof(bool)*sz);
         }
     }
 
@@ -1202,8 +1241,10 @@ ERR:
         safe_free(rnn->neurons[i].er_bptt_h);
         safe_free(rnn->neurons[i].wt_bptt_ih_w);
         safe_free(rnn->neurons[i].wt_bptt_ih_h);
+        safe_free(rnn->neurons[i].dirty_word);
         
         safe_free(rnn->neurons[i].mini_hist);
+        safe_free(rnn->neurons[i].dirty_class);
         safe_free(rnn->neurons[i].wt_ih_w);
         safe_free(rnn->neurons[i].wt_ih_h);
         safe_free(rnn->neurons[i].wt_ho_c);
@@ -1248,7 +1289,7 @@ int rnn_reset_train(rnn_t *rnn, int tid)
     neu->last_word = -1;
 
     if (train_opt->param.mini_batch > 0) {
-        neu->mini_step = 0;
+        neu->mini_step = 1;
         neu->mini_hist[0] = -1;
     }
 
@@ -1347,18 +1388,21 @@ int rnn_end_train(rnn_t *rnn, int word, int tid)
 
         if (neu->step % mini_batch == 0 || word == 0) {
             mini_batch = min(mini_batch, neu->mini_step);
-            neu->mini_step = 0;
-            int_sort(neu->mini_hist + 1, mini_batch);
+            neu->mini_step = 1;
+
             if (rnn->class_size > 0) {
-                c = -1;
-                for (i = 0; i < mini_batch + 1; i++) {
+                for (i = 0; i < mini_batch; i++) {
                     if (neu->mini_hist[i] == -1) {
                         continue;
                     }
-                    if (rnn->output->w2c[neu->mini_hist[i]] == c) {
+
+                    c = rnn->output->w2c[neu->mini_hist[i]];
+
+                    if (neu->dirty_class[c]) {
                         continue;
                     }
-                    c = rnn->output->w2c[neu->mini_hist[i]];
+                    neu->dirty_class[c] = true;
+
                     s = rnn->output->c2w_s[c];
                     e = rnn->output->c2w_e[c];
 
@@ -1375,6 +1419,15 @@ int rnn_end_train(rnn_t *rnn, int word, int tid)
                     memset(neu->wt_ho_w + s * hidden_size,
                            0,
                            sizeof(real_t) * (e-s) * hidden_size);
+                }
+
+                for (i = 0; i < mini_batch; i++) {
+                    if (neu->mini_hist[i] == -1) {
+                        continue;
+                    }
+
+                    c = rnn->output->w2c[neu->mini_hist[i]];
+                    neu->dirty_class[c] = false;
                 }
 
                 param_update(&param,
@@ -1404,6 +1457,12 @@ int rnn_end_train(rnn_t *rnn, int word, int tid)
                         sizeof(real_t) * rnn->vocab_size * hidden_size);
             }
 
+            
+            for (i = 1; i < mini_batch + 1; i++) {
+                fprintf(stderr, "%d ", neu->mini_hist[i]);
+            }
+            fprintf(stderr, "\n");
+            int_sort(neu->mini_hist + 1, mini_batch);
             w = -1;
             for (i = 1; i < mini_batch + 1; i++) {
                 if (neu->mini_hist[i] == -1) {
