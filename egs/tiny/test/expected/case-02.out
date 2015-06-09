@@ -1,0 +1,42 @@
+
+Step 1: Learn Vocab ...
+../steps/learn_vocab.sh ./data/train ./data/valid test/tmp/case-02/exp
+**Learning vocab test/tmp/case-02/exp/vocab.clm from ./data/train
+Succeeded learning vocab: 
+  Words:  88440
+  Vocab size:  3925
+
+Step 3: Train RNN model ...
+../steps/init_model.sh --config-file test/tmp/case-02/conf/rnn/init.conf test/tmp/case-02/exp/vocab.clm test/tmp/case-02/exp/rnn
+**Initializing model test/tmp/case-02/exp/vocab.clm to test/tmp/case-02/exp/rnn/init.clm ...
+../steps/train_model.sh --train-config test/tmp/case-02/conf/rnn/train.conf --test-config test/tmp/case-02/conf/test.conf --train-threads 1 --test-threads 1 ./data/train ./data/valid test/tmp/case-02/exp/rnn
+Prerun Valid Entropy: 8.9865
+ITERATION 01: TrEnt 7.1705, lr(0.1/0.001/0.1/0.1), W/s 35.8k, CVEnt: 7.1288
+nnet accepted (01.clm)
+ITERATION 02: TrEnt 6.7753, lr(0.1/0.001/0.1/0.1), W/s 36.1k, CVEnt: 6.9865
+nnet accepted (02.clm)
+ITERATION 03: TrEnt 6.6320, lr(0.1/0.001/0.1/0.1), W/s 36.2k, CVEnt: 6.9338
+nnet accepted (03.clm)
+ITERATION 04: TrEnt 6.5390, lr(0.1/0.001/0.1/0.1), W/s 36.1k, CVEnt: 6.8863
+nnet accepted (04.clm)
+ITERATION 05: TrEnt 6.4681, lr(0.1/0.001/0.1/0.1), W/s 36.3k, CVEnt: 6.8646
+nnet accepted (05.clm)
+ITERATION 06: TrEnt 6.4101, lr(0.1/0.001/0.1/0.1), W/s 36.4k, CVEnt: 6.8258
+nnet accepted (06.clm)
+ITERATION 07: TrEnt 6.3643, lr(0.1/0.001/0.1/0.1), W/s 36.3k, CVEnt: 6.8137
+nnet accepted (07.clm)
+ITERATION 08: TrEnt 6.2712, lr(0.05/0.0005/0.05/0.05), W/s 35.8k, CVEnt: 6.7709
+nnet accepted (08.clm)
+ITERATION 09: TrEnt 6.2177, lr(0.025/0.00025/0.025/0.025), W/s 36.5k, CVEnt: 6.7419
+nnet accepted (09.clm)
+ITERATION 10: TrEnt 6.1870, lr(0.0125/0.000125/0.0125/0.0125), W/s 36.6k, CVEnt: 6.7419
+nnet accepted (10.clm)
+finished, too small rel. improvement .0000038564
+Succeeded training the Neural Network : test/tmp/case-02/exp/rnn/final.clm
+../steps/test_model.sh --config-file test/tmp/case-02/conf/test.conf --test-threads 1 test/tmp/case-02/exp/rnn ./data/test
+**Testing model test/tmp/case-02/exp/rnn/final.clm ...
+=================================
+Test Entropy: 6.8301
+Test PPL: 113.7814
+Test Speed: 123.1k words/sec
+=================================

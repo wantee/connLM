@@ -1,0 +1,114 @@
+
+Step 1: Learn Vocab ...
+../steps/learn_vocab.sh ./data/train ./data/valid test/tmp/case-01/exp
+**Learning vocab test/tmp/case-01/exp/vocab.clm from ./data/train
+Succeeded learning vocab: 
+  Words:  88440
+  Vocab size:  3925
+
+Step 2: Train MaxEnt model ...
+../steps/init_model.sh --config-file test/tmp/case-01/conf/maxent/init.conf test/tmp/case-01/exp/vocab.clm test/tmp/case-01/exp/maxent
+**Initializing model test/tmp/case-01/exp/vocab.clm to test/tmp/case-01/exp/maxent/init.clm ...
+../steps/train_model.sh --train-config test/tmp/case-01/conf/maxent/train.conf --test-config test/tmp/case-01/conf/test.conf --train-threads 1 --test-threads 1 ./data/train ./data/valid test/tmp/case-01/exp/maxent
+Prerun Valid Entropy: 8.9702
+ITERATION 01: TrEnt 7.6548, lr(0.1/0.005/0.1/0.1), W/s 153.7k, CVEnt: 7.6402
+nnet accepted (01.clm)
+ITERATION 02: TrEnt 7.3281, lr(0.1/0.005/0.1/0.1), W/s 156.7k, CVEnt: 7.5198
+nnet accepted (02.clm)
+ITERATION 03: TrEnt 7.1981, lr(0.1/0.005/0.1/0.1), W/s 156.4k, CVEnt: 7.4446
+nnet accepted (03.clm)
+ITERATION 04: TrEnt 7.1048, lr(0.1/0.005/0.1/0.1), W/s 158.8k, CVEnt: 7.3862
+nnet accepted (04.clm)
+ITERATION 05: TrEnt 7.0303, lr(0.1/0.005/0.1/0.1), W/s 157.0k, CVEnt: 7.3448
+nnet accepted (05.clm)
+ITERATION 06: TrEnt 6.9684, lr(0.1/0.005/0.1/0.1), W/s 158.2k, CVEnt: 7.3037
+nnet accepted (06.clm)
+ITERATION 07: TrEnt 6.9144, lr(0.1/0.005/0.1/0.1), W/s 152.8k, CVEnt: 7.2677
+nnet accepted (07.clm)
+ITERATION 08: TrEnt 6.8661, lr(0.1/0.005/0.1/0.1), W/s 155.5k, CVEnt: 7.2420
+nnet accepted (08.clm)
+ITERATION 09: TrEnt 6.8225, lr(0.1/0.005/0.1/0.1), W/s 155.5k, CVEnt: 7.2218
+nnet accepted (09.clm)
+ITERATION 10: TrEnt 6.7867, lr(0.05/0.0025/0.05/0.05), W/s 157.9k, CVEnt: 7.2061
+nnet accepted (10.clm)
+ITERATION 11: TrEnt 6.7695, lr(0.025/0.00125/0.025/0.025), W/s 156.4k, CVEnt: 7.2006
+nnet accepted (11.clm)
+ITERATION 12: TrEnt 6.7609, lr(0.0125/0.000625/0.0125/0.0125), W/s 158.2k, CVEnt: 7.1975
+nnet accepted (12.clm)
+ITERATION 13: TrEnt 6.7567, lr(0.00625/0.0003125/0.00625/0.00625), W/s 156.1k, CVEnt: 7.1957
+nnet accepted (13.clm)
+finished, too small rel. improvement .0002389734
+Succeeded training the Neural Network : test/tmp/case-01/exp/maxent/final.clm
+../steps/test_model.sh --config-file test/tmp/case-01/conf/test.conf --test-threads 1 test/tmp/case-01/exp/maxent ./data/test
+**Testing model test/tmp/case-01/exp/maxent/final.clm ...
+=================================
+Test Entropy: 7.3377
+Test PPL: 161.7536
+Test Speed: 207.2k words/sec
+=================================
+
+Step 3: Train RNN model ...
+../steps/init_model.sh --config-file test/tmp/case-01/conf/rnn/init.conf test/tmp/case-01/exp/vocab.clm test/tmp/case-01/exp/rnn
+**Initializing model test/tmp/case-01/exp/vocab.clm to test/tmp/case-01/exp/rnn/init.clm ...
+../steps/train_model.sh --train-config test/tmp/case-01/conf/rnn/train.conf --test-config test/tmp/case-01/conf/test.conf --train-threads 1 --test-threads 1 ./data/train ./data/valid test/tmp/case-01/exp/rnn
+Prerun Valid Entropy: 8.9865
+ITERATION 01: TrEnt 7.1705, lr(0.1/0.001/0.1/0.1), W/s 45.0k, CVEnt: 7.1288
+nnet accepted (01.clm)
+ITERATION 02: TrEnt 6.7753, lr(0.1/0.001/0.1/0.1), W/s 41.3k, CVEnt: 6.9865
+nnet accepted (02.clm)
+ITERATION 03: TrEnt 6.6320, lr(0.1/0.001/0.1/0.1), W/s 45.0k, CVEnt: 6.9338
+nnet accepted (03.clm)
+ITERATION 04: TrEnt 6.5390, lr(0.1/0.001/0.1/0.1), W/s 45.0k, CVEnt: 6.8862
+nnet accepted (04.clm)
+ITERATION 05: TrEnt 6.4681, lr(0.1/0.001/0.1/0.1), W/s 45.0k, CVEnt: 6.8646
+nnet accepted (05.clm)
+ITERATION 06: TrEnt 6.4101, lr(0.1/0.001/0.1/0.1), W/s 44.6k, CVEnt: 6.8258
+nnet accepted (06.clm)
+ITERATION 07: TrEnt 6.3643, lr(0.1/0.001/0.1/0.1), W/s 45.0k, CVEnt: 6.8137
+nnet accepted (07.clm)
+ITERATION 08: TrEnt 6.2713, lr(0.05/0.0005/0.05/0.05), W/s 44.6k, CVEnt: 6.7709
+nnet accepted (08.clm)
+ITERATION 09: TrEnt 6.2177, lr(0.025/0.00025/0.025/0.025), W/s 44.8k, CVEnt: 6.7419
+nnet accepted (09.clm)
+ITERATION 10: TrEnt 6.1870, lr(0.0125/0.000125/0.0125/0.0125), W/s 44.5k, CVEnt: 6.7419
+nnet accepted (10.clm)
+finished, too small rel. improvement .0000060813
+Succeeded training the Neural Network : test/tmp/case-01/exp/rnn/final.clm
+../steps/test_model.sh --config-file test/tmp/case-01/conf/test.conf --test-threads 1 test/tmp/case-01/exp/rnn ./data/test
+**Testing model test/tmp/case-01/exp/rnn/final.clm ...
+=================================
+Test Entropy: 6.8301
+Test PPL: 113.7835
+Test Speed: 123.1k words/sec
+=================================
+
+Step 4: Train RNN+MaxEnt model ...
+../steps/init_model.sh --config-file test/tmp/case-01/conf/rnn+maxent/init.conf test/tmp/case-01/exp/vocab.clm test/tmp/case-01/exp/rnn+maxent
+**Initializing model test/tmp/case-01/exp/vocab.clm to test/tmp/case-01/exp/rnn+maxent/init.clm ...
+../steps/train_model.sh --train-config test/tmp/case-01/conf/rnn+maxent/train.conf --test-config test/tmp/case-01/conf/test.conf --train-threads 1 --test-threads 1 ./data/train ./data/valid test/tmp/case-01/exp/rnn+maxent
+Prerun Valid Entropy: 8.9645
+ITERATION 01: TrEnt 6.8654, lr(0.5/0.1/0.5/0.5), W/s 39.0k, CVEnt: 6.8313
+nnet accepted (01.clm)
+ITERATION 02: TrEnt 6.2531, lr(0.5/0.1/0.5/0.5), W/s 39.5k, CVEnt: 6.7216
+nnet accepted (02.clm)
+ITERATION 03: TrEnt 5.9337, lr(0.5/0.1/0.5/0.5), W/s 39.4k, CVEnt: 6.6629
+nnet accepted (03.clm)
+ITERATION 04: TrEnt 5.6943, lr(0.5/0.1/0.5/0.5), W/s 37.9k, CVEnt: 6.6481
+nnet accepted (04.clm)
+ITERATION 05: TrEnt 5.4169, lr(0.25/0.05/0.25/0.25), W/s 38.0k, CVEnt: 6.5763
+nnet accepted (05.clm)
+ITERATION 06: TrEnt 5.2816, lr(0.125/0.025/0.125/0.125), W/s 39.1k, CVEnt: 6.5359
+nnet accepted (06.clm)
+ITERATION 07: TrEnt 5.2145, lr(0.0625/0.0125/0.0625/0.0625), W/s 39.4k, CVEnt: 6.5095
+nnet accepted (07.clm)
+ITERATION 08: TrEnt 5.1793, lr(0.03125/0.00625/0.03125/0.03125), W/s 39.5k, CVEnt: 6.5119
+nnet rejected (08.clm)
+finished, too small rel. improvement 0
+Succeeded training the Neural Network : test/tmp/case-01/exp/rnn+maxent/final.clm
+../steps/test_model.sh --config-file test/tmp/case-01/conf/test.conf --test-threads 1 test/tmp/case-01/exp/rnn+maxent ./data/test
+**Testing model test/tmp/case-01/exp/rnn+maxent/final.clm ...
+=================================
+Test Entropy: 6.6481
+Test PPL: 100.2947
+Test Speed: 99.9k words/sec
+=================================
