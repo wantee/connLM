@@ -75,8 +75,10 @@ typedef struct _rnn_neuron_t {
     real_t *er_h;
 
     // caches for mini-batch
-    int *mini_hist;
-    int mini_step;
+    int *ho_w_hist;
+    int ho_w_hist_num;
+    int *ih_w_hist;
+    int ih_w_hist_num;
     bool *dirty_class;
 
     real_t *wt_ih_w;

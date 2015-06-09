@@ -211,7 +211,8 @@ void rnn_destroy(rnn_t *rnn)
         safe_free(rnn->neurons[i].wt_bptt_ih_h);
         safe_free(rnn->neurons[i].dirty_word);
 
-        safe_free(rnn->neurons[i].mini_hist);
+        safe_free(rnn->neurons[i].ho_w_hist);
+        safe_free(rnn->neurons[i].ih_w_hist);
         safe_free(rnn->neurons[i].dirty_class);
         safe_free(rnn->neurons[i].wt_ih_w);
         safe_free(rnn->neurons[i].wt_ih_h);
@@ -814,6 +815,8 @@ int rnn_backprop(rnn_t *rnn, int word, int tid)
                 neu->ac_h,
                 hidden_size,
                 -1);
+        neu->ho_w_hist[neu->ho_w_hist_num] = word;
+        neu->ho_w_hist_num++;
     } else {
         // weight update (output -> hidden)
         param_update(&param,
@@ -869,6 +872,8 @@ int rnn_backprop(rnn_t *rnn, int word, int tid)
                         NULL,
                         rnn->vocab_size,
                         -1);
+                neu->ih_w_hist[neu->ih_w_hist_num] = neu->last_word;
+                neu->ih_w_hist_num++;
             } else {
                 param_update(&param,
                         &neu->arg_ih_w,
@@ -1013,6 +1018,8 @@ int rnn_backprop(rnn_t *rnn, int word, int tid)
                             NULL,
                             -rnn->vocab_size,
                             -1);
+                    neu->ih_w_hist[neu->ih_w_hist_num] = w;
+                    neu->ih_w_hist_num++;
                 } else {
                     param_update(&param,
                             &neu->arg_ih_w,
@@ -1206,14 +1213,26 @@ int rnn_setup_train(rnn_t *rnn, rnn_train_opt_t *train_opt,
                     goto ERR;
                 }
                 memset(neu->dirty_class, 0, sizeof(bool)*sz);
+
+                sz = train_opt->param.mini_batch;
+                neu->ho_w_hist = (int *) malloc(sizeof(int) * sz);
+                if (neu->ho_w_hist == NULL) {
+                    ST_WARNING("Failed to malloc ho_w_hist.");
+                    goto ERR;
+                }
+                neu->ho_w_hist_num = 0;
             }
 
-            sz = train_opt->param.mini_batch + 1;
-            neu->mini_hist = (int *) malloc(sizeof(int) * sz);
-            if (neu->mini_hist == NULL) {
-                ST_WARNING("Failed to malloc mini_hist.");
+            sz = train_opt->param.mini_batch;
+            if (train_opt->bptt > 1) {
+                 sz *= (train_opt->bptt + train_opt->bptt_block - 1);
+            }
+            neu->ih_w_hist = (int *) malloc(sizeof(int) * sz);
+            if (neu->ih_w_hist == NULL) {
+                ST_WARNING("Failed to malloc ih_w_hist.");
                 goto ERR;
             }
+            neu->ih_w_hist_num = 0;
         }
 
         if (train_opt->bptt > 1 || train_opt->param.mini_batch > 0) {
@@ -1243,7 +1262,8 @@ ERR:
         safe_free(rnn->neurons[i].wt_bptt_ih_h);
         safe_free(rnn->neurons[i].dirty_word);
         
-        safe_free(rnn->neurons[i].mini_hist);
+        safe_free(rnn->neurons[i].ho_w_hist);
+        safe_free(rnn->neurons[i].ih_w_hist);
         safe_free(rnn->neurons[i].dirty_class);
         safe_free(rnn->neurons[i].wt_ih_w);
         safe_free(rnn->neurons[i].wt_ih_h);
@@ -1289,8 +1309,8 @@ int rnn_reset_train(rnn_t *rnn, int tid)
     neu->last_word = -1;
 
     if (train_opt->param.mini_batch > 0) {
-        neu->mini_step = 1;
-        neu->mini_hist[0] = -1;
+        neu->ho_w_hist_num = 0;
+        neu->ih_w_hist_num = 0;
     }
 
     return 0;
@@ -1380,23 +1400,14 @@ int rnn_end_train(rnn_t *rnn, int word, int tid)
             rnn->model_opt.hidden_size * sizeof(real_t));
 
     if (mini_batch > 0) {
-        memmove(neu->mini_hist + 1, neu->mini_hist,
-                sizeof(int)*(min(neu->mini_step, mini_batch)));
-        neu->mini_hist[0] = word;
-
-        neu->mini_step++;
-
         if (neu->step % mini_batch == 0 || word == 0) {
-            mini_batch = min(mini_batch, neu->mini_step);
-            neu->mini_step = 1;
-
             if (rnn->class_size > 0) {
-                for (i = 0; i < mini_batch; i++) {
-                    if (neu->mini_hist[i] == -1) {
+                for (i = 0; i < neu->ho_w_hist_num; i++) {
+                    if (neu->ho_w_hist[i] == -1) {
                         continue;
                     }
 
-                    c = rnn->output->w2c[neu->mini_hist[i]];
+                    c = rnn->output->w2c[neu->ho_w_hist[i]];
 
                     if (neu->dirty_class[c]) {
                         continue;
@@ -1421,14 +1432,15 @@ int rnn_end_train(rnn_t *rnn, int word, int tid)
                            sizeof(real_t) * (e-s) * hidden_size);
                 }
 
-                for (i = 0; i < mini_batch; i++) {
-                    if (neu->mini_hist[i] == -1) {
+                for (i = 0; i < neu->ho_w_hist_num; i++) {
+                    if (neu->ho_w_hist[i] == -1) {
                         continue;
                     }
 
-                    c = rnn->output->w2c[neu->mini_hist[i]];
+                    c = rnn->output->w2c[neu->ho_w_hist[i]];
                     neu->dirty_class[c] = false;
                 }
+                neu->ho_w_hist_num = 0;
 
                 param_update(&param,
                         &neu->arg_ho_c,
@@ -1457,21 +1469,17 @@ int rnn_end_train(rnn_t *rnn, int word, int tid)
                         sizeof(real_t) * rnn->vocab_size * hidden_size);
             }
 
-            
-            for (i = 1; i < mini_batch + 1; i++) {
-                fprintf(stderr, "%d ", neu->mini_hist[i]);
-            }
-            fprintf(stderr, "\n");
-            int_sort(neu->mini_hist + 1, mini_batch);
-            w = -1;
-            for (i = 1; i < mini_batch + 1; i++) {
-                if (neu->mini_hist[i] == -1) {
+            for (i = 0; i < neu->ih_w_hist_num; i++) {
+                w = neu->ih_w_hist[i];
+
+                if (w == -1) {
                     continue;
                 }
-                if (neu->mini_hist[i] == w) {
+
+                if (neu->dirty_word[w]) {
                     continue;
                 }
-                w = neu->mini_hist[i];
+                neu->dirty_word[w] = true;
 
                 param_update(&param,
                         &neu->arg_ih_w,
@@ -1489,6 +1497,17 @@ int rnn_end_train(rnn_t *rnn, int word, int tid)
                     a += rnn->vocab_size;
                 }
             }
+
+            for (i = 0; i < neu->ih_w_hist_num; i++) {
+                w = neu->ih_w_hist[i];
+
+                if (w == -1) {
+                    continue;
+                }
+
+                neu->dirty_word[w] = false;
+            }
+            neu->ih_w_hist_num = 0;
 
             param_update(&param,
                     &neu->arg_ih_h,

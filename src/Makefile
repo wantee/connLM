@@ -44,47 +44,50 @@ OUTINCDIR = ../include/connlm
 BIN_OBJ = ./bin_obj
 SO_OBJ = ./so_obj
 
-TARGET_INC = connlm.h vocab.h output.h param.h rnn.h maxent.h lbl.h ffnn.h
+INC = connlm.h vocab.h output.h param.h rnn.h maxent.h lbl.h ffnn.h
+TARGET_INC = $(addprefix $(OUTINCDIR)/, $(INC))
 
 OBJ_SO = utils.o vocab.o output.o param.o rnn.o maxent.o lbl.o ffnn.o \
          connlm.o 
 
 ifeq ($(UNAME_S),Darwin)
-TARGET_SO = libconnlm.dylib
+TARGET_SO = $(OUTLIBDIR)/libconnlm.dylib
 SO_FLAGS = -dynamiclib
 else
-TARGET_SO = libconnlm.so
+TARGET_SO = $(OUTLIBDIR)/libconnlm.so
 SO_FLAGS = -shared
 endif
 
-TARGET_BIN = connlm-train connlm-test connlm-info connlm-copy \
-             connlm-vocab connlm-init
+BIN = connlm-train connlm-test connlm-info connlm-copy \
+      connlm-vocab connlm-init
+
+TARGET_BIN = $(addprefix $(BINDIR)/, $(BIN))
 
 .PHONY: all clean preparedir
 
 all: preparedir $(TARGET_BIN)
 
 preparedir: 
-	mkdir -p $(BIN_OBJ)
-	mkdir -p $(SO_OBJ)
-	mkdir -p ${BINDIR}
-	mkdir -p ${OUTLIBDIR}
-	mkdir -p ${OUTINCDIR}
+	@mkdir -p $(BIN_OBJ)
+	@mkdir -p $(SO_OBJ)
+	@mkdir -p ${BINDIR}
+	@mkdir -p ${OUTLIBDIR}
+	@mkdir -p ${OUTINCDIR}
+
+$(TARGET_INC) : $(INC)
+	cp $^ ${OUTINCDIR}
 
 $(SO_OBJ)/%.o : %.c 
 	$(GCC) $(CFLAGS) -fPIC -c -o $@ $<
 
 $(TARGET_SO) : $(addprefix $(SO_OBJ)/, $(OBJ_SO))
 	$(GCC) $(CFLAGS) $(SO_FLAGS) -o $@ $^ $(LDFLAGS)
-	mv ${TARGET_SO} ${OUTLIBDIR}
-	cp ${TARGET_INC} ${OUTINCDIR}
 
 $(BIN_OBJ)/%.o : %.c
 	$(GCC) $(CFLAGS) -c -o $@ $^ 
 
-$(TARGET_BIN) : connlm-%: $(addprefix $(BIN_OBJ)/, connlm-%.o) $(TARGET_SO)
+$(TARGET_BIN) : $(BINDIR)/connlm-%: $(addprefix $(BIN_OBJ)/, connlm-%.o) $(TARGET_SO) $(TARGET_INC)
 	$(GCC) $(CFLAGS) -o $@ $< $(LDFLAGS) -L$(OUTLIBDIR) -lconnlm 
-	mv $@ ${BINDIR}
 
 lint-check : *.h *.cpp *.c
 	splint +posixlib +D__gnuc_va_list=int -fileextensions $^ 
