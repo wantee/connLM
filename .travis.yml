@@ -8,8 +8,12 @@ install:
   - cd src; ./autogen.sh; cd -
   - make -C src
 env:
-  - CONNLM_NO_OPT=1
+  global:
+    - CONNLM_NO_OPT=1
+  matrix:
+    - CASE=1
+    - CASE=2
 script: 
   - source tools/shutils/shutils.sh
-  - cd egs/tiny; shu-testing
+  - cd egs/tiny; shu-testing $CASE
 

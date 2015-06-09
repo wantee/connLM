@@ -1,0 +1,8 @@
+name="RNN with minibatch" 
+
+before="rm -rf test/tmp/case-02; mkdir -p test/tmp/case-02; cp -r conf test/tmp/case-02; sed -i '' 's/MINI_BATCH[[:space:]]*:[[:space:]]*0/MINI_BATCH : 1/' test/tmp/case-02/conf/rnn/train.conf"
+
+script="./run.sh --conf-dir test/tmp/case-02/conf --exp-dir test/tmp/case-02/exp 1,3 > test/output/case-02.log"
+
+normalize="./test/normalize_log.sh"
+compare_normalize=("expected/case-02.log:test/output/case-02.log")

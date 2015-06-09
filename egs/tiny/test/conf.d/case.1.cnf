@@ -1,8 +1,8 @@
-name="All models" 
+name="All models with default config" 
 
-before="if [ -d exp ]; then shu-err 'Please backup your exp dir'; exit 1; fi; mkdir -p test/output"
+before="rm -rf test/tmp/case-01; mkdir -p test/tmp/case-01; cp -r conf test/tmp/case-01"
 
-script="./run.sh > test/output/all.log"
+script="./run.sh --conf-dir test/tmp/case-01/conf --exp-dir test/tmp/case-01/exp> test/output/case-01.log"
 
 normalize="./test/normalize_log.sh"
-compare_normalize=("expected/all.log:test/output/all.log")
+compare_normalize=("expected/case-01.log:test/output/case-01.log")
