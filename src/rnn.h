@@ -141,6 +141,7 @@ int rnn_reset_train(rnn_t *rnn, int tid);
 int rnn_start_train(rnn_t *rnn, int word, int tid);
 int rnn_fwd_bp(rnn_t *rnn, int word, int tid);
 int rnn_end_train(rnn_t *rnn, int word, int tid);
+int rnn_finish_train(rnn_t *rnn, int tid);
 
 int rnn_setup_test(rnn_t *rnn, output_t *output, int num_thrs);
 int rnn_reset_test(rnn_t *rnn, int tid);

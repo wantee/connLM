@@ -92,6 +92,7 @@ int output_setup_train(output_t *output, int num_thrs);
 int output_reset_train(output_t *output, int tid);
 int output_start_train(output_t *output, int word, int tid);
 int output_end_train(output_t *output, int word, int tid);
+int output_finish_train(output_t *output, int tid);
 
 int output_setup_test(output_t *output, int num_thrs);
 int output_reset_test(output_t *output, int tid);

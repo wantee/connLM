@@ -1369,7 +1369,7 @@ int rnn_fwd_bp(rnn_t *rnn, int word, int tid)
     return 0;
 }
 
-int rnn_end_train(rnn_t *rnn, int word, int tid)
+int rnn_updat_minibatch(rnn_t *rnn, int tid)
 {
     param_t param;
     rnn_neuron_t *neu;
@@ -1393,6 +1393,145 @@ int rnn_end_train(rnn_t *rnn, int word, int tid)
     hidden_size = rnn->model_opt.hidden_size;
     mini_batch = param.mini_batch;
 
+    if (neu->ho_w_hist_num > 0) {
+        if (rnn->class_size > 0) {
+            for (i = 0; i < neu->ho_w_hist_num; i++) {
+                if (neu->ho_w_hist[i] == -1) {
+                    continue;
+                }
+
+                c = rnn->output->w2c[neu->ho_w_hist[i]];
+
+                if (neu->dirty_class[c]) {
+                    continue;
+                }
+                neu->dirty_class[c] = true;
+
+                s = rnn->output->c2w_s[c];
+                e = rnn->output->c2w_e[c];
+
+                param_update(&param,
+                        &neu->arg_ho_w,
+                        rnn->wt_ho_w + s * hidden_size,
+                        neu->wt_ho_w + s * hidden_size,
+                        rnn->model_opt.scale,
+                        -(e - s), 
+                        NULL,
+                        hidden_size,
+                        -1);
+
+                memset(neu->wt_ho_w + s * hidden_size,
+                        0,
+                        sizeof(real_t) * (e-s) * hidden_size);
+            }
+
+            for (i = 0; i < neu->ho_w_hist_num; i++) {
+                if (neu->ho_w_hist[i] == -1) {
+                    continue;
+                }
+
+                c = rnn->output->w2c[neu->ho_w_hist[i]];
+                neu->dirty_class[c] = false;
+            }
+            neu->ho_w_hist_num = 0;
+
+            param_update(&param,
+                    &neu->arg_ho_c,
+                    rnn->wt_ho_c,
+                    neu->wt_ho_c, 
+                    rnn->model_opt.scale,
+                    -rnn->class_size, 
+                    NULL,
+                    hidden_size,
+                    -1);
+
+            memset(neu->wt_ho_c, 0,
+                    sizeof(real_t) * rnn->class_size * hidden_size);
+        } else {
+            param_update(&param,
+                    &neu->arg_ho_w,
+                    rnn->wt_ho_w,
+                    neu->wt_ho_w, 
+                    rnn->model_opt.scale,
+                    -rnn->vocab_size, 
+                    NULL,
+                    hidden_size,
+                    -1);
+
+            memset(neu->wt_ho_w, 0,
+                    sizeof(real_t) * rnn->vocab_size * hidden_size);
+        }
+    }
+
+    if (neu->ih_w_hist_num > 0) {
+        for (i = 0; i < neu->ih_w_hist_num; i++) {
+            w = neu->ih_w_hist[i];
+
+            if (w == -1) {
+                continue;
+            }
+
+            if (neu->dirty_word[w]) {
+                continue;
+            }
+            neu->dirty_word[w] = true;
+
+            param_update(&param,
+                    &neu->arg_ih_w,
+                    rnn->wt_ih_w + w,
+                    neu->wt_ih_w + w,
+                    1.0, 
+                    -hidden_size, 
+                    NULL,
+                    -rnn->vocab_size,
+                    -1);
+
+            a = w;
+            for (h = 0; h < hidden_size; h++) {
+                neu->wt_ih_w[a] = 0;
+                a += rnn->vocab_size;
+            }
+        }
+
+        for (i = 0; i < neu->ih_w_hist_num; i++) {
+            w = neu->ih_w_hist[i];
+
+            if (w == -1) {
+                continue;
+            }
+
+            neu->dirty_word[w] = false;
+        }
+        neu->ih_w_hist_num = 0;
+
+        param_update(&param,
+                &neu->arg_ih_h,
+                rnn->wt_ih_h,
+                neu->wt_ih_h, 
+                1.0, 
+                -hidden_size, 
+                NULL,
+                hidden_size,
+                -1);
+
+        memset(neu->wt_ih_h, 0,
+                sizeof(real_t) * hidden_size * hidden_size);
+    }
+
+    return 0;
+}
+
+int rnn_end_train(rnn_t *rnn, int word, int tid)
+{
+    rnn_neuron_t *neu;
+
+    int mini_batch;
+
+    ST_CHECK_PARAM(rnn == NULL || tid < 0, -1);
+
+    neu = rnn->neurons + tid;
+    mini_batch = rnn->train_opt.param.mini_batch;
+
     neu->last_word = word;
 
     // copy hidden layer to input
@@ -1400,127 +1539,25 @@ int rnn_end_train(rnn_t *rnn, int word, int tid)
             rnn->model_opt.hidden_size * sizeof(real_t));
 
     if (mini_batch > 0) {
-        if (neu->step % mini_batch == 0 || word == 0) {
-            if (rnn->class_size > 0) {
-                for (i = 0; i < neu->ho_w_hist_num; i++) {
-                    if (neu->ho_w_hist[i] == -1) {
-                        continue;
-                    }
-
-                    c = rnn->output->w2c[neu->ho_w_hist[i]];
-
-                    if (neu->dirty_class[c]) {
-                        continue;
-                    }
-                    neu->dirty_class[c] = true;
-
-                    s = rnn->output->c2w_s[c];
-                    e = rnn->output->c2w_e[c];
-
-                    param_update(&param,
-                            &neu->arg_ho_w,
-                            rnn->wt_ho_w + s * hidden_size,
-                            neu->wt_ho_w + s * hidden_size,
-                            rnn->model_opt.scale,
-                            -(e - s), 
-                            NULL,
-                            hidden_size,
-                            -1);
-
-                    memset(neu->wt_ho_w + s * hidden_size,
-                           0,
-                           sizeof(real_t) * (e-s) * hidden_size);
-                }
-
-                for (i = 0; i < neu->ho_w_hist_num; i++) {
-                    if (neu->ho_w_hist[i] == -1) {
-                        continue;
-                    }
-
-                    c = rnn->output->w2c[neu->ho_w_hist[i]];
-                    neu->dirty_class[c] = false;
-                }
-                neu->ho_w_hist_num = 0;
-
-                param_update(&param,
-                        &neu->arg_ho_c,
-                        rnn->wt_ho_c,
-                        neu->wt_ho_c, 
-                        rnn->model_opt.scale,
-                        -rnn->class_size, 
-                        NULL,
-                        hidden_size,
-                        -1);
-
-                memset(neu->wt_ho_c, 0,
-                        sizeof(real_t) * rnn->class_size * hidden_size);
-            } else {
-                param_update(&param,
-                        &neu->arg_ho_w,
-                        rnn->wt_ho_w,
-                        neu->wt_ho_w, 
-                        rnn->model_opt.scale,
-                        -rnn->vocab_size, 
-                        NULL,
-                        hidden_size,
-                        -1);
-
-                memset(neu->wt_ho_w, 0,
-                        sizeof(real_t) * rnn->vocab_size * hidden_size);
+        if (neu->step % mini_batch == 0) {// || word == 0) {
+            if (rnn_updat_minibatch(rnn, tid) < 0) {
+                ST_WARNING("Failed to rnn_updat_minibatch.");
+                return -1;
             }
+        }
+    }
 
-            for (i = 0; i < neu->ih_w_hist_num; i++) {
-                w = neu->ih_w_hist[i];
+    return 0;
+}
 
-                if (w == -1) {
-                    continue;
-                }
+int rnn_finish_train(rnn_t *rnn, int tid)
+{
+    ST_CHECK_PARAM(rnn == NULL || tid < 0, -1);
 
-                if (neu->dirty_word[w]) {
-                    continue;
-                }
-                neu->dirty_word[w] = true;
-
-                param_update(&param,
-                        &neu->arg_ih_w,
-                        rnn->wt_ih_w + w,
-                        neu->wt_ih_w + w,
-                        1.0, 
-                        -hidden_size, 
-                        NULL,
-                        -rnn->vocab_size,
-                        -1);
-
-                a = w;
-                for (h = 0; h < hidden_size; h++) {
-                    neu->wt_ih_w[a] = 0;
-                    a += rnn->vocab_size;
-                }
-            }
-
-            for (i = 0; i < neu->ih_w_hist_num; i++) {
-                w = neu->ih_w_hist[i];
-
-                if (w == -1) {
-                    continue;
-                }
-
-                neu->dirty_word[w] = false;
-            }
-            neu->ih_w_hist_num = 0;
-
-            param_update(&param,
-                    &neu->arg_ih_h,
-                    rnn->wt_ih_h,
-                    neu->wt_ih_h, 
-                    1.0, 
-                    -hidden_size, 
-                    NULL,
-                    hidden_size,
-                    -1);
-
-            memset(neu->wt_ih_h, 0,
-                    sizeof(real_t) * hidden_size * hidden_size);
+    if (rnn->train_opt.param.mini_batch > 0) {
+        if (rnn_updat_minibatch(rnn, tid) < 0) {
+            ST_WARNING("Failed to rnn_updat_minibatch.");
+            return -1;
         }
     }
 

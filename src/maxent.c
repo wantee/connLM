@@ -1000,6 +1000,13 @@ int maxent_end_train(maxent_t *maxent, int word, int tid)
     return 0;
 }
 
+int maxent_finish_train(maxent_t *maxent, int tid)
+{
+    ST_CHECK_PARAM(maxent == NULL || tid < 0, -1);
+
+    return 0;
+}
+
 int maxent_setup_test(maxent_t *maxent, output_t *output, int num_thrs)
 {
     maxent_neuron_t *neu;

@@ -1066,6 +1066,46 @@ int connlm_end_train(connlm_t *connlm, int word, int tid)
     return 0;
 }
 
+int connlm_finish_train(connlm_t *connlm, int tid)
+{
+    ST_CHECK_PARAM(connlm == NULL, -1);
+
+    if (output_finish_train(connlm->output, tid) < 0) {
+        ST_WARNING("Failed to output_finish_train.");
+        return -1;
+    }
+
+    if (connlm->rnn != NULL) {
+        if (rnn_finish_train(connlm->rnn, tid) < 0) {
+            ST_WARNING("Failed to rnn_finish_train.");
+            return -1;
+        }
+    }
+
+    if (connlm->maxent != NULL) {
+        if (maxent_finish_train(connlm->maxent, tid) < 0) {
+            ST_WARNING("Failed to maxent_finish_train.");
+            return -1;
+        }
+    }
+
+    if (connlm->lbl != NULL) {
+        if (lbl_finish_train(connlm->lbl, tid) < 0) {
+            ST_WARNING("Failed to lbl_finish_train.");
+            return -1;
+        }
+    }
+
+    if (connlm->ffnn != NULL) {
+        if (ffnn_finish_train(connlm->ffnn, tid) < 0) {
+            ST_WARNING("Failed to ffnn_finish_train.");
+            return -1;
+        }
+    }
+
+    return 0;
+}
+
 int connlm_forward(connlm_t *connlm, int word, int tid)
 {
     ST_CHECK_PARAM(connlm == NULL, -1);
@@ -1361,6 +1401,13 @@ int connlm_train(connlm_t *connlm)
                     words, sents, words / ((double) ms / 1000.0),
                     logp, -logp / log10(2) / words,
                     exp10(-logp / (double) words));
+        }
+    }
+
+    for (i = 0; i < train_opt->num_thread; i++) {
+        if (connlm_finish_train(connlm, i) < 0) {
+            ST_WARNING("Failed to connlm_finish_train.");
+            return -1;
         }
     }
 

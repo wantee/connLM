@@ -807,6 +807,13 @@ int output_end_train(output_t *output, int word, int tid)
     return 0;
 }
 
+int output_finish_train(output_t *output, int tid)
+{
+    ST_CHECK_PARAM(output == NULL, -1);
+
+    return 0;
+}
+
 int output_setup_test(output_t *output, int num_thrs)
 {
     output_neuron_t *neu;

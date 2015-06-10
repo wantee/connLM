@@ -85,6 +85,7 @@ int ffnn_setup_train(ffnn_t *ffnn, ffnn_train_opt_t *train_opt,
 int ffnn_reset_train(ffnn_t *ffnn, int tid);
 int ffnn_start_train(ffnn_t *ffnn, int word, int tid);
 int ffnn_end_train(ffnn_t *ffnn, int word, int tid);
+int ffnn_finish_train(ffnn_t *ffnn, int tid);
 
 int ffnn_setup_test(ffnn_t *ffnn, output_t *output, int num_thrs);
 int ffnn_reset_test(ffnn_t *ffnn, int tid);

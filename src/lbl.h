@@ -84,6 +84,7 @@ int lbl_setup_train(lbl_t *lbl, lbl_train_opt_t *train_opt,
 int lbl_reset_train(lbl_t *lbl, int tid);
 int lbl_start_train(lbl_t *lbl, int word, int tid);
 int lbl_end_train(lbl_t *lbl, int word, int tid);
+int lbl_finish_train(lbl_t *lbl, int tid);
 
 int lbl_setup_test(lbl_t *lbl, output_t *output, int num_thrs);
 int lbl_reset_test(lbl_t *lbl, int tid);

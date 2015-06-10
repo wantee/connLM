@@ -375,6 +375,13 @@ int ffnn_end_train(ffnn_t *ffnn, int word, int tid)
     return 0;
 }
 
+int ffnn_finish_train(ffnn_t *ffnn, int tid)
+{
+    ST_CHECK_PARAM(ffnn == NULL || tid < 0, -1);
+
+    return 0;
+}
+
 int ffnn_setup_test(ffnn_t *ffnn, output_t *output, int num_thrs)
 {
     size_t sz;

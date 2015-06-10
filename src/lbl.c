@@ -376,6 +376,13 @@ int lbl_end_train(lbl_t *lbl, int word, int tid)
     return 0;
 }
 
+int lbl_finish_train(lbl_t *lbl, int tid)
+{
+    ST_CHECK_PARAM(lbl == NULL || tid < 0, -1);
+
+    return 0;
+}
+
 int lbl_setup_test(lbl_t *lbl, output_t *output, int num_thrs)
 {
     size_t sz;

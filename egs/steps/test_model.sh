@@ -29,21 +29,23 @@ log_file=$dir/log/test.log
 echo "**Testing model $dir/final.clm ..."
 if [ -z $config_file ]; then
 connlm-test --log-file=$log_file \
+           --num-thread=$test_threads \
            $dir/final.clm $test_file \
 || exit 1; 
 else
 connlm-test --log-file=$log_file \
            --config=$config_file \
+           --num-thread=$test_threads \
            $dir/final.clm $test_file \
 || exit 1; 
 fi
 
 echo "================================="
 ent=`../utils/get_value.sh "Entropy" $log_file`
-echo "Test Entropy: $(printf "%.4f" $ent)"
+echo "Test Entropy: $(printf "%.6f" $ent)"
 
 ppl=`../utils/get_value.sh "PPL" $log_file`
-echo "Test PPL: $(printf "%.4f" $ppl)"
+echo "Test PPL: $(printf "%.6f" $ppl)"
 
 wpc=`../utils/get_value.sh "words/sec" $log_file`
 echo "Test Speed: $(bc <<< "scale=1; $wpc / 1000")k words/sec"

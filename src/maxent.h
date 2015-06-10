@@ -108,6 +108,7 @@ int maxent_setup_train(maxent_t *maxent, maxent_train_opt_t *train_opt,
 int maxent_reset_train(maxent_t *maxent, int tid);
 int maxent_start_train(maxent_t *maxent, int word, int tid);
 int maxent_end_train(maxent_t *maxent, int word, int tid);
+int maxent_finish_train(maxent_t *maxent, int tid);
 
 int maxent_setup_test(maxent_t *maxent, output_t *output, int num_thrs);
 int maxent_reset_test(maxent_t *maxent, int tid);
