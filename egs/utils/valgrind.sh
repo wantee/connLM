@@ -8,8 +8,7 @@ VAL_RUN=1
 
 if [ -n "$VAL_EXES" ]; then
   rm -f $VAL_OUT
-  cmd="exec $VAL_FD>> $VAL_OUT"
-  eval $cmd
+  eval "exec $VAL_FD>> $VAL_OUT"
 
   shopt -s expand_aliases
   for x in $VAL_EXES; do
@@ -23,8 +22,7 @@ function val_exit()
       return
   fi
 
-  cmd="exec $VAL_FD<&-"
-  eval $cmd
+  eval "exec $VAL_FD<&-"
 
   echo "Checking valgrind log from $VAL_OUT"
   perl -e '$pr = -1;

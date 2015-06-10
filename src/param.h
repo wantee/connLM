@@ -52,12 +52,11 @@ int param_load(param_t *param, st_opt_t *opt, const char *sec_name,
         param_t *parent_param);
 
 void param_acc_wt(real_t *wt, real_t *er, int er_size, real_t *in,
-        hash_size_t in_size, hash_size_t hash_start);
+        int in_size);
 
-void param_update(param_t *param, param_arg_t *arg,
+void param_update(param_t *param, param_arg_t *arg, bool update_arg,
         real_t *wt, real_t *er, real_t er_scale,
-        int er_size, real_t *in, hash_size_t in_size,
-        hash_size_t hash_start);
+        int er_size, real_t *in, int in_size);
 
 #ifdef __cplusplus
 }

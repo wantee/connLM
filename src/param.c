@@ -98,17 +98,16 @@ void param_arg_clear(param_arg_t *arg)
  *  
  *
  * er_size > 0 && in_size > 0: er is [ 1 x er_size ]; wt is [ er_size x in_size ]; if in == NULL: in is one-shot vector
- * er_size > 0 && in_size < 0: er is [ 1 x er_size ]; wt is hash based 1d vector start from hash_start; in is one-shot vector
+ * er_size > 0 && in_size < 0: er is [ 1 x er_size ]; wt is hash based 1d vector; in is one-shot vector
  * er_size < 0 && in_size > 0: er is delta-weight matrix [ er_size x in_size ]; wt is [ er_size x in_size ]; 
  * er_size < 0 && in_size < 0: er is delta-weight matrix [ er_size x in_size ]; wt is [ er_size x in_size ]; in is one-shot vector
  */
-void param_acc_wt(real_t *wt, real_t *er, int er_size, real_t *in,
-        hash_size_t in_size, hash_size_t hash_start)
+void param_acc_wt(real_t *wt, real_t *er, int er_size, real_t *in, int in_size)
 {
     real_t *w;
     real_t *delta_w;
 
-    hash_size_t i;
+    int i;
     int j;
 
     if (er_size > 0 && in_size > 0) {
@@ -128,14 +127,8 @@ void param_acc_wt(real_t *wt, real_t *er, int er_size, real_t *in,
             }
         }
     } else if (er_size > 0 && in_size < 0) {
-        in_size = - in_size;
-        i = hash_start;
         for (j = 0; j < er_size; j++) {
-            wt[i] +=  er[j];
-            i++;
-            if (i >= in_size) {
-                i = 0;
-            }
+            wt[j] += er[j];
         }
     } else if (er_size < 0 && in_size > 0) {
         er_size = - er_size;
@@ -170,14 +163,13 @@ void param_acc_wt(real_t *wt, real_t *er, int er_size, real_t *in,
  *  
  *
  * er_size > 0 && in_size > 0: er is [ 1 x er_size ]; wt is [ er_size x in_size ]; if in == NULL: in is one-shot vector
- * er_size > 0 && in_size < 0: er is [ 1 x er_size ]; wt is hash based 1d vector start from hash_start; in is one-shot vector
+ * er_size > 0 && in_size < 0: er is [ 1 x er_size ]; wt is hash based 1d vector; in is one-shot vector
  * er_size < 0 && in_size > 0: er is delta-weight matrix [ er_size x in_size ]; wt is [ er_size x in_size ]; 
  * er_size < 0 && in_size < 0: er is delta-weight matrix [ er_size x in_size ]; wt is [ er_size x in_size ]; in is one-shot vector
  */
-void param_update(param_t *param, param_arg_t *arg,
+void param_update(param_t *param, param_arg_t *arg, bool update_arg,
         real_t *wt, real_t *er, real_t er_scale,
-        int er_size, real_t *in, hash_size_t in_size,
-        hash_size_t hash_start)
+        int er_size, real_t *in, int in_size)
 {
     real_t *w;
     real_t *delta_w;
@@ -185,7 +177,7 @@ void param_update(param_t *param, param_arg_t *arg,
     real_t lr;
     real_t l2;
 
-    hash_size_t i;
+    int i;
     int j;
 
     lr = param->learn_rate;
@@ -195,9 +187,12 @@ void param_update(param_t *param, param_arg_t *arg,
         if (arg->l2_step != 0) {
             l2 = 0.0;
         }
-        arg->l2_step++;
-        if (arg->l2_step >= param->l2_gap) {
-            arg->l2_step = 0;
+
+        if (update_arg) {
+            arg->l2_step++;
+            if (arg->l2_step >= param->l2_gap) {
+                arg->l2_step = 0;
+            }
         }
     }
 
@@ -220,15 +215,9 @@ void param_update(param_t *param, param_arg_t *arg,
             }
         }
     } else if (er_size > 0 && in_size < 0) {
-        in_size = - in_size;
-        i = hash_start;
         for (j = 0; j < er_size; j++) {
-            wt[i] += lr * er[j] * er_scale // * 1.0
-                - l2 * wt[i];
-            i++;
-            if (i >= in_size) {
-                i = 0;
-            }
+            wt[j] += lr * er[j] * er_scale // * 1.0
+                - l2 * wt[j];
         }
     } else if (er_size < 0 && in_size > 0) {
         er_size = - er_size;

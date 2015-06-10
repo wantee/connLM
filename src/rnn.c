@@ -813,21 +813,19 @@ int rnn_backprop(rnn_t *rnn, int word, int tid)
                 output_neu->er_o_w + s, 
                 e - s, 
                 neu->ac_h,
-                hidden_size,
-                -1);
+                hidden_size);
         neu->ho_w_hist[neu->ho_w_hist_num] = word;
         neu->ho_w_hist_num++;
     } else {
         // weight update (output -> hidden)
         param_update(&param,
-                &neu->arg_ho_w,
+                &neu->arg_ho_w, true,
                 rnn->wt_ho_w + s * hidden_size,
                 output_neu->er_o_w + s, 
                 rnn->model_opt.scale, 
                 e - s, 
                 neu->ac_h,
-                hidden_size,
-                -1);
+                hidden_size);
     }
 
     if (rnn->class_size > 0) {
@@ -841,18 +839,16 @@ int rnn_backprop(rnn_t *rnn, int word, int tid)
                     output_neu->er_o_c, 
                     rnn->class_size, 
                     neu->ac_h,
-                    hidden_size,
-                    -1);
+                    hidden_size);
         } else {
             param_update(&param,
-                    &neu->arg_ho_c,
+                    &neu->arg_ho_c, true,
                     rnn->wt_ho_c,
                     output_neu->er_o_c, 
                     rnn->model_opt.scale, 
                     rnn->class_size, 
                     neu->ac_h,
-                    hidden_size,
-                    -1);
+                    hidden_size);
         }
     }
 
@@ -870,20 +866,18 @@ int rnn_backprop(rnn_t *rnn, int word, int tid)
                         neu->er_h, 
                         hidden_size, 
                         NULL,
-                        rnn->vocab_size,
-                        -1);
+                        rnn->vocab_size);
                 neu->ih_w_hist[neu->ih_w_hist_num] = neu->last_word;
                 neu->ih_w_hist_num++;
             } else {
                 param_update(&param,
-                        &neu->arg_ih_w,
+                        &neu->arg_ih_w, true,
                         rnn->wt_ih_w + neu->last_word,
                         neu->er_h, 
                         1.0, 
                         hidden_size, 
                         NULL,
-                        rnn->vocab_size,
-                        -1);
+                        rnn->vocab_size);
             }
         }
 
@@ -893,18 +887,16 @@ int rnn_backprop(rnn_t *rnn, int word, int tid)
                     neu->er_h, 
                     hidden_size, 
                     neu->ac_i_h,
-                    hidden_size,
-                    -1);
+                    hidden_size);
         } else {
             param_update(&param,
-                    &neu->arg_ih_h,
+                    &neu->arg_ih_h, true,
                     rnn->wt_ih_h,
                     neu->er_h, 
                     1.0, 
                     hidden_size, 
                     neu->ac_i_h,
-                    hidden_size,
-                    -1);
+                    hidden_size);
         }
     } else { // BPTT
         memcpy(neu->ac_bptt_h, neu->ac_h, sizeof(real_t) * hidden_size);
@@ -981,18 +973,16 @@ int rnn_backprop(rnn_t *rnn, int word, int tid)
                         neu->wt_bptt_ih_h,
                         -hidden_size, 
                         NULL,
-                        hidden_size,
-                        -1);
+                        hidden_size);
             } else {
                 param_update(&param,
-                        &neu->arg_ih_h,
+                        &neu->arg_ih_h, true,
                         rnn->wt_ih_h,
                         neu->wt_bptt_ih_h,
                         1.0,
                         -hidden_size, 
                         NULL,
-                        hidden_size,
-                        -1);
+                        hidden_size);
             }
 
             memset(neu->wt_bptt_ih_h, 0,
@@ -1016,20 +1006,18 @@ int rnn_backprop(rnn_t *rnn, int word, int tid)
                             neu->wt_bptt_ih_w + w,
                             -hidden_size, 
                             NULL,
-                            -rnn->vocab_size,
-                            -1);
+                            -rnn->vocab_size);
                     neu->ih_w_hist[neu->ih_w_hist_num] = w;
                     neu->ih_w_hist_num++;
                 } else {
-                    param_update(&param,
-                            &neu->arg_ih_w,
+                    param_update(&param, 
+                            &neu->arg_ih_w, true,
                             rnn->wt_ih_w + w,
                             neu->wt_bptt_ih_w + w,
                             1.0,
                             -hidden_size, 
                             NULL,
-                            -rnn->vocab_size,
-                            -1);
+                            -rnn->vocab_size);
                 }
 
                 i = w;
@@ -1375,7 +1363,6 @@ int rnn_updat_minibatch(rnn_t *rnn, int tid)
     rnn_neuron_t *neu;
 
     int hidden_size;
-    int mini_batch;
 
     int c;
     int s;
@@ -1391,7 +1378,6 @@ int rnn_updat_minibatch(rnn_t *rnn, int tid)
     param = rnn->train_opt.param;
     neu = rnn->neurons + tid;
     hidden_size = rnn->model_opt.hidden_size;
-    mini_batch = param.mini_batch;
 
     if (neu->ho_w_hist_num > 0) {
         if (rnn->class_size > 0) {
@@ -1411,14 +1397,13 @@ int rnn_updat_minibatch(rnn_t *rnn, int tid)
                 e = rnn->output->c2w_e[c];
 
                 param_update(&param,
-                        &neu->arg_ho_w,
+                        &neu->arg_ho_w, true,
                         rnn->wt_ho_w + s * hidden_size,
                         neu->wt_ho_w + s * hidden_size,
                         rnn->model_opt.scale,
                         -(e - s), 
                         NULL,
-                        hidden_size,
-                        -1);
+                        hidden_size);
 
                 memset(neu->wt_ho_w + s * hidden_size,
                         0,
@@ -1436,27 +1421,25 @@ int rnn_updat_minibatch(rnn_t *rnn, int tid)
             neu->ho_w_hist_num = 0;
 
             param_update(&param,
-                    &neu->arg_ho_c,
+                    &neu->arg_ho_c, true,
                     rnn->wt_ho_c,
                     neu->wt_ho_c, 
                     rnn->model_opt.scale,
                     -rnn->class_size, 
                     NULL,
-                    hidden_size,
-                    -1);
+                    hidden_size);
 
             memset(neu->wt_ho_c, 0,
                     sizeof(real_t) * rnn->class_size * hidden_size);
         } else {
             param_update(&param,
-                    &neu->arg_ho_w,
+                    &neu->arg_ho_w, true,
                     rnn->wt_ho_w,
                     neu->wt_ho_w, 
                     rnn->model_opt.scale,
                     -rnn->vocab_size, 
                     NULL,
-                    hidden_size,
-                    -1);
+                    hidden_size);
 
             memset(neu->wt_ho_w, 0,
                     sizeof(real_t) * rnn->vocab_size * hidden_size);
@@ -1477,14 +1460,13 @@ int rnn_updat_minibatch(rnn_t *rnn, int tid)
             neu->dirty_word[w] = true;
 
             param_update(&param,
-                    &neu->arg_ih_w,
+                    &neu->arg_ih_w, true,
                     rnn->wt_ih_w + w,
                     neu->wt_ih_w + w,
                     1.0, 
                     -hidden_size, 
                     NULL,
-                    -rnn->vocab_size,
-                    -1);
+                    -rnn->vocab_size);
 
             a = w;
             for (h = 0; h < hidden_size; h++) {
@@ -1505,14 +1487,13 @@ int rnn_updat_minibatch(rnn_t *rnn, int tid)
         neu->ih_w_hist_num = 0;
 
         param_update(&param,
-                &neu->arg_ih_h,
+                &neu->arg_ih_h, true,
                 rnn->wt_ih_h,
                 neu->wt_ih_h, 
                 1.0, 
                 -hidden_size, 
                 NULL,
-                hidden_size,
-                -1);
+                hidden_size);
 
         memset(neu->wt_ih_h, 0,
                 sizeof(real_t) * hidden_size * hidden_size);
