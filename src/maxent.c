@@ -745,6 +745,7 @@ static int maxent_backprop_class(maxent_t *maxent, int tid)
     maxent_neuron_t *neu;
     output_neuron_t *output_neu;
 
+    hash_size_t sz;
     int order;
 
     int a;
@@ -770,15 +771,34 @@ static int maxent_backprop_class(maxent_t *maxent, int tid)
 #endif
 
     for (a = 0; a < order; a++) {
-        param_update(&maxent->train_opt.param,
-                &neu->param_arg_c,
-                maxent->wt_c,
-                output_neu->er_o_c,
-                maxent->model_opt.scale,
-                maxent->class_size,
-                NULL,
-                -maxent->model_opt.sz_c,
-                neu->hash_c[a]);
+        if (neu->hash_c[a] + maxent->class_size > maxent->model_opt.sz_c) {
+            sz = maxent->model_opt.sz_c - neu->hash_c[a];
+            param_update(&maxent->train_opt.param,
+                    &neu->param_arg_c, false,
+                    maxent->wt_c + neu->hash_c[a],
+                    output_neu->er_o_c,
+                    maxent->model_opt.scale,
+                    sz,
+                    NULL,
+                    -1);
+            param_update(&maxent->train_opt.param,
+                    &neu->param_arg_c, true,
+                    maxent->wt_c,
+                    output_neu->er_o_c + sz,
+                    maxent->model_opt.scale,
+                    maxent->class_size - sz,
+                    NULL,
+                    -1);
+        } else {
+            param_update(&maxent->train_opt.param,
+                    &neu->param_arg_c, true,
+                    maxent->wt_c + neu->hash_c[a],
+                    output_neu->er_o_c,
+                    maxent->model_opt.scale,
+                    maxent->class_size,
+                    NULL,
+                    -1);
+        }
     }
 
     return 0;
@@ -790,6 +810,7 @@ static int maxent_backprop_word(maxent_t *maxent, int c, int s, int e,
     maxent_neuron_t *neu;
     output_neuron_t *output_neu;
 
+    hash_size_t sz;
     int order;
 
     int a;
@@ -815,15 +836,34 @@ static int maxent_backprop_word(maxent_t *maxent, int c, int s, int e,
 #endif
 
     for (a = 0; a < order; a++) {
-        param_update(&maxent->train_opt.param,
-                &neu->param_arg_w,
-                maxent->wt_w,
-                output_neu->er_o_w + s, 
-                maxent->model_opt.scale,
-                e - s, 
-                NULL,
-                -maxent->model_opt.sz_w,
-                neu->hash_w[a]);
+        if (neu->hash_w[a] + (e - s) > maxent->model_opt.sz_w) {
+            sz = maxent->model_opt.sz_w - neu->hash_w[a];
+            param_update(&maxent->train_opt.param,
+                    &neu->param_arg_w, false,
+                    maxent->wt_w + neu->hash_w[a],
+                    output_neu->er_o_w + s, 
+                    maxent->model_opt.scale,
+                    sz, 
+                    NULL,
+                    -1);
+            param_update(&maxent->train_opt.param,
+                    &neu->param_arg_w, true,
+                    maxent->wt_w,
+                    output_neu->er_o_w + s + sz, 
+                    maxent->model_opt.scale,
+                    (e - s) - sz, 
+                    NULL,
+                    -1);
+        } else {
+            param_update(&maxent->train_opt.param,
+                    &neu->param_arg_w, true,
+                    maxent->wt_w + neu->hash_w[a],
+                    output_neu->er_o_w + s, 
+                    maxent->model_opt.scale,
+                    e - s, 
+                    NULL,
+                    -1);
+        }
     }
 
     return 0;

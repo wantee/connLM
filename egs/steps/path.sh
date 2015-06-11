@@ -11,7 +11,7 @@ fi
 
 export LC_ALL=C
 
-USE_VAL=0
+USE_VAL=${USE_VAL:-0}
 if [ "$USE_VAL" -eq 1 ]; then
   VAL_EXES=""
   for f in `ls $CONNLM_BIN/*`; do

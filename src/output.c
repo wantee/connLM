@@ -484,9 +484,9 @@ int output_generate(output_t *output, count_t *word_cnts)
 
     ST_CHECK_PARAM(output == NULL || word_cnts == NULL, -1);
 
-    output->w2c = NULL;
-    output->c2w_s = NULL;
-    output->c2w_e = NULL;
+    safe_free(output->w2c);
+    safe_free(output->c2w_s);
+    safe_free(output->c2w_e);
 
     class_size = output->output_opt.class_size;
     if (class_size <= 0) {
