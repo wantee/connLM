@@ -1330,7 +1330,9 @@ int connlm_train(connlm_t *connlm)
     int eg_sents;
 
     struct timeval tts_train, tte_train;
+    struct timeval tts_io, tts_cpu;
     long ms;
+    long ms_io, ms_cpu;
 
     ST_CHECK_PARAM(connlm == NULL, -1);
 
@@ -1343,6 +1345,8 @@ int connlm_train(connlm_t *connlm)
     logp = 0;
     connlm->err = 0;
     while (!feof(connlm->text_fp)) {
+        gettimeofday(&tts_io, NULL);
+
         total_eg_sents = connlm_get_egs(connlm,
                 train_opt->max_word_per_sent,
                 train_opt->num_line_read, true);
@@ -1350,6 +1354,8 @@ int connlm_train(connlm_t *connlm)
             ST_WARNING("Failed to connlm_get_egs.");
             return -1;
         }
+
+        gettimeofday(&tts_cpu, NULL);
 
         if (train_opt->shuffle) {
             total_eg_sents = train_opt->num_line_read;
@@ -1385,22 +1391,30 @@ int connlm_train(connlm_t *connlm)
 
         gettimeofday(&tte_train, NULL);
         ms = TIMEDIFF(tts_train, tte_train);
+        ms_io = TIMEDIFF(tts_io, tts_cpu);
+        ms_cpu = TIMEDIFF(tts_cpu, tte_train);
 
         if (connlm->fsize > 0) {
             ST_TRACE("Total progress: %.2f%%. Words: " COUNT_FMT
                     ", Sentences: " COUNT_FMT ", words/sec: %.1f, "
-                    "LogP: %f, Entropy: %f, PPL: %f", 
+                    "LogP: %f, Entropy: %f, PPL: %f, "
+                    "Time(cpu/io): %.3fms(%.2f%%)/%.3fms(%.2f%%)", 
                     ftell(connlm->text_fp) / (double) connlm->fsize * 100,
                     words, sents, words / ((double) ms / 1000.0),
                     logp, -logp / log10(2) / words,
-                    exp10(-logp / (double) words));
+                    exp10(-logp / (double) words),
+                    ms_cpu / 1000.0, 100.0 * ms_cpu / (ms_io + ms_cpu),
+                    ms_io / 1000.0, 100.0 * ms_io / (ms_io + ms_cpu));
         } else {
             ST_TRACE("Total progress: Words: " COUNT_FMT
                     ", Sentences: " COUNT_FMT ", words/sec: %.1f, "
-                    "LogP: %f, Entropy: %f, PPL: %f", 
+                    "LogP: %f, Entropy: %f, PPL: %f, "
+                    "Time(cpu/io): %.3f(%.2f%%)/%.3f(%.2f%%)", 
                     words, sents, words / ((double) ms / 1000.0),
                     logp, -logp / log10(2) / words,
-                    exp10(-logp / (double) words));
+                    exp10(-logp / (double) words),
+                    ms_cpu / 1000.0, 100.0 * ms_cpu / (ms_io + ms_cpu),
+                    ms_io / 1000.0, 100.0 * ms_io / (ms_io + ms_cpu));
         }
     }
 
