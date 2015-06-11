@@ -1,12 +1,14 @@
 #!/bin/bash
 
-train_file=./data/train
-valid_file=./data/valid
-test_file=./data/test
+train_file="./data/train"
+valid_file="./data/valid"
+test_file="./data/test"
 
-conf_dir=./conf/
-exp_dir=./exp/
+conf_dir="./conf/"
+exp_dir="./exp/"
 
+class_size=""
+#class_size="50;100;150;200"
 tr_thr=1
 test_thr=1
 
@@ -53,7 +55,12 @@ echo
 echo "Step $st: ${stepnames[$st]} ..."
 conf=$conf_dir/maxent
 dir=$exp_dir/maxent
-../steps/init_model.sh --config-file $conf/init.conf\
+../steps/init_model.sh --init-config-file $conf/init.conf \
+        --output-config-file $conf/output.conf \
+        --class-size "$class_size" \
+          --train-file $train_file \
+          --train-config $conf/train.conf \
+          --train-threads $tr_thr \
         $exp_dir/vocab.clm $dir || exit 1;
 
 ../steps/train_model.sh --train-config $conf/train.conf \
@@ -73,7 +80,12 @@ echo
 echo "Step $st: ${stepnames[$st]} ..."
 conf=$conf_dir/rnn
 dir=$exp_dir/rnn
-../steps/init_model.sh --config-file $conf/init.conf\
+../steps/init_model.sh --init-config-file $conf/init.conf \
+        --output-config-file $conf/output.conf \
+        --class-size "$class_size" \
+          --train-file $train_file \
+          --train-config $conf/train.conf \
+          --train-threads $tr_thr \
         $exp_dir/vocab.clm $dir || exit 1;
 
 ../steps/train_model.sh --train-config $conf/train.conf \
@@ -93,7 +105,12 @@ echo
 echo "Step $st: ${stepnames[$st]} ..."
 conf=$conf_dir/rnn+maxent
 dir=$exp_dir/rnn+maxent
-../steps/init_model.sh --config-file $conf/init.conf\
+../steps/init_model.sh --init-config-file $conf/init.conf \
+        --output-config-file $conf/output.conf \
+        --class-size "$class_size" \
+          --train-file $train_file \
+          --train-config $conf/train.conf \
+          --train-threads $tr_thr \
         $exp_dir/vocab.clm $dir || exit 1;
 
 ../steps/train_model.sh --train-config $conf/train.conf \

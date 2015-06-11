@@ -59,7 +59,7 @@ SO_FLAGS = -shared
 endif
 
 BIN = connlm-train connlm-test connlm-info connlm-copy \
-      connlm-vocab connlm-init
+      connlm-vocab connlm-init connlm-output
 
 TARGET_BIN = $(addprefix $(BINDIR)/, $(BIN))
 

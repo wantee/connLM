@@ -29,16 +29,14 @@
 #include "connlm.h"
 
 bool g_binary;
-count_t g_max_word_num;
 
 st_opt_t *g_cmd_opt;
 
-vocab_opt_t g_vocab_opt;
+output_opt_t g_output_opt;
 
-int connlm_vocab_parse_opt(int *argc, const char *argv[])
+int connlm_output_parse_opt(int *argc, const char *argv[])
 {
     st_log_opt_t log_opt;
-    unsigned long ul;
     bool b;
 
     g_cmd_opt = st_opt_create();
@@ -62,17 +60,13 @@ int connlm_vocab_parse_opt(int *argc, const char *argv[])
         goto ST_OPT_ERR;
     }
 
-    if (vocab_load_opt(&g_vocab_opt, g_cmd_opt, NULL) < 0) {
-        ST_WARNING("Failed to vocab_load_opt");
+    if (output_load_opt(&g_output_opt, g_cmd_opt, NULL) < 0) {
+        ST_WARNING("Failed to output_load_opt");
         goto ST_OPT_ERR;
     }
 
     ST_OPT_SEC_GET_BOOL(g_cmd_opt, NULL, "BINARY", g_binary, true,
             "Save file as binary format");
-
-    ST_OPT_SEC_GET_ULONG(g_cmd_opt, NULL, "MAX_WORD_NUM", ul, 0, 
-        "Maximum number of words used to learn vocab. 0 denotes no limit");
-    g_max_word_num = (count_t)ul;
 
     if (st_opt_get_bool(g_cmd_opt, NULL, "help", &b, false,
                 "Print help") < 0) {
@@ -89,8 +83,8 @@ ST_OPT_ERR:
 void show_usage(const char *module_name)
 {
     connlm_show_usage(module_name,
-            "Learn Vocabulary",
-            "<train-file> <model-out>",
+            "Initialise output layer",
+            "<model-in> <model-out>",
             g_cmd_opt);
 }
 
@@ -101,12 +95,13 @@ int main(int argc, const char *argv[])
     FILE *fp = NULL;
     int ret;
 
-    connlm_t *connlm = NULL;
-    vocab_t *vocab = NULL;
+    connlm_t *connlm_in = NULL;
+    connlm_t *connlm_out = NULL;
+    output_t *output = NULL;
 
     (void)st_escape_args(argc, argv, args, 1024);
 
-    ret = connlm_vocab_parse_opt(&argc, argv);
+    ret = connlm_output_parse_opt(&argc, argv);
     if (ret < 0) {
         goto ERR;
     } if (ret == 1) {
@@ -120,30 +115,37 @@ int main(int argc, const char *argv[])
     }
 
     ST_CLEAN("Command-line: %s", args);
-    st_opt_show(g_cmd_opt, "connLM Vocab Options");
-    ST_CLEAN("Train: %s, Model: %s", argv[1], argv[2]);
+    st_opt_show(g_cmd_opt, "connLM Output Options");
+    ST_CLEAN("Model-in: %s, Model-out: %s", argv[1], argv[2]);
 
-    ST_NOTICE("Learning Vocab..");
-    vocab = vocab_create(&g_vocab_opt);
-    if (vocab == NULL) {
-        ST_WARNING("Failed to vocab_create.");
-        goto ERR;
-    }
-
+    ST_NOTICE("Loading vocab model..");
     fp = st_fopen(argv[1], "rb");
     if (fp == NULL) {
         ST_WARNING("Failed to st_fopen. [%s]", argv[1]);
         goto ERR;
     }
 
-    if (vocab_learn(vocab, fp, g_max_word_num) < 0) {
-        ST_WARNING("Failed to vocab_learn. [%s]", argv[1]);
+    connlm_in = connlm_load(fp);
+    if (connlm_in == NULL) {
+        ST_WARNING("Failed to connlm_load. [%s]", argv[1]);
         goto ERR;
     }
     safe_st_fclose(fp);
 
-    connlm = connlm_new(vocab, NULL, NULL, NULL, NULL, NULL);
-    if (connlm == NULL) {
+    ST_NOTICE("Generating Output Layer...");
+    output = output_create(&g_output_opt, connlm_in->vocab->vocab_size);
+    if (output == NULL) {
+        ST_WARNING("Failed to output_create.");
+        goto ERR;
+    }
+
+    if (output_generate(output, connlm_in->vocab->cnts) < 0) {
+        ST_WARNING("Failed to output_generate.");
+        goto ERR;
+    }
+
+    connlm_out = connlm_new(connlm_in->vocab, output, NULL, NULL, NULL, NULL);
+    if (connlm_out == NULL) {
         ST_WARNING("Failed to connlm_new.");
         goto ERR;
     }
@@ -154,15 +156,16 @@ int main(int argc, const char *argv[])
         goto ERR;
     }
 
-    if (connlm_save(connlm, fp, g_binary) < 0) {
+    if (connlm_save(connlm_out, fp, g_binary) < 0) {
         ST_WARNING("Failed to connlm_save. [%s]", argv[2]);
         goto ERR;
     }
 
     safe_st_fclose(fp);
     safe_st_opt_destroy(g_cmd_opt);
-    safe_vocab_destroy(vocab);
-    safe_connlm_destroy(connlm);
+    safe_output_destroy(output);
+    safe_connlm_destroy(connlm_in);
+    safe_connlm_destroy(connlm_out);
 
     st_log_close(0);
     return 0;
@@ -170,8 +173,9 @@ int main(int argc, const char *argv[])
 ERR:
     safe_st_fclose(fp);
     safe_st_opt_destroy(g_cmd_opt);
-    safe_vocab_destroy(vocab);
-    safe_connlm_destroy(connlm);
+    safe_output_destroy(output);
+    safe_connlm_destroy(connlm_in);
+    safe_connlm_destroy(connlm_out);
 
     st_log_close(1);
     return -1;
