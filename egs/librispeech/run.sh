@@ -11,6 +11,11 @@ valid_file=./data/valid
 test_file=./data/test
 vocab_file=./data/vocab
 
+conf_dir=./conf/
+exp_dir=./exp/
+
+#class_size=""
+class_size="50;100;150;200;250"
 tr_thr=12
 test_thr=12
 
@@ -22,25 +27,31 @@ stepnames[5]="Train RNN+MaxEnt model"
 
 steps_len=${#stepnames[*]}
 
-. ../utils/parse_range.sh || exit 1
+. ../steps/path.sh || exit 1
 
-if [ $# -gt 1 -o "$1" == "--help" ]; then 
+. ../utils/parse_options.sh || exit 1
+
+if [ $# -gt 1 ] || ! shu-valid-range $1 || [ "$1" == "--help" ]; then 
   echo "usage: $0 [steps]"
   echo "e.g.: $0 -3,5,7-9,10-"
-  echo "  stpes could be 1-$steps_len:"
+  echo "  stpes could be a number range within 1-$steps_len:"
   st=1
   while [ $st -le $steps_len ]
   do
   echo "   step$st:	${stepnames[$st]}"
   ((st++))
   done
+  echo ""
+  echo "options: "
+  echo "     --conf-dir <conf-dir>         # config directory."
+  echo "     --exp-dir <exp-dir>           # exp directory."
   exit 1
 fi
 
 steps=$1
 
 st=1
-if in_range $st $steps; then
+if shu-in-range $st $steps; then
 echo
 echo "Step $st: ${stepnames[$st]} ..."
 for part in dev-clean test-clean dev-other test-other train-clean-100 train-clean-360 train-other-500; do
@@ -81,68 +92,83 @@ if [ ! -e "$test_file" ]; then
 fi
 ((st++))
 
-if in_range $st $steps; then
+if shu-in-range $st $steps; then
 echo
 echo "Step $st: ${stepnames[$st]} ..."
 ../steps/learn_vocab.sh $train_file exp || exit 1;
 fi
 ((st++))
 
-if in_range $st $steps; then
+if shu-in-range $st $steps; then
 echo
 echo "Step $st: ${stepnames[$st]} ..."
-conf_dir=./conf/maxent
-dir=exp/maxent
-../steps/init_model.sh --config-file $conf_dir/init.conf\
-        exp/vocab.clm $dir || exit 1;
+conf=$conf_dir/maxent
+dir=$exp_dir/maxent
+../steps/init_model.sh --init-config-file $conf/init.conf \
+        --output-config-file $conf/output.conf \
+        --class-size "$class_size" \
+          --train-file $train_file \
+          --train-config $conf/train.conf \
+          --train-threads $tr_thr \
+        $exp_dir/vocab.clm $dir || exit 1;
 
-../steps/train_model.sh --train-config $conf_dir/train.conf \
-        --test-config ./conf/test.conf \
+../steps/train_model.sh --train-config $conf/train.conf \
+        --test-config $conf_dir/test.conf \
         --train-threads $tr_thr \
         --test-threads $test_thr \
         $train_file $valid_file $dir || exit 1;
 
-../steps/test_model.sh --config-file ./conf/test.conf \
+../steps/test_model.sh --config-file $conf_dir/test.conf \
         --test-threads $test_thr \
         $dir $test_file || exit 1;
 fi
 ((st++))
 
-if in_range $st $steps; then
+if shu-in-range $st $steps; then
 echo
 echo "Step $st: ${stepnames[$st]} ..."
-conf_dir=./conf/rnn
-dir=exp/rnn
-../steps/init_model.sh --config-file $conf_dir/init.conf\
-        exp/vocab.clm $dir || exit 1;
+conf=$conf_dir/rnn
+dir=$exp_dir/rnn
+../steps/init_model.sh --init-config-file $conf/init.conf \
+        --output-config-file $conf/output.conf \
+        --class-size "$class_size" \
+          --train-file $train_file \
+          --train-config $conf/train.conf \
+          --train-threads $tr_thr \
+        $exp_dir/vocab.clm $dir || exit 1;
 
-../steps/train_model.sh --train-config $conf_dir/train.conf \
-        --test-config ./conf/test.conf \
+../steps/train_model.sh --train-config $conf/train.conf \
+        --test-config $conf_dir/test.conf \
         --train-threads $tr_thr \
         --test-threads $test_thr \
         $train_file $valid_file $dir || exit 1;
 
-../steps/test_model.sh --config-file ./conf/test.conf \
+../steps/test_model.sh --config-file $conf_dir/test.conf \
         --test-threads $test_thr \
         $dir $test_file || exit 1;
 fi
 ((st++))
 
-if in_range $st $steps; then
+if shu-in-range $st $steps; then
 echo
 echo "Step $st: ${stepnames[$st]} ..."
-conf_dir=./conf/rnn+maxent
-dir=exp/rnn+maxent
-../steps/init_model.sh --config-file $conf_dir/init.conf\
-        exp/vocab.clm $dir || exit 1;
+conf=$conf_dir/rnn+maxent
+dir=$exp_dir/rnn+maxent
+../steps/init_model.sh --init-config-file $conf/init.conf \
+        --output-config-file $conf/output.conf \
+        --class-size "$class_size" \
+          --train-file $train_file \
+          --train-config $conf/train.conf \
+          --train-threads $tr_thr \
+        $exp_dir/vocab.clm $dir || exit 1;
 
-../steps/train_model.sh --train-config $conf_dir/train.conf \
-        --test-config ./conf/test.conf \
+../steps/train_model.sh --train-config $conf/train.conf \
+        --test-config $conf_dir/test.conf \
         --train-threads $tr_thr \
         --test-threads $test_thr \
         $train_file $valid_file $dir || exit 1;
 
-../steps/test_model.sh --config-file ./conf/test.conf \
+../steps/test_model.sh --config-file $conf_dir/test.conf \
         --test-threads $test_thr \
         $dir $test_file || exit 1;
 fi
