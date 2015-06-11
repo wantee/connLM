@@ -16,4 +16,7 @@ env:
 script: 
   - source tools/shutils/shutils.sh
   - cd egs/tiny; shu-testing $CASE
-
+notifications:
+  email:
+    on_success: always
+    on_failure: always
