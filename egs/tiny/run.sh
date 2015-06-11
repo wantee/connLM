@@ -46,7 +46,7 @@ st=1
 if shu-in-range $st $steps; then
 echo
 echo "Step $st: ${stepnames[$st]} ..."
-../steps/learn_vocab.sh $train_file $valid_file $exp_dir || exit 1;
+../steps/learn_vocab.sh $train_file $exp_dir || exit 1;
 fi
 ((st++))
 

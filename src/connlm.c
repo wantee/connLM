@@ -1398,7 +1398,7 @@ int connlm_train(connlm_t *connlm)
             ST_TRACE("Total progress: %.2f%%. Words: " COUNT_FMT
                     ", Sentences: " COUNT_FMT ", words/sec: %.1f, "
                     "LogP: %f, Entropy: %f, PPL: %f, "
-                    "Time(cpu/io): %.3fms(%.2f%%)/%.3fms(%.2f%%)", 
+                    "Time(cpu/io): %.3fs(%.2f%%)/%.3fs(%.2f%%)", 
                     ftell(connlm->text_fp) / (double) connlm->fsize * 100,
                     words, sents, words / ((double) ms / 1000.0),
                     logp, -logp / log10(2) / words,
@@ -1409,7 +1409,7 @@ int connlm_train(connlm_t *connlm)
             ST_TRACE("Total progress: Words: " COUNT_FMT
                     ", Sentences: " COUNT_FMT ", words/sec: %.1f, "
                     "LogP: %f, Entropy: %f, PPL: %f, "
-                    "Time(cpu/io): %.3f(%.2f%%)/%.3f(%.2f%%)", 
+                    "Time(cpu/io): %.3fs(%.2f%%)/%.3fs(%.2f%%)", 
                     words, sents, words / ((double) ms / 1000.0),
                     logp, -logp / log10(2) / words,
                     exp10(-logp / (double) words),
