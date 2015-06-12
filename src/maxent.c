@@ -1026,10 +1026,6 @@ int maxent_end_train(maxent_t *maxent, int word, int tid)
 
     ST_CHECK_PARAM(maxent == NULL || tid < 0, -1);
 
-    if (word < 0) {
-        return 0;
-    }
-
     neu = maxent->neurons + tid;
 
     for (i = maxent->model_opt.order - 1; i > 0; i--) {
@@ -1146,10 +1142,6 @@ int maxent_end_test(maxent_t *maxent, int word, int tid)
     int i;
 
     ST_CHECK_PARAM(maxent == NULL || tid < 0, -1);
-
-    if (word < 0) {
-        return 0;
-    }
 
     neu = maxent->neurons + tid;
 
