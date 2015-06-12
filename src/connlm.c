@@ -734,6 +734,8 @@ static int connlm_get_egs(connlm_t *connlm, int max_word_per_sent,
     int i;
     int w;
 
+    bool err;
+
     ST_CHECK_PARAM(connlm == NULL, -1);
 
     if (connlm->shuffle_buf != NULL) {
@@ -748,8 +750,9 @@ static int connlm_get_egs(connlm_t *connlm, int max_word_per_sent,
         connlm->egs[i*max_word_per_sent] = -2;
     }
 
+    err = false;
     num_sents = 0;
-    while (st_fgets(&line, &line_sz, connlm->text_fp)) {
+    while (st_fgets(&line, &line_sz, connlm->text_fp, &err)) {
         remove_newline(line);
 
         if (line[0] == '\0') {
@@ -833,6 +836,11 @@ SKIP:
     }
 
     safe_free(line);
+
+    if (err) {
+        return -1;
+    }
+
     return num_sents;
 }
 
