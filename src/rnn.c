@@ -144,19 +144,19 @@ int rnn_init(rnn_t **prnn, rnn_model_opt_t *model_opt, output_t *output)
 
     sz = model_opt->hidden_size * vocab_size;
     for (i = 0; i < sz; i++) {
-        rnn->wt_ih_w[i] = rrandom(-0.1, 0.1) 
+        rnn->wt_ih_w[i] = rrandom(-0.1, 0.1)
             + rrandom(-0.1, 0.1) + rrandom(-0.1, 0.1);
     }
 
     sz = model_opt->hidden_size * model_opt->hidden_size;
     for (i = 0; i < sz; i++) {
-        rnn->wt_ih_h[i] = rrandom(-0.1, 0.1) 
+        rnn->wt_ih_h[i] = rrandom(-0.1, 0.1)
             + rrandom(-0.1, 0.1) + rrandom(-0.1, 0.1);
     }
 
     sz = vocab_size * model_opt->hidden_size;
     for (i = 0; i < sz; i++) {
-        rnn->wt_ho_w[i] = rrandom(-0.1, 0.1) 
+        rnn->wt_ho_w[i] = rrandom(-0.1, 0.1)
             + rrandom(-0.1, 0.1) + rrandom(-0.1, 0.1);
     }
 
@@ -170,7 +170,7 @@ int rnn_init(rnn_t **prnn, rnn_model_opt_t *model_opt, output_t *output)
 
         sz = class_size * model_opt->hidden_size;
         for (i = 0; i < sz; i++) {
-            rnn->wt_ho_c[i] = rrandom(-0.1, 0.1) 
+            rnn->wt_ho_c[i] = rrandom(-0.1, 0.1)
                 + rrandom(-0.1, 0.1) + rrandom(-0.1, 0.1);
         }
     }
@@ -554,7 +554,7 @@ int rnn_save_header(rnn_t *rnn, FILE *fp, bool binary)
 
     ST_CHECK_PARAM(fp == NULL, -1);
 
-    if (binary) { 
+    if (binary) {
         if (fwrite(&RNN_MAGIC_NUM, sizeof(int), 1, fp) != 1) {
             ST_WARNING("Failed to write magic num.");
             return -1;
@@ -592,8 +592,8 @@ int rnn_save_header(rnn_t *rnn, FILE *fp, bool binary)
         if (rnn == NULL) {
             fprintf(fp, "Scale: 0\n");
             return 0;
-        } 
-            
+        }
+
         fprintf(fp, "Scale: %g\n", rnn->model_opt.scale);
         fprintf(fp, "Vocab Size: %d\n", rnn->vocab_size);
         fprintf(fp, "Class Size: %d\n", rnn->class_size);
@@ -810,8 +810,8 @@ int rnn_backprop(rnn_t *rnn, int word, int tid)
 
     if (param.mini_batch > 0) {
         param_acc_wt(neu->wt_ho_w + s * hidden_size,
-                output_neu->er_o_w + s, 
-                e - s, 
+                output_neu->er_o_w + s,
+                e - s,
                 neu->ac_h,
                 hidden_size);
         neu->ho_w_hist[neu->ho_w_hist_num] = word;
@@ -821,9 +821,9 @@ int rnn_backprop(rnn_t *rnn, int word, int tid)
         param_update(&param,
                 &neu->arg_ho_w, true,
                 rnn->wt_ho_w + s * hidden_size,
-                output_neu->er_o_w + s, 
-                rnn->model_opt.scale, 
-                e - s, 
+                output_neu->er_o_w + s,
+                rnn->model_opt.scale,
+                e - s,
                 neu->ac_h,
                 hidden_size);
     }
@@ -836,17 +836,17 @@ int rnn_backprop(rnn_t *rnn, int word, int tid)
 
         if (param.mini_batch > 0) {
             param_acc_wt(neu->wt_ho_c,
-                    output_neu->er_o_c, 
-                    rnn->class_size, 
+                    output_neu->er_o_c,
+                    rnn->class_size,
                     neu->ac_h,
                     hidden_size);
         } else {
             param_update(&param,
                     &neu->arg_ho_c, true,
                     rnn->wt_ho_c,
-                    output_neu->er_o_c, 
-                    rnn->model_opt.scale, 
-                    rnn->class_size, 
+                    output_neu->er_o_c,
+                    rnn->model_opt.scale,
+                    rnn->class_size,
                     neu->ac_h,
                     hidden_size);
         }
@@ -863,8 +863,8 @@ int rnn_backprop(rnn_t *rnn, int word, int tid)
         if (neu->last_word >= 0) {
             if (param.mini_batch > 0) {
                 param_acc_wt(neu->wt_ih_w + neu->last_word,
-                        neu->er_h, 
-                        hidden_size, 
+                        neu->er_h,
+                        hidden_size,
                         NULL,
                         rnn->vocab_size);
                 neu->ih_w_hist[neu->ih_w_hist_num] = neu->last_word;
@@ -873,9 +873,9 @@ int rnn_backprop(rnn_t *rnn, int word, int tid)
                 param_update(&param,
                         &neu->arg_ih_w, true,
                         rnn->wt_ih_w + neu->last_word,
-                        neu->er_h, 
-                        1.0, 
-                        hidden_size, 
+                        neu->er_h,
+                        1.0,
+                        hidden_size,
                         NULL,
                         rnn->vocab_size);
             }
@@ -884,17 +884,17 @@ int rnn_backprop(rnn_t *rnn, int word, int tid)
         // weight update (hidden -> hidden)
         if (param.mini_batch > 0) {
             param_acc_wt(neu->wt_ih_h,
-                    neu->er_h, 
-                    hidden_size, 
+                    neu->er_h,
+                    hidden_size,
                     neu->ac_i_h,
                     hidden_size);
         } else {
             param_update(&param,
                     &neu->arg_ih_h, true,
                     rnn->wt_ih_h,
-                    neu->er_h, 
-                    1.0, 
-                    hidden_size, 
+                    neu->er_h,
+                    1.0,
+                    hidden_size,
                     neu->ac_i_h,
                     hidden_size);
         }
@@ -971,7 +971,7 @@ int rnn_backprop(rnn_t *rnn, int word, int tid)
             if (param.mini_batch > 0) {
                 param_acc_wt(neu->wt_ih_h,
                         neu->wt_bptt_ih_h,
-                        -hidden_size, 
+                        -hidden_size,
                         NULL,
                         hidden_size);
             } else {
@@ -980,7 +980,7 @@ int rnn_backprop(rnn_t *rnn, int word, int tid)
                         rnn->wt_ih_h,
                         neu->wt_bptt_ih_h,
                         1.0,
-                        -hidden_size, 
+                        -hidden_size,
                         NULL,
                         hidden_size);
             }
@@ -1004,18 +1004,18 @@ int rnn_backprop(rnn_t *rnn, int word, int tid)
                 if (param.mini_batch > 0) {
                     param_acc_wt(neu->wt_ih_w + w,
                             neu->wt_bptt_ih_w + w,
-                            -hidden_size, 
+                            -hidden_size,
                             NULL,
                             -rnn->vocab_size);
                     neu->ih_w_hist[neu->ih_w_hist_num] = w;
                     neu->ih_w_hist_num++;
                 } else {
-                    param_update(&param, 
+                    param_update(&param,
                             &neu->arg_ih_w, true,
                             rnn->wt_ih_w + w,
                             neu->wt_bptt_ih_w + w,
                             1.0,
-                            -hidden_size, 
+                            -hidden_size,
                             NULL,
                             -rnn->vocab_size);
                 }
@@ -1249,7 +1249,7 @@ ERR:
         safe_free(rnn->neurons[i].wt_bptt_ih_w);
         safe_free(rnn->neurons[i].wt_bptt_ih_h);
         safe_free(rnn->neurons[i].dirty_word);
-        
+
         safe_free(rnn->neurons[i].ho_w_hist);
         safe_free(rnn->neurons[i].ih_w_hist);
         safe_free(rnn->neurons[i].dirty_class);
@@ -1311,7 +1311,7 @@ int rnn_start_train(rnn_t *rnn, int word, int tid)
     return 0;
 }
 
-int rnn_fwd_bp(rnn_t *rnn, int word, int tid) 
+int rnn_fwd_bp(rnn_t *rnn, int word, int tid)
 {
     rnn_neuron_t *neu;
     int bptt;
@@ -1357,7 +1357,7 @@ int rnn_fwd_bp(rnn_t *rnn, int word, int tid)
     return 0;
 }
 
-int rnn_updat_minibatch(rnn_t *rnn, int tid)
+static int rnn_update_minibatch(rnn_t *rnn, int tid)
 {
     param_t param;
     rnn_neuron_t *neu;
@@ -1401,7 +1401,7 @@ int rnn_updat_minibatch(rnn_t *rnn, int tid)
                         rnn->wt_ho_w + s * hidden_size,
                         neu->wt_ho_w + s * hidden_size,
                         rnn->model_opt.scale,
-                        -(e - s), 
+                        -(e - s),
                         NULL,
                         hidden_size);
 
@@ -1423,9 +1423,9 @@ int rnn_updat_minibatch(rnn_t *rnn, int tid)
             param_update(&param,
                     &neu->arg_ho_c, true,
                     rnn->wt_ho_c,
-                    neu->wt_ho_c, 
+                    neu->wt_ho_c,
                     rnn->model_opt.scale,
-                    -rnn->class_size, 
+                    -rnn->class_size,
                     NULL,
                     hidden_size);
 
@@ -1435,9 +1435,9 @@ int rnn_updat_minibatch(rnn_t *rnn, int tid)
             param_update(&param,
                     &neu->arg_ho_w, true,
                     rnn->wt_ho_w,
-                    neu->wt_ho_w, 
+                    neu->wt_ho_w,
                     rnn->model_opt.scale,
-                    -rnn->vocab_size, 
+                    -rnn->vocab_size,
                     NULL,
                     hidden_size);
 
@@ -1463,8 +1463,8 @@ int rnn_updat_minibatch(rnn_t *rnn, int tid)
                     &neu->arg_ih_w, true,
                     rnn->wt_ih_w + w,
                     neu->wt_ih_w + w,
-                    1.0, 
-                    -hidden_size, 
+                    1.0,
+                    -hidden_size,
                     NULL,
                     -rnn->vocab_size);
 
@@ -1489,9 +1489,9 @@ int rnn_updat_minibatch(rnn_t *rnn, int tid)
         param_update(&param,
                 &neu->arg_ih_h, true,
                 rnn->wt_ih_h,
-                neu->wt_ih_h, 
-                1.0, 
-                -hidden_size, 
+                neu->wt_ih_h,
+                1.0,
+                -hidden_size,
                 NULL,
                 hidden_size);
 
@@ -1521,8 +1521,8 @@ int rnn_end_train(rnn_t *rnn, int word, int tid)
 
     if (mini_batch > 0) {
         if (neu->step % mini_batch == 0) {// || word == 0) {
-            if (rnn_updat_minibatch(rnn, tid) < 0) {
-                ST_WARNING("Failed to rnn_updat_minibatch.");
+            if (rnn_update_minibatch(rnn, tid) < 0) {
+                ST_WARNING("Failed to rnn_update_minibatch.");
                 return -1;
             }
         }
@@ -1536,8 +1536,8 @@ int rnn_finish_train(rnn_t *rnn, int tid)
     ST_CHECK_PARAM(rnn == NULL || tid < 0, -1);
 
     if (rnn->train_opt.param.mini_batch > 0) {
-        if (rnn_updat_minibatch(rnn, tid) < 0) {
-            ST_WARNING("Failed to rnn_updat_minibatch.");
+        if (rnn_update_minibatch(rnn, tid) < 0) {
+            ST_WARNING("Failed to rnn_update_minibatch.");
             return -1;
         }
     }

@@ -55,7 +55,7 @@ int maxent_load_model_opt(maxent_model_opt_t *model_opt,
 
     ST_CHECK_PARAM(model_opt == NULL || opt == NULL, -1);
 
-    ST_OPT_SEC_GET_DOUBLE(opt, sec_name, "SCALE", d, 1.0, 
+    ST_OPT_SEC_GET_DOUBLE(opt, sec_name, "SCALE", d, 1.0,
             "Scale of MaxEnt model output");
     model_opt->scale = (real_t)d;
 
@@ -163,6 +163,7 @@ ERR:
 void maxent_destroy(maxent_t *maxent)
 {
     int i;
+    int j;
 
     if (maxent == NULL) {
         return;
@@ -175,6 +176,20 @@ void maxent_destroy(maxent_t *maxent)
         safe_free(maxent->neurons[i].hist);
         safe_free(maxent->neurons[i].hash_w);
         safe_free(maxent->neurons[i].hash_c);
+        if (maxent->neurons[i].hash_hist_w != NULL) {
+            for (j = 0; j < maxent->train_opt.param.mini_batch; j++) {
+                safe_free(maxent->neurons[i].hash_hist_w[j].range);
+            }
+            safe_free(maxent->neurons[i].hash_hist_w);
+        }
+        if (maxent->neurons[i].hash_hist_c != NULL) {
+            for (j = 0; j < maxent->train_opt.param.mini_batch; j++) {
+                safe_free(maxent->neurons[i].hash_hist_c[j].range);
+            }
+            safe_free(maxent->neurons[i].hash_hist_c);
+        }
+        safe_free(maxent->neurons[i].wt_w);
+        safe_free(maxent->neurons[i].wt_c);
     }
     safe_free(maxent->neurons);
 }
@@ -522,7 +537,7 @@ int maxent_save_header(maxent_t *maxent, FILE *fp, bool binary)
             fprintf(fp, "Scale: 0\n");
 
             return 0;
-        } 
+        }
 
         fprintf(fp, "Scale: %g\n", maxent->model_opt.scale);
         fprintf(fp, "Vocab Size: %d\n", maxent->vocab_size);
@@ -610,7 +625,7 @@ static int maxent_get_hash(hash_t *hash, hash_t init_val,
                 * (hash_t)(hist[b-1] + 1);
         }
     }
-    
+
     return order;
 }
 
@@ -647,7 +662,7 @@ static int maxent_forward_class(maxent_t *maxent, int tid)
     for (a = 0; a < order; a++) {
         h = neu->hash_c[a];
         for (o = 0; o < maxent->class_size; o++) {
-            output_neu->ac_o_c[o] += maxent->model_opt.scale 
+            output_neu->ac_o_c[o] += maxent->model_opt.scale
                 * maxent->wt_c[h];
             h++;
             if (h >= maxent->model_opt.sz_c) {
@@ -693,7 +708,7 @@ static int maxent_forward_word(maxent_t *maxent, int c, int s, int e,
     for (a = 0; a < order; a++) {
         h = neu->hash_w[a];
         for (o = s; o < e; o++) {
-            output_neu->ac_o_w[o] += maxent->model_opt.scale 
+            output_neu->ac_o_w[o] += maxent->model_opt.scale
                 * maxent->wt_w[h];
             h++;
             if (h >= maxent->model_opt.sz_w) {
@@ -773,32 +788,61 @@ static int maxent_backprop_class(maxent_t *maxent, int tid)
     for (a = 0; a < order; a++) {
         if (neu->hash_c[a] + maxent->class_size > maxent->model_opt.sz_c) {
             sz = maxent->model_opt.sz_c - neu->hash_c[a];
-            param_update(&maxent->train_opt.param,
-                    &neu->param_arg_c, false,
-                    maxent->wt_c + neu->hash_c[a],
-                    output_neu->er_o_c,
-                    maxent->model_opt.scale,
-                    sz,
-                    NULL,
-                    -1);
-            param_update(&maxent->train_opt.param,
-                    &neu->param_arg_c, true,
-                    maxent->wt_c,
-                    output_neu->er_o_c + sz,
-                    maxent->model_opt.scale,
-                    maxent->class_size - sz,
-                    NULL,
-                    -1);
+            if (maxent->train_opt.param.mini_batch > 0) {
+                param_acc_wt(neu->wt_c + neu->hash_c[a],
+                        output_neu->er_o_c,
+                        sz,
+                        NULL,
+                        -1);
+                param_acc_wt(neu->wt_c,
+                        output_neu->er_o_c + sz,
+                        maxent->class_size - sz,
+                        NULL,
+                        -1);
+            } else {
+                param_update(&maxent->train_opt.param,
+                        &neu->param_arg_c, false,
+                        maxent->wt_c + neu->hash_c[a],
+                        output_neu->er_o_c,
+                        maxent->model_opt.scale,
+                        sz,
+                        NULL,
+                        -1);
+                param_update(&maxent->train_opt.param,
+                        &neu->param_arg_c, true,
+                        maxent->wt_c,
+                        output_neu->er_o_c + sz,
+                        maxent->model_opt.scale,
+                        maxent->class_size - sz,
+                        NULL,
+                        -1);
+            }
         } else {
-            param_update(&maxent->train_opt.param,
-                    &neu->param_arg_c, true,
-                    maxent->wt_c + neu->hash_c[a],
-                    output_neu->er_o_c,
-                    maxent->model_opt.scale,
-                    maxent->class_size,
-                    NULL,
-                    -1);
+            if (maxent->train_opt.param.mini_batch > 0) {
+                param_acc_wt(neu->wt_c + neu->hash_c[a],
+                        output_neu->er_o_c,
+                        maxent->class_size,
+                        NULL,
+                        -1);
+            } else {
+                param_update(&maxent->train_opt.param,
+                        &neu->param_arg_c, true,
+                        maxent->wt_c + neu->hash_c[a],
+                        output_neu->er_o_c,
+                        maxent->model_opt.scale,
+                        maxent->class_size,
+                        NULL,
+                        -1);
+            }
         }
+        if (maxent->train_opt.param.mini_batch > 0) {
+            neu->hash_hist_c[neu->hash_hist_c_num].range[a].s = neu->hash_c[a];
+            neu->hash_hist_c[neu->hash_hist_c_num].range[a].num = maxent->class_size;
+        }
+    }
+    if (maxent->train_opt.param.mini_batch > 0 && order > 0) {
+        neu->hash_hist_c[neu->hash_hist_c_num].order = order;
+        neu->hash_hist_c_num++;
     }
 
     return 0;
@@ -838,32 +882,61 @@ static int maxent_backprop_word(maxent_t *maxent, int c, int s, int e,
     for (a = 0; a < order; a++) {
         if (neu->hash_w[a] + (e - s) > maxent->model_opt.sz_w) {
             sz = maxent->model_opt.sz_w - neu->hash_w[a];
-            param_update(&maxent->train_opt.param,
-                    &neu->param_arg_w, false,
-                    maxent->wt_w + neu->hash_w[a],
-                    output_neu->er_o_w + s, 
-                    maxent->model_opt.scale,
-                    sz, 
-                    NULL,
-                    -1);
-            param_update(&maxent->train_opt.param,
-                    &neu->param_arg_w, true,
-                    maxent->wt_w,
-                    output_neu->er_o_w + s + sz, 
-                    maxent->model_opt.scale,
-                    (e - s) - sz, 
-                    NULL,
-                    -1);
+            if (maxent->train_opt.param.mini_batch > 0) {
+                param_acc_wt(neu->wt_w + neu->hash_w[a],
+                        output_neu->er_o_w + s,
+                        sz,
+                        NULL,
+                        -1);
+                param_acc_wt(neu->wt_w,
+                        output_neu->er_o_w + s + sz,
+                        (e - s) - sz,
+                        NULL,
+                        -1);
+            } else {
+                param_update(&maxent->train_opt.param,
+                        &neu->param_arg_w, false,
+                        maxent->wt_w + neu->hash_w[a],
+                        output_neu->er_o_w + s,
+                        maxent->model_opt.scale,
+                        sz,
+                        NULL,
+                        -1);
+                param_update(&maxent->train_opt.param,
+                        &neu->param_arg_w, true,
+                        maxent->wt_w,
+                        output_neu->er_o_w + s + sz,
+                        maxent->model_opt.scale,
+                        (e - s) - sz,
+                        NULL,
+                        -1);
+            }
         } else {
-            param_update(&maxent->train_opt.param,
-                    &neu->param_arg_w, true,
-                    maxent->wt_w + neu->hash_w[a],
-                    output_neu->er_o_w + s, 
-                    maxent->model_opt.scale,
-                    e - s, 
-                    NULL,
-                    -1);
+            if (maxent->train_opt.param.mini_batch > 0) {
+                param_acc_wt(neu->wt_w + neu->hash_w[a],
+                        output_neu->er_o_w + s,
+                        e - s,
+                        NULL,
+                        -1);
+            } else {
+                param_update(&maxent->train_opt.param,
+                        &neu->param_arg_w, true,
+                        maxent->wt_w + neu->hash_w[a],
+                        output_neu->er_o_w + s,
+                        maxent->model_opt.scale,
+                        e - s,
+                        NULL,
+                        -1);
+            }
         }
+        if (maxent->train_opt.param.mini_batch > 0) {
+            neu->hash_hist_w[neu->hash_hist_w_num].range[a].s = neu->hash_w[a];
+            neu->hash_hist_w[neu->hash_hist_w_num].range[a].num = e - s;
+        }
+    }
+    if (maxent->train_opt.param.mini_batch > 0 && order > 0) {
+        neu->hash_hist_w[neu->hash_hist_w_num].order = order;
+        neu->hash_hist_w_num++;
     }
 
     return 0;
@@ -928,6 +1001,7 @@ int maxent_setup_train(maxent_t *maxent, maxent_train_opt_t *train_opt,
 
     int order;
     int i;
+    int j;
     int t;
 
     ST_CHECK_PARAM(maxent == NULL || train_opt == NULL
@@ -980,6 +1054,70 @@ int maxent_setup_train(maxent_t *maxent, maxent_train_opt_t *train_opt,
                 goto ERR;
             }
         }
+
+        if (train_opt->param.mini_batch > 0) {
+            sz = maxent->model_opt.sz_w;
+            neu->wt_w = (real_t *) malloc(sizeof(real_t)*sz);
+            if (neu->wt_w == NULL) {
+                ST_WARNING("Failed to malloc wt_w.");
+                goto ERR;
+            }
+            memset(neu->wt_w, 0, sizeof(real_t)*sz);
+
+            sz = train_opt->param.mini_batch * sizeof(hash_hist_t);
+            neu->hash_hist_w = (hash_hist_t *) malloc(sz);
+            if (neu->hash_hist_w == NULL) {
+                ST_WARNING("Failed to malloc hash_hist_w.");
+                goto ERR;
+            }
+            memset(neu->hash_hist_w, 0, sz);
+
+            sz = sizeof(hash_range_t) * order;
+            for (i = 0; i < train_opt->param.mini_batch; i++) {
+                neu->hash_hist_w[i].range = (hash_range_t *)malloc(sz);
+                if (neu->hash_hist_w[i].range == NULL) {
+                    ST_WARNING("Failed to malloc hash_hist_w->range.");
+                    goto ERR;
+                }
+                memset(neu->hash_hist_w[i].range, 0, sz);
+            }
+
+            sz = 2 * train_opt->param.mini_batch * order * sizeof(hash_range_t);
+            neu->hash_union = (hash_range_t *) malloc(sz);
+            if (neu->hash_union == NULL) {
+                ST_WARNING("Failed to malloc hash_union.");
+                goto ERR;
+            }
+            memset(neu->hash_union, 0, sz);
+
+            if (maxent->class_size > 0) {
+                sz = maxent->model_opt.sz_c;
+                neu->wt_c = (real_t *) malloc(sizeof(real_t)*sz);
+                if (neu->wt_c == NULL) {
+                    ST_WARNING("Failed to malloc wt_c.");
+                    goto ERR;
+                }
+                memset(neu->wt_c, 0, sizeof(real_t)*sz);
+
+                sz = train_opt->param.mini_batch*sizeof(hash_hist_t);
+                neu->hash_hist_c = (hash_hist_t *) malloc(sz);
+                if (neu->hash_hist_c == NULL) {
+                    ST_WARNING("Failed to malloc hash_hist_c.");
+                    goto ERR;
+                }
+                memset(neu->hash_hist_c, 0, sz);
+
+                sz = sizeof(hash_t) * order;
+                for (i = 0; i < train_opt->param.mini_batch; i++) {
+                    neu->hash_hist_c[i].range = (hash_range_t *)malloc(sz);
+                    if (neu->hash_hist_c[i].range == NULL) {
+                        ST_WARNING("Failed to malloc hash_hist_c->range.");
+                        goto ERR;
+                    }
+                    memset(neu->hash_hist_c[i].range, 0, sz);
+                }
+            }
+        }
     }
 
     return 0;
@@ -988,6 +1126,20 @@ ERR:
         safe_free(maxent->neurons[i].hist);
         safe_free(maxent->neurons[i].hash_w);
         safe_free(maxent->neurons[i].hash_c);
+        if (maxent->neurons[i].hash_hist_w != NULL) {
+            for (j = 0; j < maxent->train_opt.param.mini_batch; j++) {
+                safe_free(maxent->neurons[i].hash_hist_w[j].range);
+            }
+            safe_free(maxent->neurons[i].hash_hist_w);
+        }
+        if (maxent->neurons[i].hash_hist_c != NULL) {
+            for (j = 0; j < maxent->train_opt.param.mini_batch; j++) {
+                safe_free(maxent->neurons[i].hash_hist_c[j].range);
+            }
+            safe_free(maxent->neurons[i].hash_hist_c);
+        }
+        safe_free(maxent->neurons[i].wt_w);
+        safe_free(maxent->neurons[i].wt_c);
     }
     safe_free(maxent->neurons);
 
@@ -1005,6 +1157,8 @@ int maxent_reset_train(maxent_t *maxent, int tid)
 
     neu = maxent->neurons + tid;
 
+    neu->step = 0;
+
     order = maxent->model_opt.order;
     for (i = 0; i < order; i++) {
         neu->hist[i] = -1;
@@ -1018,20 +1172,221 @@ int maxent_start_train(maxent_t *maxent, int word, int tid)
     return 0;
 }
 
+static int maxent_union_insert(hash_range_t *range, int *n_range,
+        hash_t s, hash_t e)
+{
+    int i;
+    int j;
+    int n;
+
+    ST_CHECK_PARAM_EX(range == NULL || n_range == NULL
+            || s < 0 || e < 0 || s >= e, -1, "%lld, %lld", s, e);
+
+    n = *n_range;
+
+    if (e < range[0].s) {
+        memmove(range + 1, range, sizeof(hash_range_t)*n);
+        range[0].s = s;
+        range[0].e = e;
+        (*n_range)++;
+        return 0;
+    } else if (e == range[0].s) {
+        range[0].s = s;
+        return 0;
+    }
+
+    // skip non-intersected sets
+    for (i = 0; i < n; i++) {
+        if (s <= range[i].e) {
+            break;
+        }
+    }
+
+    if (i == n) {
+        range[n].s = s;
+        range[n].e = e;
+
+        (*n_range)++;
+        return 0;
+    }
+
+    if (e < range[i].s) { // insert new set before ith
+        memmove(range + i + 1, range + i,
+                sizeof(hash_range_t) * (n - i));
+        range[i].s = s;
+        range[i].e = e;
+        (*n_range)++;
+    } else {// forward extend the ith set
+        for (j = i + 1; j < n; j++) {
+            if (e <= range[j].s) {
+                break;
+            }
+        }
+
+        range[i].s = min(s, range[i].s);
+        if (j == n || e < range[j].s) {
+            range[i].e = max(e, range[j - 1].e);
+            if (j < n) {
+                memmove(range + i + 1, range + j,
+                        sizeof(hash_range_t) * (n - j));
+            }
+            *n_range -= (j - i - 1);
+        } else {
+            range[i].e = max(e, range[j].e);
+
+            if (j + 1 < n) {
+                memmove(range + i + 1, range + j + 1,
+                        sizeof(hash_range_t) * (n - (j + 1)));
+            }
+            *n_range -= (j - i);
+        }
+    }
+
+    return 0;
+}
+
+int maxent_union(hash_range_t *range, int *n_range, hash_range_t *hash,
+        int num_hash, hash_size_t sz_hash)
+{
+    hash_t s;
+    hash_t e;
+
+    int i;
+
+    ST_CHECK_PARAM(range == NULL || n_range == NULL
+            || *n_range < 0  || hash == NULL, -1);
+
+    for (i = 0; i < num_hash; i++) {
+        if (hash[i].s + hash[i].num > sz_hash) {
+            s = hash[i].s;
+            e = sz_hash;
+            if (maxent_union_insert(range, n_range, s, e) < 0) {
+                ST_WARNING("Failed to maxent_union_insert.");
+                return -1;
+            }
+
+            s = 0;
+            e = hash[i].num - (sz_hash - hash[i].s);
+            if (maxent_union_insert(range, n_range, s, e) < 0) {
+                ST_WARNING("Failed to maxent_union_insert.");
+                return -1;
+            }
+        } else {
+            s = hash[i].s;
+            e = hash[i].s + hash[i].num;
+            if (maxent_union_insert(range, n_range, s, e) < 0) {
+                ST_WARNING("Failed to maxent_union_insert.");
+                return -1;
+            }
+        }
+    }
+
+    return 0;
+}
+
+static int maxent_update_minibatch(maxent_t *maxent, int tid)
+{
+    maxent_neuron_t *neu;
+
+    hash_t s;
+    hash_t e;
+    hash_size_t sz;
+
+    int i;
+    int n;
+    int h;
+
+    ST_CHECK_PARAM(maxent == NULL || tid < 0, -1);
+
+    neu = maxent->neurons + tid;
+
+    if (maxent->class_size > 0 && neu->hash_hist_c_num > 0) {
+        sz = maxent->model_opt.sz_c;
+        n = 0;
+        for (h = 0; h < neu->hash_hist_c_num; h++) {
+            if (maxent_union(neu->hash_union, &n,
+                        neu->hash_hist_c[h].range,
+                        neu->hash_hist_c[h].order, sz) < 0) {
+                ST_WARNING("Failed to maxent_union.");
+                return -1;
+            }
+        }
+
+        for (i = 0; i < n; i++) {
+            s = neu->hash_union[i].s;
+            e = neu->hash_union[i].e;
+            param_update(&maxent->train_opt.param,
+                    &neu->param_arg_c, (i == n - 1),
+                    maxent->wt_c + s,
+                    neu->wt_c + s,
+                    maxent->model_opt.scale,
+                    e - s,
+                    NULL,
+                    -1);
+            memset(neu->wt_c + s, 0, sizeof(real_t) * (e - s));
+        }
+        neu->hash_hist_c_num = 0;
+    }
+
+    if (neu->hash_hist_w_num > 0) {
+        sz = maxent->model_opt.sz_w;
+        n = 0;
+        for (h = 0; h < neu->hash_hist_w_num; h++) {
+            if (maxent_union(neu->hash_union, &n,
+                        neu->hash_hist_w[h].range,
+                        neu->hash_hist_w[h].order,
+                        sz) < 0) {
+                ST_WARNING("Failed to maxent_union.");
+                return -1;
+            }
+        }
+
+        for (i = 0; i < n; i++) {
+            s = neu->hash_union[i].s;
+            e = neu->hash_union[i].e;
+            param_update(&maxent->train_opt.param,
+                    &neu->param_arg_w, (i == n - 1),
+                    maxent->wt_w + s,
+                    neu->wt_w + s,
+                    maxent->model_opt.scale,
+                    e - s,
+                    NULL,
+                    -1);
+            memset(neu->wt_w + s, 0, sizeof(real_t) * (e - s));
+        }
+        neu->hash_hist_w_num = 0;
+    }
+
+    return 0;
+}
+
 int maxent_end_train(maxent_t *maxent, int word, int tid)
 {
     maxent_neuron_t *neu;
 
+    int mini_batch;
     int i;
 
     ST_CHECK_PARAM(maxent == NULL || tid < 0, -1);
 
+    mini_batch = maxent->train_opt.param.mini_batch;
     neu = maxent->neurons + tid;
 
     for (i = maxent->model_opt.order - 1; i > 0; i--) {
         neu->hist[i] = neu->hist[i - 1];
     }
     neu->hist[0] = word;
+    neu->step++;
+
+    if (mini_batch > 0) {
+        if (neu->step % mini_batch == 0) {// || word == 0) {
+            if (maxent_update_minibatch(maxent, tid) < 0) {
+                ST_WARNING("Failed to maxent_update_minibatch. [%d]",
+                        neu->step);
+                return -1;
+            }
+        }
+    }
 
     return 0;
 }
@@ -1039,6 +1394,13 @@ int maxent_end_train(maxent_t *maxent, int word, int tid)
 int maxent_finish_train(maxent_t *maxent, int tid)
 {
     ST_CHECK_PARAM(maxent == NULL || tid < 0, -1);
+
+    if (maxent->train_opt.param.mini_batch > 0) {
+        if (maxent_update_minibatch(maxent, tid) < 0) {
+            ST_WARNING("Failed to maxent_update_minibatch.");
+            return -1;
+        }
+    }
 
     return 0;
 }
@@ -1125,6 +1487,11 @@ int maxent_reset_test(maxent_t *maxent, int tid)
     order = maxent->model_opt.order;
     for (i = 0; i < order; i++) {
         neu->hist[i] = -1;
+    }
+
+    if (maxent->train_opt.param.mini_batch > 0) {
+        neu->hash_hist_c_num = 0;
+        neu->hash_hist_w_num = 0;
     }
 
     return 0;

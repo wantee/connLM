@@ -13,8 +13,10 @@ env:
   matrix:
     - CASE=1
     - CASE=2
+    - CASE=3
 script: 
   - source tools/shutils/shutils.sh
+  - if [ $CASE -eq 2 ]; then make -C src test; fi
   - cd egs/tiny; shu-testing $CASE
 notifications:
   email:

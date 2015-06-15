@@ -1,5 +1,11 @@
 GCC = gcc
  
+BINDIR = ../bin
+OUTLIBDIR = ../lib
+OUTINCDIR = ../include/connlm
+BIN_OBJ = ./bin_obj
+SO_OBJ = ./so_obj
+
 UNAME_S := $(shell uname -s)
 ifeq ($(UNAME_S),Darwin)
 LDFLAGS+=
@@ -10,7 +16,9 @@ endif
 CFLAGS += -I../tools/stutils/include/stutils/
 LDFLAGS += -L../tools/stutils/lib/
 LDFLAGS += -lstutils -lpthread
-LDFLAGS += -Wl,-rpath '-Wl,$$ORIGIN'
+LDFLAGS += -Wl,-rpath,'$$ORIGIN'
+LDFLAGS += -Wl,-rpath,$(shell pwd)/$(OUTLIBDIR)
+LDFLAGS += -Wl,-rpath,$(shell pwd)/../tools/stutils/lib/
 
 real_type=float
 CFLAGS += -D REAL_TYPE=$(real_type)
@@ -29,6 +37,8 @@ ifndef CONNLM_NO_OPT
   CFLAGS += -O3
   endif
   CFLAGS += -march=native -funroll-loops -ffast-math
+else
+  CFLAGS += -O0
 endif
 
 #CFLAGS += -D_MAT_X_VEC_RAW_
@@ -38,12 +48,6 @@ CFLAGS += -DNDEBUG
 #CFLAGS += -pg
 #LDFLAGS += -pg
 
-BINDIR = ../bin
-OUTLIBDIR = ../lib
-OUTINCDIR = ../include/connlm
-BIN_OBJ = ./bin_obj
-SO_OBJ = ./so_obj
-
 INC = connlm.h vocab.h output.h param.h rnn.h maxent.h lbl.h ffnn.h
 TARGET_INC = $(addprefix $(OUTINCDIR)/, $(INC))
 
@@ -52,7 +56,7 @@ OBJ_SO = utils.o vocab.o output.o param.o rnn.o maxent.o lbl.o ffnn.o \
 
 ifeq ($(UNAME_S),Darwin)
 TARGET_SO = $(OUTLIBDIR)/libconnlm.dylib
-SO_FLAGS = -dynamiclib
+SO_FLAGS = -dynamiclib -install_name $(shell pwd)/$(TARGET_SO)
 else
 TARGET_SO = $(OUTLIBDIR)/libconnlm.so
 SO_FLAGS = -shared
@@ -62,6 +66,10 @@ BIN = connlm-train connlm-test connlm-info connlm-copy \
       connlm-vocab connlm-init connlm-output
 
 TARGET_BIN = $(addprefix $(BINDIR)/, $(BIN))
+
+TEST_BIN = maxent-test
+
+TARGET_TEST_BIN = $(addprefix $(BINDIR)/, $(TEST_BIN))
 
 .PHONY: all clean preparedir
 
@@ -86,8 +94,9 @@ $(TARGET_SO) : $(addprefix $(SO_OBJ)/, $(OBJ_SO))
 $(BIN_OBJ)/%.o : %.c
 	$(GCC) $(CFLAGS) -c -o $@ $^ 
 
-$(TARGET_BIN) : $(BINDIR)/connlm-%: $(addprefix $(BIN_OBJ)/, connlm-%.o) $(TARGET_SO) $(TARGET_INC)
-	$(GCC) $(CFLAGS) -o $@ $< $(LDFLAGS) -L$(OUTLIBDIR) -lconnlm 
+$(TARGET_BIN) : $(BINDIR)/connlm-%: $(addprefix $(BIN_OBJ)/, connlm-%.o) \
+                $(TARGET_SO) $(TARGET_INC)
+	$(GCC) $(CFLAGS) -o $@ $< -L$(OUTLIBDIR) -lconnlm $(LDFLAGS) 
 
 lint-check : *.h *.cpp *.c
 	splint +posixlib +D__gnuc_va_list=int -fileextensions $^ 
@@ -104,4 +113,10 @@ clean:
 gen-doc:
 	doxygen doc/Doxyfile
 	cd html && git add * && git commit -a -m"generate doc on $(shell date)" && git push origin gh-pages
+
+$(TARGET_TEST_BIN) : $(BINDIR)/%-test: $(addprefix $(BIN_OBJ)/, %-test.o) $(TARGET_SO) $(TARGET_INC)
+	$(GCC) $(CFLAGS) -o $@ $< $(LDFLAGS) -L$(OUTLIBDIR) -lconnlm
+
+test: preparedir $(TARGET_TEST_BIN)
+	@result=0; for x in $(TARGET_TEST_BIN); do printf "Running $$x ..."; ./$$x >/dev/null 2>&1; if [ $$? -ne 0 ]; then echo "... FAIL $$x"; result=1; else echo "... SUCCESS";  fi;  done; exit $$result
 

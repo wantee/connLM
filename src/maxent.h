@@ -47,6 +47,19 @@ typedef struct _maxent_train_opt_t {
     param_t param;
 } maxent_train_opt_t;
 
+typedef struct _hash_range_t_ {
+    hash_t s;
+    union {
+        hash_t e;
+        hash_t num;
+    };
+} hash_range_t;
+
+typedef struct _hash_hist_t_ {
+    int order;
+    hash_range_t *range;
+} hash_hist_t;
+
 typedef struct _maxent_neuron_t_ {
     param_arg_t param_arg_c;
     param_arg_t param_arg_w;
@@ -59,6 +72,17 @@ typedef struct _maxent_neuron_t_ {
     int hash_order_c;
     int hash_order_w;
 #endif
+    int step;
+
+    // caches for mini-batch
+    hash_range_t *hash_union;
+    int max_hash_hist_num;
+    hash_hist_t *hash_hist_c;
+    int hash_hist_c_num;
+    hash_hist_t *hash_hist_w;
+    int hash_hist_w_num;
+    real_t *wt_c;
+    real_t *wt_w;
 } maxent_neuron_t;
 
 typedef struct _maxent_t_ {
@@ -115,6 +139,8 @@ int maxent_reset_test(maxent_t *maxent, int tid);
 int maxent_start_test(maxent_t *maxent, int word, int tid);
 int maxent_end_test(maxent_t *maxent, int word, int tid);
 
+int maxent_union(hash_range_t *range, int *n_range, hash_range_t *hash,
+        int num_hash, hash_size_t sz_hash);
 #ifdef __cplusplus
 }
 #endif
