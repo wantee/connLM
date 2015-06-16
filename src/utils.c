@@ -38,6 +38,8 @@
 #    include <mkl.h>
 #  elif defined(_HAVE_ATLAS_)
 #    include <cblas.h>
+#  elif defined(_HAVE_ACCELERATE_)
+#    include <Accelerate/Accelerate.h>
 #  else
 #    warn "No MKL or ATLAS included, fallback to Non-Blas"
 #    undef _USE_BLAS_
@@ -54,7 +56,7 @@ void matXvec(real_t *dst, real_t *mat, real_t *vec,
 
 #ifdef _USE_BLAS_
     cblas_sgemv(CblasRowMajor, CblasNoTrans, mat_row, in_vec_size, scale,
-            mat, in_vec_size, vec, 1, 0.0, dst, 1);
+            mat, in_vec_size, vec, 1, 1.0, dst, 1);
 #elif defined(_MAT_X_VEC_RAW_)
     for (i = 0; i < mat_row; i++) {
         for (j = 0; j < in_vec_size; j++) {
@@ -114,33 +116,6 @@ void matXvec(real_t *dst, real_t *mat, real_t *vec,
         }
     }
 #endif
-
-#if _MAT_X_VEC_DEBUG_
-    fprintf(stderr, "MATRIX X VECTOR\n");
-    fprintf(stderr, "M: %d, N: %d\n", mat_row, in_vec_size);
-    fprintf(stderr, "MATRIX: \n");
-    for (i = 0; i < mat_row; i++) {
-        for (j = 0; j < in_vec_size; j++) {
-            fprintf(stderr, "%g ", mat[i*in_vec_size+j]);
-        }
-        fprintf(stderr, "\n");
-    }
-    fprintf(stderr, "\n");
-
-    fprintf(stderr, "VECTOR: \n");
-    for (j = 0; j < in_vec_size; j++) {
-        fprintf(stderr, "%g\n", vec[j]);
-    }
-    fprintf(stderr, "\n");
-
-    fprintf(stderr, "DST: \n");
-    for (j = 0; j < mat_row; j++) {
-        fprintf(stderr, "%g ", dst[j]);
-    }
-    fprintf(stderr, "\n\n");
-
-    fflush(stderr);
-#endif
 }
 
 void vecXmat(real_t *dst, real_t *vec, real_t *mat,
@@ -153,7 +128,7 @@ void vecXmat(real_t *dst, real_t *vec, real_t *mat,
 
 #ifdef _USE_BLAS_
     cblas_sgemv(CblasRowMajor, CblasTrans, in_vec_size, mat_col, scale,
-            mat, mat_col, vec, 1, 0.0, dst, 1);
+            mat, mat_col, vec, 1, 1.0, dst, 1);
 #elif defined(_MAT_X_VEC_RAW_)
     for (i = 0; i < mat_col; i++) {
         for (j = 0; j < in_vec_size; j++) {
@@ -212,33 +187,6 @@ void vecXmat(real_t *dst, real_t *vec, real_t *mat,
             dst[i] += vec[j] * mat[i + j*mat_col] * scale;
         }
     }
-#endif
-
-#if _MAT_X_VEC_DEBUG_
-    fprintf(stderr, "VECTOR X MATRIX\n");
-    fprintf(stderr, "M: %d, N: %d\n", in_vec_size, mat_col);
-    fprintf(stderr, "MATRIX: \n");
-    for (i = 0; i < in_vec_size; i++) {
-        for (j = 0; j < mat_col; j++) {
-            fprintf(stderr, "%g ", mat[i*mat_col+j]);
-        }
-        fprintf(stderr, "\n");
-    }
-    fprintf(stderr, "\n");
-
-    fprintf(stderr, "VECTOR: \n");
-    for (j = 0; j < in_vec_size; j++) {
-        fprintf(stderr, "%g ", vec[j]);
-    }
-    fprintf(stderr, "\n\n");
-
-    fprintf(stderr, "DST: \n");
-    for (j = 0; j < mat_col; j++) {
-        fprintf(stderr, "%g ", dst[j]);
-    }
-    fprintf(stderr, "\n\n");
-
-    fflush(stderr);
 #endif
 }
 

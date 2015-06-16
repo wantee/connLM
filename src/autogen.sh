@@ -48,7 +48,12 @@ if [ "`uname`" == "Linux" ]; then
   fi
 
 elif [ "`uname`" == "Darwin" ]; then
-  echo "Darwin"
+  if [ -e /System/Library/Frameworks/Accelerate.framework ]; then
+    echo "Using Accelerate framework for blas"
+    echo "CFLAGS += -D_USE_BLAS_" >> $mkfile
+    echo "CFLAGS += -D_HAVE_ACCELERATE_" >> $mkfile
+    echo "LDFLAGS += -framework Accelerate" >> $mkfile
+  fi
 fi
 
 echo "Finish autogen"

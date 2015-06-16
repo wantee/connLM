@@ -67,7 +67,7 @@ BIN = connlm-train connlm-test connlm-info connlm-copy \
 
 TARGET_BIN = $(addprefix $(BINDIR)/, $(BIN))
 
-TEST_BIN = maxent-test
+TEST_BIN = maxent-test utils-test
 
 TARGET_TEST_BIN = $(addprefix $(BINDIR)/, $(TEST_BIN))
 
