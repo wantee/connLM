@@ -30,9 +30,11 @@ $ make
 Quick tests:
 
 ```shell
-$ cd $CONNLM_HOME
+$ cd $CONNLM_HOME/src
 $ make clean
-$ CONNLM_NO_OPT=1 make -C src
+$ make test
+$ CONNLM_NO_OPT=1 make
+$ cd ..
 $ source tools/shutils/shutils.sh
 $ cd egs/tiny
 $ shu-testing
