@@ -7,12 +7,11 @@ VAL_FD=10
 VAL_RUN=1
 
 if [ -n "$VAL_EXES" ]; then
-  rm -f $VAL_OUT
   eval "exec $VAL_FD>> $VAL_OUT"
 
   shopt -s expand_aliases
   for x in $VAL_EXES; do
-    alias $x="echo \"Run \$VAL_RUN\" >> $VAL_OUT; VAL_RUN=\$((VAL_RUN+1));valgrind --log-fd=$VAL_FD $x"
+    alias $x="echo \"Run \$VAL_RUN: `date`\" >> $VAL_OUT; VAL_RUN=\$((VAL_RUN+1));valgrind --log-fd=$VAL_FD $x"
   done
 fi
 
@@ -24,7 +23,7 @@ function val_exit()
 
   eval "exec $VAL_FD<&-"
 
-  echo "Checking valgrind log from $VAL_OUT"
+#  echo "Checking valgrind log from $VAL_OUT"
   perl -e '$pr = -1;
            while(<>) { 
              if (m/^Run (\d+)$/) {

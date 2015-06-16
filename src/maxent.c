@@ -188,6 +188,7 @@ void maxent_destroy(maxent_t *maxent)
             }
             safe_free(maxent->neurons[i].hash_hist_c);
         }
+        safe_free(maxent->neurons[i].hash_union);
         safe_free(maxent->neurons[i].wt_w);
         safe_free(maxent->neurons[i].wt_c);
     }
@@ -1107,7 +1108,7 @@ int maxent_setup_train(maxent_t *maxent, maxent_train_opt_t *train_opt,
                 }
                 memset(neu->hash_hist_c, 0, sz);
 
-                sz = sizeof(hash_t) * order;
+                sz = sizeof(hash_range_t) * order;
                 for (i = 0; i < train_opt->param.mini_batch; i++) {
                     neu->hash_hist_c[i].range = (hash_range_t *)malloc(sz);
                     if (neu->hash_hist_c[i].range == NULL) {
@@ -1138,6 +1139,7 @@ ERR:
             }
             safe_free(maxent->neurons[i].hash_hist_c);
         }
+        safe_free(maxent->neurons[i].hash_union);
         safe_free(maxent->neurons[i].wt_w);
         safe_free(maxent->neurons[i].wt_c);
     }
