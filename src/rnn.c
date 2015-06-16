@@ -32,7 +32,6 @@
 #include <st_utils.h>
 #include <st_log.h>
 
-#include "fastexp.h"
 #include "utils.h"
 #include "rnn.h"
 

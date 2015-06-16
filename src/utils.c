@@ -30,31 +30,31 @@
 #include <st_utils.h>
 
 #include "config.h"
-#include "fastexp.h"
 #include "utils.h"
+#include "fastexp.h"
 
-#ifdef _TIME_PROF_
-struct timeval matXvec_start, matXvec_end;
-long long matXvec_total = 0;
-
-struct timeval vecXmat_start, vecXmat_end;
-long long vecXmat_total = 0;
-
-struct timeval softmax_start, softmax_end;
-long long softmax_total = 0;
+#ifdef _USE_BLAS_
+#  ifdef _HAVE_MKL_
+#    include <mkl.h>
+#  elif defined(_HAVE_ATLAS_)
+#    include <cblas.h>
+#  else
+#    warn "No MKL or ATLAS included, fallback to Non-Blas"
+#    undef _USE_BLAS_
+#  endif
 #endif
 
 void matXvec(real_t *dst, real_t *mat, real_t *vec,
         int mat_row, int in_vec_size, real_t scale)
 {
+#ifndef _USE_BLAS_
     int i;
     int j;
-
-#ifdef _TIME_PROF_
-    gettimeofday(&matXvec_start, NULL);
 #endif
 
-#ifdef _MAT_X_VEC_OPENMP_
+#ifdef _USE_BLAS_
+    cblas_sgemv(CblasRowMajor, CblasNoTrans, mat_row, in_vec_size, scale,
+            mat, in_vec_size, vec, 1, 0.0, dst, 1);
 #elif defined(_MAT_X_VEC_RAW_)
     for (i = 0; i < mat_row; i++) {
         for (j = 0; j < in_vec_size; j++) {
@@ -115,11 +115,6 @@ void matXvec(real_t *dst, real_t *mat, real_t *vec,
     }
 #endif
 
-#ifdef _TIME_PROF_
-    gettimeofday(&matXvec_end, NULL);
-    matXvec_total += UTIMEDIFF(matXvec_start, matXvec_end);
-#endif
-
 #if _MAT_X_VEC_DEBUG_
     fprintf(stderr, "MATRIX X VECTOR\n");
     fprintf(stderr, "M: %d, N: %d\n", mat_row, in_vec_size);
@@ -151,14 +146,14 @@ void matXvec(real_t *dst, real_t *mat, real_t *vec,
 void vecXmat(real_t *dst, real_t *vec, real_t *mat,
         int mat_col, int in_vec_size, real_t scale)
 {
+#ifndef _USE_BLAS_
     int i;
     int j;
-
-#ifdef _TIME_PROF_
-    gettimeofday(&vecXmat_start, NULL);
 #endif
 
-#ifdef _MAT_X_VEC_OPENMP_
+#ifdef _USE_BLAS_
+    cblas_sgemv(CblasRowMajor, CblasTrans, in_vec_size, mat_col, scale,
+            mat, mat_col, vec, 1, 0.0, dst, 1);
 #elif defined(_MAT_X_VEC_RAW_)
     for (i = 0; i < mat_col; i++) {
         for (j = 0; j < in_vec_size; j++) {
@@ -219,11 +214,6 @@ void vecXmat(real_t *dst, real_t *vec, real_t *mat,
     }
 #endif
 
-#ifdef _TIME_PROF_
-    gettimeofday(&vecXmat_end, NULL);
-    vecXmat_total += UTIMEDIFF(vecXmat_start, vecXmat_end);
-#endif
-
 #if _MAT_X_VEC_DEBUG_
     fprintf(stderr, "VECTOR X MATRIX\n");
     fprintf(stderr, "M: %d, N: %d\n", in_vec_size, mat_col);
@@ -275,10 +265,6 @@ void softmax(real_t *vec, int vec_size)
 
     int i;
 
-#ifdef _TIME_PROF_
-    gettimeofday(&softmax_start, NULL);
-#endif
-
     max = -FLT_MAX;
     sum = 0;
 
@@ -296,12 +282,6 @@ void softmax(real_t *vec, int vec_size)
     for (i = 0; i < vec_size; i++) {
         vec[i] = vec[i] / sum;
     }
-
-#ifdef _TIME_PROF_
-    gettimeofday(&softmax_end, NULL);
-    softmax_total += UTIMEDIFF(softmax_start, softmax_end);
-#endif
-
 }
 
 real_t rrandom(real_t min, real_t max)

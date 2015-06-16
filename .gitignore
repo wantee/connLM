@@ -27,3 +27,4 @@ exp/
 tmp/
 output/
 nohup.out
+blas.mk

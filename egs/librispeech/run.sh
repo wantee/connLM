@@ -15,7 +15,7 @@ conf_dir=./conf/
 exp_dir=./exp/
 
 #class_size=""
-class_size="50;100;150;200;250"
+class_size="50;100;150;200;250;300;350;400;450;500"
 tr_thr=12
 test_thr=12
 

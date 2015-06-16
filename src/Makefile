@@ -1,10 +1,25 @@
-GCC = gcc
+CC = gcc
  
 BINDIR = ../bin
 OUTLIBDIR = ../lib
 OUTINCDIR = ../include/connlm
 BIN_OBJ = ./bin_obj
 SO_OBJ = ./so_obj
+
+ifndef CONNLM_NO_OPT 
+  ifeq ($(shell echo 'int main(){return 0;}' | $(CC) -xc - -Ofast -o /dev/null >/dev/null 2>&1 ; echo $$?),0)
+  CFLAGS += -Ofast
+  else
+  CFLAGS += -O3
+  endif
+  CFLAGS += -march=native -funroll-loops
+  ifneq ($(CC), "icc")
+    CFLAGS += -ffast-math
+  endif
+  include ./blas.mk
+else
+  CFLAGS += -O0
+endif
 
 UNAME_S := $(shell uname -s)
 ifeq ($(UNAME_S),Darwin)
@@ -29,24 +44,9 @@ CFLAGS += -D REAL_FMT="\"%f\""
 endif
 
 CFLAGS += -g -Wall -Winline -pipe 
-
-ifndef CONNLM_NO_OPT 
-  ifeq ($(shell echo 'int main(){return 0;}' | gcc -xc - -Ofast -o /dev/null >/dev/null 2>&1 ; echo $$?),0)
-  CFLAGS += -Ofast
-  else
-  CFLAGS += -O3
-  endif
-  CFLAGS += -march=native -funroll-loops -ffast-math
-else
-  CFLAGS += -O0
-endif
-
+CFLAGS += -DNDEBUG
 #CFLAGS += -D_MAT_X_VEC_RAW_
 
-#CFLAGS += -D_TIME_PROF_
-CFLAGS += -DNDEBUG
-#CFLAGS += -pg
-#LDFLAGS += -pg
 
 INC = connlm.h vocab.h output.h param.h rnn.h maxent.h lbl.h ffnn.h
 TARGET_INC = $(addprefix $(OUTINCDIR)/, $(INC))
@@ -86,17 +86,17 @@ $(TARGET_INC) : $(INC)
 	cp $^ ${OUTINCDIR}
 
 $(SO_OBJ)/%.o : %.c 
-	$(GCC) $(CFLAGS) -fPIC -c -o $@ $<
+	$(CC) $(CFLAGS) -fPIC -c -o $@ $<
 
 $(TARGET_SO) : $(addprefix $(SO_OBJ)/, $(OBJ_SO))
-	$(GCC) $(CFLAGS) $(SO_FLAGS) -o $@ $^ $(LDFLAGS)
+	$(CC) $(CFLAGS) $(SO_FLAGS) -o $@ $^ $(LDFLAGS)
 
 $(BIN_OBJ)/%.o : %.c
-	$(GCC) $(CFLAGS) -c -o $@ $^ 
+	$(CC) $(CFLAGS) -c -o $@ $^ 
 
 $(TARGET_BIN) : $(BINDIR)/connlm-%: $(addprefix $(BIN_OBJ)/, connlm-%.o) \
                 $(TARGET_SO) $(TARGET_INC)
-	$(GCC) $(CFLAGS) -o $@ $< -L$(OUTLIBDIR) -lconnlm $(LDFLAGS) 
+	$(CC) $(CFLAGS) -o $@ $< -L$(OUTLIBDIR) -lconnlm $(LDFLAGS) 
 
 lint-check : *.h *.cpp *.c
 	splint +posixlib +D__gnuc_va_list=int -fileextensions $^ 
@@ -115,7 +115,7 @@ gen-doc:
 	cd html && git add * && git commit -a -m"generate doc on $(shell date)" && git push origin gh-pages
 
 $(TARGET_TEST_BIN) : $(BINDIR)/%-test: $(addprefix $(BIN_OBJ)/, %-test.o) $(TARGET_SO) $(TARGET_INC)
-	$(GCC) $(CFLAGS) -o $@ $< $(LDFLAGS) -L$(OUTLIBDIR) -lconnlm
+	$(CC) $(CFLAGS) -o $@ $< $(LDFLAGS) -L$(OUTLIBDIR) -lconnlm
 
 test: preparedir $(TARGET_TEST_BIN)
 	@result=0; for x in $(TARGET_TEST_BIN); do printf "Running $$x ..."; ./$$x >/dev/null 2>&1; if [ $$? -ne 0 ]; then echo "... FAIL $$x"; result=1; else echo "... SUCCESS";  fi;  done; exit $$result
