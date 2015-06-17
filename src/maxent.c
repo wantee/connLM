@@ -129,7 +129,7 @@ int maxent_init(maxent_t **pmaxent, maxent_model_opt_t *model_opt,
     maxent->class_size = class_size;
     maxent->vocab_size = vocab_size;
 
-    maxent->wt_w = (real_t *) malloc(sizeof(real_t)*model_opt->sz_w);
+    posix_memalign((void **)&maxent->wt_w, ALIGN_SIZE, sizeof(real_t) * model_opt->sz_w);
     if (maxent->wt_w == NULL) {
         ST_WARNING("Failed to malloc wt_w.");
         goto ERR;
@@ -140,7 +140,7 @@ int maxent_init(maxent_t **pmaxent, maxent_model_opt_t *model_opt,
     }
 
     if (maxent->class_size > 0) {
-        maxent->wt_c = (real_t *) malloc(sizeof(real_t)*model_opt->sz_c);
+        posix_memalign((void **)&maxent->wt_c, ALIGN_SIZE, sizeof(real_t) * model_opt->sz_c);
         if (maxent->wt_c == NULL) {
             ST_WARNING("Failed to malloc wt_c.");
             goto ERR;
@@ -210,7 +210,7 @@ maxent_t* maxent_dup(maxent_t *m)
     *maxent = *m;
     maxent->model_opt = m->model_opt;
 
-    maxent->wt_w = (real_t *) malloc(sizeof(real_t)*m->model_opt.sz_w);
+    posix_memalign((void **)&maxent->wt_w, ALIGN_SIZE, sizeof(real_t) * m->model_opt.sz_w);
     if (maxent->wt_w == NULL) {
         ST_WARNING("Failed to malloc wt_w.");
         goto ERR;
@@ -218,7 +218,7 @@ maxent_t* maxent_dup(maxent_t *m)
     memcpy(maxent->wt_w, m->wt_w, sizeof(real_t)*m->model_opt.sz_w);
 
     if (maxent->class_size > 0) {
-        maxent->wt_c = (real_t *) malloc(sizeof(real_t)*m->model_opt.sz_c);
+        posix_memalign((void **)&maxent->wt_c, ALIGN_SIZE, sizeof(real_t) * m->model_opt.sz_c);
         if (maxent->wt_c == NULL) {
             ST_WARNING("Failed to malloc wt_c.");
             goto ERR;
@@ -400,7 +400,7 @@ int maxent_load_body(maxent_t *maxent, FILE *fp, bool binary)
     ST_CHECK_PARAM(maxent == NULL || fp == NULL, -1);
 
     sz = maxent->model_opt.sz_w;
-    maxent->wt_w = (real_t *) malloc(sizeof(real_t) * sz);
+    posix_memalign((void **)&maxent->wt_w, ALIGN_SIZE, sizeof(real_t) * sz);
     if (maxent->wt_w == NULL) {
         ST_WARNING("Failed to malloc wt_w.");
         goto ERR;
@@ -408,7 +408,7 @@ int maxent_load_body(maxent_t *maxent, FILE *fp, bool binary)
 
     if (maxent->class_size > 0) {
         sz = maxent->model_opt.sz_c;
-        maxent->wt_c = (real_t *) malloc(sizeof(real_t) * sz);
+        posix_memalign((void **)&maxent->wt_c, ALIGN_SIZE, sizeof(real_t) * sz);
         if (maxent->wt_c == NULL) {
             ST_WARNING("Failed to malloc wt_c.");
             goto ERR;
@@ -1058,7 +1058,7 @@ int maxent_setup_train(maxent_t *maxent, maxent_train_opt_t *train_opt,
 
         if (train_opt->param.mini_batch > 0) {
             sz = maxent->model_opt.sz_w;
-            neu->wt_w = (real_t *) malloc(sizeof(real_t)*sz);
+            posix_memalign((void **)&neu->wt_w, ALIGN_SIZE, sizeof(real_t) * sz);
             if (neu->wt_w == NULL) {
                 ST_WARNING("Failed to malloc wt_w.");
                 goto ERR;
@@ -1093,7 +1093,7 @@ int maxent_setup_train(maxent_t *maxent, maxent_train_opt_t *train_opt,
 
             if (maxent->class_size > 0) {
                 sz = maxent->model_opt.sz_c;
-                neu->wt_c = (real_t *) malloc(sizeof(real_t)*sz);
+                posix_memalign((void **)&neu->wt_c, ALIGN_SIZE, sizeof(real_t) * sz);
                 if (neu->wt_c == NULL) {
                     ST_WARNING("Failed to malloc wt_c.");
                     goto ERR;

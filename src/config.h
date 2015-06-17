@@ -46,6 +46,8 @@ typedef unsigned long long hash_t;
 typedef long long hash_size_t;
 #define HASH_SIZE_FMT "%lld"
 
+#define ALIGN_SIZE 128
+
 #ifdef __cplusplus
 }
 #endif
