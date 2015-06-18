@@ -13,7 +13,7 @@ ifndef CONNLM_NO_OPT
   CFLAGS += -O3
   endif
   CFLAGS += -march=native -funroll-loops
-  ifneq ($(CC), "icc")
+  ifneq ($(CC),icc)
     CFLAGS += -ffast-math
   endif
   include ./blas.mk
@@ -45,7 +45,6 @@ endif
 
 CFLAGS += -g -Wall -Winline -pipe 
 CFLAGS += -DNDEBUG
-#CFLAGS += -D_MAT_X_VEC_RAW_
 
 
 INC = connlm.h vocab.h output.h param.h rnn.h maxent.h lbl.h ffnn.h
@@ -67,7 +66,7 @@ BIN = connlm-train connlm-test connlm-info connlm-copy \
 
 TARGET_BIN = $(addprefix $(BINDIR)/, $(BIN))
 
-TEST_BIN = maxent-test utils-test
+TEST_BIN = maxent-test utils-test param-test
 
 TARGET_TEST_BIN = $(addprefix $(BINDIR)/, $(TEST_BIN))
 

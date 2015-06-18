@@ -122,11 +122,21 @@ typedef union { v4si i; int array[4]; } v4siindexer;
   })
 
 typedef union { v4sf f; v4si i; } v4sfv4sipun;
+/*
 #define v4sf_fabs(x)                    \
   ({                                    \
      v4sfv4sipun vx;                    \
      vx.f = x;                          \
      vx.i &= v4sil (0x7FFFFFFF);        \
+     vx.f;                              \
+  })
+*/
+
+#define v4sf_fabs(x)                    \
+  ({                                    \
+     v4sfv4sipun vx;                    \
+     vx.f = x;                          \
+     vx.i = _mm_and_si128(vx.i, v4sil (0x7FFFFFFF));        \
      vx.f;                              \
   })
 
@@ -362,7 +372,8 @@ static inline v4sf
 vfastlog2 (v4sf x)
 {
   union { v4sf f; v4si i; } vx = { x };
-  union { v4si i; v4sf f; } mx; mx.i = (vx.i & v4sil (0x007FFFFF)) | v4sil (0x3f000000);
+  //union { v4si i; v4sf f; } mx; mx.i = (vx.i & v4sil (0x007FFFFF)) | v4sil (0x3f000000);
+  union { v4si i; v4sf f; } mx; mx.i = _mm_or_si128(_mm_and_si128(vx.i , v4sil (0x007FFFFF)) , v4sil (0x3f000000));
   v4sf y = v4si_to_v4sf (vx.i);
   y *= v4sfl (1.1920928955078125e-7f);
 
@@ -540,7 +551,8 @@ vfasterfc (v4sf x)
   const v4sf c = v4sfl (5.609846028328545f);
 
   union { v4sf f; v4si i; } vc; vc.f = c * x;
-  vc.i |= v4sil (0x80000000);
+  //vc.i |= v4sil (0x80000000);
+  vc.i = _mm_or_si128(vc.i, v4sil (0x80000000));
 
   v4sf xsq = x * x;
   v4sf xquad = xsq * xsq;
@@ -1460,13 +1472,16 @@ vfastsin (const v4sf x)
   const v4sf s = v4sfl (-0.0032225901625579573f);
 
   union { v4sf f; v4si i; } vx = { x };
-  v4si sign = vx.i & v4sil (0x80000000);
-  vx.i &= v4sil (0x7FFFFFFF);
+  //v4si sign = vx.i & v4sil (0x80000000);
+  //vx.i &= v4sil (0x7FFFFFFF);
+  v4si sign = _mm_and_si128(vx.i, v4sil (0x80000000));
+  vx.i = _mm_and_si128(vx.i, v4sil (0x7FFFFFFF));
 
   v4sf qpprox = fouroverpi * x - fouroverpisq * x * vx.f;
   v4sf qpproxsq = qpprox * qpprox;
   union { v4sf f; v4si i; } vy; vy.f = qpproxsq * (p + qpproxsq * (r + qpproxsq * s));
-  vy.i ^= sign;
+  //vy.i ^= sign;
+  vy.i = _mm_xor_si128(vy.i, sign);
 
   return q * qpprox + vy.f;
 }
@@ -1481,12 +1496,15 @@ vfastersin (const v4sf x)
   union { v4sf f; v4si i; } p = { plit };
 
   union { v4sf f; v4si i; } vx = { x };
-  v4si sign = vx.i & v4sil (0x80000000);
-  vx.i &= v4sil (0x7FFFFFFF);
+  //v4si sign = vx.i & v4sil (0x80000000);
+  //vx.i &= v4sil (0x7FFFFFFF);
+  v4si sign = _mm_and_si128(vx.i, v4sil (0x80000000));
+  vx.i = _mm_and_si128(vx.i, v4sil (0x7FFFFFFF));
 
   v4sf qpprox = fouroverpi * x - fouroverpisq * x * vx.f;
 
-  p.i |= sign;
+  //p.i |= sign;
+  p.i = _mm_or_si128(p.i, sign);
 
   return qpprox * (q + p.f * qpprox);
 }
