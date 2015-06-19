@@ -215,8 +215,13 @@ void rnn_destroy(rnn_t *rnn)
         safe_free(rnn->neurons[i].dirty_class);
         safe_free(rnn->neurons[i].wt_ih_w);
         safe_free(rnn->neurons[i].wt_ih_h);
-        safe_free(rnn->neurons[i].wt_ho_c);
         safe_free(rnn->neurons[i].wt_ho_w);
+#ifdef _MINI_UPDATE_
+        safe_free(rnn->neurons[i].er_o_c_buf);
+        safe_free(rnn->neurons[i].ac_h_buf);
+#else
+        safe_free(rnn->neurons[i].wt_ho_c);
+#endif
     }
     safe_free(rnn->neurons);
 }
@@ -834,11 +839,19 @@ int rnn_backprop(rnn_t *rnn, int word, int tid)
                 rnn->model_opt.scale);
 
         if (param.mini_batch > 0) {
+#ifdef _MINI_UPDATE_
+            memcpy(neu->er_o_c_buf + neu->ho_c_buf_num * rnn->class_size,
+                    output_neu->er_o_c, sizeof(real_t) * rnn->class_size);
+            memcpy(neu->ac_h_buf + neu->ho_c_buf_num * hidden_size, neu->ac_h,
+                    sizeof(real_t) * hidden_size);
+            neu->ho_c_buf_num++;
+#else
             param_acc_wt(neu->wt_ho_c,
                     output_neu->er_o_c,
                     rnn->class_size,
                     neu->ac_h,
                     hidden_size);
+#endif
         } else {
             param_update(&param,
                     &neu->arg_ho_c, true,
@@ -882,11 +895,19 @@ int rnn_backprop(rnn_t *rnn, int word, int tid)
 
         // weight update (hidden -> hidden)
         if (param.mini_batch > 0) {
+//#ifdef _MINI_UPDATE_
+//            memcpy(neu->er_h_buf + neu->ih_buf_num * hidden_size,
+//                    output_neu->er_h, sizeof(real_t) * hidden_size);
+//            memcpy(neu->ac_i_h_buf + neu->ih_buf_num * hidden_size,
+//                    output_neu->ac_i_h, sizeof(real_t) * hidden_size);
+//            neu->ih_buf_num++;
+//#else
             param_acc_wt(neu->wt_ih_h,
                     neu->er_h,
                     hidden_size,
                     neu->ac_i_h,
                     hidden_size);
+//#endif
         } else {
             param_update(&param,
                     &neu->arg_ih_h, true,
@@ -1160,6 +1181,8 @@ int rnn_setup_train(rnn_t *rnn, rnn_train_opt_t *train_opt,
         }
 
         if (train_opt->param.mini_batch > 0) {
+            neu->mini_step = 0;
+
             sz = rnn->vocab_size * rnn->model_opt.hidden_size;
             posix_memalign((void **)&neu->wt_ih_w, ALIGN_SIZE, sizeof(real_t) * sz);
             if (neu->wt_ih_w == NULL) {
@@ -1185,14 +1208,6 @@ int rnn_setup_train(rnn_t *rnn, rnn_train_opt_t *train_opt,
             memset(neu->wt_ho_w, 0, sizeof(real_t) * sz);
 
             if (rnn->class_size > 0) {
-                sz = rnn->model_opt.hidden_size * rnn->class_size;
-                posix_memalign((void **)&neu->wt_ho_c, ALIGN_SIZE, sizeof(real_t) * sz);
-                if (neu->wt_ho_c == NULL) {
-                    ST_WARNING("Failed to malloc wt_ho_c.");
-                    goto ERR;
-                }
-                memset(neu->wt_ho_c, 0, sizeof(real_t) * sz);
-
                 sz = rnn->class_size;
                 neu->dirty_class = (bool *) malloc(sizeof(bool) * sz);
                 if (neu->dirty_class == NULL) {
@@ -1208,6 +1223,30 @@ int rnn_setup_train(rnn_t *rnn, rnn_train_opt_t *train_opt,
                     goto ERR;
                 }
                 neu->ho_w_hist_num = 0;
+
+#ifdef _MINI_UPDATE_
+                sz = train_opt->param.mini_batch * rnn->class_size;
+                neu->er_o_c_buf = (real_t *) malloc(sizeof(real_t) * sz);
+                if (neu->er_o_c_buf == NULL) {
+                    ST_WARNING("Failed to malloc er_o_c_buf.");
+                    goto ERR;
+                }
+                sz = train_opt->param.mini_batch * hidden_size;
+                neu->ac_h_buf = (real_t *) malloc(sizeof(real_t) * sz);
+                if (neu->ac_h_buf == NULL) {
+                    ST_WARNING("Failed to malloc ac_h_buf.");
+                    goto ERR;
+                }
+                neu->ho_c_buf_num = 0;
+#else
+                sz = rnn->model_opt.hidden_size * rnn->class_size;
+                posix_memalign((void **)&neu->wt_ho_c, ALIGN_SIZE, sizeof(real_t) * sz);
+                if (neu->wt_ho_c == NULL) {
+                    ST_WARNING("Failed to malloc wt_ho_c.");
+                    goto ERR;
+                }
+                memset(neu->wt_ho_c, 0, sizeof(real_t) * sz);
+#endif
             }
 
             sz = train_opt->param.mini_batch;
@@ -1254,8 +1293,14 @@ ERR:
         safe_free(rnn->neurons[i].dirty_class);
         safe_free(rnn->neurons[i].wt_ih_w);
         safe_free(rnn->neurons[i].wt_ih_h);
-        safe_free(rnn->neurons[i].wt_ho_c);
         safe_free(rnn->neurons[i].wt_ho_w);
+
+#ifdef _MINI_UPDATE_
+        safe_free(rnn->neurons[i].er_o_c_buf);
+        safe_free(rnn->neurons[i].ac_h_buf);
+#else
+        safe_free(rnn->neurons[i].wt_ho_c);
+#endif
     }
     safe_free(rnn->neurons);
 
@@ -1296,8 +1341,9 @@ int rnn_reset_train(rnn_t *rnn, int tid)
     neu->last_word = -1;
 
     if (train_opt->param.mini_batch > 0) {
-        neu->ho_w_hist_num = 0;
-        neu->ih_w_hist_num = 0;
+//        neu->ho_w_hist_num = 0;
+//        neu->ih_w_hist_num = 0;
+//        neu->ho_c_buf_num = 0;
     }
 
     return 0;
@@ -1419,6 +1465,19 @@ static int rnn_update_minibatch(rnn_t *rnn, int tid)
             }
             neu->ho_w_hist_num = 0;
 
+#ifdef _MINI_UPDATE_
+            param_update_minibatch(&param,
+                    &neu->arg_ho_c, true,
+                    neu->ho_c_buf_num,
+                    rnn->wt_ho_c,
+                    neu->er_o_c_buf,
+                    rnn->model_opt.scale,
+                    rnn->class_size,
+                    neu->ac_h_buf,
+                    hidden_size);
+
+            neu->ho_c_buf_num = 0;
+#else
             param_update(&param,
                     &neu->arg_ho_c, true,
                     rnn->wt_ho_c,
@@ -1430,6 +1489,7 @@ static int rnn_update_minibatch(rnn_t *rnn, int tid)
 
             memset(neu->wt_ho_c, 0,
                     sizeof(real_t) * rnn->class_size * hidden_size);
+#endif
         } else {
             param_update(&param,
                     &neu->arg_ho_w, true,
@@ -1519,11 +1579,13 @@ int rnn_end_train(rnn_t *rnn, int word, int tid)
             rnn->model_opt.hidden_size * sizeof(real_t));
 
     if (mini_batch > 0) {
-        if (neu->step % mini_batch == 0) {// || word == 0) {
+        neu->mini_step++;
+        if (neu->mini_step >= mini_batch) {// || word == 0) {
             if (rnn_update_minibatch(rnn, tid) < 0) {
                 ST_WARNING("Failed to rnn_update_minibatch.");
                 return -1;
             }
+            neu->mini_step = 0;
         }
     }
 

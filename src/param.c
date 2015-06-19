@@ -29,6 +29,7 @@
 #include <st_macro.h>
 #include <st_log.h>
 
+#include "blas.h"
 #include "param.h"
 
 static param_t def_param = {
@@ -120,7 +121,12 @@ void param_acc_wt(real_t *wt, real_t *er, int er_size, real_t *in, int in_size)
                 i += in_size;
             }
         } else {
-#ifdef _PARAM_UPDATE_UNROLL_
+#ifdef _USE_BLAS_
+            cblas_sgemm(CblasRowMajor, CblasTrans, CblasNoTrans,
+                    er_size, in_size, 1,
+                    1.0, er, er_size, in, in_size,
+                    1.0, wt, in_size);
+#elif defined(_PARAM_UPDATE_UNROLL_)
             for (j = 0; j < er_size; j++) {
                 for (i = 0; i < in_size / N * N; i+=N) {
                     wt[j * in_size + i + 0] += er[j] * in[i + 0];
@@ -325,4 +331,111 @@ void param_update(param_t *param, param_arg_t *arg, bool update_arg,
         }
     }
 }
+
+#ifdef _MINI_UPDATE_
+void param_update_minibatch(param_t *param, param_arg_t *arg, bool update_arg,
+        int batch, real_t *wt, real_t *er, real_t er_scale,
+        int er_size, real_t *in, int in_size)
+{
+    real_t *w;
+    real_t *delta_w;
+
+    real_t lr;
+    real_t l2;
+
+    int i;
+    int j;
+
+    lr = param->learn_rate;
+    l2 = param->l2_penalty;
+
+    if (param->l2_gap > 1 && arg != NULL) {
+        if (arg->l2_step != 0) {
+            l2 = 0.0;
+        }
+
+        if (update_arg) {
+            arg->l2_step++;
+            if (arg->l2_step >= param->l2_gap) {
+                arg->l2_step = 0;
+            }
+        }
+    }
+
+    if (er_size > 0 && in_size > 0) {
+        if (in == NULL) {
+            i = 0;
+            for (j = 0; j < er_size; j++) {
+                wt[i] += lr * er[j] * er_scale
+                    - l2 * wt[i];
+                i += in_size;
+            }
+        } else {
+            cblas_sgemm(CblasRowMajor, CblasTrans, CblasNoTrans,
+                    er_size, in_size, batch,
+                    lr*er_scale, er, er_size, in, in_size,
+                    1.0 - l2, wt, in_size);
+        }
+    } else if (er_size > 0 && in_size < 0) {
+        for (j = 0; j < er_size; j++) {
+            wt[j] += lr * er[j] * er_scale // * 1.0
+                - l2 * wt[j];
+        }
+    } else if (er_size < 0 && in_size > 0) {
+        er_size = - er_size;
+
+#ifdef _PARAM_UPDATE_UNROLL_
+        for (j = 0; j < er_size; j++) {
+            for (i = 0; i < in_size / N * N; i+=N) {
+                wt[j * in_size + i + 0] += lr * er[j * in_size + i + 0] * er_scale
+                                         - l2 * wt[j * in_size + i + 0];
+                wt[j * in_size + i + 1] += lr * er[j * in_size + i + 1] * er_scale
+                                         - l2 * wt[j * in_size + i + 1];
+                wt[j * in_size + i + 2] += lr * er[j * in_size + i + 2] * er_scale
+                                         - l2 * wt[j * in_size + i + 2];
+                wt[j * in_size + i + 3] += lr * er[j * in_size + i + 3] * er_scale
+                                         - l2 * wt[j * in_size + i + 3];
+
+                wt[j * in_size + i + 4] += lr * er[j * in_size + i + 4] * er_scale
+                                         - l2 * wt[j * in_size + i + 4];
+                wt[j * in_size + i + 5] += lr * er[j * in_size + i + 5] * er_scale
+                                         - l2 * wt[j * in_size + i + 5];
+                wt[j * in_size + i + 6] += lr * er[j * in_size + i + 6] * er_scale
+                                         - l2 * wt[j * in_size + i + 6];
+                wt[j * in_size + i + 7] += lr * er[j * in_size + i + 7] * er_scale
+                                         - l2 * wt[j * in_size + i + 7];
+            }
+
+            for (; i < in_size; i++) {
+                wt[j * in_size + i] += lr * er[j * in_size + i] * er_scale
+                                     - l2 * wt[j * in_size + i];
+            }
+        }
+#else
+        w = wt;
+        delta_w = er;
+        for (j = 0; j < er_size; j++) {
+            for (i = 0; i < in_size; i++) {
+                w[i] += lr * delta_w[i] * er_scale
+                    - l2 * w[i];
+            }
+            w += in_size;
+            delta_w += in_size;
+        }
+#endif
+    } else {
+        in_size = - in_size;
+        er_size = - er_size;
+        w = wt;
+        delta_w = er;
+
+        i = 0;
+        for (j = 0; j < er_size; j++) {
+            w[i] += lr * delta_w[i] * er_scale
+                - l2 * w[i];
+            i += in_size;
+        }
+    }
+}
+#endif
 

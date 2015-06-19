@@ -72,9 +72,9 @@ typedef struct _maxent_neuron_t_ {
     int hash_order_c;
     int hash_order_w;
 #endif
-    int step;
 
     // caches for mini-batch
+    int mini_step;
     hash_range_t *hash_union;
     int max_hash_hist_num;
     hash_hist_t *hash_hist_c;

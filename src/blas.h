@@ -22,46 +22,24 @@
  * SOFTWARE.
  */
 
-#ifndef  _PARAM_H_
-#define  _PARAM_H_
+#ifndef  _CONNLM_BLAS_H_
+#define  _CONNLM_BLAS_H_
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#include <st_opt.h>
-
-#include "config.h"
-
-typedef struct _param_t_ {
-    real_t learn_rate;
-    real_t l1_penalty;
-    real_t l2_penalty;
-    int l2_gap;
-    real_t momentum;
-    int mini_batch;
-} param_t;
-
-typedef struct _param_arg_t_ {
-    int l2_step;
-} param_arg_t;
-
-void param_arg_clear(param_arg_t *arg);
-
-int param_load(param_t *param, st_opt_t *opt, const char *sec_name,
-        param_t *parent_param);
-
-void param_acc_wt(real_t *wt, real_t *er, int er_size, real_t *in,
-        int in_size);
-
-void param_update(param_t *param, param_arg_t *arg, bool update_arg,
-        real_t *wt, real_t *er, real_t er_scale,
-        int er_size, real_t *in, int in_size);
-
-#ifdef _MINI_UPDATE_
-void param_update_minibatch(param_t *param, param_arg_t *arg, bool update_arg,
-        int batch, real_t *wt, real_t *er, real_t er_scale,
-        int er_size, real_t *in, int in_size);
+#ifdef _USE_BLAS_
+#  ifdef _HAVE_MKL_
+#    include <mkl.h>
+#  elif defined(_HAVE_ATLAS_)
+#    include <cblas.h>
+#  elif defined(_HAVE_ACCELERATE_)
+#    include <Accelerate/Accelerate.h>
+#  else
+#    warn "No MKL or ATLAS included, fallback to Non-Blas"
+#    undef _USE_BLAS_
+#  endif
 #endif
 
 #ifdef __cplusplus

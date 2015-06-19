@@ -29,8 +29,8 @@
 #define M 23
 #define N 17
 
-#define PRINT printf
-//#define PRINT(...)
+//#define PRINT printf
+#define PRINT(...)
 
 static int unit_test_param_acc_wt()
 {

@@ -1159,8 +1159,6 @@ int maxent_reset_train(maxent_t *maxent, int tid)
 
     neu = maxent->neurons + tid;
 
-    neu->step = 0;
-
     order = maxent->model_opt.order;
     for (i = 0; i < order; i++) {
         neu->hist[i] = -1;
@@ -1378,15 +1376,15 @@ int maxent_end_train(maxent_t *maxent, int word, int tid)
         neu->hist[i] = neu->hist[i - 1];
     }
     neu->hist[0] = word;
-    neu->step++;
+    neu->mini_step++;
 
     if (mini_batch > 0) {
-        if (neu->step % mini_batch == 0) {// || word == 0) {
+        if (neu->mini_step >= mini_batch) {// || word == 0) {
             if (maxent_update_minibatch(maxent, tid) < 0) {
-                ST_WARNING("Failed to maxent_update_minibatch. [%d]",
-                        neu->step);
+                ST_WARNING("Failed to maxent_update_minibatch.");
                 return -1;
             }
+            neu->mini_step = 0;
         }
     }
 

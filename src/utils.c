@@ -32,19 +32,7 @@
 #include "config.h"
 #include "utils.h"
 #include "fastexp.h"
-
-#ifdef _USE_BLAS_
-#  ifdef _HAVE_MKL_
-#    include <mkl.h>
-#  elif defined(_HAVE_ATLAS_)
-#    include <cblas.h>
-#  elif defined(_HAVE_ACCELERATE_)
-#    include <Accelerate/Accelerate.h>
-#  else
-#    warn "No MKL or ATLAS included, fallback to Non-Blas"
-#    undef _USE_BLAS_
-#  endif
-#endif
+#include "blas.h"
 
 void matXvec(real_t *dst, real_t *mat, real_t *vec,
         int mat_row, int in_vec_size, real_t scale)
