@@ -49,7 +49,8 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
   <div id="navrow1" class="tabs">
     <ul class="tablist">
       <li><a href="index.html"><span>Main&#160;Page</span></a></li>
-      <li class="current"><a href="annotated.html"><span>Classes</span></a></li>
+      <li><a href="pages.html"><span>Related&#160;Pages</span></a></li>
+      <li class="current"><a href="annotated.html"><span>Data&#160;Structures</span></a></li>
       <li><a href="files.html"><span>Files</span></a></li>
       <li>
         <div id="MSearchBox" class="MSearchBoxInactive">
@@ -71,8 +72,9 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
   </div>
   <div id="navrow2" class="tabs2">
     <ul class="tablist">
-      <li><a href="annotated.html"><span>Class&#160;List</span></a></li>
-      <li><a href="classes.html"><span>Class&#160;Index</span></a></li>
+      <li><a href="annotated.html"><span>Data&#160;Structures</span></a></li>
+      <li><a href="classes.html"><span>Data&#160;Structure&#160;Index</span></a></li>
+      <li><a href="functions.html"><span>Data&#160;Fields</span></a></li>
     </ul>
   </div>
 </div><!-- top -->
@@ -106,34 +108,71 @@ $(document).ready(function(){initNavTree('struct__connlm__t__.html','');});
 
 <div class="header">
   <div class="summary">
-<a href="#pub-attribs">Public Attributes</a> &#124;
-<a href="struct__connlm__t__-members.html">List of all members</a>  </div>
+<a href="#pub-attribs">Data Fields</a>  </div>
   <div class="headertitle">
 <div class="title">_connlm_t_ Struct Reference</div>  </div>
 </div><!--header-->
 <div class="contents">
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-attribs"></a>
-Public Attributes</h2></td></tr>
-<tr class="memitem:adf354d8d7fac7c50da5071993b85c438"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="adf354d8d7fac7c50da5071993b85c438"></a>
-<a class="el" href="struct__connlm__opt__t__.html">connlm_opt_t</a>&#160;</td><td class="memItemRight" valign="bottom"><b>connlm_opt</b></td></tr>
-<tr class="separator:adf354d8d7fac7c50da5071993b85c438"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a1a7ed2e926fe30033be6707207385cf9"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a1a7ed2e926fe30033be6707207385cf9"></a>
-st_alphabet_t *&#160;</td><td class="memItemRight" valign="bottom"><b>vocab</b></td></tr>
-<tr class="separator:a1a7ed2e926fe30033be6707207385cf9"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:acc115458a59a273524fd6ddb6b916739"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="acc115458a59a273524fd6ddb6b916739"></a>
-int&#160;</td><td class="memItemRight" valign="bottom"><b>vocab_size</b></td></tr>
-<tr class="separator:acc115458a59a273524fd6ddb6b916739"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a9a4c7d06ffe1f6a49a3bca3514fa1ed6"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a9a4c7d06ffe1f6a49a3bca3514fa1ed6"></a>
-<a class="el" href="struct__word__info__t__.html">word_info_t</a> *&#160;</td><td class="memItemRight" valign="bottom"><b>word_infos</b></td></tr>
-<tr class="separator:a9a4c7d06ffe1f6a49a3bca3514fa1ed6"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae0235c928e6e8f29b8f3457f8dd79653"><td class="memItemLeft" ><a class="anchor" id="ae0235c928e6e8f29b8f3457f8dd79653"></a>
-union {</td></tr>
-<tr class="memitem:abb1085c5d5173cd99c0e131a0e82a29b"><td class="memItemLeft" >
-&#160;&#160;&#160;<a class="el" href="struct__rnnlm__t__.html">rnnlm_t</a> *&#160;&#160;&#160;<b>rnnlm</b></td></tr>
-<tr class="separator:abb1085c5d5173cd99c0e131a0e82a29b"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae0235c928e6e8f29b8f3457f8dd79653"><td class="memItemLeft" valign="top">};&#160;</td><td class="memItemRight" valign="bottom"></td></tr>
-<tr class="separator:ae0235c928e6e8f29b8f3457f8dd79653"><td class="memSeparator" colspan="2">&#160;</td></tr>
+Data Fields</h2></td></tr>
+<tr class="memitem:a58cea7caa49b6d7e2ce7630d7e4ef7f8"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a58cea7caa49b6d7e2ce7630d7e4ef7f8"></a>
+<a class="el" href="struct__connlm__model__opt__t__.html">connlm_model_opt_t</a>&#160;</td><td class="memItemRight" valign="bottom"><b>model_opt</b></td></tr>
+<tr class="separator:a58cea7caa49b6d7e2ce7630d7e4ef7f8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af73cc9f72dbd28e2d8a9ad919ecc8be2"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="af73cc9f72dbd28e2d8a9ad919ecc8be2"></a>
+<a class="el" href="struct__connlm__train__opt__t__.html">connlm_train_opt_t</a>&#160;</td><td class="memItemRight" valign="bottom"><b>train_opt</b></td></tr>
+<tr class="separator:af73cc9f72dbd28e2d8a9ad919ecc8be2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7461ad318c949ce65f58281520f03282"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a7461ad318c949ce65f58281520f03282"></a>
+<a class="el" href="struct__connlm__test__opt__t__.html">connlm_test_opt_t</a>&#160;</td><td class="memItemRight" valign="bottom"><b>test_opt</b></td></tr>
+<tr class="separator:a7461ad318c949ce65f58281520f03282"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae9c204009e4d6c234283d5fba8854d7f"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ae9c204009e4d6c234283d5fba8854d7f"></a>
+unsigned&#160;</td><td class="memItemRight" valign="bottom"><b>random</b></td></tr>
+<tr class="separator:ae9c204009e4d6c234283d5fba8854d7f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5228ad0b02f2ca59cd10d920369856b5"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a5228ad0b02f2ca59cd10d920369856b5"></a>
+FILE *&#160;</td><td class="memItemRight" valign="bottom"><b>text_fp</b></td></tr>
+<tr class="separator:a5228ad0b02f2ca59cd10d920369856b5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5f3f77711998037557bd7c83039a0978"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a5f3f77711998037557bd7c83039a0978"></a>
+off_t&#160;</td><td class="memItemRight" valign="bottom"><b>fsize</b></td></tr>
+<tr class="separator:a5f3f77711998037557bd7c83039a0978"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6be042da85529ff31d497468428a23f5"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a6be042da85529ff31d497468428a23f5"></a>
+int *&#160;</td><td class="memItemRight" valign="bottom"><b>egs</b></td></tr>
+<tr class="separator:a6be042da85529ff31d497468428a23f5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae44c75885cebe8deea685ea58451f3e5"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ae44c75885cebe8deea685ea58451f3e5"></a>
+int *&#160;</td><td class="memItemRight" valign="bottom"><b>shuffle_buf</b></td></tr>
+<tr class="separator:ae44c75885cebe8deea685ea58451f3e5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2ffcfd004247071e3f6e6d13dbc9e592"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a2ffcfd004247071e3f6e6d13dbc9e592"></a>
+pthread_t *&#160;</td><td class="memItemRight" valign="bottom"><b>pts</b></td></tr>
+<tr class="separator:a2ffcfd004247071e3f6e6d13dbc9e592"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8db06960dba2fb908194449d141342ef"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a8db06960dba2fb908194449d141342ef"></a>
+int&#160;</td><td class="memItemRight" valign="bottom"><b>err</b></td></tr>
+<tr class="separator:a8db06960dba2fb908194449d141342ef"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a72a407dcdb2b6379abf0e00da46f8cc0"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a72a407dcdb2b6379abf0e00da46f8cc0"></a>
+<a class="el" href="struct__connlm__thread__t__.html">connlm_thr_t</a> *&#160;</td><td class="memItemRight" valign="bottom"><b>thrs</b></td></tr>
+<tr class="separator:a72a407dcdb2b6379abf0e00da46f8cc0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5796b904821d01efae16ef32e6b2085d"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a5796b904821d01efae16ef32e6b2085d"></a>
+FILE *&#160;</td><td class="memItemRight" valign="bottom"><b>fp_log</b></td></tr>
+<tr class="separator:a5796b904821d01efae16ef32e6b2085d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae3a469bb260451f9e5f48713f4a08ca9"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ae3a469bb260451f9e5f48713f4a08ca9"></a>
+pthread_mutex_t&#160;</td><td class="memItemRight" valign="bottom"><b>fp_lock</b></td></tr>
+<tr class="separator:ae3a469bb260451f9e5f48713f4a08ca9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9aeaf92734cb4818edfe71a3fca2206f"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a9aeaf92734cb4818edfe71a3fca2206f"></a>
+<a class="el" href="struct__output__t__.html">output_t</a> *&#160;</td><td class="memItemRight" valign="bottom"><b>output</b></td></tr>
+<tr class="separator:a9aeaf92734cb4818edfe71a3fca2206f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aba8fd93471f0bab00039ae5b7c40737c"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aba8fd93471f0bab00039ae5b7c40737c"></a>
+<a class="el" href="struct__vocab__t__.html">vocab_t</a> *&#160;</td><td class="memItemRight" valign="bottom"><b>vocab</b></td></tr>
+<tr class="separator:aba8fd93471f0bab00039ae5b7c40737c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa8a2b6ae2c18f6c5cfeac0a313a1f2d3"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aa8a2b6ae2c18f6c5cfeac0a313a1f2d3"></a>
+<a class="el" href="struct__rnn__t__.html">rnn_t</a> *&#160;</td><td class="memItemRight" valign="bottom"><b>rnn</b></td></tr>
+<tr class="separator:aa8a2b6ae2c18f6c5cfeac0a313a1f2d3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4f6ad3b671d5b6bd87224f47744e7b9d"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a4f6ad3b671d5b6bd87224f47744e7b9d"></a>
+<a class="el" href="struct__maxent__t__.html">maxent_t</a> *&#160;</td><td class="memItemRight" valign="bottom"><b>maxent</b></td></tr>
+<tr class="separator:a4f6ad3b671d5b6bd87224f47744e7b9d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a330f9176bd1c49538ddd4f45acce91ea"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a330f9176bd1c49538ddd4f45acce91ea"></a>
+<a class="el" href="struct__lbl__t__.html">lbl_t</a> *&#160;</td><td class="memItemRight" valign="bottom"><b>lbl</b></td></tr>
+<tr class="separator:a330f9176bd1c49538ddd4f45acce91ea"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4e83d66b764abfe1e235bb3dd43489cb"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a4e83d66b764abfe1e235bb3dd43489cb"></a>
+<a class="el" href="struct__ffnn__t__.html">ffnn_t</a> *&#160;</td><td class="memItemRight" valign="bottom"><b>ffnn</b></td></tr>
+<tr class="separator:a4e83d66b764abfe1e235bb3dd43489cb"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <hr/>The documentation for this struct was generated from the following file:<ul>
 <li><a class="el" href="connlm_8h_source.html">connlm.h</a></li>
@@ -144,7 +183,7 @@ union {</td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="struct__connlm__t__.html">_connlm_t_</a></li>
-    <li class="footer">Generated on Mon Mar 23 2015 16:26:28 for connLM by
+    <li class="footer">Generated on Wed Jun 24 2015 15:25:05 for connLM by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.9.1 </li>
   </ul>

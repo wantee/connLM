@@ -1,11 +1,8 @@
 var searchData=
 [
-  ['_5fconnlm_5fconf_5ft_5f',['_connlm_conf_t_',['../struct__connlm__conf__t__.html',1,'']]],
-  ['_5fconnlm_5fopt_5ft_5f',['_connlm_opt_t_',['../struct__connlm__opt__t__.html',1,'']]],
-  ['_5fconnlm_5ft_5f',['_connlm_t_',['../struct__connlm__t__.html',1,'']]],
-  ['_5fconnlm_5ftest_5fconf_5ft',['_connlm_test_conf_t',['../struct__connlm__test__conf__t.html',1,'']]],
-  ['_5fconnlm_5ftrain_5fconf_5ft',['_connlm_train_conf_t',['../struct__connlm__train__conf__t.html',1,'']]],
-  ['_5frnnlm_5fopt_5ft',['_rnnlm_opt_t',['../struct__rnnlm__opt__t.html',1,'']]],
-  ['_5frnnlm_5ft_5f',['_rnnlm_t_',['../struct__rnnlm__t__.html',1,'']]],
-  ['_5fword_5finfo_5ft_5f',['_word_info_t_',['../struct__word__info__t__.html',1,'']]]
+  ['connlm_5fmodel_5fopt_5ft',['connlm_model_opt_t',['../structconnlm__model__opt__t.html',1,'']]],
+  ['connlm_5ft',['connlm_t',['../structconnlm__t.html',1,'']]],
+  ['connlm_5ftest_5fopt_5ft',['connlm_test_opt_t',['../structconnlm__test__opt__t.html',1,'']]],
+  ['connlm_5fthr_5ft',['connlm_thr_t',['../structconnlm__thr__t.html',1,'']]],
+  ['connlm_5ftrain_5fopt_5ft',['connlm_train_opt_t',['../structconnlm__train__opt__t.html',1,'']]]
 ];
