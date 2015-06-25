@@ -33,6 +33,7 @@ extern "C" {
 
 #include <st_utils.h>
 #include <st_alphabet.h>
+#include <st_semaphore.h>
 
 #include "config.h"
 #include "vocab.h"
@@ -70,16 +71,17 @@ typedef struct _connlm_train_opt_t_ {
     param_t param;            /**< training parameters. */
 
     int num_thread;           /**< number of threads. */
-    int max_word_per_sent;    /**< max words per one sentence. Any sentence with larger words will be dropped. */
     int rand_seed;            /**< seed for random function. */
  
-    int num_line_read;        /**< number lines read one time. */
+    int epoch_size;  /**< number sentences read one time per thread. */
     bool shuffle;             /**< whether shuffle the sentences. */
 
     rnn_train_opt_t rnn_opt; /**< training options for RNN model */
     maxent_train_opt_t maxent_opt; /**< training options for MaxEnt model */
     lbl_train_opt_t lbl_opt; /**< training options for LBL model */
     ffnn_train_opt_t ffnn_opt; /**< training options for FFNN model */
+
+    char debug_file[MAX_DIR_LEN]; /**< file to print out debug infos. */
 } connlm_train_opt_t;
 
 /**
@@ -88,32 +90,23 @@ typedef struct _connlm_train_opt_t_ {
  */
 typedef struct _connlm_test_opt_t_ {
     int num_thread;           /**< number of threads. */
-    int max_word_per_sent;    /**< max words per one sentence. Any sentence with larger words will be dropped. */
 
-    int num_line_read;        /**< number lines read one time. */
+    int epoch_size; /**< number sentences read one time per thread. */
 
     real_t oov_penalty;       /**< penalty for OOV. */
+
+    char debug_file[MAX_DIR_LEN]; /**< file to print out debug infos. */
 } connlm_test_opt_t;
 
-struct _connlm_t_;
-
 /**
- * Variables for one connLM thread.
+ * A bunch of word
  * @ingroup connlm
  */
-typedef struct _connlm_thread_t_ {
-    struct _connlm_t_ *connlm; /**< connlm model. */
-    int tid; /**< thread id. */
-
-    int eg_s; /**< start position of examples for this thread. */
-    int eg_e; /**< end position of examples for this thread. */
-
-    count_t words; /**< total number of words trained in this thread. */
-    count_t sents; /**< total number of sentences trained in this thread. */
-    double logp; /**< total log probability in this thread. */
-
-    count_t oovs; /**< total number of OOV words found in this thread. */
-} connlm_thr_t;
+typedef struct _connlm_egs_t_ {
+    int *words;
+    int size;
+    int capacity;
+} connlm_egs_t;
 
 /**
  * connLM model.
@@ -124,18 +117,23 @@ typedef struct _connlm_t_ {
     connlm_train_opt_t train_opt; /**< training options */
     connlm_test_opt_t test_opt; /**< testing options */
 
-    unsigned random; /**< random state. */
+    char text_file[MAX_DIR_LEN]; /**< training/testing file name. */
 
-    FILE *text_fp;   /**< file pointer for input text. */
-    off_t fsize;     /**< size of input text file */
-    int *egs;        /**< training examples. i.e. training words. */
-    int *shuffle_buf;/**< buffer used for shuffling. */
+    connlm_egs_t *egs_pool; /**< training example pool.
+                              Buffer for multi-threads. */
+    int pool_size; /**< size of training example pool. */
+    int pool_in; /**< next write in position of pool. */
+    int pool_out; /**< next read out position of pool. */
+    st_sem_t sem_full; /**< full semaphore for egs_pool. */
+    st_sem_t sem_empty; /**< empty semaphore for egs_pool. */
+    pthread_mutex_t pool_lock; /**< lock for egs_pool. */
 
-    pthread_t *pts; /**< buffer used to store pthread ids. */
     int err; /**< error indicator. */
-    connlm_thr_t *thrs; /**< thread datas. */
     FILE *fp_log;    /**< file pointer to print out log. */
-    pthread_mutex_t fp_lock; /**< lock for fp_log */
+    pthread_mutex_t fp_lock; /**< lock for fp_log. */
+
+    FILE *fp_debug; /**< file pointer to print out debug info. */
+    pthread_mutex_t fp_debug_lock; /**< lock for fp_debug_log. */
 
     output_t *output; /**< output layer */
     vocab_t *vocab;   /**< vocab */

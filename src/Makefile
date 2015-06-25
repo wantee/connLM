@@ -73,7 +73,7 @@ endif
 
 TARGET_TEST_BIN = $(addprefix $(BINDIR)/, $(TEST_BIN))
 
-.PHONY: all clean preparedir
+.PHONY: all clean preparedir test gen-dco
 
 all: preparedir $(TARGET_BIN)
 

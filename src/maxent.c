@@ -1245,6 +1245,9 @@ static int maxent_union_insert(hash_range_t *range, int *n_range,
     return 0;
 }
 
+/*
+ * Find union of num_hash sets of hash
+ */
 int maxent_union(hash_range_t *range, int *n_range, hash_range_t *hash,
         int num_hash, hash_size_t sz_hash)
 {

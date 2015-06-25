@@ -32,6 +32,9 @@ typedef struct _hash_range_arg_t_ {
     hash_size_t sz;
 } hash_range_arg_t;
 
+int maxent_union(hash_range_t *range, int *n_range, hash_range_t *hash,
+        int num_hash, hash_size_t sz_hash);
+
 static int unit_test_maxent_union_one(void *base,
         size_t num_set, void *args)
 {

@@ -356,11 +356,6 @@ int maxent_start_test(maxent_t *maxent, int word, int tid);
  */
 int maxent_end_test(maxent_t *maxent, int word, int tid);
 
-/*
- * Find union of num_hash sets of hash
- */
-int maxent_union(hash_range_t *range, int *n_range, hash_range_t *hash,
-        int num_hash, hash_size_t sz_hash);
 #ifdef __cplusplus
 }
 #endif
