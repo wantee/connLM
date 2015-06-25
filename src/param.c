@@ -94,7 +94,7 @@ void param_arg_clear(param_arg_t *arg)
 
 #define N 8
 
-/**
+/*
  * accumulate weights
  * 
  * in is [ in_size x 1 ];
@@ -184,7 +184,7 @@ void param_acc_wt(real_t *wt, real_t *er, int er_size, real_t *in, int in_size)
     }
 }
 
-/**
+/*
  * update weight using parameters.
  * 
  * in is [ in_size x 1 ];

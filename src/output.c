@@ -141,7 +141,7 @@ ERR:
     return NULL;
 }
 
-long output_load_header(output_t **output, FILE *fp, bool *binary,
+int output_load_header(output_t **output, FILE *fp, bool *binary,
         FILE *fo_info)
 {
     char sym[MAX_LINE_LEN];
