@@ -1433,7 +1433,7 @@ static void* connlm_read_thread(void *args)
                     ST_TRACE("Total progress: %.2f%%. Words: " COUNT_FMT
                             ", Sentences: " COUNT_FMT ", words/sec: %.1f, "
                             "LogP: %f, Entropy: %f, PPL: %f, Time: %.3fs", 
-                            ftell(text_fp) / fsize * 100.0,
+                            ftell(text_fp) / (fsize / 100.0),
                             total_words, total_sents,
                             total_words / ((double) ms / 1000.0),
                             logp, -logp / log10(2) / total_words,
@@ -1527,7 +1527,7 @@ static void* connlm_train_thread(void *args)
     long ms;
 
     struct timeval tts_wait, tte_wait;
-    long ms_wait;
+    long ms_wait = 0;
 
     ST_CHECK_PARAM(args == NULL, NULL);
 
@@ -1665,7 +1665,7 @@ static void* connlm_train_thread(void *args)
 
         gettimeofday(&tte, NULL);
         ms = TIMEDIFF(tts, tte);
-        ms_wait = TIMEDIFF(tts_wait, tte_wait);
+        ms_wait += TIMEDIFF(tts_wait, tte_wait);
 
         ST_TRACE("Thread: %d, Words: " COUNT_FMT
                 ", Sentences: " COUNT_FMT ", words/sec: %.1f, "

@@ -14,12 +14,8 @@ halving_factor=0.5
 # end configuration sections
 
 echo "$0 $@"  # Print the command line for logging
-[ -f `dirname $0`/path.sh ] && . `dirname $0`/path.sh
-[ -f ./path.sh ] && . ./path.sh
-
-. ../utils/parse_options.sh || exit 1
-
-if [ $# -ne 3 ]; then 
+function print_help()
+{
   echo "usage: $0 <train-file> <valid-file> <exp-dir>"
   echo "e.g.: $0 data/train data/valid exp/rnn"
   echo "options: "
@@ -33,6 +29,17 @@ if [ $# -ne 3 ]; then
   echo "     --start-halving-impr <value>         # default: 0.01, improvement starting halving"
   echo "     --end-halving-impr <value>           # default: 0.001, improvement ending halving"
   echo "     --halving-factor <value>             # default: 0.5, halving factor"
+}
+
+help_message=`print_help`
+
+[ -f `dirname $0`/path.sh ] && . `dirname $0`/path.sh
+[ -f ./path.sh ] && . ./path.sh
+
+. ../utils/parse_options.sh || exit 1
+
+if [ $# -ne 3 ]; then 
+  print_help 1>&2 
   exit 1;
 fi
 

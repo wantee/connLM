@@ -12,12 +12,8 @@ train_threads=""
 # end configuration sections
 
 echo "$0 $@"  # Print the command line for logging
-[ -f `dirname $0`/path.sh ] && . `dirname $0`/path.sh
-[ -f ./path.sh ] && . ./path.sh
-
-. ../utils/parse_options.sh || exit 1
-
-if [ $# -ne 2 ]; then 
+function print_help()
+{
   echo "usage: $0 <vocab-clm> <exp-dir>"
   echo "e.g.: $0 exp/vocab.clm exp/rnn"
   echo "options: "
@@ -27,6 +23,17 @@ if [ $# -ne 2 ]; then
   echo "       --train-file <file>               # following options are used for choosing class size."
   echo "       --train-config <config>"           
   echo "       --train-threads <threads>"         
+}
+
+help_message=`print_help`
+
+[ -f `dirname $0`/path.sh ] && . `dirname $0`/path.sh
+[ -f ./path.sh ] && . ./path.sh
+
+. ../utils/parse_options.sh || exit 1
+
+if [ $# -ne 2 ]; then 
+  print_help 1>&2 
   exit 1;
 fi
 
@@ -75,6 +82,11 @@ function init_model ()
   || exit 1; 
   fi
 }
+
+if [ -e "$model_out" ]; then
+  echo "**Skipping Initializing $model_out ..."
+  exit 0
+fi
 
 echo "**Initializing model $vocab to $model_out ..."
 if [ -z "$class_size" ]; then

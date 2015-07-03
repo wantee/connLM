@@ -19,11 +19,8 @@ stepnames[4]="Train RNN+MaxEnt model"
 
 steps_len=${#stepnames[*]}
 
-. ../steps/path.sh || exit 1
-
-. ../utils/parse_options.sh || exit 1
-
-if [ $# -gt 1 ] || ! shu-valid-range $1 || [ "$1" == "--help" ]; then 
+function print_help()
+{
   echo "usage: $0 [steps]"
   echo "e.g.: $0 -3,5,7-9,10-"
   echo "  stpes could be a number range within 1-$steps_len:"
@@ -37,6 +34,16 @@ if [ $# -gt 1 ] || ! shu-valid-range $1 || [ "$1" == "--help" ]; then
   echo "options: "
   echo "     --conf-dir <conf-dir>         # config directory."
   echo "     --exp-dir <exp-dir>           # exp directory."
+}
+
+help_message=`print_help`
+
+. ../steps/path.sh || exit 1
+
+. ../utils/parse_options.sh || exit 1
+
+if [ $# -gt 1 ] || ! shu-valid-range $1; then 
+  print_help 1>&2 
   exit 1
 fi
 

@@ -6,17 +6,24 @@ test_threads=1
 # end configuration sections
 
 echo "$0 $@"  # Print the command line for logging
+function print_help()
+{
+  echo "usage: $0 <exp-dir> <test-file>"
+  echo "e.g.: $0 exp/rnn data/test"
+  echo "options: "
+  echo "     --config-file <config-file>         # config file."
+  echo "     --test-threads <number>             # default: 1, number of testing threads"
+}
+
+help_message=`print_help`
+
 [ -f `dirname $0`/path.sh ] && . `dirname $0`/path.sh
 [ -f ./path.sh ] && . ./path.sh
 
 . ../utils/parse_options.sh || exit 1
 
 if [ $# -ne 2 ]; then 
-  echo "usage: $0 <exp-dir> <test-file>"
-  echo "e.g.: $0 exp/rnn data/test"
-  echo "options: "
-  echo "     --config-file <config-file>         # config file."
-  echo "     --test-threads <number>             # default: 1, number of testing threads"
+  print_help 1>&2 
   exit 1;
 fi
 
