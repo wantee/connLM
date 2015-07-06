@@ -106,6 +106,7 @@ typedef struct _connlm_egs_t_ {
     int *words;
     int size;
     int capacity;
+    struct _connlm_egs_t_ *next;
 } connlm_egs_t;
 
 /**
@@ -119,14 +120,12 @@ typedef struct _connlm_t_ {
 
     char text_file[MAX_DIR_LEN]; /**< training/testing file name. */
 
-    connlm_egs_t *egs_pool; /**< training example pool.
-                              Buffer for multi-threads. */
-    int pool_size; /**< size of training example pool. */
-    int pool_in; /**< next write in position of pool. */
-    int pool_out; /**< next read out position of pool. */
-    st_sem_t sem_full; /**< full semaphore for egs_pool. */
-    st_sem_t sem_empty; /**< empty semaphore for egs_pool. */
-    pthread_mutex_t pool_lock; /**< lock for egs_pool. */
+    connlm_egs_t *full_egs; /**< pool for egs filled with data. */
+    connlm_egs_t *empty_egs; /**< pool for egs with data consumed. */
+    st_sem_t sem_full; /**< number of full egs. */
+    st_sem_t sem_empty; /**< number of empty egs. */
+    pthread_mutex_t full_egs_lock; /**< lock for full egs pool. */
+    pthread_mutex_t empty_egs_lock; /**< lock for empty egs pool. */
 
     int err; /**< error indicator. */
     FILE *fp_log;    /**< file pointer to print out log. */

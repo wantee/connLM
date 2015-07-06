@@ -275,20 +275,35 @@ ST_OPT_ERR:
 
 void connlm_destroy(connlm_t *connlm)
 {
-    int i;
+    connlm_egs_t *p;
+    connlm_egs_t *q;
 
     if (connlm == NULL) {
         return;
     }
 
-    if (connlm->egs_pool != NULL) {
-        for (i = 0; i < connlm->pool_size; i++) {
-            connlm_egs_destroy(connlm->egs_pool + i);
-        }
-        safe_free(connlm->egs_pool);
-    }
+    p = connlm->full_egs;
+    while (p != NULL) {
+        q = p;
+        p = p->next;
 
-    (void)pthread_mutex_destroy(&connlm->pool_lock);
+        connlm_egs_destroy(q);
+        safe_free(q);
+    }
+    connlm->full_egs = NULL;
+
+    p = connlm->empty_egs;;
+    while (p != NULL) {
+        q = p;
+        p = p->next;
+
+        connlm_egs_destroy(q);
+        safe_free(q);
+    }
+    connlm->empty_egs = NULL;
+
+    (void)pthread_mutex_destroy(&connlm->full_egs_lock);
+    (void)pthread_mutex_destroy(&connlm->empty_egs_lock);
     (void)st_sem_destroy(&connlm->sem_full);
     (void)st_sem_destroy(&connlm->sem_empty);
     safe_fclose(connlm->fp_debug);
@@ -900,7 +915,14 @@ ERR:
 int connlm_setup_train(connlm_t *connlm, connlm_train_opt_t *train_opt,
         const char *train_file)
 {
+    connlm_egs_t *egs;
+    connlm_egs_t *p;
+    connlm_egs_t *q;
+    int pool_size;
+
     int num_thrs;
+
+    int i;
 
     ST_CHECK_PARAM(connlm == NULL || train_opt == NULL
             || train_file == NULL, -1);
@@ -915,16 +937,21 @@ int connlm_setup_train(connlm_t *connlm, connlm_train_opt_t *train_opt,
     strncpy(connlm->text_file, train_file, MAX_DIR_LEN);
     connlm->text_file[MAX_DIR_LEN - 1] = '\0';
 
-    connlm->pool_size = train_opt->num_thread;
-    connlm->egs_pool = (connlm_egs_t *)malloc(sizeof(connlm_egs_t)
-            * connlm->pool_size);
-    if (connlm->egs_pool == NULL) {
-        ST_WARNING("Failed to malloc egs_pool.");
-        goto ERR;
+    pool_size = 2 * train_opt->num_thread;
+    connlm->full_egs = NULL;
+    connlm->empty_egs = NULL;;
+    for (i = 0; i < pool_size; i++) {
+        egs = (connlm_egs_t *)malloc(sizeof(connlm_egs_t));
+        if (egs == NULL) {
+            ST_WARNING("Failed to malloc egs.");
+            goto ERR;
+        }
+        memset(egs, 0, sizeof(connlm_egs_t));
+        egs->next = connlm->empty_egs;
+        connlm->empty_egs = egs;
     }
-    memset(connlm->egs_pool, 0, sizeof(connlm_egs_t)*connlm->pool_size);
 
-    if (st_sem_init(&connlm->sem_empty, connlm->pool_size) != 0) {
+    if (st_sem_init(&connlm->sem_empty, pool_size) != 0) {
         ST_WARNING("Failed to st_sem_init sem_empty.");
         goto ERR;
     }
@@ -934,8 +961,13 @@ int connlm_setup_train(connlm_t *connlm, connlm_train_opt_t *train_opt,
         goto ERR;
     }
 
-    if (pthread_mutex_init(&connlm->pool_lock, NULL) != 0) {
-        ST_WARNING("Failed to pthread_mutex_init pool_lock.");
+    if (pthread_mutex_init(&connlm->full_egs_lock, NULL) != 0) {
+        ST_WARNING("Failed to pthread_mutex_init full_egs_lock.");
+        goto ERR;
+    }
+
+    if (pthread_mutex_init(&connlm->empty_egs_lock, NULL) != 0) {
+        ST_WARNING("Failed to pthread_mutex_init empty_egs_lock.");
         goto ERR;
     }
 
@@ -992,8 +1024,28 @@ int connlm_setup_train(connlm_t *connlm, connlm_train_opt_t *train_opt,
     return 0;
 
 ERR:
-    safe_free(connlm->egs_pool);
-    (void)pthread_mutex_destroy(&connlm->pool_lock);
+    p = connlm->full_egs;
+    while (p != NULL) {
+        q = p;
+        p = p->next;
+
+        connlm_egs_destroy(q);
+        safe_free(q);
+    }
+    connlm->full_egs = NULL;
+
+    p = connlm->empty_egs;
+    while (p != NULL) {
+        q = p;
+        p = p->next;
+
+        connlm_egs_destroy(q);
+        safe_free(q);
+    }
+    connlm->empty_egs = NULL;
+
+    (void)pthread_mutex_destroy(&connlm->full_egs_lock);
+    (void)pthread_mutex_destroy(&connlm->empty_egs_lock);
     (void)st_sem_destroy(&connlm->sem_full);
     (void)st_sem_destroy(&connlm->sem_empty);
     safe_fclose(connlm->fp_debug);
@@ -1305,6 +1357,7 @@ static void* connlm_read_thread(void *args)
     int i;
     int start;
     int end;
+    int num_reads;
 
     count_t total_words;
     count_t total_sents;
@@ -1347,6 +1400,7 @@ static void* connlm_read_thread(void *args)
         goto ERR;
     }
 
+    num_reads = 0;
     read_thr->sents = 0;
     read_thr->words = 0;
     gettimeofday(&tts, NULL);
@@ -1381,17 +1435,24 @@ static void* connlm_read_thread(void *args)
             goto ERR;
         }
 
-        // only one read thread, do not need to lock the pool.
-        // copy egs to pool
-        egs_in_pool = connlm->egs_pool + connlm->pool_in;
-        egs_in_pool->size = 0;
+        if (pthread_mutex_lock(&connlm->empty_egs_lock) != 0) {
+            ST_WARNING("Failed to pthread_mutex_lock empty_egs_lock.");
+            goto ERR;
+        }
+        egs_in_pool = connlm->empty_egs;
+        connlm->empty_egs = connlm->empty_egs->next;
+        if (pthread_mutex_unlock(&connlm->empty_egs_lock) != 0) {
+            ST_WARNING("Failed to pthread_mutex_unlock empty_egs_lock.");
+            goto ERR;
+        }
+
         if (connlm_egs_ensure(egs_in_pool, egs.size) < 0) {
-            ST_WARNING("Failed to connlm_ensure_egs. pool_in[%d], "
-                    "num_words[%d].", connlm->pool_in, egs.size);
+            ST_WARNING("Failed to connlm_ensure_egs. size[%d].", egs.size);
             goto ERR;
         }
 
         if (shuffle_buf != NULL) {
+            egs_in_pool->size = 0;
             for (i = 0; i < num_sents; i++) {
                 if (shuffle_buf[i] == 0) {
                     start = 0;
@@ -1409,13 +1470,26 @@ static void* connlm_read_thread(void *args)
             egs_in_pool->size = egs.size;
         }
 
-        connlm->pool_in = (connlm->pool_in + 1) % connlm->pool_size;
+        if (pthread_mutex_lock(&connlm->full_egs_lock) != 0) {
+            ST_WARNING("Failed to pthread_mutex_lock full_egs_lock.");
+            goto ERR;
+        }
+        egs_in_pool->next = connlm->full_egs;
+        connlm->full_egs = egs_in_pool;
+        //ST_DEBUG("IN: %p, %d", egs_in_pool, egs_in_pool->size);
+        if (pthread_mutex_unlock(&connlm->full_egs_lock) != 0) {
+            ST_WARNING("Failed to pthread_mutex_unlock full_egs_lock.");
+            goto ERR;
+        }
         if (st_sem_post(&connlm->sem_full) != 0) {
             ST_WARNING("Failed to st_sem_post sem_full.");
             goto ERR;
         }
 
-        if (connlm->pool_in == 0) {
+        num_reads++;
+        if (num_reads >= num_thrs) {
+            num_reads = 0;
+
             total_words = 0;
             total_sents = 0;
             logp = 0.0;
@@ -1454,15 +1528,7 @@ static void* connlm_read_thread(void *args)
     }
 
     for (i = 0; i < num_thrs; i++) {
-        if (st_sem_wait(&connlm->sem_empty) != 0) {
-            ST_WARNING("Failed to st_sem_wait sem_empty.");
-            goto ERR;
-        }
-
-        egs_in_pool = connlm->egs_pool + connlm->pool_in;
-        egs_in_pool->size = -2; // finish
-        connlm->pool_in = (connlm->pool_in + 1) % connlm->pool_size;
-
+        /* posting semaphore without adding data indicates finish. */
         if (st_sem_post(&connlm->sem_full) != 0) {
             ST_WARNING("Failed to st_sem_post sem_full.");
             goto ERR;
@@ -1485,15 +1551,7 @@ ERR:
     safe_free(sent_ends);
 
     for (i = 0; i < num_thrs; i++) {
-        if (st_sem_wait(&connlm->sem_empty) != 0) {
-            ST_WARNING("Failed to st_sem_wait sem_empty.");
-            goto ERR;
-        }
-
-        egs_in_pool = connlm->egs_pool + connlm->pool_in;
-        egs_in_pool->size = -2; // finish
-        connlm->pool_in = (connlm->pool_in + 1) % connlm->pool_size;
-
+        /* posting semaphore without adding data indicates finish. */
         if (st_sem_post(&connlm->sem_full) != 0) {
             ST_WARNING("Failed to st_sem_post sem_full.");
             goto ERR;
@@ -1509,16 +1567,12 @@ static void* connlm_train_thread(void *args)
     connlm_thr_t *thr;
     int tid;
 
-    connlm_egs_t *egs_in_pool;
-    connlm_egs_t egs = {
-        .words = NULL,
-        .size = 0,
-        .capacity = 0,
-    };
+    connlm_egs_t *egs;
 
     count_t words;
     count_t sents;
     double logp;
+    bool finish;
 
     int word;
     int i;
@@ -1537,6 +1591,7 @@ static void* connlm_train_thread(void *args)
 
     gettimeofday(&tts, NULL);
 
+    finish = false;
     words = 0;
     sents = 0;
     logp = 0.0;
@@ -1550,41 +1605,32 @@ static void* connlm_train_thread(void *args)
             ST_WARNING("Failed to st_sem_wait sem_full.");
             goto ERR;
         }
-        if (pthread_mutex_lock(&connlm->pool_lock) != 0) {
-            ST_WARNING("Failed to pthread_mutex_lock pool_lock.");
+        if (pthread_mutex_lock(&connlm->full_egs_lock) != 0) {
+            ST_WARNING("Failed to pthread_mutex_lock full_egs_lock.");
             goto ERR;
         }
 
-        egs_in_pool = connlm->egs_pool + connlm->pool_out;
-        connlm->pool_out = (connlm->pool_out + 1) % connlm->pool_size;
-
-        if (egs_in_pool->size > 0) {
-            if (connlm_egs_ensure(&egs, egs_in_pool->size) < 0) {
-                ST_WARNING("Failed to connlm_ensure_egs. pool_out[%d], "
-                        "num_words[%d].", connlm->pool_out, egs_in_pool->size);
-                goto ERR;
-            }
-            memcpy(egs.words, egs_in_pool->words, sizeof(int)*egs_in_pool->size);
+        if (connlm->full_egs == NULL) {
+            finish = true;
+        } else {
+            egs = connlm->full_egs;
+            connlm->full_egs = connlm->full_egs->next;
         }
-        egs.size = egs_in_pool->size;
 
-        if (pthread_mutex_unlock(&connlm->pool_lock) != 0) {
-            ST_WARNING("Failed to pthread_mutex_unlock pool_lock.");
-            goto ERR;
-        }
-        if (st_sem_post(&connlm->sem_empty) != 0) {
-            ST_WARNING("Failed to st_sem_post sem_empty.");
+        if (pthread_mutex_unlock(&connlm->full_egs_lock) != 0) {
+            ST_WARNING("Failed to pthread_mutex_unlock full_egs_lock.");
             goto ERR;
         }
         gettimeofday(&tte_wait, NULL);
 
-        if (egs.size == -2) { // finish
+        //ST_DEBUG("OUT: %s, %p, %d", bool2str(finish), egs, egs->size);
+        if (finish) {
             break;
         }
 
         if (connlm->fp_debug != NULL) {
             if (connlm_egs_print(connlm->fp_debug, &connlm->fp_debug_lock,
-                        &egs, connlm->vocab) < 0) {
+                        egs, connlm->vocab) < 0) {
                 ST_WARNING("Failed to connlm_egs_print.");
                 goto ERR;
             }
@@ -1595,8 +1641,8 @@ static void* connlm_train_thread(void *args)
             goto ERR;
         }
 
-        for (i = 0; i < egs.size; i++) {
-            word = egs.words[i];
+        for (i = 0; i < egs->size; i++) {
+            word = egs->words[i];
 
             if (word < 0) {
                 /* TODO: OOV during training. */
@@ -1676,15 +1722,26 @@ static void* connlm_train_thread(void *args)
                 exp10(-logp / (double) words),
                 (ms - ms_wait) / 1000.0, (ms - ms_wait) / (ms / 100.0),
                 ms_wait / 1000.0, ms_wait / (ms / 100.0));
-    }
 
-    connlm_egs_destroy(&egs);
+        if (pthread_mutex_lock(&connlm->empty_egs_lock) != 0) {
+            ST_WARNING("Failed to pthread_mutex_lock empty_egs_lock.");
+            goto ERR;
+        }
+        egs->next = connlm->empty_egs;
+        connlm->empty_egs = egs;
+        if (pthread_mutex_unlock(&connlm->empty_egs_lock) != 0) {
+            ST_WARNING("Failed to pthread_mutex_unlock empty_egs_lock.");
+            goto ERR;
+        }
+        if (st_sem_post(&connlm->sem_empty) != 0) {
+            ST_WARNING("Failed to st_sem_post sem_empty.");
+            goto ERR;
+        }
+    }
 
     return NULL;
 ERR:
     connlm->err = -1;
-
-    connlm_egs_destroy(&egs);
 
     /* TODO: unlock mutex and post semaphore */
     return NULL;
@@ -1725,8 +1782,6 @@ int connlm_train(connlm_t *connlm)
     memset(thrs, 0, sizeof(connlm_thr_t) * num_thrs);
 
     connlm->err = 0;
-    connlm->pool_in = 0;
-    connlm->pool_out = 0;
 
     read_thr.connlm = connlm;
     read_thr.thrs = thrs;
@@ -1801,7 +1856,14 @@ ERR:
 int connlm_setup_test(connlm_t *connlm, connlm_test_opt_t *test_opt,
         const char *test_file)
 {
+    connlm_egs_t *egs;
+    connlm_egs_t *p;
+    connlm_egs_t *q;
+    int pool_size;
+
     int num_thrs;
+
+    int i;
 
     ST_CHECK_PARAM(connlm == NULL || test_opt == NULL
             || test_file == NULL, -1);
@@ -1816,16 +1878,21 @@ int connlm_setup_test(connlm_t *connlm, connlm_test_opt_t *test_opt,
     strncpy(connlm->text_file, test_file, MAX_DIR_LEN);
     connlm->text_file[MAX_DIR_LEN - 1] = '\0';
 
-    connlm->pool_size = test_opt->num_thread;
-    connlm->egs_pool = (connlm_egs_t *)malloc(sizeof(connlm_egs_t)
-            * connlm->pool_size);
-    if (connlm->egs_pool == NULL) {
-        ST_WARNING("Failed to malloc egs_pool.");
-        goto ERR;
+    pool_size = 2 * test_opt->num_thread;
+    connlm->full_egs = NULL;
+    connlm->empty_egs = NULL;;
+    for (i = 0; i < pool_size; i++) {
+        egs = (connlm_egs_t *)malloc(sizeof(connlm_egs_t));
+        if (egs == NULL) {
+            ST_WARNING("Failed to malloc egs.");
+            goto ERR;
+        }
+        memset(egs, 0, sizeof(connlm_egs_t));
+        egs->next = connlm->empty_egs;
+        connlm->empty_egs = egs;
     }
-    memset(connlm->egs_pool, 0, sizeof(connlm_egs_t)*connlm->pool_size);
 
-    if (st_sem_init(&connlm->sem_empty, connlm->pool_size) != 0) {
+    if (st_sem_init(&connlm->sem_empty, pool_size) != 0) {
         ST_WARNING("Failed to st_sem_init sem_empty.");
         goto ERR;
     }
@@ -1835,8 +1902,13 @@ int connlm_setup_test(connlm_t *connlm, connlm_test_opt_t *test_opt,
         goto ERR;
     }
 
-    if (pthread_mutex_init(&connlm->pool_lock, NULL) != 0) {
-        ST_WARNING("Failed to pthread_mutex_init pool_lock.");
+    if (pthread_mutex_init(&connlm->full_egs_lock, NULL) != 0) {
+        ST_WARNING("Failed to pthread_mutex_init full_egs_lock.");
+        goto ERR;
+    }
+
+    if (pthread_mutex_init(&connlm->empty_egs_lock, NULL) != 0) {
+        ST_WARNING("Failed to pthread_mutex_init empty_egs_lock.");
         goto ERR;
     }
 
@@ -1890,8 +1962,27 @@ int connlm_setup_test(connlm_t *connlm, connlm_test_opt_t *test_opt,
     return 0;
 
 ERR:
-    safe_free(connlm->egs_pool);
-    (void)pthread_mutex_destroy(&connlm->pool_lock);
+    p = connlm->full_egs;
+    while (p != NULL) {
+        q = p;
+        p = p->next;
+
+        connlm_egs_destroy(q);
+        safe_free(q);
+    }
+    connlm->full_egs = NULL;
+
+    p = connlm->empty_egs;;
+    while (p != NULL) {
+        q = p;
+        p = p->next;
+
+        connlm_egs_destroy(q);
+        safe_free(q);
+    }
+    connlm->empty_egs = NULL;
+    (void)pthread_mutex_destroy(&connlm->full_egs_lock);
+    (void)pthread_mutex_destroy(&connlm->empty_egs_lock);
     (void)st_sem_destroy(&connlm->sem_full);
     (void)st_sem_destroy(&connlm->sem_empty);
     safe_fclose(connlm->fp_debug);
@@ -2026,17 +2117,13 @@ static void* connlm_test_thread(void *args)
     connlm_thr_t *thr;
     int tid;
 
-    connlm_egs_t *egs_in_pool;
-    connlm_egs_t egs = {
-        .words = NULL,
-        .size = 0,
-        .capacity = 0,
-    };
+    connlm_egs_t *egs;
 
     count_t words;
     count_t sents;
     count_t oovs;
     double logp;
+    bool finish;
 
     int word;
     double oov_penalty;
@@ -2052,6 +2139,7 @@ static void* connlm_test_thread(void *args)
 
     oov_penalty = connlm->test_opt.oov_penalty;
 
+    finish = false;
     words = 0;
     sents = 0;
     oovs = 0;
@@ -2065,40 +2153,30 @@ static void* connlm_test_thread(void *args)
             ST_WARNING("Failed to st_sem_wait sem_full.");
             goto ERR;
         }
-        if (pthread_mutex_lock(&connlm->pool_lock) != 0) {
-            ST_WARNING("Failed to pthread_mutex_lock pool_lock.");
+        if (pthread_mutex_lock(&connlm->full_egs_lock) != 0) {
+            ST_WARNING("Failed to pthread_mutex_lock full_egs_lock.");
             goto ERR;
         }
 
-        egs_in_pool = connlm->egs_pool + connlm->pool_out;
-        connlm->pool_out = (connlm->pool_out + 1) % connlm->pool_size;
-
-        if (egs_in_pool->size > 0) {
-            if (connlm_egs_ensure(&egs, egs_in_pool->size) < 0) {
-                ST_WARNING("Failed to connlm_ensure_egs. pool_out[%d], "
-                        "num_words[%d].", connlm->pool_out, egs_in_pool->size);
-                goto ERR;
-            }
-            memcpy(egs.words, egs_in_pool->words, sizeof(int)*egs_in_pool->size);
+        if (connlm->full_egs == NULL) {
+            finish = true;
+        } else {
+            egs = connlm->full_egs;
+            connlm->full_egs = connlm->full_egs->next;
         }
-        egs.size = egs_in_pool->size;
 
-        if (pthread_mutex_unlock(&connlm->pool_lock) != 0) {
-            ST_WARNING("Failed to pthread_mutex_unlock pool_lock.");
+        if (pthread_mutex_unlock(&connlm->full_egs_lock) != 0) {
+            ST_WARNING("Failed to pthread_mutex_unlock full_egs_lock.");
             goto ERR;
         }
-        if (st_sem_post(&connlm->sem_empty) != 0) {
-            ST_WARNING("Failed to st_sem_post sem_empty.");
-            goto ERR;
-        }
-
-        if (egs.size == -2) { // finish
+        //ST_DEBUG("OUT: %s, %p, %d", bool2str(finish), egs, egs->size);
+        if (finish) {
             break;
         }
 
         if (connlm->fp_debug != NULL) {
             if (connlm_egs_print(connlm->fp_debug, &connlm->fp_debug_lock,
-                        &egs, connlm->vocab) < 0) {
+                        egs, connlm->vocab) < 0) {
                 ST_WARNING("Failed to connlm_egs_print.");
                 goto ERR;
             }
@@ -2108,8 +2186,8 @@ static void* connlm_test_thread(void *args)
             ST_WARNING("Failed to connlm_reset_test.");
             goto ERR;
         }
-        for (i = 0; i < egs.size; i++) {
-            word = egs.words[i];
+        for (i = 0; i < egs->size; i++) {
+            word = egs->words[i];
 
             if (connlm_start_test(connlm, word, tid) < 0) {
                 ST_WARNING("connlm_start_test.");
@@ -2177,6 +2255,21 @@ static void* connlm_test_thread(void *args)
 
             words++;
         }
+
+        if (pthread_mutex_lock(&connlm->empty_egs_lock) != 0) {
+            ST_WARNING("Failed to pthread_mutex_lock empty_egs_lock.");
+            goto ERR;
+        }
+        egs->next = connlm->empty_egs;
+        connlm->empty_egs = egs;
+        if (pthread_mutex_unlock(&connlm->empty_egs_lock) != 0) {
+            ST_WARNING("Failed to pthread_mutex_unlock empty_egs_lock.");
+            goto ERR;
+        }
+        if (st_sem_post(&connlm->sem_empty) != 0) {
+            ST_WARNING("Failed to st_sem_post sem_empty.");
+            goto ERR;
+        }
     }
 
     thr->words = words;
@@ -2184,12 +2277,10 @@ static void* connlm_test_thread(void *args)
     thr->oovs = oovs;
     thr->logp = logp;
 
-    connlm_egs_destroy(&egs);
     return NULL;
 ERR:
     connlm->err = -1;
 
-    connlm_egs_destroy(&egs);
     /* TODO: unlock mutex and post semaphore */
     return NULL;
 }
@@ -2238,8 +2329,6 @@ int connlm_test(connlm_t *connlm, FILE *fp_log)
     memset(thrs, 0, sizeof(connlm_thr_t) * num_thrs);
 
     connlm->err = 0;
-    connlm->pool_in = 0;
-    connlm->pool_out = 0;
 
     read_thr.connlm = connlm;
     read_thr.thrs = thrs;

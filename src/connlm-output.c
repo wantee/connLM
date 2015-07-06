@@ -132,6 +132,11 @@ int main(int argc, const char *argv[])
     }
     safe_st_fclose(fp);
 
+    if (connlm_in->vocab == NULL) {
+        ST_WARNING("No vocab loaded from [%s].", argv[1]);
+        goto ERR;
+    }
+
     ST_NOTICE("Generating Output Layer...");
     output = output_create(&g_output_opt, connlm_in->vocab->vocab_size);
     if (output == NULL) {
