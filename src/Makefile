@@ -45,6 +45,7 @@ endif
 
 CFLAGS += -g -Wall -Winline -pipe 
 CFLAGS += -DNDEBUG
+#CFLAGS += -D_TIME_PROF_
 
 
 INC = connlm.h vocab.h output.h param.h rnn.h maxent.h lbl.h ffnn.h

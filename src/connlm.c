@@ -1363,7 +1363,17 @@ static void* connlm_read_thread(void *args)
     count_t total_sents;
     double logp;
     struct timeval tts, tte;
-    long ms;
+    long ms = 0;
+#ifdef _TIME_PROF_
+    struct timeval tts_io, tte_io;
+    long ms_io = 0;
+    struct timeval tts_shuf, tte_shuf;
+    long ms_shuf = 0;
+    struct timeval tts_lock, tte_lock;
+    long ms_lock = 0;
+    struct timeval tts_fill, tte_fill;
+    long ms_fill = 0;
+#endif
 
     ST_CHECK_PARAM(args == NULL, NULL);
 
@@ -1409,12 +1419,18 @@ static void* connlm_read_thread(void *args)
             break;
         }
 
+#ifdef _TIME_PROF_
+        gettimeofday(&tts_io, NULL);
+#endif
         num_sents = connlm_get_egs(&egs, sent_ends,
                 epoch_size, text_fp, connlm->vocab);
         if (num_sents < 0) {
             ST_WARNING("Failed to connlm_get_egs.");
             goto ERR;
         }
+#ifdef _TIME_PROF_
+        gettimeofday(&tte_io, NULL);
+#endif
         if (num_sents == 0) {
             continue;
         }
@@ -1422,6 +1438,9 @@ static void* connlm_read_thread(void *args)
         read_thr->sents += num_sents;
         read_thr->words += egs.size;
 
+#ifdef _TIME_PROF_
+        gettimeofday(&tts_shuf, NULL);
+#endif
         if (shuffle_buf != NULL) {
             for (i = 0; i < num_sents; i++) {
                 shuffle_buf[i] = i;
@@ -1429,7 +1448,13 @@ static void* connlm_read_thread(void *args)
 
             st_shuffle_r(shuffle_buf, num_sents, &read_thr->random);
         }
+#ifdef _TIME_PROF_
+        gettimeofday(&tte_shuf, NULL);
+#endif
 
+#ifdef _TIME_PROF_
+        gettimeofday(&tts_lock, NULL);
+#endif
         if (st_sem_wait(&connlm->sem_empty) != 0) {
             ST_WARNING("Failed to st_sem_wait sem_empty.");
             goto ERR;
@@ -1445,7 +1470,13 @@ static void* connlm_read_thread(void *args)
             ST_WARNING("Failed to pthread_mutex_unlock empty_egs_lock.");
             goto ERR;
         }
+#ifdef _TIME_PROF_
+        gettimeofday(&tte_lock, NULL);
+#endif
 
+#ifdef _TIME_PROF_
+        gettimeofday(&tts_fill, NULL);
+#endif
         if (connlm_egs_ensure(egs_in_pool, egs.size) < 0) {
             ST_WARNING("Failed to connlm_ensure_egs. size[%d].", egs.size);
             goto ERR;
@@ -1469,6 +1500,9 @@ static void* connlm_read_thread(void *args)
             memcpy(egs_in_pool->words, egs.words, sizeof(int)*egs.size);
             egs_in_pool->size = egs.size;
         }
+#ifdef _TIME_PROF_
+        gettimeofday(&tte_fill, NULL);
+#endif
 
         if (pthread_mutex_lock(&connlm->full_egs_lock) != 0) {
             ST_WARNING("Failed to pthread_mutex_lock full_egs_lock.");
@@ -1485,6 +1519,20 @@ static void* connlm_read_thread(void *args)
             ST_WARNING("Failed to st_sem_post sem_full.");
             goto ERR;
         }
+
+#ifdef _TIME_PROF_
+        gettimeofday(&tte, NULL);
+        ms = TIMEDIFF(tts, tte);
+        ms_io += TIMEDIFF(tts_io, tte_io);
+        ms_shuf += TIMEDIFF(tts_shuf, tte_shuf);
+        ms_lock += TIMEDIFF(tts_lock, tte_lock);
+        ms_fill += TIMEDIFF(tts_fill, tte_fill);
+        ST_TRACE("Time: %.3fs, I/O: %.3f(%.2f%%), Shuf: %.3f(%.2f%%), Lock: %.3f(%.2f%%), Fill: %.3f(%.2f%%)",
+                ms / 1000.0, ms_io / 1000.0, ms_io / (ms / 100.0),
+                ms_shuf / 1000.0, ms_shuf / (ms / 100.0),
+                ms_lock / 1000.0, ms_lock / (ms / 100.0),
+                ms_fill / 1000.0, ms_fill / (ms / 100.0));
+#endif
 
         num_reads++;
         if (num_reads >= num_thrs) {
@@ -1567,7 +1615,7 @@ static void* connlm_train_thread(void *args)
     connlm_thr_t *thr;
     int tid;
 
-    connlm_egs_t *egs;
+    connlm_egs_t *egs = NULL;
 
     count_t words;
     count_t sents;
@@ -1716,12 +1764,13 @@ static void* connlm_train_thread(void *args)
         ST_TRACE("Thread: %d, Words: " COUNT_FMT
                 ", Sentences: " COUNT_FMT ", words/sec: %.1f, "
                 "LogP: %f, Entropy: %f, PPL: %f, "
-                "Time(cpu/wait): %.3fs(%.2f%%)/%.3fs(%.2f%%)", 
+                "Time(cpu/wait): %.3fs(%.2f%%)/%.3fs(%.2f%%):%.3f", 
                 tid, words, sents, words / ((double) ms / 1000.0),
                 logp, -logp / log10(2) / words,
                 exp10(-logp / (double) words),
                 (ms - ms_wait) / 1000.0, (ms - ms_wait) / (ms / 100.0),
-                ms_wait / 1000.0, ms_wait / (ms / 100.0));
+                ms_wait / 1000.0, ms_wait / (ms / 100.0),
+                TIMEDIFF(tts_wait, tte_wait) / 1000.0);
 
         if (pthread_mutex_lock(&connlm->empty_egs_lock) != 0) {
             ST_WARNING("Failed to pthread_mutex_lock empty_egs_lock.");
