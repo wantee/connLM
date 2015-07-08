@@ -41,6 +41,7 @@ fi
 vocab=$1
 dir=$2
 
+begin_date=`date +"%Y-%m-%d %H:%M:%S"`
 mkdir -p $dir
 
 model_out=$dir/init.clm
@@ -140,6 +141,12 @@ else
 
   echo "**Best model: $max_mdl, Speed: $max_speed."
   cp $max_mdl $model_out
+fi
+
+if [ -z "$class_size" ]; then
+  ../utils/check_log.sh -b "$begin_date" $init_log.wf $output_log.wf
+else
+  ../utils/check_log.sh -b "$begin_date" $log_dir/*.wf
 fi
 
 exit 0;

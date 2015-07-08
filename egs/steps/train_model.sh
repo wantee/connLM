@@ -48,6 +48,7 @@ valid_file=$2
 dir=$3
 mdl_init=init.clm
 
+begin_date=`date +"%Y-%m-%d %H:%M:%S"`
 log_dir=$dir/log
 
 if [ ! -e $dir/.learn_rate ]; then
@@ -168,5 +169,8 @@ else
   echo "Error training neural network."
   exit 1
 fi
+
+../utils/check_log.sh -b "$begin_date" $log_dir/*.wf
+
 exit 0;
 
