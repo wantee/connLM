@@ -81,7 +81,13 @@ typedef struct _rnn_neuron_t {
     real_t *ac_bptt_h; /**< buffer for activation of hidden for bptt. */
     real_t *er_bptt_h; /**< buffer for error of hidden for bptt. */
     real_t *wt_bptt_ih_w; /**< buffer for input-hidden weights for bptt. */
+#ifdef _MINI_UPDATE_
+    real_t *er_h_buf; /**< errors of hiddend layer for one mini-batch */
+    real_t *ac_i_h_buf; /**< activation of hiddend part of input layer for one mini-batch */
+#else
     real_t *wt_bptt_ih_h; /**< buffer for hidden-hidden weights for bptt. */
+#endif
+    int ih_buf_num; /**< size of er_h_buf and ac_i_h_buf, or used to indicate wt_i_h updated during mini-batch. */
     bool *dirty_word; /**< byte map for updated words. */
 
     // input layer
@@ -102,7 +108,9 @@ typedef struct _rnn_neuron_t {
     bool *dirty_class; /**< byte map for updated classes. */
 
     real_t *wt_ih_w; /**< delta weight of input-hidden for one mini-batch */
+#ifndef _MINI_UPDATE_
     real_t *wt_ih_h; /**< delta weight of hidden-hidden for one mini-batch */
+#endif
 
     real_t *wt_ho_w; /**< delta weight of word part of hidden-output for one mini-batch */
 #ifdef _MINI_UPDATE_

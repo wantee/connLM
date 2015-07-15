@@ -48,6 +48,10 @@ typedef long long hash_size_t;
 
 #define ALIGN_SIZE 128
 
+#ifdef _USE_BLAS_
+# define _MINI_UPDATE_
+#endif
+
 #ifdef __cplusplus
 }
 #endif

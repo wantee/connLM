@@ -119,6 +119,18 @@ void param_update(param_t *param, param_arg_t *arg, bool update_arg,
 
 #ifdef _MINI_UPDATE_
 /**
+ * Accumulate weights with mini-batch.
+ * @ingroup param
+ *
+ * batch is the mini-batch size,
+ * other arguments are the same as param_acc_wt.
+ *
+ * @see param_acc_wt
+ */
+void param_acc_wt_minibatch(int batch, real_t *wt, real_t *er, int er_size,
+        real_t *in, int in_size);
+
+/**
  * Update weight with mini-batch
  * @ingroup param
  *

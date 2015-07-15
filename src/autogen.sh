@@ -32,7 +32,7 @@ if [ "`uname`" == "Linux" ]; then
     echo "CFLAGS += -D_HAVE_MKL_" >> $mkfile
     echo "LDFLAGS += -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lmkl_sequential -lmkl_core" >> $mkfile
   else
-    ATLASLIB=$(dirname `ldconfig -p | grep libatlas.so | cut -d'>' -f2` 2>/dev/null)
+    ATLASLIB=$(dirname "`ldconfig -p | grep 'libatlas.so$' | cut -d'>' -f2`" 2>/dev/null)
     if [ -n "$ATLASLIB" ]; then
       FLAG="-L $ATLASLIB -lcblas -latlas -llapack"
       if [ -n "$ATLASINC" ]; then
