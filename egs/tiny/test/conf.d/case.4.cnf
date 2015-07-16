@@ -2,5 +2,5 @@ name="Reading thread"
 
 before="rm -rf test/tmp/case-04; mkdir -p test/tmp/case-04; cp -r conf test/tmp/case-04; ./run.sh --conf-dir test/tmp/case-04/conf --exp-dir test/tmp/case-04/exp 1,2 > /dev/null"
 
-script="./test/test_read.sh test/tmp/case-04/exp/maxent test/tmp/case-04"
+script="./test/test_read.sh test/tmp/case-04/exp/maxent test/tmp/case-04 > /dev/null"
 
