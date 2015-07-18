@@ -5,6 +5,7 @@ var searchData=
   ['sem_5fempty',['sem_empty',['../structconnlm__t.html#a5b6c32a9a77bff13ad5c9841de9b9b82',1,'connlm_t']]],
   ['sem_5ffull',['sem_full',['../structconnlm__t.html#afdb39575efa6ff66fccd308338ff89d0',1,'connlm_t']]],
   ['shuffle',['shuffle',['../structconnlm__train__opt__t.html#aa96d4549fdd8ea2c5c3e6d70f12cef97',1,'connlm_train_opt_t']]],
+  ['size',['size',['../structconnlm__egs__t.html#a0a61c2f839aff3d2ffcfc8f0cf92c126',1,'connlm_egs_t']]],
   ['step',['step',['../structrnn__neuron__t.html#adf768eeb6a8f46b83a84a46d2731f8c4',1,'rnn_neuron_t']]],
   ['sz_5fc',['sz_c',['../structmaxent__model__opt__t.html#aa73140fd91a283e896e3cbc8ed79d741',1,'maxent_model_opt_t']]],
   ['sz_5fw',['sz_w',['../structmaxent__model__opt__t.html#a0bccf6cae3b63ec65c1545db1fd176f0',1,'maxent_model_opt_t']]]
