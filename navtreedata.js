@@ -23,7 +23,7 @@ var NAVTREE =
 var NAVTREEINDEX =
 [
 "about.html",
-"structlbl__model__opt__t.html"
+"structconnlm__train__opt__t.html#a04725f8d6bc1fe1ed576655e911d462a"
 ];
 
 var SYNCONMSG = 'click to disable panel synchronisation';

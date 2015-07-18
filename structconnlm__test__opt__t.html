@@ -125,45 +125,44 @@ Data Fields</h2></td></tr>
 <tr class="memitem:a7aa3604a4bf9169e2f18efaa845059e7"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structconnlm__test__opt__t.html#a7aa3604a4bf9169e2f18efaa845059e7">num_thread</a></td></tr>
 <tr class="memdesc:a7aa3604a4bf9169e2f18efaa845059e7"><td class="mdescLeft">&#160;</td><td class="mdescRight">number of threads.  <a href="#a7aa3604a4bf9169e2f18efaa845059e7">More...</a><br /></td></tr>
 <tr class="separator:a7aa3604a4bf9169e2f18efaa845059e7"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a0c8a7e75deae2f979a0bb11821baf4c9"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structconnlm__test__opt__t.html#a0c8a7e75deae2f979a0bb11821baf4c9">max_word_per_sent</a></td></tr>
-<tr class="memdesc:a0c8a7e75deae2f979a0bb11821baf4c9"><td class="mdescLeft">&#160;</td><td class="mdescRight">max words per one sentence.  <a href="#a0c8a7e75deae2f979a0bb11821baf4c9">More...</a><br /></td></tr>
-<tr class="separator:a0c8a7e75deae2f979a0bb11821baf4c9"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a40a32e82f91d5c758e2e871b03a8b67f"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structconnlm__test__opt__t.html#a40a32e82f91d5c758e2e871b03a8b67f">num_line_read</a></td></tr>
-<tr class="memdesc:a40a32e82f91d5c758e2e871b03a8b67f"><td class="mdescLeft">&#160;</td><td class="mdescRight">number lines read one time.  <a href="#a40a32e82f91d5c758e2e871b03a8b67f">More...</a><br /></td></tr>
-<tr class="separator:a40a32e82f91d5c758e2e871b03a8b67f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ada23e7920e628a6cedbf2322f414fea8"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structconnlm__test__opt__t.html#ada23e7920e628a6cedbf2322f414fea8">epoch_size</a></td></tr>
+<tr class="memdesc:ada23e7920e628a6cedbf2322f414fea8"><td class="mdescLeft">&#160;</td><td class="mdescRight">number sentences read one time per thread.  <a href="#ada23e7920e628a6cedbf2322f414fea8">More...</a><br /></td></tr>
+<tr class="separator:ada23e7920e628a6cedbf2322f414fea8"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a3c165ee1812aa499199254a7e2684134"><td class="memItemLeft" align="right" valign="top">real_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structconnlm__test__opt__t.html#a3c165ee1812aa499199254a7e2684134">oov_penalty</a></td></tr>
 <tr class="memdesc:a3c165ee1812aa499199254a7e2684134"><td class="mdescLeft">&#160;</td><td class="mdescRight">penalty for OOV.  <a href="#a3c165ee1812aa499199254a7e2684134">More...</a><br /></td></tr>
 <tr class="separator:a3c165ee1812aa499199254a7e2684134"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab5cac0150ebcfb7cf4c5531d0e6bdaf5"><td class="memItemLeft" align="right" valign="top">char&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structconnlm__test__opt__t.html#ab5cac0150ebcfb7cf4c5531d0e6bdaf5">debug_file</a> [MAX_DIR_LEN]</td></tr>
+<tr class="memdesc:ab5cac0150ebcfb7cf4c5531d0e6bdaf5"><td class="mdescLeft">&#160;</td><td class="mdescRight">file to print out debug infos.  <a href="#ab5cac0150ebcfb7cf4c5531d0e6bdaf5">More...</a><br /></td></tr>
+<tr class="separator:ab5cac0150ebcfb7cf4c5531d0e6bdaf5"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Parameters for testing connLM model. </p>
 </div><h2 class="groupheader">Field Documentation</h2>
-<a class="anchor" id="a0c8a7e75deae2f979a0bb11821baf4c9"></a>
+<a class="anchor" id="ab5cac0150ebcfb7cf4c5531d0e6bdaf5"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">int connlm_test_opt_t::max_word_per_sent</td>
+          <td class="memname">char connlm_test_opt_t::debug_file[MAX_DIR_LEN]</td>
         </tr>
       </table>
 </div><div class="memdoc">
 
-<p>max words per one sentence. </p>
-<p>Any sentence with larger words will be dropped. </p>
+<p>file to print out debug infos. </p>
 
 </div>
 </div>
-<a class="anchor" id="a40a32e82f91d5c758e2e871b03a8b67f"></a>
+<a class="anchor" id="ada23e7920e628a6cedbf2322f414fea8"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">int connlm_test_opt_t::num_line_read</td>
+          <td class="memname">int connlm_test_opt_t::epoch_size</td>
         </tr>
       </table>
 </div><div class="memdoc">
 
-<p>number lines read one time. </p>
+<p>number sentences read one time per thread. </p>
 
 </div>
 </div>
@@ -204,7 +203,7 @@ Data Fields</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="structconnlm__test__opt__t.html">connlm_test_opt_t</a></li>
-    <li class="footer">Generated on Thu Jun 25 2015 10:58:20 for connLM by
+    <li class="footer">Generated on Sat Jul 18 2015 23:14:42 for connLM by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.9.1 </li>
   </ul>

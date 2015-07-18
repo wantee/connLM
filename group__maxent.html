@@ -169,9 +169,12 @@ Functions</h2></td></tr>
 <tr class="memitem:gaeecffee868358c63b48880d657e6803b"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__maxent.html#gaeecffee868358c63b48880d657e6803b">maxent_save_body</a> (<a class="el" href="structmaxent__t.html">maxent_t</a> *maxent, FILE *fp, bool binary)</td></tr>
 <tr class="memdesc:gaeecffee868358c63b48880d657e6803b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Save maxent body.  <a href="#gaeecffee868358c63b48880d657e6803b">More...</a><br /></td></tr>
 <tr class="separator:gaeecffee868358c63b48880d657e6803b"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:gad5718b4b62e28bba6c2c6582279265ef"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__maxent.html#gad5718b4b62e28bba6c2c6582279265ef">maxent_forward</a> (<a class="el" href="structmaxent__t.html">maxent_t</a> *maxent, int word, int tid)</td></tr>
-<tr class="memdesc:gad5718b4b62e28bba6c2c6582279265ef"><td class="mdescLeft">&#160;</td><td class="mdescRight">Feed-forward one word for a thread of maxent model.  <a href="#gad5718b4b62e28bba6c2c6582279265ef">More...</a><br /></td></tr>
-<tr class="separator:gad5718b4b62e28bba6c2c6582279265ef"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga1673ee01e5e17c722d358e43672f4920"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__maxent.html#ga1673ee01e5e17c722d358e43672f4920">maxent_forward_pre_layer</a> (<a class="el" href="structmaxent__t.html">maxent_t</a> *maxent, int tid)</td></tr>
+<tr class="memdesc:ga1673ee01e5e17c722d358e43672f4920"><td class="mdescLeft">&#160;</td><td class="mdescRight">Feed-forward one word for pre-non-output layer of one thread of maxent model.  <a href="#ga1673ee01e5e17c722d358e43672f4920">More...</a><br /></td></tr>
+<tr class="separator:ga1673ee01e5e17c722d358e43672f4920"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga0e447e06e8668f42e535cc9ac60d897e"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__maxent.html#ga0e447e06e8668f42e535cc9ac60d897e">maxent_forward_last_layer</a> (<a class="el" href="structmaxent__t.html">maxent_t</a> *maxent, int cls, int tid)</td></tr>
+<tr class="memdesc:ga0e447e06e8668f42e535cc9ac60d897e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Feed-forward one word for last output layer of one thread of maxent model.  <a href="#ga0e447e06e8668f42e535cc9ac60d897e">More...</a><br /></td></tr>
+<tr class="separator:ga0e447e06e8668f42e535cc9ac60d897e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga87e4d36fcff29a2206ac930d4389c8b0"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__maxent.html#ga87e4d36fcff29a2206ac930d4389c8b0">maxent_backprop</a> (<a class="el" href="structmaxent__t.html">maxent_t</a> *maxent, int word, int tid)</td></tr>
 <tr class="memdesc:ga87e4d36fcff29a2206ac930d4389c8b0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Back-propagate one word for a thread of maxent model.  <a href="#ga87e4d36fcff29a2206ac930d4389c8b0">More...</a><br /></td></tr>
 <tr class="separator:ga87e4d36fcff29a2206ac930d4389c8b0"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -202,6 +205,15 @@ Functions</h2></td></tr>
 <tr class="memitem:gabecbc6a05a41ed2572d7af5b0c68177c"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__maxent.html#gabecbc6a05a41ed2572d7af5b0c68177c">maxent_end_test</a> (<a class="el" href="structmaxent__t.html">maxent_t</a> *maxent, int word, int tid)</td></tr>
 <tr class="memdesc:gabecbc6a05a41ed2572d7af5b0c68177c"><td class="mdescLeft">&#160;</td><td class="mdescRight">End testing for maxent model.  <a href="#gabecbc6a05a41ed2572d7af5b0c68177c">More...</a><br /></td></tr>
 <tr class="separator:gabecbc6a05a41ed2572d7af5b0c68177c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga90a86aff93d279b9cba496ddc02fe11a"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__maxent.html#ga90a86aff93d279b9cba496ddc02fe11a">maxent_setup_gen</a> (<a class="el" href="structmaxent__t.html">maxent_t</a> *maxent, <a class="el" href="structoutput__t.html">output_t</a> *output)</td></tr>
+<tr class="memdesc:ga90a86aff93d279b9cba496ddc02fe11a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Setup generating for maxent model.  <a href="#ga90a86aff93d279b9cba496ddc02fe11a">More...</a><br /></td></tr>
+<tr class="separator:ga90a86aff93d279b9cba496ddc02fe11a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga31964ab9d66a0f6444e54437ae53fa44"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__maxent.html#ga31964ab9d66a0f6444e54437ae53fa44">maxent_reset_gen</a> (<a class="el" href="structmaxent__t.html">maxent_t</a> *maxent)</td></tr>
+<tr class="memdesc:ga31964ab9d66a0f6444e54437ae53fa44"><td class="mdescLeft">&#160;</td><td class="mdescRight">Reset generating for maxent model.  <a href="#ga31964ab9d66a0f6444e54437ae53fa44">More...</a><br /></td></tr>
+<tr class="separator:ga31964ab9d66a0f6444e54437ae53fa44"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga9f66e75b486781897efd68ea05e9830f"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__maxent.html#ga9f66e75b486781897efd68ea05e9830f">maxent_end_gen</a> (<a class="el" href="structmaxent__t.html">maxent_t</a> *maxent, int word)</td></tr>
+<tr class="memdesc:ga9f66e75b486781897efd68ea05e9830f"><td class="mdescLeft">&#160;</td><td class="mdescRight">End generating for maxent model.  <a href="#ga9f66e75b486781897efd68ea05e9830f">More...</a><br /></td></tr>
+<tr class="separator:ga9f66e75b486781897efd68ea05e9830f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <p>Data structures and functions for MaxEnt model. </p>
@@ -278,7 +290,7 @@ Functions</h2></td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section see"><dt>See also</dt><dd><a class="el" href="group__maxent.html#gad5718b4b62e28bba6c2c6582279265ef" title="Feed-forward one word for a thread of maxent model. ">maxent_forward</a> </dd></dl>
+<dl class="section see"><dt>See also</dt><dd>maxent_forward </dd></dl>
 <dl class="section return"><dt>Returns</dt><dd>non-zero value if any error. </dd></dl>
 
 </div>
@@ -329,6 +341,43 @@ Functions</h2></td></tr>
   </dd>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>the duplicated maxent model </dd></dl>
+
+</div>
+</div>
+<a class="anchor" id="ga9f66e75b486781897efd68ea05e9830f"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int maxent_end_gen </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structmaxent__t.html">maxent_t</a> *&#160;</td>
+          <td class="paramname"><em>maxent</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>word</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>End generating for maxent model. </p>
+<p>Called after every word generated.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">maxent</td><td>maxent model. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">word</td><td>current generated word. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>non-zero value if any error. </dd></dl>
 
 </div>
 </div>
@@ -457,12 +506,12 @@ Functions</h2></td></tr>
 
 </div>
 </div>
-<a class="anchor" id="gad5718b4b62e28bba6c2c6582279265ef"></a>
+<a class="anchor" id="ga0e447e06e8668f42e535cc9ac60d897e"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">int maxent_forward </td>
+          <td class="memname">int maxent_forward_last_layer </td>
           <td>(</td>
           <td class="paramtype"><a class="el" href="structmaxent__t.html">maxent_t</a> *&#160;</td>
           <td class="paramname"><em>maxent</em>, </td>
@@ -471,7 +520,7 @@ Functions</h2></td></tr>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">int&#160;</td>
-          <td class="paramname"><em>word</em>, </td>
+          <td class="paramname"><em>cls</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
@@ -487,16 +536,53 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Feed-forward one word for a thread of maxent model. </p>
+<p>Feed-forward one word for last output layer of one thread of maxent model. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramdir">[in]</td><td class="paramname">maxent</td><td>maxent model. </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">word</td><td>current word. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">cls</td><td>class of current word. -1 if non-class. </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">tid</td><td>thread id (neuron id). </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section see"><dt>See also</dt><dd><a class="el" href="group__maxent.html#ga87e4d36fcff29a2206ac930d4389c8b0" title="Back-propagate one word for a thread of maxent model. ">maxent_backprop</a> </dd></dl>
+<dl class="section see"><dt>See also</dt><dd><a class="el" href="group__maxent.html#ga1673ee01e5e17c722d358e43672f4920" title="Feed-forward one word for pre-non-output layer of one thread of maxent model. ">maxent_forward_pre_layer</a> </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>non-zero value if any error. </dd></dl>
+
+</div>
+</div>
+<a class="anchor" id="ga1673ee01e5e17c722d358e43672f4920"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int maxent_forward_pre_layer </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structmaxent__t.html">maxent_t</a> *&#160;</td>
+          <td class="paramname"><em>maxent</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>tid</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Feed-forward one word for pre-non-output layer of one thread of maxent model. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">maxent</td><td>maxent model. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">tid</td><td>thread id (neuron id). </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section see"><dt>See also</dt><dd><a class="el" href="group__maxent.html#ga0e447e06e8668f42e535cc9ac60d897e" title="Feed-forward one word for last output layer of one thread of maxent model. ">maxent_forward_last_layer</a> </dd></dl>
 <dl class="section return"><dt>Returns</dt><dd>non-zero value if any error. </dd></dl>
 
 </div>
@@ -736,6 +822,32 @@ Functions</h2></td></tr>
 
 </div>
 </div>
+<a class="anchor" id="ga31964ab9d66a0f6444e54437ae53fa44"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int maxent_reset_gen </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structmaxent__t.html">maxent_t</a> *&#160;</td>
+          <td class="paramname"><em>maxent</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Reset generating for maxent model. </p>
+<p>Called before every sentence to be generated.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">maxent</td><td>maxent model. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>non-zero value if any error. </dd></dl>
+
+</div>
+</div>
 <a class="anchor" id="gabdff95b60c9cc46b1ead25017df44b18"></a>
 <div class="memitem">
 <div class="memproto">
@@ -898,6 +1010,43 @@ Functions</h2></td></tr>
 <dl class="section see"><dt>See also</dt><dd><a class="el" href="group__maxent.html#gaeecffee868358c63b48880d657e6803b" title="Save maxent body. ">maxent_save_body</a> </dd>
 <dd>
 <a class="el" href="group__maxent.html#gad4464c5e8e14abf7102b585aaf926800" title="Load maxent header and initialise a new maxent. ">maxent_load_header</a>, <a class="el" href="group__maxent.html#gae999e0f8a979d83f668615c8a74bf91b" title="Load maxent body. ">maxent_load_body</a> </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>non-zero value if any error. </dd></dl>
+
+</div>
+</div>
+<a class="anchor" id="ga90a86aff93d279b9cba496ddc02fe11a"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int maxent_setup_gen </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structmaxent__t.html">maxent_t</a> *&#160;</td>
+          <td class="paramname"><em>maxent</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="structoutput__t.html">output_t</a> *&#160;</td>
+          <td class="paramname"><em>output</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Setup generating for maxent model. </p>
+<p>Called before generating.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">maxent</td><td>maxent model. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">output</td><td>output layer. </td></tr>
+  </table>
+  </dd>
+</dl>
 <dl class="section return"><dt>Returns</dt><dd>non-zero value if any error. </dd></dl>
 
 </div>
@@ -1090,7 +1239,7 @@ Functions</h2></td></tr>
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on Thu Jun 25 2015 10:58:20 for connLM by
+    <li class="footer">Generated on Sat Jul 18 2015 23:14:42 for connLM by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.9.1 </li>
   </ul>

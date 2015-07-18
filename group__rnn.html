@@ -163,9 +163,12 @@ Functions</h2></td></tr>
 <tr class="memitem:gae8c4d1230527af8447e4593f0bfe7d31"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__rnn.html#gae8c4d1230527af8447e4593f0bfe7d31">rnn_save_body</a> (<a class="el" href="structrnn__t.html">rnn_t</a> *rnn, FILE *fp, bool binary)</td></tr>
 <tr class="memdesc:gae8c4d1230527af8447e4593f0bfe7d31"><td class="mdescLeft">&#160;</td><td class="mdescRight">Save rnn body.  <a href="#gae8c4d1230527af8447e4593f0bfe7d31">More...</a><br /></td></tr>
 <tr class="separator:gae8c4d1230527af8447e4593f0bfe7d31"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ga45ebad23c8393645889c228688d432c3"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__rnn.html#ga45ebad23c8393645889c228688d432c3">rnn_forward</a> (<a class="el" href="structrnn__t.html">rnn_t</a> *rnn, int word, int tid)</td></tr>
-<tr class="memdesc:ga45ebad23c8393645889c228688d432c3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Feed-forward one word for a thread of rnn model.  <a href="#ga45ebad23c8393645889c228688d432c3">More...</a><br /></td></tr>
-<tr class="separator:ga45ebad23c8393645889c228688d432c3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga936b12a6e8a8c5fa03ad0cccac43df03"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__rnn.html#ga936b12a6e8a8c5fa03ad0cccac43df03">rnn_forward_pre_layer</a> (<a class="el" href="structrnn__t.html">rnn_t</a> *rnn, int tid)</td></tr>
+<tr class="memdesc:ga936b12a6e8a8c5fa03ad0cccac43df03"><td class="mdescLeft">&#160;</td><td class="mdescRight">Feed-forward one word for pre-non-output layer of one thread of rnn model.  <a href="#ga936b12a6e8a8c5fa03ad0cccac43df03">More...</a><br /></td></tr>
+<tr class="separator:ga936b12a6e8a8c5fa03ad0cccac43df03"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga3de281e2975344cf92d5155487471393"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__rnn.html#ga3de281e2975344cf92d5155487471393">rnn_forward_last_layer</a> (<a class="el" href="structrnn__t.html">rnn_t</a> *rnn, int cls, int tid)</td></tr>
+<tr class="memdesc:ga3de281e2975344cf92d5155487471393"><td class="mdescLeft">&#160;</td><td class="mdescRight">Feed-forward one word for last output layer of one thread of rnn model.  <a href="#ga3de281e2975344cf92d5155487471393">More...</a><br /></td></tr>
+<tr class="separator:ga3de281e2975344cf92d5155487471393"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga583be03dd3df63d735fba67a53cefa79"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__rnn.html#ga583be03dd3df63d735fba67a53cefa79">rnn_backprop</a> (<a class="el" href="structrnn__t.html">rnn_t</a> *rnn, int word, int tid)</td></tr>
 <tr class="memdesc:ga583be03dd3df63d735fba67a53cefa79"><td class="mdescLeft">&#160;</td><td class="mdescRight">Back-propagate one word for a thread of rnn model.  <a href="#ga583be03dd3df63d735fba67a53cefa79">More...</a><br /></td></tr>
 <tr class="separator:ga583be03dd3df63d735fba67a53cefa79"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -199,6 +202,15 @@ Functions</h2></td></tr>
 <tr class="memitem:gaaf5e89e99509cf3ebd27f72ce08670bc"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__rnn.html#gaaf5e89e99509cf3ebd27f72ce08670bc">rnn_end_test</a> (<a class="el" href="structrnn__t.html">rnn_t</a> *rnn, int word, int tid)</td></tr>
 <tr class="memdesc:gaaf5e89e99509cf3ebd27f72ce08670bc"><td class="mdescLeft">&#160;</td><td class="mdescRight">End testing for rnn model.  <a href="#gaaf5e89e99509cf3ebd27f72ce08670bc">More...</a><br /></td></tr>
 <tr class="separator:gaaf5e89e99509cf3ebd27f72ce08670bc"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga12598fd882fb3eb83d19195bd12cae14"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__rnn.html#ga12598fd882fb3eb83d19195bd12cae14">rnn_setup_gen</a> (<a class="el" href="structrnn__t.html">rnn_t</a> *rnn, <a class="el" href="structoutput__t.html">output_t</a> *output)</td></tr>
+<tr class="memdesc:ga12598fd882fb3eb83d19195bd12cae14"><td class="mdescLeft">&#160;</td><td class="mdescRight">Setup generating for rnn model.  <a href="#ga12598fd882fb3eb83d19195bd12cae14">More...</a><br /></td></tr>
+<tr class="separator:ga12598fd882fb3eb83d19195bd12cae14"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga5af2cb6a78994405508fe0578d062f41"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__rnn.html#ga5af2cb6a78994405508fe0578d062f41">rnn_reset_gen</a> (<a class="el" href="structrnn__t.html">rnn_t</a> *rnn)</td></tr>
+<tr class="memdesc:ga5af2cb6a78994405508fe0578d062f41"><td class="mdescLeft">&#160;</td><td class="mdescRight">Reset generating for rnn model.  <a href="#ga5af2cb6a78994405508fe0578d062f41">More...</a><br /></td></tr>
+<tr class="separator:ga5af2cb6a78994405508fe0578d062f41"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gac4b5d4f88d22cd71501a54e68c72da75"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__rnn.html#gac4b5d4f88d22cd71501a54e68c72da75">rnn_end_gen</a> (<a class="el" href="structrnn__t.html">rnn_t</a> *rnn, int word)</td></tr>
+<tr class="memdesc:gac4b5d4f88d22cd71501a54e68c72da75"><td class="mdescLeft">&#160;</td><td class="mdescRight">End generating for rnn model.  <a href="#gac4b5d4f88d22cd71501a54e68c72da75">More...</a><br /></td></tr>
+<tr class="separator:gac4b5d4f88d22cd71501a54e68c72da75"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <p>Data structures and functions for RNN model. </p>
@@ -275,7 +287,7 @@ Functions</h2></td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section see"><dt>See also</dt><dd><a class="el" href="group__rnn.html#ga45ebad23c8393645889c228688d432c3" title="Feed-forward one word for a thread of rnn model. ">rnn_forward</a> </dd></dl>
+<dl class="section see"><dt>See also</dt><dd>rnn_forward </dd></dl>
 <dl class="section return"><dt>Returns</dt><dd>non-zero value if any error. </dd></dl>
 
 </div>
@@ -326,6 +338,43 @@ Functions</h2></td></tr>
   </dd>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>the duplicated rnn model </dd></dl>
+
+</div>
+</div>
+<a class="anchor" id="gac4b5d4f88d22cd71501a54e68c72da75"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int rnn_end_gen </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structrnn__t.html">rnn_t</a> *&#160;</td>
+          <td class="paramname"><em>rnn</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>word</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>End generating for rnn model. </p>
+<p>Called after every word generated.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">rnn</td><td>rnn model. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">word</td><td>current generated word. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>non-zero value if any error. </dd></dl>
 
 </div>
 </div>
@@ -454,12 +503,12 @@ Functions</h2></td></tr>
 
 </div>
 </div>
-<a class="anchor" id="ga45ebad23c8393645889c228688d432c3"></a>
+<a class="anchor" id="ga3de281e2975344cf92d5155487471393"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">int rnn_forward </td>
+          <td class="memname">int rnn_forward_last_layer </td>
           <td>(</td>
           <td class="paramtype"><a class="el" href="structrnn__t.html">rnn_t</a> *&#160;</td>
           <td class="paramname"><em>rnn</em>, </td>
@@ -468,7 +517,7 @@ Functions</h2></td></tr>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">int&#160;</td>
-          <td class="paramname"><em>word</em>, </td>
+          <td class="paramname"><em>cls</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
@@ -484,16 +533,53 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Feed-forward one word for a thread of rnn model. </p>
+<p>Feed-forward one word for last output layer of one thread of rnn model. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramdir">[in]</td><td class="paramname">rnn</td><td>rnn model. </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">word</td><td>current word. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">cls</td><td>class of current word. -1 if non-class. </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">tid</td><td>thread id (neuron id). </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section see"><dt>See also</dt><dd><a class="el" href="group__rnn.html#ga583be03dd3df63d735fba67a53cefa79" title="Back-propagate one word for a thread of rnn model. ">rnn_backprop</a> </dd></dl>
+<dl class="section see"><dt>See also</dt><dd><a class="el" href="group__rnn.html#ga936b12a6e8a8c5fa03ad0cccac43df03" title="Feed-forward one word for pre-non-output layer of one thread of rnn model. ">rnn_forward_pre_layer</a> </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>non-zero value if any error. </dd></dl>
+
+</div>
+</div>
+<a class="anchor" id="ga936b12a6e8a8c5fa03ad0cccac43df03"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int rnn_forward_pre_layer </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structrnn__t.html">rnn_t</a> *&#160;</td>
+          <td class="paramname"><em>rnn</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>tid</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Feed-forward one word for pre-non-output layer of one thread of rnn model. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">rnn</td><td>rnn model. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">tid</td><td>thread id (neuron id). </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section see"><dt>See also</dt><dd><a class="el" href="group__rnn.html#ga3de281e2975344cf92d5155487471393" title="Feed-forward one word for last output layer of one thread of rnn model. ">rnn_forward_last_layer</a> </dd></dl>
 <dl class="section return"><dt>Returns</dt><dd>non-zero value if any error. </dd></dl>
 
 </div>
@@ -777,6 +863,32 @@ Functions</h2></td></tr>
 
 </div>
 </div>
+<a class="anchor" id="ga5af2cb6a78994405508fe0578d062f41"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int rnn_reset_gen </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structrnn__t.html">rnn_t</a> *&#160;</td>
+          <td class="paramname"><em>rnn</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Reset generating for rnn model. </p>
+<p>Called before every sentence to be generated.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">rnn</td><td>rnn model. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>non-zero value if any error. </dd></dl>
+
+</div>
+</div>
 <a class="anchor" id="gabb14bdf350151c5919f64da7aaea2d0a"></a>
 <div class="memitem">
 <div class="memproto">
@@ -939,6 +1051,43 @@ Functions</h2></td></tr>
 <dl class="section see"><dt>See also</dt><dd><a class="el" href="group__rnn.html#gae8c4d1230527af8447e4593f0bfe7d31" title="Save rnn body. ">rnn_save_body</a> </dd>
 <dd>
 <a class="el" href="group__rnn.html#gaaccdf7b3d104667bbc2d4a28d89efe7a" title="Load rnn header and initialise a new rnn. ">rnn_load_header</a>, <a class="el" href="group__rnn.html#gab0ae2f20d2552d578bd3a778515faadf" title="Load rnn body. ">rnn_load_body</a> </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>non-zero value if any error. </dd></dl>
+
+</div>
+</div>
+<a class="anchor" id="ga12598fd882fb3eb83d19195bd12cae14"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int rnn_setup_gen </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structrnn__t.html">rnn_t</a> *&#160;</td>
+          <td class="paramname"><em>rnn</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="structoutput__t.html">output_t</a> *&#160;</td>
+          <td class="paramname"><em>output</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Setup generating for rnn model. </p>
+<p>Called before generating.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">rnn</td><td>rnn model. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">output</td><td>output layer. </td></tr>
+  </table>
+  </dd>
+</dl>
 <dl class="section return"><dt>Returns</dt><dd>non-zero value if any error. </dd></dl>
 
 </div>
@@ -1131,7 +1280,7 @@ Functions</h2></td></tr>
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on Thu Jun 25 2015 10:58:20 for connLM by
+    <li class="footer">Generated on Sat Jul 18 2015 23:14:42 for connLM by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.9.1 </li>
   </ul>

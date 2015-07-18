@@ -160,15 +160,21 @@ Functions</h2></td></tr>
 <tr class="memitem:gaccd85b3963f1fd4d22712ea90db1f609"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__output.html#gaccd85b3963f1fd4d22712ea90db1f609">output_generate</a> (<a class="el" href="structoutput__t.html">output_t</a> *output, count_t *word_cnts)</td></tr>
 <tr class="memdesc:gaccd85b3963f1fd4d22712ea90db1f609"><td class="mdescLeft">&#160;</td><td class="mdescRight">Generate output layer with word counts.  <a href="#gaccd85b3963f1fd4d22712ea90db1f609">More...</a><br /></td></tr>
 <tr class="separator:gaccd85b3963f1fd4d22712ea90db1f609"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ga3f725c067e41473eb7500c9b96470c9c"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__output.html#ga3f725c067e41473eb7500c9b96470c9c">output_activate</a> (<a class="el" href="structoutput__t.html">output_t</a> *output, int word, int tid)</td></tr>
-<tr class="memdesc:ga3f725c067e41473eb7500c9b96470c9c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Activate neurons of output layer.  <a href="#ga3f725c067e41473eb7500c9b96470c9c">More...</a><br /></td></tr>
-<tr class="separator:ga3f725c067e41473eb7500c9b96470c9c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga051c41bfbc88ac2134b6462b27236df6"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__output.html#ga051c41bfbc88ac2134b6462b27236df6">output_activate_pre_layer</a> (<a class="el" href="structoutput__t.html">output_t</a> *output, int tid)</td></tr>
+<tr class="memdesc:ga051c41bfbc88ac2134b6462b27236df6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Activate neurons of pre output layer.  <a href="#ga051c41bfbc88ac2134b6462b27236df6">More...</a><br /></td></tr>
+<tr class="separator:ga051c41bfbc88ac2134b6462b27236df6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gaeeac4c312a63bc66bfae66e5730029db"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__output.html#gaeeac4c312a63bc66bfae66e5730029db">output_activate_last_layer</a> (<a class="el" href="structoutput__t.html">output_t</a> *output, int cls, int tid)</td></tr>
+<tr class="memdesc:gaeeac4c312a63bc66bfae66e5730029db"><td class="mdescLeft">&#160;</td><td class="mdescRight">Activate neurons of last output layer.  <a href="#gaeeac4c312a63bc66bfae66e5730029db">More...</a><br /></td></tr>
+<tr class="separator:gaeeac4c312a63bc66bfae66e5730029db"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga294ede6745f4dda4b6d056581997dd65"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__output.html#ga294ede6745f4dda4b6d056581997dd65">output_loss</a> (<a class="el" href="structoutput__t.html">output_t</a> *output, int word, int tid)</td></tr>
 <tr class="memdesc:ga294ede6745f4dda4b6d056581997dd65"><td class="mdescLeft">&#160;</td><td class="mdescRight">Compute loss of neurons of output layer.  <a href="#ga294ede6745f4dda4b6d056581997dd65">More...</a><br /></td></tr>
 <tr class="separator:ga294ede6745f4dda4b6d056581997dd65"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga97f6c32d4392dad4e0bb161bf892b42f"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__output.html#ga97f6c32d4392dad4e0bb161bf892b42f">output_get_prob</a> (<a class="el" href="structoutput__t.html">output_t</a> *output, int word, int tid)</td></tr>
 <tr class="memdesc:ga97f6c32d4392dad4e0bb161bf892b42f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get probability of a word.  <a href="#ga97f6c32d4392dad4e0bb161bf892b42f">More...</a><br /></td></tr>
 <tr class="separator:ga97f6c32d4392dad4e0bb161bf892b42f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gaf1ba4fb3a3abec785ed3ec6ffa64b824"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__output.html#gaf1ba4fb3a3abec785ed3ec6ffa64b824">output_get_class_prob_for_class</a> (<a class="el" href="structoutput__t.html">output_t</a> *output, int cls, int tid)</td></tr>
+<tr class="memdesc:gaf1ba4fb3a3abec785ed3ec6ffa64b824"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get class probability of a class.  <a href="#gaf1ba4fb3a3abec785ed3ec6ffa64b824">More...</a><br /></td></tr>
+<tr class="separator:gaf1ba4fb3a3abec785ed3ec6ffa64b824"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:gaccf071662f4ea63c39a53af4da5ed548"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__output.html#gaccf071662f4ea63c39a53af4da5ed548">output_get_class_prob</a> (<a class="el" href="structoutput__t.html">output_t</a> *output, int word, int tid)</td></tr>
 <tr class="memdesc:gaccf071662f4ea63c39a53af4da5ed548"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get class probability of a word.  <a href="#gaccf071662f4ea63c39a53af4da5ed548">More...</a><br /></td></tr>
 <tr class="separator:gaccf071662f4ea63c39a53af4da5ed548"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -202,6 +208,15 @@ Functions</h2></td></tr>
 <tr class="memitem:ga950e1535f6a2462685ac77bae6ed2002"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__output.html#ga950e1535f6a2462685ac77bae6ed2002">output_end_test</a> (<a class="el" href="structoutput__t.html">output_t</a> *output, int word, int tid)</td></tr>
 <tr class="memdesc:ga950e1535f6a2462685ac77bae6ed2002"><td class="mdescLeft">&#160;</td><td class="mdescRight">End testing for output layer.  <a href="#ga950e1535f6a2462685ac77bae6ed2002">More...</a><br /></td></tr>
 <tr class="separator:ga950e1535f6a2462685ac77bae6ed2002"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga14d9228d970881016a6d8baee7246c0a"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__output.html#ga14d9228d970881016a6d8baee7246c0a">output_setup_gen</a> (<a class="el" href="structoutput__t.html">output_t</a> *output)</td></tr>
+<tr class="memdesc:ga14d9228d970881016a6d8baee7246c0a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Setup generating for output layer.  <a href="#ga14d9228d970881016a6d8baee7246c0a">More...</a><br /></td></tr>
+<tr class="separator:ga14d9228d970881016a6d8baee7246c0a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga4f8e091a9eed6151cdaccc8c1bff6de8"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__output.html#ga4f8e091a9eed6151cdaccc8c1bff6de8">output_reset_gen</a> (<a class="el" href="structoutput__t.html">output_t</a> *output)</td></tr>
+<tr class="memdesc:ga4f8e091a9eed6151cdaccc8c1bff6de8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Reset generating for output layer.  <a href="#ga4f8e091a9eed6151cdaccc8c1bff6de8">More...</a><br /></td></tr>
+<tr class="separator:ga4f8e091a9eed6151cdaccc8c1bff6de8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gab4e4161e16ac8289d7297745b77f10f3"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__output.html#gab4e4161e16ac8289d7297745b77f10f3">output_end_gen</a> (<a class="el" href="structoutput__t.html">output_t</a> *output, int word)</td></tr>
+<tr class="memdesc:gab4e4161e16ac8289d7297745b77f10f3"><td class="mdescLeft">&#160;</td><td class="mdescRight">End generating for output layer.  <a href="#gab4e4161e16ac8289d7297745b77f10f3">More...</a><br /></td></tr>
+<tr class="separator:gab4e4161e16ac8289d7297745b77f10f3"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <p>Data structures and functions for Output Layer. </p>
@@ -239,12 +254,12 @@ Functions</h2></td></tr>
 </div>
 </div>
 <h2 class="groupheader">Function Documentation</h2>
-<a class="anchor" id="ga3f725c067e41473eb7500c9b96470c9c"></a>
+<a class="anchor" id="gaeeac4c312a63bc66bfae66e5730029db"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">int output_activate </td>
+          <td class="memname">int output_activate_last_layer </td>
           <td>(</td>
           <td class="paramtype"><a class="el" href="structoutput__t.html">output_t</a> *&#160;</td>
           <td class="paramname"><em>output</em>, </td>
@@ -253,7 +268,7 @@ Functions</h2></td></tr>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">int&#160;</td>
-          <td class="paramname"><em>word</em>, </td>
+          <td class="paramname"><em>cls</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
@@ -269,11 +284,47 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Activate neurons of output layer. </p>
+<p>Activate neurons of last output layer. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramdir">[in]</td><td class="paramname">output</td><td>output layer related. </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">word</td><td>current word. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">cls</td><td>class of current word. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">tid</td><td>thread id (neuron id). </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>non-zero value if any error. </dd></dl>
+
+</div>
+</div>
+<a class="anchor" id="ga051c41bfbc88ac2134b6462b27236df6"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int output_activate_pre_layer </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structoutput__t.html">output_t</a> *&#160;</td>
+          <td class="paramname"><em>output</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>tid</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Activate neurons of pre output layer. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">output</td><td>output layer related. </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">tid</td><td>thread id (neuron id). </td></tr>
   </table>
   </dd>
@@ -364,6 +415,43 @@ Functions</h2></td></tr>
   </dd>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>the duplicated output. </dd></dl>
+
+</div>
+</div>
+<a class="anchor" id="gab4e4161e16ac8289d7297745b77f10f3"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int output_end_gen </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structoutput__t.html">output_t</a> *&#160;</td>
+          <td class="paramname"><em>output</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>word</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>End generating for output layer. </p>
+<p>Called after every word generated.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">output</td><td>output layer. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">word</td><td>current generated word. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>non-zero value if any error. </dd></dl>
 
 </div>
 </div>
@@ -563,6 +651,49 @@ Functions</h2></td></tr>
   <table class="params">
     <tr><td class="paramdir">[in]</td><td class="paramname">output</td><td>output layer related. </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">word</td><td>current word. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">tid</td><td>thread id (neuron id). </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>non-zero value if any error. </dd></dl>
+
+</div>
+</div>
+<a class="anchor" id="gaf1ba4fb3a3abec785ed3ec6ffa64b824"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">double output_get_class_prob_for_class </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structoutput__t.html">output_t</a> *&#160;</td>
+          <td class="paramname"><em>output</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>cls</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>tid</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Get class probability of a class. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">output</td><td>output layer related. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">class</td><td>the specific class. </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">tid</td><td>thread id (neuron id). </td></tr>
   </table>
   </dd>
@@ -842,6 +973,32 @@ Functions</h2></td></tr>
 
 </div>
 </div>
+<a class="anchor" id="ga4f8e091a9eed6151cdaccc8c1bff6de8"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int output_reset_gen </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structoutput__t.html">output_t</a> *&#160;</td>
+          <td class="paramname"><em>output</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Reset generating for output layer. </p>
+<p>Called before every sentence to be generated.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">output</td><td>output layer. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>non-zero value if any error. </dd></dl>
+
+</div>
+</div>
 <a class="anchor" id="ga8f7f46d4619cab195796eea24156ffcf"></a>
 <div class="memitem">
 <div class="memproto">
@@ -1008,6 +1165,32 @@ Functions</h2></td></tr>
 
 </div>
 </div>
+<a class="anchor" id="ga14d9228d970881016a6d8baee7246c0a"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int output_setup_gen </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structoutput__t.html">output_t</a> *&#160;</td>
+          <td class="paramname"><em>output</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Setup generating for output layer. </p>
+<p>Called before generating.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">output</td><td>output layer. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>non-zero value if any error. </dd></dl>
+
+</div>
+</div>
 <a class="anchor" id="gaaa30be8c2223889703e990653b2fa576"></a>
 <div class="memitem">
 <div class="memproto">
@@ -1036,7 +1219,6 @@ Functions</h2></td></tr>
 <p>Called before testing.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramdir">[in]</td><td class="paramname">output</td><td>output layer. </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">output</td><td>output layer. </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">num_thrs</td><td>number of thread to be used. </td></tr>
   </table>
@@ -1176,7 +1358,7 @@ Functions</h2></td></tr>
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on Thu Jun 25 2015 10:58:20 for connLM by
+    <li class="footer">Generated on Sat Jul 18 2015 23:14:42 for connLM by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.9.1 </li>
   </ul>

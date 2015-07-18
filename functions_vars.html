@@ -92,6 +92,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
       <li><a href="#index_d"><span>d</span></a></li>
       <li><a href="#index_e"><span>e</span></a></li>
       <li><a href="#index_f"><span>f</span></a></li>
+      <li><a href="#index_g"><span>g</span></a></li>
       <li><a href="#index_h"><span>h</span></a></li>
       <li><a href="#index_i"><span>i</span></a></li>
       <li><a href="#index_l"><span>l</span></a></li>
@@ -151,6 +152,9 @@ $(document).ready(function(){initNavTree('functions_vars.html','');});
 <li>ac_i_h
 : <a class="el" href="structrnn__neuron__t.html#a60eb4fbac4afc4115e7ebb36e299b2a5">rnn_neuron_t</a>
 </li>
+<li>ac_i_h_buf
+: <a class="el" href="structrnn__neuron__t.html#aa2ba61f19525ab1479cce2f3dc488198">rnn_neuron_t</a>
+</li>
 <li>ac_o_c
 : <a class="el" href="structoutput__neuron__t.html#a68a9226399de4a99a2b2cc025aff180e">output_neuron_t</a>
 </li>
@@ -206,13 +210,14 @@ $(document).ready(function(){initNavTree('functions_vars.html','');});
 <li>cnts
 : <a class="el" href="structvocab__t.html#a584eb6d2e70c8a37f8889ba72aef54de">vocab_t</a>
 </li>
-<li>connlm
-: <a class="el" href="structconnlm__thr__t.html#a36fd20fd69686690e13b62c2091799d7">connlm_thr_t</a>
-</li>
 </ul>
 
 
 <h3><a class="anchor" id="index_d"></a>- d -</h3><ul>
+<li>debug_file
+: <a class="el" href="structconnlm__test__opt__t.html#ab5cac0150ebcfb7cf4c5531d0e6bdaf5">connlm_test_opt_t</a>
+, <a class="el" href="structconnlm__train__opt__t.html#afaa2c690ea01fdc9d6006a5088d0812d">connlm_train_opt_t</a>
+</li>
 <li>dirty_class
 : <a class="el" href="structrnn__neuron__t.html#aeddaa7d382fb48c0cc291f161d3244e2">rnn_neuron_t</a>
 </li>
@@ -226,14 +231,15 @@ $(document).ready(function(){initNavTree('functions_vars.html','');});
 <li>e
 : <a class="el" href="structhash__range__t.html#a4f1b52d1abd0116ccb66b9dbff401e18">hash_range_t</a>
 </li>
-<li>eg_e
-: <a class="el" href="structconnlm__thr__t.html#a3440063501ad8ce4a529c38d04c157f1">connlm_thr_t</a>
+<li>empty_egs
+: <a class="el" href="structconnlm__t.html#a9e98e84854b3bae8c309270cc5582ba1">connlm_t</a>
 </li>
-<li>eg_s
-: <a class="el" href="structconnlm__thr__t.html#a536bdde07e2381a7511782cd2a1cbb74">connlm_thr_t</a>
+<li>empty_egs_lock
+: <a class="el" href="structconnlm__t.html#a880a8ddaf022844e04337126aa4f21a0">connlm_t</a>
 </li>
-<li>egs
-: <a class="el" href="structconnlm__t.html#a88fd2bcb1736b6176a130666573f549c">connlm_t</a>
+<li>epoch_size
+: <a class="el" href="structconnlm__test__opt__t.html#ada23e7920e628a6cedbf2322f414fea8">connlm_test_opt_t</a>
+, <a class="el" href="structconnlm__train__opt__t.html#a15ea00a8ee7fc305554f5f32add64067">connlm_train_opt_t</a>
 </li>
 <li>er_bptt_h
 : <a class="el" href="structrnn__neuron__t.html#a533fb6573978a24edf5c7b8c28706747">rnn_neuron_t</a>
@@ -243,6 +249,9 @@ $(document).ready(function(){initNavTree('functions_vars.html','');});
 </li>
 <li>er_h
 : <a class="el" href="structrnn__neuron__t.html#aab0efdbc1b826ed77a923d7d509ffe6e">rnn_neuron_t</a>
+</li>
+<li>er_h_buf
+: <a class="el" href="structrnn__neuron__t.html#acf147d7876a9444ac8df825b6b543a85">rnn_neuron_t</a>
 </li>
 <li>er_i_h
 : <a class="el" href="structrnn__neuron__t.html#a5ddda405736e1ce4a3562bdc4dd3bf07">rnn_neuron_t</a>
@@ -270,14 +279,30 @@ $(document).ready(function(){initNavTree('functions_vars.html','');});
 : <a class="el" href="structconnlm__model__opt__t.html#a38f8b2c20ffa93140cefd2f5834139d5">connlm_model_opt_t</a>
 , <a class="el" href="structconnlm__train__opt__t.html#a04725f8d6bc1fe1ed576655e911d462a">connlm_train_opt_t</a>
 </li>
+<li>fp_debug
+: <a class="el" href="structconnlm__t.html#aa610e9e6a2011624747f46a7f3d75def">connlm_t</a>
+</li>
+<li>fp_debug_lock
+: <a class="el" href="structconnlm__t.html#a67a37cbdc58fd1a53a7ed661927282c5">connlm_t</a>
+</li>
 <li>fp_lock
 : <a class="el" href="structconnlm__t.html#a72622c11849e3147167eb9d8f36011d0">connlm_t</a>
 </li>
 <li>fp_log
 : <a class="el" href="structconnlm__t.html#a8eddcb9d3461e61e31f4529769183ed9">connlm_t</a>
 </li>
-<li>fsize
-: <a class="el" href="structconnlm__t.html#a6071f705ee3918a04cfefa67cfb25ebf">connlm_t</a>
+<li>full_egs
+: <a class="el" href="structconnlm__t.html#a5b6bbd66885f43f04b93d8c36c79a049">connlm_t</a>
+</li>
+<li>full_egs_lock
+: <a class="el" href="structconnlm__t.html#a77008d2830e1b8dc554dd15f8be30f2c">connlm_t</a>
+</li>
+</ul>
+
+
+<h3><a class="anchor" id="index_g"></a>- g -</h3><ul>
+<li>gen_opt
+: <a class="el" href="structconnlm__t.html#ac2f8c85648edb3b4cf06dcfc7682d352">connlm_t</a>
 </li>
 </ul>
 
@@ -332,6 +357,9 @@ $(document).ready(function(){initNavTree('functions_vars.html','');});
 
 
 <h3><a class="anchor" id="index_i"></a>- i -</h3><ul>
+<li>ih_buf_num
+: <a class="el" href="structrnn__neuron__t.html#ad4b1dfbbb08c16a72c95d80d588999d8">rnn_neuron_t</a>
+</li>
 <li>ih_w_hist
 : <a class="el" href="structrnn__neuron__t.html#a1289801ba5aa59616b5b2b0d9a835e08">rnn_neuron_t</a>
 </li>
@@ -367,19 +395,12 @@ $(document).ready(function(){initNavTree('functions_vars.html','');});
 <li>learn_rate
 : <a class="el" href="structparam__t.html#a664f28c5bfefe413adf7fa29e3fd6365">param_t</a>
 </li>
-<li>logp
-: <a class="el" href="structconnlm__thr__t.html#aa38c12106ae730f89724f60c427a9efd">connlm_thr_t</a>
-</li>
 </ul>
 
 
 <h3><a class="anchor" id="index_m"></a>- m -</h3><ul>
 <li>max_vocab_size
 : <a class="el" href="structvocab__opt__t.html#accfacc1a21766a87eb63f57c6884eece">vocab_opt_t</a>
-</li>
-<li>max_word_per_sent
-: <a class="el" href="structconnlm__test__opt__t.html#a0c8a7e75deae2f979a0bb11821baf4c9">connlm_test_opt_t</a>
-, <a class="el" href="structconnlm__train__opt__t.html#ad55cbae400b155a562e346a5d841bec9">connlm_train_opt_t</a>
 </li>
 <li>maxent
 : <a class="el" href="structconnlm__t.html#af5e89bdebab8b9b2aa98ca74570bf938">connlm_t</a>
@@ -419,10 +440,6 @@ $(document).ready(function(){initNavTree('functions_vars.html','');});
 <li>num
 : <a class="el" href="structhash__range__t.html#a461f221cedd696dcbf64649e753ba1df">hash_range_t</a>
 </li>
-<li>num_line_read
-: <a class="el" href="structconnlm__test__opt__t.html#a40a32e82f91d5c758e2e871b03a8b67f">connlm_test_opt_t</a>
-, <a class="el" href="structconnlm__train__opt__t.html#a426960518d3199fa680fb29531667e0c">connlm_train_opt_t</a>
-</li>
 <li>num_thread
 : <a class="el" href="structconnlm__test__opt__t.html#a7aa3604a4bf9169e2f18efaa845059e7">connlm_test_opt_t</a>
 , <a class="el" href="structconnlm__train__opt__t.html#aa5c74dc3d019caef510339c84028877f">connlm_train_opt_t</a>
@@ -440,9 +457,6 @@ $(document).ready(function(){initNavTree('functions_vars.html','');});
 <h3><a class="anchor" id="index_o"></a>- o -</h3><ul>
 <li>oov_penalty
 : <a class="el" href="structconnlm__test__opt__t.html#a3c165ee1812aa499199254a7e2684134">connlm_test_opt_t</a>
-</li>
-<li>oovs
-: <a class="el" href="structconnlm__thr__t.html#a17506ac1258dd345c0475b9adf9e6c2e">connlm_thr_t</a>
 </li>
 <li>order
 : <a class="el" href="structhash__hist__t.html#a3467fb2edd1bdf675da8b61579a1a8d9">hash_hist_t</a>
@@ -479,9 +493,6 @@ $(document).ready(function(){initNavTree('functions_vars.html','');});
 <li>param_arg_w
 : <a class="el" href="structmaxent__neuron__t.html#aa47b9030d98357afeaa8e86cd0485e41">maxent_neuron_t</a>
 </li>
-<li>pts
-: <a class="el" href="structconnlm__t.html#ada5b953d70973665f2a498e9086d71a4">connlm_t</a>
-</li>
 </ul>
 
 
@@ -489,9 +500,6 @@ $(document).ready(function(){initNavTree('functions_vars.html','');});
 <li>rand_seed
 : <a class="el" href="structconnlm__model__opt__t.html#a2ab7676cc3d5eff8cbb04cc872a9d8db">connlm_model_opt_t</a>
 , <a class="el" href="structconnlm__train__opt__t.html#a0ec601e0f13e32b9bca39797a9a43766">connlm_train_opt_t</a>
-</li>
-<li>random
-: <a class="el" href="structconnlm__t.html#a489c3913c4a8d1877827c9ff31e118d1">connlm_t</a>
 </li>
 <li>range
 : <a class="el" href="structhash__hist__t.html#ae9fd3344b00c32ee352bcb9701db541c">hash_hist_t</a>
@@ -516,14 +524,14 @@ $(document).ready(function(){initNavTree('functions_vars.html','');});
 , <a class="el" href="structmaxent__model__opt__t.html#a983dec8ee700ecfdef9dc40dc8df0677">maxent_model_opt_t</a>
 , <a class="el" href="structrnn__model__opt__t.html#ad63034a8fac1799a7f344de571ad2bbe">rnn_model_opt_t</a>
 </li>
-<li>sents
-: <a class="el" href="structconnlm__thr__t.html#a2778a1051e963b20367c644c6c7afc85">connlm_thr_t</a>
+<li>sem_empty
+: <a class="el" href="structconnlm__t.html#a5b6c32a9a77bff13ad5c9841de9b9b82">connlm_t</a>
+</li>
+<li>sem_full
+: <a class="el" href="structconnlm__t.html#afdb39575efa6ff66fccd308338ff89d0">connlm_t</a>
 </li>
 <li>shuffle
 : <a class="el" href="structconnlm__train__opt__t.html#aa96d4549fdd8ea2c5c3e6d70f12cef97">connlm_train_opt_t</a>
-</li>
-<li>shuffle_buf
-: <a class="el" href="structconnlm__t.html#ad1ff74963fa71f990febe01532c9c76a">connlm_t</a>
 </li>
 <li>step
 : <a class="el" href="structrnn__neuron__t.html#adf768eeb6a8f46b83a84a46d2731f8c4">rnn_neuron_t</a>
@@ -541,14 +549,8 @@ $(document).ready(function(){initNavTree('functions_vars.html','');});
 <li>test_opt
 : <a class="el" href="structconnlm__t.html#ace11a0861563ff06ff440c7ccac55d14">connlm_t</a>
 </li>
-<li>text_fp
-: <a class="el" href="structconnlm__t.html#a673f237a52cb6de2ae3ecb3833b58994">connlm_t</a>
-</li>
-<li>thrs
-: <a class="el" href="structconnlm__t.html#af8d5716e144ec2ae1993fdd840209046">connlm_t</a>
-</li>
-<li>tid
-: <a class="el" href="structconnlm__thr__t.html#a9b75ffbdf60df21f43b2a743f26c3629">connlm_thr_t</a>
+<li>text_file
+: <a class="el" href="structconnlm__t.html#a6b92e27f53a638a23eb7316e47deba4d">connlm_t</a>
 </li>
 <li>train_opt
 : <a class="el" href="structconnlm__t.html#a3ff65308c94c91a3243a11daf0a9f6a4">connlm_t</a>
@@ -579,12 +581,6 @@ $(document).ready(function(){initNavTree('functions_vars.html','');});
 <li>w2c
 : <a class="el" href="structoutput__t.html#af8aa3b4b55710e80ecf3bdfcab280f65">output_t</a>
 </li>
-<li>words
-: <a class="el" href="structconnlm__thr__t.html#a7176bb7a822c65e3442a45ba636f4661">connlm_thr_t</a>
-</li>
-<li>wt_bptt_ih_h
-: <a class="el" href="structrnn__neuron__t.html#a0ecd946f4e92811f96fb43c6a64655a9">rnn_neuron_t</a>
-</li>
 <li>wt_bptt_ih_w
 : <a class="el" href="structrnn__neuron__t.html#a47719b514804b85755eaa4c3c4cd8c00">rnn_neuron_t</a>
 </li>
@@ -600,8 +596,7 @@ $(document).ready(function(){initNavTree('functions_vars.html','');});
 , <a class="el" href="structrnn__t.html#a932d11f9c61c14d0cfeaf3aa2d2f465d">rnn_t</a>
 </li>
 <li>wt_ih_h
-: <a class="el" href="structrnn__neuron__t.html#a8a22e7f4f5ff9250c4a0d41be7d6f673">rnn_neuron_t</a>
-, <a class="el" href="structrnn__t.html#a2c4ec03823e23a3d6d5200dff7da05e2">rnn_t</a>
+: <a class="el" href="structrnn__t.html#a2c4ec03823e23a3d6d5200dff7da05e2">rnn_t</a>
 </li>
 <li>wt_ih_w
 : <a class="el" href="structrnn__neuron__t.html#a9e2bdb2f900da33355361d1dbe8d2a2a">rnn_neuron_t</a>
@@ -617,7 +612,7 @@ $(document).ready(function(){initNavTree('functions_vars.html','');});
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on Thu Jun 25 2015 10:58:21 for connLM by
+    <li class="footer">Generated on Sat Jul 18 2015 23:14:43 for connLM by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.9.1 </li>
   </ul>

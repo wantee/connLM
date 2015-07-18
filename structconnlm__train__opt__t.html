@@ -128,15 +128,12 @@ Data Fields</h2></td></tr>
 <tr class="memitem:aa5c74dc3d019caef510339c84028877f"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structconnlm__train__opt__t.html#aa5c74dc3d019caef510339c84028877f">num_thread</a></td></tr>
 <tr class="memdesc:aa5c74dc3d019caef510339c84028877f"><td class="mdescLeft">&#160;</td><td class="mdescRight">number of threads.  <a href="#aa5c74dc3d019caef510339c84028877f">More...</a><br /></td></tr>
 <tr class="separator:aa5c74dc3d019caef510339c84028877f"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ad55cbae400b155a562e346a5d841bec9"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structconnlm__train__opt__t.html#ad55cbae400b155a562e346a5d841bec9">max_word_per_sent</a></td></tr>
-<tr class="memdesc:ad55cbae400b155a562e346a5d841bec9"><td class="mdescLeft">&#160;</td><td class="mdescRight">max words per one sentence.  <a href="#ad55cbae400b155a562e346a5d841bec9">More...</a><br /></td></tr>
-<tr class="separator:ad55cbae400b155a562e346a5d841bec9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a0ec601e0f13e32b9bca39797a9a43766"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structconnlm__train__opt__t.html#a0ec601e0f13e32b9bca39797a9a43766">rand_seed</a></td></tr>
 <tr class="memdesc:a0ec601e0f13e32b9bca39797a9a43766"><td class="mdescLeft">&#160;</td><td class="mdescRight">seed for random function.  <a href="#a0ec601e0f13e32b9bca39797a9a43766">More...</a><br /></td></tr>
 <tr class="separator:a0ec601e0f13e32b9bca39797a9a43766"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a426960518d3199fa680fb29531667e0c"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structconnlm__train__opt__t.html#a426960518d3199fa680fb29531667e0c">num_line_read</a></td></tr>
-<tr class="memdesc:a426960518d3199fa680fb29531667e0c"><td class="mdescLeft">&#160;</td><td class="mdescRight">number lines read one time.  <a href="#a426960518d3199fa680fb29531667e0c">More...</a><br /></td></tr>
-<tr class="separator:a426960518d3199fa680fb29531667e0c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a15ea00a8ee7fc305554f5f32add64067"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structconnlm__train__opt__t.html#a15ea00a8ee7fc305554f5f32add64067">epoch_size</a></td></tr>
+<tr class="memdesc:a15ea00a8ee7fc305554f5f32add64067"><td class="mdescLeft">&#160;</td><td class="mdescRight">number sentences read one time per thread.  <a href="#a15ea00a8ee7fc305554f5f32add64067">More...</a><br /></td></tr>
+<tr class="separator:a15ea00a8ee7fc305554f5f32add64067"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa96d4549fdd8ea2c5c3e6d70f12cef97"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structconnlm__train__opt__t.html#aa96d4549fdd8ea2c5c3e6d70f12cef97">shuffle</a></td></tr>
 <tr class="memdesc:aa96d4549fdd8ea2c5c3e6d70f12cef97"><td class="mdescLeft">&#160;</td><td class="mdescRight">whether shuffle the sentences.  <a href="#aa96d4549fdd8ea2c5c3e6d70f12cef97">More...</a><br /></td></tr>
 <tr class="separator:aa96d4549fdd8ea2c5c3e6d70f12cef97"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -156,36 +153,38 @@ Data Fields</h2></td></tr>
 <a class="el" href="structffnn__train__opt__t.html">ffnn_train_opt_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structconnlm__train__opt__t.html#a04725f8d6bc1fe1ed576655e911d462a">ffnn_opt</a></td></tr>
 <tr class="memdesc:a04725f8d6bc1fe1ed576655e911d462a"><td class="mdescLeft">&#160;</td><td class="mdescRight">training options for FFNN model <br /></td></tr>
 <tr class="separator:a04725f8d6bc1fe1ed576655e911d462a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:afaa2c690ea01fdc9d6006a5088d0812d"><td class="memItemLeft" align="right" valign="top">char&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structconnlm__train__opt__t.html#afaa2c690ea01fdc9d6006a5088d0812d">debug_file</a> [MAX_DIR_LEN]</td></tr>
+<tr class="memdesc:afaa2c690ea01fdc9d6006a5088d0812d"><td class="mdescLeft">&#160;</td><td class="mdescRight">file to print out debug infos.  <a href="#afaa2c690ea01fdc9d6006a5088d0812d">More...</a><br /></td></tr>
+<tr class="separator:afaa2c690ea01fdc9d6006a5088d0812d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Parameters for training connLM model. </p>
 </div><h2 class="groupheader">Field Documentation</h2>
-<a class="anchor" id="ad55cbae400b155a562e346a5d841bec9"></a>
+<a class="anchor" id="afaa2c690ea01fdc9d6006a5088d0812d"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">int connlm_train_opt_t::max_word_per_sent</td>
+          <td class="memname">char connlm_train_opt_t::debug_file[MAX_DIR_LEN]</td>
         </tr>
       </table>
 </div><div class="memdoc">
 
-<p>max words per one sentence. </p>
-<p>Any sentence with larger words will be dropped. </p>
+<p>file to print out debug infos. </p>
 
 </div>
 </div>
-<a class="anchor" id="a426960518d3199fa680fb29531667e0c"></a>
+<a class="anchor" id="a15ea00a8ee7fc305554f5f32add64067"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">int connlm_train_opt_t::num_line_read</td>
+          <td class="memname">int connlm_train_opt_t::epoch_size</td>
         </tr>
       </table>
 </div><div class="memdoc">
 
-<p>number lines read one time. </p>
+<p>number sentences read one time per thread. </p>
 
 </div>
 </div>
@@ -254,7 +253,7 @@ Data Fields</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="structconnlm__train__opt__t.html">connlm_train_opt_t</a></li>
-    <li class="footer">Generated on Thu Jun 25 2015 10:58:20 for connLM by
+    <li class="footer">Generated on Sat Jul 18 2015 23:14:42 for connLM by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.9.1 </li>
   </ul>

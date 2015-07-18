@@ -135,6 +135,9 @@ Functions</h2></td></tr>
 <tr class="memitem:ga9bb6680d24c3e115b16e33989d790110"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__param.html#ga9bb6680d24c3e115b16e33989d790110">param_update</a> (<a class="el" href="structparam__t.html">param_t</a> *param, <a class="el" href="structparam__arg__t.html">param_arg_t</a> *arg, bool update_arg, real_t *wt, real_t *er, real_t er_scale, int er_size, real_t *in, int in_size)</td></tr>
 <tr class="memdesc:ga9bb6680d24c3e115b16e33989d790110"><td class="mdescLeft">&#160;</td><td class="mdescRight">Update weight using parameters.  <a href="#ga9bb6680d24c3e115b16e33989d790110">More...</a><br /></td></tr>
 <tr class="separator:ga9bb6680d24c3e115b16e33989d790110"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga72fe152ee7f79c342d8f00e291dc657a"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__param.html#ga72fe152ee7f79c342d8f00e291dc657a">param_acc_wt_minibatch</a> (int batch, real_t *wt, real_t *er, int er_size, real_t *in, int in_size)</td></tr>
+<tr class="memdesc:ga72fe152ee7f79c342d8f00e291dc657a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Accumulate weights with mini-batch.  <a href="#ga72fe152ee7f79c342d8f00e291dc657a">More...</a><br /></td></tr>
+<tr class="separator:ga72fe152ee7f79c342d8f00e291dc657a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:gad1831f13e45221032208a67e05ad7e1d"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__param.html#gad1831f13e45221032208a67e05ad7e1d">param_update_minibatch</a> (<a class="el" href="structparam__t.html">param_t</a> *param, <a class="el" href="structparam__arg__t.html">param_arg_t</a> *arg, bool update_arg, int batch, real_t *wt, real_t *er, real_t er_scale, int er_size, real_t *in, int in_size)</td></tr>
 <tr class="memdesc:gad1831f13e45221032208a67e05ad7e1d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Update weight with mini-batchbatch is the mini-batch size, other arguments are the same as param_update.  <a href="#gad1831f13e45221032208a67e05ad7e1d">More...</a><br /></td></tr>
 <tr class="separator:gad1831f13e45221032208a67e05ad7e1d"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -191,6 +194,60 @@ Functions</h2></td></tr>
 <p>er_size &lt; 0 &amp;&amp; in_size &gt; 0: er is delta-weight matrix [ er_size x in_size ]; wt is [ er_size x in_size ];</p>
 <p>er_size &lt; 0 &amp;&amp; in_size &lt; 0: er is delta-weight matrix [ er_size x in_size ]; wt is [ er_size x in_size ]; in is one-shot vector</p>
 <dl class="section see"><dt>See also</dt><dd><a class="el" href="group__param.html#ga9bb6680d24c3e115b16e33989d790110" title="Update weight using parameters. ">param_update</a> </dd></dl>
+
+</div>
+</div>
+<a class="anchor" id="ga72fe152ee7f79c342d8f00e291dc657a"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void param_acc_wt_minibatch </td>
+          <td>(</td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>batch</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">real_t *&#160;</td>
+          <td class="paramname"><em>wt</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">real_t *&#160;</td>
+          <td class="paramname"><em>er</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>er_size</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">real_t *&#160;</td>
+          <td class="paramname"><em>in</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>in_size</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Accumulate weights with mini-batch. </p>
+<p>batch is the mini-batch size, other arguments are the same as param_acc_wt.</p>
+<dl class="section see"><dt>See also</dt><dd><a class="el" href="group__param.html#ga667303378d7e193011e090b9b926291d" title="Accumulate weights. ">param_acc_wt</a> </dd></dl>
 
 </div>
 </div>
@@ -426,7 +483,7 @@ Functions</h2></td></tr>
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on Thu Jun 25 2015 10:58:20 for connLM by
+    <li class="footer">Generated on Sat Jul 18 2015 23:14:42 for connLM by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.9.1 </li>
   </ul>

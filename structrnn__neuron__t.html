@@ -155,9 +155,17 @@ Data Fields</h2></td></tr>
 <tr class="memitem:a47719b514804b85755eaa4c3c4cd8c00"><td class="memItemLeft" align="right" valign="top">real_t *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structrnn__neuron__t.html#a47719b514804b85755eaa4c3c4cd8c00">wt_bptt_ih_w</a></td></tr>
 <tr class="memdesc:a47719b514804b85755eaa4c3c4cd8c00"><td class="mdescLeft">&#160;</td><td class="mdescRight">buffer for input-hidden weights for bptt.  <a href="#a47719b514804b85755eaa4c3c4cd8c00">More...</a><br /></td></tr>
 <tr class="separator:a47719b514804b85755eaa4c3c4cd8c00"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a0ecd946f4e92811f96fb43c6a64655a9"><td class="memItemLeft" align="right" valign="top">real_t *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structrnn__neuron__t.html#a0ecd946f4e92811f96fb43c6a64655a9">wt_bptt_ih_h</a></td></tr>
-<tr class="memdesc:a0ecd946f4e92811f96fb43c6a64655a9"><td class="mdescLeft">&#160;</td><td class="mdescRight">buffer for hidden-hidden weights for bptt.  <a href="#a0ecd946f4e92811f96fb43c6a64655a9">More...</a><br /></td></tr>
-<tr class="separator:a0ecd946f4e92811f96fb43c6a64655a9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:acf147d7876a9444ac8df825b6b543a85"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="acf147d7876a9444ac8df825b6b543a85"></a>
+real_t *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structrnn__neuron__t.html#acf147d7876a9444ac8df825b6b543a85">er_h_buf</a></td></tr>
+<tr class="memdesc:acf147d7876a9444ac8df825b6b543a85"><td class="mdescLeft">&#160;</td><td class="mdescRight">errors of hiddend layer for one mini-batch <br /></td></tr>
+<tr class="separator:acf147d7876a9444ac8df825b6b543a85"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa2ba61f19525ab1479cce2f3dc488198"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aa2ba61f19525ab1479cce2f3dc488198"></a>
+real_t *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structrnn__neuron__t.html#aa2ba61f19525ab1479cce2f3dc488198">ac_i_h_buf</a></td></tr>
+<tr class="memdesc:aa2ba61f19525ab1479cce2f3dc488198"><td class="mdescLeft">&#160;</td><td class="mdescRight">activation of hiddend part of input layer for one mini-batch <br /></td></tr>
+<tr class="separator:aa2ba61f19525ab1479cce2f3dc488198"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad4b1dfbbb08c16a72c95d80d588999d8"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structrnn__neuron__t.html#ad4b1dfbbb08c16a72c95d80d588999d8">ih_buf_num</a></td></tr>
+<tr class="memdesc:ad4b1dfbbb08c16a72c95d80d588999d8"><td class="mdescLeft">&#160;</td><td class="mdescRight">size of er_h_buf and ac_i_h_buf, or used to indicate wt_i_h updated during mini-batch.  <a href="#ad4b1dfbbb08c16a72c95d80d588999d8">More...</a><br /></td></tr>
+<tr class="separator:ad4b1dfbbb08c16a72c95d80d588999d8"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a7a82acfbbbb001020befc675dfcc37dc"><td class="memItemLeft" align="right" valign="top">bool *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structrnn__neuron__t.html#a7a82acfbbbb001020befc675dfcc37dc">dirty_word</a></td></tr>
 <tr class="memdesc:a7a82acfbbbb001020befc675dfcc37dc"><td class="mdescLeft">&#160;</td><td class="mdescRight">byte map for updated words.  <a href="#a7a82acfbbbb001020befc675dfcc37dc">More...</a><br /></td></tr>
 <tr class="separator:a7a82acfbbbb001020befc675dfcc37dc"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -196,10 +204,6 @@ Data Fields</h2></td></tr>
 real_t *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structrnn__neuron__t.html#a9e2bdb2f900da33355361d1dbe8d2a2a">wt_ih_w</a></td></tr>
 <tr class="memdesc:a9e2bdb2f900da33355361d1dbe8d2a2a"><td class="mdescLeft">&#160;</td><td class="mdescRight">delta weight of input-hidden for one mini-batch <br /></td></tr>
 <tr class="separator:a9e2bdb2f900da33355361d1dbe8d2a2a"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a8a22e7f4f5ff9250c4a0d41be7d6f673"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a8a22e7f4f5ff9250c4a0d41be7d6f673"></a>
-real_t *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structrnn__neuron__t.html#a8a22e7f4f5ff9250c4a0d41be7d6f673">wt_ih_h</a></td></tr>
-<tr class="memdesc:a8a22e7f4f5ff9250c4a0d41be7d6f673"><td class="mdescLeft">&#160;</td><td class="mdescRight">delta weight of hidden-hidden for one mini-batch <br /></td></tr>
-<tr class="separator:a8a22e7f4f5ff9250c4a0d41be7d6f673"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a662448e65b0dd57e369b3b6f568bad1e"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a662448e65b0dd57e369b3b6f568bad1e"></a>
 real_t *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structrnn__neuron__t.html#a662448e65b0dd57e369b3b6f568bad1e">wt_ho_w</a></td></tr>
 <tr class="memdesc:a662448e65b0dd57e369b3b6f568bad1e"><td class="mdescLeft">&#160;</td><td class="mdescRight">delta weight of word part of hidden-output for one mini-batch <br /></td></tr>
@@ -458,6 +462,20 @@ real_t *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="
 
 </div>
 </div>
+<a class="anchor" id="ad4b1dfbbb08c16a72c95d80d588999d8"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int rnn_neuron_t::ih_buf_num</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>size of er_h_buf and ac_i_h_buf, or used to indicate wt_i_h updated during mini-batch. </p>
+
+</div>
+</div>
 <a class="anchor" id="a1289801ba5aa59616b5b2b0d9a835e08"></a>
 <div class="memitem">
 <div class="memproto">
@@ -528,20 +546,6 @@ real_t *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="
 
 </div>
 </div>
-<a class="anchor" id="a0ecd946f4e92811f96fb43c6a64655a9"></a>
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">real_t* rnn_neuron_t::wt_bptt_ih_h</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>buffer for hidden-hidden weights for bptt. </p>
-
-</div>
-</div>
 <a class="anchor" id="a47719b514804b85755eaa4c3c4cd8c00"></a>
 <div class="memitem">
 <div class="memproto">
@@ -565,7 +569,7 @@ real_t *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="structrnn__neuron__t.html">rnn_neuron_t</a></li>
-    <li class="footer">Generated on Thu Jun 25 2015 10:58:20 for connLM by
+    <li class="footer">Generated on Sat Jul 18 2015 23:14:43 for connLM by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.9.1 </li>
   </ul>

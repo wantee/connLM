@@ -1,11 +1,11 @@
 var searchData=
 [
-  ['max_5fvocab_5fsize',['max_vocab_size',['../structvocab__opt__t.html#accfacc1a21766a87eb63f57c6884eece',1,'vocab_opt_t']]],
-  ['max_5fword_5fper_5fsent',['max_word_per_sent',['../structconnlm__train__opt__t.html#ad55cbae400b155a562e346a5d841bec9',1,'connlm_train_opt_t::max_word_per_sent()'],['../structconnlm__test__opt__t.html#a0c8a7e75deae2f979a0bb11821baf4c9',1,'connlm_test_opt_t::max_word_per_sent()']]],
-  ['maxent',['maxent',['../structconnlm__t.html#af5e89bdebab8b9b2aa98ca74570bf938',1,'connlm_t']]],
-  ['maxent_5fopt',['maxent_opt',['../structconnlm__model__opt__t.html#a850ac7605a49f3836b9808aa7c1dd606',1,'connlm_model_opt_t::maxent_opt()'],['../structconnlm__train__opt__t.html#abe0f895bc887ce12e0aef5f98da6cf40',1,'connlm_train_opt_t::maxent_opt()']]],
-  ['mini_5fbatch',['mini_batch',['../structparam__t.html#a5b43cd8951a73581f8217695ba8908e8',1,'param_t']]],
-  ['mini_5fstep',['mini_step',['../structmaxent__neuron__t.html#a7d71f95b00d524224d6fce979180f1ce',1,'maxent_neuron_t::mini_step()'],['../structrnn__neuron__t.html#a793a6be14c85062bfa35654deb6020d3',1,'rnn_neuron_t::mini_step()']]],
-  ['model_5fopt',['model_opt',['../structconnlm__t.html#ab9afa952c8f8d4efdf4aec468aa6764a',1,'connlm_t::model_opt()'],['../structffnn__t.html#ab04189943f69eb3a09846645b1c44e2f',1,'ffnn_t::model_opt()'],['../structlbl__t.html#a673387a6e55882960c7ddc0e98d7fe55',1,'lbl_t::model_opt()'],['../structmaxent__t.html#afe802e4e1fd616593568cb26f5c16df8',1,'maxent_t::model_opt()'],['../structrnn__t.html#a61cda1f4d1f0fff8dbc0328c13d21329',1,'rnn_t::model_opt()']]],
-  ['momentum',['momentum',['../structparam__t.html#ada2d53933fd9b7e546a09329cfd8c962',1,'param_t']]]
+  ['l1_5fpenalty',['l1_penalty',['../structparam__t.html#ad83d07035bdca5333a370855e7fba842',1,'param_t']]],
+  ['l2_5fgap',['l2_gap',['../structparam__t.html#ac2d4227abd4b17210a8b032cc21e3954',1,'param_t']]],
+  ['l2_5fpenalty',['l2_penalty',['../structparam__t.html#a5741f83992fef9b08de7b265b97b8d88',1,'param_t']]],
+  ['l2_5fstep',['l2_step',['../structparam__arg__t.html#a195baa62048d36c3442edff4b090200e',1,'param_arg_t']]],
+  ['last_5fword',['last_word',['../structrnn__neuron__t.html#aa2de2b9783f31d8896476731d6f2f2ab',1,'rnn_neuron_t']]],
+  ['lbl',['lbl',['../structconnlm__t.html#aa21b31a4d089cde5dd0c529120ae680b',1,'connlm_t']]],
+  ['lbl_5fopt',['lbl_opt',['../structconnlm__model__opt__t.html#a1e3cac85be379bd161f790a187f94b2d',1,'connlm_model_opt_t::lbl_opt()'],['../structconnlm__train__opt__t.html#a8fe9a6c382b0d7c3b58b7cbfce2865bd',1,'connlm_train_opt_t::lbl_opt()']]],
+  ['learn_5frate',['learn_rate',['../structparam__t.html#a664f28c5bfefe413adf7fa29e3fd6365',1,'param_t']]]
 ];

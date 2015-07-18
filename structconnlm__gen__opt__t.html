@@ -5,7 +5,7 @@
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.9.1"/>
-<title>connLM: Modules</title>
+<title>connLM: connlm_gen_opt_t Struct Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <link rel="shortcut icon" href="connlm.ico" type="image/x-icon" />
 <script type="text/javascript" src="jquery.js"></script>
@@ -50,8 +50,8 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
     <ul class="tablist">
       <li><a href="index.html"><span>Main&#160;Page</span></a></li>
       <li><a href="pages.html"><span>Related&#160;Pages</span></a></li>
-      <li class="current"><a href="modules.html"><span>Modules</span></a></li>
-      <li><a href="annotated.html"><span>Data&#160;Structures</span></a></li>
+      <li><a href="modules.html"><span>Modules</span></a></li>
+      <li class="current"><a href="annotated.html"><span>Data&#160;Structures</span></a></li>
       <li><a href="files.html"><span>Files</span></a></li>
       <li>
         <div id="MSearchBox" class="MSearchBoxInactive">
@@ -71,6 +71,13 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
       </li>
     </ul>
   </div>
+  <div id="navrow2" class="tabs2">
+    <ul class="tablist">
+      <li><a href="annotated.html"><span>Data&#160;Structures</span></a></li>
+      <li><a href="classes.html"><span>Data&#160;Structure&#160;Index</span></a></li>
+      <li><a href="functions.html"><span>Data&#160;Fields</span></a></li>
+    </ul>
+  </div>
 </div><!-- top -->
 <div id="side-nav" class="ui-resizable side-nav-resizable">
   <div id="nav-tree">
@@ -83,7 +90,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
   </div>
 </div>
 <script type="text/javascript">
-$(document).ready(function(){initNavTree('modules.html','');});
+$(document).ready(function(){initNavTree('structconnlm__gen__opt__t.html','');});
 </script>
 <div id="doc-content">
 <!-- window showing the filter options -->
@@ -101,28 +108,36 @@ $(document).ready(function(){initNavTree('modules.html','');});
 </div>
 
 <div class="header">
+  <div class="summary">
+<a href="#pub-attribs">Data Fields</a>  </div>
   <div class="headertitle">
-<div class="title">Modules</div>  </div>
+<div class="title">connlm_gen_opt_t Struct Reference<div class="ingroups"><a class="el" href="group__connlm.html">connLM Model</a></div></div>  </div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock">Here is a list of all modules:</div><div class="directory">
-<table class="directory">
-<tr id="row_0_" class="even"><td class="entry"><span style="width:16px;display:inline-block;">&#160;</span><a class="el" href="group__connlm.html" target="_self">connLM Model</a></td><td class="desc">Data structure and functions for connLM model </td></tr>
-<tr id="row_1_"><td class="entry"><span style="width:16px;display:inline-block;">&#160;</span><a class="el" href="group__ffnn.html" target="_self">FFNN Model</a></td><td class="desc">Data structures and functions for FFNN model </td></tr>
-<tr id="row_2_" class="even"><td class="entry"><span style="width:16px;display:inline-block;">&#160;</span><a class="el" href="group__lbl.html" target="_self">LBL Model</a></td><td class="desc">Data structures and functions for LBL model </td></tr>
-<tr id="row_3_"><td class="entry"><span style="width:16px;display:inline-block;">&#160;</span><a class="el" href="group__maxent.html" target="_self">MaxEnt Model</a></td><td class="desc">Data structures and functions for MaxEnt model </td></tr>
-<tr id="row_4_" class="even"><td class="entry"><span style="width:16px;display:inline-block;">&#160;</span><a class="el" href="group__output.html" target="_self">Output Layer</a></td><td class="desc">Data structures and functions for Output Layer </td></tr>
-<tr id="row_5_"><td class="entry"><span style="width:16px;display:inline-block;">&#160;</span><a class="el" href="group__param.html" target="_self">Parameter</a></td><td class="desc">Data structures and functions for training Parameter </td></tr>
-<tr id="row_6_" class="even"><td class="entry"><span style="width:16px;display:inline-block;">&#160;</span><a class="el" href="group__rnn.html" target="_self">RNN Model</a></td><td class="desc">Data structures and functions for RNN model </td></tr>
-<tr id="row_7_"><td class="entry"><span style="width:16px;display:inline-block;">&#160;</span><a class="el" href="group__vocab.html" target="_self">Vocab</a></td><td class="desc">Data structures and functions for Vocab </td></tr>
+
+<p>Parameters for generate text.  
+ <a href="structconnlm__gen__opt__t.html#details">More...</a></p>
+
+<p><code>#include &lt;<a class="el" href="connlm_8h_source.html">connlm.h</a>&gt;</code></p>
+<table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-attribs"></a>
+Data Fields</h2></td></tr>
+<tr class="memitem:a039d9df611d5a43cd826d216dc877467"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a039d9df611d5a43cd826d216dc877467"></a>
+char&#160;</td><td class="memItemRight" valign="bottom"><b>prefix_file</b> [MAX_DIR_LEN]</td></tr>
+<tr class="separator:a039d9df611d5a43cd826d216dc877467"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
-</div><!-- directory -->
+<a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
+<div class="textblock"><p>Parameters for generate text. </p>
+</div><hr/>The documentation for this struct was generated from the following file:<ul>
+<li><a class="el" href="connlm_8h_source.html">connlm.h</a></li>
+</ul>
 </div><!-- contents -->
 </div><!-- doc-content -->
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on Sat Jul 18 2015 23:14:43 for connLM by
+    <li class="navelem"><a class="el" href="structconnlm__gen__opt__t.html">connlm_gen_opt_t</a></li>
+    <li class="footer">Generated on Sat Jul 18 2015 23:14:42 for connLM by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.9.1 </li>
   </ul>

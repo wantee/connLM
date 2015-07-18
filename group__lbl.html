@@ -163,9 +163,12 @@ Functions</h2></td></tr>
 <tr class="memitem:ga70d6b4feadc106184eb4b8b63771176f"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__lbl.html#ga70d6b4feadc106184eb4b8b63771176f">lbl_save_body</a> (<a class="el" href="structlbl__t.html">lbl_t</a> *lbl, FILE *fp, bool binary)</td></tr>
 <tr class="memdesc:ga70d6b4feadc106184eb4b8b63771176f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Save lbl body.  <a href="#ga70d6b4feadc106184eb4b8b63771176f">More...</a><br /></td></tr>
 <tr class="separator:ga70d6b4feadc106184eb4b8b63771176f"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ga356329db8eaeb008d911295bf0270d65"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__lbl.html#ga356329db8eaeb008d911295bf0270d65">lbl_forward</a> (<a class="el" href="structlbl__t.html">lbl_t</a> *lbl, int word, int tid)</td></tr>
-<tr class="memdesc:ga356329db8eaeb008d911295bf0270d65"><td class="mdescLeft">&#160;</td><td class="mdescRight">Feed-forward one word for a thread of lbl model.  <a href="#ga356329db8eaeb008d911295bf0270d65">More...</a><br /></td></tr>
-<tr class="separator:ga356329db8eaeb008d911295bf0270d65"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga6366759043ec62c1e05d8cf1bd931fd5"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__lbl.html#ga6366759043ec62c1e05d8cf1bd931fd5">lbl_forward_pre_layer</a> (<a class="el" href="structlbl__t.html">lbl_t</a> *lbl, int tid)</td></tr>
+<tr class="memdesc:ga6366759043ec62c1e05d8cf1bd931fd5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Feed-forward one word for pre-non-output layer of one thread of lbl model.  <a href="#ga6366759043ec62c1e05d8cf1bd931fd5">More...</a><br /></td></tr>
+<tr class="separator:ga6366759043ec62c1e05d8cf1bd931fd5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga12035e648d01ea3539cac8c4cca3a684"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__lbl.html#ga12035e648d01ea3539cac8c4cca3a684">lbl_forward_last_layer</a> (<a class="el" href="structlbl__t.html">lbl_t</a> *lbl, int cls, int tid)</td></tr>
+<tr class="memdesc:ga12035e648d01ea3539cac8c4cca3a684"><td class="mdescLeft">&#160;</td><td class="mdescRight">Feed-forward one word for last output layer of one thread of lbl model.  <a href="#ga12035e648d01ea3539cac8c4cca3a684">More...</a><br /></td></tr>
+<tr class="separator:ga12035e648d01ea3539cac8c4cca3a684"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:gab35111beeef1a78057f20bec737872da"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__lbl.html#gab35111beeef1a78057f20bec737872da">lbl_backprop</a> (<a class="el" href="structlbl__t.html">lbl_t</a> *lbl, int word, int tid)</td></tr>
 <tr class="memdesc:gab35111beeef1a78057f20bec737872da"><td class="mdescLeft">&#160;</td><td class="mdescRight">Back-propagate one word for a thread of lbl model.  <a href="#gab35111beeef1a78057f20bec737872da">More...</a><br /></td></tr>
 <tr class="separator:gab35111beeef1a78057f20bec737872da"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -196,6 +199,15 @@ Functions</h2></td></tr>
 <tr class="memitem:ga0910645985785ae45cfcc23f1fdac79c"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__lbl.html#ga0910645985785ae45cfcc23f1fdac79c">lbl_end_test</a> (<a class="el" href="structlbl__t.html">lbl_t</a> *lbl, int word, int tid)</td></tr>
 <tr class="memdesc:ga0910645985785ae45cfcc23f1fdac79c"><td class="mdescLeft">&#160;</td><td class="mdescRight">End testing for lbl model.  <a href="#ga0910645985785ae45cfcc23f1fdac79c">More...</a><br /></td></tr>
 <tr class="separator:ga0910645985785ae45cfcc23f1fdac79c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gae4998068d2b80d30e623f69b0152a02b"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__lbl.html#gae4998068d2b80d30e623f69b0152a02b">lbl_setup_gen</a> (<a class="el" href="structlbl__t.html">lbl_t</a> *lbl, <a class="el" href="structoutput__t.html">output_t</a> *output)</td></tr>
+<tr class="memdesc:gae4998068d2b80d30e623f69b0152a02b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Setup generating for lbl model.  <a href="#gae4998068d2b80d30e623f69b0152a02b">More...</a><br /></td></tr>
+<tr class="separator:gae4998068d2b80d30e623f69b0152a02b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga1d206205229fd31c18fbeb92eb10b165"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__lbl.html#ga1d206205229fd31c18fbeb92eb10b165">lbl_reset_gen</a> (<a class="el" href="structlbl__t.html">lbl_t</a> *lbl)</td></tr>
+<tr class="memdesc:ga1d206205229fd31c18fbeb92eb10b165"><td class="mdescLeft">&#160;</td><td class="mdescRight">Reset generating for lbl model.  <a href="#ga1d206205229fd31c18fbeb92eb10b165">More...</a><br /></td></tr>
+<tr class="separator:ga1d206205229fd31c18fbeb92eb10b165"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga020dd9ab8e4a433cb3316a8c91961efc"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__lbl.html#ga020dd9ab8e4a433cb3316a8c91961efc">lbl_end_gen</a> (<a class="el" href="structlbl__t.html">lbl_t</a> *lbl, int word)</td></tr>
+<tr class="memdesc:ga020dd9ab8e4a433cb3316a8c91961efc"><td class="mdescLeft">&#160;</td><td class="mdescRight">End generating for lbl model.  <a href="#ga020dd9ab8e4a433cb3316a8c91961efc">More...</a><br /></td></tr>
+<tr class="separator:ga020dd9ab8e4a433cb3316a8c91961efc"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <p>Data structures and functions for LBL model. </p>
@@ -272,7 +284,7 @@ Functions</h2></td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section see"><dt>See also</dt><dd><a class="el" href="group__lbl.html#ga356329db8eaeb008d911295bf0270d65" title="Feed-forward one word for a thread of lbl model. ">lbl_forward</a> </dd></dl>
+<dl class="section see"><dt>See also</dt><dd>lbl_forward </dd></dl>
 <dl class="section return"><dt>Returns</dt><dd>non-zero value if any error. </dd></dl>
 
 </div>
@@ -323,6 +335,43 @@ Functions</h2></td></tr>
   </dd>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>the duplicated lbl model </dd></dl>
+
+</div>
+</div>
+<a class="anchor" id="ga020dd9ab8e4a433cb3316a8c91961efc"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int lbl_end_gen </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structlbl__t.html">lbl_t</a> *&#160;</td>
+          <td class="paramname"><em>lbl</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>word</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>End generating for lbl model. </p>
+<p>Called after every word generated.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">lbl</td><td>lbl model. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">word</td><td>current generated word. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>non-zero value if any error. </dd></dl>
 
 </div>
 </div>
@@ -451,12 +500,12 @@ Functions</h2></td></tr>
 
 </div>
 </div>
-<a class="anchor" id="ga356329db8eaeb008d911295bf0270d65"></a>
+<a class="anchor" id="ga12035e648d01ea3539cac8c4cca3a684"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">int lbl_forward </td>
+          <td class="memname">int lbl_forward_last_layer </td>
           <td>(</td>
           <td class="paramtype"><a class="el" href="structlbl__t.html">lbl_t</a> *&#160;</td>
           <td class="paramname"><em>lbl</em>, </td>
@@ -465,7 +514,7 @@ Functions</h2></td></tr>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">int&#160;</td>
-          <td class="paramname"><em>word</em>, </td>
+          <td class="paramname"><em>cls</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
@@ -481,16 +530,53 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Feed-forward one word for a thread of lbl model. </p>
+<p>Feed-forward one word for last output layer of one thread of lbl model. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramdir">[in]</td><td class="paramname">lbl</td><td>lbl model. </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">word</td><td>current word. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">cls</td><td>class of current word. -1 if non-class. </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">tid</td><td>thread id (neuron id). </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section see"><dt>See also</dt><dd><a class="el" href="group__lbl.html#gab35111beeef1a78057f20bec737872da" title="Back-propagate one word for a thread of lbl model. ">lbl_backprop</a> </dd></dl>
+<dl class="section see"><dt>See also</dt><dd><a class="el" href="group__lbl.html#ga6366759043ec62c1e05d8cf1bd931fd5" title="Feed-forward one word for pre-non-output layer of one thread of lbl model. ">lbl_forward_pre_layer</a> </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>non-zero value if any error. </dd></dl>
+
+</div>
+</div>
+<a class="anchor" id="ga6366759043ec62c1e05d8cf1bd931fd5"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int lbl_forward_pre_layer </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structlbl__t.html">lbl_t</a> *&#160;</td>
+          <td class="paramname"><em>lbl</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>tid</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Feed-forward one word for pre-non-output layer of one thread of lbl model. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">lbl</td><td>lbl model. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">tid</td><td>thread id (neuron id). </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section see"><dt>See also</dt><dd><a class="el" href="group__lbl.html#ga12035e648d01ea3539cac8c4cca3a684" title="Feed-forward one word for last output layer of one thread of lbl model. ">lbl_forward_last_layer</a> </dd></dl>
 <dl class="section return"><dt>Returns</dt><dd>non-zero value if any error. </dd></dl>
 
 </div>
@@ -730,6 +816,32 @@ Functions</h2></td></tr>
 
 </div>
 </div>
+<a class="anchor" id="ga1d206205229fd31c18fbeb92eb10b165"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int lbl_reset_gen </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structlbl__t.html">lbl_t</a> *&#160;</td>
+          <td class="paramname"><em>lbl</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Reset generating for lbl model. </p>
+<p>Called before every sentence to be generated.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">lbl</td><td>lbl model. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>non-zero value if any error. </dd></dl>
+
+</div>
+</div>
 <a class="anchor" id="ga3923754848453beb5467ff9ce07d2429"></a>
 <div class="memitem">
 <div class="memproto">
@@ -892,6 +1004,43 @@ Functions</h2></td></tr>
 <dl class="section see"><dt>See also</dt><dd><a class="el" href="group__lbl.html#ga70d6b4feadc106184eb4b8b63771176f" title="Save lbl body. ">lbl_save_body</a> </dd>
 <dd>
 <a class="el" href="group__lbl.html#ga4c8c23e53c1bcb0204244246c29015a7" title="Load lbl header and initialise a new lbl. ">lbl_load_header</a>, <a class="el" href="group__lbl.html#ga496409a1545a027d60107cba91f104d0" title="Load lbl body. ">lbl_load_body</a> </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>non-zero value if any error. </dd></dl>
+
+</div>
+</div>
+<a class="anchor" id="gae4998068d2b80d30e623f69b0152a02b"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int lbl_setup_gen </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structlbl__t.html">lbl_t</a> *&#160;</td>
+          <td class="paramname"><em>lbl</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="structoutput__t.html">output_t</a> *&#160;</td>
+          <td class="paramname"><em>output</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Setup generating for lbl model. </p>
+<p>Called before generating.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">lbl</td><td>lbl model. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">output</td><td>output layer. </td></tr>
+  </table>
+  </dd>
+</dl>
 <dl class="section return"><dt>Returns</dt><dd>non-zero value if any error. </dd></dl>
 
 </div>
@@ -1084,7 +1233,7 @@ Functions</h2></td></tr>
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on Thu Jun 25 2015 10:58:20 for connLM by
+    <li class="footer">Generated on Sat Jul 18 2015 23:14:42 for connLM by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.9.1 </li>
   </ul>

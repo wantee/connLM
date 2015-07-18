@@ -1,6 +1,6 @@
 var searchData=
 [
-  ['vocab',['vocab',['../structconnlm__t.html#a5ce1d69db833748652d0020d6e549739',1,'connlm_t']]],
-  ['vocab_5fopt',['vocab_opt',['../structvocab__t.html#a8050a4134e238c3000fa03847fef2057',1,'vocab_t']]],
-  ['vocab_5fsize',['vocab_size',['../structmaxent__t.html#adb88a7ffa3a60b6ae5cbc2722057c044',1,'maxent_t::vocab_size()'],['../structrnn__t.html#a2442f02bc9330e05612dc5d8e38671c6',1,'rnn_t::vocab_size()'],['../structvocab__t.html#aa6d558209c0fcecc7055467c79d1fb7b',1,'vocab_t::vocab_size()']]]
+  ['test_5fopt',['test_opt',['../structconnlm__t.html#ace11a0861563ff06ff440c7ccac55d14',1,'connlm_t']]],
+  ['text_5ffile',['text_file',['../structconnlm__t.html#a6b92e27f53a638a23eb7316e47deba4d',1,'connlm_t']]],
+  ['train_5fopt',['train_opt',['../structconnlm__t.html#a3ff65308c94c91a3243a11daf0a9f6a4',1,'connlm_t::train_opt()'],['../structffnn__t.html#a9517616ed4f5f1a67f0a7b9d76e74e93',1,'ffnn_t::train_opt()'],['../structlbl__t.html#a2bb70f6f6206fc7437bbf87055569d88',1,'lbl_t::train_opt()'],['../structmaxent__t.html#a9ee494fd0ab65a30b5ba64701cc8766b',1,'maxent_t::train_opt()'],['../structrnn__t.html#a536d667e7bc6f086620e41e9ee1bc92d',1,'rnn_t::train_opt()']]]
 ];

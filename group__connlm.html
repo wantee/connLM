@@ -124,8 +124,11 @@ Data Structures</h2></td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structconnlm__test__opt__t.html">connlm_test_opt_t</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Parameters for testing connLM model.  <a href="structconnlm__test__opt__t.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structconnlm__thr__t.html">connlm_thr_t</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Variables for one connLM thread.  <a href="structconnlm__thr__t.html#details">More...</a><br /></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structconnlm__gen__opt__t.html">connlm_gen_opt_t</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Parameters for generate text.  <a href="structconnlm__gen__opt__t.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structconnlm__egs__t.html">connlm_egs_t</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">A bunch of word.  <a href="structconnlm__egs__t.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structconnlm__t.html">connlm_t</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">connLM model.  <a href="structconnlm__t.html#details">More...</a><br /></td></tr>
@@ -148,6 +151,9 @@ Functions</h2></td></tr>
 <tr class="memitem:ga9dfd56d0ed400c116f346fd84d285037"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__connlm.html#ga9dfd56d0ed400c116f346fd84d285037">connlm_load_test_opt</a> (<a class="el" href="structconnlm__test__opt__t.html">connlm_test_opt_t</a> *test_opt, st_opt_t *opt, const char *sec_name)</td></tr>
 <tr class="memdesc:ga9dfd56d0ed400c116f346fd84d285037"><td class="mdescLeft">&#160;</td><td class="mdescRight">Load connlm test option.  <a href="#ga9dfd56d0ed400c116f346fd84d285037">More...</a><br /></td></tr>
 <tr class="separator:ga9dfd56d0ed400c116f346fd84d285037"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gaff03e7c0c99c60d3e477f0c9d40afd52"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__connlm.html#gaff03e7c0c99c60d3e477f0c9d40afd52">connlm_load_gen_opt</a> (<a class="el" href="structconnlm__gen__opt__t.html">connlm_gen_opt_t</a> *gen_opt, st_opt_t *opt, const char *sec_name)</td></tr>
+<tr class="memdesc:gaff03e7c0c99c60d3e477f0c9d40afd52"><td class="mdescLeft">&#160;</td><td class="mdescRight">Load connlm gen option.  <a href="#gaff03e7c0c99c60d3e477f0c9d40afd52">More...</a><br /></td></tr>
+<tr class="separator:gaff03e7c0c99c60d3e477f0c9d40afd52"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga16cc86da5bd225c176db09b440e2e338"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__connlm.html#ga16cc86da5bd225c176db09b440e2e338">connlm_destroy</a> (<a class="el" href="structconnlm__t.html">connlm_t</a> *connlm)</td></tr>
 <tr class="memdesc:ga16cc86da5bd225c176db09b440e2e338"><td class="mdescLeft">&#160;</td><td class="mdescRight">Destroy a connlm model.  <a href="#ga16cc86da5bd225c176db09b440e2e338">More...</a><br /></td></tr>
 <tr class="separator:ga16cc86da5bd225c176db09b440e2e338"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -208,6 +214,18 @@ Functions</h2></td></tr>
 <tr class="memitem:gab65c887fc91dd797891764844e0bb97b"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__connlm.html#gab65c887fc91dd797891764844e0bb97b">connlm_test</a> (<a class="el" href="structconnlm__t.html">connlm_t</a> *connlm, FILE *fp_log)</td></tr>
 <tr class="memdesc:gab65c887fc91dd797891764844e0bb97b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Testing a connlm model.  <a href="#gab65c887fc91dd797891764844e0bb97b">More...</a><br /></td></tr>
 <tr class="separator:gab65c887fc91dd797891764844e0bb97b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga54345a4669765c6930481739d8963b6f"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__connlm.html#ga54345a4669765c6930481739d8963b6f">connlm_setup_gen</a> (<a class="el" href="structconnlm__t.html">connlm_t</a> *connlm, <a class="el" href="structconnlm__gen__opt__t.html">connlm_gen_opt_t</a> *gen_opt)</td></tr>
+<tr class="memdesc:ga54345a4669765c6930481739d8963b6f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Setup generating for connlm model.  <a href="#ga54345a4669765c6930481739d8963b6f">More...</a><br /></td></tr>
+<tr class="separator:ga54345a4669765c6930481739d8963b6f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga9a89f00f2146769a911d7907c21b5021"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__connlm.html#ga9a89f00f2146769a911d7907c21b5021">connlm_reset_gen</a> (<a class="el" href="structconnlm__t.html">connlm_t</a> *connlm)</td></tr>
+<tr class="memdesc:ga9a89f00f2146769a911d7907c21b5021"><td class="mdescLeft">&#160;</td><td class="mdescRight">Reset generating for connlm model.  <a href="#ga9a89f00f2146769a911d7907c21b5021">More...</a><br /></td></tr>
+<tr class="separator:ga9a89f00f2146769a911d7907c21b5021"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gaca56f44052ac238ffc6cdae9ec1b7830"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__connlm.html#gaca56f44052ac238ffc6cdae9ec1b7830">connlm_end_gen</a> (<a class="el" href="structconnlm__t.html">connlm_t</a> *connlm, int word)</td></tr>
+<tr class="memdesc:gaca56f44052ac238ffc6cdae9ec1b7830"><td class="mdescLeft">&#160;</td><td class="mdescRight">End generating for connlm model.  <a href="#gaca56f44052ac238ffc6cdae9ec1b7830">More...</a><br /></td></tr>
+<tr class="separator:gaca56f44052ac238ffc6cdae9ec1b7830"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gaea0bba3ee31343a8e64345ce96f4a47b"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__connlm.html#gaea0bba3ee31343a8e64345ce96f4a47b">connlm_gen</a> (<a class="el" href="structconnlm__t.html">connlm_t</a> *connlm, int num_sents)</td></tr>
+<tr class="memdesc:gaea0bba3ee31343a8e64345ce96f4a47b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Testing a connlm model.  <a href="#gaea0bba3ee31343a8e64345ce96f4a47b">More...</a><br /></td></tr>
+<tr class="separator:gaea0bba3ee31343a8e64345ce96f4a47b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <p>Data structure and functions for connLM model. </p>
@@ -310,6 +328,43 @@ Functions</h2></td></tr>
   </table>
   </dd>
 </dl>
+
+</div>
+</div>
+<a class="anchor" id="gaca56f44052ac238ffc6cdae9ec1b7830"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int connlm_end_gen </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structconnlm__t.html">connlm_t</a> *&#160;</td>
+          <td class="paramname"><em>connlm</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>word</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>End generating for connlm model. </p>
+<p>Called after every input word generated.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">connlm</td><td>connlm model. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">word</td><td>current generated word. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>non-zero value if any error. </dd></dl>
 
 </div>
 </div>
@@ -526,6 +581,42 @@ Functions</h2></td></tr>
 
 </div>
 </div>
+<a class="anchor" id="gaea0bba3ee31343a8e64345ce96f4a47b"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int connlm_gen </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structconnlm__t.html">connlm_t</a> *&#160;</td>
+          <td class="paramname"><em>connlm</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>num_sents</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Testing a connlm model. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">connlm</td><td>connlm model. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">num_sents</td><td>number of sentences to be generate. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>non-zero value if any error. </dd></dl>
+
+</div>
+</div>
 <a class="anchor" id="ga9d8b12e37a523f8f0229988989545cc3"></a>
 <div class="memitem">
 <div class="memproto">
@@ -584,6 +675,49 @@ Functions</h2></td></tr>
   </dd>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>a connlm model. </dd></dl>
+
+</div>
+</div>
+<a class="anchor" id="gaff03e7c0c99c60d3e477f0c9d40afd52"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int connlm_load_gen_opt </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structconnlm__gen__opt__t.html">connlm_gen_opt_t</a> *&#160;</td>
+          <td class="paramname"><em>gen_opt</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">st_opt_t *&#160;</td>
+          <td class="paramname"><em>opt</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const char *&#160;</td>
+          <td class="paramname"><em>sec_name</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Load connlm gen option. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[out]</td><td class="paramname">gen_opt</td><td>options loaded. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">opt</td><td>runtime options passed by caller. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">sec_name</td><td>section name of runtime options to be loaded. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>non-zero value if any error. </dd></dl>
 
 </div>
 </div>
@@ -816,6 +950,32 @@ Functions</h2></td></tr>
 
 </div>
 </div>
+<a class="anchor" id="ga9a89f00f2146769a911d7907c21b5021"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int connlm_reset_gen </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structconnlm__t.html">connlm_t</a> *&#160;</td>
+          <td class="paramname"><em>connlm</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Reset generating for connlm model. </p>
+<p>Called before every input sentence to be generated.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">connlm</td><td>connlm model. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>non-zero value if any error. </dd></dl>
+
+</div>
+</div>
 <a class="anchor" id="ga654d34d7786cc7392ece4dee86a79474"></a>
 <div class="memitem">
 <div class="memproto">
@@ -926,6 +1086,43 @@ Functions</h2></td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">connlm</td><td>connlm to be saved. </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">fp</td><td>file stream saved to. </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">binary</td><td>whether to use binary format. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>non-zero value if any error. </dd></dl>
+
+</div>
+</div>
+<a class="anchor" id="ga54345a4669765c6930481739d8963b6f"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int connlm_setup_gen </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structconnlm__t.html">connlm_t</a> *&#160;</td>
+          <td class="paramname"><em>connlm</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="structconnlm__gen__opt__t.html">connlm_gen_opt_t</a> *&#160;</td>
+          <td class="paramname"><em>gen_opt</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Setup generating for connlm model. </p>
+<p>Called before generating.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">connlm</td><td>connlm model. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">gen_opt</td><td>generating options. </td></tr>
   </table>
   </dd>
 </dl>
@@ -1175,7 +1372,7 @@ Functions</h2></td></tr>
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on Thu Jun 25 2015 10:58:20 for connLM by
+    <li class="footer">Generated on Sat Jul 18 2015 23:14:42 for connLM by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.9.1 </li>
   </ul>

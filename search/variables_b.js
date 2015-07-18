@@ -1,9 +1,7 @@
 var searchData=
 [
-  ['oov_5fpenalty',['oov_penalty',['../structconnlm__test__opt__t.html#a3c165ee1812aa499199254a7e2684134',1,'connlm_test_opt_t']]],
-  ['oovs',['oovs',['../structconnlm__thr__t.html#a17506ac1258dd345c0475b9adf9e6c2e',1,'connlm_thr_t']]],
-  ['order',['order',['../structmaxent__model__opt__t.html#a94723c7092061d2a93ce098ea31c6132',1,'maxent_model_opt_t::order()'],['../structhash__hist__t.html#a3467fb2edd1bdf675da8b61579a1a8d9',1,'hash_hist_t::order()']]],
-  ['output',['output',['../structconnlm__t.html#acb30c474d8738764497837d6edca976e',1,'connlm_t::output()'],['../structffnn__t.html#a45b377fdef3e3d9da61fc3b1374e9bb7',1,'ffnn_t::output()'],['../structlbl__t.html#a6dcf64d21b6c453a4d7b4194305b85e0',1,'lbl_t::output()'],['../structmaxent__t.html#af976c98311be2747b28a396097287549',1,'maxent_t::output()'],['../structrnn__t.html#ae92cba711c3c01788dbfc157095000e4',1,'rnn_t::output()']]],
-  ['output_5fopt',['output_opt',['../structconnlm__model__opt__t.html#a5229dff8fd57417b5e74a80710c7b8cd',1,'connlm_model_opt_t::output_opt()'],['../structoutput__t.html#a25a8ee731394d8b205ae7742c1397a3a',1,'output_t::output_opt()']]],
-  ['output_5fsize',['output_size',['../structoutput__t.html#a8dadbf2b03d5cf2b1ee248be00c197bc',1,'output_t']]]
+  ['neurons',['neurons',['../structffnn__t.html#aec95d3838525b9e11fe92e4980bb13d3',1,'ffnn_t::neurons()'],['../structlbl__t.html#a4e1cbe7ddf024a8ad79f2f9ef021a788',1,'lbl_t::neurons()'],['../structmaxent__t.html#aed5c0f08ec98b6128379fc28a4413b07',1,'maxent_t::neurons()'],['../structoutput__t.html#a38f7a8e84a59d3616947c04fa8678143',1,'output_t::neurons()'],['../structrnn__t.html#a280df707fc29c32bcccc39096509fa62',1,'rnn_t::neurons()']]],
+  ['num',['num',['../structhash__range__t.html#a461f221cedd696dcbf64649e753ba1df',1,'hash_range_t']]],
+  ['num_5fthread',['num_thread',['../structconnlm__train__opt__t.html#aa5c74dc3d019caef510339c84028877f',1,'connlm_train_opt_t::num_thread()'],['../structconnlm__test__opt__t.html#a7aa3604a4bf9169e2f18efaa845059e7',1,'connlm_test_opt_t::num_thread()']]],
+  ['num_5fthrs',['num_thrs',['../structffnn__t.html#aa2c181429c762bbdb33cc578bf08aa9a',1,'ffnn_t::num_thrs()'],['../structlbl__t.html#afd1ae79ee922244786cbbfb124608461',1,'lbl_t::num_thrs()'],['../structmaxent__t.html#a8d905741cac389abf84f97b995fff606',1,'maxent_t::num_thrs()'],['../structoutput__t.html#ab60a8eff4b1b5e2035fd58b575dc5207',1,'output_t::num_thrs()'],['../structrnn__t.html#adcb7b48ea5a8e3862f44c9526e8c578e',1,'rnn_t::num_thrs()']]]
 ];

@@ -1,9 +1,10 @@
 var annotated =
 [
+    [ "connlm_egs_t", "structconnlm__egs__t.html", "structconnlm__egs__t" ],
+    [ "connlm_gen_opt_t", "structconnlm__gen__opt__t.html", "structconnlm__gen__opt__t" ],
     [ "connlm_model_opt_t", "structconnlm__model__opt__t.html", "structconnlm__model__opt__t" ],
     [ "connlm_t", "structconnlm__t.html", "structconnlm__t" ],
     [ "connlm_test_opt_t", "structconnlm__test__opt__t.html", "structconnlm__test__opt__t" ],
-    [ "connlm_thr_t", "structconnlm__thr__t.html", "structconnlm__thr__t" ],
     [ "connlm_train_opt_t", "structconnlm__train__opt__t.html", "structconnlm__train__opt__t" ],
     [ "ffnn_model_opt_t", "structffnn__model__opt__t.html", "structffnn__model__opt__t" ],
     [ "ffnn_neuron_t", "structffnn__neuron__t.html", null ],

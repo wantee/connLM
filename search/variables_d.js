@@ -1,8 +1,6 @@
 var searchData=
 [
-  ['rand_5fseed',['rand_seed',['../structconnlm__model__opt__t.html#a2ab7676cc3d5eff8cbb04cc872a9d8db',1,'connlm_model_opt_t::rand_seed()'],['../structconnlm__train__opt__t.html#a0ec601e0f13e32b9bca39797a9a43766',1,'connlm_train_opt_t::rand_seed()']]],
-  ['random',['random',['../structconnlm__t.html#a489c3913c4a8d1877827c9ff31e118d1',1,'connlm_t']]],
-  ['range',['range',['../structhash__hist__t.html#ae9fd3344b00c32ee352bcb9701db541c',1,'hash_hist_t']]],
-  ['rnn',['rnn',['../structconnlm__t.html#a7d391f7fa33670624ea7af9d666023d2',1,'connlm_t']]],
-  ['rnn_5fopt',['rnn_opt',['../structconnlm__model__opt__t.html#a7a1e39578afeb7b7a919b3858bf72b6b',1,'connlm_model_opt_t::rnn_opt()'],['../structconnlm__train__opt__t.html#a09b6621fadadf7b3325dbec54d322c78',1,'connlm_train_opt_t::rnn_opt()']]]
+  ['param',['param',['../structconnlm__train__opt__t.html#a2b50fc0ed6c0490ca8c422964d12da86',1,'connlm_train_opt_t::param()'],['../structffnn__train__opt__t.html#a9cec24ac70b93ca9e8919bdbb1be56b1',1,'ffnn_train_opt_t::param()'],['../structlbl__train__opt__t.html#a8143c268121b9e36e3e8f026d526efac',1,'lbl_train_opt_t::param()'],['../structmaxent__train__opt__t.html#aa721e297cf3ad893c3330f37c8cbee1d',1,'maxent_train_opt_t::param()'],['../structrnn__train__opt__t.html#a2e5d3c9d91853581936c0490f01e2b90',1,'rnn_train_opt_t::param()']]],
+  ['param_5farg_5fc',['param_arg_c',['../structmaxent__neuron__t.html#af8f14c8eaed26f8439c88c6f9cd6adba',1,'maxent_neuron_t']]],
+  ['param_5farg_5fw',['param_arg_w',['../structmaxent__neuron__t.html#aa47b9030d98357afeaa8e86cd0485e41',1,'maxent_neuron_t']]]
 ];

@@ -163,9 +163,12 @@ Functions</h2></td></tr>
 <tr class="memitem:ga32928469e505481041c0c1cdf889a603"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__ffnn.html#ga32928469e505481041c0c1cdf889a603">ffnn_save_body</a> (<a class="el" href="structffnn__t.html">ffnn_t</a> *ffnn, FILE *fp, bool binary)</td></tr>
 <tr class="memdesc:ga32928469e505481041c0c1cdf889a603"><td class="mdescLeft">&#160;</td><td class="mdescRight">Save ffnn body.  <a href="#ga32928469e505481041c0c1cdf889a603">More...</a><br /></td></tr>
 <tr class="separator:ga32928469e505481041c0c1cdf889a603"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ga2180517b855205e85eb2dafc2e673c3d"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__ffnn.html#ga2180517b855205e85eb2dafc2e673c3d">ffnn_forward</a> (<a class="el" href="structffnn__t.html">ffnn_t</a> *ffnn, int word, int tid)</td></tr>
-<tr class="memdesc:ga2180517b855205e85eb2dafc2e673c3d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Feed-forward one word for a thread of ffnn model.  <a href="#ga2180517b855205e85eb2dafc2e673c3d">More...</a><br /></td></tr>
-<tr class="separator:ga2180517b855205e85eb2dafc2e673c3d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga12de626e675d0966a4e17d02696789d2"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__ffnn.html#ga12de626e675d0966a4e17d02696789d2">ffnn_forward_pre_layer</a> (<a class="el" href="structffnn__t.html">ffnn_t</a> *ffnn, int tid)</td></tr>
+<tr class="memdesc:ga12de626e675d0966a4e17d02696789d2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Feed-forward one word for pre-non-output layer of one thread of ffnn model.  <a href="#ga12de626e675d0966a4e17d02696789d2">More...</a><br /></td></tr>
+<tr class="separator:ga12de626e675d0966a4e17d02696789d2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gac5a9e3046b9feede8bb67e958274550b"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__ffnn.html#gac5a9e3046b9feede8bb67e958274550b">ffnn_forward_last_layer</a> (<a class="el" href="structffnn__t.html">ffnn_t</a> *ffnn, int cls, int tid)</td></tr>
+<tr class="memdesc:gac5a9e3046b9feede8bb67e958274550b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Feed-forward one word for last output layer of one thread of ffnn model.  <a href="#gac5a9e3046b9feede8bb67e958274550b">More...</a><br /></td></tr>
+<tr class="separator:gac5a9e3046b9feede8bb67e958274550b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:gaa660d4a56143e8205e3c91293e035726"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__ffnn.html#gaa660d4a56143e8205e3c91293e035726">ffnn_backprop</a> (<a class="el" href="structffnn__t.html">ffnn_t</a> *ffnn, int word, int tid)</td></tr>
 <tr class="memdesc:gaa660d4a56143e8205e3c91293e035726"><td class="mdescLeft">&#160;</td><td class="mdescRight">Back-propagate one word for a thread of ffnn model.  <a href="#gaa660d4a56143e8205e3c91293e035726">More...</a><br /></td></tr>
 <tr class="separator:gaa660d4a56143e8205e3c91293e035726"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -196,6 +199,15 @@ Functions</h2></td></tr>
 <tr class="memitem:ga66004f5d8ee0f7794c7bd7a87da2a7ab"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__ffnn.html#ga66004f5d8ee0f7794c7bd7a87da2a7ab">ffnn_end_test</a> (<a class="el" href="structffnn__t.html">ffnn_t</a> *ffnn, int word, int tid)</td></tr>
 <tr class="memdesc:ga66004f5d8ee0f7794c7bd7a87da2a7ab"><td class="mdescLeft">&#160;</td><td class="mdescRight">End testing for ffnn model.  <a href="#ga66004f5d8ee0f7794c7bd7a87da2a7ab">More...</a><br /></td></tr>
 <tr class="separator:ga66004f5d8ee0f7794c7bd7a87da2a7ab"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga88bac5c935c4aa4b2bf0dc05027cf70f"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__ffnn.html#ga88bac5c935c4aa4b2bf0dc05027cf70f">ffnn_setup_gen</a> (<a class="el" href="structffnn__t.html">ffnn_t</a> *ffnn, <a class="el" href="structoutput__t.html">output_t</a> *output)</td></tr>
+<tr class="memdesc:ga88bac5c935c4aa4b2bf0dc05027cf70f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Setup generating for ffnn model.  <a href="#ga88bac5c935c4aa4b2bf0dc05027cf70f">More...</a><br /></td></tr>
+<tr class="separator:ga88bac5c935c4aa4b2bf0dc05027cf70f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga3f4adcb60a5551f32cdeb5486e06ef67"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__ffnn.html#ga3f4adcb60a5551f32cdeb5486e06ef67">ffnn_reset_gen</a> (<a class="el" href="structffnn__t.html">ffnn_t</a> *ffnn)</td></tr>
+<tr class="memdesc:ga3f4adcb60a5551f32cdeb5486e06ef67"><td class="mdescLeft">&#160;</td><td class="mdescRight">Reset generating for ffnn model.  <a href="#ga3f4adcb60a5551f32cdeb5486e06ef67">More...</a><br /></td></tr>
+<tr class="separator:ga3f4adcb60a5551f32cdeb5486e06ef67"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga948778e4f00fb6aaaa7a340840e780aa"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__ffnn.html#ga948778e4f00fb6aaaa7a340840e780aa">ffnn_end_gen</a> (<a class="el" href="structffnn__t.html">ffnn_t</a> *ffnn, int word)</td></tr>
+<tr class="memdesc:ga948778e4f00fb6aaaa7a340840e780aa"><td class="mdescLeft">&#160;</td><td class="mdescRight">End generating for ffnn model.  <a href="#ga948778e4f00fb6aaaa7a340840e780aa">More...</a><br /></td></tr>
+<tr class="separator:ga948778e4f00fb6aaaa7a340840e780aa"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <p>Data structures and functions for FFNN model. </p>
@@ -272,7 +284,7 @@ Functions</h2></td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section see"><dt>See also</dt><dd><a class="el" href="group__ffnn.html#ga2180517b855205e85eb2dafc2e673c3d" title="Feed-forward one word for a thread of ffnn model. ">ffnn_forward</a> </dd></dl>
+<dl class="section see"><dt>See also</dt><dd>ffnn_forward </dd></dl>
 <dl class="section return"><dt>Returns</dt><dd>non-zero value if any error. </dd></dl>
 
 </div>
@@ -323,6 +335,43 @@ Functions</h2></td></tr>
   </dd>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>the duplicated ffnn model </dd></dl>
+
+</div>
+</div>
+<a class="anchor" id="ga948778e4f00fb6aaaa7a340840e780aa"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int ffnn_end_gen </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structffnn__t.html">ffnn_t</a> *&#160;</td>
+          <td class="paramname"><em>ffnn</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>word</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>End generating for ffnn model. </p>
+<p>Called after every word generated.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">ffnn</td><td>ffnn model. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">word</td><td>current generated word. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>non-zero value if any error. </dd></dl>
 
 </div>
 </div>
@@ -451,12 +500,12 @@ Functions</h2></td></tr>
 
 </div>
 </div>
-<a class="anchor" id="ga2180517b855205e85eb2dafc2e673c3d"></a>
+<a class="anchor" id="gac5a9e3046b9feede8bb67e958274550b"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">int ffnn_forward </td>
+          <td class="memname">int ffnn_forward_last_layer </td>
           <td>(</td>
           <td class="paramtype"><a class="el" href="structffnn__t.html">ffnn_t</a> *&#160;</td>
           <td class="paramname"><em>ffnn</em>, </td>
@@ -465,7 +514,7 @@ Functions</h2></td></tr>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">int&#160;</td>
-          <td class="paramname"><em>word</em>, </td>
+          <td class="paramname"><em>cls</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
@@ -481,16 +530,53 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Feed-forward one word for a thread of ffnn model. </p>
+<p>Feed-forward one word for last output layer of one thread of ffnn model. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramdir">[in]</td><td class="paramname">ffnn</td><td>ffnn model. </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">word</td><td>current word. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">cls</td><td>class of current word. -1 if non-class. </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">tid</td><td>thread id (neuron id). </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section see"><dt>See also</dt><dd><a class="el" href="group__ffnn.html#gaa660d4a56143e8205e3c91293e035726" title="Back-propagate one word for a thread of ffnn model. ">ffnn_backprop</a> </dd></dl>
+<dl class="section see"><dt>See also</dt><dd><a class="el" href="group__ffnn.html#ga12de626e675d0966a4e17d02696789d2" title="Feed-forward one word for pre-non-output layer of one thread of ffnn model. ">ffnn_forward_pre_layer</a> </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>non-zero value if any error. </dd></dl>
+
+</div>
+</div>
+<a class="anchor" id="ga12de626e675d0966a4e17d02696789d2"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int ffnn_forward_pre_layer </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structffnn__t.html">ffnn_t</a> *&#160;</td>
+          <td class="paramname"><em>ffnn</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>tid</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Feed-forward one word for pre-non-output layer of one thread of ffnn model. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">ffnn</td><td>ffnn model. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">tid</td><td>thread id (neuron id). </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section see"><dt>See also</dt><dd><a class="el" href="group__ffnn.html#gac5a9e3046b9feede8bb67e958274550b" title="Feed-forward one word for last output layer of one thread of ffnn model. ">ffnn_forward_last_layer</a> </dd></dl>
 <dl class="section return"><dt>Returns</dt><dd>non-zero value if any error. </dd></dl>
 
 </div>
@@ -730,6 +816,32 @@ Functions</h2></td></tr>
 
 </div>
 </div>
+<a class="anchor" id="ga3f4adcb60a5551f32cdeb5486e06ef67"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int ffnn_reset_gen </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structffnn__t.html">ffnn_t</a> *&#160;</td>
+          <td class="paramname"><em>ffnn</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Reset generating for ffnn model. </p>
+<p>Called before every sentence to be generated.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">ffnn</td><td>ffnn model. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>non-zero value if any error. </dd></dl>
+
+</div>
+</div>
 <a class="anchor" id="ga309274f2176325df84d4cb40df73383a"></a>
 <div class="memitem">
 <div class="memproto">
@@ -892,6 +1004,43 @@ Functions</h2></td></tr>
 <dl class="section see"><dt>See also</dt><dd><a class="el" href="group__ffnn.html#ga32928469e505481041c0c1cdf889a603" title="Save ffnn body. ">ffnn_save_body</a> </dd>
 <dd>
 <a class="el" href="group__ffnn.html#ga22b04e0f6a0d3e52322e2c4a7869385b" title="Load ffnn header and initialise a new ffnn. ">ffnn_load_header</a>, <a class="el" href="group__ffnn.html#ga457e9bdce7b96beb4cbeb671cb23b04b" title="Load ffnn body. ">ffnn_load_body</a> </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>non-zero value if any error. </dd></dl>
+
+</div>
+</div>
+<a class="anchor" id="ga88bac5c935c4aa4b2bf0dc05027cf70f"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int ffnn_setup_gen </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structffnn__t.html">ffnn_t</a> *&#160;</td>
+          <td class="paramname"><em>ffnn</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="structoutput__t.html">output_t</a> *&#160;</td>
+          <td class="paramname"><em>output</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Setup generating for ffnn model. </p>
+<p>Called before generating.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">ffnn</td><td>ffnn model. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">output</td><td>output layer. </td></tr>
+  </table>
+  </dd>
+</dl>
 <dl class="section return"><dt>Returns</dt><dd>non-zero value if any error. </dd></dl>
 
 </div>
@@ -1084,7 +1233,7 @@ Functions</h2></td></tr>
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on Thu Jun 25 2015 10:58:20 for connLM by
+    <li class="footer">Generated on Sat Jul 18 2015 23:14:42 for connLM by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.9.1 </li>
   </ul>
