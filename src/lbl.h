@@ -181,15 +181,24 @@ int lbl_save_header(lbl_t *lbl, FILE *fp, bool binary);
 int lbl_save_body(lbl_t *lbl, FILE *fp, bool binary);
 
 /**
- * Feed-forward one word for a thread of lbl model.
+ * Feed-forward one word for pre-non-output layer of one thread of lbl model.
  * @ingroup lbl
  * @param[in] lbl lbl model.
- * @param[in] word current word.
  * @param[in] tid thread id (neuron id).
- * @see lbl_backprop
+ * @see lbl_forward_last_layer
  * @return non-zero value if any error.
  */
-int lbl_forward(lbl_t *lbl, int word, int tid);
+int lbl_forward_pre_layer(lbl_t *lbl, int tid);
+/**
+ * Feed-forward one word for last output layer of one thread of lbl model.
+ * @ingroup lbl
+ * @param[in] lbl lbl model.
+ * @param[in] cls class of current word. -1 if non-class.
+ * @param[in] tid thread id (neuron id).
+ * @see lbl_forward_pre_layer
+ * @return non-zero value if any error.
+ */
+int lbl_forward_last_layer(lbl_t *lbl, int cls, int tid);
 /**
  * Back-propagate one word for a thread of lbl model.
  * @ingroup lbl
@@ -291,6 +300,33 @@ int lbl_start_test(lbl_t *lbl, int word, int tid);
  * @return non-zero value if any error.
  */
 int lbl_end_test(lbl_t *lbl, int word, int tid);
+
+/**
+ * Setup generating for lbl model.
+ * Called before generating.
+ * @ingroup lbl
+ * @param[in] lbl lbl model.
+ * @param[in] output output layer.
+ * @return non-zero value if any error.
+ */
+int lbl_setup_gen(lbl_t *lbl, output_t *output);
+/**
+ * Reset generating for lbl model.
+ * Called before every sentence to be generated.
+ * @ingroup lbl
+ * @param[in] lbl lbl model.
+ * @return non-zero value if any error.
+ */
+int lbl_reset_gen(lbl_t *lbl);
+/**
+ * End generating for lbl model.
+ * Called after every word generated.
+ * @ingroup lbl
+ * @param[in] lbl lbl model.
+ * @param[in] word current generated word.
+ * @return non-zero value if any error.
+ */
+int lbl_end_gen(lbl_t *lbl, int word);
 
 #ifdef __cplusplus
 }

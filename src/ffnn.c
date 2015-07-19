@@ -305,13 +305,16 @@ int ffnn_save_body(ffnn_t *ffnn, FILE *fp, bool binary)
     return 0;
 }
 
-int ffnn_forward(ffnn_t *ffnn, int word, int tid)
+int ffnn_forward_pre_layer(ffnn_t *ffnn, int tid)
 {
     ST_CHECK_PARAM(ffnn == NULL || tid < 0, -1);
 
-    if (word < 0) {
-        return 0;
-    }
+    return 0;
+}
+
+int ffnn_forward_last_layer(ffnn_t *ffnn, int cls, int tid)
+{
+    ST_CHECK_PARAM(ffnn == NULL || tid < 0, -1);
 
     return 0;
 }
@@ -425,5 +428,20 @@ int ffnn_end_test(ffnn_t *ffnn, int word, int tid)
     ST_CHECK_PARAM(ffnn == NULL || tid < 0, -1);
 
     return 0;
+}
+
+int ffnn_setup_gen(ffnn_t *ffnn, output_t *output)
+{
+    return ffnn_setup_test(ffnn, output, 1);
+}
+
+int ffnn_reset_gen(ffnn_t *ffnn)
+{
+    return ffnn_reset_test(ffnn, 0);
+}
+
+int ffnn_end_gen(ffnn_t *ffnn, int word)
+{
+    return ffnn_end_test(ffnn, word, 0);
 }
 

@@ -306,13 +306,16 @@ int lbl_save_body(lbl_t *lbl, FILE *fp, bool binary)
     return 0;
 }
 
-int lbl_forward(lbl_t *lbl, int word, int tid)
+int lbl_forward_pre_layer(lbl_t *lbl, int tid)
 {
     ST_CHECK_PARAM(lbl == NULL || tid < 0, -1);
 
-    if (word < 0) {
-        return 0;
-    }
+    return 0;
+}
+
+int lbl_forward_last_layer(lbl_t *lbl, int cls, int tid)
+{
+    ST_CHECK_PARAM(lbl == NULL || tid < 0, -1);
 
     return 0;
 }
@@ -426,5 +429,20 @@ int lbl_end_test(lbl_t *lbl, int word, int tid)
     ST_CHECK_PARAM(lbl == NULL || tid < 0, -1);
 
     return 0;
+}
+
+int lbl_setup_gen(lbl_t *lbl, output_t *output)
+{
+    return lbl_setup_test(lbl, output, 1);
+}
+
+int lbl_reset_gen(lbl_t *lbl)
+{
+    return lbl_reset_test(lbl, 0);
+}
+
+int lbl_end_gen(lbl_t *lbl, int word)
+{
+    return lbl_end_test(lbl, word, 0);
 }
 

@@ -116,7 +116,7 @@ int connlm_load_model_opt(connlm_model_opt_t *model_opt,
 
     ST_CHECK_PARAM(model_opt == NULL || opt == NULL, -1);
 
-    ST_OPT_SEC_GET_INT(opt, sec_name, "RANDOM_SEED",
+    ST_OPT_SEC_GET_UINT(opt, sec_name, "RANDOM_SEED",
             model_opt->rand_seed, 1, "Random seed");
 
     if (sec_name == NULL || sec_name[0] == '\0') {
@@ -179,7 +179,7 @@ int connlm_load_train_opt(connlm_train_opt_t *train_opt,
 
     ST_OPT_SEC_GET_INT(opt, sec_name, "NUM_THREAD",
             train_opt->num_thread, 1, "Number of threads");
-    ST_OPT_SEC_GET_INT(opt, sec_name, "RANDOM_SEED",
+    ST_OPT_SEC_GET_UINT(opt, sec_name, "RANDOM_SEED",
             train_opt->rand_seed, 1, "Random seed");
 
     ST_OPT_SEC_GET_INT(opt, sec_name, "EPOCH_SIZE",
@@ -266,6 +266,25 @@ int connlm_load_test_opt(connlm_test_opt_t *test_opt,
     ST_OPT_SEC_GET_STR(opt, sec_name, "DEBUG_FILE",
             test_opt->debug_file, MAX_DIR_LEN, "",
             "file to print out debug infos.");
+
+    return 0;
+
+ST_OPT_ERR:
+    return -1;
+}
+
+int connlm_load_gen_opt(connlm_gen_opt_t *gen_opt, 
+        st_opt_t *opt, const char *sec_name)
+{
+    ST_CHECK_PARAM(gen_opt == NULL || opt == NULL, -1);
+
+    ST_OPT_SEC_GET_UINT(opt, sec_name, "RANDOM_SEED",
+            gen_opt->rand_seed, (unsigned int)time(NULL),
+            "Random seed. Default is value of time(NULl).");
+
+    ST_OPT_SEC_GET_STR(opt, sec_name, "PREFIX_FILE",
+            gen_opt->prefix_file, MAX_DIR_LEN, "",
+            "File contains text prefix to be generated after");
 
     return 0;
 
@@ -1214,40 +1233,107 @@ int connlm_finish_train(connlm_t *connlm, int tid)
     return 0;
 }
 
-int connlm_forward(connlm_t *connlm, int word, int tid)
+/* forward non-output-word layer */
+int connlm_forward_pre_layer(connlm_t *connlm, int tid)
 {
     ST_CHECK_PARAM(connlm == NULL, -1);
 
     if (connlm->rnn != NULL) {
-        if (rnn_forward(connlm->rnn, word, tid) < 0) {
-            ST_WARNING("Failed to rnn_forward.");
+        if (rnn_forward_pre_layer(connlm->rnn, tid) < 0) {
+            ST_WARNING("Failed to rnn_forward_pre_layer.");
             return -1;
         }
     }
 
     if (connlm->maxent != NULL) {
-        if (maxent_forward(connlm->maxent, word, tid) < 0) {
-            ST_WARNING("Failed to maxent_forward.");
+        if (maxent_forward_pre_layer(connlm->maxent, tid) < 0) {
+            ST_WARNING("Failed to maxent_forward_pre_layer.");
             return -1;
         }
     }
 
     if (connlm->lbl != NULL) {
-        if (lbl_forward(connlm->lbl, word, tid) < 0) {
-            ST_WARNING("Failed to lbl_forward.");
+        if (lbl_forward_pre_layer(connlm->lbl, tid) < 0) {
+            ST_WARNING("Failed to lbl_forward_pre_layer.");
             return -1;
         }
     }
 
     if (connlm->ffnn != NULL) {
-        if (ffnn_forward(connlm->ffnn, word, tid) < 0) {
-            ST_WARNING("Failed to ffnn_forward.");
+        if (ffnn_forward_pre_layer(connlm->ffnn, tid) < 0) {
+            ST_WARNING("Failed to ffnn_forward_pre_layer.");
             return -1;
         }
     }
 
-    if (output_activate(connlm->output, word, tid) < 0) {
-        ST_WARNING("Failed to output_activate.");
+    if (output_activate_pre_layer(connlm->output, tid) < 0) {
+        ST_WARNING("Failed to output_activate_pre_layer.");
+        return -1;
+    }
+
+    return 0;
+}
+
+/* forward the last output-word layer */
+int connlm_forward_last_layer(connlm_t *connlm, int cls, int tid)
+{
+    ST_CHECK_PARAM(connlm == NULL, -1);
+
+    if (connlm->rnn != NULL) {
+        if (rnn_forward_last_layer(connlm->rnn, cls, tid) < 0) {
+            ST_WARNING("Failed to rnn_forward_last_layer.");
+            return -1;
+        }
+    }
+
+    if (connlm->maxent != NULL) {
+        if (maxent_forward_last_layer(connlm->maxent, cls, tid) < 0) {
+            ST_WARNING("Failed to maxent_forward_last_layer.");
+            return -1;
+        }
+    }
+
+    if (connlm->lbl != NULL) {
+        if (lbl_forward_last_layer(connlm->lbl, cls, tid) < 0) {
+            ST_WARNING("Failed to lbl_forward_last_layer.");
+            return -1;
+        }
+    }
+
+    if (connlm->ffnn != NULL) {
+        if (ffnn_forward_last_layer(connlm->ffnn, cls, tid) < 0) {
+            ST_WARNING("Failed to ffnn_forward_last_layer.");
+            return -1;
+        }
+    }
+
+    if (output_activate_last_layer(connlm->output, cls, tid) < 0) {
+        ST_WARNING("Failed to output_activate_last_layer.");
+        return -1;
+    }
+
+    return 0;
+}
+
+int connlm_forward(connlm_t *connlm, int word, int tid)
+{
+    int cls;
+
+    ST_CHECK_PARAM(connlm == NULL, -1);
+
+    if (connlm_forward_pre_layer(connlm, tid) < 0) {
+        ST_WARNING("Failed to connlm_forward_pre_layer.");
+        return -1;
+    }
+
+    if (connlm->output->output_opt.class_size > 0) {
+        cls = connlm->output->w2c[word];
+    } else {
+        cls = -1;
+    }
+
+    if (connlm_forward_last_layer(connlm, cls, tid) < 0) {
+        ST_WARNING("Failed to connlm_forward_last_layer.");
         return -1;
     }
 
@@ -2462,5 +2548,242 @@ ERR:
 
     return -1;
 }
+
+int connlm_setup_gen(connlm_t *connlm, connlm_gen_opt_t *gen_opt)
+{
+    ST_CHECK_PARAM(connlm == NULL || gen_opt == NULL, -1);
+
+    connlm->gen_opt = *gen_opt;
+
+    st_srand(gen_opt->rand_seed);
+
+    if (output_setup_gen(connlm->output) < 0) {
+        ST_WARNING("Failed to output_setup_gen.");
+        goto ERR;
+    }
+
+    if (connlm->rnn != NULL) {
+        if (rnn_setup_gen(connlm->rnn, connlm->output) < 0) {
+            ST_WARNING("Failed to rnn_setup_test.");
+            goto ERR;
+        }
+    }
+
+    if (connlm->maxent != NULL) {
+        if (maxent_setup_gen(connlm->maxent, connlm->output) < 0) {
+            ST_WARNING("Failed to maxent_setup_gen.");
+            goto ERR;
+        }
+    }
+
+    if (connlm->lbl != NULL) {
+        if (lbl_setup_gen(connlm->lbl, connlm->output) < 0) {
+            ST_WARNING("Failed to lbl_setup_gen.");
+            goto ERR;
+        }
+    }
+
+    if (connlm->ffnn != NULL) {
+        if (ffnn_setup_gen(connlm->ffnn, connlm->output) < 0) {
+            ST_WARNING("Failed to ffnn_setup_gen.");
+            goto ERR;
+        }
+    }
+
+    return 0;
+
+ERR:
+
+    return -1;
+}
+
+int connlm_reset_gen(connlm_t *connlm)
+{
+    ST_CHECK_PARAM(connlm == NULL, -1);
+
+    if (output_reset_gen(connlm->output) < 0) {
+        ST_WARNING("Failed to output_reset_gen.");
+        return -1;
+    }
+
+    if (connlm->rnn != NULL) {
+        if (rnn_reset_gen(connlm->rnn) < 0) {
+            ST_WARNING("Failed to rnn_reset_gen.");
+            return -1;
+        }
+    }
+
+    if (connlm->maxent != NULL) {
+        if (maxent_reset_gen(connlm->maxent) < 0) {
+            ST_WARNING("Failed to maxent_reset_gen.");
+            return -1;
+        }
+    }
+
+    if (connlm->lbl != NULL) {
+        if (lbl_reset_gen(connlm->lbl) < 0) {
+            ST_WARNING("Failed to lbl_reset_gen.");
+            return -1;
+        }
+    }
+
+    if (connlm->ffnn != NULL) {
+        if (ffnn_reset_gen(connlm->ffnn) < 0) {
+            ST_WARNING("Failed to ffnn_reset_gen.");
+            return -1;
+        }
+    }
+
+    return 0;
+}
+
+int connlm_end_gen(connlm_t *connlm, int word)
+{
+    ST_CHECK_PARAM(connlm == NULL, -1);
+
+    if (output_end_gen(connlm->output, word) < 0) {
+        ST_WARNING("Failed to output_end_gen.");
+        return -1;
+    }
+
+    if (connlm->rnn != NULL) {
+        if (rnn_end_gen(connlm->rnn, word) < 0) {
+            ST_WARNING("Failed to rnn_end_gen.");
+            return -1;
+        }
+    }
+
+    if (connlm->maxent != NULL) {
+        if (maxent_end_gen(connlm->maxent, word) < 0) {
+            ST_WARNING("Failed to maxent_end_gen.");
+            return -1;
+        }
+    }
+
+    if (connlm->lbl != NULL) {
+        if (lbl_end_gen(connlm->lbl, word) < 0) {
+            ST_WARNING("Failed to lbl_end_gen.");
+            return -1;
+        }
+    }
+
+    if (connlm->ffnn != NULL) {
+        if (ffnn_end_gen(connlm->ffnn, word) < 0) {
+            ST_WARNING("Failed to ffnn_end_gen.");
+            return -1;
+        }
+    }
+
+    return 0;
+}
+
+int connlm_gen(connlm_t *connlm, int num_sents)
+{
+    count_t words;
+    count_t sents;
+
+    int class_size;
+
+    int word;
+    int cls;
+    int s;
+    int e;
+    double u;
+    double p;
+
+    struct timeval tts_gen, tte_gen;
+    long ms;
+
+    ST_CHECK_PARAM(connlm == NULL || num_sents < 0, -1);
+
+    class_size = connlm->output->output_opt.class_size;
+
+    gettimeofday(&tts_gen, NULL);
+    sents = -1;
+    words = 0;
+    word = 0;
+    while(true) {
+        if (word == 0) {
+            if (connlm_reset_gen(connlm) < 0) {
+                ST_WARNING("Failed to connlm_reset_gen.");
+                goto ERR;
+            }
+            sents++;
+            if (sents >= num_sents) {
+                break;
+            }
+        }
+
+        if (class_size > 0) {
+            // generate class
+            if (connlm_forward_pre_layer(connlm, 0) < 0) {
+                ST_WARNING("Failed to connlm_forward_pre_layer.");
+                goto ERR;
+            }
+
+            u = st_random(0, 1);
+            p = 0;
+            for (cls = 0; cls < class_size; cls++) {
+                p += output_get_class_prob_for_class(connlm->output, cls, 0);
+
+                if (p >= u) {
+                    break;
+                }
+            }
+
+            s = connlm->output->c2w_s[cls];
+            e = connlm->output->c2w_e[cls];
+        } else {
+            cls = -1;
+            s = 0;
+            e = connlm->output->output_size;
+        }
+
+        if (connlm_forward_last_layer(connlm, cls, 0) < 0) {
+            ST_WARNING("Failed to connlm_forward_last_layer.");
+            goto ERR;
+        }
+
+        u = st_random(0, 1);
+        p = 0;
+        for (word = s; word < e; word++) {
+            p += output_get_word_prob(connlm->output, word, 0);
+
+            if (p >= u) {
+                break;
+            }
+        }
+
+        if (word == 0) {
+            printf("\n");
+        } else {
+            printf("%s ", vocab_get_word(connlm->vocab, word));
+        }
+        fflush(stdout);
+
+        if (connlm_end_gen(connlm, word) < 0) {
+            ST_WARNING("connlm_end_gen.");
+            goto ERR;
+        }
+
+        words++;
+    }
+
+    gettimeofday(&tte_gen, NULL);
+    ms = TIMEDIFF(tts_gen, tte_gen);
+
+    ST_NOTICE("Finish generating in %ldms.", ms);
+
+    ST_NOTICE("Words: " COUNT_FMT "    Sentences: " COUNT_FMT
+            ", words/sec: %.1f", words, sents,
+             words / ((double) ms / 1000));
+
+    return 0;
+
+ERR:
+
+    return -1;
+}
+
 /* vim: set expandtab ts=4 sw=4 sts=4 tw=100: */
 

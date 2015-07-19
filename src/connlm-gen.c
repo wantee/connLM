@@ -38,9 +38,9 @@ bool g_binary;
 
 st_opt_t *g_cmd_opt;
 
-connlm_test_opt_t g_test_opt;
+connlm_gen_opt_t g_gen_opt;
 
-int connlm_test_parse_opt(int *argc, const char *argv[])
+int connlm_gen_parse_opt(int *argc, const char *argv[])
 {
     st_log_opt_t log_opt;
     bool b;
@@ -66,8 +66,8 @@ int connlm_test_parse_opt(int *argc, const char *argv[])
         goto ST_OPT_ERR;
     }
 
-    if (connlm_load_test_opt(&g_test_opt, g_cmd_opt, NULL) < 0) {
-        ST_WARNING("Failed to connlm_load_test_opt");
+    if (connlm_load_gen_opt(&g_gen_opt, g_cmd_opt, NULL) < 0) {
+        ST_WARNING("Failed to connlm_load_gen_opt");
         goto ST_OPT_ERR;
     }
 
@@ -86,8 +86,8 @@ ST_OPT_ERR:
 void show_usage(const char *module_name)
 {
     connlm_show_usage(module_name,
-            "Test Model",
-            "<model> <test-file> [prob-log]",
+            "Generate text based on a model",
+            "<model> [#words]",
             g_cmd_opt);
 }
 
@@ -96,11 +96,12 @@ int main(int argc, const char *argv[])
     char args[1024] = "";
     FILE *fp = NULL;
     connlm_t *connlm = NULL;
+    int num_sents = 1;
     int ret;
 
     (void)st_escape_args(argc, argv, args, 1024);
 
-    ret = connlm_test_parse_opt(&argc, argv);
+    ret = connlm_gen_parse_opt(&argc, argv);
     if (ret < 0) {
         goto ERR;
     } if (ret == 1) {
@@ -108,14 +109,23 @@ int main(int argc, const char *argv[])
         goto ERR;
     }
 
-    if (argc < 3) {
+    if (argc < 2) {
         show_usage(argv[0]);
         goto ERR;
     }
 
+    if (argc > 2) {
+        num_sents = atoi(argv[2]);
+
+        if (num_sents < 0) {
+            show_usage(argv[0]);
+            goto ERR;
+        }
+    }
+
     ST_CLEAN("Command-line: %s", args);
-    st_opt_show(g_cmd_opt, "connLM Test Options");
-    ST_CLEAN("Model: %s, Test: %s", argv[1], argv[2]);
+    st_opt_show(g_cmd_opt, "connLM Gen Options");
+    ST_CLEAN("Model: %s, #Sents: %d", argv[1], num_sents);
 
     fp = st_fopen(argv[1], "rb");
     if (fp == NULL) {
@@ -130,27 +140,15 @@ int main(int argc, const char *argv[])
     }
     safe_st_fclose(fp);
 
-    if (connlm_setup_test(connlm, &g_test_opt, argv[2]) < 0) {
-        ST_WARNING("Failed to connlm_setup_test.");
+    if (connlm_setup_gen(connlm, &g_gen_opt) < 0) {
+        ST_WARNING("Failed to connlm_setup_gen.");
         goto ERR;
     }
 
-    if (argc > 3) {
-        fp = st_fopen(argv[3], "wb");
-        if (fp == NULL) {
-            ST_WARNING("Failed to st_fopen. [%s]", argv[3]);
-            goto ERR;
-        }
-    } else {
-        fp = NULL;
-    }
-
-    if (connlm_test(connlm, fp) < 0) {
-        ST_WARNING("Failed to connlm_test.");
+    if (connlm_gen(connlm, num_sents) < 0) {
+        ST_WARNING("Failed to connlm_gen.");
         goto ERR;
     }
-
-    safe_st_fclose(fp);
 
     safe_st_opt_destroy(g_cmd_opt);
     safe_connlm_destroy(connlm);

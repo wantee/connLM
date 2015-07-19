@@ -182,15 +182,24 @@ int ffnn_save_header(ffnn_t *ffnn, FILE *fp, bool binary);
 int ffnn_save_body(ffnn_t *ffnn, FILE *fp, bool binary);
 
 /**
- * Feed-forward one word for a thread of ffnn model.
+ * Feed-forward one word for pre-non-output layer of one thread of ffnn model.
  * @ingroup ffnn
  * @param[in] ffnn ffnn model.
- * @param[in] word current word.
  * @param[in] tid thread id (neuron id).
- * @see ffnn_backprop
+ * @see ffnn_forward_last_layer
  * @return non-zero value if any error.
  */
-int ffnn_forward(ffnn_t *ffnn, int word, int tid);
+int ffnn_forward_pre_layer(ffnn_t *ffnn, int tid);
+/**
+ * Feed-forward one word for last output layer of one thread of ffnn model.
+ * @ingroup ffnn
+ * @param[in] ffnn ffnn model.
+ * @param[in] cls class of current word. -1 if non-class.
+ * @param[in] tid thread id (neuron id).
+ * @see ffnn_forward_pre_layer
+ * @return non-zero value if any error.
+ */
+int ffnn_forward_last_layer(ffnn_t *ffnn, int cls, int tid);
 /**
  * Back-propagate one word for a thread of ffnn model.
  * @ingroup ffnn
@@ -292,6 +301,33 @@ int ffnn_start_test(ffnn_t *ffnn, int word, int tid);
  * @return non-zero value if any error.
  */
 int ffnn_end_test(ffnn_t *ffnn, int word, int tid);
+
+/**
+ * Setup generating for ffnn model.
+ * Called before generating.
+ * @ingroup ffnn
+ * @param[in] ffnn ffnn model.
+ * @param[in] output output layer.
+ * @return non-zero value if any error.
+ */
+int ffnn_setup_gen(ffnn_t *ffnn, output_t *output);
+/**
+ * Reset generating for ffnn model.
+ * Called before every sentence to be generated.
+ * @ingroup ffnn
+ * @param[in] ffnn ffnn model.
+ * @return non-zero value if any error.
+ */
+int ffnn_reset_gen(ffnn_t *ffnn);
+/**
+ * End generating for ffnn model.
+ * Called after every word generated.
+ * @ingroup ffnn
+ * @param[in] ffnn ffnn model.
+ * @param[in] word current generated word.
+ * @return non-zero value if any error.
+ */
+int ffnn_end_gen(ffnn_t *ffnn, int word);
 
 #ifdef __cplusplus
 }

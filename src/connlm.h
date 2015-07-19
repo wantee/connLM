@@ -53,7 +53,7 @@ extern "C" {
  * @ingroup connlm
  */
 typedef struct _connlm_model_opt_t_ {
-    int rand_seed;                 /**< seed for random function. */
+    unsigned int rand_seed;       /**< seed for random function. */
 
     output_opt_t output_opt;       /**< options for output layer */
 
@@ -71,7 +71,7 @@ typedef struct _connlm_train_opt_t_ {
     param_t param;            /**< training parameters. */
 
     int num_thread;           /**< number of threads. */
-    int rand_seed;            /**< seed for random function. */
+    unsigned int rand_seed;   /**< seed for random function. */
  
     int epoch_size;  /**< number sentences read one time per thread. */
     bool shuffle;             /**< whether shuffle the sentences. */
@@ -99,14 +99,23 @@ typedef struct _connlm_test_opt_t_ {
 } connlm_test_opt_t;
 
 /**
+ * Parameters for generate text.
+ * @ingroup connlm
+ */
+typedef struct _connlm_gen_opt_t_ {
+    char prefix_file[MAX_DIR_LEN]; /**< file storing the prefix(es) for generating text. */
+    unsigned int rand_seed;   /**< seed for random function. */
+} connlm_gen_opt_t;
+
+/**
  * A bunch of word
  * @ingroup connlm
  */
 typedef struct _connlm_egs_t_ {
-    int *words;
-    int size;
-    int capacity;
-    struct _connlm_egs_t_ *next;
+    int *words; /**< word ids. */
+    int size; /**< size of words. */
+    int capacity; /**< capacity of words. */
+    struct _connlm_egs_t_ *next; /**< pointer to the next list element. */
 } connlm_egs_t;
 
 /**
@@ -117,6 +126,7 @@ typedef struct _connlm_t_ {
     connlm_model_opt_t model_opt; /**< model options */
     connlm_train_opt_t train_opt; /**< training options */
     connlm_test_opt_t test_opt; /**< testing options */
+    connlm_gen_opt_t gen_opt; /**< generating options */
 
     char text_file[MAX_DIR_LEN]; /**< training/testing file name. */
 
@@ -173,6 +183,17 @@ int connlm_load_train_opt(connlm_train_opt_t *train_opt,
  * @return non-zero value if any error.
  */
 int connlm_load_test_opt(connlm_test_opt_t *test_opt, 
+        st_opt_t *opt, const char *sec_name);
+
+/**
+ * Load connlm gen option.
+ * @ingroup connlm
+ * @param[out] gen_opt options loaded.
+ * @param[in] opt runtime options passed by caller.
+ * @param[in] sec_name section name of runtime options to be loaded.
+ * @return non-zero value if any error.
+ */
+int connlm_load_gen_opt(connlm_gen_opt_t *gen_opt, 
         st_opt_t *opt, const char *sec_name);
 
 /**
@@ -388,6 +409,43 @@ int connlm_end_test(connlm_t *connlm, int word, int tid);
  * @return non-zero value if any error.
  */
 int connlm_test(connlm_t *connlm, FILE *fp_log);
+
+/**
+ * Setup generating for connlm model. Called before generating.
+ * @ingroup connlm
+ * @param[in] connlm connlm model.
+ * @param[in] gen_opt generating options.
+ * @return non-zero value if any error.
+ */
+int connlm_setup_gen(connlm_t *connlm, connlm_gen_opt_t *gen_opt);
+
+/**
+ * Reset generating for connlm model.
+ * Called before every input sentence to be generated.
+ * @ingroup connlm
+ * @param[in] connlm connlm model.
+ * @return non-zero value if any error.
+ */
+int connlm_reset_gen(connlm_t *connlm);
+
+/**
+ * End generating for connlm model.
+ * Called after every input word generated.
+ * @ingroup connlm
+ * @param[in] connlm connlm model.
+ * @param[in] word current generated word.
+ * @return non-zero value if any error.
+ */
+int connlm_end_gen(connlm_t *connlm, int word);
+
+/**
+ * Testing a connlm model.
+ * @ingroup connlm
+ * @param[in] connlm connlm model.
+ * @param[in] num_sents number of sentences to be generate.
+ * @return non-zero value if any error.
+ */
+int connlm_gen(connlm_t *connlm, int num_sents);
 
 #ifdef __cplusplus
 }

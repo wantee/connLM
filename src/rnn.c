@@ -143,20 +143,20 @@ int rnn_init(rnn_t **prnn, rnn_model_opt_t *model_opt, output_t *output)
 
     sz = model_opt->hidden_size * vocab_size;
     for (i = 0; i < sz; i++) {
-        rnn->wt_ih_w[i] = rrandom(-0.1, 0.1)
-            + rrandom(-0.1, 0.1) + rrandom(-0.1, 0.1);
+        rnn->wt_ih_w[i] = st_random(-0.1, 0.1)
+            + st_random(-0.1, 0.1) + st_random(-0.1, 0.1);
     }
 
     sz = model_opt->hidden_size * model_opt->hidden_size;
     for (i = 0; i < sz; i++) {
-        rnn->wt_ih_h[i] = rrandom(-0.1, 0.1)
-            + rrandom(-0.1, 0.1) + rrandom(-0.1, 0.1);
+        rnn->wt_ih_h[i] = st_random(-0.1, 0.1)
+            + st_random(-0.1, 0.1) + st_random(-0.1, 0.1);
     }
 
     sz = vocab_size * model_opt->hidden_size;
     for (i = 0; i < sz; i++) {
-        rnn->wt_ho_w[i] = rrandom(-0.1, 0.1)
-            + rrandom(-0.1, 0.1) + rrandom(-0.1, 0.1);
+        rnn->wt_ho_w[i] = st_random(-0.1, 0.1)
+            + st_random(-0.1, 0.1) + st_random(-0.1, 0.1);
     }
 
     if (class_size > 0) {
@@ -169,8 +169,8 @@ int rnn_init(rnn_t **prnn, rnn_model_opt_t *model_opt, output_t *output)
 
         sz = class_size * model_opt->hidden_size;
         for (i = 0; i < sz; i++) {
-            rnn->wt_ho_c[i] = rrandom(-0.1, 0.1)
-                + rrandom(-0.1, 0.1) + rrandom(-0.1, 0.1);
+            rnn->wt_ho_c[i] = st_random(-0.1, 0.1)
+                + st_random(-0.1, 0.1) + st_random(-0.1, 0.1);
         }
     }
 
@@ -687,7 +687,7 @@ int rnn_save_body(rnn_t *rnn, FILE *fp, bool binary)
     return 0;
 }
 
-int rnn_forward(rnn_t *rnn, int word, int tid)
+int rnn_forward_pre_layer(rnn_t *rnn, int tid)
 {
     rnn_neuron_t *neu;
     output_neuron_t *output_neu;
@@ -695,10 +695,6 @@ int rnn_forward(rnn_t *rnn, int word, int tid)
 
     int h;
     int i;
-
-    int c;
-    int s;
-    int e;
 
     ST_CHECK_PARAM(rnn == NULL || tid < 0, -1);
 
@@ -729,15 +725,27 @@ int rnn_forward(rnn_t *rnn, int word, int tid)
                 rnn->class_size, hidden_size, rnn->model_opt.scale);
     }
 
-    // PROPAGATE hidden -> output (word)
-    if (word < 0) {
-        return 0;
-    }
+    return 0;
+}
 
-    if (rnn->class_size > 0) {
-        c = rnn->output->w2c[word];
-        s = rnn->output->c2w_s[c];
-        e = rnn->output->c2w_e[c];
+int rnn_forward_last_layer(rnn_t *rnn, int cls, int tid)
+{
+    rnn_neuron_t *neu;
+    output_neuron_t *output_neu;
+    int hidden_size;
+
+    int s;
+    int e;
+
+    ST_CHECK_PARAM(rnn == NULL || tid < 0, -1);
+
+    neu = rnn->neurons + tid;
+    output_neu = rnn->output->neurons + tid;
+    hidden_size = rnn->model_opt.hidden_size;
+
+    if (rnn->class_size > 0 && cls >= 0) {
+        s = rnn->output->c2w_s[cls];
+        e = rnn->output->c2w_e[cls];
     } else {
         s = 0;
         e = rnn->vocab_size;
@@ -1788,5 +1796,20 @@ int rnn_end_test(rnn_t *rnn, int word, int tid)
             rnn->model_opt.hidden_size * sizeof(real_t));
 
     return 0;
+}
+
+int rnn_setup_gen(rnn_t *rnn, output_t *output)
+{
+    return rnn_setup_test(rnn, output, 1);
+}
+
+int rnn_reset_gen(rnn_t *rnn)
+{
+    return rnn_reset_test(rnn, 0);
+}
+
+int rnn_end_gen(rnn_t *rnn, int word)
+{
+    return rnn_end_test(rnn, word, 0);
 }
 

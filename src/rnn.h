@@ -254,15 +254,24 @@ int rnn_save_header(rnn_t *rnn, FILE *fp, bool binary);
 int rnn_save_body(rnn_t *rnn, FILE *fp, bool binary);
 
 /**
- * Feed-forward one word for a thread of rnn model.
+ * Feed-forward one word for pre-non-output layer of one thread of rnn model.
  * @ingroup rnn
  * @param[in] rnn rnn model.
- * @param[in] word current word.
  * @param[in] tid thread id (neuron id).
- * @see rnn_backprop
+ * @see rnn_forward_last_layer
  * @return non-zero value if any error.
  */
-int rnn_forward(rnn_t *rnn, int word, int tid);
+int rnn_forward_pre_layer(rnn_t *rnn, int tid);
+/**
+ * Feed-forward one word for last output layer of one thread of rnn model.
+ * @ingroup rnn
+ * @param[in] rnn rnn model.
+ * @param[in] cls class of current word. -1 if non-class.
+ * @param[in] tid thread id (neuron id).
+ * @see rnn_forward_pre_layer
+ * @return non-zero value if any error.
+ */
+int rnn_forward_last_layer(rnn_t *rnn, int cls, int tid);
 /**
  * Back-propagate one word for a thread of rnn model.
  * @ingroup rnn
@@ -374,6 +383,33 @@ int rnn_start_test(rnn_t *rnn, int word, int tid);
  * @return non-zero value if any error.
  */
 int rnn_end_test(rnn_t *rnn, int word, int tid);
+
+/**
+ * Setup generating for rnn model.
+ * Called before generating.
+ * @ingroup rnn
+ * @param[in] rnn rnn model.
+ * @param[in] output output layer.
+ * @return non-zero value if any error.
+ */
+int rnn_setup_gen(rnn_t *rnn, output_t *output);
+/**
+ * Reset generating for rnn model.
+ * Called before every sentence to be generated.
+ * @ingroup rnn
+ * @param[in] rnn rnn model.
+ * @return non-zero value if any error.
+ */
+int rnn_reset_gen(rnn_t *rnn);
+/**
+ * End generating for rnn model.
+ * Called after every word generated.
+ * @ingroup rnn
+ * @param[in] rnn rnn model.
+ * @param[in] word current generated word.
+ * @return non-zero value if any error.
+ */
+int rnn_end_gen(rnn_t *rnn, int word);
 
 #ifdef __cplusplus
 }
