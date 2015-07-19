@@ -27,6 +27,8 @@
 #include <assert.h>
 #include <time.h>
 
+#include <st_utils.h>
+
 #include "utils.h"
 #include "blas.h"
 
