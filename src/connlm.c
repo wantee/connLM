@@ -1492,7 +1492,7 @@ static void* connlm_read_thread(void *args)
 
     text_fp = st_fopen(connlm->text_file, "rb");
     if (text_fp == NULL) {
-        ST_WARNING("Failed to open train file[%s]", connlm->text_file);
+        ST_WARNING("Failed to open text file[%s]", connlm->text_file);
         goto ERR;
     }
 
@@ -2682,6 +2682,14 @@ int connlm_gen(connlm_t *connlm, int num_sents)
     count_t words;
     count_t sents;
 
+    FILE *text_fp = NULL;
+
+    connlm_egs_t egs = {
+        .words = NULL,
+        .size = 0,
+        .capacity = 0,
+    };
+
     int class_size;
 
     int word;
@@ -2690,6 +2698,7 @@ int connlm_gen(connlm_t *connlm, int num_sents)
     int e;
     double u;
     double p;
+    int i;
 
     struct timeval tts_gen, tte_gen;
     long ms;
@@ -2698,75 +2707,126 @@ int connlm_gen(connlm_t *connlm, int num_sents)
 
     class_size = connlm->output->output_opt.class_size;
 
+    if (connlm->gen_opt.prefix_file[0] != '\0') {
+        text_fp = st_fopen(connlm->gen_opt.prefix_file, "rb");
+        if (text_fp == NULL) {
+            ST_WARNING("Failed to open prefix file[%s]",
+                    connlm->gen_opt.prefix_file);
+            goto ERR;
+        }
+    }
+
     gettimeofday(&tts_gen, NULL);
-    sents = -1;
+    sents = 0;
     words = 0;
-    word = 0;
     while(true) {
-        if (word == 0) {
-            if (connlm_reset_gen(connlm) < 0) {
-                ST_WARNING("Failed to connlm_reset_gen.");
+        if (connlm_reset_gen(connlm) < 0) {
+            ST_WARNING("Failed to connlm_reset_gen.");
+            goto ERR;
+        }
+        if (text_fp != NULL && !feof(text_fp)) {
+            if (connlm_get_egs(&egs, NULL, 1, text_fp, connlm->vocab) < 0) {
+                ST_WARNING("Failed to connlm_get_egs.");
                 goto ERR;
             }
-            sents++;
-            if (sents >= num_sents) {
+
+            if (egs.size > 1) {
+                printf("[");
+                for (i = 0; i < egs.size - 1; i++) {
+                    word = egs.words[i];
+                    if (word > 0) {
+                        if (connlm_forward(connlm, word, 0) < 0) {
+                            ST_WARNING("Failed to connlm_forward.");
+                            goto ERR;
+                        }
+
+                        if (connlm_end_gen(connlm, word) < 0) {
+                            ST_WARNING("connlm_end_gen.");
+                            goto ERR;
+                        }
+                    }
+                    printf("%s", vocab_get_word(connlm->vocab, word));
+                    if (i < egs.size - 2) {
+                        printf(" ");
+                    }
+                }
+                printf("] ");
+            } else if (feof(text_fp)) {
                 break;
             }
         }
 
-        if (class_size > 0) {
-            // generate class
-            if (connlm_forward_pre_layer(connlm, 0) < 0) {
-                ST_WARNING("Failed to connlm_forward_pre_layer.");
+        word = -1;
+        while (word != 0) {
+            if (word != -1) { // not first word
+                printf(" ");
+            }
+            if (class_size > 0) {
+                // generate class
+                if (connlm_forward_pre_layer(connlm, 0) < 0) {
+                    ST_WARNING("Failed to connlm_forward_pre_layer.");
+                    goto ERR;
+                }
+
+                u = st_random(0, 1);
+                p = 0;
+                for (cls = 0; cls < class_size; cls++) {
+                    p += output_get_class_prob_for_class(connlm->output,
+                            cls, 0);
+
+                    if (p >= u) {
+                        break;
+                    }
+                }
+
+                s = connlm->output->c2w_s[cls];
+                e = connlm->output->c2w_e[cls];
+            } else {
+                cls = -1;
+                s = 0;
+                e = connlm->output->output_size;
+            }
+
+            if (connlm_forward_last_layer(connlm, cls, 0) < 0) {
+                ST_WARNING("Failed to connlm_forward_last_layer.");
                 goto ERR;
             }
 
             u = st_random(0, 1);
             p = 0;
-            for (cls = 0; cls < class_size; cls++) {
-                p += output_get_class_prob_for_class(connlm->output, cls, 0);
+            for (word = s; word < e; word++) {
+                p += output_get_word_prob(connlm->output, word, 0);
 
                 if (p >= u) {
                     break;
                 }
             }
 
-            s = connlm->output->c2w_s[cls];
-            e = connlm->output->c2w_e[cls];
-        } else {
-            cls = -1;
-            s = 0;
-            e = connlm->output->output_size;
+            if (word == 0) {
+                printf("\n");
+            } else {
+                printf("%s", vocab_get_word(connlm->vocab, word));
+            }
+            fflush(stdout);
+
+            if (connlm_end_gen(connlm, word) < 0) {
+                ST_WARNING("connlm_end_gen.");
+                goto ERR;
+            }
+
+            words++;
         }
 
-        if (connlm_forward_last_layer(connlm, cls, 0) < 0) {
-            ST_WARNING("Failed to connlm_forward_last_layer.");
-            goto ERR;
-        }
-
-        u = st_random(0, 1);
-        p = 0;
-        for (word = s; word < e; word++) {
-            p += output_get_word_prob(connlm->output, word, 0);
-
-            if (p >= u) {
+        sents++;
+        if (sents >= num_sents) {
+            if(text_fp != NULL) {
+                if (feof(text_fp)) {
+                    break;
+                }
+            } else {
                 break;
             }
         }
-
-        if (word == 0) {
-            printf("\n");
-        } else {
-            printf("%s ", vocab_get_word(connlm->vocab, word));
-        }
-        fflush(stdout);
-
-        if (connlm_end_gen(connlm, word) < 0) {
-            ST_WARNING("connlm_end_gen.");
-            goto ERR;
-        }
-
-        words++;
     }
 
     gettimeofday(&tte_gen, NULL);
