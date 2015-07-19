@@ -227,11 +227,6 @@ void softmax(real_t *vec, int vec_size)
     }
 }
 
-real_t rrandom(real_t min, real_t max)
-{
-    return st_rand() / (real_t) ST_RAND_MAX *(max - min) + min;
-}
-
 void connlm_show_usage(const char *module_name, const char *header,
         const char *usage, st_opt_t *opt)
 {

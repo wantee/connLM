@@ -143,20 +143,20 @@ int rnn_init(rnn_t **prnn, rnn_model_opt_t *model_opt, output_t *output)
 
     sz = model_opt->hidden_size * vocab_size;
     for (i = 0; i < sz; i++) {
-        rnn->wt_ih_w[i] = rrandom(-0.1, 0.1)
-            + rrandom(-0.1, 0.1) + rrandom(-0.1, 0.1);
+        rnn->wt_ih_w[i] = st_random(-0.1, 0.1)
+            + st_random(-0.1, 0.1) + st_random(-0.1, 0.1);
     }
 
     sz = model_opt->hidden_size * model_opt->hidden_size;
     for (i = 0; i < sz; i++) {
-        rnn->wt_ih_h[i] = rrandom(-0.1, 0.1)
-            + rrandom(-0.1, 0.1) + rrandom(-0.1, 0.1);
+        rnn->wt_ih_h[i] = st_random(-0.1, 0.1)
+            + st_random(-0.1, 0.1) + st_random(-0.1, 0.1);
     }
 
     sz = vocab_size * model_opt->hidden_size;
     for (i = 0; i < sz; i++) {
-        rnn->wt_ho_w[i] = rrandom(-0.1, 0.1)
-            + rrandom(-0.1, 0.1) + rrandom(-0.1, 0.1);
+        rnn->wt_ho_w[i] = st_random(-0.1, 0.1)
+            + st_random(-0.1, 0.1) + st_random(-0.1, 0.1);
     }
 
     if (class_size > 0) {
@@ -169,8 +169,8 @@ int rnn_init(rnn_t **prnn, rnn_model_opt_t *model_opt, output_t *output)
 
         sz = class_size * model_opt->hidden_size;
         for (i = 0; i < sz; i++) {
-            rnn->wt_ho_c[i] = rrandom(-0.1, 0.1)
-                + rrandom(-0.1, 0.1) + rrandom(-0.1, 0.1);
+            rnn->wt_ho_c[i] = st_random(-0.1, 0.1)
+                + st_random(-0.1, 0.1) + st_random(-0.1, 0.1);
         }
     }
 

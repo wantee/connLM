@@ -27,6 +27,8 @@
 #include <assert.h>
 #include <time.h>
 
+#include <st_utils.h>
+
 #include "utils.h"
 #include "blas.h"
 
@@ -57,19 +59,19 @@ static void test_sgemm(int m, int n, int k, bool transa, bool transb)
     posix_memalign((void **)&a, 128, sizeof(real_t) * m * k);
     assert(a != NULL);
     for (i = 0; i < m * k; i++) {
-        a[i] = rrandom(-0.1, 0.1);
+        a[i] = st_random(-0.1, 0.1);
     }
 
     posix_memalign((void **)&b, 128, sizeof(real_t) * k * n);
     assert(b != NULL);
     for (i = 0; i < k * n; i++) {
-        b[i] = rrandom(-0.1, 0.1);
+        b[i] = st_random(-0.1, 0.1);
     }
 
     posix_memalign((void **)&cp, 128, sizeof(real_t) * m * n);
     assert(cp != NULL);
     for (i = 0; i < m * n; i++) {
-        cp[i] = rrandom(-0.1, 0.1);
+        cp[i] = st_random(-0.1, 0.1);
     }
     posix_memalign((void **)&c, 128, sizeof(real_t) * m * n);
     assert(c != NULL);
