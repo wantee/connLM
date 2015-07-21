@@ -1,7 +1,6 @@
 #!/bin/bash
 
 data=./corpus
-data=`cd $data; pwd`
 
 # base url for downloads.
 data_url=http://www.fit.vutbr.cz/~imikolov/rnnlm/simple-examples.tgz
@@ -63,6 +62,7 @@ echo
 echo "Step $st: ${stepnames[$st]} ..."
 local/download_data.sh $data_url $data || exit 1
 
+data=`cd $data; pwd`
 mkdir -p `dirname "$train_file"`
 ln -sf $data/simple-examples/data/ptb.train.txt $train_file || exit 1
 mkdir -p `dirname "$valid_file"`

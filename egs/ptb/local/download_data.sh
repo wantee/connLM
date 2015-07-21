@@ -29,7 +29,7 @@ mkdir -p $data
 
 archive=simple-examples.tgz
 archive_size="34869662"
-data_dir=simple-examples/data
+data_dir=./simple-examples/data
 
 if [ -f $data/.complete ]; then
   echo "$0: data was already successfully extracted, nothing to do."
