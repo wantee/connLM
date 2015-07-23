@@ -2287,7 +2287,7 @@ static void* connlm_test_thread(void *args)
                     fprintf(connlm->fp_log, "%d\t%.10f\t%s", word, p,
                             vocab_get_word(connlm->vocab, word));
                 } else {
-                    fprintf(connlm->fp_log, "-1\t0\t\t<OOV>");
+                    fprintf(connlm->fp_log, "-1\t%.10f\t<OOV>", exp10(oov_penalty));
                 }
 
                 fprintf(connlm->fp_log, "\n");
