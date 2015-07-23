@@ -245,15 +245,24 @@ int maxent_save_header(maxent_t *maxent, FILE *fp, bool binary);
 int maxent_save_body(maxent_t *maxent, FILE *fp, bool binary);
 
 /**
- * Feed-forward one word for a thread of maxent model.
+ * Feed-forward one word for pre-non-output layer of one thread of maxent model.
  * @ingroup maxent
  * @param[in] maxent maxent model.
- * @param[in] word current word.
  * @param[in] tid thread id (neuron id).
- * @see maxent_backprop
+ * @see maxent_forward_last_layer
  * @return non-zero value if any error.
  */
-int maxent_forward(maxent_t *maxent, int word, int tid);
+int maxent_forward_pre_layer(maxent_t *maxent, int tid);
+/**
+ * Feed-forward one word for last output layer of one thread of maxent model.
+ * @ingroup maxent
+ * @param[in] maxent maxent model.
+ * @param[in] cls class of current word. -1 if non-class.
+ * @param[in] tid thread id (neuron id).
+ * @see maxent_forward_pre_layer
+ * @return non-zero value if any error.
+ */
+int maxent_forward_last_layer(maxent_t *maxent, int cls, int tid);
 /**
  * Back-propagate one word for a thread of maxent model.
  * @ingroup maxent
@@ -355,6 +364,33 @@ int maxent_start_test(maxent_t *maxent, int word, int tid);
  * @return non-zero value if any error.
  */
 int maxent_end_test(maxent_t *maxent, int word, int tid);
+
+/**
+ * Setup generating for maxent model.
+ * Called before generating.
+ * @ingroup maxent
+ * @param[in] maxent maxent model.
+ * @param[in] output output layer.
+ * @return non-zero value if any error.
+ */
+int maxent_setup_gen(maxent_t *maxent, output_t *output);
+/**
+ * Reset generating for maxent model.
+ * Called before every sentence to be generated.
+ * @ingroup maxent
+ * @param[in] maxent maxent model.
+ * @return non-zero value if any error.
+ */
+int maxent_reset_gen(maxent_t *maxent);
+/**
+ * End generating for maxent model.
+ * Called after every word generated.
+ * @ingroup maxent
+ * @param[in] maxent maxent model.
+ * @param[in] word current generated word.
+ * @return non-zero value if any error.
+ */
+int maxent_end_gen(maxent_t *maxent, int word);
 
 #ifdef __cplusplus
 }

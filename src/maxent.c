@@ -721,34 +721,38 @@ static int maxent_forward_word(maxent_t *maxent, int c, int s, int e,
     return 0;
 }
 
-int maxent_forward(maxent_t *maxent, int word, int tid)
+int maxent_forward_pre_layer(maxent_t *maxent, int tid)
 {
-    int c;
+    ST_CHECK_PARAM(maxent == NULL || tid < 0, -1);
+
+    if (maxent->class_size > 0) {
+        if (maxent_forward_class(maxent, tid) < 0) {
+            ST_WARNING("Failed to maxent_forward_class.");
+            return -1;
+        }
+    }
+
+    return 0;
+
+}
+
+int maxent_forward_last_layer(maxent_t *maxent, int cls, int tid)
+{
     int s;
     int e;
 
     ST_CHECK_PARAM(maxent == NULL || tid < 0, -1);
 
-    if (word < 0) {
-        return 0;
-    }
-
-    if (maxent->class_size > 0) {
-        c = maxent->output->w2c[word];
-        s = maxent->output->c2w_s[c];
-        e = maxent->output->c2w_e[c];
-
-        if (maxent_forward_class(maxent, tid) < 0) {
-            ST_WARNING("Failed to maxent_forward_class.");
-            return -1;
-        }
+    if (maxent->class_size > 0 && cls >= 0) {
+        s = maxent->output->c2w_s[cls];
+        e = maxent->output->c2w_e[cls];
     } else {
-        c = 0;
+        cls = 0;
         s = 0;
         e = maxent->vocab_size;
     }
 
-    if (maxent_forward_word(maxent, c, s, e, tid) < 0) {
+    if (maxent_forward_word(maxent, cls, s, e, tid) < 0) {
         ST_WARNING("Failed to maxent_forward_word.");
         return -1;
     }
@@ -1521,5 +1525,20 @@ int maxent_end_test(maxent_t *maxent, int word, int tid)
     neu->hist[0] = word;
 
     return 0;
+}
+
+int maxent_setup_gen(maxent_t *maxent, output_t *output)
+{
+    return maxent_setup_test(maxent, output, 1);
+}
+
+int maxent_reset_gen(maxent_t *maxent)
+{
+    return maxent_reset_test(maxent, 0);
+}
+
+int maxent_end_gen(maxent_t *maxent, int word)
+{
+    return maxent_end_test(maxent, word, 0);
 }
 

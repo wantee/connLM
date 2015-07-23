@@ -211,25 +211,21 @@ void softmax(real_t *vec, int vec_size)
     }
 
     for (i = 0; i < vec_size; i++) {
+#ifdef _SOFTMAX_NO_CLIP_
+        vec[i] = fasterexp(vec[i] - max);
+#else
         vec[i] = vec[i] - max;
-        if (vec[i] > 50) {
-            vec[i] = 50;
-        } else if (vec[i] < -50) {
+        if (vec[i] < -50) {
             vec[i] = -50;
         }
         vec[i] = fasterexp(vec[i]);
-        //vec[i] = fasterexp(vec[i] - max);
+#endif
         sum += vec[i];
     }
 
     for (i = 0; i < vec_size; i++) {
         vec[i] = vec[i] / sum;
     }
-}
-
-real_t rrandom(real_t min, real_t max)
-{
-    return st_rand() / (real_t) ST_RAND_MAX *(max - min) + min;
 }
 
 void connlm_show_usage(const char *module_name, const char *header,

@@ -551,27 +551,33 @@ ERR:
     return -1;
 }
 
-int output_activate(output_t *output, int word, int tid)
+int output_activate_pre_layer(output_t *output, int tid)
 {
     output_neuron_t *neu;
 
-    int c;
+    ST_CHECK_PARAM(output == NULL || tid < 0, -1);
+
+    neu = output->neurons + tid;
+    if (output->output_opt.class_size > 0) {
+        softmax(neu->ac_o_c, output->output_opt.class_size);
+    }
+
+    return 0;
+}
+
+int output_activate_last_layer(output_t *output, int cls, int tid)
+{
+    output_neuron_t *neu;
+
     int s;
     int e;
 
     ST_CHECK_PARAM(output == NULL || tid < 0, -1);
 
-    if (word < 0) {
-        return 0;
-    }
-
     neu = output->neurons + tid;
-    if (output->output_opt.class_size > 0) {
-        c = output->w2c[word];
-        s = output->c2w_s[c];
-        e = output->c2w_e[c];
-        
-        softmax(neu->ac_o_c, output->output_opt.class_size);
+    if (output->output_opt.class_size > 0 && cls >= 0) {
+        s = output->c2w_s[cls];
+        e = output->c2w_e[cls];
     } else {
         s = 0;
         e = output->output_size;
@@ -634,6 +640,18 @@ double output_get_prob(output_t *output, int word, int tid)
     p *= neu->ac_o_w[word];
 
     return p;
+}
+
+double output_get_class_prob_for_class(output_t *output, int cls, int tid)
+{
+    output_neuron_t *neu;
+
+    neu = output->neurons + tid;
+    if (output->output_opt.class_size > 0) {
+        return neu->ac_o_c[cls];
+    }
+
+    return 0;
 }
 
 double output_get_class_prob(output_t *output, int word, int tid)
@@ -945,5 +963,20 @@ int output_end_test(output_t *output, int word, int tid)
     ST_CHECK_PARAM(output == NULL, -1);
 
     return 0;
+}
+
+int output_setup_gen(output_t *output)
+{
+    return output_setup_test(output, 1);
+}
+
+int output_reset_gen(output_t *output)
+{
+    return output_reset_test(output, 0);
+}
+
+int output_end_gen(output_t *output, int word)
+{
+    return output_end_test(output, word, 0);
 }
 

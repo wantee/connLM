@@ -181,14 +181,22 @@ int output_save_body(output_t *output, FILE *fp, bool binary);
 int output_generate(output_t *output, count_t *word_cnts);
 
 /**
- * Activate neurons of output layer.
+ * Activate neurons of pre output layer.
  * @ingroup output
  * @param[in] output output layer related.
- * @param[in] word current word.
  * @param[in] tid thread id (neuron id).
  * @return non-zero value if any error.
  */
-int output_activate(output_t *output, int word, int tid);
+int output_activate_pre_layer(output_t *output, int tid);
+/**
+ * Activate neurons of last output layer.
+ * @ingroup output
+ * @param[in] output output layer related.
+ * @param[in] cls class of current word.
+ * @param[in] tid thread id (neuron id).
+ * @return non-zero value if any error.
+ */
+int output_activate_last_layer(output_t *output, int cls, int tid);
 /**
  * Compute loss of neurons of output layer.
  * @ingroup output
@@ -208,10 +216,19 @@ int output_loss(output_t *output, int word, int tid);
  */
 double output_get_prob(output_t *output, int word, int tid);
 /**
+ * Get class probability of a class.
+ * @ingroup output
+ * @param[in] output output layer related.
+ * @param[in] cls the specific class.
+ * @param[in] tid thread id (neuron id).
+ * @return non-zero value if any error.
+ */
+double output_get_class_prob_for_class(output_t *output, int cls, int tid);
+/**
  * Get class probability of a word.
  * @ingroup output
  * @param[in] output output layer related.
- * @param[in] word current word.
+ * @param[in] word the specific word.
  * @param[in] tid thread id (neuron id).
  * @return non-zero value if any error.
  */
@@ -220,7 +237,7 @@ double output_get_class_prob(output_t *output, int word, int tid);
  * Get word probability of a word.
  * @ingroup output
  * @param[in] output output layer related.
- * @param[in] word current word.
+ * @param[in] word the specific word.
  * @param[in] tid thread id (neuron id).
  * @return non-zero value if any error.
  */
@@ -279,7 +296,6 @@ int output_finish_train(output_t *output, int tid);
  * Called before testing.
  * @ingroup output
  * @param[in] output output layer.
- * @param[in] output output layer.
  * @param[in] num_thrs number of thread to be used.
  * @return non-zero value if any error.
  */
@@ -313,6 +329,32 @@ int output_start_test(output_t *output, int word, int tid);
  * @return non-zero value if any error.
  */
 int output_end_test(output_t *output, int word, int tid);
+
+/**
+ * Setup generating for output layer.
+ * Called before generating.
+ * @ingroup output
+ * @param[in] output output layer.
+ * @return non-zero value if any error.
+ */
+int output_setup_gen(output_t *output);
+/**
+ * Reset generating for output layer.
+ * Called before every sentence to be generated.
+ * @ingroup output
+ * @param[in] output output layer.
+ * @return non-zero value if any error.
+ */
+int output_reset_gen(output_t *output);
+/**
+ * End generating for output layer.
+ * Called after every word generated.
+ * @ingroup output
+ * @param[in] output output layer.
+ * @param[in] word current generated word.
+ * @return non-zero value if any error.
+ */
+int output_end_gen(output_t *output, int word);
 
 #ifdef __cplusplus
 }
