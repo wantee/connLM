@@ -49,6 +49,7 @@ dir=$3
 mdl_init=init.clm
 
 begin_date=`date +"%Y-%m-%d %H:%M:%S"`
+begin_ts=`date +%s`
 log_dir=$dir/log
 
 if [ ! -e $dir/.learn_rate ]; then
@@ -171,6 +172,9 @@ else
 fi
 
 ../utils/check_log.sh -b "$begin_date" $log_dir/*.wf
+
+end_ts=`date +%s`
+echo "Elapse time: $(shu-diff-timestamp $begin_ts $end_ts)"
 
 exit 0;
 

@@ -32,6 +32,7 @@ log_file=$dir/log/vocab.log
 model_file=$dir/vocab.clm
 
 begin_date=`date +"%Y-%m-%d %H:%M:%S"`
+begin_ts=`date +%s`
 mkdir -p $dir
 
 echo "**Learning vocab $model_file from $train_file"
@@ -53,6 +54,9 @@ echo "  Words: $words"
 echo "  Vocab size: $size"
 
 ../utils/check_log.sh -b "$begin_date" $log_file.wf
+
+end_ts=`date +%s`
+echo "Elapse time: $(shu-diff-timestamp $begin_ts $end_ts)"
 
 exit 0;
 

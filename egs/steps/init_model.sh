@@ -42,6 +42,7 @@ vocab=$1
 dir=$2
 
 begin_date=`date +"%Y-%m-%d %H:%M:%S"`
+begin_ts=`date +%s`
 mkdir -p $dir
 
 model_out=$dir/init.clm
@@ -148,6 +149,9 @@ if [ -z "$class_size" ]; then
 else
   ../utils/check_log.sh -b "$begin_date" $log_dir/*.wf
 fi
+
+end_ts=`date +%s`
+echo "Elapse time: $(shu-diff-timestamp $begin_ts $end_ts)"
 
 exit 0;
 
