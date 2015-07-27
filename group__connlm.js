@@ -5,7 +5,7 @@ var group__connlm =
       [ "lbl_opt", "structconnlm__model__opt__t.html#a1e3cac85be379bd161f790a187f94b2d", null ],
       [ "maxent_opt", "structconnlm__model__opt__t.html#a850ac7605a49f3836b9808aa7c1dd606", null ],
       [ "output_opt", "structconnlm__model__opt__t.html#a5229dff8fd57417b5e74a80710c7b8cd", null ],
-      [ "rand_seed", "structconnlm__model__opt__t.html#a2ab7676cc3d5eff8cbb04cc872a9d8db", null ],
+      [ "rand_seed", "structconnlm__model__opt__t.html#ad8d905c180844d5b663861417709409b", null ],
       [ "rnn_opt", "structconnlm__model__opt__t.html#a7a1e39578afeb7b7a919b3858bf72b6b", null ]
     ] ],
     [ "connlm_train_opt_t", "structconnlm__train__opt__t.html", [
@@ -16,7 +16,7 @@ var group__connlm =
       [ "maxent_opt", "structconnlm__train__opt__t.html#abe0f895bc887ce12e0aef5f98da6cf40", null ],
       [ "num_thread", "structconnlm__train__opt__t.html#aa5c74dc3d019caef510339c84028877f", null ],
       [ "param", "structconnlm__train__opt__t.html#a2b50fc0ed6c0490ca8c422964d12da86", null ],
-      [ "rand_seed", "structconnlm__train__opt__t.html#a0ec601e0f13e32b9bca39797a9a43766", null ],
+      [ "rand_seed", "structconnlm__train__opt__t.html#ae948080211630dbb14b88b5f9acb1566", null ],
       [ "rnn_opt", "structconnlm__train__opt__t.html#a09b6621fadadf7b3325dbec54d322c78", null ],
       [ "shuffle", "structconnlm__train__opt__t.html#aa96d4549fdd8ea2c5c3e6d70f12cef97", null ]
     ] ],
@@ -27,7 +27,8 @@ var group__connlm =
       [ "oov_penalty", "structconnlm__test__opt__t.html#a3c165ee1812aa499199254a7e2684134", null ]
     ] ],
     [ "connlm_gen_opt_t", "structconnlm__gen__opt__t.html", [
-      [ "prefix_file", "structconnlm__gen__opt__t.html#a039d9df611d5a43cd826d216dc877467", null ]
+      [ "prefix_file", "structconnlm__gen__opt__t.html#a039d9df611d5a43cd826d216dc877467", null ],
+      [ "rand_seed", "structconnlm__gen__opt__t.html#ace7407273b595e2de4325e1419be067f", null ]
     ] ],
     [ "connlm_egs_t", "structconnlm__egs__t.html", [
       [ "capacity", "structconnlm__egs__t.html#ad13746ca08b7090c5cc527f3b4047b42", null ],

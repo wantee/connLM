@@ -7,7 +7,7 @@ var structconnlm__train__opt__t =
     [ "maxent_opt", "structconnlm__train__opt__t.html#abe0f895bc887ce12e0aef5f98da6cf40", null ],
     [ "num_thread", "structconnlm__train__opt__t.html#aa5c74dc3d019caef510339c84028877f", null ],
     [ "param", "structconnlm__train__opt__t.html#a2b50fc0ed6c0490ca8c422964d12da86", null ],
-    [ "rand_seed", "structconnlm__train__opt__t.html#a0ec601e0f13e32b9bca39797a9a43766", null ],
+    [ "rand_seed", "structconnlm__train__opt__t.html#ae948080211630dbb14b88b5f9acb1566", null ],
     [ "rnn_opt", "structconnlm__train__opt__t.html#a09b6621fadadf7b3325dbec54d322c78", null ],
     [ "shuffle", "structconnlm__train__opt__t.html#aa96d4549fdd8ea2c5c3e6d70f12cef97", null ]
 ];
