@@ -15,6 +15,20 @@ connLM is a Connectionist Language Modelling Toolkit, implementing several neura
 * Asynchronous SGD (HOGWILD!)[<sup> 5 </sup>](#hogwild)
 * Hierarchical SoftMax[<sup> 6 </sup>](#hogwild)
 
+## Benchmark
+
+Main performance metrics of connLM is shown in following table. Details for testings can be found in the documentation.
+
+```
++-----+-------------+------------+-------+---------------+---------------------------------+-------+
+|     |             |            |       |               |           Entropy/PPL           |       |
++ No. +    Corpus   +    Model   + Algo. +   Time/Speed  +---------------------------------+ Iter. +
+|     |             |            |       |               |  Train |  Valid |      Test     |       |
++-----+-------------+------------+-------+---------------+--------+--------+---------------+-------+
+|  2  | librispeech | RNN+MaxEnt |  ASGD | 32hr9m9s/115k | 6.8693 | 7.1583 | 7.1008/137.27 |   13  |
++-----+-------------+------------+-------+---------------+--------+--------+---------------+-------+
+```
+
 ## Usage
 ### Build
 

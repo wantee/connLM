@@ -26,5 +26,6 @@
 
   <p>
     - @subpage about
+    - @subpage benchmark
   </p>
 */
