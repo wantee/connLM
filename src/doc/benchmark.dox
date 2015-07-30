@@ -321,6 +321,10 @@ Details of rnnlm-hs-0.1b training:
   - Iterations: 11
   - Valid Entropy: 7.2456
   - Test Entropy/PPL: 7.6899/206.49 (without OOV penalty)
+  - Threads: 24
+  - Hidden size: 150
+  - MaxEnt order: 5
+  - MaxEnt size: 1000M
 </p>
 
 @verbatim
