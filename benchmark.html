@@ -122,9 +122,11 @@ Summary of the performance</h1>
 <tr>
 <th class="tg-s6z2">Train </th><th class="tg-s6z2">Valid </th><th class="tg-s6z2">Test  </th></tr>
 <tr>
-<td class="tg-s6z2">1 </td><td class="tg-s6z2" rowspan="2">librispeech </td><td class="tg-s6z2">RNN+MaxEnt </td><td class="tg-s6z2">ASGD </td><td class="tg-s6z2">42hr7min/90k </td><td class="tg-s6z2">6.3330 </td><td class="tg-s6z2">6.9708 </td><td class="tg-s6z2">7.2314/150.27 </td><td class="tg-s6z2">10  </td></tr>
+<td class="tg-s6z2">1 </td><td class="tg-s6z2">librispeech </td><td class="tg-s6z2">RNN+MaxEnt </td><td class="tg-s6z2">ASGD </td><td class="tg-s6z2">42hr7min/90k </td><td class="tg-s6z2">6.3330 </td><td class="tg-s6z2">6.9708 </td><td class="tg-s6z2">7.2314/150.27 </td><td class="tg-s6z2">10  </td></tr>
 <tr>
-<td class="tg-5hgy">2 </td><td class="tg-5hgy">RNN+MaxEnt </td><td class="tg-5hgy">ASGD </td><td class="tg-5hgy">32hr9m9s/115k </td><td class="tg-5hgy">6.8593 </td><td class="tg-5hgy">7.1583 </td><td class="tg-5hgy">7.1008/137.27 </td><td class="tg-5hgy">13  </td></tr>
+<td class="tg-5hgy">2 </td><td class="tg-5hgy">librispeech </td><td class="tg-5hgy">RNN+MaxEnt </td><td class="tg-5hgy">ASGD </td><td class="tg-5hgy">32hr9m9s/115k </td><td class="tg-5hgy">6.8593 </td><td class="tg-5hgy">7.1583 </td><td class="tg-5hgy">7.1008/137.27 </td><td class="tg-5hgy">13  </td></tr>
+<tr>
+<td class="tg-s6z2">3 </td><td class="tg-s6z2">librispeech </td><td class="tg-s6z2">RNN+MaxEnt </td><td class="tg-s6z2">ASGD </td><td class="tg-s6z2">25hr5m3s/123k </td><td class="tg-s6z2">6.9026 </td><td class="tg-s6z2">7.1940 </td><td class="tg-s6z2">7.1190/139.00 </td><td class="tg-s6z2">11  </td></tr>
 </table>
 <p>The Time/Speed column denotes the training time and speed. The unit of speed is words/sec.</p>
 <h1><a class="anchor" id="detail"></a>
@@ -140,8 +142,10 @@ Details of training process</h1>
 <td class="tg-5hgy">1 </td><td class="tg-5hgy">librispeech </td><td class="tg-5hgy">RNN+MaxEnt </td><td class="tg-5hgy">ASGD </td><td class="tg-5hgy">42hr7min/90k </td><td class="tg-5hgy">6.3330 </td><td class="tg-5hgy">6.9708 </td><td class="tg-5hgy">7.2314/150.27 </td><td class="tg-5hgy">10 </td><td class="tg-5hgy">RNN+MaxEnt/ASGD </td><td class="tg-5hgy">-8 </td><td class="tg-5hgy">24 </td><td class="tg-5hgy">200002 </td><td class="tg-5hgy">400 </td><td class="tg-5hgy">false </td><td class="tg-5hgy">1.0 </td><td class="tg-5hgy">150 </td><td class="tg-5hgy">0.01 </td><td class="tg-5hgy">0.0 </td><td class="tg-5hgy">0.0000001 </td><td class="tg-5hgy">10 </td><td class="tg-5hgy">0.0 </td><td class="tg-5hgy">20 </td><td class="tg-5hgy">5 </td><td class="tg-5hgy">10 </td><td class="tg-5hgy">1.0 </td><td class="tg-5hgy">500M </td><td class="tg-5hgy">500M </td><td class="tg-5hgy">5 </td><td class="tg-5hgy">0.005 </td><td class="tg-5hgy">0.0 </td><td class="tg-5hgy">0.0000001 </td><td class="tg-5hgy">0 </td><td class="tg-5hgy">0.0 </td><td class="tg-5hgy">0.0 </td><td class="tg-5hgy"></td><td class="tg-5hgy"></td><td class="tg-5hgy"></td><td class="tg-5hgy"></td><td class="tg-5hgy"></td><td class="tg-5hgy"></td><td class="tg-5hgy"></td><td class="tg-5hgy">0.0 </td><td class="tg-5hgy"></td><td class="tg-5hgy"></td><td class="tg-5hgy"></td><td class="tg-5hgy"></td><td class="tg-5hgy"></td><td class="tg-5hgy"></td></tr>
 <tr>
 <td class="tg-s6z2">2 </td><td class="tg-s6z2">librispeech </td><td class="tg-s6z2">RNN+MaxEnt </td><td class="tg-s6z2">ASGD </td><td class="tg-s6z2">32hr9m9s/115k </td><td class="tg-s6z2">6.8593 </td><td class="tg-s6z2">7.1583 </td><td class="tg-s6z2">7.1008/137.27 </td><td class="tg-s6z2">13 </td><td class="tg-s6z2">RNN+MaxEnt/ASGD </td><td class="tg-s6z2">-8 </td><td class="tg-s6z2">24 </td><td class="tg-s6z2">200002 </td><td class="tg-s6z2">350 </td><td class="tg-s6z2">false </td><td class="tg-s6z2">1.0 </td><td class="tg-s6z2">150 </td><td class="tg-s6z2">0.01 </td><td class="tg-s6z2">0.0 </td><td class="tg-s6z2">0.0000001 </td><td class="tg-s6z2">10 </td><td class="tg-s6z2">0.0 </td><td class="tg-s6z2">100 </td><td class="tg-s6z2">5 </td><td class="tg-s6z2">10 </td><td class="tg-s6z2">1.0 </td><td class="tg-s6z2">500M </td><td class="tg-s6z2">500M </td><td class="tg-s6z2">5 </td><td class="tg-s6z2">0.005 </td><td class="tg-s6z2">0.0 </td><td class="tg-s6z2">0.0000001 </td><td class="tg-s6z2">0 </td><td class="tg-s6z2">0.0 </td><td class="tg-s6z2">0.0 </td><td class="tg-s6z2"></td><td class="tg-s6z2"></td><td class="tg-s6z2"></td><td class="tg-s6z2"></td><td class="tg-s6z2"></td><td class="tg-s6z2"></td><td class="tg-s6z2"></td><td class="tg-s6z2">0.0 </td><td class="tg-s6z2"></td><td class="tg-s6z2"></td><td class="tg-s6z2"></td><td class="tg-s6z2"></td><td class="tg-s6z2"></td><td class="tg-s6z2"></td></tr>
+<tr>
+<td class="tg-5hgy">3 </td><td class="tg-5hgy">librispeech </td><td class="tg-5hgy">RNN+MaxEnt </td><td class="tg-5hgy">ASGD </td><td class="tg-5hgy">25hr5m3s/123k </td><td class="tg-5hgy">6.9026 </td><td class="tg-5hgy">7.1940 </td><td class="tg-5hgy">7.1190/139.00 </td><td class="tg-5hgy">11 </td><td class="tg-5hgy">RNN+MaxEnt/ASGD </td><td class="tg-5hgy">-8 </td><td class="tg-5hgy">24 </td><td class="tg-5hgy">200002 </td><td class="tg-5hgy">400 </td><td class="tg-5hgy">false </td><td class="tg-5hgy">1.0 </td><td class="tg-5hgy">150 </td><td class="tg-5hgy">0.01 </td><td class="tg-5hgy">0.0 </td><td class="tg-5hgy">0.0000001 </td><td class="tg-5hgy">10 </td><td class="tg-5hgy">0.0 </td><td class="tg-5hgy">256 </td><td class="tg-5hgy">5 </td><td class="tg-5hgy">10 </td><td class="tg-5hgy">1.0 </td><td class="tg-5hgy">500M </td><td class="tg-5hgy">500M </td><td class="tg-5hgy">5 </td><td class="tg-5hgy">0.005 </td><td class="tg-5hgy">0.0 </td><td class="tg-5hgy">0.0000001 </td><td class="tg-5hgy">0 </td><td class="tg-5hgy">0.0 </td><td class="tg-5hgy">0.0 </td><td class="tg-5hgy"></td><td class="tg-5hgy"></td><td class="tg-5hgy"></td><td class="tg-5hgy"></td><td class="tg-5hgy"></td><td class="tg-5hgy"></td><td class="tg-5hgy"></td><td class="tg-5hgy">0.0 </td><td class="tg-5hgy"></td><td class="tg-5hgy"></td><td class="tg-5hgy"></td><td class="tg-5hgy"></td><td class="tg-5hgy"></td><td class="tg-5hgy"></td></tr>
 </table>
-<p>Results for Kaldi rnnlm rescoring with librispeech corpus: rnnlm_h150_me5-1000 corresponding to rnnlm-hs-0.1b tool shipped with kaldi; connlm_mini20 corresponding to No. 1 in above table; connlm_mini100 corresponding to No. 2 in above table;</p>
+<p>Results for Kaldi rnnlm rescoring with librispeech corpus: rnnlm_h150_me5-1000 corresponding to rnnlm-hs-0.1b tool shipped with kaldi; connlm_mini20 corresponding to No. 1 in above table; connlm_mini100 corresponding to No. 2 in above table; connlm_mini256 corresponding to No. 3 in above table;</p>
 <p>Details of rnnlm-hs-0.1b training: </p>
 <ul>
 <li>Time: 45hr36m58s</li>
@@ -159,6 +163,9 @@ Details of training process</h1>
 %WER 6.63 [ 3606 / 54402, 531 ins, 373 del, 2702 sub ] exp/tri6b/decode_tglarge_dev_clean_connlm_mini100_L0.25/wer_15
 %WER 6.24 [ 3393 / 54402, 522 ins, 331 del, 2540 sub ] exp/tri6b/decode_tglarge_dev_clean_connlm_mini100_L0.5/wer_15
 %WER 6.17 [ 3356 / 54402, 513 ins, 321 del, 2522 sub ] exp/tri6b/decode_tglarge_dev_clean_connlm_mini100__L0.75/wer_16
+%WER 6.63 [ 3606 / 54402, 528 ins, 375 del, 2703 sub ] exp/tri6b/decode_tglarge_dev_clean_connlm_mini256_L0.25/wer_15
+%WER 6.24 [ 3396 / 54402, 483 ins, 353 del, 2560 sub ] exp/tri6b/decode_tglarge_dev_clean_connlm_mini256_L0.5/wer_16
+%WER 6.14 [ 3339 / 54402, 486 ins, 338 del, 2515 sub ] exp/tri6b/decode_tglarge_dev_clean_connlm_mini256_L0.75/wer_16
 
 %WER 22.09 [ 11253 / 50948, 1304 ins, 1531 del, 8418 sub ] exp/tri6b/decode_tglarge_dev_other/wer_16
 %WER 21.40 [ 10905 / 50948, 1390 ins, 1296 del, 8219 sub ] exp/tri6b/decode_tglarge_dev_other_rnnlm_h150_me5-1000_t24_L0.25/wer_15
@@ -170,6 +177,9 @@ Details of training process</h1>
 %WER 20.74 [ 10567 / 50948, 1272 ins, 1378 del, 7917 sub ] exp/tri6b/decode_tglarge_dev_other_connlm_mini100_L0.25/wer_16
 %WER 20.14 [ 10259 / 50948, 1255 ins, 1307 del, 7697 sub ] exp/tri6b/decode_tglarge_dev_other_connlm_mini100_L0.5/wer_16
 %WER 19.90 [ 10137 / 50948, 1252 ins, 1285 del, 7600 sub ] exp/tri6b/decode_tglarge_dev_other_connlm_mini100_L0.75/wer_17
+%WER 20.77 [ 10584 / 50948, 1242 ins, 1419 del, 7923 sub ] exp/tri6b/decode_tglarge_dev_other_connlm_mini256_L0.25/wer_17
+%WER 20.07 [ 10225 / 50948, 1291 ins, 1273 del, 7661 sub ] exp/tri6b/decode_tglarge_dev_other_connlm_mini256_L0.5/wer_15
+%WER 19.91 [ 10146 / 50948, 1247 ins, 1300 del, 7599 sub ] exp/tri6b/decode_tglarge_dev_other_connlm_mini256_L0.75/wer_17
 
 %WER 9.62 [ 5231 / 54402, 579 ins, 687 del, 3965 sub ] exp/tri6b/decode_tgmed_dev_clean/wer_15
 %WER 8.27 [ 4497 / 54402, 596 ins, 490 del, 3411 sub ] exp/tri6b/decode_tgmed_dev_clean_rnnlm_h150_me5-1000_t24_L0.25/wer_14
@@ -181,6 +191,9 @@ Details of training process</h1>
 %WER 7.77 [ 4228 / 54402, 551 ins, 505 del, 3172 sub ] exp/tri6b/decode_tgmed_dev_clean_connlm_mini100_L0.25/wer_14
 %WER 6.94 [ 3778 / 54402, 532 ins, 412 del, 2834 sub ] exp/tri6b/decode_tgmed_dev_clean_connlm_mini100_L0.5/wer_14
 %WER 6.67 [ 3630 / 54402, 506 ins, 392 del, 2732 sub ] exp/tri6b/decode_tgmed_dev_clean_connlm_mini100_L0.75/wer_16
+%WER 7.78 [ 4234 / 54402, 502 ins, 537 del, 3195 sub ] exp/tri6b/decode_tgmed_dev_clean_connlm_mini256_L0.25/wer_16
+%WER 7.03 [ 3826 / 54402, 506 ins, 435 del, 2885 sub ] exp/tri6b/decode_tgmed_dev_clean_connlm_mini256_L0.5/wer_15
+%WER 6.76 [ 3676 / 54402, 515 ins, 397 del, 2764 sub ] exp/tri6b/decode_tgmed_dev_clean_connlm_mini256_L0.75/wer_15
 
 %WER 25.16 [ 12818 / 50948, 1148 ins, 2054 del, 9616 sub ] exp/tri6b/decode_tgmed_dev_other/wer_16
 %WER 23.58 [ 12012 / 50948, 1301 ins, 1639 del, 9072 sub ] exp/tri6b/decode_tgmed_dev_other_rnnlm_h150_me5-1000_t24_L0.25/wer_16
@@ -192,6 +205,9 @@ Details of training process</h1>
 %WER 22.87 [ 11654 / 50948, 1275 ins, 1607 del, 8772 sub ] exp/tri6b/decode_tgmed_dev_other_connlm_mini100_L0.25/wer_14
 %WER 21.87 [ 11140 / 50948, 1254 ins, 1504 del, 8382 sub ] exp/tri6b/decode_tgmed_dev_other_connlm_mini100_L0.5/wer_15
 %WER 21.60 [ 11007 / 50948, 1243 ins, 1467 del, 8297 sub ] exp/tri6b/decode_tgmed_dev_other_connlm_mini100_L0.75/wer_16
+%WER 22.81 [ 11623 / 50948, 1253 ins, 1657 del, 8713 sub ] exp/tri6b/decode_tgmed_dev_other_connlm_mini256_L0.25/wer_15
+%WER 21.83 [ 11120 / 50948, 1223 ins, 1542 del, 8355 sub ] exp/tri6b/decode_tgmed_dev_other_connlm_mini256_L0.5/wer_16
+%WER 21.57 [ 10991 / 50948, 1244 ins, 1479 del, 8268 sub ] exp/tri6b/decode_tgmed_dev_other_connlm_mini256_L0.75/wer_16
 
 %WER 11.03 [ 5999 / 54402, 661 ins, 787 del, 4551 sub ] exp/tri6b/decode_tgsmall_dev_clean/wer_13
 %WER 8.83 [ 4801 / 54402, 618 ins, 536 del, 3647 sub ] exp/tri6b/decode_tgsmall_dev_clean_rnnlm_h150_me5-1000_t24_L0.25/wer_13
@@ -203,6 +219,9 @@ Details of training process</h1>
 %WER 8.38 [ 4558 / 54402, 571 ins, 541 del, 3446 sub ] exp/tri6b/decode_tgsmall_dev_clean_connlm_mini100_L0.25/wer_13
 %WER 7.42 [ 4039 / 54402, 516 ins, 484 del, 3039 sub ] exp/tri6b/decode_tgsmall_dev_clean_connlm_mini100_L0.5/wer_15
 %WER 7.12 [ 3872 / 54402, 530 ins, 422 del, 2920 sub ] exp/tri6b/decode_tgsmall_dev_clean_connlm_mini100_L0.75/wer_15
+%WER 8.46 [ 4601 / 54402, 530 ins, 590 del, 3481 sub ] exp/tri6b/decode_tgsmall_dev_clean_connlm_mini256_L0.25/wer_14
+%WER 7.49 [ 4076 / 54402, 525 ins, 466 del, 3085 sub ] exp/tri6b/decode_tgsmall_dev_clean_connlm_mini256_L0.5/wer_14
+%WER 7.16 [ 3895 / 54402, 518 ins, 443 del, 2934 sub ] exp/tri6b/decode_tgsmall_dev_clean_connlm_mini256_L0.75/wer_15
 
 %WER 13.89 [ 7559 / 54402, 722 ins, 1150 del, 5687 sub ] exp/tri6b/decode_tgsmall_dev_clean.si/wer_13
 
@@ -216,6 +235,9 @@ Details of training process</h1>
 %WER 24.38 [ 12419 / 50948, 1223 ins, 1903 del, 9293 sub ] exp/tri6b/decode_tgsmall_dev_other_connlm_mini100_L0.25/wer_15
 %WER 23.10 [ 11768 / 50948, 1200 ins, 1736 del, 8832 sub ] exp/tri6b/decode_tgsmall_dev_other_connlm_mini100_L0.5/wer_16
 %WER 22.77 [ 11599 / 50948, 1249 ins, 1623 del, 8727 sub ] exp/tri6b/decode_tgsmall_dev_other_connlm_mini100_L0.75/wer_16
+%WER 24.23 [ 12346 / 50948, 1200 ins, 1892 del, 9254 sub ] exp/tri6b/decode_tgsmall_dev_other_connlm_mini256_L0.25/wer_15
+%WER 22.94 [ 11690 / 50948, 1216 ins, 1681 del, 8793 sub ] exp/tri6b/decode_tgsmall_dev_other_connlm_mini256_L0.5/wer_15
+%WER 22.64 [ 11536 / 50948, 1212 ins, 1622 del, 8702 sub ] exp/tri6b/decode_tgsmall_dev_other_connlm_mini256_L0.75/wer_16
 
 %WER 37.09 [ 18896 / 50948, 1415 ins, 3426 del, 14055 sub ] exp/tri6b/decode_tgsmall_dev_other.si/wer_13
 </pre> </div></div><!-- contents -->
@@ -224,7 +246,7 @@ Details of training process</h1>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="index.html">connLM</a></li>
-    <li class="footer">Generated on Mon Jul 27 2015 18:51:50 for connLM by
+    <li class="footer">Generated on Thu Jul 30 2015 12:31:06 for connLM by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.9.1 </li>
   </ul>
