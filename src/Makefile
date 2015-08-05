@@ -114,7 +114,7 @@ clean:
 	rm -f tags cscope.*
 
 gen-doc:
-	doxygen doc/Doxyfile
+	doxygen doc/Doxyfile > /dev/null
 	cd html && git add * && git commit -a -m"generate doc on $(shell date)" && git push origin gh-pages
 
 $(TARGET_TEST_BIN) : $(BINDIR)/%-test: $(addprefix $(BIN_OBJ)/, %-test.o) $(TARGET_SO) $(TARGET_INC)

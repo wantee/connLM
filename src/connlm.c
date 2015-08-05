@@ -49,14 +49,13 @@ static void connlm_egs_destroy(connlm_egs_t *egs)
     }
 }
 
+//#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wstrict-overflow"
 static int connlm_egs_ensure(connlm_egs_t *egs, int capacity)
 {
     ST_CHECK_PARAM(egs == NULL, -1);
 
-//#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wstrict-overflow"
     if (egs->capacity < capacity) {
-//#pragma GCC diagnostic pop
         egs->words = realloc(egs->words, sizeof(int)*capacity);
         if (egs->words == NULL) {
             ST_WARNING("Failed to realloc egs->words. capacity[%d]", 
@@ -69,6 +68,7 @@ static int connlm_egs_ensure(connlm_egs_t *egs, int capacity)
 
     return 0;
 }
+//#pragma GCC diagnostic pop
 
 static int connlm_egs_print(FILE *fp, pthread_mutex_t *fp_lock,
         connlm_egs_t *egs, vocab_t *vocab)
@@ -2252,7 +2252,7 @@ static void* connlm_test_thread(void *args)
     connlm_thr_t *thr;
     int tid;
 
-    connlm_egs_t *egs;
+    connlm_egs_t *egs = NULL;
 
     count_t words;
     count_t sents;
