@@ -115,6 +115,11 @@ Summary of the performance</h1>
 <li>Cores: 12(physical) / 24(logical)</li>
 <li>Cache size: 15360 KB </li>
 </ul>
+<p>Binary is compiled by: </p>
+<ul>
+<li>gcc: version 4.8.2 20140120 (Red Hat 4.8.2-15) (GCC)</li>
+<li>MKL: Version 11.2.3 Product Build 20150409 for Intel(R) 64 architecture applications (shipped with Parallel Studio XE 2015 update3) </li>
+</ul>
 <p>Table of performance is shown following:</p>
 <table  class="tg">
 <tr>
@@ -129,6 +134,8 @@ Summary of the performance</h1>
 <td class="tg-s6z2">3 </td><td class="tg-s6z2">librispeech </td><td class="tg-s6z2">RNN+MaxEnt </td><td class="tg-s6z2">ASGD </td><td class="tg-s6z2">25hr5m3s/123k </td><td class="tg-s6z2">6.9026 </td><td class="tg-s6z2">7.1940 </td><td class="tg-s6z2">7.1190/139.00 </td><td class="tg-s6z2">11  </td></tr>
 <tr>
 <td class="tg-5hgy">4 </td><td class="tg-5hgy">librispeech </td><td class="tg-5hgy">RNN+MaxEnt </td><td class="tg-5hgy">ASGD </td><td class="tg-5hgy">49hr21m31s/47k </td><td class="tg-5hgy">6.7812 </td><td class="tg-5hgy">7.0981 </td><td class="tg-5hgy">7.0040/128.36 </td><td class="tg-5hgy">10  </td></tr>
+<tr>
+<td class="tg-s6z2">5 </td><td class="tg-s6z2">librispeech </td><td class="tg-s6z2">RNN </td><td class="tg-s6z2">ASGD </td><td class="tg-s6z2">48hr34m35s/48 </td><td class="tg-s6z2">7.3028 </td><td class="tg-s6z2">7.5319 </td><td class="tg-s6z2">7.3660/164.96 </td><td class="tg-s6z2">10  </td></tr>
 </table>
 <p>The Time/Speed column denotes the training time and speed. The unit of speed is words/sec.</p>
 <h1><a class="anchor" id="detail"></a>
@@ -147,7 +154,7 @@ Details of training process</h1>
 <tr>
 <th class="tg-s6z2" rowspan="3">No. </th><th class="tg-s6z2" rowspan="3">Corpus </th><th class="tg-s6z2" rowspan="3">Model </th><th class="tg-s6z2" rowspan="3">Algo. </th><th class="tg-s6z2" rowspan="3">Time/Speed </th><th class="tg-s6z2" colspan="3">Entropy/PPL </th><th class="tg-s6z2" rowspan="3">Iter. </th><th class="tg-s6z2" rowspan="3">git-tag </th><th class="tg-s6z2" rowspan="3">oov_penalty </th><th class="tg-s6z2" colspan="38">Parameter  </th></tr>
 <tr>
-<th class="tg-s6z2" rowspan="2">Train </th><th class="tg-s6z2" rowspan="2">Valid </th><th class="tg-s6z2" rowspan="2">Test </th><th class="tg-s6z2" rowspan="2">Thread </th><th class="tg-s6z2">Vocab </th><th class="tg-s6z2" colspan="3">Output </th><th class="tg-s6z2" colspan="9">RNN </th><th class="tg-s6z2" colspan="9">MaxEnt </th><th class="tg-s6z2" colspan="8">FFNN </th><th class="tg-s6z2" colspan="7">LBL  </th></tr>
+<th class="tg-s6z2" rowspan="2">Train </th><th class="tg-s6z2" rowspan="2">Valid </th><th class="tg-s6z2" rowspan="2">Test </th><th class="tg-s6z2" rowspan="2">Thread </th><th class="tg-s6z2">Vocab </th><th class="tg-s6z2" colspan="2">Output </th><th class="tg-s6z2" colspan="10">RNN </th><th class="tg-s6z2" colspan="9">MaxEnt </th><th class="tg-s6z2" colspan="8">FFNN </th><th class="tg-s6z2" colspan="7">LBL  </th></tr>
 <tr>
 <th class="tg-s6z2">Words </th><th class="tg-s6z2">Class </th><th class="tg-s6z2">HS </th><th class="tg-s6z2">scale </th><th class="tg-s6z2">Hidden </th><th class="tg-s6z2">lr </th><th class="tg-s6z2">l1 </th><th class="tg-s6z2">l2 </th><th class="tg-s6z2">l2_gap </th><th class="tg-s6z2">momentum </th><th class="tg-s6z2">mini_batch </th><th class="tg-s6z2">bptt </th><th class="tg-s6z2">bptt_block </th><th class="tg-s6z2">scale </th><th class="tg-s6z2">hash_word </th><th class="tg-s6z2">hash_class </th><th class="tg-s6z2">order </th><th class="tg-s6z2">lr </th><th class="tg-s6z2">l1 </th><th class="tg-s6z2">l2 </th><th class="tg-s6z2">l2_gap </th><th class="tg-s6z2">momentum </th><th class="tg-s6z2">scale </th><th class="tg-s6z2">projection </th><th class="tg-s6z2">order </th><th class="tg-s6z2">lr </th><th class="tg-s6z2">l1 </th><th class="tg-s6z2">l2 </th><th class="tg-s6z2">l2_gap </th><th class="tg-s6z2">momentum </th><th class="tg-s6z2">scale </th><th class="tg-s6z2">order </th><th class="tg-s6z2">lr </th><th class="tg-s6z2">l1 </th><th class="tg-s6z2">l2 </th><th class="tg-s6z2">l2_gap </th><th class="tg-s6z2">momentum  </th></tr>
 <tr>
@@ -158,6 +165,8 @@ Details of training process</h1>
 <td class="tg-5hgy">3 </td><td class="tg-5hgy">librispeech </td><td class="tg-5hgy">RNN+MaxEnt </td><td class="tg-5hgy">ASGD </td><td class="tg-5hgy">25hr5m3s/103k </td><td class="tg-5hgy">6.9026 </td><td class="tg-5hgy">7.1940 </td><td class="tg-5hgy">7.1190/139.00 </td><td class="tg-5hgy">11 </td><td class="tg-5hgy">RNN+MaxEnt/ASGD </td><td class="tg-5hgy">-8 </td><td class="tg-5hgy">24 </td><td class="tg-5hgy">200002 </td><td class="tg-5hgy">400 </td><td class="tg-5hgy">false </td><td class="tg-5hgy">1.0 </td><td class="tg-5hgy">150 </td><td class="tg-5hgy">0.01 </td><td class="tg-5hgy">0.0 </td><td class="tg-5hgy">0.0000001 </td><td class="tg-5hgy">10 </td><td class="tg-5hgy">0.0 </td><td class="tg-5hgy">256 </td><td class="tg-5hgy">5 </td><td class="tg-5hgy">10 </td><td class="tg-5hgy">1.0 </td><td class="tg-5hgy">500M </td><td class="tg-5hgy">500M </td><td class="tg-5hgy">5 </td><td class="tg-5hgy">0.005 </td><td class="tg-5hgy">0.0 </td><td class="tg-5hgy">0.0000001 </td><td class="tg-5hgy">0 </td><td class="tg-5hgy">0.0 </td><td class="tg-5hgy">0.0 </td><td class="tg-5hgy"></td><td class="tg-5hgy"></td><td class="tg-5hgy"></td><td class="tg-5hgy"></td><td class="tg-5hgy"></td><td class="tg-5hgy"></td><td class="tg-5hgy"></td><td class="tg-5hgy">0.0 </td><td class="tg-5hgy"></td><td class="tg-5hgy"></td><td class="tg-5hgy"></td><td class="tg-5hgy"></td><td class="tg-5hgy"></td><td class="tg-5hgy"></td></tr>
 <tr>
 <td class="tg-s6z2">4 </td><td class="tg-s6z2">librispeech </td><td class="tg-s6z2">RNN+MaxEnt </td><td class="tg-s6z2">ASGD </td><td class="tg-s6z2">49hr21m31s/47k </td><td class="tg-s6z2">6.7812 </td><td class="tg-s6z2">7.0981 </td><td class="tg-s6z2">7.0040/128.36 </td><td class="tg-s6z2">10 </td><td class="tg-s6z2">RNN+MaxEnt/ASGD </td><td class="tg-s6z2">-8 </td><td class="tg-s6z2">24 </td><td class="tg-s6z2">200002 </td><td class="tg-s6z2">400 </td><td class="tg-s6z2">false </td><td class="tg-s6z2">1.0 </td><td class="tg-s6z2">300 </td><td class="tg-s6z2">0.01 </td><td class="tg-s6z2">0.0 </td><td class="tg-s6z2">0.0000001 </td><td class="tg-s6z2">10 </td><td class="tg-s6z2">0.0 </td><td class="tg-s6z2">256 </td><td class="tg-s6z2">5 </td><td class="tg-s6z2">10 </td><td class="tg-s6z2">1.0 </td><td class="tg-s6z2">500M </td><td class="tg-s6z2">500M </td><td class="tg-s6z2">5 </td><td class="tg-s6z2">0.005 </td><td class="tg-s6z2">0.0 </td><td class="tg-s6z2">0.0000001 </td><td class="tg-s6z2">0 </td><td class="tg-s6z2">0.0 </td><td class="tg-s6z2">0.0 </td><td class="tg-s6z2"></td><td class="tg-s6z2"></td><td class="tg-s6z2"></td><td class="tg-s6z2"></td><td class="tg-s6z2"></td><td class="tg-s6z2"></td><td class="tg-s6z2"></td><td class="tg-s6z2">0.0 </td><td class="tg-s6z2"></td><td class="tg-s6z2"></td><td class="tg-s6z2"></td><td class="tg-s6z2"></td><td class="tg-s6z2"></td><td class="tg-s6z2"></td></tr>
+<tr>
+<td class="tg-5hgy">5 </td><td class="tg-5hgy">librispeech </td><td class="tg-5hgy">RNN </td><td class="tg-5hgy">ASGD </td><td class="tg-5hgy">48hr34m35s/48 </td><td class="tg-5hgy">7.3028 </td><td class="tg-5hgy">7.5319 </td><td class="tg-5hgy">7.3660/164.96 </td><td class="tg-5hgy">10 </td><td class="tg-5hgy">RNN+MaxEnt/ASGD </td><td class="tg-5hgy">-8 </td><td class="tg-5hgy">24 </td><td class="tg-5hgy">200002 </td><td class="tg-5hgy">400 </td><td class="tg-5hgy">false </td><td class="tg-5hgy">1.0 </td><td class="tg-5hgy">300 </td><td class="tg-5hgy">0.01 </td><td class="tg-5hgy">0.0 </td><td class="tg-5hgy">0.0000001 </td><td class="tg-5hgy">10 </td><td class="tg-5hgy">0.0 </td><td class="tg-5hgy">256 </td><td class="tg-5hgy">5 </td><td class="tg-5hgy">10 </td><td class="tg-5hgy">0.0 </td><td class="tg-5hgy"></td><td class="tg-5hgy"></td><td class="tg-5hgy"></td><td class="tg-5hgy"></td><td class="tg-5hgy"></td><td class="tg-5hgy"></td><td class="tg-5hgy"></td><td class="tg-5hgy"></td><td class="tg-5hgy">0.0 </td><td class="tg-5hgy"></td><td class="tg-5hgy"></td><td class="tg-5hgy"></td><td class="tg-5hgy"></td><td class="tg-5hgy"></td><td class="tg-5hgy"></td><td class="tg-5hgy"></td><td class="tg-5hgy">0.0 </td><td class="tg-5hgy"></td><td class="tg-5hgy"></td><td class="tg-5hgy"></td><td class="tg-5hgy"></td><td class="tg-5hgy"></td><td class="tg-5hgy"></td></tr>
 </table>
 <p>Results for Kaldi rnnlm rescoring with librispeech corpus:</p>
 <p>rnnlm_h150_me5-1000 corresponding to rnnlm-hs-0.1b tool shipped with kaldi;</p>
@@ -293,7 +302,7 @@ Details of training process</h1>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="index.html">connLM</a></li>
-    <li class="footer">Generated on Wed Aug 5 2015 15:22:37 for connLM by
+    <li class="footer">Generated on Thu Aug 6 2015 15:30:20 for connLM by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.9.1 </li>
   </ul>
