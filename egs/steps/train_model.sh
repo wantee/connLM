@@ -175,6 +175,8 @@ fi
 
 end_ts=`date +%s`
 echo "Elapse time: $(shu-diff-timestamp $begin_ts $end_ts)"
+words=`../utils/get_value.sh "Words" $log_dir/train.${iter}.log`
+echo "Effective speed: $(bc <<< "scale=1; ($iter * $words) / ($end_ts - $begin_ts) / 1000")k words/sec"
 
 exit 0;
 

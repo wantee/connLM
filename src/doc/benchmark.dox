@@ -34,6 +34,12 @@ The CPU used for training is:
   - Cache size: 15360 KB
 </p>
 
+Binary is compiled by:
+<p>
+  - gcc: version 4.8.2 20140120 (Red Hat 4.8.2-15) (GCC)
+  - MKL: Version 11.2.3 Product Build 20150409 for Intel(R) 64 architecture applications (shipped with Parallel Studio XE 2015 update3)
+</p>
+
 Table of performance is shown following:
 
 <table class="tg">
@@ -94,6 +100,28 @@ Table of performance is shown following:
     <td class="tg-5hgy">7.0981</td>
     <td class="tg-5hgy">7.0040/128.36</td>
     <td class="tg-5hgy">10</td>
+  </tr>
+  <tr>
+    <td class="tg-s6z2">5</td>
+    <td class="tg-s6z2">librispeech</td>
+    <td class="tg-s6z2">RNN</td>
+    <td class="tg-s6z2">ASGD</td>
+    <td class="tg-s6z2">48hr34m35s/48k</td>
+    <td class="tg-s6z2">7.3028</td>
+    <td class="tg-s6z2">7.5319</td>
+    <td class="tg-s6z2">7.3660/164.96</td>
+    <td class="tg-s6z2">10</td>
+  </tr>
+  <tr>
+    <td class="tg-5hgy">6</td>
+    <td class="tg-5hgy">librispeech</td>
+    <td class="tg-5hgy">RNN+MaxEnt</td>
+    <td class="tg-5hgy">ASGD</td>
+    <td class="tg-5hgy">17hr32m56s/93k</td>
+    <td class="tg-5hgy">6.8514</td>
+    <td class="tg-5hgy">7.3909</td>
+    <td class="tg-5hgy">7.6734/204.13</td>
+    <td class="tg-5hgy">7</td>
   </tr>
 </table>
 
@@ -158,8 +186,8 @@ Table of performance is shown following:
     <th class="tg-s6z2" rowspan="2">Test</th>
     <th class="tg-s6z2" rowspan="2">Thread</th>
     <th class="tg-s6z2">Vocab</th>
-    <th class="tg-s6z2" colspan="3">Output</th>
-    <th class="tg-s6z2" colspan="9">RNN</th>
+    <th class="tg-s6z2" colspan="2">Output</th>
+    <th class="tg-s6z2" colspan="10">RNN</th>
     <th class="tg-s6z2" colspan="9">MaxEnt</th>
     <th class="tg-s6z2" colspan="8">FFNN</th>
     <th class="tg-s6z2" colspan="7">LBL</th>
@@ -387,6 +415,108 @@ Table of performance is shown following:
     <td class="tg-s6z2">500M</td>
     <td class="tg-s6z2">5</td>
     <td class="tg-s6z2">0.005</td>
+    <td class="tg-s6z2">0.0</td>
+    <td class="tg-s6z2">0.0000001</td>
+    <td class="tg-s6z2">0</td>
+    <td class="tg-s6z2">0.0</td>
+    <td class="tg-s6z2">0.0</td>
+    <td class="tg-s6z2"></td>
+    <td class="tg-s6z2"></td>
+    <td class="tg-s6z2"></td>
+    <td class="tg-s6z2"></td>
+    <td class="tg-s6z2"></td>
+    <td class="tg-s6z2"></td>
+    <td class="tg-s6z2"></td>
+    <td class="tg-s6z2">0.0</td>
+    <td class="tg-s6z2"></td>
+    <td class="tg-s6z2"></td>
+    <td class="tg-s6z2"></td>
+    <td class="tg-s6z2"></td>
+    <td class="tg-s6z2"></td>
+    <td class="tg-s6z2"></td>
+  </tr>
+  <tr>
+    <td class="tg-5hgy">5</td>
+    <td class="tg-5hgy">librispeech</td>
+    <td class="tg-5hgy">RNN</td>
+    <td class="tg-5hgy">ASGD</td>
+    <td class="tg-5hgy">48hr34m35s/48</td>
+    <td class="tg-5hgy">7.3028</td>
+    <td class="tg-5hgy">7.5319</td>
+    <td class="tg-5hgy">7.3660/164.96</td>
+    <td class="tg-5hgy">10</td>
+    <td class="tg-5hgy">RNN+MaxEnt/ASGD</td>
+    <td class="tg-5hgy">-8</td>
+    <td class="tg-5hgy">24</td>
+    <td class="tg-5hgy">200002</td>
+    <td class="tg-5hgy">400</td>
+    <td class="tg-5hgy">false</td>
+    <td class="tg-5hgy">1.0</td>
+    <td class="tg-5hgy">300</td>
+    <td class="tg-5hgy">0.01</td>
+    <td class="tg-5hgy">0.0</td>
+    <td class="tg-5hgy">0.0000001</td>
+    <td class="tg-5hgy">10</td>
+    <td class="tg-5hgy">0.0</td>
+    <td class="tg-5hgy">256</td>
+    <td class="tg-5hgy">5</td>
+    <td class="tg-5hgy">10</td>
+    <td class="tg-5hgy">0.0</td>
+    <td class="tg-5hgy"></td>
+    <td class="tg-5hgy"></td>
+    <td class="tg-5hgy"></td>
+    <td class="tg-5hgy"></td>
+    <td class="tg-5hgy"></td>
+    <td class="tg-5hgy"></td>
+    <td class="tg-5hgy"></td>
+    <td class="tg-5hgy"></td>
+    <td class="tg-5hgy">0.0</td>
+    <td class="tg-5hgy"></td>
+    <td class="tg-5hgy"></td>
+    <td class="tg-5hgy"></td>
+    <td class="tg-5hgy"></td>
+    <td class="tg-5hgy"></td>
+    <td class="tg-5hgy"></td>
+    <td class="tg-5hgy"></td>
+    <td class="tg-5hgy">0.0</td>
+    <td class="tg-5hgy"></td>
+    <td class="tg-5hgy"></td>
+    <td class="tg-5hgy"></td>
+    <td class="tg-5hgy"></td>
+    <td class="tg-5hgy"></td>
+    <td class="tg-5hgy"></td>
+  </tr>
+  <tr>
+    <td class="tg-s6z2">4</td>
+    <td class="tg-s6z2">librispeech</td>
+    <td class="tg-s6z2">RNN+MaxEnt</td>
+    <td class="tg-s6z2">ASGD</td>
+    <td class="tg-s6z2">17hr32m56s/93k</td>
+    <td class="tg-s6z2">6.8514</td>
+    <td class="tg-s6z2">7.3909</td>
+    <td class="tg-s6z2">7.6734/204.13</td>
+    <td class="tg-s6z2">7</td>
+    <td class="tg-s6z2">RNN+MaxEnt/ASGD</td>
+    <td class="tg-s6z2">-8</td>
+    <td class="tg-s6z2">24</td>
+    <td class="tg-s6z2">200002</td>
+    <td class="tg-s6z2">450</td>
+    <td class="tg-s6z2">false</td>
+    <td class="tg-s6z2">1.0</td>
+    <td class="tg-s6z2">150</td>
+    <td class="tg-s6z2">0.1</td>
+    <td class="tg-s6z2">0.0</td>
+    <td class="tg-s6z2">0.0000001</td>
+    <td class="tg-s6z2">10</td>
+    <td class="tg-s6z2">0.0</td>
+    <td class="tg-s6z2">256</td>
+    <td class="tg-s6z2">5</td>
+    <td class="tg-s6z2">10</td>
+    <td class="tg-s6z2">1.0</td>
+    <td class="tg-s6z2">500M</td>
+    <td class="tg-s6z2">500M</td>
+    <td class="tg-s6z2">5</td>
+    <td class="tg-s6z2">0.1</td>
     <td class="tg-s6z2">0.0</td>
     <td class="tg-s6z2">0.0000001</td>
     <td class="tg-s6z2">0</td>
