@@ -122,7 +122,7 @@ void param_acc_wt(real_t *wt, real_t *er, int er_size, real_t *in, int in_size)
             }
         } else {
 #ifdef _USE_BLAS_
-            cblas_sgemm(CblasRowMajor, CblasTrans, CblasNoTrans,
+            cblas_gemm(CblasRowMajor, CblasTrans, CblasNoTrans,
                     er_size, in_size, 1,
                     1.0, er, er_size, in, in_size,
                     1.0, wt, in_size);
@@ -341,7 +341,7 @@ void param_acc_wt_minibatch(int batch, real_t *wt, real_t *er, int er_size,
         return;
     }
 
-    cblas_sgemm(CblasRowMajor, CblasTrans, CblasNoTrans,
+    cblas_gemm(CblasRowMajor, CblasTrans, CblasNoTrans,
             er_size, in_size, batch,
             1.0, er, er_size, in, in_size,
             1.0, wt, in_size);
@@ -375,7 +375,7 @@ void param_update_minibatch(param_t *param, param_arg_t *arg, bool update_arg,
         return;
     }
 
-    cblas_sgemm(CblasRowMajor, CblasTrans, CblasNoTrans,
+    cblas_gemm(CblasRowMajor, CblasTrans, CblasNoTrans,
             er_size, in_size, batch,
             lr*er_scale, er, er_size, in, in_size,
             1.0 - l2, wt, in_size);

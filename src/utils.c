@@ -43,7 +43,7 @@ void matXvec(real_t *dst, real_t *mat, real_t *vec,
 #endif
 
 #ifdef _USE_BLAS_
-    cblas_sgemv(CblasRowMajor, CblasNoTrans, mat_row, in_vec_size, scale,
+    cblas_gemv(CblasRowMajor, CblasNoTrans, mat_row, in_vec_size, scale,
             mat, in_vec_size, vec, 1, 1.0, dst, 1);
 #elif defined(_MAT_X_VEC_RAW_)
     for (i = 0; i < mat_row; i++) {
@@ -115,7 +115,7 @@ void vecXmat(real_t *dst, real_t *vec, real_t *mat,
 #endif
 
 #ifdef _USE_BLAS_
-    cblas_sgemv(CblasRowMajor, CblasTrans, in_vec_size, mat_col, scale,
+    cblas_gemv(CblasRowMajor, CblasTrans, in_vec_size, mat_col, scale,
             mat, mat_col, vec, 1, 1.0, dst, 1);
 #elif defined(_MAT_X_VEC_RAW_)
     for (i = 0; i < mat_col; i++) {

@@ -29,6 +29,8 @@
 extern "C" {
 #endif
 
+#include "config.h"
+
 #ifdef _USE_BLAS_
 #  ifdef _HAVE_MKL_
 #    include <mkl.h>
@@ -40,6 +42,14 @@ extern "C" {
 #    warn "No MKL or ATLAS included, fallback to Non-Blas"
 #    undef _USE_BLAS_
 #  endif
+#endif
+
+#if REAL_TYPE == double
+#    define  cblas_gemm cblas_dgemm
+#    define  cblas_gemv cblas_dgemv
+#else
+#    define  cblas_gemm cblas_sgemm
+#    define  cblas_gemv cblas_sgemv
 #endif
 
 #ifdef __cplusplus

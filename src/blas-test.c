@@ -80,7 +80,7 @@ static void test_sgemm(int m, int n, int k, bool transa, bool transb)
     time_st = clock();
     for (l = 0; l < LOOP_COUNT; l++) {
         memcpy(c, cp, sizeof(real_t) * m * n);
-        cblas_sgemm(CblasRowMajor, transa ? CblasTrans : CblasNoTrans,
+        cblas_gemm(CblasRowMajor, transa ? CblasTrans : CblasNoTrans,
                 transb ? CblasTrans : CblasNoTrans,
                 m, n, k,
                 alpha, a, transa ? m : k,
