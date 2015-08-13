@@ -35,13 +35,7 @@ LDFLAGS += -Wl,-rpath,'$$ORIGIN'
 LDFLAGS += -Wl,-rpath,$(shell pwd)/$(OUTLIBDIR)
 LDFLAGS += -Wl,-rpath,$(shell pwd)/../tools/stutils/lib/
 
-real_type=float
-CFLAGS += -D REAL_TYPE=$(real_type)
-ifeq ($(real_type), double)
-CFLAGS += -D REAL_FMT="\"%lf\""
-else
-CFLAGS += -D REAL_FMT="\"%f\""
-endif
+CFLAGS += -D _USE_DOUBLE_=0
 
 CFLAGS += -g -Wall -Winline -pipe 
 CFLAGS += -DNDEBUG

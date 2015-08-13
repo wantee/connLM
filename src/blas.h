@@ -44,7 +44,7 @@ extern "C" {
 #  endif
 #endif
 
-#if REAL_TYPE == double
+#if _USE_DOUBLE_ == 1
 #    define  cblas_gemm cblas_dgemm
 #    define  cblas_gemv cblas_dgemv
 #else

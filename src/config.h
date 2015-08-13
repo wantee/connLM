@@ -33,11 +33,17 @@ extern "C" {
 
 #define CONNLM_FILE_VERSION   1
 
-#ifndef REAL_TYPE
-#define REAL_TYPE double
+#ifndef _USE_DOUBLE_
+#define _USE_DOUBLE_ 0
 #endif
 
-typedef REAL_TYPE real_t;
+#if _USE_DOUBLE_ == 1
+   typedef double real_t;
+#  define REAL_FMT "%lf"
+#else
+   typedef float real_t;
+#  define REAL_FMT "%f"
+#endif
 
 typedef unsigned long count_t;
 #define COUNT_FMT "%lu"
@@ -49,7 +55,7 @@ typedef long long hash_size_t;
 #define ALIGN_SIZE 128
 
 #ifdef _USE_BLAS_
-# define _MINI_UPDATE_
+#  define _MINI_UPDATE_
 #endif
 
 #ifdef __cplusplus
