@@ -172,27 +172,30 @@ void maxent_destroy(maxent_t *maxent)
     safe_free(maxent->wt_w);
     safe_free(maxent->wt_c);
 
-    for (i = 0; i < maxent->num_thrs; i++) {
-        safe_free(maxent->neurons[i].hist);
-        safe_free(maxent->neurons[i].hash_w);
-        safe_free(maxent->neurons[i].hash_c);
-        if (maxent->neurons[i].hash_hist_w != NULL) {
-            for (j = 0; j < maxent->train_opt.param.mini_batch; j++) {
-                safe_free(maxent->neurons[i].hash_hist_w[j].range);
+    if (maxent->neurons != NULL) {
+        for (i = 0; i < maxent->num_thrs; i++) {
+            safe_free(maxent->neurons[i].hist);
+            safe_free(maxent->neurons[i].hash_w);
+            safe_free(maxent->neurons[i].hash_c);
+            if (maxent->neurons[i].hash_hist_w != NULL) {
+                for (j = 0; j < maxent->train_opt.param.mini_batch; j++) {
+                    safe_free(maxent->neurons[i].hash_hist_w[j].range);
+                }
+                safe_free(maxent->neurons[i].hash_hist_w);
             }
-            safe_free(maxent->neurons[i].hash_hist_w);
-        }
-        if (maxent->neurons[i].hash_hist_c != NULL) {
-            for (j = 0; j < maxent->train_opt.param.mini_batch; j++) {
-                safe_free(maxent->neurons[i].hash_hist_c[j].range);
+            if (maxent->neurons[i].hash_hist_c != NULL) {
+                for (j = 0; j < maxent->train_opt.param.mini_batch; j++) {
+                    safe_free(maxent->neurons[i].hash_hist_c[j].range);
+                }
+                safe_free(maxent->neurons[i].hash_hist_c);
             }
-            safe_free(maxent->neurons[i].hash_hist_c);
+            safe_free(maxent->neurons[i].hash_union);
+            safe_free(maxent->neurons[i].wt_w);
+            safe_free(maxent->neurons[i].wt_c);
         }
-        safe_free(maxent->neurons[i].hash_union);
-        safe_free(maxent->neurons[i].wt_w);
-        safe_free(maxent->neurons[i].wt_c);
+        safe_free(maxent->neurons);
     }
-    safe_free(maxent->neurons);
+    maxent->num_thrs = 0;
 }
 
 maxent_t* maxent_dup(maxent_t *m)
@@ -1127,27 +1130,30 @@ int maxent_setup_train(maxent_t *maxent, maxent_train_opt_t *train_opt,
 
     return 0;
 ERR:
-    for (i = 0; i < maxent->num_thrs; i++) {
-        safe_free(maxent->neurons[i].hist);
-        safe_free(maxent->neurons[i].hash_w);
-        safe_free(maxent->neurons[i].hash_c);
-        if (maxent->neurons[i].hash_hist_w != NULL) {
-            for (j = 0; j < maxent->train_opt.param.mini_batch; j++) {
-                safe_free(maxent->neurons[i].hash_hist_w[j].range);
+    if (maxent->neurons != NULL) {
+        for (i = 0; i < maxent->num_thrs; i++) {
+            safe_free(maxent->neurons[i].hist);
+            safe_free(maxent->neurons[i].hash_w);
+            safe_free(maxent->neurons[i].hash_c);
+            if (maxent->neurons[i].hash_hist_w != NULL) {
+                for (j = 0; j < maxent->train_opt.param.mini_batch; j++) {
+                    safe_free(maxent->neurons[i].hash_hist_w[j].range);
+                }
+                safe_free(maxent->neurons[i].hash_hist_w);
             }
-            safe_free(maxent->neurons[i].hash_hist_w);
-        }
-        if (maxent->neurons[i].hash_hist_c != NULL) {
-            for (j = 0; j < maxent->train_opt.param.mini_batch; j++) {
-                safe_free(maxent->neurons[i].hash_hist_c[j].range);
+            if (maxent->neurons[i].hash_hist_c != NULL) {
+                for (j = 0; j < maxent->train_opt.param.mini_batch; j++) {
+                    safe_free(maxent->neurons[i].hash_hist_c[j].range);
+                }
+                safe_free(maxent->neurons[i].hash_hist_c);
             }
-            safe_free(maxent->neurons[i].hash_hist_c);
+            safe_free(maxent->neurons[i].hash_union);
+            safe_free(maxent->neurons[i].wt_w);
+            safe_free(maxent->neurons[i].wt_c);
         }
-        safe_free(maxent->neurons[i].hash_union);
-        safe_free(maxent->neurons[i].wt_w);
-        safe_free(maxent->neurons[i].wt_c);
+        safe_free(maxent->neurons);
     }
-    safe_free(maxent->neurons);
+    maxent->num_thrs = 0;
 
     return -1;
 }
@@ -1470,12 +1476,15 @@ int maxent_setup_test(maxent_t *maxent, output_t *output, int num_thrs)
 
     return 0;
 ERR:
-    for (i = 0; i < maxent->num_thrs; i++) {
-        safe_free(maxent->neurons[i].hist);
-        safe_free(maxent->neurons[i].hash_w);
-        safe_free(maxent->neurons[i].hash_c);
+    if (maxent->neurons != NULL) {
+        for (i = 0; i < maxent->num_thrs; i++) {
+            safe_free(maxent->neurons[i].hist);
+            safe_free(maxent->neurons[i].hash_w);
+            safe_free(maxent->neurons[i].hash_c);
+        }
+        safe_free(maxent->neurons);
     }
-    safe_free(maxent->neurons);
+    maxent->num_thrs = 0;
 
     return -1;
 }

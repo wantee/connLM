@@ -88,13 +88,16 @@ void output_destroy(output_t *output)
     safe_free(output->c2w_s);
     safe_free(output->c2w_e);
 
-    for (i = 0; i < output->num_thrs; i++) {
-        safe_free(output->neurons[i].ac_o_c);
-        safe_free(output->neurons[i].er_o_c);
-        safe_free(output->neurons[i].ac_o_w);
-        safe_free(output->neurons[i].er_o_w);
+    if (output->neurons != NULL) {
+        for (i = 0; i < output->num_thrs; i++) {
+            safe_free(output->neurons[i].ac_o_c);
+            safe_free(output->neurons[i].er_o_c);
+            safe_free(output->neurons[i].ac_o_w);
+            safe_free(output->neurons[i].er_o_w);
+        }
+        safe_free(output->neurons);
     }
-    safe_free(output->neurons);
+    output->num_thrs = 0;
 }
 
 output_t* output_dup(output_t *o)
@@ -740,13 +743,16 @@ int output_setup_train(output_t *output, int num_thrs)
     return 0;
 
 ERR:
-    for (i = 0; i < output->num_thrs; i++) {
-        safe_free(output->neurons[i].ac_o_c);
-        safe_free(output->neurons[i].er_o_c);
-        safe_free(output->neurons[i].ac_o_w);
-        safe_free(output->neurons[i].er_o_w);
+    if (output->neurons != NULL) {
+        for (i = 0; i < output->num_thrs; i++) {
+            safe_free(output->neurons[i].ac_o_c);
+            safe_free(output->neurons[i].er_o_c);
+            safe_free(output->neurons[i].ac_o_w);
+            safe_free(output->neurons[i].er_o_w);
+        }
+        safe_free(output->neurons);
     }
-    safe_free(output->neurons);
+    output->num_thrs = 0;
 
     return -1;
 }
@@ -884,13 +890,16 @@ int output_setup_test(output_t *output, int num_thrs)
     return 0;
 
 ERR:
-    for (i = 0; i < output->num_thrs; i++) {
-        safe_free(output->neurons[i].ac_o_c);
-        safe_free(output->neurons[i].er_o_c);
-        safe_free(output->neurons[i].ac_o_w);
-        safe_free(output->neurons[i].er_o_w);
+    if (output->neurons != NULL) {
+        for (i = 0; i < output->num_thrs; i++) {
+            safe_free(output->neurons[i].ac_o_c);
+            safe_free(output->neurons[i].er_o_c);
+            safe_free(output->neurons[i].ac_o_w);
+            safe_free(output->neurons[i].er_o_w);
+        }
+        safe_free(output->neurons);
     }
-    safe_free(output->neurons);
+    output->num_thrs = 0;
 
     return -1;
 }

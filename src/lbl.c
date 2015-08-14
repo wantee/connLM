@@ -112,6 +112,7 @@ void lbl_destroy(lbl_t *lbl)
     }
 
     safe_free(lbl->neurons);
+    lbl->num_thrs = 0;
 }
 
 lbl_t* lbl_dup(lbl_t *l)
@@ -355,6 +356,7 @@ int lbl_setup_train(lbl_t *lbl, lbl_train_opt_t *train_opt,
 
 ERR:
     safe_free(lbl->neurons);
+    lbl->num_thrs = 0;
     return -1;
 }
 
@@ -407,6 +409,7 @@ int lbl_setup_test(lbl_t *lbl, output_t *output, int num_thrs)
 
 ERR:
     safe_free(lbl->neurons);
+    lbl->num_thrs = 0;
     return -1;
 }
 

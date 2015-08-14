@@ -110,6 +110,9 @@ void ffnn_destroy(ffnn_t *ffnn)
     if (ffnn == NULL) {
         return;
     }
+
+    safe_free(ffnn->neurons);
+    ffnn->num_thrs = 0;
 }
 
 ffnn_t* ffnn_dup(ffnn_t *f)
@@ -354,6 +357,7 @@ int ffnn_setup_train(ffnn_t *ffnn, ffnn_train_opt_t *train_opt,
 
 ERR:
     safe_free(ffnn->neurons);
+    ffnn->num_thrs = 0;
     return -1;
 }
 
@@ -406,6 +410,7 @@ int ffnn_setup_test(ffnn_t *ffnn, output_t *output, int num_thrs)
 
 ERR:
     safe_free(ffnn->neurons);
+    ffnn->num_thrs = 0;
     return -1;
 }
 

@@ -197,38 +197,41 @@ void rnn_destroy(rnn_t *rnn)
     safe_free(rnn->wt_ho_c);
     safe_free(rnn->wt_ho_w);
 
-    for (i = 0; i < rnn->num_thrs; i++) {
-        safe_free(rnn->neurons[i].ac_i_h);
-        safe_free(rnn->neurons[i].er_i_h);
-        safe_free(rnn->neurons[i].ac_h);
-        safe_free(rnn->neurons[i].er_h);
+    if (rnn->neurons != NULL) {
+        for (i = 0; i < rnn->num_thrs; i++) {
+            safe_free(rnn->neurons[i].ac_i_h);
+            safe_free(rnn->neurons[i].er_i_h);
+            safe_free(rnn->neurons[i].ac_h);
+            safe_free(rnn->neurons[i].er_h);
 
-        safe_free(rnn->neurons[i].bptt_hist);
-        safe_free(rnn->neurons[i].ac_bptt_h);
-        safe_free(rnn->neurons[i].er_bptt_h);
-        safe_free(rnn->neurons[i].wt_bptt_ih_w);
+            safe_free(rnn->neurons[i].bptt_hist);
+            safe_free(rnn->neurons[i].ac_bptt_h);
+            safe_free(rnn->neurons[i].er_bptt_h);
+            safe_free(rnn->neurons[i].wt_bptt_ih_w);
 #ifdef _MINI_UPDATE_
-        safe_free(rnn->neurons[i].er_h_buf);
-        safe_free(rnn->neurons[i].ac_i_h_buf);
+            safe_free(rnn->neurons[i].er_h_buf);
+            safe_free(rnn->neurons[i].ac_i_h_buf);
 #else
-        safe_free(rnn->neurons[i].wt_bptt_ih_h);
-        safe_free(rnn->neurons[i].wt_ih_h);
+            safe_free(rnn->neurons[i].wt_bptt_ih_h);
+            safe_free(rnn->neurons[i].wt_ih_h);
 #endif
-        safe_free(rnn->neurons[i].dirty_word);
+            safe_free(rnn->neurons[i].dirty_word);
 
-        safe_free(rnn->neurons[i].ho_w_hist);
-        safe_free(rnn->neurons[i].ih_w_hist);
-        safe_free(rnn->neurons[i].dirty_class);
-        safe_free(rnn->neurons[i].wt_ih_w);
-        safe_free(rnn->neurons[i].wt_ho_w);
+            safe_free(rnn->neurons[i].ho_w_hist);
+            safe_free(rnn->neurons[i].ih_w_hist);
+            safe_free(rnn->neurons[i].dirty_class);
+            safe_free(rnn->neurons[i].wt_ih_w);
+            safe_free(rnn->neurons[i].wt_ho_w);
 #ifdef _MINI_UPDATE_
-        safe_free(rnn->neurons[i].er_o_c_buf);
-        safe_free(rnn->neurons[i].ac_h_buf);
+            safe_free(rnn->neurons[i].er_o_c_buf);
+            safe_free(rnn->neurons[i].ac_h_buf);
 #else
-        safe_free(rnn->neurons[i].wt_ho_c);
+            safe_free(rnn->neurons[i].wt_ho_c);
 #endif
+        }
+        safe_free(rnn->neurons);
     }
-    safe_free(rnn->neurons);
+    rnn->num_thrs = 0;
 }
 
 rnn_t* rnn_dup(rnn_t *r)
@@ -1349,39 +1352,42 @@ int rnn_setup_train(rnn_t *rnn, rnn_train_opt_t *train_opt,
     return 0;
 
 ERR:
-    for (i = 0; i < rnn->num_thrs; i++) {
-        safe_free(rnn->neurons[i].ac_i_h);
-        safe_free(rnn->neurons[i].er_i_h);
-        safe_free(rnn->neurons[i].ac_h);
-        safe_free(rnn->neurons[i].er_h);
+    if (rnn->neurons != NULL) {
+        for (i = 0; i < rnn->num_thrs; i++) {
+            safe_free(rnn->neurons[i].ac_i_h);
+            safe_free(rnn->neurons[i].er_i_h);
+            safe_free(rnn->neurons[i].ac_h);
+            safe_free(rnn->neurons[i].er_h);
 
-        safe_free(rnn->neurons[i].bptt_hist);
-        safe_free(rnn->neurons[i].ac_bptt_h);
-        safe_free(rnn->neurons[i].er_bptt_h);
-        safe_free(rnn->neurons[i].wt_bptt_ih_w);
+            safe_free(rnn->neurons[i].bptt_hist);
+            safe_free(rnn->neurons[i].ac_bptt_h);
+            safe_free(rnn->neurons[i].er_bptt_h);
+            safe_free(rnn->neurons[i].wt_bptt_ih_w);
 #ifdef _MINI_UPDATE_
-        safe_free(rnn->neurons[i].er_h_buf);
-        safe_free(rnn->neurons[i].ac_i_h_buf);
+            safe_free(rnn->neurons[i].er_h_buf);
+            safe_free(rnn->neurons[i].ac_i_h_buf);
 #else
-        safe_free(rnn->neurons[i].wt_bptt_ih_h);
-        safe_free(rnn->neurons[i].wt_ih_h);
+            safe_free(rnn->neurons[i].wt_bptt_ih_h);
+            safe_free(rnn->neurons[i].wt_ih_h);
 #endif
-        safe_free(rnn->neurons[i].dirty_word);
+            safe_free(rnn->neurons[i].dirty_word);
 
-        safe_free(rnn->neurons[i].ho_w_hist);
-        safe_free(rnn->neurons[i].ih_w_hist);
-        safe_free(rnn->neurons[i].dirty_class);
-        safe_free(rnn->neurons[i].wt_ih_w);
-        safe_free(rnn->neurons[i].wt_ho_w);
+            safe_free(rnn->neurons[i].ho_w_hist);
+            safe_free(rnn->neurons[i].ih_w_hist);
+            safe_free(rnn->neurons[i].dirty_class);
+            safe_free(rnn->neurons[i].wt_ih_w);
+            safe_free(rnn->neurons[i].wt_ho_w);
 
 #ifdef _MINI_UPDATE_
-        safe_free(rnn->neurons[i].er_o_c_buf);
-        safe_free(rnn->neurons[i].ac_h_buf);
+            safe_free(rnn->neurons[i].er_o_c_buf);
+            safe_free(rnn->neurons[i].ac_h_buf);
 #else
-        safe_free(rnn->neurons[i].wt_ho_c);
+            safe_free(rnn->neurons[i].wt_ho_c);
 #endif
+        }
+        safe_free(rnn->neurons);
     }
-    safe_free(rnn->neurons);
+    rnn->num_thrs = 0;
 
     return -1;
 }
@@ -1742,11 +1748,14 @@ int rnn_setup_test(rnn_t *rnn, output_t *output, int num_thrs)
     return 0;
 
 ERR:
-    for (i = 0; i < rnn->num_thrs; i++) {
-        safe_free(rnn->neurons[i].ac_i_h);
-        safe_free(rnn->neurons[i].ac_h);
+    if (rnn->neurons != NULL) {
+        for (i = 0; i < rnn->num_thrs; i++) {
+            safe_free(rnn->neurons[i].ac_i_h);
+            safe_free(rnn->neurons[i].ac_h);
+        }
+        safe_free(rnn->neurons);
     }
-    safe_free(rnn->neurons);
+    rnn->num_thrs = 0;
 
     return -1;
 }
