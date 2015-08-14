@@ -493,7 +493,7 @@ int vocab_learn(vocab_t *vocab, FILE *fp, count_t max_word_num)
     char word[MAX_SYM_LEN];
 
     word_info_t *word_infos = NULL;
-    int words = 0;
+    count_t words = 0;
     int id;
 
     ST_CHECK_PARAM(vocab == NULL || fp == NULL, -1);
