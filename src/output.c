@@ -995,3 +995,44 @@ int output_end_gen(output_t *output, int word)
     return output_end_test(output, word, 0);
 }
 
+bool output_equal(output_t *output1, output_t *output2)
+{
+    int i;
+
+    ST_CHECK_PARAM(output1 == NULL || output2 == NULL, false);
+
+    if (output1->output_size != output2->output_size) {
+        return false;
+    }
+
+    if (output1->output_opt.class_size != output2->output_opt.class_size) {
+        return false;
+    }
+
+    if (output1->output_opt.class_size > 0) {
+        for (i = 0; i < output1->output_size; i++) {
+            if (output1->w2c[i] != output2->w2c[i]) {
+                return false;
+            }
+        }
+
+        for (i = 0; i < output1->output_opt.class_size; i++) {
+            if (output1->c2w_s[i] != output2->c2w_s[i]) {
+                return false;
+            }
+            if (output1->c2w_e[i] != output2->c2w_e[i]) {
+                return false;
+            }
+        }
+    }
+
+    if (output1->output_opt.hs != output2->output_opt.hs) {
+        return false;
+    }
+
+    if (output1->output_opt.hs) {
+    }
+
+    return true;
+}
+

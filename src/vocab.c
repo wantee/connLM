@@ -587,3 +587,31 @@ int vocab_add_word(vocab_t *vocab, const char* word)
     return st_alphabet_add_label(vocab->alphabet, word);
 }
 
+bool vocab_equal(vocab_t *vocab1, vocab_t *vocab2)
+{
+    char *ptr1, *ptr2;
+    int i;
+
+    ST_CHECK_PARAM(vocab1 == NULL || vocab2 == NULL, false);
+
+    if (vocab1->vocab_size != vocab2->vocab_size) {
+        return false;
+    }
+    
+    for (i = 0; i < vocab1->vocab_size; i++) {
+        ptr1 = vocab_get_word(vocab1, i);
+        ptr2 = vocab_get_word(vocab2, i);
+
+        if (ptr1 == NULL || ptr2 == NULL
+                || strcmp(ptr1, ptr2) != 0) {
+            return false;
+        }
+        // FIXME: Do we need to compare count?
+        if (vocab1->cnts[i] != vocab2->cnts[i]) {
+            return false;
+        }
+    }
+    
+    return true;
+}
+

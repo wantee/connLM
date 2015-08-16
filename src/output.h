@@ -356,6 +356,15 @@ int output_reset_gen(output_t *output);
  */
 int output_end_gen(output_t *output, int word);
 
+/**
+ * Whether two output layer is equal.
+ * @ingroup output
+ * @param[in] output1 first output.
+ * @param[in] output2 second output.
+ * @return true, if equal, false otherwise.
+ */
+bool output_equal(output_t *output1, output_t *output2);
+
 #ifdef __cplusplus
 }
 #endif

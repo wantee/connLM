@@ -335,16 +335,20 @@ static int unit_test_parse_model_filter()
     }
 
     fprintf(stderr, "    Case %d...\n", ncase++);
+    strncpy(in, "mdl,vofmlr:model1.clm", MAX_DIR_LEN);
+    in[MAX_DIR_LEN - 1] = '\0';
+    mf = parse_model_filter(in, out, MAX_DIR_LEN);
+    if ((strcmp(out, "model1.clm") != 0)
+            || (mf != MF_ALL)) {
+        return -1;
+    }
+
+    fprintf(stderr, "    Case %d...\n", ncase++);
     strncpy(in, "mdl,-vofmlr:model1.clm", MAX_DIR_LEN);
     in[MAX_DIR_LEN - 1] = '\0';
     mf = parse_model_filter(in, out, MAX_DIR_LEN);
     if ((strcmp(out, "model1.clm") != 0)
-            || (mf & MF_OUTPUT)
-            || (mf & MF_VOCAB)
-            || (mf & MF_MAXENT)
-            || (mf & MF_RNN)
-            || (mf & MF_LBL)
-            || (mf & MF_FFNN)) {
+            || (mf != MF_NONE)) {
         return -1;
     }
 

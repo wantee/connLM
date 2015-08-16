@@ -184,6 +184,15 @@ char* vocab_get_word(vocab_t *vocab, int id);
  */
 int vocab_add_word(vocab_t *vocab, const char* word);
 
+/**
+ * Whether two vocab is equal.
+ * @ingroup vocab
+ * @param[in] vocab1 first vocab.
+ * @param[in] vocab2 second vocab.
+ * @return true, if equal, false otherwise.
+ */
+bool vocab_equal(vocab_t *vocab1, vocab_t *vocab2);
+
 #ifdef __cplusplus
 }
 #endif

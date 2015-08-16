@@ -58,7 +58,7 @@ typedef enum _model_filter_t_ {
     MF_RNN        = 0x0008,
     MF_LBL        = 0x0010,
     MF_FFNN       = 0x0020,
-    MF_ALL        = 0xFFFF,
+    MF_ALL        = 0x003F,
 } model_filter_t;
 
 /**
