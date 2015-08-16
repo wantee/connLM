@@ -127,7 +127,7 @@ int main(int argc, const char *argv[])
     }
     safe_st_fclose(fp);
 
-    ST_NOTICE("Initialising Model..");
+    ST_NOTICE("Initialising Model...");
     if (connlm_init(connlm, &g_model_opt) < 0) {
         ST_WARNING("Failed to connlm_create.");
         goto ERR;

@@ -179,6 +179,10 @@ int lbl_load_header(lbl_t **lbl, FILE *fp, bool *binary, FILE *fo_info)
             return 0;
         }
     } else {
+        if (st_readline(fp, "") != 0) {
+            ST_WARNING("tag error");
+            goto ERR;
+        }
         if (st_readline(fp, "<LBL>") != 0) {
             ST_WARNING("tag error");
             goto ERR;
@@ -215,7 +219,9 @@ int lbl_load_header(lbl_t **lbl, FILE *fp, bool *binary, FILE *fo_info)
     return 0;
 
 ERR:
-    safe_lbl_destroy(*lbl);
+    if (lbl != NULL) {
+        safe_lbl_destroy(*lbl);
+    }
     return -1;
 }
 

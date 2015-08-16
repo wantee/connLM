@@ -201,6 +201,10 @@ int output_load_header(output_t **output, FILE *fp, bool *binary,
             return -1;
         }
     } else {
+        if (st_readline(fp, "") != 0) {
+            ST_WARNING("tag error.");
+            goto ERR;
+        }
         if (st_readline(fp, "<OUTPUT>") != 0) {
             ST_WARNING("tag error.");
             goto ERR;
@@ -253,7 +257,9 @@ int output_load_header(output_t **output, FILE *fp, bool *binary,
     return 0;
 
 ERR:
-    safe_output_destroy(*output);
+    if (output != NULL) {
+        safe_output_destroy(*output);
+    }
     return -1;
 }
 

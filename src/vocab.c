@@ -175,13 +175,17 @@ int vocab_load_header(vocab_t **vocab, FILE *fp, bool *binary,
             return 0;
         }
     } else {
+        if (st_readline(fp, "") != 0) {
+            ST_WARNING("flag error.");
+            return -1;
+        }
         if (st_readline(fp, "<VOCAB>") != 0) {
             ST_WARNING("flag error.");
             return -1;
         }
 
         if (st_readline(fp, "Vocab size: %d", &vocab_size) != 1) {
-            ST_WARNING("Failed to parse vocab_size.");
+            ST_WARNING("Failed to parse vocab_size.[%d]", vocab_size);
             return -1;
         }
 
@@ -212,7 +216,9 @@ int vocab_load_header(vocab_t **vocab, FILE *fp, bool *binary,
     return 0;
 
 ERR:
-    safe_vocab_destroy(*vocab);
+    if (vocab != NULL) {
+        safe_vocab_destroy(*vocab);
+    }
     return -1;
 }
 
@@ -299,6 +305,8 @@ ERR:
 
 int vocab_save_header(vocab_t *vocab, FILE *fp, bool binary)
 {
+    int sz;
+
     ST_CHECK_PARAM(fp == NULL, -1);
 
     if (binary) {
@@ -307,6 +315,12 @@ int vocab_save_header(vocab_t *vocab, FILE *fp, bool binary)
             return -1;
         }
         if (vocab == NULL) {
+            sz = 0;
+            if (fwrite(&sz, sizeof(int), 1, fp) != 1) {
+                ST_WARNING("Failed to write vocab size.");
+                return -1;
+            }
+
             return 0;
         }
 
@@ -318,6 +332,7 @@ int vocab_save_header(vocab_t *vocab, FILE *fp, bool binary)
         fprintf(fp, "    \n<VOCAB>\n");
 
         if (vocab == NULL) {
+            fprintf(fp, "Vocab size: %d\n", 0);
             return 0;
         }
 

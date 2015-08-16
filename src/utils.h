@@ -50,6 +50,31 @@ void connlm_show_usage(const char *module_name, const char *header,
 
 void int_sort(int *A, size_t n);
 
+typedef enum _model_filter_t_ {
+    MF_NONE       = 0x0000,
+    MF_VOCAB      = 0x0001,
+    MF_OUTPUT     = 0x0002,
+    MF_MAXENT     = 0x0004,
+    MF_RNN        = 0x0008,
+    MF_LBL        = 0x0010,
+    MF_FFNN       = 0x0020,
+    MF_ALL        = 0xFFFF,
+} model_filter_t;
+
+/**
+ * Parsing a model filter.
+ * A model filter can be: mdl,[+-][ovmrlf]:file_name.
+ * Any string not in such format will be treated as a model file name.
+ *
+ * @ingroup connlm
+ * @param[in] mdl_filter string for the model filter.
+ * @param[out] mdl_file name of model file.
+ * @param[in] mdl_file_len max len of model file buffer.
+ * @return filter type. MF_NONE if error.
+ */
+model_filter_t parse_model_filter(const char *mdl_filter,
+        char *mdl_file, size_t mdl_file_len);
+
 #ifdef __cplusplus
 }
 #endif

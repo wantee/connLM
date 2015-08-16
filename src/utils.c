@@ -26,6 +26,7 @@
 #include <string.h>
 #include <float.h>
 
+#include <st_macro.h>
 #include <st_log.h>
 #include <st_utils.h>
 
@@ -256,3 +257,113 @@ void int_sort(int *A, size_t n)
 {
     qsort(A, n, sizeof(int), int_comp);
 }
+
+model_filter_t parse_model_filter(const char *mdl_filter,
+        char *mdl_file, size_t mdl_file_len) 
+{
+    char *ptr;
+    char *ptr_fname;
+    model_filter_t mf;
+    bool add;
+
+    ST_CHECK_PARAM(mdl_filter == NULL || mdl_file == NULL, MF_NONE);
+
+    if (strncmp(mdl_filter, "mdl,", 4) != 0) {
+        ptr_fname = (char *)mdl_filter;
+        mf = MF_ALL;
+        goto RET;
+    }
+
+    ptr = (char *)mdl_filter + 4;
+    ptr_fname = strchr(ptr, ':');
+    if (ptr_fname == NULL) { // not filter format
+        ptr_fname = (char *)mdl_filter;
+        mf = MF_ALL;
+        goto RET;
+    }
+
+    if (*ptr == '-') {
+        mf = MF_ALL;
+        ptr++;
+        add = false;
+    } else if (*ptr == '+') {
+        mf = MF_NONE;
+        ptr++;
+        add = true;
+    } else {
+        mf = MF_NONE;
+        add = true;
+    }
+
+    while (ptr < ptr_fname) {
+        if (*ptr == ',') {
+            ptr++;
+            continue;
+        }
+
+        switch (*ptr) {
+            case 'o':
+                if (add) {
+                    mf |= MF_OUTPUT;
+                } else {
+                    mf &= ~MF_OUTPUT;
+                }
+                break;
+            case 'v':
+                if (add) {
+                    mf |= MF_VOCAB;
+                } else {
+                    mf &= ~MF_VOCAB;
+                }
+                break;
+            case 'm':
+                if (add) {
+                    mf |= MF_MAXENT;
+                } else {
+                    mf &= ~MF_MAXENT;
+                }
+                break;
+            case 'r':
+                if (add) {
+                    mf |= MF_RNN;
+                } else {
+                    mf &= ~MF_RNN;
+                }
+                break;
+            case 'l':
+                if (add) {
+                    mf |= MF_LBL;
+                } else {
+                    mf &= ~MF_LBL;
+                }
+                break;
+            case 'f':
+                if (add) {
+                    mf |= MF_FFNN;
+                } else {
+                    mf &= ~MF_FFNN;
+                }
+                break;
+            default:
+                ptr_fname = (char *)mdl_filter;
+                mf = MF_ALL;
+                goto RET;
+        }
+
+        ptr++;
+    }
+
+    ptr_fname++;
+
+RET:
+    if (strlen(ptr_fname) >= mdl_file_len) {
+        ST_WARNING("mdl_file_len too small.[%zu/%zu]",
+                mdl_file_len, strlen(ptr_fname));
+        mdl_file[0] = '0';
+        return MF_NONE;
+    }
+    strcpy(mdl_file, ptr_fname);
+
+    return mf;
+}
+

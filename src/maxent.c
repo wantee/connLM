@@ -312,6 +312,10 @@ int maxent_load_header(maxent_t **maxent, FILE *fp,
             }
         }
     } else {
+        if (st_readline(fp, "") != 0) {
+            ST_WARNING("tag error");
+            goto ERR;
+        }
         if (st_readline(fp, "<MAXENT>") != 0) {
             ST_WARNING("tag error");
             goto ERR;
@@ -389,7 +393,9 @@ int maxent_load_header(maxent_t **maxent, FILE *fp,
     return 0;
 
 ERR:
-    safe_maxent_destroy(*maxent);
+    if (maxent != NULL) {
+        safe_maxent_destroy(*maxent);
+    }
     return -1;
 }
 

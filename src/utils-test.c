@@ -99,6 +99,258 @@ static int unit_test_vecXMat()
     return 0;
 }
 
+static int unit_test_parse_model_filter()
+{
+    char in[MAX_DIR_LEN];
+    char out[MAX_DIR_LEN];
+    model_filter_t mf;
+
+    int ncase;
+
+    fprintf(stderr, " Testing parse_model_filter...\n");
+
+    ncase = 1;
+    fprintf(stderr, "    Case %d...\n", ncase++);
+    strncpy(in, "model1.clm", MAX_DIR_LEN);
+    in[MAX_DIR_LEN - 1] = '\0';
+    mf = parse_model_filter(in, out, MAX_DIR_LEN);
+    if (mf != MF_ALL || strcmp(in, out) != 0) {
+        return -1;
+    }
+
+    fprintf(stderr, "    Case %d...\n", ncase++);
+    strncpy(in, "mdl,model1.clm", MAX_DIR_LEN);
+    in[MAX_DIR_LEN - 1] = '\0';
+    mf = parse_model_filter(in, out, MAX_DIR_LEN);
+    if (mf != MF_ALL || strcmp(in, out) != 0) {
+        return -1;
+    }
+
+    fprintf(stderr, "    Case %d...\n", ncase++);
+    strncpy(in, "mdl,oxt:model1.clm", MAX_DIR_LEN);
+    in[MAX_DIR_LEN - 1] = '\0';
+    mf = parse_model_filter(in, out, MAX_DIR_LEN);
+    if (mf != MF_ALL || strcmp(in, out) != 0) {
+        return -1;
+    }
+
+    fprintf(stderr, "    Case %d...\n", ncase++);
+    strncpy(in, "mdl,o:model1.clm", MAX_DIR_LEN);
+    in[MAX_DIR_LEN - 1] = '\0';
+    mf = parse_model_filter(in, out, MAX_DIR_LEN);
+    if ((strcmp(out, "model1.clm") != 0)
+            || (!(mf & MF_OUTPUT))
+            || (mf & ~MF_OUTPUT)) {
+        return -1;
+    }
+
+    fprintf(stderr, "    Case %d...\n", ncase++);
+    strncpy(in, "mdl,v:model1.clm", MAX_DIR_LEN);
+    in[MAX_DIR_LEN - 1] = '\0';
+    mf = parse_model_filter(in, out, MAX_DIR_LEN);
+    if ((strcmp(out, "model1.clm") != 0)
+            || (!(mf & MF_VOCAB))
+            || (mf & ~MF_VOCAB)) {
+        return -1;
+    }
+
+    fprintf(stderr, "    Case %d...\n", ncase++);
+    strncpy(in, "mdl,m:model1.clm", MAX_DIR_LEN);
+    in[MAX_DIR_LEN - 1] = '\0';
+    mf = parse_model_filter(in, out, MAX_DIR_LEN);
+    if ((strcmp(out, "model1.clm") != 0)
+            || (!(mf & MF_MAXENT))
+            || (mf & ~MF_MAXENT)) {
+        return -1;
+    }
+
+    fprintf(stderr, "    Case %d...\n", ncase++);
+    strncpy(in, "mdl,r:model1.clm", MAX_DIR_LEN);
+    in[MAX_DIR_LEN - 1] = '\0';
+    mf = parse_model_filter(in, out, MAX_DIR_LEN);
+    if ((strcmp(out, "model1.clm") != 0)
+            || (!(mf & MF_RNN))
+            || (mf & ~MF_RNN)) {
+        return -1;
+    }
+
+    fprintf(stderr, "    Case %d...\n", ncase++);
+    strncpy(in, "mdl,l:model1.clm", MAX_DIR_LEN);
+    in[MAX_DIR_LEN - 1] = '\0';
+    mf = parse_model_filter(in, out, MAX_DIR_LEN);
+    if ((strcmp(out, "model1.clm") != 0)
+            || (!(mf & MF_LBL))
+            || (mf & ~MF_LBL)) {
+        return -1;
+    }
+
+    fprintf(stderr, "    Case %d...\n", ncase++);
+    strncpy(in, "mdl,f:model1.clm", MAX_DIR_LEN);
+    in[MAX_DIR_LEN - 1] = '\0';
+    mf = parse_model_filter(in, out, MAX_DIR_LEN);
+    if ((strcmp(out, "model1.clm") != 0)
+            || (!(mf & MF_FFNN))
+            || (mf & ~MF_FFNN)) {
+        return -1;
+    }
+
+    fprintf(stderr, "    Case %d...\n", ncase++);
+    strncpy(in, "mdl,-o:model1.clm", MAX_DIR_LEN);
+    in[MAX_DIR_LEN - 1] = '\0';
+    mf = parse_model_filter(in, out, MAX_DIR_LEN);
+    if ((strcmp(out, "model1.clm") != 0)
+            || (mf & MF_OUTPUT)
+            || !(mf & MF_VOCAB)
+            || !(mf & MF_MAXENT)
+            || !(mf & MF_RNN)
+            || !(mf & MF_LBL)
+            || !(mf & MF_FFNN)) {
+        return -1;
+    }
+
+    fprintf(stderr, "    Case %d...\n", ncase++);
+    strncpy(in, "mdl,-v:model1.clm", MAX_DIR_LEN);
+    in[MAX_DIR_LEN - 1] = '\0';
+    mf = parse_model_filter(in, out, MAX_DIR_LEN);
+    if ((strcmp(out, "model1.clm") != 0)
+            || !(mf & MF_OUTPUT)
+            || (mf & MF_VOCAB)
+            || !(mf & MF_MAXENT)
+            || !(mf & MF_RNN)
+            || !(mf & MF_LBL)
+            || !(mf & MF_FFNN)) {
+        return -1;
+    }
+
+    fprintf(stderr, "    Case %d...\n", ncase++);
+    strncpy(in, "mdl,-m:model1.clm", MAX_DIR_LEN);
+    in[MAX_DIR_LEN - 1] = '\0';
+    mf = parse_model_filter(in, out, MAX_DIR_LEN);
+    if ((strcmp(out, "model1.clm") != 0)
+            || !(mf & MF_OUTPUT)
+            || !(mf & MF_VOCAB)
+            || (mf & MF_MAXENT)
+            || !(mf & MF_RNN)
+            || !(mf & MF_LBL)
+            || !(mf & MF_FFNN)) {
+        return -1;
+    }
+
+    fprintf(stderr, "    Case %d...\n", ncase++);
+    strncpy(in, "mdl,-r:model1.clm", MAX_DIR_LEN);
+    in[MAX_DIR_LEN - 1] = '\0';
+    mf = parse_model_filter(in, out, MAX_DIR_LEN);
+    if ((strcmp(out, "model1.clm") != 0)
+            || !(mf & MF_OUTPUT)
+            || !(mf & MF_VOCAB)
+            || !(mf & MF_MAXENT)
+            || (mf & MF_RNN)
+            || !(mf & MF_LBL)
+            || !(mf & MF_FFNN)) {
+        return -1;
+    }
+
+    fprintf(stderr, "    Case %d...\n", ncase++);
+    strncpy(in, "mdl,-l:model1.clm", MAX_DIR_LEN);
+    in[MAX_DIR_LEN - 1] = '\0';
+    mf = parse_model_filter(in, out, MAX_DIR_LEN);
+    if ((strcmp(out, "model1.clm") != 0)
+            || !(mf & MF_OUTPUT)
+            || !(mf & MF_VOCAB)
+            || !(mf & MF_MAXENT)
+            || !(mf & MF_RNN)
+            || (mf & MF_LBL)
+            || !(mf & MF_FFNN)) {
+        return -1;
+    }
+
+    fprintf(stderr, "    Case %d...\n", ncase++);
+    strncpy(in, "mdl,-f:model1.clm", MAX_DIR_LEN);
+    in[MAX_DIR_LEN - 1] = '\0';
+    mf = parse_model_filter(in, out, MAX_DIR_LEN);
+    if ((strcmp(out, "model1.clm") != 0)
+            || !(mf & MF_OUTPUT)
+            || !(mf & MF_VOCAB)
+            || !(mf & MF_MAXENT)
+            || !(mf & MF_RNN)
+            || !(mf & MF_LBL)
+            || (mf & MF_FFNN)) {
+        return -1;
+    }
+
+    fprintf(stderr, "    Case %d...\n", ncase++);
+    strncpy(in, "mdl,fv:model1.clm", MAX_DIR_LEN);
+    in[MAX_DIR_LEN - 1] = '\0';
+    mf = parse_model_filter(in, out, MAX_DIR_LEN);
+    if ((strcmp(out, "model1.clm") != 0)
+            || (mf & MF_OUTPUT)
+            || !(mf & MF_VOCAB)
+            || (mf & MF_MAXENT)
+            || (mf & MF_RNN)
+            || (mf & MF_LBL)
+            || !(mf & MF_FFNN)) {
+        return -1;
+    }
+
+    fprintf(stderr, "    Case %d...\n", ncase++);
+    strncpy(in, "mdl,olr:model1.clm", MAX_DIR_LEN);
+    in[MAX_DIR_LEN - 1] = '\0';
+    mf = parse_model_filter(in, out, MAX_DIR_LEN);
+    if ((strcmp(out, "model1.clm") != 0)
+            || !(mf & MF_OUTPUT)
+            || (mf & MF_VOCAB)
+            || (mf & MF_MAXENT)
+            || !(mf & MF_RNN)
+            || !(mf & MF_LBL)
+            || (mf & MF_FFNN)) {
+        return -1;
+    }
+
+    fprintf(stderr, "    Case %d...\n", ncase++);
+    strncpy(in, "mdl,-rl:model1.clm", MAX_DIR_LEN);
+    in[MAX_DIR_LEN - 1] = '\0';
+    mf = parse_model_filter(in, out, MAX_DIR_LEN);
+    if ((strcmp(out, "model1.clm") != 0)
+            || !(mf & MF_OUTPUT)
+            || !(mf & MF_VOCAB)
+            || !(mf & MF_MAXENT)
+            || (mf & MF_RNN)
+            || (mf & MF_LBL)
+            || !(mf & MF_FFNN)) {
+        return -1;
+    }
+
+    fprintf(stderr, "    Case %d...\n", ncase++);
+    strncpy(in, "mdl,-vof:model1.clm", MAX_DIR_LEN);
+    in[MAX_DIR_LEN - 1] = '\0';
+    mf = parse_model_filter(in, out, MAX_DIR_LEN);
+    if ((strcmp(out, "model1.clm") != 0)
+            || (mf & MF_OUTPUT)
+            || (mf & MF_VOCAB)
+            || !(mf & MF_MAXENT)
+            || !(mf & MF_RNN)
+            || !(mf & MF_LBL)
+            || (mf & MF_FFNN)) {
+        return -1;
+    }
+
+    fprintf(stderr, "    Case %d...\n", ncase++);
+    strncpy(in, "mdl,-vofmlr:model1.clm", MAX_DIR_LEN);
+    in[MAX_DIR_LEN - 1] = '\0';
+    mf = parse_model_filter(in, out, MAX_DIR_LEN);
+    if ((strcmp(out, "model1.clm") != 0)
+            || (mf & MF_OUTPUT)
+            || (mf & MF_VOCAB)
+            || (mf & MF_MAXENT)
+            || (mf & MF_RNN)
+            || (mf & MF_LBL)
+            || (mf & MF_FFNN)) {
+        return -1;
+    }
+
+    return 0;
+}
+
 static int run_all_tests()
 {
     int ret = 0;
@@ -111,6 +363,9 @@ static int run_all_tests()
         ret = -1;
     }
 
+    if (unit_test_parse_model_filter() != 0) {
+        ret = -1;
+    }
     return ret;
 }
 
