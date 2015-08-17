@@ -1,9 +1,12 @@
 language: c
+sudo: false
+addons:
+  apt:
+    packages:
+    - bc
 compiler:
   - clang
   - gcc
-before_install:
-  - sudo apt-get install -y bc
 install:
   - cd src; ./autogen.sh; cd -
   - make -C src

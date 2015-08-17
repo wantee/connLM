@@ -121,21 +121,21 @@ int rnn_init(rnn_t **prnn, rnn_model_opt_t *model_opt, output_t *output)
     rnn->vocab_size = vocab_size;
 
     sz = vocab_size * model_opt->hidden_size;
-    posix_memalign((void **)&rnn->wt_ih_w, ALIGN_SIZE, sizeof(real_t) * sz);
+    (void)posix_memalign((void **)&rnn->wt_ih_w, ALIGN_SIZE, sizeof(real_t) * sz);
     if (rnn->wt_ih_w == NULL) {
         ST_WARNING("Failed to malloc wt_ih_w.");
         goto ERR;
     }
 
     sz = model_opt->hidden_size * model_opt->hidden_size;
-    posix_memalign((void **)&rnn->wt_ih_h, ALIGN_SIZE, sizeof(real_t) * sz);
+    (void)posix_memalign((void **)&rnn->wt_ih_h, ALIGN_SIZE, sizeof(real_t) * sz);
     if (rnn->wt_ih_h == NULL) {
         ST_WARNING("Failed to malloc wt_ih_h.");
         goto ERR;
     }
 
     sz = model_opt->hidden_size * vocab_size;
-    posix_memalign((void **)&rnn->wt_ho_w, ALIGN_SIZE, sizeof(real_t) * sz);
+    (void)posix_memalign((void **)&rnn->wt_ho_w, ALIGN_SIZE, sizeof(real_t) * sz);
     if (rnn->wt_ho_w == NULL) {
         ST_WARNING("Failed to malloc wt_ho_w.");
         goto ERR;
@@ -161,7 +161,7 @@ int rnn_init(rnn_t **prnn, rnn_model_opt_t *model_opt, output_t *output)
 
     if (class_size > 0) {
         sz = model_opt->hidden_size * class_size;
-        posix_memalign((void **)&rnn->wt_ho_c, ALIGN_SIZE, sizeof(real_t) * sz);
+        (void)posix_memalign((void **)&rnn->wt_ho_c, ALIGN_SIZE, sizeof(real_t) * sz);
         if (rnn->wt_ho_c == NULL) {
             ST_WARNING("Failed to malloc wt_ho_c.");
             goto ERR;
@@ -253,7 +253,7 @@ rnn_t* rnn_dup(rnn_t *r)
     *rnn = *r;
 
     sz = r->vocab_size * r->model_opt.hidden_size;
-    posix_memalign((void **)&rnn->wt_ih_w, ALIGN_SIZE, sizeof(real_t) * sz);
+    (void)posix_memalign((void **)&rnn->wt_ih_w, ALIGN_SIZE, sizeof(real_t) * sz);
     if (rnn->wt_ih_w == NULL) {
         ST_WARNING("Failed to malloc wt_ih_w.");
         goto ERR;
@@ -261,7 +261,7 @@ rnn_t* rnn_dup(rnn_t *r)
     memcpy(rnn->wt_ih_w, r->wt_ih_w, sizeof(real_t) * sz);
 
     sz = r->model_opt.hidden_size * r->model_opt.hidden_size;
-    posix_memalign((void **)&rnn->wt_ih_h, ALIGN_SIZE, sizeof(real_t) * sz);
+    (void)posix_memalign((void **)&rnn->wt_ih_h, ALIGN_SIZE, sizeof(real_t) * sz);
     if (rnn->wt_ih_h == NULL) {
         ST_WARNING("Failed to malloc wt_ih_h.");
         goto ERR;
@@ -269,7 +269,7 @@ rnn_t* rnn_dup(rnn_t *r)
     memcpy(rnn->wt_ih_h, r->wt_ih_h, sizeof(real_t) * sz);
 
     sz = r->model_opt.hidden_size * r->vocab_size;
-    posix_memalign((void **)&rnn->wt_ho_w, ALIGN_SIZE, sizeof(real_t) * sz);
+    (void)posix_memalign((void **)&rnn->wt_ho_w, ALIGN_SIZE, sizeof(real_t) * sz);
     if (rnn->wt_ho_w == NULL) {
         ST_WARNING("Failed to malloc wt_ho_w.");
         goto ERR;
@@ -278,7 +278,7 @@ rnn_t* rnn_dup(rnn_t *r)
 
     if (r->class_size > 0) {
         sz = r->model_opt.hidden_size * r->class_size;
-        posix_memalign((void **)&rnn->wt_ho_c, ALIGN_SIZE, sizeof(real_t) * sz);
+        (void)posix_memalign((void **)&rnn->wt_ho_c, ALIGN_SIZE, sizeof(real_t) * sz);
         if (rnn->wt_ho_c == NULL) {
             ST_WARNING("Failed to malloc wt_ho_c.");
             goto ERR;
@@ -433,21 +433,21 @@ int rnn_load_body(rnn_t *rnn, FILE *fp, bool binary)
     ST_CHECK_PARAM(rnn == NULL || fp == NULL, -1);
 
     sz = rnn->vocab_size * rnn->model_opt.hidden_size;
-    posix_memalign((void **)&rnn->wt_ih_w, ALIGN_SIZE, sizeof(real_t) * sz);
+    (void)posix_memalign((void **)&rnn->wt_ih_w, ALIGN_SIZE, sizeof(real_t) * sz);
     if (rnn->wt_ih_w == NULL) {
         ST_WARNING("Failed to malloc wt_ih_w.");
         goto ERR;
     }
 
     sz = rnn->model_opt.hidden_size * rnn->model_opt.hidden_size;
-    posix_memalign((void **)&rnn->wt_ih_h, ALIGN_SIZE, sizeof(real_t) * sz);
+    (void)posix_memalign((void **)&rnn->wt_ih_h, ALIGN_SIZE, sizeof(real_t) * sz);
     if (rnn->wt_ih_h == NULL) {
         ST_WARNING("Failed to malloc wt_ih_h.");
         goto ERR;
     }
 
     sz = rnn->model_opt.hidden_size * rnn->vocab_size;
-    posix_memalign((void **)&rnn->wt_ho_w, ALIGN_SIZE, sizeof(real_t) * sz);
+    (void)posix_memalign((void **)&rnn->wt_ho_w, ALIGN_SIZE, sizeof(real_t) * sz);
     if (rnn->wt_ho_w == NULL) {
         ST_WARNING("Failed to malloc wt_ho_w.");
         goto ERR;
@@ -455,7 +455,7 @@ int rnn_load_body(rnn_t *rnn, FILE *fp, bool binary)
 
     if (rnn->class_size > 0) {
         sz = rnn->model_opt.hidden_size * rnn->class_size;
-        posix_memalign((void **)&rnn->wt_ho_c, ALIGN_SIZE, sizeof(real_t) * sz);
+        (void)posix_memalign((void **)&rnn->wt_ho_c, ALIGN_SIZE, sizeof(real_t) * sz);
         if (rnn->wt_ho_c == NULL) {
             ST_WARNING("Failed to malloc wt_ho_c.");
             goto ERR;
@@ -1161,26 +1161,26 @@ int rnn_setup_train(rnn_t *rnn, rnn_train_opt_t *train_opt,
         param_arg_clear(&neu->arg_ho_w);
         param_arg_clear(&neu->arg_ho_c);
 
-        posix_memalign((void **)&neu->ac_i_h, ALIGN_SIZE, sizeof(real_t) * hidden_size);
+        (void)posix_memalign((void **)&neu->ac_i_h, ALIGN_SIZE, sizeof(real_t) * hidden_size);
         if (neu->ac_i_h == NULL) {
             ST_WARNING("Failed to malloc ac_i_h.");
             goto ERR;
         }
 
-        posix_memalign((void **)&neu->ac_h, ALIGN_SIZE, sizeof(real_t) * hidden_size);
+        (void)posix_memalign((void **)&neu->ac_h, ALIGN_SIZE, sizeof(real_t) * hidden_size);
         if (neu->ac_h == NULL) {
             ST_WARNING("Failed to malloc ac_h.");
             goto ERR;
         }
 
-        posix_memalign((void **)&neu->er_h, ALIGN_SIZE, sizeof(real_t) * hidden_size);
+        (void)posix_memalign((void **)&neu->er_h, ALIGN_SIZE, sizeof(real_t) * hidden_size);
         if (neu->er_h == NULL) {
             ST_WARNING("Failed to malloc er_h.");
             goto ERR;
         }
 
         if (train_opt->bptt > 1) {
-            posix_memalign((void **)&neu->er_i_h, ALIGN_SIZE, sizeof(real_t) * hidden_size);
+            (void)posix_memalign((void **)&neu->er_i_h, ALIGN_SIZE, sizeof(real_t) * hidden_size);
             if (neu->er_i_h == NULL) {
                 ST_WARNING("Failed to malloc er_i_h.");
                 goto ERR;
@@ -1194,7 +1194,7 @@ int rnn_setup_train(rnn_t *rnn, rnn_train_opt_t *train_opt,
             }
 
             sz = hidden_size * (train_opt->bptt + train_opt->bptt_block);
-            posix_memalign((void **)&neu->ac_bptt_h, ALIGN_SIZE, sizeof(real_t) * sz);
+            (void)posix_memalign((void **)&neu->ac_bptt_h, ALIGN_SIZE, sizeof(real_t) * sz);
             if (neu->ac_bptt_h == NULL) {
                 ST_WARNING("Failed to malloc ac_bptt_h.");
                 goto ERR;
@@ -1202,7 +1202,7 @@ int rnn_setup_train(rnn_t *rnn, rnn_train_opt_t *train_opt,
             memset(neu->ac_bptt_h, 0, sizeof(real_t) * sz);
 
             sz = hidden_size * (train_opt->bptt_block);
-            posix_memalign((void **)&neu->er_bptt_h, ALIGN_SIZE, sizeof(real_t) * sz);
+            (void)posix_memalign((void **)&neu->er_bptt_h, ALIGN_SIZE, sizeof(real_t) * sz);
             if (neu->er_bptt_h == NULL) {
                 ST_WARNING("Failed to malloc er_bptt_h.");
                 goto ERR;
@@ -1210,7 +1210,7 @@ int rnn_setup_train(rnn_t *rnn, rnn_train_opt_t *train_opt,
             memset(neu->er_bptt_h, 0, sizeof(real_t) * sz);
 
             sz = rnn->vocab_size * hidden_size;
-            posix_memalign((void **)&neu->wt_bptt_ih_w, ALIGN_SIZE, sizeof(real_t) * sz);
+            (void)posix_memalign((void **)&neu->wt_bptt_ih_w, ALIGN_SIZE, sizeof(real_t) * sz);
             if (neu->wt_bptt_ih_w == NULL) {
                 ST_WARNING("Failed to malloc wt_bptt_ih_w.");
                 goto ERR;
@@ -1222,12 +1222,12 @@ int rnn_setup_train(rnn_t *rnn, rnn_train_opt_t *train_opt,
             if (train_opt->param.mini_batch > 0) {
                 sz *= train_opt->param.mini_batch;
             }
-            posix_memalign((void **)&neu->er_h_buf, ALIGN_SIZE, sizeof(real_t) * sz);
+            (void)posix_memalign((void **)&neu->er_h_buf, ALIGN_SIZE, sizeof(real_t) * sz);
             if (neu->er_h_buf == NULL) {
                 ST_WARNING("Failed to malloc er_h_buf.");
                 goto ERR;
             }
-            posix_memalign((void **)&neu->ac_i_h_buf, ALIGN_SIZE, sizeof(real_t) * sz);
+            (void)posix_memalign((void **)&neu->ac_i_h_buf, ALIGN_SIZE, sizeof(real_t) * sz);
             if (neu->ac_i_h_buf == NULL) {
                 ST_WARNING("Failed to malloc ac_i_h_buf.");
                 goto ERR;
@@ -1235,7 +1235,7 @@ int rnn_setup_train(rnn_t *rnn, rnn_train_opt_t *train_opt,
             neu->ih_buf_num = 0;
 #else
             sz = hidden_size * hidden_size;
-            posix_memalign((void **)&neu->wt_bptt_ih_h, ALIGN_SIZE, sizeof(real_t) * sz);
+            (void)posix_memalign((void **)&neu->wt_bptt_ih_h, ALIGN_SIZE, sizeof(real_t) * sz);
             if (neu->wt_bptt_ih_h == NULL) {
                 ST_WARNING("Failed to malloc wt_bptt_ih_h.");
                 goto ERR;
@@ -1248,7 +1248,7 @@ int rnn_setup_train(rnn_t *rnn, rnn_train_opt_t *train_opt,
             neu->mini_step = 0;
 
             sz = rnn->vocab_size * rnn->model_opt.hidden_size;
-            posix_memalign((void **)&neu->wt_ih_w, ALIGN_SIZE, sizeof(real_t) * sz);
+            (void)posix_memalign((void **)&neu->wt_ih_w, ALIGN_SIZE, sizeof(real_t) * sz);
             if (neu->wt_ih_w == NULL) {
                 ST_WARNING("Failed to malloc wt_ih_w.");
                 goto ERR;
@@ -1256,7 +1256,7 @@ int rnn_setup_train(rnn_t *rnn, rnn_train_opt_t *train_opt,
             memset(neu->wt_ih_w, 0, sizeof(real_t) * sz);
 
             sz = rnn->model_opt.hidden_size * rnn->vocab_size;
-            posix_memalign((void **)&neu->wt_ho_w, ALIGN_SIZE, sizeof(real_t) * sz);
+            (void)posix_memalign((void **)&neu->wt_ho_w, ALIGN_SIZE, sizeof(real_t) * sz);
             if (neu->wt_ho_w == NULL) {
                 ST_WARNING("Failed to malloc wt_ho_w.");
                 goto ERR;
@@ -1282,13 +1282,13 @@ int rnn_setup_train(rnn_t *rnn, rnn_train_opt_t *train_opt,
 
 #ifdef _MINI_UPDATE_
                 sz = train_opt->param.mini_batch * rnn->class_size;
-                posix_memalign((void **)&neu->er_o_c_buf, ALIGN_SIZE, sizeof(real_t) * sz);
+                (void)posix_memalign((void **)&neu->er_o_c_buf, ALIGN_SIZE, sizeof(real_t) * sz);
                 if (neu->er_o_c_buf == NULL) {
                     ST_WARNING("Failed to malloc er_o_c_buf.");
                     goto ERR;
                 }
                 sz = train_opt->param.mini_batch * hidden_size;
-                posix_memalign((void **)&neu->ac_h_buf, ALIGN_SIZE, sizeof(real_t) * sz);
+                (void)posix_memalign((void **)&neu->ac_h_buf, ALIGN_SIZE, sizeof(real_t) * sz);
                 if (neu->ac_h_buf == NULL) {
                     ST_WARNING("Failed to malloc ac_h_buf.");
                     goto ERR;
@@ -1296,7 +1296,7 @@ int rnn_setup_train(rnn_t *rnn, rnn_train_opt_t *train_opt,
                 neu->ho_c_buf_num = 0;
 #else
                 sz = rnn->model_opt.hidden_size * rnn->class_size;
-                posix_memalign((void **)&neu->wt_ho_c, ALIGN_SIZE, sizeof(real_t) * sz);
+                (void)posix_memalign((void **)&neu->wt_ho_c, ALIGN_SIZE, sizeof(real_t) * sz);
                 if (neu->wt_ho_c == NULL) {
                     ST_WARNING("Failed to malloc wt_ho_c.");
                     goto ERR;
@@ -1319,13 +1319,13 @@ int rnn_setup_train(rnn_t *rnn, rnn_train_opt_t *train_opt,
 #ifdef _MINI_UPDATE_
             if (train_opt->bptt <= 1) {
                 sz = train_opt->param.mini_batch * hidden_size;
-                posix_memalign((void **)&neu->er_h_buf, ALIGN_SIZE, sizeof(real_t) * sz);
+                (void)posix_memalign((void **)&neu->er_h_buf, ALIGN_SIZE, sizeof(real_t) * sz);
                 if (neu->er_h_buf == NULL) {
                     ST_WARNING("Failed to malloc er_h_buf.");
                     goto ERR;
                 }
                 sz = train_opt->param.mini_batch * hidden_size;
-                posix_memalign((void **)&neu->ac_i_h_buf, ALIGN_SIZE, sizeof(real_t) * sz);
+                (void)posix_memalign((void **)&neu->ac_i_h_buf, ALIGN_SIZE, sizeof(real_t) * sz);
                 if (neu->ac_i_h_buf == NULL) {
                     ST_WARNING("Failed to malloc ac_i_h_buf.");
                     goto ERR;
@@ -1334,7 +1334,7 @@ int rnn_setup_train(rnn_t *rnn, rnn_train_opt_t *train_opt,
             }
 #else
             sz = rnn->model_opt.hidden_size * rnn->model_opt.hidden_size;
-            posix_memalign((void **)&neu->wt_ih_h, ALIGN_SIZE, sizeof(real_t) * sz);
+            (void)posix_memalign((void **)&neu->wt_ih_h, ALIGN_SIZE, sizeof(real_t) * sz);
             if (neu->wt_ih_h == NULL) {
                 ST_WARNING("Failed to malloc wt_ih_h.");
                 goto ERR;
@@ -1738,13 +1738,13 @@ int rnn_setup_test(rnn_t *rnn, output_t *output, int num_thrs)
     for (t = 0; t < num_thrs; t++) {
         neu = rnn->neurons + t;
 
-        posix_memalign((void **)&neu->ac_i_h, ALIGN_SIZE, sizeof(real_t) * hidden_size);
+        (void)posix_memalign((void **)&neu->ac_i_h, ALIGN_SIZE, sizeof(real_t) * hidden_size);
         if (neu->ac_i_h == NULL) {
             ST_WARNING("Failed to malloc ac_i_h.");
             goto ERR;
         }
 
-        posix_memalign((void **)&neu->ac_h, ALIGN_SIZE, sizeof(real_t) * hidden_size);
+        (void)posix_memalign((void **)&neu->ac_h, ALIGN_SIZE, sizeof(real_t) * hidden_size);
         if (neu->ac_h == NULL) {
             ST_WARNING("Failed to malloc ac_h.");
             goto ERR;

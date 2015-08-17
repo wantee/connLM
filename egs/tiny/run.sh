@@ -12,6 +12,8 @@ class_size=""
 tr_thr=1
 test_thr=1
 
+realtype="float"
+
 stepnames[1]="Learn Vocab"
 stepnames[2]="Train MaxEnt model"
 stepnames[3]="Train RNN model"
@@ -37,6 +39,10 @@ function print_help()
 }
 
 help_message=`print_help`
+
+if [ ! -z "$realtype" ]; then
+export CONNLM_REALTYPE="$realtype"
+fi
 
 . ../steps/path.sh || exit 1
 

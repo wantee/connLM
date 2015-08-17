@@ -1,6 +1,28 @@
+
+CONNLM_BIN=$PWD/../../bin/float
+CONNLM_LIB=$PWD/../../lib/float
+
+if [ ! -z "$CONNLM_REALTYPE" ]; then
+  if [ "$CONNLM_REALTYPE" == "double" ]; then
+    CONNLM_BIN=$PWD/../../bin/double
+    CONNLM_LIB=$PWD/../../lib/double
+  elif [ "$CONNLM_REALTYPE" == "float" ]; then
+    CONNLM_BIN=$PWD/../../bin/float
+    CONNLM_LIB=$PWD/../../lib/float
+  fi
+fi
+
+if [ ! -z "$1" ]; then
+  if [ "$1" == "double" ]; then
+    CONNLM_BIN=$PWD/../../bin/double
+    CONNLM_LIB=$PWD/../../lib/double
+  elif [ "$1" == "float" ]; then
+    CONNLM_BIN=$PWD/../../bin/float
+    CONNLM_LIB=$PWD/../../lib/float
+  fi
+fi
+
 ST_UTILS_LIB=$PWD/../../tools/stutils/lib
-CONNLM_BIN=$PWD/../../bin
-CONNLM_LIB=$PWD/../../lib
 
 export PATH=$CONNLM_BIN:$PWD:$PATH
 if [ `uname` ==  "Darwin" ]; then

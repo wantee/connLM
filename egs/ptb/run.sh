@@ -18,6 +18,8 @@ class_size="100"
 tr_thr=4
 test_thr=4
 
+realtype="float"
+
 stepnames[1]="Prepare data"
 stepnames[2]="Learn Vocab"
 stepnames[3]="Train MaxEnt model"
@@ -45,6 +47,10 @@ function print_help()
 }
 
 help_message=`print_help`
+
+if [ ! -z "$realtype" ]; then
+export CONNLM_REALTYPE="$realtype"
+fi
 
 . ../steps/path.sh || exit 1
 
