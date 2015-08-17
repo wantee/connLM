@@ -5,6 +5,7 @@ output_config_file=""
 init_config_file=""
 class_size="" # if not empty, choose a optimal size among candidate sizes,
               # which are seperated by semicolon
+hs=""
 train_file="" # must be given if $class_size not empty
 train_line=200000 # lines used for test speed
 train_config=""   
@@ -57,10 +58,16 @@ train_part=$init_dir/train.part
 
 function init_model ()
 {
+  cls_size=`echo $cls_size | tr -d '[[:space:]]'`
   if [ -z "$cls_size" ]; then
     output_opt=""
   else
     output_opt="--class-size=$cls_size"
+  fi
+
+  hs=`echo $hs | tr -d '[[:space:]]'`
+  if [ ! -z "$hs" ]; then
+    output_opt+=" --hs=$hs"
   fi
 
   if [ -z "$output_config_file" ]; then
