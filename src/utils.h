@@ -29,6 +29,8 @@
 extern "C" {
 #endif
 
+#include <math.h>
+
 #include <st_opt.h>
 
 #include "config.h"

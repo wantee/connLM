@@ -129,8 +129,9 @@ int maxent_init(maxent_t **pmaxent, maxent_model_opt_t *model_opt,
     maxent->class_size = class_size;
     maxent->vocab_size = vocab_size;
 
-    (void)posix_memalign((void **)&maxent->wt_w, ALIGN_SIZE, sizeof(real_t) * model_opt->sz_w);
-    if (maxent->wt_w == NULL) {
+    if (posix_memalign((void **)&maxent->wt_w, ALIGN_SIZE,
+                sizeof(real_t) * model_opt->sz_w) != 0
+            || maxent->wt_w == NULL) {
         ST_WARNING("Failed to malloc wt_w.");
         goto ERR;
     }
@@ -140,8 +141,9 @@ int maxent_init(maxent_t **pmaxent, maxent_model_opt_t *model_opt,
     }
 
     if (maxent->class_size > 0) {
-        (void)posix_memalign((void **)&maxent->wt_c, ALIGN_SIZE, sizeof(real_t) * model_opt->sz_c);
-        if (maxent->wt_c == NULL) {
+        if (posix_memalign((void **)&maxent->wt_c, ALIGN_SIZE,
+                    sizeof(real_t) * model_opt->sz_c) != 0
+                || maxent->wt_c == NULL) {
             ST_WARNING("Failed to malloc wt_c.");
             goto ERR;
         }
@@ -213,16 +215,18 @@ maxent_t* maxent_dup(maxent_t *m)
     *maxent = *m;
     maxent->model_opt = m->model_opt;
 
-    (void)posix_memalign((void **)&maxent->wt_w, ALIGN_SIZE, sizeof(real_t) * m->model_opt.sz_w);
-    if (maxent->wt_w == NULL) {
+    if (posix_memalign((void **)&maxent->wt_w, ALIGN_SIZE,
+                sizeof(real_t) * m->model_opt.sz_w) != 0
+           || maxent->wt_w == NULL) {
         ST_WARNING("Failed to malloc wt_w.");
         goto ERR;
     }
     memcpy(maxent->wt_w, m->wt_w, sizeof(real_t)*m->model_opt.sz_w);
 
     if (maxent->class_size > 0) {
-        (void)posix_memalign((void **)&maxent->wt_c, ALIGN_SIZE, sizeof(real_t) * m->model_opt.sz_c);
-        if (maxent->wt_c == NULL) {
+        if (posix_memalign((void **)&maxent->wt_c, ALIGN_SIZE,
+                    sizeof(real_t) * m->model_opt.sz_c) != 0
+                || maxent->wt_c == NULL) {
             ST_WARNING("Failed to malloc wt_c.");
             goto ERR;
         }
@@ -409,16 +413,18 @@ int maxent_load_body(maxent_t *maxent, FILE *fp, bool binary)
     ST_CHECK_PARAM(maxent == NULL || fp == NULL, -1);
 
     sz = maxent->model_opt.sz_w;
-    (void)posix_memalign((void **)&maxent->wt_w, ALIGN_SIZE, sizeof(real_t) * sz);
-    if (maxent->wt_w == NULL) {
+    if (posix_memalign((void **)&maxent->wt_w, ALIGN_SIZE,
+                sizeof(real_t) * sz) != 0
+            || maxent->wt_w == NULL) {
         ST_WARNING("Failed to malloc wt_w.");
         goto ERR;
     }
 
     if (maxent->class_size > 0) {
         sz = maxent->model_opt.sz_c;
-        (void)posix_memalign((void **)&maxent->wt_c, ALIGN_SIZE, sizeof(real_t) * sz);
-        if (maxent->wt_c == NULL) {
+        if (posix_memalign((void **)&maxent->wt_c, ALIGN_SIZE,
+                    sizeof(real_t) * sz) != 0
+                || maxent->wt_c == NULL) {
             ST_WARNING("Failed to malloc wt_c.");
             goto ERR;
         }
@@ -1071,8 +1077,9 @@ int maxent_setup_train(maxent_t *maxent, maxent_train_opt_t *train_opt,
 
         if (train_opt->param.mini_batch > 0) {
             sz = maxent->model_opt.sz_w;
-            (void)posix_memalign((void **)&neu->wt_w, ALIGN_SIZE, sizeof(real_t) * sz);
-            if (neu->wt_w == NULL) {
+            if (posix_memalign((void **)&neu->wt_w, ALIGN_SIZE,
+                        sizeof(real_t) * sz) != 0
+                    || neu->wt_w == NULL) {
                 ST_WARNING("Failed to malloc wt_w.");
                 goto ERR;
             }
@@ -1106,8 +1113,9 @@ int maxent_setup_train(maxent_t *maxent, maxent_train_opt_t *train_opt,
 
             if (maxent->class_size > 0) {
                 sz = maxent->model_opt.sz_c;
-                (void)posix_memalign((void **)&neu->wt_c, ALIGN_SIZE, sizeof(real_t) * sz);
-                if (neu->wt_c == NULL) {
+                if (posix_memalign((void **)&neu->wt_c, ALIGN_SIZE,
+                            sizeof(real_t) * sz) != 0
+                        || neu->wt_c == NULL) {
                     ST_WARNING("Failed to malloc wt_c.");
                     goto ERR;
                 }

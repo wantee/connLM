@@ -123,6 +123,17 @@ Table of performance is shown following:
     <td class="tg-5hgy">7.6734/204.13</td>
     <td class="tg-5hgy">7</td>
   </tr>
+  <tr>
+    <td class="tg-s6z2">7</td>
+    <td class="tg-s6z2">librispeech</td>
+    <td class="tg-s6z2">RNN+MaxEnt</td>
+    <td class="tg-s6z2">ASGD</td>
+    <td class="tg-s6z2">56hr26m23s/54k</td>
+    <td class="tg-s6z2">6.8646</td>
+    <td class="tg-s6z2">7.1655</td>
+    <td class="tg-s6z2">7.1050/137.66</td>
+    <td class="tg-s6z2">13</td>
+  </tr>
 </table>
 
   The Time/Speed column denotes the training time and speed. The unit of speed is words/sec.
@@ -440,7 +451,7 @@ Table of performance is shown following:
     <td class="tg-5hgy">librispeech</td>
     <td class="tg-5hgy">RNN</td>
     <td class="tg-5hgy">ASGD</td>
-    <td class="tg-5hgy">48hr34m35s/48</td>
+    <td class="tg-5hgy">48hr34m35s/48k</td>
     <td class="tg-5hgy">7.3028</td>
     <td class="tg-5hgy">7.5319</td>
     <td class="tg-5hgy">7.3660/164.96</td>
@@ -537,6 +548,57 @@ Table of performance is shown following:
     <td class="tg-s6z2"></td>
     <td class="tg-s6z2"></td>
   </tr>
+  <tr>
+    <td class="tg-5hgy">7</td>
+    <td class="tg-5hgy">librispeech</td>
+    <td class="tg-5hgy">RNN+MaxEnt</td>
+    <td class="tg-5hgy">ASGD</td>
+    <td class="tg-5hgy">56hr26m23s/54k</td>
+    <td class="tg-5hgy">6.8646</td>
+    <td class="tg-5hgy">7.1655</td>
+    <td class="tg-5hgy">7.1050/137.66</td>
+    <td class="tg-5hgy">13</td>
+    <td class="tg-5hgy">RNN+MaxEnt/ASGD(double)</td>
+    <td class="tg-5hgy">-8</td>
+    <td class="tg-5hgy">24</td>
+    <td class="tg-5hgy">200002</td>
+    <td class="tg-5hgy">350</td>
+    <td class="tg-5hgy">false</td>
+    <td class="tg-5hgy">1.0</td>
+    <td class="tg-5hgy">150</td>
+    <td class="tg-5hgy">0.01</td>
+    <td class="tg-5hgy">0.0</td>
+    <td class="tg-5hgy">0.0000001</td>
+    <td class="tg-5hgy">10</td>
+    <td class="tg-5hgy">0.0</td>
+    <td class="tg-5hgy">256</td>
+    <td class="tg-5hgy">5</td>
+    <td class="tg-5hgy">10</td>
+    <td class="tg-5hgy">1.0</td>
+    <td class="tg-5hgy">500M</td>
+    <td class="tg-5hgy">500M</td>
+    <td class="tg-5hgy">5</td>
+    <td class="tg-5hgy">0.1</td>
+    <td class="tg-5hgy">0.0</td>
+    <td class="tg-5hgy">0.0000001</td>
+    <td class="tg-5hgy">0</td>
+    <td class="tg-5hgy">0.0</td>
+    <td class="tg-5hgy">0.0</td>
+    <td class="tg-5hgy"></td>
+    <td class="tg-5hgy"></td>
+    <td class="tg-5hgy"></td>
+    <td class="tg-5hgy"></td>
+    <td class="tg-5hgy"></td>
+    <td class="tg-5hgy"></td>
+    <td class="tg-5hgy"></td>
+    <td class="tg-5hgy">0.0</td>
+    <td class="tg-5hgy"></td>
+    <td class="tg-5hgy"></td>
+    <td class="tg-5hgy"></td>
+    <td class="tg-5hgy"></td>
+    <td class="tg-5hgy"></td>
+    <td class="tg-5hgy"></td>
+  </tr>
 </table>
 
 Results for Kaldi rnnlm rescoring with librispeech corpus:
@@ -581,6 +643,10 @@ Details of rnnlm-hs-0.1b training:
 %WER 6.06 [ 3296 / 54402, 498 ins, 320 del, 2478 sub ] exp/tri6b/decode_tglarge_dev_clean_connlm_h300_mini256_t24_L0.5/wer_15
 %WER 5.96 [ 3240 / 54402, 486 ins, 311 del, 2443 sub ] exp/tri6b/decode_tglarge_dev_clean_connlm_h300_mini256_t24_L0.75/wer_15
 %WER 6.08 [ 3310 / 54402, 489 ins, 321 del, 2500 sub ] exp/tri6b/decode_tglarge_dev_clean_connlm_h300_mini256_t24_L1.0/wer_16
+%WER 6.62 [ 3603 / 54402, 510 ins, 394 del, 2699 sub ] exp/tri6b/decode_tglarge_dev_clean_connlm_double_L0.25/wer_16
+%WER 6.22 [ 3383 / 54402, 506 ins, 332 del, 2545 sub ] exp/tri6b/decode_tglarge_dev_clean_connlm_double_L0.5/wer_15
+%WER 6.17 [ 3355 / 54402, 517 ins, 314 del, 2524 sub ] exp/tri6b/decode_tglarge_dev_clean_connlm_double_L0.75/wer_15
+%WER 6.32 [ 3438 / 54402, 504 ins, 331 del, 2603 sub ] exp/tri6b/decode_tglarge_dev_clean_connlm_double_L1.0/wer_16
 
 %WER 22.09 [ 11253 / 50948, 1304 ins, 1531 del, 8418 sub ] exp/tri6b/decode_tglarge_dev_other/wer_16
 %WER 21.40 [ 10905 / 50948, 1390 ins, 1296 del, 8219 sub ] exp/tri6b/decode_tglarge_dev_other_rnnlm_h150_me5-1000_t24_L0.25/wer_15
@@ -599,6 +665,10 @@ Details of rnnlm-hs-0.1b training:
 %WER 19.73 [ 10054 / 50948, 1240 ins, 1284 del, 7530 sub ] exp/tri6b/decode_tglarge_dev_other_connlm_h300_mini256_t24_L0.5/wer_16
 %WER 19.54 [ 9953 / 50948, 1268 ins, 1205 del, 7480 sub ] exp/tri6b/decode_tglarge_dev_other_connlm_h300_mini256_t24_L0.75/wer_15
 %WER 19.73 [ 10052 / 50948, 1226 ins, 1308 del, 7518 sub ] exp/tri6b/decode_tglarge_dev_other_connlm_h300_mini256_t24_L1.0/wer_19
+%WER 20.68 [ 10535 / 50948, 1267 ins, 1365 del, 7903 sub ] exp/tri6b/decode_tglarge_dev_other_connlm_double_L0.25/wer_16
+%WER 20.02 [ 10198 / 50948, 1249 ins, 1321 del, 7628 sub ] exp/tri6b/decode_tglarge_dev_other_connlm_double_L0.5/wer_16
+%WER 19.89 [ 10135 / 50948, 1248 ins, 1261 del, 7626 sub ] exp/tri6b/decode_tglarge_dev_other_connlm_double_L0.75/wer_16
+%WER 20.02 [ 10200 / 50948, 1226 ins, 1301 del, 7673 sub ] exp/tri6b/decode_tglarge_dev_other_connlm_double_L1.0/wer_18
 
 %WER 9.62 [ 5231 / 54402, 579 ins, 687 del, 3965 sub ] exp/tri6b/decode_tgmed_dev_clean/wer_15
 %WER 8.27 [ 4497 / 54402, 596 ins, 490 del, 3411 sub ] exp/tri6b/decode_tgmed_dev_clean_rnnlm_h150_me5-1000_t24_L0.25/wer_14
@@ -617,6 +687,10 @@ Details of rnnlm-hs-0.1b training:
 %WER 6.78 [ 3688 / 54402, 491 ins, 415 del, 2782 sub ] exp/tri6b/decode_tgmed_dev_clean_connlm_h300_mini256_t24_L0.5/wer_15
 %WER 6.57 [ 3574 / 54402, 475 ins, 391 del, 2708 sub ] exp/tri6b/decode_tgmed_dev_clean_connlm_h300_mini256_t24_L0.75/wer_17
 %WER 6.53 [ 3553 / 54402, 510 ins, 365 del, 2678 sub ] exp/tri6b/decode_tgmed_dev_clean_connlm_h300_mini256_t24_L1.0/wer_15
+%WER 7.79 [ 4238 / 54402, 496 ins, 541 del, 3201 sub ] exp/tri6b/decode_tgmed_dev_clean_connlm_double_L0.25/wer_16
+%WER 6.97 [ 3792 / 54402, 529 ins, 427 del, 2836 sub ] exp/tri6b/decode_tgmed_dev_clean_connlm_double_L0.5/wer_14
+%WER 6.67 [ 3630 / 54402, 518 ins, 389 del, 2723 sub ] exp/tri6b/decode_tgmed_dev_clean_connlm_double_L0.75/wer_15
+%WER 6.68 [ 3632 / 54402, 516 ins, 378 del, 2738 sub ] exp/tri6b/decode_tgmed_dev_clean_connlm_double_L1.0/wer_16
 
 %WER 25.16 [ 12818 / 50948, 1148 ins, 2054 del, 9616 sub ] exp/tri6b/decode_tgmed_dev_other/wer_16
 %WER 23.58 [ 12012 / 50948, 1301 ins, 1639 del, 9072 sub ] exp/tri6b/decode_tgmed_dev_other_rnnlm_h150_me5-1000_t24_L0.25/wer_16
@@ -635,6 +709,10 @@ Details of rnnlm-hs-0.1b training:
 %WER 21.46 [ 10934 / 50948, 1199 ins, 1535 del, 8200 sub ] exp/tri6b/decode_tgmed_dev_other_connlm_h300_mini256_t24_L0.5/wer_16
 %WER 21.17 [ 10785 / 50948, 1207 ins, 1467 del, 8111 sub ] exp/tri6b/decode_tgmed_dev_other_connlm_h300_mini256_t24_L0.75/wer_16
 %WER 21.16 [ 10782 / 50948, 1201 ins, 1486 del, 8095 sub ] exp/tri6b/decode_tgmed_dev_other_connlm_h300_mini256_t24_L1.0/wer_19
+%WER 22.76 [ 11595 / 50948, 1243 ins, 1643 del, 8709 sub ] exp/tri6b/decode_tgmed_dev_other_connlm_double_L0.25/wer_15
+%WER 21.88 [ 11146 / 50948, 1233 ins, 1548 del, 8365 sub ] exp/tri6b/decode_tgmed_dev_other_connlm_double_L0.5/wer_16
+%WER 21.57 [ 10991 / 50948, 1264 ins, 1431 del, 8296 sub ] exp/tri6b/decode_tgmed_dev_other_connlm_double_L0.75/wer_15
+%WER 21.55 [ 10977 / 50948, 1238 ins, 1487 del, 8252 sub ] exp/tri6b/decode_tgmed_dev_other_connlm_double_L1.0/wer_19
 
 %WER 11.03 [ 5999 / 54402, 661 ins, 787 del, 4551 sub ] exp/tri6b/decode_tgsmall_dev_clean/wer_13
 %WER 8.83 [ 4801 / 54402, 618 ins, 536 del, 3647 sub ] exp/tri6b/decode_tgsmall_dev_clean_rnnlm_h150_me5-1000_t24_L0.25/wer_13
@@ -653,6 +731,10 @@ Details of rnnlm-hs-0.1b training:
 %WER 7.23 [ 3935 / 54402, 501 ins, 469 del, 2965 sub ] exp/tri6b/decode_tgsmall_dev_clean_connlm_h300_mini256_t24_L0.5/wer_15
 %WER 6.96 [ 3789 / 54402, 493 ins, 428 del, 2868 sub ] exp/tri6b/decode_tgsmall_dev_clean_connlm_h300_mini256_t24_L0.75/wer_16
 %WER 6.93 [ 3771 / 54402, 517 ins, 402 del, 2852 sub ] exp/tri6b/decode_tgsmall_dev_clean_connlm_h300_mini256_t24_L1.0/wer_15
+%WER 8.39 [ 4566 / 54402, 559 ins, 554 del, 3453 sub ] exp/tri6b/decode_tgsmall_dev_clean_connlm_double_L0.25/wer_13
+%WER 7.43 [ 4044 / 54402, 512 ins, 492 del, 3040 sub ] exp/tri6b/decode_tgsmall_dev_clean_connlm_double_L0.5/wer_15
+%WER 7.12 [ 3875 / 54402, 503 ins, 446 del, 2926 sub ] exp/tri6b/decode_tgsmall_dev_clean_connlm_double_L0.75/wer_16
+%WER 7.10 [ 3863 / 54402, 541 ins, 406 del, 2916 sub ] exp/tri6b/decode_tgsmall_dev_clean_connlm_double_L1.0/wer_14
 
 %WER 13.89 [ 7559 / 54402, 722 ins, 1150 del, 5687 sub ] exp/tri6b/decode_tgsmall_dev_clean.si/wer_13
 
@@ -673,6 +755,10 @@ Details of rnnlm-hs-0.1b training:
 %WER 22.70 [ 11564 / 50948, 1181 ins, 1664 del, 8719 sub ] exp/tri6b/decode_tgsmall_dev_other_connlm_h300_mini256_t24_L0.5/wer_15
 %WER 22.34 [ 11381 / 50948, 1189 ins, 1620 del, 8572 sub ] exp/tri6b/decode_tgsmall_dev_other_connlm_h300_mini256_t24_L0.75/wer_16
 %WER 22.29 [ 11357 / 50948, 1223 ins, 1560 del, 8574 sub ] exp/tri6b/decode_tgsmall_dev_other_connlm_h300_mini256_t24_L1.0/wer_16
+%WER 24.23 [ 12344 / 50948, 1201 ins, 1889 del, 9254 sub ] exp/tri6b/decode_tgsmall_dev_other_connlm_double_L0.25/wer_15
+%WER 23.03 [ 11731 / 50948, 1195 ins, 1713 del, 8823 sub ] exp/tri6b/decode_tgsmall_dev_other_connlm_double_L0.5/wer_16
+%WER 22.59 [ 11508 / 50948, 1202 ins, 1649 del, 8657 sub ] exp/tri6b/decode_tgsmall_dev_other_connlm_double_L0.75/wer_17
+%WER 22.58 [ 11504 / 50948, 1231 ins, 1613 del, 8660 sub ] exp/tri6b/decode_tgsmall_dev_other_connlm_double_L1.0/wer_18
 
 %WER 37.09 [ 18896 / 50948, 1415 ins, 3426 del, 14055 sub ] exp/tri6b/decode_tgsmall_dev_other.si/wer_13
 @endverbatim

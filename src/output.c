@@ -710,14 +710,16 @@ int output_setup_train(output_t *output, int num_thrs)
     for (t = 0; t < num_thrs; t++) {
         neu = output->neurons + t;
         if (class_size > 0) {
-            (void)posix_memalign((void **)&neu->ac_o_c, ALIGN_SIZE, sizeof(real_t) * class_size);
-            if (neu->ac_o_c == NULL) {
+            if (posix_memalign((void **)&neu->ac_o_c, ALIGN_SIZE,
+                        sizeof(real_t) * class_size) != 0
+                    || neu->ac_o_c == NULL) {
                 ST_WARNING("Failed to malloc ac_o_c.");
                 goto ERR;
             }
 
-            (void)posix_memalign((void **)&neu->er_o_c, ALIGN_SIZE, sizeof(real_t) * class_size);
-            if (neu->er_o_c == NULL) {
+            if (posix_memalign((void **)&neu->er_o_c, ALIGN_SIZE,
+                        sizeof(real_t) * class_size) != 0
+                    || neu->er_o_c == NULL) {
                 ST_WARNING("Failed to malloc er_o_c.");
                 goto ERR;
             }
@@ -728,14 +730,16 @@ int output_setup_train(output_t *output, int num_thrs)
             }
         }
 
-        (void)posix_memalign((void **)&neu->ac_o_w, ALIGN_SIZE, sizeof(real_t) * output->output_size);
-        if (neu->ac_o_w == NULL) {
+        if (posix_memalign((void **)&neu->ac_o_w, ALIGN_SIZE,
+                    sizeof(real_t) * output->output_size) != 0
+                || neu->ac_o_w == NULL) {
             ST_WARNING("Failed to malloc ac_o_w.");
             goto ERR;
         }
 
-        (void)posix_memalign((void **)&neu->er_o_w, ALIGN_SIZE, sizeof(real_t) * output->output_size);
-        if (neu->er_o_w == NULL) {
+        if (posix_memalign((void **)&neu->er_o_w, ALIGN_SIZE,
+                    sizeof(real_t) * output->output_size) != 0
+                || neu->er_o_w == NULL) {
             ST_WARNING("Failed to malloc er_o_w.");
             goto ERR;
         }
@@ -871,8 +875,9 @@ int output_setup_test(output_t *output, int num_thrs)
         neu = output->neurons + t;
 
         if (class_size > 0) {
-            (void)posix_memalign((void **)&neu->ac_o_c, ALIGN_SIZE, sizeof(real_t) * class_size);
-            if (neu->ac_o_c == NULL) {
+            if (posix_memalign((void **)&neu->ac_o_c, ALIGN_SIZE,
+                        sizeof(real_t) * class_size) != 0
+                    || neu->ac_o_c == NULL) {
                 ST_WARNING("Failed to malloc ac_o_c.");
                 goto ERR;
             }
@@ -882,8 +887,9 @@ int output_setup_test(output_t *output, int num_thrs)
             }
         }
 
-        (void)posix_memalign((void **)&neu->ac_o_w, ALIGN_SIZE, sizeof(real_t) * output->output_size);
-        if (neu->ac_o_w == NULL) {
+        if (posix_memalign((void **)&neu->ac_o_w, ALIGN_SIZE,
+                    sizeof(real_t) * output->output_size) != 0
+                || neu->ac_o_w == NULL) {
             ST_WARNING("Failed to malloc ac_o_w.");
             goto ERR;
         }
