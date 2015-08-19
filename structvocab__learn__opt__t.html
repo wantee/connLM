@@ -5,7 +5,7 @@
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.9.1"/>
-<title>connLM: output_neuron_t Struct Reference</title>
+<title>connLM: vocab_learn_opt_t Struct Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <link rel="shortcut icon" href="connlm.ico" type="image/x-icon" />
 <script type="text/javascript" src="jquery.js"></script>
@@ -91,7 +91,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
   </div>
 </div>
 <script type="text/javascript">
-$(document).ready(function(){initNavTree('structoutput__neuron__t.html','');});
+$(document).ready(function(){initNavTree('structvocab__learn__opt__t.html','');});
 </script>
 <div id="doc-content">
 <!-- window showing the filter options -->
@@ -112,99 +112,81 @@ $(document).ready(function(){initNavTree('structoutput__neuron__t.html','');});
   <div class="summary">
 <a href="#pub-attribs">Data Fields</a>  </div>
   <div class="headertitle">
-<div class="title">output_neuron_t Struct Reference<div class="ingroups"><a class="el" href="group__output.html">Output Layer</a></div></div>  </div>
+<div class="title">vocab_learn_opt_t Struct Reference<div class="ingroups"><a class="el" href="group__vocab.html">Vocab</a></div></div>  </div>
 </div><!--header-->
 <div class="contents">
 
-<p>Neuron of Output Layer.  
- <a href="structoutput__neuron__t.html#details">More...</a></p>
+<p>Parameters for learning Vocab.  
+ <a href="structvocab__learn__opt__t.html#details">More...</a></p>
 
-<p><code>#include &lt;<a class="el" href="output_8h_source.html">output.h</a>&gt;</code></p>
+<p><code>#include &lt;<a class="el" href="vocab_8h_source.html">vocab.h</a>&gt;</code></p>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-attribs"></a>
 Data Fields</h2></td></tr>
-<tr class="memitem:a2f6e07204418a2ddf05d572459d979f8"><td class="memItemLeft" align="right" valign="top">real_t *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structoutput__neuron__t.html#a2f6e07204418a2ddf05d572459d979f8">ac_o_w</a></td></tr>
-<tr class="memdesc:a2f6e07204418a2ddf05d572459d979f8"><td class="mdescLeft">&#160;</td><td class="mdescRight">activation of output of word part.  <a href="#a2f6e07204418a2ddf05d572459d979f8">More...</a><br /></td></tr>
-<tr class="separator:a2f6e07204418a2ddf05d572459d979f8"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:abeaa482db16a5635f6a65e2a9e56c9b8"><td class="memItemLeft" align="right" valign="top">real_t *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structoutput__neuron__t.html#abeaa482db16a5635f6a65e2a9e56c9b8">er_o_w</a></td></tr>
-<tr class="memdesc:abeaa482db16a5635f6a65e2a9e56c9b8"><td class="mdescLeft">&#160;</td><td class="mdescRight">error of output of word part.  <a href="#abeaa482db16a5635f6a65e2a9e56c9b8">More...</a><br /></td></tr>
-<tr class="separator:abeaa482db16a5635f6a65e2a9e56c9b8"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a68a9226399de4a99a2b2cc025aff180e"><td class="memItemLeft" align="right" valign="top">real_t *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structoutput__neuron__t.html#a68a9226399de4a99a2b2cc025aff180e">ac_o_c</a></td></tr>
-<tr class="memdesc:a68a9226399de4a99a2b2cc025aff180e"><td class="mdescLeft">&#160;</td><td class="mdescRight">activation of output of class part.  <a href="#a68a9226399de4a99a2b2cc025aff180e">More...</a><br /></td></tr>
-<tr class="separator:a68a9226399de4a99a2b2cc025aff180e"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a77ee8a7f180e16757c9197bbe1b576fd"><td class="memItemLeft" align="right" valign="top">real_t *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structoutput__neuron__t.html#a77ee8a7f180e16757c9197bbe1b576fd">er_o_c</a></td></tr>
-<tr class="memdesc:a77ee8a7f180e16757c9197bbe1b576fd"><td class="mdescLeft">&#160;</td><td class="mdescRight">error of output of class part.  <a href="#a77ee8a7f180e16757c9197bbe1b576fd">More...</a><br /></td></tr>
-<tr class="separator:a77ee8a7f180e16757c9197bbe1b576fd"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a55577abf5e81e0bbd95348082777eb2e"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structvocab__learn__opt__t.html#a55577abf5e81e0bbd95348082777eb2e">max_vocab_size</a></td></tr>
+<tr class="memdesc:a55577abf5e81e0bbd95348082777eb2e"><td class="mdescLeft">&#160;</td><td class="mdescRight">max number of words in vocab.  <a href="#a55577abf5e81e0bbd95348082777eb2e">More...</a><br /></td></tr>
+<tr class="separator:a55577abf5e81e0bbd95348082777eb2e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aaf298129c00f00f326b0d57028f54bbc"><td class="memItemLeft" align="right" valign="top">count_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structvocab__learn__opt__t.html#aaf298129c00f00f326b0d57028f54bbc">max_word_num</a></td></tr>
+<tr class="memdesc:aaf298129c00f00f326b0d57028f54bbc"><td class="mdescLeft">&#160;</td><td class="mdescRight">max number of words used to learn vocab.  <a href="#aaf298129c00f00f326b0d57028f54bbc">More...</a><br /></td></tr>
+<tr class="separator:aaf298129c00f00f326b0d57028f54bbc"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a61ae3b3824f0b6ece42049359251af26"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structvocab__learn__opt__t.html#a61ae3b3824f0b6ece42049359251af26">min_count</a></td></tr>
+<tr class="memdesc:a61ae3b3824f0b6ece42049359251af26"><td class="mdescLeft">&#160;</td><td class="mdescRight">min count for a word to be used in learning vocab.  <a href="#a61ae3b3824f0b6ece42049359251af26">More...</a><br /></td></tr>
+<tr class="separator:a61ae3b3824f0b6ece42049359251af26"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p>Neuron of Output Layer. </p>
-<p>Each neuron used in one single thread. </p>
+<div class="textblock"><p>Parameters for learning Vocab. </p>
 </div><h2 class="groupheader">Field Documentation</h2>
-<a class="anchor" id="a68a9226399de4a99a2b2cc025aff180e"></a>
+<a class="anchor" id="a55577abf5e81e0bbd95348082777eb2e"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">real_t* output_neuron_t::ac_o_c</td>
+          <td class="memname">int vocab_learn_opt_t::max_vocab_size</td>
         </tr>
       </table>
 </div><div class="memdoc">
 
-<p>activation of output of class part. </p>
+<p>max number of words in vocab. </p>
 
 </div>
 </div>
-<a class="anchor" id="a2f6e07204418a2ddf05d572459d979f8"></a>
+<a class="anchor" id="aaf298129c00f00f326b0d57028f54bbc"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">real_t* output_neuron_t::ac_o_w</td>
+          <td class="memname">count_t vocab_learn_opt_t::max_word_num</td>
         </tr>
       </table>
 </div><div class="memdoc">
 
-<p>activation of output of word part. </p>
+<p>max number of words used to learn vocab. </p>
 
 </div>
 </div>
-<a class="anchor" id="a77ee8a7f180e16757c9197bbe1b576fd"></a>
+<a class="anchor" id="a61ae3b3824f0b6ece42049359251af26"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">real_t* output_neuron_t::er_o_c</td>
+          <td class="memname">int vocab_learn_opt_t::min_count</td>
         </tr>
       </table>
 </div><div class="memdoc">
 
-<p>error of output of class part. </p>
-
-</div>
-</div>
-<a class="anchor" id="abeaa482db16a5635f6a65e2a9e56c9b8"></a>
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">real_t* output_neuron_t::er_o_w</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>error of output of word part. </p>
+<p>min count for a word to be used in learning vocab. </p>
 
 </div>
 </div>
 <hr/>The documentation for this struct was generated from the following file:<ul>
-<li><a class="el" href="output_8h_source.html">output.h</a></li>
+<li><a class="el" href="vocab_8h_source.html">vocab.h</a></li>
 </ul>
 </div><!-- contents -->
 </div><!-- doc-content -->
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="navelem"><a class="el" href="structoutput__neuron__t.html">output_neuron_t</a></li>
+    <li class="navelem"><a class="el" href="structvocab__learn__opt__t.html">vocab_learn_opt_t</a></li>
     <li class="footer">Generated on Wed Aug 19 2015 19:59:54 for connLM by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.9.1 </li>

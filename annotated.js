@@ -29,6 +29,7 @@ var annotated =
     [ "rnn_neuron_t", "structrnn__neuron__t.html", "structrnn__neuron__t" ],
     [ "rnn_t", "structrnn__t.html", "structrnn__t" ],
     [ "rnn_train_opt_t", "structrnn__train__opt__t.html", "structrnn__train__opt__t" ],
+    [ "vocab_learn_opt_t", "structvocab__learn__opt__t.html", "structvocab__learn__opt__t" ],
     [ "vocab_opt_t", "structvocab__opt__t.html", "structvocab__opt__t" ],
     [ "vocab_t", "structvocab__t.html", "structvocab__t" ]
 ];

@@ -215,11 +215,13 @@ $(document).ready(function(){initNavTree('output_8h_source.html','');});
 <div class="line"><a name="l00348"></a><span class="lineno">  348</span>&#160;<span class="keywordtype">int</span> <a class="code" href="group__output.html#ga4f8e091a9eed6151cdaccc8c1bff6de8">output_reset_gen</a>(<a class="code" href="structoutput__t.html">output_t</a> *output);</div>
 <div class="line"><a name="l00357"></a><span class="lineno">  357</span>&#160;<span class="keywordtype">int</span> <a class="code" href="group__output.html#gab4e4161e16ac8289d7297745b77f10f3">output_end_gen</a>(<a class="code" href="structoutput__t.html">output_t</a> *output, <span class="keywordtype">int</span> word);</div>
 <div class="line"><a name="l00358"></a><span class="lineno">  358</span>&#160;</div>
-<div class="line"><a name="l00359"></a><span class="lineno">  359</span>&#160;<span class="preprocessor">#ifdef __cplusplus</span></div>
-<div class="line"><a name="l00360"></a><span class="lineno">  360</span>&#160;}</div>
-<div class="line"><a name="l00361"></a><span class="lineno">  361</span>&#160;<span class="preprocessor">#endif</span></div>
-<div class="line"><a name="l00362"></a><span class="lineno">  362</span>&#160;</div>
-<div class="line"><a name="l00363"></a><span class="lineno">  363</span>&#160;<span class="preprocessor">#endif</span></div>
+<div class="line"><a name="l00366"></a><span class="lineno">  366</span>&#160;<span class="keywordtype">bool</span> <a class="code" href="group__output.html#ga5d4a5743fae3b346e6d74350b840c217">output_equal</a>(<a class="code" href="structoutput__t.html">output_t</a> *output1, <a class="code" href="structoutput__t.html">output_t</a> *output2);</div>
+<div class="line"><a name="l00367"></a><span class="lineno">  367</span>&#160;</div>
+<div class="line"><a name="l00368"></a><span class="lineno">  368</span>&#160;<span class="preprocessor">#ifdef __cplusplus</span></div>
+<div class="line"><a name="l00369"></a><span class="lineno">  369</span>&#160;}</div>
+<div class="line"><a name="l00370"></a><span class="lineno">  370</span>&#160;<span class="preprocessor">#endif</span></div>
+<div class="line"><a name="l00371"></a><span class="lineno">  371</span>&#160;</div>
+<div class="line"><a name="l00372"></a><span class="lineno">  372</span>&#160;<span class="preprocessor">#endif</span></div>
 <div class="ttc" id="group__output_html_gaccf071662f4ea63c39a53af4da5ed548"><div class="ttname"><a href="group__output.html#gaccf071662f4ea63c39a53af4da5ed548">output_get_class_prob</a></div><div class="ttdeci">double output_get_class_prob(output_t *output, int word, int tid)</div><div class="ttdoc">Get class probability of a word. </div></div>
 <div class="ttc" id="group__output_html_ga051c41bfbc88ac2134b6462b27236df6"><div class="ttname"><a href="group__output.html#ga051c41bfbc88ac2134b6462b27236df6">output_activate_pre_layer</a></div><div class="ttdeci">int output_activate_pre_layer(output_t *output, int tid)</div><div class="ttdoc">Activate neurons of pre output layer. </div></div>
 <div class="ttc" id="group__output_html_ga294ede6745f4dda4b6d056581997dd65"><div class="ttname"><a href="group__output.html#ga294ede6745f4dda4b6d056581997dd65">output_loss</a></div><div class="ttdeci">int output_loss(output_t *output, int word, int tid)</div><div class="ttdoc">Compute loss of neurons of output layer. </div></div>
@@ -256,6 +258,7 @@ $(document).ready(function(){initNavTree('output_8h_source.html','');});
 <div class="ttc" id="group__output_html_gaccd85b3963f1fd4d22712ea90db1f609"><div class="ttname"><a href="group__output.html#gaccd85b3963f1fd4d22712ea90db1f609">output_generate</a></div><div class="ttdeci">int output_generate(output_t *output, count_t *word_cnts)</div><div class="ttdoc">Generate output layer with word counts. </div></div>
 <div class="ttc" id="structoutput__neuron__t_html"><div class="ttname"><a href="structoutput__neuron__t.html">output_neuron_t</a></div><div class="ttdoc">Neuron of Output Layer. </div><div class="ttdef"><b>Definition:</b> output.h:55</div></div>
 <div class="ttc" id="group__output_html_ga02349bb14d51c8d43f1fcc8435ff3701"><div class="ttname"><a href="group__output.html#ga02349bb14d51c8d43f1fcc8435ff3701">output_create</a></div><div class="ttdeci">output_t * output_create(output_opt_t *output_opt, int output_size)</div><div class="ttdoc">Create a output layer with options. </div></div>
+<div class="ttc" id="group__output_html_ga5d4a5743fae3b346e6d74350b840c217"><div class="ttname"><a href="group__output.html#ga5d4a5743fae3b346e6d74350b840c217">output_equal</a></div><div class="ttdeci">bool output_equal(output_t *output1, output_t *output2)</div><div class="ttdoc">Whether two output layer is equal. </div></div>
 <div class="ttc" id="group__output_html_ga7cc6c6b10c16d6ed79d67d56dc1acf87"><div class="ttname"><a href="group__output.html#ga7cc6c6b10c16d6ed79d67d56dc1acf87">output_start_train</a></div><div class="ttdeci">int output_start_train(output_t *output, int word, int tid)</div><div class="ttdoc">Start training for output layer. </div></div>
 <div class="ttc" id="structoutput__t_html_a8158d22bf9aae5458dfe46699035c865"><div class="ttname"><a href="structoutput__t.html#a8158d22bf9aae5458dfe46699035c865">output_t::c2w_s</a></div><div class="ttdeci">int * c2w_s</div><div class="ttdoc">start for class to word map. </div><div class="ttdef"><b>Definition:</b> output.h:77</div></div>
 <div class="ttc" id="group__output_html_ga73829da4604eb9196159b856acf5bef1"><div class="ttname"><a href="group__output.html#ga73829da4604eb9196159b856acf5bef1">output_load_header</a></div><div class="ttdeci">int output_load_header(output_t **output, FILE *fp, bool *binary, FILE *fo)</div><div class="ttdoc">Load output layer header and initialise a new output layer. </div></div>
@@ -270,7 +273,7 @@ $(document).ready(function(){initNavTree('output_8h_source.html','');});
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><b>output.h</b></li>
-    <li class="footer">Generated on Thu Aug 6 2015 15:30:20 for connLM by
+    <li class="footer">Generated on Wed Aug 19 2015 19:59:54 for connLM by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.9.1 </li>
   </ul>

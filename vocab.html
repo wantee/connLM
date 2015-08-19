@@ -5,7 +5,7 @@
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.9.1"/>
-<title>connLM: Related Pages</title>
+<title>connLM: The Vocabulary</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <link rel="shortcut icon" href="connlm.ico" type="image/x-icon" />
 <script type="text/javascript" src="jquery.js"></script>
@@ -84,7 +84,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
   </div>
 </div>
 <script type="text/javascript">
-$(document).ready(function(){initNavTree('pages.html','');});
+$(document).ready(function(){initNavTree('vocab.html','');});
 </script>
 <div id="doc-content">
 <!-- window showing the filter options -->
@@ -103,18 +103,43 @@ $(document).ready(function(){initNavTree('pages.html','');});
 
 <div class="header">
   <div class="headertitle">
-<div class="title">Related Pages</div>  </div>
+<div class="title">The Vocabulary </div>  </div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock">Here is a list of all related documentation pages:</div><div class="directory">
-<table class="directory">
-</table>
-</div><!-- directory -->
-</div><!-- contents -->
+<div class="textblock"><h1><a class="anchor" id="intro"></a>
+Introduction</h1>
+<p>Vocabulary in connLM is used to map word strings into integer ids and verse vice.</p>
+<p>Vocabulary should be learned from dataset, usually one would use the train corpus. After learned, the words in vocabulary is sorted by their counts in the corpus, this count information is also stored to be passed to output layer for generating word classes.</p>
+<h1><a class="anchor" id="usage"></a>
+Usage</h1>
+<p>Vocabulary related source code is in <a class="el" href="vocab_8h_source.html">vocab.h</a>. vocab_learn can be called to learn vocabulary from text. <a class="el" href="group__vocab.html#gab9ccab0c8afb58ef65357356b470c7fd" title="Get id of a word. ">vocab_get_id()</a> and <a class="el" href="group__vocab.html#ga2c4a395692c4291436693e0a5ad0912d" title="Get string of a word id. ">vocab_get_word()</a> is used to map between the word string and word id.</p>
+<p>The command line interface for learning vocabulary is <code>connlm-vocab</code>, available options are:</p>
+<div class="fragment"><div class="line">$ connlm-vocab --help</div>
+<div class="line">Usage    : connlm-vocab [options] &lt;train-file&gt; &lt;model-out&gt;</div>
+<div class="line"></div>
+<div class="line">Options  : </div>
+<div class="line">  --help                     : Print help (<span class="keywordtype">bool</span>, <span class="keywordflow">default</span> = <span class="keyword">false</span>)</div>
+<div class="line">  --log-file                 : Log file (<span class="keywordtype">string</span>, <span class="keywordflow">default</span> = <span class="stringliteral">&quot;/dev/stderr&quot;</span>)</div>
+<div class="line">  --log-level                : Log level (1-8) (int, <span class="keywordflow">default</span> = 8)</div>
+<div class="line">  --max-alphabet-size        : Maximum size of alphabet <span class="keywordflow">for</span> vocab. (<span class="keywordtype">int</span>, <span class="keywordflow">default</span> = 10000000)</div>
+<div class="line">  --max-vocab-size           : Maximum size of Vocabulary. 0 denotes no limit. (int, <span class="keywordflow">default</span> = 0)</div>
+<div class="line">  --max-word-num             : Maximum number of words used to learn vocab. 0 denotes no limit. (ulong, <span class="keywordflow">default</span> = 0)</div>
+<div class="line">  --min-count                : Mininum count <span class="keywordflow">for</span> a word to be used in learning vocab. 0 denotes no limit. (int, <span class="keywordflow">default</span> = 0)</div>
+<div class="line">  --binary                   : Save file as binary format (<span class="keywordtype">bool</span>, <span class="keywordflow">default</span> = <span class="keyword">true</span>)</div>
+<div class="line">  --config                   : config file (<span class="keywordtype">string</span>, <span class="keywordflow">default</span> = <span class="stringliteral">&quot;&quot;</span>)</div>
+</div><!-- fragment --><p><code>&ndash;max-alphabet-size</code> restrict max size of vocabulary can be learned.</p>
+<p>When training large corpus, one would not like to learn the vocabulary by going through the whole corpus. Thus, we can use the <code>&ndash;max-word-num</code> option, which controls the maximum number of words used to learn vocabulary.</p>
+<h1><a class="anchor" id="limited"></a>
+Limited Vocabulary</h1>
+<p>The learning process can be finer controlled to support the usage of limited vocabulary.</p>
+<p>A manually procedure to limit vocabulary could be: replace the out-of-vocabulary words to a special token, like <code>&lt;unk&gt;</code>, and then training with the processed data.</p>
+<p>connLM comes with two different ways to avoid above preprocessing. First, one can restrict the size of learned vocabulary explicitly by passing the parameter with <code>&ndash;max-vocab-size</code> option. Second, one can specify a minimum occurrences for a word to be added to vocabulary, which is accomplished by <code>&ndash;min-count</code> option, i.e., any word occurs less than min-count times will be ignored. In both methods, the remaining words are the most frequent words. </p>
+</div></div><!-- contents -->
 </div><!-- doc-content -->
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
+    <li class="navelem"><a class="el" href="index.html">connLM</a></li>
     <li class="footer">Generated on Wed Aug 19 2015 19:59:54 for connLM by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.9.1 </li>

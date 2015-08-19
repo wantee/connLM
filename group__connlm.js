@@ -23,8 +23,7 @@ var group__connlm =
     [ "connlm_test_opt_t", "structconnlm__test__opt__t.html", [
       [ "debug_file", "structconnlm__test__opt__t.html#ab5cac0150ebcfb7cf4c5531d0e6bdaf5", null ],
       [ "epoch_size", "structconnlm__test__opt__t.html#ada23e7920e628a6cedbf2322f414fea8", null ],
-      [ "num_thread", "structconnlm__test__opt__t.html#a7aa3604a4bf9169e2f18efaa845059e7", null ],
-      [ "oov_penalty", "structconnlm__test__opt__t.html#a3c165ee1812aa499199254a7e2684134", null ]
+      [ "num_thread", "structconnlm__test__opt__t.html#a7aa3604a4bf9169e2f18efaa845059e7", null ]
     ] ],
     [ "connlm_gen_opt_t", "structconnlm__gen__opt__t.html", [
       [ "prefix_file", "structconnlm__gen__opt__t.html#a039d9df611d5a43cd826d216dc877467", null ],
@@ -88,5 +87,6 @@ var group__connlm =
     [ "connlm_start_test", "group__connlm.html#ga32084f4a83a4a406933a5877fdd6726a", null ],
     [ "connlm_start_train", "group__connlm.html#ga285f40d04228ee0dd05bad7df95722fe", null ],
     [ "connlm_test", "group__connlm.html#gab65c887fc91dd797891764844e0bb97b", null ],
-    [ "connlm_train", "group__connlm.html#ga9ac420c4728b4a9062e5a87b7df558b9", null ]
+    [ "connlm_train", "group__connlm.html#ga9ac420c4728b4a9062e5a87b7df558b9", null ],
+    [ "parse_model_filter", "group__connlm.html#ga948e67d910be79aa747b7e2b9e81a05d", null ]
 ];

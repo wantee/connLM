@@ -122,6 +122,9 @@ Data Structures</h2></td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structvocab__t.html">vocab_t</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Vocab.  <a href="structvocab__t.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structvocab__learn__opt__t.html">vocab_learn_opt_t</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Parameters for learning Vocab.  <a href="structvocab__learn__opt__t.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="define-members"></a>
 Macros</h2></td></tr>
@@ -155,9 +158,12 @@ Functions</h2></td></tr>
 <tr class="memitem:gafe0e19ff216e228fc48eecff0f84df41"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__vocab.html#gafe0e19ff216e228fc48eecff0f84df41">vocab_save_body</a> (<a class="el" href="structvocab__t.html">vocab_t</a> *vocab, FILE *fp, bool binary)</td></tr>
 <tr class="memdesc:gafe0e19ff216e228fc48eecff0f84df41"><td class="mdescLeft">&#160;</td><td class="mdescRight">Save vocab body.  <a href="#gafe0e19ff216e228fc48eecff0f84df41">More...</a><br /></td></tr>
 <tr class="separator:gafe0e19ff216e228fc48eecff0f84df41"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:gaafd51d361db401e804a4081427813a22"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__vocab.html#gaafd51d361db401e804a4081427813a22">vocab_learn</a> (<a class="el" href="structvocab__t.html">vocab_t</a> *vocab, FILE *fp, count_t max_word_num)</td></tr>
-<tr class="memdesc:gaafd51d361db401e804a4081427813a22"><td class="mdescLeft">&#160;</td><td class="mdescRight">Learn vocab form corpus.  <a href="#gaafd51d361db401e804a4081427813a22">More...</a><br /></td></tr>
-<tr class="separator:gaafd51d361db401e804a4081427813a22"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gafd0c159ff7804f28527d6027e092c731"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__vocab.html#gafd0c159ff7804f28527d6027e092c731">vocab_load_learn_opt</a> (<a class="el" href="structvocab__learn__opt__t.html">vocab_learn_opt_t</a> *lr_opt, st_opt_t *opt, const char *sec_name)</td></tr>
+<tr class="memdesc:gafd0c159ff7804f28527d6027e092c731"><td class="mdescLeft">&#160;</td><td class="mdescRight">Load learn vocab option.  <a href="#gafd0c159ff7804f28527d6027e092c731">More...</a><br /></td></tr>
+<tr class="separator:gafd0c159ff7804f28527d6027e092c731"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gada8a43dcf1095da62ba2d161439c84af"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__vocab.html#gada8a43dcf1095da62ba2d161439c84af">vocab_learn</a> (<a class="el" href="structvocab__t.html">vocab_t</a> *vocab, FILE *fp, <a class="el" href="structvocab__learn__opt__t.html">vocab_learn_opt_t</a> *lr_opt)</td></tr>
+<tr class="memdesc:gada8a43dcf1095da62ba2d161439c84af"><td class="mdescLeft">&#160;</td><td class="mdescRight">Learn vocab from corpus.  <a href="#gada8a43dcf1095da62ba2d161439c84af">More...</a><br /></td></tr>
+<tr class="separator:gada8a43dcf1095da62ba2d161439c84af"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:gab9ccab0c8afb58ef65357356b470c7fd"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__vocab.html#gab9ccab0c8afb58ef65357356b470c7fd">vocab_get_id</a> (<a class="el" href="structvocab__t.html">vocab_t</a> *vocab, const char *word)</td></tr>
 <tr class="memdesc:gab9ccab0c8afb58ef65357356b470c7fd"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get id of a word.  <a href="#gab9ccab0c8afb58ef65357356b470c7fd">More...</a><br /></td></tr>
 <tr class="separator:gab9ccab0c8afb58ef65357356b470c7fd"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -167,6 +173,9 @@ Functions</h2></td></tr>
 <tr class="memitem:ga258a460aea836dc51c239145350236ca"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__vocab.html#ga258a460aea836dc51c239145350236ca">vocab_add_word</a> (<a class="el" href="structvocab__t.html">vocab_t</a> *vocab, const char *word)</td></tr>
 <tr class="memdesc:ga258a460aea836dc51c239145350236ca"><td class="mdescLeft">&#160;</td><td class="mdescRight">Add a word to vocab.  <a href="#ga258a460aea836dc51c239145350236ca">More...</a><br /></td></tr>
 <tr class="separator:ga258a460aea836dc51c239145350236ca"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga946c23cf987be68b41cea9a7d3dc461a"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__vocab.html#ga946c23cf987be68b41cea9a7d3dc461a">vocab_equal</a> (<a class="el" href="structvocab__t.html">vocab_t</a> *vocab1, <a class="el" href="structvocab__t.html">vocab_t</a> *vocab2)</td></tr>
+<tr class="memdesc:ga946c23cf987be68b41cea9a7d3dc461a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Whether two vocab is equal.  <a href="#ga946c23cf987be68b41cea9a7d3dc461a">More...</a><br /></td></tr>
+<tr class="separator:ga946c23cf987be68b41cea9a7d3dc461a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <p>Data structures and functions for Vocab. </p>
@@ -314,6 +323,42 @@ Functions</h2></td></tr>
 
 </div>
 </div>
+<a class="anchor" id="ga946c23cf987be68b41cea9a7d3dc461a"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool vocab_equal </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structvocab__t.html">vocab_t</a> *&#160;</td>
+          <td class="paramname"><em>vocab1</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="structvocab__t.html">vocab_t</a> *&#160;</td>
+          <td class="paramname"><em>vocab2</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Whether two vocab is equal. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">vocab1</td><td>first vocab. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">vocab2</td><td>second vocab. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true, if equal, false otherwise. </dd></dl>
+
+</div>
+</div>
 <a class="anchor" id="gab9ccab0c8afb58ef65357356b470c7fd"></a>
 <div class="memitem">
 <div class="memproto">
@@ -386,7 +431,7 @@ Functions</h2></td></tr>
 
 </div>
 </div>
-<a class="anchor" id="gaafd51d361db401e804a4081427813a22"></a>
+<a class="anchor" id="gada8a43dcf1095da62ba2d161439c84af"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
@@ -405,8 +450,8 @@ Functions</h2></td></tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">count_t&#160;</td>
-          <td class="paramname"><em>max_word_num</em>&#160;</td>
+          <td class="paramtype"><a class="el" href="structvocab__learn__opt__t.html">vocab_learn_opt_t</a> *&#160;</td>
+          <td class="paramname"><em>lr_opt</em>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -416,12 +461,12 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Learn vocab form corpus. </p>
+<p>Learn vocab from corpus. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramdir">[in]</td><td class="paramname">vocab</td><td>vocab to be learned. </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">fp</td><td>file stream for corpus. </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">max_word_num</td><td>if larger than 0, just learn form first max_word_num words </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">lr_opt</td><td>option for learning vocab. </td></tr>
   </table>
   </dd>
 </dl>
@@ -524,6 +569,49 @@ Functions</h2></td></tr>
 <dl class="section see"><dt>See also</dt><dd><a class="el" href="group__vocab.html#gaca4863b831352149fb02da4aca5273bf" title="Load vocab body. ">vocab_load_body</a> </dd>
 <dd>
 <a class="el" href="group__vocab.html#gac1541778f49a1024a87b65a45b53755d" title="Save vocab header. ">vocab_save_header</a>, <a class="el" href="group__vocab.html#gafe0e19ff216e228fc48eecff0f84df41" title="Save vocab body. ">vocab_save_body</a> </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>non-zero value if any error. </dd></dl>
+
+</div>
+</div>
+<a class="anchor" id="gafd0c159ff7804f28527d6027e092c731"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int vocab_load_learn_opt </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structvocab__learn__opt__t.html">vocab_learn_opt_t</a> *&#160;</td>
+          <td class="paramname"><em>lr_opt</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">st_opt_t *&#160;</td>
+          <td class="paramname"><em>opt</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const char *&#160;</td>
+          <td class="paramname"><em>sec_name</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Load learn vocab option. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[out]</td><td class="paramname">lr_opt</td><td>options loaded. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">opt</td><td>runtime options passed by caller. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">sec_name</td><td>section name of runtime options to be loaded. </td></tr>
+  </table>
+  </dd>
+</dl>
 <dl class="section return"><dt>Returns</dt><dd>non-zero value if any error. </dd></dl>
 
 </div>
@@ -668,7 +756,7 @@ Functions</h2></td></tr>
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on Thu Aug 6 2015 15:30:20 for connLM by
+    <li class="footer">Generated on Wed Aug 19 2015 19:59:54 for connLM by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.9.1 </li>
   </ul>

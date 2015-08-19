@@ -8,6 +8,7 @@ var searchData=
   ['output_5fend_5fgen',['output_end_gen',['../group__output.html#gab4e4161e16ac8289d7297745b77f10f3',1,'output.h']]],
   ['output_5fend_5ftest',['output_end_test',['../group__output.html#ga950e1535f6a2462685ac77bae6ed2002',1,'output.h']]],
   ['output_5fend_5ftrain',['output_end_train',['../group__output.html#ga39e5bd4eb04ed225317245c3960642c9',1,'output.h']]],
+  ['output_5fequal',['output_equal',['../group__output.html#ga5d4a5743fae3b346e6d74350b840c217',1,'output.h']]],
   ['output_5ffinish_5ftrain',['output_finish_train',['../group__output.html#ga6e458653c6034a3f3208384432437230',1,'output.h']]],
   ['output_5fgenerate',['output_generate',['../group__output.html#gaccd85b3963f1fd4d22712ea90db1f609',1,'output.h']]],
   ['output_5fget_5fclass_5fprob',['output_get_class_prob',['../group__output.html#gaccf071662f4ea63c39a53af4da5ed548',1,'output.h']]],
