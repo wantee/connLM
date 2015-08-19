@@ -58,6 +58,11 @@ typedef long long hash_size_t;
 #  define _MINI_UPDATE_
 #endif
 
+#define SENT_END "</s>"
+#define SENT_END_ID 0
+#define UNK "<unk>"
+#define UNK_ID 1
+
 #ifdef __cplusplus
 }
 #endif

@@ -43,7 +43,7 @@ extern "C" {
  * @ingroup vocab
  */
 typedef struct _vocab_opt_t_ {
-    int max_vocab_size; /**< max number of words in vocab. */
+    int max_alphabet_size; /**< max size of alphabet. */
 } vocab_opt_t;
 
 /**
@@ -150,14 +150,35 @@ int vocab_save_header(vocab_t *vocab, FILE *fp, bool binary);
 int vocab_save_body(vocab_t *vocab, FILE *fp, bool binary);
 
 /**
- * Learn vocab form corpus.
+ * Parameters for learning Vocab.
+ * @ingroup vocab
+ */
+typedef struct _vocab_learn_opt_t_ {
+    int max_vocab_size; /**< max number of words in vocab. */
+    count_t max_word_num; /**< max number of words used to learn vocab. */
+    int min_count; /**< min count for a word to be used in learning vocab. */
+} vocab_learn_opt_t;
+
+/**
+ * Load learn vocab option.
+ * @ingroup vocab
+ * @param[out] lr_opt options loaded.
+ * @param[in] opt runtime options passed by caller.
+ * @param[in] sec_name section name of runtime options to be loaded.
+ * @return non-zero value if any error.
+ */
+int vocab_load_learn_opt(vocab_learn_opt_t *lr_opt, st_opt_t *opt,
+        const char *sec_name);
+
+/**
+ * Learn vocab from corpus.
  * @ingroup vocab
  * @param[in] vocab vocab to be learned.
  * @param[in] fp file stream for corpus.
- * @param[in] max_word_num if larger than 0, just learn form first max_word_num words
+ * @param[in] lr_opt option for learning vocab.
  * @return non-zero value if any error.
  */
-int vocab_learn(vocab_t *vocab, FILE *fp, count_t max_word_num);
+int vocab_learn(vocab_t *vocab, FILE *fp, vocab_learn_opt_t *lr_opt);
 
 /**
  * Get id of a word.

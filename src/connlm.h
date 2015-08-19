@@ -93,8 +93,6 @@ typedef struct _connlm_test_opt_t_ {
 
     int epoch_size; /**< number sentences read one time per thread. */
 
-    real_t oov_penalty;       /**< penalty for OOV. */
-
     char debug_file[MAX_DIR_LEN]; /**< file to print out debug infos. */
 } connlm_test_opt_t;
 

@@ -815,11 +815,7 @@ int rnn_backprop(rnn_t *rnn, int word, int tid)
 
     param_t param;
 
-    ST_CHECK_PARAM(rnn == NULL || tid < 0, -1);
-
-    if (word < 0) {
-        return 0;
-    }
+    ST_CHECK_PARAM(rnn == NULL || tid < 0 || word < 0, -1);
 
     neu = rnn->neurons + tid;
     output_neu = rnn->output->neurons + tid;

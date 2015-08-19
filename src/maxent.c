@@ -968,11 +968,7 @@ int maxent_backprop(maxent_t *maxent, int word, int tid)
     int s;
     int e;
 
-    ST_CHECK_PARAM(maxent == NULL || tid < 0, -1);
-
-    if (word < 0) {
-        return 0;
-    }
+    ST_CHECK_PARAM(maxent == NULL || tid < 0 || word < 0, -1);
 
     if (maxent->class_size > 0) {
         c = maxent->output->w2c[word];

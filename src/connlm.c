@@ -58,7 +58,7 @@ static int connlm_egs_ensure(connlm_egs_t *egs, int capacity)
     if (egs->capacity < capacity) {
         egs->words = realloc(egs->words, sizeof(int)*capacity);
         if (egs->words == NULL) {
-            ST_WARNING("Failed to realloc egs->words. capacity[%d]", 
+            ST_WARNING("Failed to realloc egs->words. capacity[%d]",
                     capacity);
             return -1;
         }
@@ -83,17 +83,13 @@ static int connlm_egs_print(FILE *fp, pthread_mutex_t *fp_lock,
     while (i < egs->size) {
         (void)pthread_mutex_lock(fp_lock);
         fprintf(fp, "<EGS>: ");
-        while (egs->words[i] != 0 && i < egs->size) {
+        while (egs->words[i] != SENT_END_ID && i < egs->size) {
             word = egs->words[i];
 
-            if (word > 0) {
-                if (vocab != NULL) {
-                    fprintf(fp, "%s", vocab_get_word(vocab, word));
-                } else {
-                    fprintf(fp, "<%d>", word);
-                }
+            if (vocab != NULL) {
+                fprintf(fp, "%s", vocab_get_word(vocab, word));
             } else {
-                fprintf(fp, "<OOV>");
+                fprintf(fp, "<%d>", word);
             }
             if (i < egs->size - 1 && egs->words[i+1] != 0) {
                 fprintf(fp, " ");
@@ -109,7 +105,7 @@ static int connlm_egs_print(FILE *fp, pthread_mutex_t *fp_lock,
     return 0;
 }
 
-int connlm_load_model_opt(connlm_model_opt_t *model_opt, 
+int connlm_load_model_opt(connlm_model_opt_t *model_opt,
         st_opt_t *opt, const char *sec_name)
 {
     char name[MAX_ST_CONF_LEN];
@@ -165,7 +161,7 @@ ST_OPT_ERR:
     return -1;
 }
 
-int connlm_load_train_opt(connlm_train_opt_t *train_opt, 
+int connlm_load_train_opt(connlm_train_opt_t *train_opt,
         st_opt_t *opt, const char *sec_name)
 {
     char name[MAX_ST_CONF_LEN];
@@ -244,11 +240,9 @@ ST_OPT_ERR:
     return -1;
 }
 
-int connlm_load_test_opt(connlm_test_opt_t *test_opt, 
+int connlm_load_test_opt(connlm_test_opt_t *test_opt,
         st_opt_t *opt, const char *sec_name)
 {
-    double d;
-
     ST_CHECK_PARAM(test_opt == NULL || opt == NULL, -1);
 
     ST_OPT_SEC_GET_INT(opt, sec_name, "NUM_THREAD",
@@ -258,10 +252,6 @@ int connlm_load_test_opt(connlm_test_opt_t *test_opt,
             test_opt->epoch_size, 10,
             "Number of sentences read in one epoch per thread (in kilos)");
     test_opt->epoch_size *= 1000;
-
-    ST_OPT_SEC_GET_DOUBLE(opt, sec_name, "OOV_PENALTY",
-            d, -8, "Penalty of OOV");
-    test_opt->oov_penalty = (real_t)d;
 
     ST_OPT_SEC_GET_STR(opt, sec_name, "DEBUG_FILE",
             test_opt->debug_file, MAX_DIR_LEN, "",
@@ -273,7 +263,7 @@ ST_OPT_ERR:
     return -1;
 }
 
-int connlm_load_gen_opt(connlm_gen_opt_t *gen_opt, 
+int connlm_load_gen_opt(connlm_gen_opt_t *gen_opt,
         st_opt_t *opt, const char *sec_name)
 {
     ST_CHECK_PARAM(gen_opt == NULL || opt == NULL, -1);
@@ -381,7 +371,7 @@ connlm_t *connlm_new(vocab_t *vocab, output_t *output,
 {
     connlm_t *connlm = NULL;
 
-    ST_CHECK_PARAM(vocab == NULL && output == NULL 
+    ST_CHECK_PARAM(vocab == NULL && output == NULL
             && rnn == NULL && maxent == NULL
             && lbl == NULL && ffnn == NULL, NULL);
 
@@ -614,7 +604,7 @@ static int connlm_load_header(connlm_t *connlm, FILE *fp,
     return 0;
 }
 
-static int connlm_load_body(connlm_t *connlm, FILE *fp, bool binary) 
+static int connlm_load_body(connlm_t *connlm, FILE *fp, bool binary)
 {
     ST_CHECK_PARAM(connlm == NULL || fp == NULL, -1);
 
@@ -770,7 +760,7 @@ static int connlm_save_header(connlm_t *connlm, FILE *fp, bool binary)
     return 0;
 }
 
-static int connlm_save_body(connlm_t *connlm, FILE *fp, bool binary) 
+static int connlm_save_body(connlm_t *connlm, FILE *fp, bool binary)
 {
     ST_CHECK_PARAM(connlm == NULL || fp == NULL, -1);
 
@@ -836,7 +826,7 @@ int connlm_save(connlm_t *connlm, FILE *fp, bool binary)
 }
 
 static int connlm_get_egs(connlm_egs_t *egs, int *sent_ends,
-        int epoch_size, FILE *text_fp, vocab_t *vocab)
+        int epoch_size, FILE *text_fp, vocab_t *vocab, int *oovs)
 {
     char *line = NULL;
     size_t line_sz = 0;
@@ -845,6 +835,7 @@ static int connlm_get_egs(connlm_egs_t *egs, int *sent_ends,
     char *p;
 
     int num_sents;
+    int oov;
     int i;
 
     bool err;
@@ -854,6 +845,7 @@ static int connlm_get_egs(connlm_egs_t *egs, int *sent_ends,
 
     err = false;
     num_sents = 0;
+    oov = 0;
     egs->size = 0;
     while (st_fgets(&line, &line_sz, text_fp, &err)) {
         remove_newline(line);
@@ -876,6 +868,11 @@ static int connlm_get_egs(connlm_egs_t *egs, int *sent_ends,
                         }
                     }
                     egs->words[egs->size] = vocab_get_id(vocab, word);
+                    if (egs->words[egs->size] < 0
+                            || egs->words[egs->size] == UNK_ID) {
+                        egs->words[egs->size] = UNK_ID;
+                        oov++;
+                    }
                     egs->size++;
 
                     i = 0;
@@ -900,12 +897,17 @@ static int connlm_get_egs(connlm_egs_t *egs, int *sent_ends,
                 }
             }
             egs->words[egs->size] = vocab_get_id(vocab, word);
+            if (egs->words[egs->size] < 0
+                    || egs->words[egs->size] == UNK_ID) {
+                egs->words[egs->size] = UNK_ID;
+                oov++;
+            }
             egs->size++;
 
             i = 0;
         }
 
-        egs->words[egs->size] = 0; // </s>
+        egs->words[egs->size] = SENT_END_ID;
         egs->size++; // do not need to check, prev check num_egs - 1
         if (sent_ends != NULL) {
             sent_ends[num_sents] = egs->size;
@@ -921,6 +923,10 @@ static int connlm_get_egs(connlm_egs_t *egs, int *sent_ends,
 
     if (err) {
         return -1;
+    }
+
+    if (oovs != NULL) {
+        *oovs = oov;
     }
 
     return num_sents;
@@ -1401,8 +1407,6 @@ typedef struct _connlm_thread_t_ {
     count_t words; /**< total number of words trained in this thread. */
     count_t sents; /**< total number of sentences trained in this thread. */
     double logp; /**< total log probability in this thread. */
-
-    count_t oovs; /**< total number of OOV words found in this thread. */
 } connlm_thr_t;
 
 typedef struct _connlm_read_thread_t_ {
@@ -1417,6 +1421,7 @@ typedef struct _connlm_read_thread_t_ {
 
     count_t sents;
     count_t words;
+    count_t oovs;
 } connlm_read_thr_t;
 
 static void* connlm_read_thread(void *args)
@@ -1424,7 +1429,7 @@ static void* connlm_read_thread(void *args)
     connlm_read_thr_t *read_thr;
     connlm_t *connlm;
     connlm_thr_t *thrs;
-    
+
     int *shuffle_buf = NULL;
     FILE *text_fp = NULL;
     off_t fsize;
@@ -1440,6 +1445,7 @@ static void* connlm_read_thread(void *args)
 
     connlm_egs_t *egs_in_pool;
     int num_sents;
+    int oovs;
     int i;
     int start;
     int end;
@@ -1509,7 +1515,7 @@ static void* connlm_read_thread(void *args)
         gettimeofday(&tts_io, NULL);
 #endif
         num_sents = connlm_get_egs(&egs, sent_ends,
-                epoch_size, text_fp, connlm->vocab);
+                epoch_size, text_fp, connlm->vocab, &oovs);
         if (num_sents < 0) {
             ST_WARNING("Failed to connlm_get_egs.");
             goto ERR;
@@ -1521,6 +1527,7 @@ static void* connlm_read_thread(void *args)
             continue;
         }
 
+        read_thr->oovs += oovs;
         read_thr->sents += num_sents;
         read_thr->words += egs.size;
 
@@ -1638,20 +1645,21 @@ static void* connlm_read_thread(void *args)
                 ms = TIMEDIFF(tts, tte);
 
                 if (fsize > 0) {
-                    ST_TRACE("Total progress: %.2f%%. Words: " COUNT_FMT
-                            ", Sentences: " COUNT_FMT ", words/sec: %.1f, "
-                            "LogP: %f, Entropy: %f, PPL: %f, Time: %.3fs", 
+                    ST_TRACE("Total progress: %.2f%%. "
+                            "Words: " COUNT_FMT ", Sentences: " COUNT_FMT
+                            ", OOVs: " COUNT_FMT ", words/sec: %.1f, "
+                            "LogP: %f, Entropy: %f, PPL: %f, Time: %.3fs",
                             ftell(text_fp) / (fsize / 100.0),
-                            total_words, total_sents,
+                            total_words, total_sents, read_thr->oovs,
                             total_words / ((double) ms / 1000.0),
                             logp, -logp / log10(2) / total_words,
                             exp10(-logp / (double) total_words),
                             ms / 1000.0);
                 } else {
-                    ST_TRACE("Words: " COUNT_FMT
-                            ", Sentences: " COUNT_FMT ", words/sec: %.1f, "
-                            "LogP: %f, Entropy: %f, PPL: %f, Time: %.3fs", 
-                            total_words, total_sents,
+                    ST_TRACE("Words: " COUNT_FMT ", Sentences: " COUNT_FMT
+                            ", OOVs: " COUNT_FMT ", words/sec: %.1f, "
+                            "LogP: %f, Entropy: %f, PPL: %f, Time: %.3fs",
+                            total_words, total_sents, read_thr->oovs,
                             total_words / ((double) ms / 1000.0),
                             logp, -logp / log10(2) / total_words,
                             exp10(-logp / (double) total_words),
@@ -1778,11 +1786,6 @@ static void* connlm_train_thread(void *args)
         for (i = 0; i < egs->size; i++) {
             word = egs->words[i];
 
-            if (word < 0) {
-                /* TODO: OOV during training. */
-                words++;
-                continue;
-            }
             if (connlm_start_train(connlm, word, tid) < 0) {
                 ST_WARNING("connlm_start_train.");
                 goto ERR;
@@ -1802,12 +1805,12 @@ static void* connlm_train_thread(void *args)
                             connlm->output->w2c[word],
                             output_get_class_prob(connlm->output,
                                 word, tid),
-                            word, 
+                            word,
                             output_get_word_prob(connlm->output,
                                 word, tid));
                 } else {
                     ST_WARNING("Numerical error. tid[%d], p_word(%d) = %g",
-                            tid, word, 
+                            tid, word,
                             output_get_word_prob(connlm->output,
                                 word, tid));
                 }
@@ -1829,7 +1832,7 @@ static void* connlm_train_thread(void *args)
                 goto ERR;
             }
 
-            if (word == 0) { // </s>
+            if (word == SENT_END_ID) {
                 if (connlm_reset_train(connlm, tid) < 0) {
                     ST_WARNING("Failed to connlm_reset_train.");
                     goto ERR;
@@ -1850,7 +1853,7 @@ static void* connlm_train_thread(void *args)
         ST_TRACE("Thread: %d, Words: " COUNT_FMT
                 ", Sentences: " COUNT_FMT ", words/sec: %.1f, "
                 "LogP: %f, Entropy: %f, PPL: %f, "
-                "Time(cpu/wait): %.3fs(%.2f%%)/%.3fs(%.2f%%):%.3f", 
+                "Time(cpu/wait): %.3fs(%.2f%%)/%.3fs(%.2f%%):%.3f",
                 tid, words, sents, words / ((double) ms / 1000.0),
                 logp, -logp / log10(2) / words,
                 exp10(-logp / (double) words),
@@ -1970,8 +1973,8 @@ int connlm_train(connlm_t *connlm)
 
     ST_NOTICE("Finish train in %ldms.", ms);
     ST_NOTICE("Words: " COUNT_FMT ", Sentences: " COUNT_FMT
-            ", words/sec: %.1f", words, sents,
-            words / ((double) ms / 1000.0));
+            ", OOVs: " COUNT_FMT ", words/sec: %.1f", words, sents,
+            read_thr.oovs, words / ((double) ms / 1000.0));
     ST_NOTICE("LogP: %f", logp);
     ST_NOTICE("Entropy: %f", -logp / log10(2) / words);
     ST_NOTICE("PPL: %f", exp10(-logp / (double) words));
@@ -2256,12 +2259,10 @@ static void* connlm_test_thread(void *args)
 
     count_t words;
     count_t sents;
-    count_t oovs;
     double logp;
     bool finish;
 
     int word;
-    double oov_penalty;
     double p;
 
     int i;
@@ -2272,12 +2273,9 @@ static void* connlm_test_thread(void *args)
     connlm = thr->connlm;
     tid = thr->tid;
 
-    oov_penalty = connlm->test_opt.oov_penalty;
-
     finish = false;
     words = 0;
     sents = 0;
-    oovs = 0;
     logp = 0.0;
     while (true) {
         if (connlm->err != 0) {
@@ -2334,32 +2332,26 @@ static void* connlm_test_thread(void *args)
                 goto ERR;
             }
 
-            if (word == -1) {
-                logp += oov_penalty;
-                oovs++;
-                p = 0;
-            } else {
-                p = output_get_prob(connlm->output, word, tid);
-                logp += log10(p);
+            p = output_get_prob(connlm->output, word, tid);
+            logp += log10(p);
 
-                if ((logp != logp) || (isinf(logp))) {
-                    if (connlm->output->output_opt.class_size > 0) {
-                        ST_WARNING("Numerical error. tid[%d], "
-                                "p_class(%d) = %g, p_word(%d) = %g", tid,
-                                connlm->output->w2c[word],
-                                output_get_class_prob(connlm->output,
-                                    word, tid),
-                                word, 
-                                output_get_word_prob(connlm->output,
-                                    word, tid));
-                    } else {
-                        ST_WARNING("Numerical error. tid[%d], p_word(%d) = %g",
-                                tid, word, 
-                                output_get_word_prob(connlm->output,
-                                    word, tid));
-                    }
-                    goto ERR;
+            if ((logp != logp) || (isinf(logp))) {
+                if (connlm->output->output_opt.class_size > 0) {
+                    ST_WARNING("Numerical error. tid[%d], "
+                            "p_class(%d) = %g, p_word(%d) = %g", tid,
+                            connlm->output->w2c[word],
+                            output_get_class_prob(connlm->output,
+                                word, tid),
+                            word,
+                            output_get_word_prob(connlm->output,
+                                word, tid));
+                } else {
+                    ST_WARNING("Numerical error. tid[%d], p_word(%d) = %g",
+                            tid, word,
+                            output_get_word_prob(connlm->output,
+                                word, tid));
                 }
+                goto ERR;
             }
 
             if (connlm_end_test(connlm, word, tid) < 0) {
@@ -2369,18 +2361,14 @@ static void* connlm_test_thread(void *args)
 
             if (connlm->fp_log != NULL) {
                 (void)pthread_mutex_lock(&connlm->fp_lock);
-                if (word != -1) {
-                    fprintf(connlm->fp_log, "%d\t%.10f\t%s", word, p,
-                            vocab_get_word(connlm->vocab, word));
-                } else {
-                    fprintf(connlm->fp_log, "-1\t%.10f\t<OOV>", exp10(oov_penalty));
-                }
+                fprintf(connlm->fp_log, "%d\t%.10f\t%s", word, p,
+                        vocab_get_word(connlm->vocab, word));
 
                 fprintf(connlm->fp_log, "\n");
                 (void)pthread_mutex_unlock(&connlm->fp_lock);
             }
 
-            if (word == 0) {
+            if (word == SENT_END_ID) {
                 if (connlm_reset_test(connlm, tid) < 0) {
                     ST_WARNING("Failed to connlm_reset_test.");
                     goto ERR;
@@ -2409,7 +2397,6 @@ static void* connlm_test_thread(void *args)
 
     thr->words = words;
     thr->sents = sents;
-    thr->oovs = oovs;
     thr->logp = logp;
 
     return NULL;
@@ -2430,7 +2417,6 @@ int connlm_test(connlm_t *connlm, FILE *fp_log)
 
     count_t words;
     count_t sents;
-    count_t oovs;
     double logp;
 
     int i;
@@ -2493,13 +2479,11 @@ int connlm_test(connlm_t *connlm, FILE *fp_log)
 
     words = 0;
     sents = 0;
-    oovs = 0;
     logp = 0;
 
     for (i = 0; i < num_thrs; i++) {
         words += thrs[i].words;
         sents += thrs[i].sents;
-        oovs += thrs[i].oovs;
         logp += thrs[i].logp;
     }
 
@@ -2516,7 +2500,7 @@ int connlm_test(connlm_t *connlm, FILE *fp_log)
 
     ST_NOTICE("Words: " COUNT_FMT "    OOVs: " COUNT_FMT
             "    Sentences: " COUNT_FMT
-            ", words/sec: %.1f", words, oovs, sents,
+            ", words/sec: %.1f", words, read_thr.oovs, sents,
              words / ((double) ms / 1000));
     ST_NOTICE("LogP: %f", logp);
     ST_NOTICE("Entropy: %f", -logp / log10(2) / words);
@@ -2525,7 +2509,7 @@ int connlm_test(connlm_t *connlm, FILE *fp_log)
     if (fp_log != NULL) {
         fprintf(fp_log, "\nSummary:\n");
         fprintf(fp_log, "Words: " COUNT_FMT "    OOVs: " COUNT_FMT "\n",
-                words, oovs);
+                words, read_thr.oovs);
         fprintf(fp_log, "LogP: %f\n", logp);
         fprintf(fp_log, "Entropy: %f\n", -logp / log10(2) / words);
         fprintf(fp_log, "PPL: %f\n", exp10(-logp / (double) words));
@@ -2725,7 +2709,8 @@ int connlm_gen(connlm_t *connlm, int num_sents)
             goto ERR;
         }
         if (text_fp != NULL && !feof(text_fp)) {
-            if (connlm_get_egs(&egs, NULL, 1, text_fp, connlm->vocab) < 0) {
+            if (connlm_get_egs(&egs, NULL, 1, text_fp,
+                        connlm->vocab, NULL) < 0) {
                 ST_WARNING("Failed to connlm_get_egs.");
                 goto ERR;
             }
@@ -2734,17 +2719,16 @@ int connlm_gen(connlm_t *connlm, int num_sents)
                 printf("[");
                 for (i = 0; i < egs.size - 1; i++) {
                     word = egs.words[i];
-                    if (word > 0) {
-                        if (connlm_forward(connlm, word, 0) < 0) {
-                            ST_WARNING("Failed to connlm_forward.");
-                            goto ERR;
-                        }
-
-                        if (connlm_end_gen(connlm, word) < 0) {
-                            ST_WARNING("connlm_end_gen.");
-                            goto ERR;
-                        }
+                    if (connlm_forward(connlm, word, 0) < 0) {
+                        ST_WARNING("Failed to connlm_forward.");
+                        goto ERR;
                     }
+
+                    if (connlm_end_gen(connlm, word) < 0) {
+                        ST_WARNING("connlm_end_gen.");
+                        goto ERR;
+                    }
+
                     printf("%s", vocab_get_word(connlm->vocab, word));
                     if (i < egs.size - 2) {
                         printf(" ");
@@ -2757,7 +2741,7 @@ int connlm_gen(connlm_t *connlm, int num_sents)
         }
 
         word = -1;
-        while (word != 0) {
+        while (word != SENT_END_ID) {
             if (word != -1) { // not first word
                 printf(" ");
             }
@@ -2792,17 +2776,23 @@ int connlm_gen(connlm_t *connlm, int num_sents)
                 goto ERR;
             }
 
-            u = st_random(0, 1);
-            p = 0;
-            for (word = s; word < e; word++) {
-                p += output_get_word_prob(connlm->output, word, 0);
+            while (true) {
+                u = st_random(0, 1);
+                p = 0;
+                for (word = s; word < e; word++) {
+                    p += output_get_word_prob(connlm->output, word, 0);
 
-                if (p >= u) {
+                    if (p >= u) {
+                        break;
+                    }
+                }
+
+                if (word != UNK_ID) {
                     break;
                 }
             }
 
-            if (word == 0) {
+            if (word == SENT_END_ID) {
                 printf("\n");
             } else {
                 printf("%s", vocab_get_word(connlm->vocab, word));

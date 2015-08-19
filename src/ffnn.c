@@ -330,11 +330,7 @@ int ffnn_forward_last_layer(ffnn_t *ffnn, int cls, int tid)
 
 int ffnn_backprop(ffnn_t *ffnn, int word, int tid)
 {
-    ST_CHECK_PARAM(ffnn == NULL || tid < 0, -1);
-
-    if (word < 0) {
-        return 0;
-    }
+    ST_CHECK_PARAM(ffnn == NULL || tid < 0 || word < 0, -1);
 
     return 0;
 }

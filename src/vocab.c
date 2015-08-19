@@ -43,9 +43,9 @@ int vocab_load_opt(vocab_opt_t *vocab_opt, st_opt_t *opt,
 
     memset(vocab_opt, 0, sizeof(vocab_opt_t));
 
-    ST_OPT_SEC_GET_INT(opt, sec_name, "MAX_VOCAB_SIZE",
-            vocab_opt->max_vocab_size, 1000000, 
-            "Maximum size of Vocabulary");
+    ST_OPT_SEC_GET_INT(opt, sec_name, "MAX_ALPHABET_SIZE",
+        vocab_opt->max_alphabet_size, 10000000,
+        "Maximum size of alphabet for vocab.");
 
     return 0;
 
@@ -68,14 +68,19 @@ vocab_t *vocab_create(vocab_opt_t *vocab_opt)
 
     vocab->vocab_opt = *vocab_opt;
 
-    vocab->alphabet = st_alphabet_create(vocab_opt->max_vocab_size);
+    vocab->alphabet = st_alphabet_create(vocab_opt->max_alphabet_size);
     if (vocab->alphabet == NULL) {
         ST_WARNING("Failed to st_alphabet_create.");
         goto ERR;
     }
 
-    if (st_alphabet_add_label(vocab->alphabet, "</s>") != 0) {
-        ST_WARNING("Failed to st_alphabet_add_label.");
+    if (st_alphabet_add_label(vocab->alphabet, SENT_END) != SENT_END_ID) {
+        ST_WARNING("Failed to add sent_end[%s].", SENT_END);
+        goto ERR;
+    }
+
+    if (st_alphabet_add_label(vocab->alphabet, UNK) != UNK_ID) {
+        ST_WARNING("Failed to add unk[%s].", UNK);
         goto ERR;
     }
 
@@ -161,7 +166,7 @@ int vocab_load_header(vocab_t **vocab, FILE *fp, bool *binary,
     if (vocab != NULL) {
         *vocab = NULL;
     }
-    
+
     if (*binary) {
         if (fread(&vocab_size, sizeof(int), 1, fp) != 1) {
             ST_WARNING("Failed to read vocab size.");
@@ -248,7 +253,7 @@ int vocab_load_body(vocab_t *vocab, FILE *fp, bool binary)
             goto ERR;
         }
 
-        vocab->alphabet = st_alphabet_load_from_bin(fp); 
+        vocab->alphabet = st_alphabet_load_from_bin(fp);
         if (vocab->alphabet == NULL) {
             ST_WARNING("Failed to st_alphabet_load_from_bin.");
             goto ERR;
@@ -392,19 +397,26 @@ typedef struct _word_info_t_ {
     count_t cnt;
 } word_info_t;
 
-static int vocab_sort(vocab_t *vocab, word_info_t *word_infos)
+static int vocab_sort(vocab_t *vocab, word_info_t *word_infos,
+        vocab_learn_opt_t *lr_opt)
 {
     word_info_t swap;
     st_alphabet_t *alphabet = NULL;
     count_t *cnts = NULL;
+
     char *word;
-    int a, b, max;
+    int total_vocab_size;
+    int a, b;
+    count_t max;
 
-    ST_CHECK_PARAM(vocab == NULL || word_infos == NULL, -1);
+    ST_CHECK_PARAM(vocab == NULL || word_infos == NULL
+            || lr_opt == NULL, -1);
 
-    for (a = 1; a < vocab->vocab_size; a++) {
+    total_vocab_size = st_alphabet_get_label_num(vocab->alphabet);
+
+    for (a = UNK_ID + 1; a < total_vocab_size; a++) {
         max = a;
-        for (b = a + 1; b < vocab->vocab_size; b++) {
+        for (b = a + 1; b < total_vocab_size; b++) {
             if (word_infos[max].cnt < word_infos[b].cnt) {
                 max = b;
             }
@@ -417,6 +429,26 @@ static int vocab_sort(vocab_t *vocab, word_info_t *word_infos)
         swap = word_infos[max];
         word_infos[max] = word_infos[a];
         word_infos[a] = swap;
+    }
+
+    if (lr_opt->max_vocab_size > 0) {
+        vocab->vocab_size = min(total_vocab_size, lr_opt->max_vocab_size);
+    } else {
+        vocab->vocab_size = total_vocab_size;
+    }
+
+    if (lr_opt->min_count > 0) {
+        for (a = UNK_ID + 1; a < vocab->vocab_size; a++) {
+            if (word_infos[a].cnt < lr_opt->min_count) {
+                break;
+            }
+        }
+        vocab->vocab_size = a;
+    }
+
+    // give all pruned words's count to <unk>
+    for (a = vocab->vocab_size; a < total_vocab_size; a++) {
+        word_infos[UNK_ID].cnt += word_infos[a].cnt;
     }
 
     cnts = (count_t *)malloc(sizeof(count_t)*vocab->vocab_size);
@@ -482,7 +514,7 @@ static int vocab_read_word(char *word, size_t word_len, FILE * fp)
             }
 
             if (ch == '\n') {
-                strncpy(word, "</s>", word_len);
+                strncpy(word, SENT_END, word_len);
                 word[word_len - 1] = '\0';
                 return 0;
             } else {
@@ -503,7 +535,34 @@ static int vocab_read_word(char *word, size_t word_len, FILE * fp)
     return 0;
 }
 
-int vocab_learn(vocab_t *vocab, FILE *fp, count_t max_word_num)
+int vocab_load_learn_opt(vocab_learn_opt_t *lr_opt, st_opt_t *opt,
+        const char *sec_name)
+{
+    unsigned long ul;
+
+    ST_CHECK_PARAM(lr_opt == NULL || opt == NULL, -1);
+
+    memset(lr_opt, 0, sizeof(vocab_learn_opt_t));
+
+    ST_OPT_SEC_GET_INT(opt, sec_name, "MAX_VOCAB_SIZE",
+        lr_opt->max_vocab_size, 0,
+        "Maximum size of Vocabulary. 0 denotes no limit.");
+
+    ST_OPT_SEC_GET_ULONG(opt, sec_name, "MAX_WORD_NUM", ul, 0,
+        "Maximum number of words used to learn vocab. 0 denotes no limit.");
+    lr_opt->max_word_num = (count_t)ul;
+
+    ST_OPT_SEC_GET_INT(opt, sec_name, "MIN_COUNT",
+        lr_opt->min_count, 0, "Mininum count for a word to be used "
+        "in learning vocab. 0 denotes no limit.");
+
+    return 0;
+
+ST_OPT_ERR:
+    return -1;
+}
+
+int vocab_learn(vocab_t *vocab, FILE *fp, vocab_learn_opt_t *lr_opt)
 {
     char word[MAX_SYM_LEN];
 
@@ -511,18 +570,21 @@ int vocab_learn(vocab_t *vocab, FILE *fp, count_t max_word_num)
     count_t words = 0;
     int id;
 
-    ST_CHECK_PARAM(vocab == NULL || fp == NULL, -1);
+    ST_CHECK_PARAM(vocab == NULL || fp == NULL || lr_opt == NULL, -1);
 
-    word_infos = (word_info_t *) malloc(sizeof(word_info_t) 
-            * vocab->vocab_opt.max_vocab_size);
+    word_infos = (word_info_t *) malloc(sizeof(word_info_t)
+            * vocab->vocab_opt.max_alphabet_size);
     if (word_infos == NULL) {
         ST_WARNING("Failed to malloc word_infos.");
         goto ERR;
     }
-    memset(word_infos, 0, sizeof(word_info_t)*vocab->vocab_opt.max_vocab_size);
+    memset(word_infos, 0, sizeof(word_info_t)*
+            vocab->vocab_opt.max_alphabet_size);
 
-    word_infos[0].id = 0;
-    word_infos[0].cnt = 0;
+    word_infos[SENT_END_ID].id = SENT_END_ID;
+    word_infos[SENT_END_ID].cnt = 0;
+    word_infos[UNK_ID].id = UNK_ID;
+    word_infos[UNK_ID].cnt = 0;
 
     words = 0;
     while (1) {
@@ -550,20 +612,18 @@ int vocab_learn(vocab_t *vocab, FILE *fp, count_t max_word_num)
         }
 
         words++;
-        if (max_word_num > 0 && words >= max_word_num) {
+        if (lr_opt->max_word_num > 0 && words >= lr_opt->max_word_num) {
             break;
         }
     }
 
-    vocab->vocab_size = st_alphabet_get_label_num(vocab->alphabet);
-
-    ST_NOTICE("Words: " COUNT_FMT, words);
-    ST_NOTICE("Vocab Size: %d", vocab->vocab_size);
-
-    if (vocab_sort(vocab, word_infos) < 0) {
+    if (vocab_sort(vocab, word_infos, lr_opt) < 0) {
         ST_WARNING("Failed to vocab_sort.");
         goto ERR;
     }
+
+    ST_NOTICE("Words: " COUNT_FMT, words);
+    ST_NOTICE("Vocab Size: %d", vocab->vocab_size);
 
     safe_free(word_infos);
     return 0;
@@ -597,7 +657,7 @@ bool vocab_equal(vocab_t *vocab1, vocab_t *vocab2)
     if (vocab1->vocab_size != vocab2->vocab_size) {
         return false;
     }
-    
+
     for (i = 0; i < vocab1->vocab_size; i++) {
         ptr1 = vocab_get_word(vocab1, i);
         ptr2 = vocab_get_word(vocab2, i);
@@ -611,7 +671,7 @@ bool vocab_equal(vocab_t *vocab1, vocab_t *vocab2)
             return false;
         }
     }
-    
+
     return true;
 }
 

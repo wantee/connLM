@@ -29,16 +29,15 @@
 #include "connlm.h"
 
 bool g_binary;
-count_t g_max_word_num;
 
 st_opt_t *g_cmd_opt;
 
 vocab_opt_t g_vocab_opt;
+vocab_learn_opt_t g_lr_opt;
 
 int connlm_vocab_parse_opt(int *argc, const char *argv[])
 {
     st_log_opt_t log_opt;
-    unsigned long ul;
     bool b;
 
     g_cmd_opt = st_opt_create();
@@ -67,12 +66,13 @@ int connlm_vocab_parse_opt(int *argc, const char *argv[])
         goto ST_OPT_ERR;
     }
 
+    if (vocab_load_learn_opt(&g_lr_opt, g_cmd_opt, NULL) < 0) {
+        ST_WARNING("Failed to vocab_load_learn_opt");
+        goto ST_OPT_ERR;
+    }
+
     ST_OPT_SEC_GET_BOOL(g_cmd_opt, NULL, "BINARY", g_binary, true,
             "Save file as binary format");
-
-    ST_OPT_SEC_GET_ULONG(g_cmd_opt, NULL, "MAX_WORD_NUM", ul, 0, 
-        "Maximum number of words used to learn vocab. 0 denotes no limit");
-    g_max_word_num = (count_t)ul;
 
     if (st_opt_get_bool(g_cmd_opt, NULL, "help", &b, false,
                 "Print help") < 0) {
@@ -136,7 +136,7 @@ int main(int argc, const char *argv[])
         goto ERR;
     }
 
-    if (vocab_learn(vocab, fp, g_max_word_num) < 0) {
+    if (vocab_learn(vocab, fp, &g_lr_opt) < 0) {
         ST_WARNING("Failed to vocab_learn. [%s]", argv[1]);
         goto ERR;
     }

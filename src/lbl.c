@@ -329,11 +329,7 @@ int lbl_forward_last_layer(lbl_t *lbl, int cls, int tid)
 
 int lbl_backprop(lbl_t *lbl, int word, int tid)
 {
-    ST_CHECK_PARAM(lbl == NULL || tid < 0, -1);
-
-    if (word < 0) {
-        return 0;
-    }
+    ST_CHECK_PARAM(lbl == NULL || tid < 0 || word < 0, -1);
 
     return 0;
 }
