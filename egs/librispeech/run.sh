@@ -63,6 +63,9 @@ fi
 
 steps=$1
 
+mkdir -p "$exp_dir"
+cp -r "${conf_dir%/}" "$exp_dir"
+
 st=1
 if shu-in-range $st $steps; then
 echo
