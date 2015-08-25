@@ -92,6 +92,8 @@ typedef struct _connlm_test_opt_t_ {
     int num_thread;           /**< number of threads. */
 
     int epoch_size; /**< number sentences read one time per thread. */
+    bool print_sent_prob; /**< print sentence prob only, if true. */
+    real_t out_log_base; /**< log base for printing prob. */
 
     char debug_file[MAX_DIR_LEN]; /**< file to print out debug infos. */
 } connlm_test_opt_t;

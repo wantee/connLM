@@ -243,15 +243,30 @@ ST_OPT_ERR:
 int connlm_load_test_opt(connlm_test_opt_t *test_opt,
         st_opt_t *opt, const char *sec_name)
 {
+    char str[MAX_ST_CONF_LEN];
+
     ST_CHECK_PARAM(test_opt == NULL || opt == NULL, -1);
 
     ST_OPT_SEC_GET_INT(opt, sec_name, "NUM_THREAD",
             test_opt->num_thread, 1, "Number of threads");
 
     ST_OPT_SEC_GET_INT(opt, sec_name, "EPOCH_SIZE",
-            test_opt->epoch_size, 10,
+            test_opt->epoch_size, 1,
             "Number of sentences read in one epoch per thread (in kilos)");
     test_opt->epoch_size *= 1000;
+
+    ST_OPT_SEC_GET_BOOL(opt, sec_name, "PRINT_SENT_PROB",
+            test_opt->print_sent_prob, false,
+            "Print sentence prob only, if true. ");
+
+    ST_OPT_SEC_GET_STR(opt, sec_name, "OUT_LOG_BASE",
+            str, MAX_ST_CONF_LEN, "e",
+            "Log base for printing prob. Could be 'e' or other number.");
+    if (str[0] == 'e' && str[1] == '\0') {
+        test_opt->out_log_base = 0;
+    } else {
+        test_opt->out_log_base = (real_t)atof(str);
+    }
 
     ST_OPT_SEC_GET_STR(opt, sec_name, "DEBUG_FILE",
             test_opt->debug_file, MAX_DIR_LEN, "",
@@ -2260,6 +2275,7 @@ static void* connlm_test_thread(void *args)
     count_t words;
     count_t sents;
     double logp;
+    double logp_sent;
     bool finish;
 
     int word;
@@ -2319,6 +2335,7 @@ static void* connlm_test_thread(void *args)
             ST_WARNING("Failed to connlm_reset_test.");
             goto ERR;
         }
+        logp_sent = 0.0;
         for (i = 0; i < egs->size; i++) {
             word = egs->words[i];
 
@@ -2334,6 +2351,7 @@ static void* connlm_test_thread(void *args)
 
             p = output_get_prob(connlm->output, word, tid);
             logp += log10(p);
+            logp_sent += logn(p, connlm->test_opt.out_log_base);
 
             if ((logp != logp) || (isinf(logp))) {
                 if (connlm->output->output_opt.class_size > 0) {
@@ -2359,9 +2377,11 @@ static void* connlm_test_thread(void *args)
                 goto ERR;
             }
 
-            if (connlm->fp_log != NULL) {
+            if (connlm->fp_log != NULL
+                    && (! connlm->test_opt.print_sent_prob)) {
                 (void)pthread_mutex_lock(&connlm->fp_lock);
-                fprintf(connlm->fp_log, "%d\t%.10f\t%s", word, p,
+                fprintf(connlm->fp_log, "%d\t%.6f\t%s", word,
+                        logn(p, connlm->test_opt.out_log_base),
                         vocab_get_word(connlm->vocab, word));
 
                 fprintf(connlm->fp_log, "\n");
@@ -2374,6 +2394,14 @@ static void* connlm_test_thread(void *args)
                     goto ERR;
                 }
                 sents++;
+
+                if (connlm->fp_log != NULL
+                        && connlm->test_opt.print_sent_prob) {
+                    (void)pthread_mutex_lock(&connlm->fp_lock);
+                    fprintf(connlm->fp_log, "%.6f\n", logp_sent);
+                    (void)pthread_mutex_unlock(&connlm->fp_lock);
+                }
+                logp_sent = 0;
             }
 
             words++;
@@ -2429,8 +2457,13 @@ int connlm_test(connlm_t *connlm, FILE *fp_log)
     if (fp_log != NULL) {
         connlm->fp_log = fp_log;
         pthread_mutex_init(&connlm->fp_lock, NULL);
-        fprintf(fp_log, "Index   P(NET)          Word\n");
-        fprintf(fp_log, "----------------------------------\n");
+        if (connlm->fp_log != NULL
+                && (! connlm->test_opt.print_sent_prob)) {
+            fprintf(fp_log, "Index   logP(NET)          Word\n");
+            fprintf(fp_log, "----------------------------------\n");
+        }
+        ST_NOTICE("Printing Probs, setting num_thread to 1.")
+            connlm->test_opt.num_thread = 1;
     }
 
     gettimeofday(&tts_test, NULL);
@@ -2506,7 +2539,8 @@ int connlm_test(connlm_t *connlm, FILE *fp_log)
     ST_NOTICE("Entropy: %f", -logp / log10(2) / words);
     ST_NOTICE("PPL: %f", exp10(-logp / (double) words));
 
-    if (fp_log != NULL) {
+    if (fp_log != NULL
+            && (! connlm->test_opt.print_sent_prob)) {
         fprintf(fp_log, "\nSummary:\n");
         fprintf(fp_log, "Words: " COUNT_FMT "    OOVs: " COUNT_FMT "\n",
                 words, read_thr.oovs);
