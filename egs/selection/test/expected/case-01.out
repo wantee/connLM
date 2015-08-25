@@ -1,0 +1,119 @@
+
+Step 1: Prepare data ...
+./local/prep_data.sh --valid-percentage 0.1 --shuf-text true test/tmp/data
+**Layouting indomain corpus with 999 lines...
+***Train size: 900
+***Valid size: 99
+***Test size: 0
+**Layouting general corpus with 999 lines...
+***Train size: 900
+***Valid size: 99
+***Test size: 0
+Elapse time: 0hr0m0s
+
+Step 2: Train in-domain model ...
+../steps/learn_vocab.sh --config-file test/tmp/case-01/conf/vocab.conf test/tmp/data/indomain/train test/tmp/case-01/exp/indomain
+**Learning vocab test/tmp/case-01/exp/indomain/vocab.clm from test/tmp/data/indomain/train
+Succeeded learning vocab: 
+  Words:  6349
+  Vocab size:  932
+Elapse time: 0hr0m2s
+../steps/init_model.sh --init-config-file test/tmp/case-01/conf/rnn+maxent/init.conf --output-config-file test/tmp/case-01/conf/rnn+maxent/output.conf --class-size  --train-file test/tmp/data/indomain/train --train-config test/tmp/case-01/conf/rnn+maxent/train.conf --train-threads 1 test/tmp/case-01/exp/indomain/vocab.clm test/tmp/case-01/exp/indomain/rnn+maxent
+**Initializing model test/tmp/case-01/exp/indomain/vocab.clm to test/tmp/case-01/exp/indomain/rnn+maxent/init.clm ...
+Elapse time: 0hr0m0s
+../steps/train_model.sh --train-config test/tmp/case-01/conf/rnn+maxent/train.conf --test-config test/tmp/case-01/conf/test.conf --train-threads 1 --test-threads 1 test/tmp/data/indomain/train test/tmp/data/indomain/valid test/tmp/case-01/exp/indomain/rnn+maxent
+Prerun Valid Entropy: 8.143344
+ITERATION 01: TrEnt 7.287213, lr(0.5/0.1/0.5/0.5), W/s 35.8k, CVEnt: 7.096608
+nnet accepted (01.clm)
+ITERATION 02: TrEnt 6.612204, lr(0.5/0.1/0.5/0.5), W/s 37.7k, CVEnt: 7.152002
+nnet rejected (02.clm)
+ITERATION 03: TrEnt 6.591974, lr(0.25/0.05/0.25/0.25), W/s 36.2k, CVEnt: 7.026932
+nnet accepted (03.clm)
+ITERATION 04: TrEnt 6.316460, lr(0.125/0.025/0.125/0.125), W/s 35.0k, CVEnt: 7.011399
+nnet accepted (04.clm)
+ITERATION 05: TrEnt 6.184669, lr(0.0625/0.0125/0.0625/0.0625), W/s 33.9k, CVEnt: 6.981983
+nnet accepted (05.clm)
+ITERATION 06: TrEnt 6.114836, lr(0.03125/0.00625/0.03125/0.03125), W/s 34.6k, CVEnt: 6.984661
+nnet rejected (06.clm)
+finished, too small rel. improvement 0
+Succeeded training the Neural Network : test/tmp/case-01/exp/indomain/rnn+maxent/final.clm
+Elapse time: 0hr0m3s
+Effective speed: 12.6k words/sec
+../steps/test_model.sh --config-file test/tmp/case-01/conf/test.conf --test-threads 1 test/tmp/case-01/exp/indomain/rnn+maxent test/tmp/data/test
+**Testing model test/tmp/case-01/exp/indomain/rnn+maxent/final.clm ...
+=================================
+Test Entropy: 7.050372
+Test PPL: 132.548069
+Test Speed: 89.4k words/sec
+=================================
+Elapse time: 0hr0m1s
+
+Step 3: Train general model ...
+../steps/learn_vocab.sh --config-file test/tmp/case-01/conf/vocab.conf test/tmp/data/general/train test/tmp/case-01/exp/general
+**Learning vocab test/tmp/case-01/exp/general/vocab.clm from test/tmp/data/general/train
+Succeeded learning vocab: 
+  Words:  7289
+  Vocab size:  1062
+Elapse time: 0hr0m1s
+../steps/init_model.sh --init-config-file test/tmp/case-01/conf/rnn+maxent/init.conf --output-config-file test/tmp/case-01/conf/rnn+maxent/output.conf --class-size  --train-file test/tmp/data/general/train --train-config test/tmp/case-01/conf/rnn+maxent/train.conf --train-threads 1 test/tmp/case-01/exp/general/vocab.clm test/tmp/case-01/exp/general/rnn+maxent
+**Initializing model test/tmp/case-01/exp/general/vocab.clm to test/tmp/case-01/exp/general/rnn+maxent/init.clm ...
+Elapse time: 0hr0m0s
+../steps/train_model.sh --train-config test/tmp/case-01/conf/rnn+maxent/train.conf --test-config test/tmp/case-01/conf/test.conf --train-threads 1 --test-threads 1 test/tmp/data/general/train test/tmp/data/general/valid test/tmp/case-01/exp/general/rnn+maxent
+Prerun Valid Entropy: 8.163037
+ITERATION 01: TrEnt 7.339767, lr(0.5/0.1/0.5/0.5), W/s 35.7k, CVEnt: 7.106952
+nnet accepted (01.clm)
+ITERATION 02: TrEnt 6.675202, lr(0.5/0.1/0.5/0.5), W/s 37.1k, CVEnt: 7.111995
+nnet rejected (02.clm)
+ITERATION 03: TrEnt 6.657565, lr(0.25/0.05/0.25/0.25), W/s 35.5k, CVEnt: 7.118618
+nnet rejected (03.clm)
+finished, too small rel. improvement 0
+Succeeded training the Neural Network : test/tmp/case-01/exp/general/rnn+maxent/final.clm
+Elapse time: 0hr0m1s
+Effective speed: 21.8k words/sec
+../steps/test_model.sh --config-file test/tmp/case-01/conf/test.conf --test-threads 1 test/tmp/case-01/exp/general/rnn+maxent test/tmp/data/test
+**Testing model test/tmp/case-01/exp/general/rnn+maxent/final.clm ...
+=================================
+Test Entropy: 7.069443
+Test PPL: 134.311853
+Test Speed: 75.2k words/sec
+=================================
+Elapse time: 0hr0m1s
+
+Step 4: Score general corpus ...
+Scoring indomain corpus...
+Scoring general corpus...
+../steps/test_model.sh --config-file test/tmp/case-01/conf/test.conf --test-threads 1 --out-prob test/tmp/case-01/exp/general/rnn+maxent/general.prob --test-opts --print-sent-prob=true --out-log-base=10 --log-file test/tmp/case-01/exp/general/rnn+maxent/log/score.log test/tmp/case-01/exp/general/rnn+maxent test/tmp/data/general.corpus
+**Testing model test/tmp/case-01/exp/general/rnn+maxent/final.clm ...
+=================================
+Test Entropy: 6.881636
+Test PPL: 117.917654
+Test Speed: 86.7k words/sec
+=================================
+Elapse time: 0hr0m1s
+Indomain score log: 
+../steps/test_model.sh --config-file test/tmp/case-01/conf/test.conf --test-threads 1 --out-prob test/tmp/case-01/exp/indomain/rnn+maxent/indomain.prob --test-opts --print-sent-prob=true --out-log-base=10 --log-file test/tmp/case-01/exp/indomain/rnn+maxent/log/score.log test/tmp/case-01/exp/indomain/rnn+maxent test/tmp/data/general.corpus
+**Testing model test/tmp/case-01/exp/indomain/rnn+maxent/final.clm ...
+=================================
+Test Entropy: 6.947116
+Test PPL: 123.392904
+Test Speed: 84.4k words/sec
+=================================
+Elapse time: 0hr0m1s
+
+Step 5: Select data ...
+./local/select.sh test/tmp/data/general.corpus test/tmp/case-01/exp/indomain/rnn+maxent/indomain.prob test/tmp/case-01/exp/general/rnn+maxent/general.prob 0 test/tmp/case-01/exp/selected.rnn+maxent.0
+Total sentences: 9981
+Selected sentences: 4274
+Elapse time: 0hr0m0s
+
+Step 5: Select data ...
+./local/select.sh test/tmp/data/general.corpus test/tmp/case-01/exp/indomain/rnn+maxent/indomain.prob test/tmp/case-01/exp/general/rnn+maxent/general.prob 0.5 test/tmp/case-01/exp/selected.rnn+maxent.0.5
+Total sentences: 9981
+Selected sentences: 36
+Elapse time: 0hr0m0s
+
+Step 5: Select data ...
+./local/select.sh test/tmp/data/general.corpus test/tmp/case-01/exp/indomain/rnn+maxent/indomain.prob test/tmp/case-01/exp/general/rnn+maxent/general.prob 1.0 test/tmp/case-01/exp/selected.rnn+maxent.1.0
+Total sentences: 9981
+Selected sentences: 0
+Elapse time: 0hr0m1s

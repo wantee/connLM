@@ -2,7 +2,10 @@
 
 # Begin configuration section.
 config_file=""
+test_opts=""
+out_prob=""
 test_threads=1
+log_file=""
 # end configuration sections
 
 echo "$0 $@"  # Print the command line for logging
@@ -12,7 +15,10 @@ function print_help()
   echo "e.g.: $0 exp/rnn data/test"
   echo "options: "
   echo "     --config-file <config-file>         # config file."
-  echo "     --test-threads <number>             # default: 1, number of testing threads"
+  echo "     --test-threads <number>             # default: 1, number of testing threads."
+  echo "     --test-opts <opts>                  # default: \"\", options to be passed to connlm-test."
+  echo "     --out-prob <prob-file>              # default: \"\", output probs to specific file."
+  echo "     --log-file <log-file>               # default: \"\", specify log file."
 }
 
 help_message=`print_help`
@@ -22,8 +28,8 @@ help_message=`print_help`
 
 . ../utils/parse_options.sh || exit 1
 
-if [ $# -ne 2 ]; then 
-  print_help 1>&2 
+if [ $# -ne 2 ]; then
+  print_help 1>&2
   exit 1;
 fi
 
@@ -33,20 +39,20 @@ test_file=$2
 
 begin_date=`date +"%Y-%m-%d %H:%M:%S"`
 begin_ts=`date +%s`
-log_file=$dir/log/test.log
+log_file=${log_file:-"$dir/log/test.log"}
 
 echo "**Testing model $dir/final.clm ..."
 if [ -z $config_file ]; then
-connlm-test --log-file=$log_file \
+connlm-test $test_opts --log-file=$log_file \
            --num-thread=$test_threads \
-           $dir/final.clm $test_file \
-|| exit 1; 
+           $dir/final.clm $test_file $out_prob \
+|| exit 1;
 else
-connlm-test --log-file=$log_file \
+connlm-test $test_opts --log-file=$log_file \
            --config=$config_file \
            --num-thread=$test_threads \
-           $dir/final.clm $test_file \
-|| exit 1; 
+           $dir/final.clm $test_file $out_prob \
+|| exit 1;
 fi
 
 echo "================================="
