@@ -2310,8 +2310,25 @@ static void* connlm_test_thread(void *args)
         if (connlm->full_egs == NULL) {
             finish = true;
         } else {
-            egs = connlm->full_egs;
-            connlm->full_egs = connlm->full_egs->next;
+            if (connlm->test_opt.num_thread == 1) {
+                /* ensure FIFO */
+                connlm_egs_t *prev_egs = NULL;
+                egs = connlm->full_egs;
+                while (egs->next != NULL) {
+                    /* full_egs list will not be too long */
+                    prev_egs = egs;
+                    egs = egs->next;
+                }
+
+                if (prev_egs == NULL) {
+                    connlm->full_egs = NULL;
+                } else {
+                    prev_egs->next = NULL;
+                }
+            } else {
+                egs = connlm->full_egs;
+                connlm->full_egs = connlm->full_egs->next;
+            }
         }
 
         if (pthread_mutex_unlock(&connlm->full_egs_lock) != 0) {
