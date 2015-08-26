@@ -51,11 +51,11 @@ function score_corpus() {
           --pipe-input true \
           "$dir" "sed -n '${s},${e}p' $corpus" \
         > "$score_dir/log/score_sh.$i.log" 2>&1 &
-    pids[$i]=$!
+    pids[$(expr $i + 0)]=$!
   done
   
   failed=0
-  for i in `seq -w $score_job`; do
+  for i in `seq $score_job`; do
     wait ${pids[$i]}
     ret=$?
     if [ $ret -ne 0 ]; then
