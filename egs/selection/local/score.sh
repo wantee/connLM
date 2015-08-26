@@ -99,7 +99,7 @@ fi
 
 if [ "$in_lines" -le 0 ] || [ "$in_lines" -ne "$gen_lines" ]; then
   echo "(Re)Computing lines..."
-  lines=`cat $corpus | wc -l`
+  lines=`cat $corpus | wc -l | sed 's/ //g'`
   echo $lines > "$in_dir/score/.lines" 
   echo $lines > "$gen_dir/score/.lines" 
 else

@@ -67,7 +67,7 @@ begin_date=`date +"%Y-%m-%d %H:%M:%S"`
 begin_ts=`date +%s`
 
 if [ "$corpus_line" -lt 0 ]; then
-  corpus_line=`cat "$dir/indomain.corpus" | wc -l`
+  corpus_line=`cat "$dir/indomain.corpus" | wc -l | sed 's/ //g'`
   corpus_line=`echo $corpus_line | sed 's/ //g'`
 fi
 
