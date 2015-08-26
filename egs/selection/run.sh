@@ -12,6 +12,7 @@ class_size=""
 #class_size="50;100;150;200"
 tr_thr=1
 test_thr=1
+score_job=4
 
 realtype="float"
 
@@ -150,38 +151,10 @@ fi
 if shu-in-range $st $steps; then
 echo
 echo "Step $st: ${stepnames[$st]} ..."
-echo "Scoring indomain corpus..."
-../steps/test_model.sh --config-file $conf_dir/test.conf \
-        --test-threads 1 \
-        --out-prob "$exp_dir/indomain/$model_type/indomain.prob" \
-        --test-opts "--print-sent-prob=true --out-log-base=10" \
-        --log-file "$exp_dir/indomain/$model_type/log/score.log" \
-        "$exp_dir/indomain/$model_type" "$data_dir/general.corpus" \
-        > "$exp_dir/indomain/$model_type/log/score_sh.log" 2>&1 &
-pid=$!
-
-echo "Scoring general corpus..."
-../steps/test_model.sh --config-file $conf_dir/test.conf \
-        --test-threads 1 \
-        --out-prob "$exp_dir/general/$model_type/general.prob" \
-        --test-opts "--print-sent-prob=true --out-log-base=10" \
-        --log-file "$exp_dir/general/$model_type/log/score.log" \
-        "$exp_dir/general/$model_type" "$data_dir/general.corpus" 
-ret=$?
-if [ $ret -ne 0 ]; then
-  echo "Score general corpus failed."
-  kill $pid
-  exit 1
-fi
-
-wait $pid
-ret=$?
-if [ $ret -ne 0 ]; then
-  echo "Score indomain corpus failed."
-  exit 1
-fi
-echo "Indomain score log: "
-cat "$exp_dir/indomain/$model_type/log/score_sh.log"
+./local/score.sh --test-conf "$conf_dir/test.conf" \
+    "$data_dir/general.corpus" \
+    "$exp_dir/indomain/$model_type/" "$exp_dir/general/$model_type/" \
+    $score_job  || exit 1
 fi
 ((st++))
 
@@ -189,9 +162,9 @@ if shu-in-range $st $steps; then
 echo
 echo "Step $st: ${stepnames[$st]} ..."
 ./local/select.sh "$data_dir/general.corpus" \
-         "$exp_dir/indomain/$model_type/indomain.prob" \
-         "$exp_dir/general/$model_type/general.prob" $thresh \
-         "$exp_dir/selected.$model_type.$thresh" || exit 1
+         "$exp_dir/indomain/$model_type/score" \
+         "$exp_dir/general/$model_type/score" $thresh \
+         "$exp_dir/selected.$model_type.$thresh" 2>&1 || exit 1
 fi
 ((st++))
 

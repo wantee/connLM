@@ -6,6 +6,7 @@ test_opts=""
 out_prob=""
 test_threads=1
 log_file=""
+pipe_input=false
 # end configuration sections
 
 echo "$0 $@"  # Print the command line for logging
@@ -19,6 +20,7 @@ function print_help()
   echo "     --test-opts <opts>                  # default: \"\", options to be passed to connlm-test."
   echo "     --out-prob <prob-file>              # default: \"\", output probs to specific file."
   echo "     --log-file <log-file>               # default: \"\", specify log file."
+  echo "     --pipe-input <true|false>           # default: false, whether input test file is through a pipe."
 }
 
 help_message=`print_help`
@@ -42,17 +44,19 @@ begin_ts=`date +%s`
 log_file=${log_file:-"$dir/log/test.log"}
 
 echo "**Testing model $dir/final.clm ..."
-if [ -z $config_file ]; then
-connlm-test $test_opts --log-file=$log_file \
-           --num-thread=$test_threads \
-           $dir/final.clm $test_file $out_prob \
-|| exit 1;
+if [ ! -z $config_file ]; then
+test_opts="--config=$config_file $test_opts" 
+fi
+
+if $pipe_input; then
+eval "$test_file" | connlm-test $test_opts \
+       --log-file=$log_file --num-thread=$test_threads \
+       $dir/final.clm - $out_prob || exit 1;
+
 else
 connlm-test $test_opts --log-file=$log_file \
-           --config=$config_file \
            --num-thread=$test_threads \
-           $dir/final.clm $test_file $out_prob \
-|| exit 1;
+           $dir/final.clm $test_file $out_prob || exit 1;
 fi
 
 echo "================================="
