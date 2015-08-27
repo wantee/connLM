@@ -43,7 +43,7 @@ begin_date=`date +"%Y-%m-%d %H:%M:%S"`
 begin_ts=`date +%s`
 log_file=${log_file:-"$dir/log/test.log"}
 
-echo "**Testing model $dir/final.clm ..."
+echo "$0: Testing model $dir/final.clm ..."
 if [ ! -z $config_file ]; then
 test_opts="--config=$config_file $test_opts" 
 fi
@@ -73,7 +73,7 @@ echo "================================="
 ../utils/check_log.sh -b "$begin_date" $log_file.wf
 
 end_ts=`date +%s`
-echo "Elapse time: $(shu-diff-timestamp $begin_ts $end_ts)"
+echo "$0: Elapse time: $(shu-diff-timestamp $begin_ts $end_ts)"
 
 exit 0;
 

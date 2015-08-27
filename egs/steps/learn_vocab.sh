@@ -35,7 +35,7 @@ begin_date=`date +"%Y-%m-%d %H:%M:%S"`
 begin_ts=`date +%s`
 mkdir -p $dir
 
-echo "**Learning vocab $model_file from $train_file"
+echo "$0: Learning vocab $model_file from $train_file"
 if [ -z $config_file ]; then
 cat $train_file | connlm-vocab --log-file=$log_file \
            - $model_file \
@@ -49,14 +49,15 @@ fi
 
 words=`../utils/get_value.sh "Words" $log_file`
 size=`../utils/get_value.sh "Vocab Size" $log_file`
-echo "Succeeded learning vocab: "
-echo "  Words: $words"
-echo "  Vocab size: $size"
+echo "================================="
+echo "Words: $words"
+echo "Vocab size: $size"
+echo "================================="
 
 ../utils/check_log.sh -b "$begin_date" $log_file.wf
 
 end_ts=`date +%s`
-echo "Elapse time: $(shu-diff-timestamp $begin_ts $end_ts)"
+echo "$0: Elapse time: $(shu-diff-timestamp $begin_ts $end_ts)"
 
 exit 0;
 

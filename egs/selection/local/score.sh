@@ -113,7 +113,7 @@ echo "Scoring general corpus..."
 score_corpus $gen_dir
 
 end_ts=`date +%s`
-echo "Elapse time: $(shu-diff-timestamp $begin_ts $end_ts)"
+echo "$0: Elapse time: $(shu-diff-timestamp $begin_ts $end_ts)"
 
 exit 0;
 

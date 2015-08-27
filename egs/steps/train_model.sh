@@ -136,10 +136,10 @@ for iter in $(seq -w $max_iters); do
   rel_impr=$(bc <<< "scale=10; ($loss_prev-$loss)/$loss_prev")
   if [ 1 == $halving -a 1 == $(bc <<< "$rel_impr < $end_halving_impr") ]; then
     if [ $iter -le $min_iters ]; then
-      echo we were supposed to finish, but we continue as min_iters : $min_iters
+      echo "$0: we were supposed to finish, but we continue as min_iters: $min_iters"
       continue
     fi
-    echo finished, too small rel. improvement $rel_impr
+    echo "$0: finished, too small rel. improvement $rel_impr"
     break
   fi
 
@@ -165,18 +165,18 @@ done
 # select the best network
 if [ $mdl_best != $mdl_init ]; then 
   ( cd $dir; ln -sf $mdl_best final.clm; )
-  echo "Succeeded training the Neural Network : $dir/final.clm"
+  echo "$0: Succeeded training the Neural Network : $dir/final.clm"
 else
-  echo "Error training neural network."
+  echo "$0: Error training neural network."
   exit 1
 fi
 
 ../utils/check_log.sh -b "$begin_date" $log_dir/*.wf
 
 end_ts=`date +%s`
-echo "Elapse time: $(shu-diff-timestamp $begin_ts $end_ts)"
+echo "$0: Elapse time: $(shu-diff-timestamp $begin_ts $end_ts)"
 words=`../utils/get_value.sh "Words" $log_dir/train.${iter}.log`
-echo "Effective speed: $(bc <<< "scale=1; ($iter * $words) / ($end_ts - $begin_ts) / 1000")k words/sec"
+echo "$0: Effective speed: $(bc <<< "scale=1; ($iter * $words) / ($end_ts - $begin_ts) / 1000")k words/sec"
 
 exit 0;
 

@@ -1,49 +1,55 @@
 
 Step 1: Learn Vocab ...
-../steps/learn_vocab.sh --config-file test/tmp/case-03/conf/vocab.conf ./data/train test/tmp/case-03/exp
-**Learning vocab test/tmp/case-03/exp/vocab.clm from ./data/train
-Succeeded learning vocab: 
-  Words:  81350
-  Vocab size:  3721
-Elapse time: 0hr0m2s
+../steps/learn_vocab.sh --config-file test/tmp/case-03/exp/conf/vocab.conf ./data/train test/tmp/case-03/exp
+../steps/learn_vocab.sh: Learning vocab test/tmp/case-03/exp/vocab.clm from ./data/train
+=================================
+Words:  81350
+Vocab size:  3721
+=================================
+../steps/learn_vocab.sh: Elapse time: 0hr0m3s
 
 Step 2: Train MaxEnt model ...
-../steps/init_model.sh --init-config-file test/tmp/case-03/conf/maxent/init.conf --output-config-file test/tmp/case-03/conf/maxent/output.conf --class-size  --train-file ./data/train --train-config test/tmp/case-03/conf/maxent/train.conf --train-threads 1 test/tmp/case-03/exp/vocab.clm test/tmp/case-03/exp/maxent
-**Initializing model test/tmp/case-03/exp/vocab.clm to test/tmp/case-03/exp/maxent/init.clm ...
-Elapse time: 0hr0m0s
-../steps/train_model.sh --train-config test/tmp/case-03/conf/maxent/train.conf --test-config test/tmp/case-03/conf/test.conf --train-threads 1 --test-threads 1 ./data/train ./data/valid test/tmp/case-03/exp/maxent
+../steps/run_standalone.sh --class-size  --train-thr 1 --test-thr 1 maxent test/tmp/case-03/exp/conf test/tmp/case-03/exp ./data/train ./data/valid ./data/test
+../steps/run_standalone.sh: Stage 1 --- Initialising model...
+../steps/init_model.sh --init-config-file test/tmp/case-03/exp/conf/maxent/init.conf --output-config-file test/tmp/case-03/exp/conf/maxent/output.conf --class-size  --hs  --train-file ./data/train --train-config test/tmp/case-03/exp/conf/maxent/train.conf --train-threads 1 test/tmp/case-03/exp/vocab.clm test/tmp/case-03/exp/maxent
+../steps/init_model.sh: Initializing model test/tmp/case-03/exp/vocab.clm to test/tmp/case-03/exp/maxent/init.clm ...
+../steps/init_model.sh: Elapse time: 0hr0m0s
+../steps/run_standalone.sh: Stage 2 --- Training model...
+../steps/train_model.sh --train-config test/tmp/case-03/exp/conf/maxent/train.conf --test-config test/tmp/case-03/exp/conf/test.conf --train-threads 1 --test-threads 1 ./data/train ./data/valid test/tmp/case-03/exp/maxent
 Prerun Valid Entropy: 8.857599
-ITERATION 01: TrEnt 7.654613, lr(0.1/0.005/0.1/0.1), W/s 124.1k, CVEnt: 7.472479
+ITERATION 01: TrEnt 7.654613, lr(0.1/0.005/0.1/0.1), W/s 118.2k, CVEnt: 7.472479
 nnet accepted (01.clm)
-ITERATION 02: TrEnt 7.323317, lr(0.1/0.005/0.1/0.1), W/s 123.9k, CVEnt: 7.381970
+ITERATION 02: TrEnt 7.323317, lr(0.1/0.005/0.1/0.1), W/s 120.3k, CVEnt: 7.381970
 nnet accepted (02.clm)
-ITERATION 03: TrEnt 7.192577, lr(0.1/0.005/0.1/0.1), W/s 124.5k, CVEnt: 7.322546
+ITERATION 03: TrEnt 7.192577, lr(0.1/0.005/0.1/0.1), W/s 119.0k, CVEnt: 7.322546
 nnet accepted (03.clm)
-ITERATION 04: TrEnt 7.099745, lr(0.1/0.005/0.1/0.1), W/s 123.2k, CVEnt: 7.277242
+ITERATION 04: TrEnt 7.099745, lr(0.1/0.005/0.1/0.1), W/s 118.0k, CVEnt: 7.277242
 nnet accepted (04.clm)
-ITERATION 05: TrEnt 7.025896, lr(0.1/0.005/0.1/0.1), W/s 122.4k, CVEnt: 7.246377
+ITERATION 05: TrEnt 7.025896, lr(0.1/0.005/0.1/0.1), W/s 120.8k, CVEnt: 7.246377
 nnet accepted (05.clm)
-ITERATION 06: TrEnt 6.965199, lr(0.1/0.005/0.1/0.1), W/s 121.9k, CVEnt: 7.214610
+ITERATION 06: TrEnt 6.965199, lr(0.1/0.005/0.1/0.1), W/s 119.4k, CVEnt: 7.214610
 nnet accepted (06.clm)
-ITERATION 07: TrEnt 6.911551, lr(0.1/0.005/0.1/0.1), W/s 106.0k, CVEnt: 7.191189
+ITERATION 07: TrEnt 6.911551, lr(0.1/0.005/0.1/0.1), W/s 119.2k, CVEnt: 7.191189
 nnet accepted (07.clm)
-ITERATION 08: TrEnt 6.863892, lr(0.1/0.005/0.1/0.1), W/s 123.6k, CVEnt: 7.174837
+ITERATION 08: TrEnt 6.863892, lr(0.1/0.005/0.1/0.1), W/s 118.2k, CVEnt: 7.174837
 nnet accepted (08.clm)
-ITERATION 09: TrEnt 6.825596, lr(0.05/0.0025/0.05/0.05), W/s 122.8k, CVEnt: 7.161742
+ITERATION 09: TrEnt 6.825596, lr(0.05/0.0025/0.05/0.05), W/s 119.2k, CVEnt: 7.161742
 nnet accepted (09.clm)
-ITERATION 10: TrEnt 6.807102, lr(0.025/0.00125/0.025/0.025), W/s 125.3k, CVEnt: 7.154966
+ITERATION 10: TrEnt 6.807102, lr(0.025/0.00125/0.025/0.025), W/s 97.8k, CVEnt: 7.154966
 nnet accepted (10.clm)
-ITERATION 11: TrEnt 6.798021, lr(0.0125/0.000625/0.0125/0.0125), W/s 122.8k, CVEnt: 7.153679
+ITERATION 11: TrEnt 6.798021, lr(0.0125/0.000625/0.0125/0.0125), W/s 119.7k, CVEnt: 7.153679
 nnet accepted (11.clm)
-finished, too small rel. improvement .0001798750
-Succeeded training the Neural Network : test/tmp/case-03/exp/maxent/final.clm
-Elapse time: 0hr0m11s
-Effective speed: 81.3k words/sec
-../steps/test_model.sh --config-file test/tmp/case-03/conf/test.conf --test-threads 1 test/tmp/case-03/exp/maxent ./data/test
-**Testing model test/tmp/case-03/exp/maxent/final.clm ...
+../steps/train_model.sh: finished, too small rel. improvement .0001798750
+../steps/train_model.sh: Succeeded training the Neural Network : test/tmp/case-03/exp/maxent/final.clm
+../steps/train_model.sh: Elapse time: 0hr0m12s
+../steps/train_model.sh: Effective speed: 74.5k words/sec
+../steps/run_standalone.sh: Stage 3 --- Testing model...
+../steps/test_model.sh --config-file test/tmp/case-03/exp/conf/test.conf --test-threads 1 test/tmp/case-03/exp/maxent ./data/test
+../steps/test_model.sh: Testing model test/tmp/case-03/exp/maxent/final.clm ...
 =================================
 Test Entropy: 7.039683
 Test PPL: 131.569634
-Test Speed: 193.1k words/sec
+Test Speed: 169.9k words/sec
 =================================
-Elapse time: 0hr0m0s
+../steps/test_model.sh: Elapse time: 0hr0m0s
+../steps/run_standalone.sh: Elapse time: 0hr0m12s

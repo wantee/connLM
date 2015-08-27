@@ -78,7 +78,7 @@ echo "**Layouting general corpus with $corpus_line lines..."
 std_layout $dir/general.corpus $corpus_line $dir/general || exit 1
 
 end_ts=`date +%s`
-echo "Elapse time: $(shu-diff-timestamp $begin_ts $end_ts)"
+echo "$0: Elapse time: $(shu-diff-timestamp $begin_ts $end_ts)"
 
 exit 0;
 

@@ -93,12 +93,12 @@ function init_model ()
 }
 
 if [ -e "$model_out" ]; then
-  echo "**Skipping Initializing $model_out ..."
+  echo "$0: Skipping Initializing $model_out ..."
   exit 0
 fi
 
-echo "**Initializing model $vocab to $model_out ..."
-if [ -z "$class_size" ]; then
+echo "$0: Initializing model $vocab to $model_out ..."
+if [ -z "$class_size" ] || ! [[ $class_size == *";"* ]]; then
   init_mdl=$model_out
 
   init_model
@@ -123,7 +123,7 @@ else
   max_speed=0
   max_mdl=""
   for size in $sizes; do
-    echo "****Trying class size: $size ..."
+    echo "$0: Trying class size: $size ..."
     output_mdl="$init_dir/output.$size.clm"
     output_log="$log_dir/output.$size.log"
     init_mdl="$init_dir/init.$size.clm"
@@ -140,25 +140,25 @@ else
     || exit 1; 
 
     speed=`../utils/get_value.sh "words/sec" $train_log`
-    echo "****Class size: $size, Speed: $speed."
+    echo "$0:   Class size: $size, Speed: $speed."
     if [ 1 == $(bc <<< "$max_speed < $speed") ]; then
       max_speed=$speed
       max_mdl=$init_mdl
     fi
   done
 
-  echo "**Best model: $max_mdl, Speed: $max_speed."
+  echo "$0: Best model: $max_mdl, Speed: $max_speed."
   cp $max_mdl $model_out
 fi
 
-if [ -z "$class_size" ]; then
+if [ -z "$class_size" ] || ! [[ $class_size == *";"* ]]; then
   ../utils/check_log.sh -b "$begin_date" $init_log.wf $output_log.wf
 else
   ../utils/check_log.sh -b "$begin_date" $log_dir/*.wf
 fi
 
 end_ts=`date +%s`
-echo "Elapse time: $(shu-diff-timestamp $begin_ts $end_ts)"
+echo "$0: Elapse time: $(shu-diff-timestamp $begin_ts $end_ts)"
 
 exit 0;
 

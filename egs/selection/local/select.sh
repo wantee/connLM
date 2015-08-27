@@ -51,7 +51,7 @@ paste <(awk 'NF' "$corpus") <(cat "$in_dir"/score.*.prob) \
   | perl "local/select.pl" $thresh > "$out" || exit 1
 
 end_ts=`date +%s`
-echo "Elapse time: $(shu-diff-timestamp $begin_ts $end_ts)"
+echo "$0: Elapse time: $(shu-diff-timestamp $begin_ts $end_ts)"
 
 exit 0;
 
