@@ -100,6 +100,7 @@ fi
 echo "$0: Initializing model $vocab to $model_out ..."
 if [ -z "$class_size" ] || ! [[ $class_size == *";"* ]]; then
   init_mdl=$model_out
+  cls_size=$class_size
 
   init_model
 else
