@@ -62,6 +62,7 @@ steps=$1
 
 mkdir -p "$exp_dir"
 cp -r "${conf_dir%/}" "$exp_dir"
+conf_dir="$exp_dir/`basename $conf_dir`"
 
 mkdir -p "$data_dir"
 test_file="$data_dir/test"
@@ -89,29 +90,14 @@ train_file="$data_dir/indomain/train"
 valid_file="$data_dir/indomain/valid"
 
 exp=$exp_dir/indomain
-conf=$conf_dir/$model_type
-dir=$exp/$model_type
 
 ../steps/learn_vocab.sh --config-file $conf_dir/vocab.conf \
     $train_file $exp || exit 1;
 
-../steps/init_model.sh --init-config-file $conf/init.conf \
-        --output-config-file $conf/output.conf \
-        --class-size "$class_size" \
-          --train-file $train_file \
-          --train-config $conf/train.conf \
-          --train-threads $tr_thr \
-        $exp/vocab.clm $dir || exit 1;
-
-../steps/train_model.sh --train-config $conf/train.conf \
-        --test-config $conf_dir/test.conf \
-        --train-threads $tr_thr \
-        --test-threads $test_thr \
-        $train_file $valid_file $dir || exit 1;
-
-../steps/test_model.sh --config-file $conf_dir/test.conf \
-        --test-threads $test_thr \
-        $dir $test_file || exit 1;
+../steps/run_standalone.sh --class-size "$class_size" \
+      --train-thr $tr_thr --test-thr $test_thr \
+    $model_type $conf_dir $exp $train_file $valid_file $test_file \
+  || exit 1;
 fi
 ((st++))
 
@@ -122,29 +108,14 @@ train_file="$data_dir/general/train"
 valid_file="$data_dir/general/valid"
 
 exp=$exp_dir/general
-conf=$conf_dir/$model_type
-dir=$exp/$model_type
 
 ../steps/learn_vocab.sh --config-file $conf_dir/vocab.conf \
     $train_file $exp || exit 1;
 
-../steps/init_model.sh --init-config-file $conf/init.conf \
-        --output-config-file $conf/output.conf \
-        --class-size "$class_size" \
-          --train-file $train_file \
-          --train-config $conf/train.conf \
-          --train-threads $tr_thr \
-        $exp/vocab.clm $dir || exit 1;
-
-../steps/train_model.sh --train-config $conf/train.conf \
-        --test-config $conf_dir/test.conf \
-        --train-threads $tr_thr \
-        --test-threads $test_thr \
-        $train_file $valid_file $dir || exit 1;
-
-../steps/test_model.sh --config-file $conf_dir/test.conf \
-        --test-threads $test_thr \
-        $dir $test_file || exit 1;
+../steps/run_standalone.sh --class-size "$class_size" \
+      --train-thr $tr_thr --test-thr $test_thr \
+    $model_type $conf_dir $exp $train_file $valid_file $test_file \
+  || exit 1;
 fi
 ((st++))
 
