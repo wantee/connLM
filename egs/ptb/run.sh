@@ -212,8 +212,6 @@ dir=$rnn_dir
           --train-threads $tr_thr \
         $exp_dir/vocab.clm $dir || exit 1;
 
-fi
-
 echo "Mergine MaxEnt~RNN..."
 connlm-merge --log-file=$local_exp/log/merge.log \
        mdl,m:$local_exp/maxent/final.clm \
@@ -233,5 +231,6 @@ dir=$local_exp/
         --test-threads $test_thr \
         $dir $test_file || exit 1;
 
+fi
 ((st++))
 

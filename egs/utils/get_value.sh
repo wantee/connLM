@@ -5,12 +5,12 @@ if [ $# -lt 1 ]; then
     exit 1
 fi
 
-pattern="$1: [-+0-9\.]*|$1: [Tt][Rr][Uu][Ee]|$1: [Ff][Aa][Ll][Ss][e]|$1: [-+]?inf|$1: [-+]?nan"
+pattern="$1:\s*[-+0-9\.]*|$1:\s*[Tt][Rr][Uu][Ee]|$1:\s*[Ff][Aa][Ll][Ss][e]|$1:\s*[-+]?inf|$1:\s*[-+]?nan"
 if [ $# -ge 2 ]; then
     cat $2 | grep -E -o "$pattern" \
-      | tail -n 1 | awk -F":" '{print $2}'
+      | tail -n 1 | awk -F"[:]" '{print $2}' | sed 's/^\s*|\s*$//g'
 else 
     grep -E -o "$pattern" \
-      | tail -n 1 | awk -F":" '{print $2}'
+      | tail -n 1 | awk -F"[:]" '{print $2}' | sed 's/^\s*|\s*$//g'
 fi
 

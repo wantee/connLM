@@ -13,27 +13,27 @@ Step 3: Train RNN model ...
 Elapse time: 0hr0m0s
 ../steps/train_model.sh --train-config test/tmp/case-02/conf/rnn/train.conf --test-config test/tmp/case-02/conf/test.conf --train-threads 1 --test-threads 1 ./data/train ./data/valid test/tmp/case-02/exp/rnn
 Prerun Valid Entropy: 8.919792
-ITERATION 01: TrEnt 7.163846, lr(0.1/0.001/0.1/0.1), W/s 34.1k, CVEnt: 7.071594
+ITERATION 01: TrEnt 7.163846, lr(0.1/0.001/0.1/0.1), W/s 37.1k, CVEnt: 7.071594
 nnet accepted (01.clm)
-ITERATION 02: TrEnt 6.778829, lr(0.1/0.001/0.1/0.1), W/s 35.0k, CVEnt: 6.989743
+ITERATION 02: TrEnt 6.778829, lr(0.1/0.001/0.1/0.1), W/s 37.3k, CVEnt: 6.989743
 nnet accepted (02.clm)
-ITERATION 03: TrEnt 6.649918, lr(0.1/0.001/0.1/0.1), W/s 35.8k, CVEnt: 6.917487
+ITERATION 03: TrEnt 6.649918, lr(0.1/0.001/0.1/0.1), W/s 37.5k, CVEnt: 6.917487
 nnet accepted (03.clm)
-ITERATION 04: TrEnt 6.565709, lr(0.1/0.001/0.1/0.1), W/s 34.4k, CVEnt: 6.927956
+ITERATION 04: TrEnt 6.565709, lr(0.1/0.001/0.1/0.1), W/s 37.4k, CVEnt: 6.927956
 nnet rejected (04.clm)
-ITERATION 05: TrEnt 6.525846, lr(0.05/0.0005/0.05/0.05), W/s 36.3k, CVEnt: 6.892374
+ITERATION 05: TrEnt 6.525846, lr(0.05/0.0005/0.05/0.05), W/s 37.5k, CVEnt: 6.892374
 nnet accepted (05.clm)
-ITERATION 06: TrEnt 6.458633, lr(0.025/0.00025/0.025/0.025), W/s 33.7k, CVEnt: 6.898714
+ITERATION 06: TrEnt 6.458633, lr(0.025/0.00025/0.025/0.025), W/s 37.4k, CVEnt: 6.898714
 nnet rejected (06.clm)
 finished, too small rel. improvement 0
 Succeeded training the Neural Network : test/tmp/case-02/exp/rnn/final.clm
-Elapse time: 0hr0m16s
-Effective speed: 30.4k words/sec
+Elapse time: 0hr0m15s
+Effective speed: 32.5k words/sec
 ../steps/test_model.sh --config-file test/tmp/case-02/conf/test.conf --test-threads 1 test/tmp/case-02/exp/rnn ./data/test
 **Testing model test/tmp/case-02/exp/rnn/final.clm ...
 =================================
 Test Entropy: 6.772411
 Test PPL: 109.319838
-Test Speed: 130.7k words/sec
+Test Speed: 123.1k words/sec
 =================================
-Elapse time: 0hr0m0s
+Elapse time: 0hr0m1s
