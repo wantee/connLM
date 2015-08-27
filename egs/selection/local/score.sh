@@ -59,13 +59,13 @@ function score_corpus() {
     wait ${pids[$i]}
     ret=$?
     if [ $ret -ne 0 ]; then
-      echo "Score corpus job $i failed."
+      echo "$0: Score corpus job $i failed."
       ((failed += 1))
     fi
   done
   
   for i in `seq -w $score_job`; do
-  echo "Score job $i log: "
+    echo "$0: Score job $i log: "
     cat "$score_dir/log/score_sh.$i.log"
   done
 
@@ -98,7 +98,7 @@ gen_lines=`cat "$gen_dir/score/.lines"`
 fi
 
 if [ "$in_lines" -le 0 ] || [ "$in_lines" -ne "$gen_lines" ]; then
-  echo "(Re)Computing lines..."
+  echo "$0: (Re)Computing lines..."
   lines=`cat $corpus | wc -l | sed 's/ //g'`
   echo $lines > "$in_dir/score/.lines" 
   echo $lines > "$gen_dir/score/.lines" 
@@ -106,11 +106,18 @@ else
   lines=$in_lines
 fi
 
-echo "Scoring indomain corpus..."
+st=1
+if shu-in-range $st $stage; then
+echo "$0: Stage $st --- Scoring indomain corpus..."
 score_corpus $in_dir
+fi
+((st++))
 
-echo "Scoring general corpus..."
+if shu-in-range $st $stage; then
+echo "$0: Stage $st --- Scoring general corpus..."
 score_corpus $gen_dir
+fi
+((st++))
 
 end_ts=`date +%s`
 echo "$0: Elapse time: $(shu-diff-timestamp $begin_ts $end_ts)"

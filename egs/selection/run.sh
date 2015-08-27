@@ -135,7 +135,7 @@ echo "Step $st: ${stepnames[$st]} ..."
 ./local/select.sh "$data_dir/general.corpus" \
          "$exp_dir/indomain/$model_type/score" \
          "$exp_dir/general/$model_type/score" $thresh \
-         "$exp_dir/selected.$model_type.$thresh" 2>&1 || exit 1
+         "$exp_dir/selected.$model_type.$thresh" || exit 1
 fi
 ((st++))
 

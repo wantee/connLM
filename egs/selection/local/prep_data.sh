@@ -58,9 +58,11 @@ function std_layout {
   tail -n $test_size $out_dir/all > $out_dir/test || exit 1
 
   sed -n "$((valid_size + 1)),$((lines - $test_size))p" $out_dir/all > $out_dir/train || exit 1
-  echo "***Train size: $((lines - $test_size - valid_size))"
-  echo "***Valid size: $valid_size"
-  echo "***Test size: $test_size"
+  echo "================================="
+  echo "Train size: $((lines - $test_size - valid_size))"
+  echo "Valid size: $valid_size"
+  echo "Test size: $test_size"
+  echo "================================="
 }
 
 begin_date=`date +"%Y-%m-%d %H:%M:%S"`
@@ -71,10 +73,10 @@ if [ "$corpus_line" -lt 0 ]; then
   corpus_line=`echo $corpus_line | sed 's/ //g'`
 fi
 
-echo "**Layouting indomain corpus with $corpus_line lines..."
+echo "$0: Layouting indomain corpus with $corpus_line lines..."
 std_layout $dir/indomain.corpus $corpus_line $dir/indomain || exit 1
 
-echo "**Layouting general corpus with $corpus_line lines..."
+echo "$0: Layouting general corpus with $corpus_line lines..."
 std_layout $dir/general.corpus $corpus_line $dir/general || exit 1
 
 end_ts=`date +%s`
