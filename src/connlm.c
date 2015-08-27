@@ -1518,6 +1518,7 @@ static void* connlm_read_thread(void *args)
     }
 
     num_reads = 0;
+    read_thr->oovs = 0;
     read_thr->sents = 0;
     read_thr->words = 0;
     gettimeofday(&tts, NULL);
