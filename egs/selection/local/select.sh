@@ -86,10 +86,10 @@ if $parallel; then
       e=`expr $lines / $score_job \* $i`
     fi
 
-    paste <(sed -n "${s},${e}p" "$corpus" | awk 'NF' ) \
+    paste <(sed -n -e '/^$/d' -e "${s},${e}p" "$corpus" ) \
       <(cat "$in_dir"/score.$i.prob) <(cat "$gen_dir"/score.$i.prob) \
       | perl "local/select.pl" $thresh > "$out-$i" \
-             2> $log_dir/select.$i.log || exit 1
+             2> $log_dir/select.$i.log &
 
     pids[$(expr $i + 0)]=$!
   done
@@ -117,7 +117,7 @@ if $parallel; then
     rm $out-*
   fi
 else
-  paste <(awk 'NF' "$corpus") <(cat "$in_dir"/score.*.prob) \
+  paste <(sed -e '/^$/d' "$corpus") <(cat "$in_dir"/score.*.prob) \
         <(cat "$gen_dir"/score.*.prob) \
     | perl "local/select.pl" $thresh > "$out" \
            2> $log_dir/select.log || exit 1
