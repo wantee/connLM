@@ -1149,6 +1149,12 @@ int rnn_setup_train(rnn_t *rnn, rnn_train_opt_t *train_opt,
     }
 
     rnn->output = output;
+    if (train_opt->bptt_block < 1) {
+        train_opt->bptt_block = 1;
+    }
+    if (train_opt->bptt < 1) {
+        train_opt->bptt = 1;
+    }
     rnn->train_opt = *train_opt;
 
     rnn->num_thrs = num_thrs;
