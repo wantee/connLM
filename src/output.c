@@ -116,26 +116,28 @@ output_t* output_dup(output_t *o)
     output->output_opt = o->output_opt;
     *output = *o;
 
-    output->w2c = (int *) malloc(sizeof(int) * o->output_size);
-    if (output->w2c == NULL) {
-        ST_WARNING("Failed to malloc w2c.");
-        goto ERR;
-    }
-    memcpy(output->w2c, o->w2c, sizeof(int)*o->output_size);
+    if( o->output_opt.class_size > 0) {
+        output->w2c = (int *) malloc(sizeof(int) * o->output_size);
+        if (output->w2c == NULL) {
+            ST_WARNING("Failed to malloc w2c.");
+            goto ERR;
+        }
+        memcpy(output->w2c, o->w2c, sizeof(int)*o->output_size);
 
-    output->c2w_s = (int *) malloc(sizeof(int) * o->output_opt.class_size);
-    if (output->c2w_s == NULL) {
-        ST_WARNING("Failed to malloc c2w_s.");
-        goto ERR;
-    }
-    memcpy(output->c2w_s, o->c2w_s, sizeof(int)*o->output_opt.class_size);
+        output->c2w_s = (int *) malloc(sizeof(int) * o->output_opt.class_size);
+        if (output->c2w_s == NULL) {
+            ST_WARNING("Failed to malloc c2w_s.");
+            goto ERR;
+        }
+        memcpy(output->c2w_s, o->c2w_s, sizeof(int)*o->output_opt.class_size);
 
-    output->c2w_e = (int *) malloc(sizeof(int) * o->output_opt.class_size);
-    if (output->c2w_e == NULL) {
-        ST_WARNING("Failed to malloc c2w_e.");
-        goto ERR;
+        output->c2w_e = (int *) malloc(sizeof(int) * o->output_opt.class_size);
+        if (output->c2w_e == NULL) {
+            ST_WARNING("Failed to malloc c2w_e.");
+            goto ERR;
+        }
+        memcpy(output->c2w_e, o->c2w_e, sizeof(int)*o->output_opt.class_size);
     }
-    memcpy(output->c2w_e, o->c2w_e, sizeof(int)*o->output_opt.class_size);
 
     return output;
 
@@ -444,37 +446,41 @@ int output_save_body(output_t *output, FILE *fp, bool binary)
             return -1;
         }
 
-        if (fwrite(output->w2c, sizeof(int), output->output_size, fp)
-                != output->output_size) {
-            ST_WARNING("Failed to write w2c.");
-            return -1;
-        }
+        if (output->output_opt.class_size > 0) {
+            if (fwrite(output->w2c, sizeof(int), output->output_size, fp)
+                    != output->output_size) {
+                ST_WARNING("Failed to write w2c.");
+                return -1;
+            }
 
-        if (fwrite(output->c2w_s, sizeof(int),
-                    output->output_opt.class_size, fp)
-                != output->output_opt.class_size) {
-            ST_WARNING("Failed to write c2w_s.");
-            return -1;
-        }
+            if (fwrite(output->c2w_s, sizeof(int),
+                        output->output_opt.class_size, fp)
+                    != output->output_opt.class_size) {
+                ST_WARNING("Failed to write c2w_s.");
+                return -1;
+            }
 
-        if (fwrite(output->c2w_e, sizeof(int),
-                    output->output_opt.class_size, fp)
-                != output->output_opt.class_size) {
-            ST_WARNING("Failed to write c2w_e.");
-            return -1;
+            if (fwrite(output->c2w_e, sizeof(int),
+                        output->output_opt.class_size, fp)
+                    != output->output_opt.class_size) {
+                ST_WARNING("Failed to write c2w_e.");
+                return -1;
+            }
         }
     } else {
         fprintf(fp, "<OUTPUT-DATA>\n");
 
-        fprintf(fp, "Words to Classes:\n");
-        for (i = 0; i < output->output_size; i++) {
-            fprintf(fp, "\t%d\t%d\n", i, output->w2c[i]);
-        }
+        if (output->output_opt.class_size > 0) {
+            fprintf(fp, "Words to Classes:\n");
+            for (i = 0; i < output->output_size; i++) {
+                fprintf(fp, "\t%d\t%d\n", i, output->w2c[i]);
+            }
 
-        fprintf(fp, "Classes to Words:\n");
-        for (i = 0; i < output->output_opt.class_size; i++) {
-            fprintf(fp, "\t%d\t%d\t%d\n", i, output->c2w_s[i],
-                    output->c2w_e[i]);
+            fprintf(fp, "Classes to Words:\n");
+            for (i = 0; i < output->output_opt.class_size; i++) {
+                fprintf(fp, "\t%d\t%d\t%d\n", i, output->c2w_s[i],
+                        output->c2w_e[i]);
+            }
         }
     }
 
