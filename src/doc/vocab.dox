@@ -24,7 +24,7 @@
 /**
   @page vocab The Vocabulary
 
-  @section intro Introduction
+  @section vocab_intro Introduction
   
   Vocabulary in connLM is used to map word strings into integer ids 
   and verse vice.
@@ -34,7 +34,7 @@
   their counts in the corpus, this count information is also stored to be
   passed to output layer for generating word classes.
 
-  @section usage Usage
+  @section vocab_usage Usage
 
   Vocabulary related source code is in vocab.h. vocab_learn can be called
   to learn vocabulary from text. vocab_get_id() and vocab_get_word() is used
@@ -67,7 +67,7 @@ Options  :
   @c --max-word-num option, which controls the 
   maximum number of words used to learn vocabulary.
 
-  @section limited Limited Vocabulary
+  @section vocab_limited Limited Vocabulary
 
   The learning process can be finer controlled to support the usage of
   limited vocabulary.  

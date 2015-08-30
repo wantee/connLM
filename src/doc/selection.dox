@@ -1,0 +1,125 @@
+//
+// The MIT License (MIT)
+// 
+// Copyright (c) 2015 Wang Jian
+// 
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+// 
+// The above copyright notice and this permission notice shall be included in all
+// copies or substantial portions of the Software.
+// 
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+
+/**
+  @page selection Data Selection
+
+  @section selection_intro Introduction
+  
+  We implemented a adapted data selection method using connLM toolkit,
+  which addressing the problem that selecting similar sentences with 
+  small in-domain data from large general-domain corpora. 
+
+  The method is based on Cross-Entropy Difference, which is proposed in
+  <a href=http://dl.acm.org/citation.cfm?id=1858883> this paper </a>.
+  It uses the difference of in-domain cross entropy and general-domain
+  cross entropy for one sentence as the metric to determine whether this
+  sentence is more similar to in-domain data.
+
+  @section selection_usage Usage
+
+  The related scripts are under @c egs/selection. Users who would like
+  to try this method, need to prepare two or three dataset files: the
+  in-domain corpus links to @c $data_dir/indomain.corpus, the gengeral
+  corpus links to @c $data_dir/general.corpus and a optional test
+  dataset links to @c $data_dir/test. Then run the @c ./run.sh script,
+  one can choose a threshold with @c --thresh option. Rerun different
+  threshold can avoid most work with @c --stage @c 5.
+
+  @section selection_procedure Procedure
+
+  We can check the detail procedure with @c -h option:
+
+  @code
+$ ./run.sh -h
+usage: ./run.sh [steps]
+e.g.: ./run.sh -3,5,7-9,10-
+  stpes could be a number range within 1-5:
+   step1:   Prepare data
+   step2:   Train in-domain model
+   step3:   Train general model
+   step4:   Score general corpus
+   step5:   Select data
+   @endcode
+
+   @subsection selection_proc_step1 Step 1: Prepare data
+
+   This preprocessing step extracts two same sized dataset from in-doimain
+   and general corpus, and splits to standard layout with train, 
+   valid and optional test.
+
+   The main script is @c ./local/prep_data.sh, options are:
+
+   @code
+$ ./local/prep_data.sh -h
+./local/prep_data.sh -h
+usage: ./local/prep_data.sh <data-dir>
+e.g.: ./local/prep_data.sh data
+options: 
+     --valid-percentage <percentage>  # percentage text used as valid set.
+     --test-percentage <percentage>  # percentage text used as test set.
+     --corpus-line <lines>  # number of lines used for train model, negtive value denotes using all indomain text.
+     --shuf-text <true|false>  # whether shuffle the input text, do not need to be true if the input already shuffled
+   @endcode
+
+   In default mode, the size of dataset extracted is the same with the
+   whole in-domain corpus. One also can set exact sentences extracted
+   by using @c --corpus-line option.
+
+   @subsection selection_proc_step23 Step 2 & 3: Training in-domain & general model
+
+   These steps train two model with @c ../steps/run_standalone.sh, using
+   the in-domain and general corpus respectively.
+
+   @subsection selection_proc_step4 Step 4: Scoring the general corpus
+
+   Using the models trained by last steps, this step scoring every sentence
+   in general corpus, and get two scores respectively. To speedup the
+   processing, one can parallelizing it with @c $score_job.
+   
+   The main script is @c ./local/score.sh:
+
+   @code
+$ ./local/score.sh -h
+./local/score.sh -h
+usage: ./local/score.sh <corpus> <indomain-dir> <general-dir> <score_job>
+e.g.: ./local/score.sh data/general.corpus exp/indomain/rnn+maxent/ exp/general/rnn+maxent/
+options: 
+     --test-conf <config-file>    # config file for connlm-test.
+   @endcode
+
+   @subsection selection_proc_step5 Step 5: Selecting data
+
+   With the scores, this step selects data with the given threshold. The
+   resulting corpus can be found in @c $exp_dir/selected.$model_type.$thresh.
+
+   The main script is @c ./local/select.sh:
+
+   @code
+$ ./local/select.sh -h
+./local/select.sh -h
+usage: ./local/select.sh <corpus> <indomain-score-dir> <general-score-dir> <thresh> <out-selected>
+e.g.: ./local/select.sh data/general.corpus exp/indomain/rnn+maxent/score exp/general/rnn+maxent/score 0.0 exp/selected
+   @endcode
+*/
+
