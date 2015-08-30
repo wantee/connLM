@@ -106,11 +106,11 @@ $(document).ready(function(){initNavTree('vocab.html','');});
 <div class="title">The Vocabulary </div>  </div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock"><h1><a class="anchor" id="intro"></a>
+<div class="textblock"><h1><a class="anchor" id="vocab_intro"></a>
 Introduction</h1>
 <p>Vocabulary in connLM is used to map word strings into integer ids and verse vice.</p>
 <p>Vocabulary should be learned from dataset, usually one would use the train corpus. After learned, the words in vocabulary is sorted by their counts in the corpus, this count information is also stored to be passed to output layer for generating word classes.</p>
-<h1><a class="anchor" id="usage"></a>
+<h1><a class="anchor" id="vocab_usage"></a>
 Usage</h1>
 <p>Vocabulary related source code is in <a class="el" href="vocab_8h_source.html">vocab.h</a>. vocab_learn can be called to learn vocabulary from text. <a class="el" href="group__vocab.html#gab9ccab0c8afb58ef65357356b470c7fd" title="Get id of a word. ">vocab_get_id()</a> and <a class="el" href="group__vocab.html#ga2c4a395692c4291436693e0a5ad0912d" title="Get string of a word id. ">vocab_get_word()</a> is used to map between the word string and word id.</p>
 <p>The command line interface for learning vocabulary is <code>connlm-vocab</code>, available options are:</p>
@@ -129,7 +129,7 @@ Usage</h1>
 <div class="line">  --config                   : config file (<span class="keywordtype">string</span>, <span class="keywordflow">default</span> = <span class="stringliteral">&quot;&quot;</span>)</div>
 </div><!-- fragment --><p><code>&ndash;max-alphabet-size</code> restrict max size of vocabulary can be learned.</p>
 <p>When training large corpus, one would not like to learn the vocabulary by going through the whole corpus. Thus, we can use the <code>&ndash;max-word-num</code> option, which controls the maximum number of words used to learn vocabulary.</p>
-<h1><a class="anchor" id="limited"></a>
+<h1><a class="anchor" id="vocab_limited"></a>
 Limited Vocabulary</h1>
 <p>The learning process can be finer controlled to support the usage of limited vocabulary.</p>
 <p>A manually procedure to limit vocabulary could be: replace the out-of-vocabulary words to a special token, like <code>&lt;unk&gt;</code>, and then training with the processed data.</p>
@@ -140,7 +140,7 @@ Limited Vocabulary</h1>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="index.html">connLM</a></li>
-    <li class="footer">Generated on Wed Aug 19 2015 19:59:54 for connLM by
+    <li class="footer">Generated on Sun Aug 30 2015 17:44:36 for connLM by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.9.1 </li>
   </ul>

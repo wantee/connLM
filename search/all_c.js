@@ -1,6 +1,7 @@
 var searchData=
 [
   ['order',['order',['../structmaxent__model__opt__t.html#a94723c7092061d2a93ce098ea31c6132',1,'maxent_model_opt_t::order()'],['../structhash__hist__t.html#a3467fb2edd1bdf675da8b61579a1a8d9',1,'hash_hist_t::order()']]],
+  ['out_5flog_5fbase',['out_log_base',['../structconnlm__test__opt__t.html#a0673df33346cda5ca5389da88b3eb768',1,'connlm_test_opt_t']]],
   ['output',['output',['../structconnlm__t.html#acb30c474d8738764497837d6edca976e',1,'connlm_t::output()'],['../structffnn__t.html#a45b377fdef3e3d9da61fc3b1374e9bb7',1,'ffnn_t::output()'],['../structlbl__t.html#a6dcf64d21b6c453a4d7b4194305b85e0',1,'lbl_t::output()'],['../structmaxent__t.html#af976c98311be2747b28a396097287549',1,'maxent_t::output()'],['../structrnn__t.html#ae92cba711c3c01788dbfc157095000e4',1,'rnn_t::output()'],['../group__output.html',1,'(Global Namespace)']]],
   ['output_5factivate_5flast_5flayer',['output_activate_last_layer',['../group__output.html#gaeeac4c312a63bc66bfae66e5730029db',1,'output.h']]],
   ['output_5factivate_5fpre_5flayer',['output_activate_pre_layer',['../group__output.html#ga051c41bfbc88ac2134b6462b27236df6',1,'output.h']]],

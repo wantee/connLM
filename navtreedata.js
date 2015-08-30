@@ -10,9 +10,19 @@ var NAVTREE =
       [ "Details of training process", "benchmark.html#detail", null ]
     ] ],
     [ "The Vocabulary", "vocab.html", [
-      [ "Introduction", "vocab.html#intro", null ],
-      [ "Usage", "vocab.html#usage", null ],
-      [ "Limited Vocabulary", "vocab.html#limited", null ]
+      [ "Introduction", "vocab.html#vocab_intro", null ],
+      [ "Usage", "vocab.html#vocab_usage", null ],
+      [ "Limited Vocabulary", "vocab.html#vocab_limited", null ]
+    ] ],
+    [ "Data Selection", "selection.html", [
+      [ "Introduction", "selection.html#selection_intro", null ],
+      [ "Usage", "selection.html#selection_usage", null ],
+      [ "Procedure", "selection.html#selection_procedure", [
+        [ "Step 1: Prepare data", "selection.html#selection_proc_step1", null ],
+        [ "Step 2 & 3: Training in-domain & general model", "selection.html#selection_proc_step23", null ],
+        [ "Step 4: Scoring the general corpus", "selection.html#selection_proc_step4", null ],
+        [ "Step 5: Selecting data", "selection.html#selection_proc_step5", null ]
+      ] ]
     ] ],
     [ "Modules", "modules.html", "modules" ],
     [ "Data Structures", null, [
@@ -32,7 +42,7 @@ var NAVTREE =
 var NAVTREEINDEX =
 [
 "about.html",
-"structconnlm__t.html#af5e89bdebab8b9b2aa98ca74570bf938"
+"structconnlm__t.html#a8eddcb9d3461e61e31f4529769183ed9"
 ];
 
 var SYNCONMSG = 'click to disable panel synchronisation';
