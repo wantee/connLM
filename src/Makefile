@@ -11,11 +11,13 @@ BINDIR_DOUBLE = $(BINDIR)/double/
 OUTLIBDIR_DOUBLE = $(OUTLIBDIR)/double/
 BIN_OBJ_DOUBLE = $(BIN_OBJ)/double/
 SO_OBJ_DOUBLE = $(SO_OBJ)/double/
+BIN_TEST_OBJ_DOUBLE = $(BIN_OBJ_DOUBLE)/test/
 
 BINDIR_FLOAT = $(BINDIR)/float/
 OUTLIBDIR_FLOAT = $(OUTLIBDIR)/float/
 BIN_OBJ_FLOAT = $(BIN_OBJ)/float/
 SO_OBJ_FLOAT = $(SO_OBJ)/float/
+BIN_TEST_OBJ_FLOAT = $(BIN_OBJ_FLOAT)/test/
 
 ifndef CONNLM_NO_OPT
   ifeq ($(shell echo 'int main(){return 0;}' | $(CC) -xc - -Ofast -o /dev/null >/dev/null 2>&1 ; echo $$?),0)
@@ -84,10 +86,10 @@ ifneq (,$(findstring _USE_BLAS_,$(CFLAGS)))
     TEST_BIN += blas-test
 endif
 
-TARGET_TEST_BIN_DOUBLE = $(addprefix $(BINDIR_DOUBLE)/, $(TEST_BIN))
-TARGET_TEST_BIN_FLOAT = $(addprefix $(BINDIR_FLOAT)/, $(TEST_BIN))
+TARGET_TEST_BIN_DOUBLE = $(addprefix $(BIN_TEST_OBJ_DOUBLE)/, $(TEST_BIN))
+TARGET_TEST_BIN_FLOAT = $(addprefix $(BIN_TEST_OBJ_FLOAT)/, $(TEST_BIN))
 
-.PHONY: all clean preparedir test gen-dco
+.PHONY: all clean preparedir test gen-doc
 
 all: preparedir $(TARGET_BIN_DOUBLE) $(TARGET_BIN_FLOAT)
 
@@ -101,12 +103,14 @@ preparedir_double: preparedir_common
 	@mkdir -p $(SO_OBJ_DOUBLE)
 	@mkdir -p ${BINDIR_DOUBLE}
 	@mkdir -p ${OUTLIBDIR_DOUBLE}
+	@mkdir -p ${BIN_TEST_OBJ_DOUBLE}
 
 preparedir_float: preparedir_common
 	@mkdir -p $(BIN_OBJ_FLOAT)
 	@mkdir -p $(SO_OBJ_FLOAT)
 	@mkdir -p ${BINDIR_FLOAT}
 	@mkdir -p ${OUTLIBDIR_FLOAT}
+	@mkdir -p ${BIN_TEST_OBJ_FLOAT}
 
 $(TARGET_INC) : $(INC)
 	cp $^ ${OUTINCDIR}
@@ -159,23 +163,29 @@ gen-doc:
 	doxygen doc/Doxyfile > /dev/null
 	cd html && git add * && git commit -a -m"generate doc on $(shell date)" && git push origin gh-pages
 
-$(TARGET_TEST_BIN_DOUBLE) : $(BINDIR_DOUBLE)/%-test\
-                   : $(addprefix $(BIN_OBJ_DOUBLE)/, %-test.o) \
+$(BIN_TEST_OBJ_DOUBLE)/%-test.o : %-test.c
+	$(CC) $(CFLAGS) $(CFLAGS_DOUBLE) -UNDEBUG -c -o $@ $^
+
+$(TARGET_TEST_BIN_DOUBLE) : $(BIN_TEST_OBJ_DOUBLE)/%-test\
+                   : $(addprefix $(BIN_TEST_OBJ_DOUBLE)/, %-test.o) \
                      $(TARGET_SO_DOUBLE) $(TARGET_INC)
 	$(CC) $(CFLAGS) $(CFLAGS_DOUBLE) -o $@ $< \
           -L$(OUTLIBDIR_DOUBLE) -lconnlm $(LDFLAGS) $(LDFLAGS_DOUBLE)
 
-$(TARGET_TEST_BIN_FLOAT) : $(BINDIR_FLOAT)/%-test\
-                   : $(addprefix $(BIN_OBJ_FLOAT)/, %-test.o) \
+$(BIN_TEST_OBJ_FLOAT)/%-test.o : %-test.c
+	$(CC) $(CFLAGS) $(CFLAGS_FLOAT) -UNDEBUG -c -o $@ $^
+
+$(TARGET_TEST_BIN_FLOAT) : $(BIN_TEST_OBJ_FLOAT)/%-test\
+                   : $(addprefix $(BIN_TEST_OBJ_FLOAT)/, %-test.o) \
                      $(TARGET_SO_FLOAT) $(TARGET_INC)
-	$(CC) $(CFLAGS) $(CFLAGS_FLOAT) -o $@ $< \
+	$(CC) $(CFLAGS) $(CFLAGS_FLOAT) -UNDEBUG -o $@ $< \
           -L$(OUTLIBDIR_FLOAT) -lconnlm $(LDFLAGS) $(LDFLAGS_FLOAT) 
 
 test: test_double test_float
 
 test_double: preparedir $(TARGET_TEST_BIN_DOUBLE)
-	@result=0; for x in $(TARGET_TEST_BIN_DOUBLE); do printf "Running $$x ..."; ./$$x >/dev/null 2>&1; if [ $$? -ne 0 ]; then echo "... FAIL $$x"; result=1; else echo "... SUCCESS";  fi;  done; exit $$result
+	@result=0; for x in $(TARGET_TEST_BIN_DOUBLE); do printf "Running $$x ..."; ./$$x >/dev/null 2>&1; if [ $$? -ne 0 ]; then echo "... FAIL"; result=1; else echo "... SUCCESS";  fi;  done; exit $$result
 
 test_float: preparedir $(TARGET_TEST_BIN_FLOAT)
-	@result=0; for x in $(TARGET_TEST_BIN_FLOAT); do printf "Running $$x ..."; ./$$x >/dev/null 2>&1; if [ $$? -ne 0 ]; then echo "... FAIL $$x"; result=1; else echo "... SUCCESS";  fi;  done; exit $$result
+	@result=0; for x in $(TARGET_TEST_BIN_FLOAT); do printf "Running $$x ..."; ./$$x >/dev/null 2>&1; if [ $$? -ne 0 ]; then echo "... FAIL"; result=1; else echo "... SUCCESS";  fi;  done; exit $$result
 

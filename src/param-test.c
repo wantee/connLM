@@ -64,7 +64,7 @@ static int unit_test_param_acc_wt()
         delta_wt[i] = ((i & 0x01) ? 1.0 : -1.0) * (i + 10);
     }
 
-    fprintf(stderr, "   Case: %d...\n", ++ncase);
+    fprintf(stderr, "   Case: %d...", ++ncase);
     for (i = 0; i < N*M; i++) {
         wt[i] = (i + 1);
     }
@@ -74,12 +74,14 @@ static int unit_test_param_acc_wt()
         PRINT("%g, ", wt[i]);
         if (wt[i] != ref[ncase][i]) {
             PRINT("F(%d/%g)\n", i, wt[i]);
+            fprintf(stderr, "Failed\n");
             return -1;
         }
     }
     PRINT("},\n");
+    fprintf(stderr, "Passed\n");
 
-    fprintf(stderr, "   Case: %d...\n", ++ncase);
+    fprintf(stderr, "   Case: %d...", ++ncase);
     for (i = 0; i < N*M; i++) {
         wt[i] = (i + 1);
     }
@@ -89,12 +91,14 @@ static int unit_test_param_acc_wt()
         PRINT("%g, ", wt[i]);
         if (wt[i] != ref[ncase][i]) {
             PRINT("F(%d/%g)\n", i, wt[i]);
+            fprintf(stderr, "Failed\n");
             return -1;
         }
     }
     PRINT("},\n");
+    fprintf(stderr, "Passed\n");
 
-    fprintf(stderr, "   Case: %d...\n", ++ncase);
+    fprintf(stderr, "   Case: %d...", ++ncase);
     for (i = 0; i < N*M; i++) {
         wt[i] = (i + 1);
     }
@@ -104,12 +108,14 @@ static int unit_test_param_acc_wt()
         PRINT("%g, ", wt[i]);
         if (wt[i] != ref[ncase][i]) {
             PRINT("F(%d/%g)\n", i, wt[i]);
+            fprintf(stderr, "Failed\n");
             return -1;
         }
     }
     PRINT("},\n");
+    fprintf(stderr, "Passed\n");
 
-    fprintf(stderr, "   Case: %d...\n", ++ncase);
+    fprintf(stderr, "   Case: %d...", ++ncase);
     for (i = 0; i < N*M; i++) {
         wt[i] = (i + 1);
     }
@@ -119,12 +125,14 @@ static int unit_test_param_acc_wt()
         PRINT("%g, ", wt[i]);
         if (wt[i] != ref[ncase][i]) {
             PRINT("F(%d/%g)\n", i, wt[i]);
+            fprintf(stderr, "Failed\n");
             return -1;
         }
     }
     PRINT("},\n");
+    fprintf(stderr, "Passed\n");
 
-    fprintf(stderr, "   Case: %d...\n", ++ncase);
+    fprintf(stderr, "   Case: %d...", ++ncase);
     for (i = 0; i < N*M; i++) {
         wt[i] = (i + 1);
     }
@@ -134,10 +142,12 @@ static int unit_test_param_acc_wt()
         PRINT("%g, ", wt[i]);
         if (wt[i] != ref[ncase][i]) {
             PRINT("F(%d/%g)\n", i, wt[i]);
+            fprintf(stderr, "Failed\n");
             return -1;
         }
     }
     PRINT("},\n");
+    fprintf(stderr, "Passed\n");
 
     return 0;
 }
@@ -184,7 +194,7 @@ static int unit_test_param_update()
     param.momentum = 1.0;
     param.mini_batch = 0;
 
-    fprintf(stderr, "   Case: %d...\n", ++ncase);
+    fprintf(stderr, "   Case: %d...", ++ncase);
     for (i = 0; i < N*M; i++) {
         wt[i] = (i + 1);
     }
@@ -195,12 +205,14 @@ static int unit_test_param_update()
         PRINT("%g, ", wt[i]);
         if (wt[i] != ref[ncase][i]) {
             PRINT("F(%d/%g)\n", i, wt[i]);
+            fprintf(stderr, "Failed\n");
             return -1;
         }
     }
     PRINT("},\n");
+    fprintf(stderr, "Passed\n");
 
-    fprintf(stderr, "   Case: %d...\n", ++ncase);
+    fprintf(stderr, "   Case: %d...", ++ncase);
     for (i = 0; i < N*M; i++) {
         wt[i] = (i + 1);
     }
@@ -211,12 +223,14 @@ static int unit_test_param_update()
         PRINT("%g, ", wt[i]);
         if (wt[i] != ref[ncase][i]) {
             PRINT("F(%d/%g)\n", i, wt[i]);
+            fprintf(stderr, "Failed\n");
             return -1;
         }
     }
     PRINT("},\n");
+    fprintf(stderr, "Passed\n");
 
-    fprintf(stderr, "   Case: %d...\n", ++ncase);
+    fprintf(stderr, "   Case: %d...", ++ncase);
     for (i = 0; i < N*M; i++) {
         wt[i] = (i + 1);
     }
@@ -227,12 +241,14 @@ static int unit_test_param_update()
         PRINT("%g, ", wt[i]);
         if (wt[i] != ref[ncase][i]) {
             PRINT("F(%d/%g)\n", i, wt[i]);
+            fprintf(stderr, "Failed\n");
             return -1;
         }
     }
     PRINT("},\n");
+    fprintf(stderr, "Passed\n");
 
-    fprintf(stderr, "   Case: %d...\n", ++ncase);
+    fprintf(stderr, "   Case: %d...", ++ncase);
     for (i = 0; i < N*M; i++) {
         wt[i] = (i + 1);
     }
@@ -243,12 +259,14 @@ static int unit_test_param_update()
         PRINT("%g, ", wt[i]);
         if (wt[i] != ref[ncase][i]) {
             PRINT("F(%d/%g)\n", i, wt[i]);
+            fprintf(stderr, "Failed\n");
             return -1;
         }
     }
     PRINT("},\n");
+    fprintf(stderr, "Passed\n");
 
-    fprintf(stderr, "   Case: %d...\n", ++ncase);
+    fprintf(stderr, "   Case: %d...", ++ncase);
     for (i = 0; i < N*M; i++) {
         wt[i] = (i + 1);
     }
@@ -259,10 +277,12 @@ static int unit_test_param_update()
         PRINT("%g, ", wt[i]);
         if (wt[i] != ref[ncase][i]) {
             PRINT("F(%d/%g)\n", i, wt[i]);
+            fprintf(stderr, "Failed\n");
             return -1;
         }
     }
     PRINT("},\n");
+    fprintf(stderr, "Passed\n");
 
     return 0;
 }

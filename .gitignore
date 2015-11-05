@@ -22,6 +22,7 @@ Session.vim
 .netrwhist
 *~
 
+bin_obj/
 html/
 exp/
 tmp/

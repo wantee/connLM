@@ -25,11 +25,11 @@ fi
 ST_UTILS_LIB=$PWD/../../tools/stutils/lib
 
 export PATH=$CONNLM_BIN:$PWD:$PATH
-if [ `uname` ==  "Darwin" ]; then
-export DYLD_LIBRARY_PATH=$CONNLM_LIB:$ST_UTILS_LIB:$DYLD_LIBRARY_PATH
-else
-export LD_LIBRARY_PATH=$CONNLM_LIB:$ST_UTILS_LIB:$LD_LIBRARY_PATH
-fi
+#if [ `uname` ==  "Darwin" ]; then
+#export DYLD_LIBRARY_PATH=$CONNLM_LIB:$ST_UTILS_LIB:$DYLD_LIBRARY_PATH
+#else
+#export LD_LIBRARY_PATH=$CONNLM_LIB:$ST_UTILS_LIB:$LD_LIBRARY_PATH
+#fi
 
 export LC_ALL=C
 

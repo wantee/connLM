@@ -68,7 +68,7 @@ static int unit_test_maxent_union()
     ref.sz = 1000;
 
     fprintf(stderr, "  Testing maxent_union...\n");
-    fprintf(stderr, "    Case %d...\n", ncase++);
+    fprintf(stderr, "    Case %d...", ncase++);
     num_set = 2;
     hsets[0].s = 100; hsets[0].num = 200;
     hsets[1].s = 800; hsets[1].num = 200;
@@ -77,10 +77,12 @@ static int unit_test_maxent_union()
     ref.hunion[1].s = 800; ref.hunion[1].e = 1000;
     if (st_permutation(hsets, num_set, sizeof(hash_range_t),
             unit_test_maxent_union_one, &ref) < 0) {
+        fprintf(stderr, "Failed\n");
         return -1;
     }
+    fprintf(stderr, "Success\n");
 
-    fprintf(stderr, "    Case %d...\n", ncase++);
+    fprintf(stderr, "    Case %d...", ncase++);
     num_set = 2;
     hsets[0].s = 100; hsets[0].num = 200;
     hsets[1].s = 800; hsets[1].num = 250;
@@ -90,10 +92,12 @@ static int unit_test_maxent_union()
     ref.hunion[2].s = 800; ref.hunion[2].e = 1000;
     if (st_permutation(hsets, num_set, sizeof(hash_range_t),
             unit_test_maxent_union_one, &ref) < 0) {
+        fprintf(stderr, "Failed\n");
         return -1;
     }
+    fprintf(stderr, "Success\n");
 
-    fprintf(stderr, "    Case %d...\n", ncase++);
+    fprintf(stderr, "    Case %d...", ncase++);
     num_set = 4;
     hsets[0].s = 100; hsets[0].num = 100;
     hsets[1].s = 300; hsets[1].num = 100;
@@ -106,10 +110,12 @@ static int unit_test_maxent_union()
     ref.hunion[3].s = 700; ref.hunion[3].e = 800;
     if (st_permutation(hsets, num_set, sizeof(hash_range_t),
             unit_test_maxent_union_one, &ref) < 0) {
+        fprintf(stderr, "Failed\n");
         return -1;
     }
+    fprintf(stderr, "Success\n");
 
-    fprintf(stderr, "    Case %d...\n", ncase++);
+    fprintf(stderr, "    Case %d...", ncase++);
     num_set = 5;
     hsets[0].s = 100; hsets[0].num = 100;
     hsets[1].s = 300; hsets[1].num = 100;
@@ -124,10 +130,12 @@ static int unit_test_maxent_union()
     ref.hunion[4].s = 700; ref.hunion[4].e = 800;
     if (st_permutation(hsets, num_set, sizeof(hash_range_t),
             unit_test_maxent_union_one, &ref) < 0) {
+        fprintf(stderr, "Failed\n");
         return -1;
     }
+    fprintf(stderr, "Success\n");
 
-    fprintf(stderr, "    Case %d...\n", ncase++);
+    fprintf(stderr, "    Case %d...", ncase++);
     num_set = 5;
     hsets[0].s = 100; hsets[0].num = 100;
     hsets[1].s = 300; hsets[1].num = 100;
@@ -141,10 +149,12 @@ static int unit_test_maxent_union()
     ref.hunion[3].s = 700; ref.hunion[3].e = 800;
     if (st_permutation(hsets, num_set, sizeof(hash_range_t),
             unit_test_maxent_union_one, &ref) < 0) {
+        fprintf(stderr, "Failed\n");
         return -1;
     }
+    fprintf(stderr, "Success\n");
 
-    fprintf(stderr, "    Case %d...\n", ncase++);
+    fprintf(stderr, "    Case %d...", ncase++);
     num_set = 5;
     hsets[0].s = 100; hsets[0].num = 100;
     hsets[1].s = 300; hsets[1].num = 100;
@@ -158,10 +168,12 @@ static int unit_test_maxent_union()
     ref.hunion[3].s = 700; ref.hunion[3].e = 800;
     if (st_permutation(hsets, num_set, sizeof(hash_range_t),
             unit_test_maxent_union_one, &ref) < 0) {
+        fprintf(stderr, "Failed\n");
         return -1;
     }
+    fprintf(stderr, "Success\n");
 
-    fprintf(stderr, "    Case %d...\n", ncase++);
+    fprintf(stderr, "    Case %d...", ncase++);
     num_set = 5;
     hsets[0].s = 100; hsets[0].num = 100;
     hsets[1].s = 300; hsets[1].num = 100;
@@ -175,10 +187,12 @@ static int unit_test_maxent_union()
     ref.hunion[3].s = 700; ref.hunion[3].e = 800;
     if (st_permutation(hsets, num_set, sizeof(hash_range_t),
             unit_test_maxent_union_one, &ref) < 0) {
+        fprintf(stderr, "Failed\n");
         return -1;
     }
+    fprintf(stderr, "Success\n");
 
-    fprintf(stderr, "    Case %d...\n", ncase++);
+    fprintf(stderr, "    Case %d...", ncase++);
     num_set = 5;
     hsets[0].s = 100; hsets[0].num = 100;
     hsets[1].s = 300; hsets[1].num = 100;
@@ -191,10 +205,12 @@ static int unit_test_maxent_union()
     ref.hunion[2].s = 700; ref.hunion[2].e = 800;
     if (st_permutation(hsets, num_set, sizeof(hash_range_t),
             unit_test_maxent_union_one, &ref) < 0) {
+        fprintf(stderr, "Failed\n");
         return -1;
     }
+    fprintf(stderr, "Success\n");
 
-    fprintf(stderr, "    Case %d...\n", ncase++);
+    fprintf(stderr, "    Case %d...", ncase++);
     num_set = 5;
     hsets[0].s = 100; hsets[0].num = 100;
     hsets[1].s = 300; hsets[1].num = 100;
@@ -207,10 +223,12 @@ static int unit_test_maxent_union()
     ref.hunion[2].s = 700; ref.hunion[2].e = 800;
     if (st_permutation(hsets, num_set, sizeof(hash_range_t),
             unit_test_maxent_union_one, &ref) < 0) {
+        fprintf(stderr, "Failed\n");
         return -1;
     }
+    fprintf(stderr, "Success\n");
 
-    fprintf(stderr, "    Case %d...\n", ncase++);
+    fprintf(stderr, "    Case %d...", ncase++);
     num_set = 5;
     hsets[0].s = 100; hsets[0].num = 100;
     hsets[1].s = 300; hsets[1].num = 100;
@@ -222,10 +240,12 @@ static int unit_test_maxent_union()
     ref.hunion[1].s = 700; ref.hunion[1].e = 800;
     if (st_permutation(hsets, num_set, sizeof(hash_range_t),
             unit_test_maxent_union_one, &ref) < 0) {
+        fprintf(stderr, "Failed\n");
         return -1;
     }
+    fprintf(stderr, "Success\n");
 
-    fprintf(stderr, "    Case %d...\n", ncase++);
+    fprintf(stderr, "    Case %d...", ncase++);
     num_set = 5;
     hsets[0].s = 100; hsets[0].num = 100;
     hsets[1].s = 300; hsets[1].num = 100;
@@ -237,10 +257,12 @@ static int unit_test_maxent_union()
     ref.hunion[1].s = 700; ref.hunion[1].e = 800;
     if (st_permutation(hsets, num_set, sizeof(hash_range_t),
             unit_test_maxent_union_one, &ref) < 0) {
+        fprintf(stderr, "Failed\n");
         return -1;
     }
+    fprintf(stderr, "Success\n");
 
-    fprintf(stderr, "    Case %d...\n", ncase++);
+    fprintf(stderr, "    Case %d...", ncase++);
     num_set = 5;
     hsets[0].s = 100; hsets[0].num = 100;
     hsets[1].s = 300; hsets[1].num = 100;
@@ -252,10 +274,12 @@ static int unit_test_maxent_union()
     ref.hunion[1].s = 700; ref.hunion[1].e = 800;
     if (st_permutation(hsets, num_set, sizeof(hash_range_t),
             unit_test_maxent_union_one, &ref) < 0) {
+        fprintf(stderr, "Failed\n");
         return -1;
     }
+    fprintf(stderr, "Success\n");
 
-    fprintf(stderr, "    Case %d...\n", ncase++);
+    fprintf(stderr, "    Case %d...", ncase++);
     num_set = 5;
     hsets[0].s = 100; hsets[0].num = 100;
     hsets[1].s = 300; hsets[1].num = 100;
@@ -266,10 +290,12 @@ static int unit_test_maxent_union()
     ref.hunion[0].s =   0; ref.hunion[0].e = 800;
     if (st_permutation(hsets, num_set, sizeof(hash_range_t),
             unit_test_maxent_union_one, &ref) < 0) {
+        fprintf(stderr, "Failed\n");
         return -1;
     }
+    fprintf(stderr, "Success\n");
 
-    fprintf(stderr, "    Case %d...\n", ncase++);
+    fprintf(stderr, "    Case %d...", ncase++);
     num_set = 5;
     hsets[0].s = 100; hsets[0].num = 100;
     hsets[1].s = 300; hsets[1].num = 100;
@@ -280,10 +306,12 @@ static int unit_test_maxent_union()
     ref.hunion[0].s =   0; ref.hunion[0].e = 800;
     if (st_permutation(hsets, num_set, sizeof(hash_range_t),
             unit_test_maxent_union_one, &ref) < 0) {
+        fprintf(stderr, "Failed\n");
         return -1;
     }
+    fprintf(stderr, "Success\n");
 
-    fprintf(stderr, "    Case %d...\n", ncase++);
+    fprintf(stderr, "    Case %d...", ncase++);
     num_set = 5;
     hsets[0].s = 100; hsets[0].num = 100;
     hsets[1].s = 300; hsets[1].num = 100;
@@ -294,10 +322,12 @@ static int unit_test_maxent_union()
     ref.hunion[0].s =   0; ref.hunion[0].e = 850;
     if (st_permutation(hsets, num_set, sizeof(hash_range_t),
             unit_test_maxent_union_one, &ref) < 0) {
+        fprintf(stderr, "Failed\n");
         return -1;
     }
+    fprintf(stderr, "Success\n");
 
-    fprintf(stderr, "    Case %d...\n", ncase++);
+    fprintf(stderr, "    Case %d...", ncase++);
     num_set = 5;
     hsets[0].s = 100; hsets[0].num = 100;
     hsets[1].s = 300; hsets[1].num = 100;
@@ -311,10 +341,12 @@ static int unit_test_maxent_union()
     ref.hunion[3].s = 700; ref.hunion[3].e = 800;
     if (st_permutation(hsets, num_set, sizeof(hash_range_t),
             unit_test_maxent_union_one, &ref) < 0) {
+        fprintf(stderr, "Failed\n");
         return -1;
     }
+    fprintf(stderr, "Success\n");
 
-    fprintf(stderr, "    Case %d...\n", ncase++);
+    fprintf(stderr, "    Case %d...", ncase++);
     num_set = 5;
     hsets[0].s = 100; hsets[0].num = 100;
     hsets[1].s = 300; hsets[1].num = 100;
@@ -328,10 +360,12 @@ static int unit_test_maxent_union()
     ref.hunion[3].s = 700; ref.hunion[3].e = 800;
     if (st_permutation(hsets, num_set, sizeof(hash_range_t),
             unit_test_maxent_union_one, &ref) < 0) {
+        fprintf(stderr, "Failed\n");
         return -1;
     }
+    fprintf(stderr, "Success\n");
 
-    fprintf(stderr, "    Case %d...\n", ncase++);
+    fprintf(stderr, "    Case %d...", ncase++);
     num_set = 5;
     hsets[0].s = 100; hsets[0].num = 100;
     hsets[1].s = 300; hsets[1].num = 100;
@@ -344,10 +378,12 @@ static int unit_test_maxent_union()
     ref.hunion[2].s = 700; ref.hunion[2].e = 800;
     if (st_permutation(hsets, num_set, sizeof(hash_range_t),
             unit_test_maxent_union_one, &ref) < 0) {
+        fprintf(stderr, "Failed\n");
         return -1;
     }
+    fprintf(stderr, "Success\n");
 
-    fprintf(stderr, "    Case %d...\n", ncase++);
+    fprintf(stderr, "    Case %d...", ncase++);
     num_set = 5;
     hsets[0].s = 100; hsets[0].num = 100;
     hsets[1].s = 300; hsets[1].num = 100;
@@ -360,10 +396,12 @@ static int unit_test_maxent_union()
     ref.hunion[2].s = 700; ref.hunion[2].e = 800;
     if (st_permutation(hsets, num_set, sizeof(hash_range_t),
             unit_test_maxent_union_one, &ref) < 0) {
+        fprintf(stderr, "Failed\n");
         return -1;
     }
+    fprintf(stderr, "Success\n");
 
-    fprintf(stderr, "    Case %d...\n", ncase++);
+    fprintf(stderr, "    Case %d...", ncase++);
     num_set = 5;
     hsets[0].s = 100; hsets[0].num = 100;
     hsets[1].s = 300; hsets[1].num = 100;
@@ -375,10 +413,12 @@ static int unit_test_maxent_union()
     ref.hunion[1].s = 700; ref.hunion[1].e = 800;
     if (st_permutation(hsets, num_set, sizeof(hash_range_t),
             unit_test_maxent_union_one, &ref) < 0) {
+        fprintf(stderr, "Failed\n");
         return -1;
     }
+    fprintf(stderr, "Success\n");
 
-    fprintf(stderr, "    Case %d...\n", ncase++);
+    fprintf(stderr, "    Case %d...", ncase++);
     num_set = 5;
     hsets[0].s = 100; hsets[0].num = 100;
     hsets[1].s = 300; hsets[1].num = 100;
@@ -390,10 +430,12 @@ static int unit_test_maxent_union()
     ref.hunion[1].s = 700; ref.hunion[1].e = 800;
     if (st_permutation(hsets, num_set, sizeof(hash_range_t),
             unit_test_maxent_union_one, &ref) < 0) {
+        fprintf(stderr, "Failed\n");
         return -1;
     }
+    fprintf(stderr, "Success\n");
 
-    fprintf(stderr, "    Case %d...\n", ncase++);
+    fprintf(stderr, "    Case %d...", ncase++);
     num_set = 5;
     hsets[0].s = 100; hsets[0].num = 100;
     hsets[1].s = 300; hsets[1].num = 100;
@@ -404,10 +446,12 @@ static int unit_test_maxent_union()
     ref.hunion[0].s = 100; ref.hunion[0].e = 800;
     if (st_permutation(hsets, num_set, sizeof(hash_range_t),
             unit_test_maxent_union_one, &ref) < 0) {
+        fprintf(stderr, "Failed\n");
         return -1;
     }
+    fprintf(stderr, "Success\n");
 
-    fprintf(stderr, "    Case %d...\n", ncase++);
+    fprintf(stderr, "    Case %d...", ncase++);
     num_set = 5;
     hsets[0].s = 100; hsets[0].num = 100;
     hsets[1].s = 300; hsets[1].num = 100;
@@ -418,10 +462,12 @@ static int unit_test_maxent_union()
     ref.hunion[0].s = 100; ref.hunion[0].e = 850;
     if (st_permutation(hsets, num_set, sizeof(hash_range_t),
             unit_test_maxent_union_one, &ref) < 0) {
+        fprintf(stderr, "Failed\n");
         return -1;
     }
+    fprintf(stderr, "Success\n");
 
-    fprintf(stderr, "    Case %d...\n", ncase++);
+    fprintf(stderr, "    Case %d...", ncase++);
     num_set = 5;
     hsets[0].s = 100; hsets[0].num = 100;
     hsets[1].s = 300; hsets[1].num = 100;
@@ -435,10 +481,12 @@ static int unit_test_maxent_union()
     ref.hunion[3].s = 700; ref.hunion[3].e = 800;
     if (st_permutation(hsets, num_set, sizeof(hash_range_t),
             unit_test_maxent_union_one, &ref) < 0) {
+        fprintf(stderr, "Failed\n");
         return -1;
     }
+    fprintf(stderr, "Success\n");
 
-    fprintf(stderr, "    Case %d...\n", ncase++);
+    fprintf(stderr, "    Case %d...", ncase++);
     num_set = 5;
     hsets[0].s = 100; hsets[0].num = 100;
     hsets[1].s = 300; hsets[1].num = 100;
@@ -451,10 +499,12 @@ static int unit_test_maxent_union()
     ref.hunion[2].s = 700; ref.hunion[2].e = 800;
     if (st_permutation(hsets, num_set, sizeof(hash_range_t),
             unit_test_maxent_union_one, &ref) < 0) {
+        fprintf(stderr, "Failed\n");
         return -1;
     }
+    fprintf(stderr, "Success\n");
 
-    fprintf(stderr, "    Case %d...\n", ncase++);
+    fprintf(stderr, "    Case %d...", ncase++);
     num_set = 5;
     hsets[0].s = 100; hsets[0].num = 100;
     hsets[1].s = 300; hsets[1].num = 100;
@@ -467,10 +517,12 @@ static int unit_test_maxent_union()
     ref.hunion[2].s = 700; ref.hunion[2].e = 800;
     if (st_permutation(hsets, num_set, sizeof(hash_range_t),
             unit_test_maxent_union_one, &ref) < 0) {
+        fprintf(stderr, "Failed\n");
         return -1;
     }
+    fprintf(stderr, "Success\n");
 
-    fprintf(stderr, "    Case %d...\n", ncase++);
+    fprintf(stderr, "    Case %d...", ncase++);
     num_set = 5;
     hsets[0].s = 100; hsets[0].num = 100;
     hsets[1].s = 300; hsets[1].num = 100;
@@ -485,10 +537,12 @@ static int unit_test_maxent_union()
     ref.hunion[4].s = 700; ref.hunion[4].e = 800;
     if (st_permutation(hsets, num_set, sizeof(hash_range_t),
             unit_test_maxent_union_one, &ref) < 0) {
+        fprintf(stderr, "Failed\n");
         return -1;
     }
+    fprintf(stderr, "Success\n");
 
-    fprintf(stderr, "    Case %d...\n", ncase++);
+    fprintf(stderr, "    Case %d...", ncase++);
     num_set = 5;
     hsets[0].s = 100; hsets[0].num = 100;
     hsets[1].s = 300; hsets[1].num = 100;
@@ -503,8 +557,11 @@ static int unit_test_maxent_union()
     ref.hunion[4].s = 850; ref.hunion[4].e = 900;
     if (st_permutation(hsets, num_set, sizeof(hash_range_t),
             unit_test_maxent_union_one, &ref) < 0) {
+        fprintf(stderr, "Failed\n");
         return -1;
     }
+    fprintf(stderr, "Success\n");
+
     return 0;
 }
 

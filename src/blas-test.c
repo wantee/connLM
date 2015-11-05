@@ -56,24 +56,24 @@ static void test_sgemm(int m, int n, int k, bool transa, bool transb)
             "transa=%s, transb=%s...\n", m, n, k,
             bool2str(transa), bool2str(transb));
 
-    assert(posix_memalign((void **)&a, 128, sizeof(real_t) * m * k) != 0);
+    assert(posix_memalign((void **)&a, 128, sizeof(real_t) * m * k) == 0);
     assert(a != NULL);
     for (i = 0; i < m * k; i++) {
         a[i] = st_random(-0.1, 0.1);
     }
 
-    assert(posix_memalign((void **)&b, 128, sizeof(real_t) * k * n) != 0);
+    assert(posix_memalign((void **)&b, 128, sizeof(real_t) * k * n) == 0);
     assert(b != NULL);
     for (i = 0; i < k * n; i++) {
         b[i] = st_random(-0.1, 0.1);
     }
 
-    assert(posix_memalign((void **)&cp, 128, sizeof(real_t) * m * n) != 0);
+    assert(posix_memalign((void **)&cp, 128, sizeof(real_t) * m * n) == 0);
     assert(cp != NULL);
     for (i = 0; i < m * n; i++) {
         cp[i] = st_random(-0.1, 0.1);
     }
-    assert(posix_memalign((void **)&c, 128, sizeof(real_t) * m * n) != 0);
+    assert(posix_memalign((void **)&c, 128, sizeof(real_t) * m * n) == 0);
     assert(c != NULL);
 
     fprintf(stderr, "Running clbas_segmm...\n");
