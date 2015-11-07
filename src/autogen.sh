@@ -13,12 +13,16 @@ fi
 ST_UTILS_ROOT=$PWD/../tools/stutils
 if [ ! -e "$ST_UTILS_ROOT/include/stutils/st_macro.h" ]; then
   git clone https://github.com/wantee/stutils.git $ST_UTILS_ROOT || exit 1
-  ( cd $ST_UTILS_ROOT/src && make) || exit 1
+else
+  ( cd $ST_UTILS_ROOT && git pull ) || exit 1
 fi
+( cd $ST_UTILS_ROOT/src && make ) || exit 1
 
 SH_UTILS_ROOT=$PWD/../tools/shutils
 if [ ! -e "$SH_UTILS_ROOT/shutils.sh" ]; then
   git clone https://github.com/wantee/shutils $SH_UTILS_ROOT || exit 1
+else
+  ( cd $SH_UTILS_ROOT && git pull ) || exit 1
 fi
 
 mkfile=blas.mk
