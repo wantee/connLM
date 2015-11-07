@@ -211,6 +211,7 @@ rnn_t* rnn_dup(rnn_t *r);
  * Load rnn header and initialise a new rnn.
  * @ingroup rnn
  * @param[out] rnn rnn initialised.
+ * @param[in] version file version of loading file.
  * @param[in] fp file stream loaded from.
  * @param[out] binary whether the file stream is in binary format.
  * @param[in] fo_info file stream used to print information, if it is not NULL.
@@ -218,18 +219,20 @@ rnn_t* rnn_dup(rnn_t *r);
  * @see rnn_save_header, rnn_save_body
  * @return non-zero value if any error.
  */
-int rnn_load_header(rnn_t **rnn, FILE *fp, bool *binary, FILE *fo_info);
+int rnn_load_header(rnn_t **rnn, int version, FILE *fp,
+        bool *binary, FILE *fo_info);
 /**
  * Load rnn body.
  * @ingroup rnn
  * @param[in] rnn rnn to be loaded.
+ * @param[in] version file version of loading file.
  * @param[in] fp file stream loaded from.
  * @param[in] binary whether to use binary format.
  * @see rnn_load_header
  * @see rnn_save_header, rnn_save_body
  * @return non-zero value if any error.
  */
-int rnn_load_body(rnn_t *rnn, FILE *fp, bool binary);
+int rnn_load_body(rnn_t *rnn, int version, FILE *fp, bool binary);
 /**
  * Save rnn header.
  * @ingroup rnn

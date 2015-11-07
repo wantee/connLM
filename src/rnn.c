@@ -301,7 +301,8 @@ ERR:
     return NULL;
 }
 
-int rnn_load_header(rnn_t **rnn, FILE *fp, bool *binary, FILE *fo_info)
+int rnn_load_header(rnn_t **rnn, int version, FILE *fp,
+        bool *binary, FILE *fo_info)
 {
     union {
         char str[4];
@@ -431,7 +432,7 @@ ERR:
     return -1;
 }
 
-int rnn_load_body(rnn_t *rnn, FILE *fp, bool binary)
+int rnn_load_body(rnn_t *rnn, int version, FILE *fp, bool binary)
 {
     int n;
 

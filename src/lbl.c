@@ -136,7 +136,8 @@ ERR:
     return NULL;
 }
 
-int lbl_load_header(lbl_t **lbl, FILE *fp, bool *binary, FILE *fo_info)
+int lbl_load_header(lbl_t **lbl, int version, FILE *fp,
+        bool *binary, FILE *fo_info)
 {
     union {
         char str[4];
@@ -225,7 +226,7 @@ ERR:
     return -1;
 }
 
-int lbl_load_body(lbl_t *lbl, FILE *fp, bool binary)
+int lbl_load_body(lbl_t *lbl, int version, FILE *fp, bool binary)
 {
     int n;
 

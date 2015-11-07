@@ -48,6 +48,14 @@ int output_load_opt(output_opt_t *output_opt, st_opt_t *opt,
     ST_OPT_SEC_GET_BOOL(opt, sec_name, "HS",
             output_opt->hs, true, "Hierarchical softmax");
 
+    ST_OPT_SEC_GET_INT(opt, sec_name, "MAX_CODE_LEN",
+            output_opt->max_code_len, 40,
+            "Maximum length for code used by HS"); 
+
+    ST_OPT_SEC_GET_BOOL(opt, sec_name, "CLASS_HS",
+            output_opt->class_hs, false,
+            "Whether using HS for classes"); 
+
     return 0;
 
 ST_OPT_ERR:
@@ -88,6 +96,11 @@ void output_destroy(output_t *output)
     safe_free(output->c2w_s);
     safe_free(output->c2w_e);
 
+    safe_free(output->code_c);
+    safe_free(output->pt_c);
+    safe_free(output->code_w);
+    safe_free(output->pt_w);
+
     if (output->neurons != NULL) {
         for (i = 0; i < output->num_thrs; i++) {
             safe_free(output->neurons[i].ac_o_c);
@@ -103,6 +116,7 @@ void output_destroy(output_t *output)
 output_t* output_dup(output_t *o)
 {
     output_t *output = NULL;
+    size_t sz;
 
     ST_CHECK_PARAM(o == NULL, NULL);
 
@@ -116,29 +130,66 @@ output_t* output_dup(output_t *o)
     output->output_opt = o->output_opt;
     *output = *o;
 
-    if( o->output_opt.class_size > 0) {
-        output->w2c = (int *) malloc(sizeof(int) * o->output_size);
+    if(o->output_opt.class_size > 0) {
+        sz = sizeof(int) * o->output_size;
+        output->w2c = (int *) malloc(sz);
         if (output->w2c == NULL) {
             ST_WARNING("Failed to malloc w2c.");
             goto ERR;
         }
-        memcpy(output->w2c, o->w2c, sizeof(int)*o->output_size);
+        memcpy(output->w2c, o->w2c, sz);
 
-        output->c2w_s = (int *) malloc(sizeof(int) * o->output_opt.class_size);
+        sz = sizeof(int) * o->output_opt.class_size;
+        output->c2w_s = (int *) malloc(sz);
         if (output->c2w_s == NULL) {
             ST_WARNING("Failed to malloc c2w_s.");
             goto ERR;
         }
-        memcpy(output->c2w_s, o->c2w_s, sizeof(int)*o->output_opt.class_size);
+        memcpy(output->c2w_s, o->c2w_s, sz);
 
-        output->c2w_e = (int *) malloc(sizeof(int) * o->output_opt.class_size);
+        output->c2w_e = (int *) malloc(sz);
         if (output->c2w_e == NULL) {
             ST_WARNING("Failed to malloc c2w_e.");
             goto ERR;
         }
-        memcpy(output->c2w_e, o->c2w_e, sizeof(int)*o->output_opt.class_size);
+        memcpy(output->c2w_e, o->c2w_e, sz);
     }
 
+    if(o->output_opt.hs) {
+        if(o->output_opt.class_size > 0 && o->output_opt.class_hs) {
+            sz = sizeof(char)*o->output_opt.class_size;
+            output->code_c = (char *) malloc(sz);
+            if (output->code_c == NULL) {
+                ST_WARNING("Failed to malloc code_c.");
+                goto ERR;
+            }
+            memcpy(output->code_c, o->code_c, sz);
+
+            sz = sizeof(int)*o->output_opt.class_size;
+            output->pt_c = (int *) malloc(sz);
+            if (output->pt_c == NULL) {
+                ST_WARNING("Failed to malloc pt_c.");
+                goto ERR;
+            }
+            memcpy(output->pt_c, o->pt_c, sz);
+        }
+
+        sz = sizeof(char)*o->output_size;
+        output->code_w = (char *) malloc(sz);
+        if (output->code_w == NULL) {
+            ST_WARNING("Failed to malloc code_w.");
+            goto ERR;
+        }
+        memcpy(output->code_w, o->code_w, sz);
+
+        sz = sizeof(int)*o->output_size;
+        output->pt_w = (int *) malloc(sz);
+        if (output->pt_w == NULL) {
+            ST_WARNING("Failed to malloc pt_w.");
+            goto ERR;
+        }
+        memcpy(output->pt_w, o->pt_w, sz);
+    }
     return output;
 
 ERR:
@@ -146,8 +197,8 @@ ERR:
     return NULL;
 }
 
-int output_load_header(output_t **output, FILE *fp, bool *binary,
-        FILE *fo_info)
+int output_load_header(output_t **output, int version,
+        FILE *fp, bool *binary, FILE *fo_info)
 {
     char sym[MAX_LINE_LEN];
     union {
@@ -158,6 +209,7 @@ int output_load_header(output_t **output, FILE *fp, bool *binary,
     int output_size;
     int class_size;
     bool hs;
+    bool class_hs = false;
 
     ST_CHECK_PARAM((output == NULL && fo_info == NULL) || fp == NULL
             || binary == NULL, -1);
@@ -202,6 +254,13 @@ int output_load_header(output_t **output, FILE *fp, bool *binary,
             ST_WARNING("Failed to read hs.");
             return -1;
         }
+
+        if (version >= 2) {
+            if (fread(&class_hs, sizeof(bool), 1, fp) != 1) {
+                ST_WARNING("Failed to read class_hs.");
+                return -1;
+            }
+        }
     } else {
         if (st_readline(fp, "") != 0) {
             ST_WARNING("tag error.");
@@ -234,6 +293,14 @@ int output_load_header(output_t **output, FILE *fp, bool *binary,
             return -1;
         }
         hs = str2bool(sym);
+
+        if (version >= 2) {
+            if (st_readline(fp, "Class HS: %s", sym) != 1) {
+                ST_WARNING("Failed to parse class_hs.");
+                return -1;
+            }
+            class_hs = str2bool(sym);
+        }
     }
 
     if (output != NULL) {
@@ -247,6 +314,7 @@ int output_load_header(output_t **output, FILE *fp, bool *binary,
         (*output)->output_size = output_size;
         (*output)->output_opt.class_size = class_size;
         (*output)->output_opt.hs = hs;
+        (*output)->output_opt.class_hs = class_hs;
     }
 
     if (fo_info != NULL) {
@@ -254,6 +322,9 @@ int output_load_header(output_t **output, FILE *fp, bool *binary,
         fprintf(fo_info, "Output size: %d\n", output_size);
         fprintf(fo_info, "Class size: %d\n", class_size);
         fprintf(fo_info, "HS: %s\n", bool2str(hs));
+        if (version >= 2) {
+            fprintf(fo_info, "Class HS: %s\n", bool2str(class_hs));
+        }
     }
 
     return 0;
@@ -265,12 +336,14 @@ ERR:
     return -1;
 }
 
-int output_load_body(output_t *output, FILE *fp, bool binary)
+int output_load_body(output_t *output, int version, FILE *fp, bool binary)
 {
+    size_t sz;
     int n;
 
     int i;
     int class_size;
+    int t;
 
     ST_CHECK_PARAM(output == NULL || fp == NULL, -1);
 
@@ -278,32 +351,75 @@ int output_load_body(output_t *output, FILE *fp, bool binary)
     output->c2w_s = NULL;
     output->c2w_e = NULL;
 
+    output->code_c = NULL;
+    output->pt_c = NULL;
+    output->code_w = NULL;
+    output->pt_w = NULL;
+
     if (output->output_size <= 0) {
         return 0;
     }
 
     class_size = output->output_opt.class_size;
     if (class_size > 0) {
-        output->w2c = (int *) malloc(sizeof(int) * output->output_size);
+        sz = sizeof(int) * output->output_size;
+        output->w2c = (int *) malloc(sz);
         if (output->w2c == NULL) {
             ST_WARNING("Failed to malloc w2c.");
             goto ERR;
         }
-        memset(output->w2c, 0, sizeof(int) * output->output_size);
+        memset(output->w2c, 0, sz);
 
-        output->c2w_s = (int *) malloc(sizeof(int) * class_size);
+        sz = sizeof(int) * class_size;
+        output->c2w_s = (int *) malloc(sz);
         if (output->c2w_s == NULL) {
             ST_WARNING("Failed to malloc c2w_s.");
             goto ERR;
         }
-        memset(output->c2w_s, 0, sizeof(int) * class_size);
+        memset(output->c2w_s, 0, sz);
 
-        output->c2w_e = (int *) malloc(sizeof(int) * class_size);
+        output->c2w_e = (int *) malloc(sz);
         if (output->c2w_e == NULL) {
             ST_WARNING("Failed to malloc c2w_e.");
             goto ERR;
         }
-        memset(output->c2w_e, 0, sizeof(int) * class_size);
+        memset(output->c2w_e, 0, sz);
+    }
+
+    if(version >= 2 && output->output_opt.hs) {
+        if(class_size > 0 && output->output_opt.class_hs) {
+            sz = sizeof(char) * class_size;
+            output->code_c = (char *) malloc(sz);
+            if (output->code_c == NULL) {
+                ST_WARNING("Failed to malloc code_c.");
+                goto ERR;
+            }
+            memset(output->code_c, 0, sz);
+
+            sz = sizeof(int) * class_size;
+            output->pt_c = (int *) malloc(sz);
+            if (output->pt_c == NULL) {
+                ST_WARNING("Failed to malloc pt_c.");
+                goto ERR;
+            }
+            memset(output->pt_c, 0, sz);
+        }
+
+        sz = sizeof(char) * output->output_size;
+        output->code_w = (char *) malloc(sz);
+        if (output->code_w == NULL) {
+            ST_WARNING("Failed to malloc code_w.");
+            goto ERR;
+        }
+        memset(output->code_w, 0, sz);
+
+        sz = sizeof(int) * output->output_size;
+        output->pt_w = (int *) malloc(sz);
+        if (output->pt_w == NULL) {
+            ST_WARNING("Failed to malloc pt_w.");
+            goto ERR;
+        }
+        memset(output->pt_w, 0, sz);
     }
 
     if (binary) {
@@ -333,6 +449,34 @@ int output_load_body(output_t *output, FILE *fp, bool binary)
             if (fread(output->c2w_e, sizeof(int), class_size, fp)
                     != class_size) {
                 ST_WARNING("Failed to read c2w_e.");
+                goto ERR;
+            }
+        }
+
+        if (version >= 2 && output->output_opt.hs) {
+            if(class_size > 0 && output->output_opt.class_hs) {
+                if (fread(output->code_c, sizeof(char), class_size, fp)
+                        != class_size) {
+                    ST_WARNING("Failed to read code_c.");
+                    goto ERR;
+                }
+
+                if (fread(output->pt_c, sizeof(int), class_size, fp)
+                        != class_size) {
+                    ST_WARNING("Failed to read pt_c.");
+                    goto ERR;
+                }
+            }
+
+            if (fread(output->code_w, sizeof(char),
+                    output->output_size, fp) != output->output_size) {
+                ST_WARNING("Failed to read code_w.");
+                goto ERR;
+            }
+
+            if (fread(output->pt_w, sizeof(int), output->output_size, fp)
+                    != output->output_size) {
+                ST_WARNING("Failed to read pt_w.");
                 goto ERR;
             }
         }
@@ -366,6 +510,58 @@ int output_load_body(output_t *output, FILE *fp, bool binary)
                 }
             }
         }
+
+        if (version >= 2 && output->output_opt.hs) {
+            if(class_size > 0 && output->output_opt.class_hs) {
+                if (st_readline(fp, "Class codes:") != 0) {
+                    ST_WARNING("code_c flag error.");
+                    goto ERR;
+                }
+                for (i = 0; i < class_size; i++) {
+                    if (st_readline(fp, "\t%*d\t%d", &t) != 1) {
+                        ST_WARNING("Failed to parse code_c.");
+                        goto ERR;
+                    }
+                    output->code_c[i] = t;
+                }
+
+                if (st_readline(fp, "Class points:") != 0) {
+                    ST_WARNING("code_c flag error.");
+                    goto ERR;
+                }
+                for (i = 0; i < class_size; i++) {
+                    if (st_readline(fp, "\t%*d\t%d", &t) != 1) {
+                        ST_WARNING("Failed to parse pt_c.");
+                        goto ERR;
+                    }
+                    output->pt_c[i] = t;
+                }
+            }
+
+            if (st_readline(fp, "Word codes:") != 0) {
+                ST_WARNING("code_w flag error.");
+                goto ERR;
+            }
+            for (i = 0; i < output->output_size; i++) {
+                if (st_readline(fp, "\t%*d\t%d", &t) != 1) {
+                    ST_WARNING("Failed to parse code_w.");
+                    goto ERR;
+                }
+                output->code_w[i] = t;
+            }
+
+            if (st_readline(fp, "Word points:") != 0) {
+                ST_WARNING("code_w flag error.");
+                goto ERR;
+            }
+            for (i = 0; i < output->output_size; i++) {
+                if (st_readline(fp, "\t%*d\t%d", &t) != 1) {
+                    ST_WARNING("Failed to parse pt_w.");
+                    goto ERR;
+                }
+                output->pt_w[i] = t;
+            }
+        }
     }
 
     return 0;
@@ -373,6 +569,12 @@ ERR:
     safe_free(output->w2c);
     safe_free(output->c2w_s);
     safe_free(output->c2w_e);
+
+    safe_free(output->code_c);
+    safe_free(output->pt_c);
+    safe_free(output->code_w);
+    safe_free(output->pt_w);
+
     return -1;
 }
 
@@ -411,6 +613,12 @@ int output_save_header(output_t *output, FILE *fp, bool binary)
             ST_WARNING("Failed to write hs.");
             return -1;
         }
+
+        if (fwrite(&output->output_opt.class_hs, sizeof(bool),
+                    1, fp) != 1) {
+            ST_WARNING("Failed to write class_hs.");
+            return -1;
+        }
     } else {
         fprintf(fp, "    \n<OUTPUT>\n");
 
@@ -422,6 +630,7 @@ int output_save_header(output_t *output, FILE *fp, bool binary)
         fprintf(fp, "Output size: %d\n", output->output_size);
         fprintf(fp, "Class size: %d\n", output->output_opt.class_size);
         fprintf(fp, "HS: %s\n", bool2str(output->output_opt.hs));
+        fprintf(fp, "Class HS: %s\n", bool2str(output->output_opt.class_hs));
     }
 
     return 0;
@@ -432,6 +641,7 @@ int output_save_body(output_t *output, FILE *fp, bool binary)
     int n;
 
     int i;
+    int t;
 
     ST_CHECK_PARAM(fp == NULL, -1);
 
@@ -467,6 +677,37 @@ int output_save_body(output_t *output, FILE *fp, bool binary)
                 return -1;
             }
         }
+
+        if (output->output_opt.hs) {
+            if(output->output_opt.class_size > 0
+                    && output->output_opt.class_hs) {
+                if (fwrite(output->code_c, sizeof(char),
+                            output->output_opt.class_size, fp)
+                        != output->output_opt.class_size) {
+                    ST_WARNING("Failed to write code_c.");
+                    return -1;
+                }
+
+                if (fwrite(output->pt_c, sizeof(int),
+                            output->output_opt.class_size, fp)
+                        != output->output_opt.class_size) {
+                    ST_WARNING("Failed to write pt_c.");
+                    return -1;
+                }
+            }
+
+            if (fwrite(output->code_w, sizeof(char),
+                    output->output_size, fp) != output->output_size) {
+                ST_WARNING("Failed to write code_w.");
+                return -1;
+            }
+
+            if (fwrite(output->pt_w, sizeof(int), output->output_size, fp)
+                    != output->output_size) {
+                ST_WARNING("Failed to write pt_w.");
+                return -1;
+            }
+        }
     } else {
         fprintf(fp, "<OUTPUT-DATA>\n");
 
@@ -482,31 +723,55 @@ int output_save_body(output_t *output, FILE *fp, bool binary)
                         output->c2w_e[i]);
             }
         }
+
+        if (output->output_opt.hs) {
+            if(output->output_opt.class_size > 0
+                    && output->output_opt.class_hs) {
+                fprintf(fp, "Class codes:\n");
+                for (i = 0; i < output->output_opt.class_size; i++) {
+                    t = output->code_c[i];
+                    fprintf(fp, "\t%d\t%d\n", i, t);
+                }
+
+                fprintf(fp, "Class points:\n");
+                for (i = 0; i < output->output_opt.class_size; i++) {
+                    t = output->pt_c[i];
+                    fprintf(fp, "\t%d\t%d\n", i, t);
+                }
+            }
+
+            fprintf(fp, "Word codes:\n");
+            for (i = 0; i < output->output_size; i++) {
+                t = output->code_w[i];
+                fprintf(fp, "\t%d\t%d\n", i, t);
+            }
+
+            fprintf(fp, "Word points:\n");
+            for (i = 0; i < output->output_size; i++) {
+                t = output->pt_w[i];
+                fprintf(fp, "\t%d\t%d\n", i, t);
+            }
+        }
     }
 
     return 0;
 }
 
-int output_generate(output_t *output, count_t *word_cnts)
+int output_generate_class(output_t *output, int class_size,
+        count_t *word_cnts)
 {
-    int class_size;
-
     int i;
     int a;
     long b;
     double dd;
     double df;
 
-    ST_CHECK_PARAM(output == NULL || word_cnts == NULL, -1);
+    ST_CHECK_PARAM(output == NULL || class_size <= 0
+            || word_cnts == NULL, -1);
 
     safe_free(output->w2c);
     safe_free(output->c2w_s);
     safe_free(output->c2w_e);
-
-    class_size = output->output_opt.class_size;
-    if (class_size <= 0) {
-        return 0;
-    }
 
     output->w2c = (int *) malloc(sizeof(int) * output->output_size);
     if (output->w2c == NULL) {
@@ -559,11 +824,29 @@ int output_generate(output_t *output, count_t *word_cnts)
     output->c2w_e[class_size - 1] = output->output_size;
 
     return 0;
+
 ERR:
     safe_free(output->w2c);
     safe_free(output->c2w_s);
     safe_free(output->c2w_e);
     return -1;
+}
+
+int output_generate(output_t *output, count_t *word_cnts)
+{
+    int class_size;
+
+    ST_CHECK_PARAM(output == NULL || word_cnts == NULL, -1);
+
+    class_size = output->output_opt.class_size;
+    if (class_size > 0) {
+        if (output_generate_class(output, class_size, word_cnts) < 0) {
+            ST_WARNING("Failed to output_generate_class.");
+            return -1;
+        }
+    }
+
+    return 0;
 }
 
 int output_activate_pre_layer(output_t *output, int tid)

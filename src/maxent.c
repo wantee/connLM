@@ -240,7 +240,7 @@ ERR:
     return NULL;
 }
 
-int maxent_load_header(maxent_t **maxent, FILE *fp,
+int maxent_load_header(maxent_t **maxent, int version, FILE *fp,
         bool *binary, FILE *fo_info)
 {
     union {
@@ -403,7 +403,7 @@ ERR:
     return -1;
 }
 
-int maxent_load_body(maxent_t *maxent, FILE *fp, bool binary)
+int maxent_load_body(maxent_t *maxent, int version, FILE *fp, bool binary)
 {
     int n;
 

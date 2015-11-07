@@ -139,6 +139,7 @@ ffnn_t* ffnn_dup(ffnn_t *f);
  * Load ffnn header and initialise a new ffnn.
  * @ingroup ffnn
  * @param[out] ffnn ffnn initialised.
+ * @param[in] version file version of loading file.
  * @param[in] fp file stream loaded from.
  * @param[out] binary whether the file stream is in binary format.
  * @param[in] fo_info file stream used to print information, if it is not NULL.
@@ -146,18 +147,20 @@ ffnn_t* ffnn_dup(ffnn_t *f);
  * @see ffnn_save_header, ffnn_save_body
  * @return non-zero value if any error.
  */
-int ffnn_load_header(ffnn_t **ffnn, FILE *fp, bool *binary, FILE *fo_info);
+int ffnn_load_header(ffnn_t **ffnn, int version, FILE *fp,
+        bool *binary, FILE *fo_info);
 /**
  * Load ffnn body.
  * @ingroup ffnn
  * @param[in] ffnn ffnn to be loaded.
+ * @param[in] version file version of loading file.
  * @param[in] fp file stream loaded from.
  * @param[in] binary whether to use binary format.
  * @see ffnn_load_header
  * @see ffnn_save_header, ffnn_save_body
  * @return non-zero value if any error.
  */
-int ffnn_load_body(ffnn_t *ffnn, FILE *fp, bool binary);
+int ffnn_load_body(ffnn_t *ffnn, int version, FILE *fp, bool binary);
 /**
  * Save ffnn header.
  * @ingroup ffnn

@@ -201,6 +201,7 @@ maxent_t* maxent_dup(maxent_t *m);
  * Load maxent header and initialise a new maxent.
  * @ingroup maxent
  * @param[out] maxent maxent initialised.
+ * @param[in] version file version of loading file.
  * @param[in] fp file stream loaded from.
  * @param[out] binary whether the file stream is in binary format.
  * @param[in] fo_info file stream used to print information, if it is not NULL.
@@ -208,19 +209,20 @@ maxent_t* maxent_dup(maxent_t *m);
  * @see maxent_save_header, maxent_save_body
  * @return non-zero value if any error.
  */
-int maxent_load_header(maxent_t **maxent, FILE *fp,
+int maxent_load_header(maxent_t **maxent, int version, FILE *fp,
         bool *binary, FILE *fo_info);
 /**
  * Load maxent body.
  * @ingroup maxent
  * @param[in] maxent maxent to be loaded.
+ * @param[in] version file version of loading file.
  * @param[in] fp file stream loaded from.
  * @param[in] binary whether to use binary format.
  * @see maxent_load_header
  * @see maxent_save_header, maxent_save_body
  * @return non-zero value if any error.
  */
-int maxent_load_body(maxent_t *maxent, FILE *fp, bool binary);
+int maxent_load_body(maxent_t *maxent, int version, FILE *fp, bool binary);
 /**
  * Save maxent header.
  * @ingroup maxent

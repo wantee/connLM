@@ -136,7 +136,7 @@ ERR:
     return NULL;
 }
 
-int vocab_load_header(vocab_t **vocab, FILE *fp, bool *binary,
+int vocab_load_header(vocab_t **vocab, int version, FILE *fp, bool *binary,
         FILE *fo_info)
 {
     union {
@@ -227,7 +227,7 @@ ERR:
     return -1;
 }
 
-int vocab_load_body(vocab_t *vocab, FILE *fp, bool binary)
+int vocab_load_body(vocab_t *vocab, int version, FILE *fp, bool binary)
 {
     int n;
 

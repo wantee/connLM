@@ -43,8 +43,10 @@ extern "C" {
  * @ingroup output
  */
 typedef struct _output_opt_t_ {
-    int class_size; /**< size of class. May be zero */
-    bool hs;        /**< whether using Hierarchical softmax */
+    int class_size; /**< size of class. May be zero. */
+    bool hs;        /**< whether using Hierarchical softmax. */
+    int max_code_len; /**< maximum length for code used by HS. */
+    bool class_hs; /** whether using HS for classes. */
 } output_opt_t;
 
 /**
@@ -76,6 +78,15 @@ typedef struct _output_t_ {
     int *w2c;   /**< word to class map. */
     int *c2w_s; /**< start for class to word map. */
     int *c2w_e; /**< end for class to word map. */
+    /**@}*/
+
+    /** @name Variables for HS. */
+    /**@{*/
+    char *code_c; /**< code for classes. */
+    int *pt_c; /**< point for classes. */
+
+    char *code_w; /**< code for words. */
+    int *pt_w; /**< point for words. */
     /**@}*/
 } output_t;
 
@@ -128,6 +139,7 @@ output_t* output_dup(output_t *o);
  * Load output layer header and initialise a new output layer.
  * @ingroup output
  * @param[out] output layer initialised.
+ * @param[in] version file version of loading file.
  * @param[in] fp file stream loaded from.
  * @param[out] binary whether the file stream is in binary format.
  * @param[in] fo file stream used to print information, if it is not NULL.
@@ -135,19 +147,20 @@ output_t* output_dup(output_t *o);
  * @see output_save_header, output_save_body
  * @return non-zero value if any error.
  */
-int output_load_header(output_t **output, FILE *fp,
+int output_load_header(output_t **output, int version, FILE *fp,
         bool *binary, FILE *fo);
 /**
  * Load output layer body.
  * @ingroup output
  * @param[in] output output layer to be loaded.
+ * @param[in] version file version of loading file.
  * @param[in] fp file stream loaded from.
  * @param[in] binary whether to use binary format.
  * @see output_load_header
  * @see output_save_header, output_save_body
  * @return non-zero value if any error.
  */
-int output_load_body(output_t *output, FILE *fp, bool binary);
+int output_load_body(output_t *output, int version, FILE *fp, bool binary);
 /**
  * Save output layer header.
  * @ingroup output

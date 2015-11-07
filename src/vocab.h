@@ -107,6 +107,7 @@ vocab_t* vocab_dup(vocab_t *v);
  * Load vocab header and initialise a new vocab.
  * @ingroup vocab
  * @param[out] vocab initialised.
+ * @param[in] version file version of loading file.
  * @param[in] fp file stream loaded from.
  * @param[out] binary whether the file stream is in binary format.
  * @param[in] fo file stream used to print information, if it is not NULL.
@@ -114,18 +115,20 @@ vocab_t* vocab_dup(vocab_t *v);
  * @see vocab_save_header, vocab_save_body
  * @return non-zero value if any error.
  */
-int vocab_load_header(vocab_t **vocab, FILE *fp, bool *binary, FILE *fo);
+int vocab_load_header(vocab_t **vocab, int version, FILE *fp,
+        bool *binary, FILE *fo);
 /**
  * Load vocab body.
  * @ingroup vocab
  * @param[in] vocab vocab to be loaded.
+ * @param[in] version file version of loading file.
  * @param[in] fp file stream loaded from.
  * @param[in] binary whether to use binary format.
  * @see vocab_load_header
  * @see vocab_save_header, vocab_save_body
  * @return non-zero value if any error.
  */
-int vocab_load_body(vocab_t *vocab, FILE *fp, bool binary);
+int vocab_load_body(vocab_t *vocab, int version, FILE *fp, bool binary);
 /**
  * Save vocab header.
  * @ingroup vocab

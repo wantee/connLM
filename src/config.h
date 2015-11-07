@@ -31,7 +31,7 @@ extern "C" {
 
 #define CONNLM_VERSION   "0.1"
 
-#define CONNLM_FILE_VERSION   1
+#define CONNLM_FILE_VERSION   2
 
 #ifndef _USE_DOUBLE_
 #define _USE_DOUBLE_ 0

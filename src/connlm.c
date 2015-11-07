@@ -553,7 +553,7 @@ static int connlm_load_header(connlm_t *connlm, FILE *fp,
     b = *binary;
 
     if (vocab_load_header((connlm == NULL) ? NULL : &connlm->vocab,
-                fp, binary, fo_info) < 0) {
+                version, fp, binary, fo_info) < 0) {
         ST_WARNING("Failed to vocab_load_header.");
         return -1;
     }
@@ -563,7 +563,7 @@ static int connlm_load_header(connlm_t *connlm, FILE *fp,
     }
 
     if (output_load_header((connlm == NULL) ? NULL : &connlm->output,
-                fp, binary, fo_info) < 0) {
+                version, fp, binary, fo_info) < 0) {
         ST_WARNING("Failed to output_load_header.");
         return -1;
     }
@@ -573,7 +573,7 @@ static int connlm_load_header(connlm_t *connlm, FILE *fp,
     }
 
     if (rnn_load_header((connlm == NULL) ? NULL : &connlm->rnn,
-                fp, binary, fo_info) < 0) {
+                version, fp, binary, fo_info) < 0) {
         ST_WARNING("Failed to rnn_load_header.");
         return -1;
     }
@@ -583,7 +583,7 @@ static int connlm_load_header(connlm_t *connlm, FILE *fp,
     }
 
     if (maxent_load_header((connlm == NULL) ? NULL : &connlm->maxent,
-                fp, binary, fo_info) < 0) {
+                version, fp, binary, fo_info) < 0) {
         ST_WARNING("Failed to maxent_load_header.");
         return -1;
     }
@@ -593,7 +593,7 @@ static int connlm_load_header(connlm_t *connlm, FILE *fp,
     }
 
     if (lbl_load_header((connlm == NULL) ? NULL : &connlm->lbl,
-                fp, binary, fo_info) < 0) {
+                version, fp, binary, fo_info) < 0) {
         ST_WARNING("Failed to lbl_load_header.");
         return -1;
     }
@@ -603,7 +603,7 @@ static int connlm_load_header(connlm_t *connlm, FILE *fp,
     }
 
     if (ffnn_load_header((connlm == NULL) ? NULL : &connlm->ffnn,
-                fp, binary, fo_info) < 0) {
+                version, fp, binary, fo_info) < 0) {
         ST_WARNING("Failed to ffnn_load_header.");
         return -1;
     }
@@ -616,49 +616,50 @@ static int connlm_load_header(connlm_t *connlm, FILE *fp,
         fflush(fo_info);
     }
 
-    return 0;
+    return version;
 }
 
-static int connlm_load_body(connlm_t *connlm, FILE *fp, bool binary)
+static int connlm_load_body(connlm_t *connlm, int version,
+        FILE *fp, bool binary)
 {
     ST_CHECK_PARAM(connlm == NULL || fp == NULL, -1);
 
     if (connlm->vocab != NULL) {
-        if (vocab_load_body(connlm->vocab, fp, binary) < 0) {
+        if (vocab_load_body(connlm->vocab, version, fp, binary) < 0) {
             ST_WARNING("Failed to vocab_load_body.");
             return -1;
         }
     }
 
     if (connlm->output != NULL) {
-        if (output_load_body(connlm->output, fp, binary) < 0) {
+        if (output_load_body(connlm->output, version, fp, binary) < 0) {
             ST_WARNING("Failed to output_load_body.");
             return -1;
         }
     }
     if (connlm->rnn != NULL) {
-        if (rnn_load_body(connlm->rnn, fp, binary) < 0) {
+        if (rnn_load_body(connlm->rnn, version, fp, binary) < 0) {
             ST_WARNING("Failed to rnn_load_body.");
             return -1;
         }
     }
 
     if (connlm->maxent != NULL) {
-        if (maxent_load_body(connlm->maxent, fp, binary) < 0) {
+        if (maxent_load_body(connlm->maxent, version, fp, binary) < 0) {
             ST_WARNING("Failed to maxent_load_body.");
             return -1;
         }
     }
 
     if (connlm->lbl != NULL) {
-        if (lbl_load_body(connlm->lbl, fp, binary) < 0) {
+        if (lbl_load_body(connlm->lbl, version, fp, binary) < 0) {
             ST_WARNING("Failed to lbl_load_body.");
             return -1;
         }
     }
 
     if (connlm->ffnn != NULL) {
-        if (ffnn_load_body(connlm->ffnn, fp, binary) < 0) {
+        if (ffnn_load_body(connlm->ffnn, version, fp, binary) < 0) {
             ST_WARNING("Failed to ffnn_load_body.");
             return -1;
         }
@@ -670,6 +671,7 @@ static int connlm_load_body(connlm_t *connlm, FILE *fp, bool binary)
 connlm_t* connlm_load(FILE *fp)
 {
     connlm_t *connlm = NULL;
+    int version;
     bool binary;
 
     ST_CHECK_PARAM(fp == NULL, NULL);
@@ -681,12 +683,13 @@ connlm_t* connlm_load(FILE *fp)
     }
     memset(connlm, 0, sizeof(connlm_t));
 
-    if (connlm_load_header(connlm, fp, &binary, NULL) < 0) {
+    version = connlm_load_header(connlm, fp, &binary, NULL);
+    if (version < 0) {
         ST_WARNING("Failed to connlm_load_header.");
         goto ERR;
     }
 
-    if (connlm_load_body(connlm, fp, binary) < 0) {
+    if (connlm_load_body(connlm, version, fp, binary) < 0) {
         ST_WARNING("Failed to connlm_load_body.");
         goto ERR;
     }

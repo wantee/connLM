@@ -136,7 +136,8 @@ ERR:
     return NULL;
 }
 
-int ffnn_load_header(ffnn_t **ffnn, FILE *fp, bool *binary, FILE *fo_info)
+int ffnn_load_header(ffnn_t **ffnn, int version, FILE *fp,
+        bool *binary, FILE *fo_info)
 {
     union {
         char str[4];
@@ -225,7 +226,7 @@ ERR:
     return -1;
 }
 
-int ffnn_load_body(ffnn_t *ffnn, FILE *fp, bool binary)
+int ffnn_load_body(ffnn_t *ffnn, int version, FILE *fp, bool binary)
 {
     int n;
 

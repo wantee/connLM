@@ -138,6 +138,7 @@ lbl_t* lbl_dup(lbl_t *l);
  * Load lbl header and initialise a new lbl.
  * @ingroup lbl
  * @param[out] lbl lbl initialised.
+ * @param[in] version file version of loading file.
  * @param[in] fp file stream loaded from.
  * @param[out] binary whether the file stream is in binary format.
  * @param[in] fo_info file stream used to print information, if it is not NULL.
@@ -145,18 +146,20 @@ lbl_t* lbl_dup(lbl_t *l);
  * @see lbl_save_header, lbl_save_body
  * @return non-zero value if any error.
  */
-int lbl_load_header(lbl_t **lbl, FILE *fp, bool *binary, FILE *fo_info);
+int lbl_load_header(lbl_t **lbl, int version, FILE *fp,
+        bool *binary, FILE *fo_info);
 /**
  * Load lbl body.
  * @ingroup lbl
  * @param[in] lbl lbl to be loaded.
+ * @param[in] version file version of loading file.
  * @param[in] fp file stream loaded from.
  * @param[in] binary whether to use binary format.
  * @see lbl_load_header
  * @see lbl_save_header, lbl_save_body
  * @return non-zero value if any error.
  */
-int lbl_load_body(lbl_t *lbl, FILE *fp, bool binary);
+int lbl_load_body(lbl_t *lbl, int version, FILE *fp, bool binary);
 /**
  * Save lbl header.
  * @ingroup lbl
