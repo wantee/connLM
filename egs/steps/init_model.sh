@@ -21,6 +21,7 @@ function print_help()
   echo "     --init-config-file <config-file>    # init config file."
   echo "     --output-config-file <config-file>  # output config file."
   echo "     --class-size <size1;size2>          # candidate class sizes."
+  echo "     --hs <true|false>                   # whether to use HS"
   echo "       --train-file <file>               # following options are used for choosing class size."
   echo "       --train-config <config>"           
   echo "       --train-threads <threads>"         

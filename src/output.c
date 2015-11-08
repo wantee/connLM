@@ -832,6 +832,67 @@ ERR:
     return -1;
 }
 
+int output_generate_hs(output_t *output, count_t *word_cnts)
+{
+    size_t sz;
+
+    int class_size;
+
+    ST_CHECK_PARAM(output == NULL || word_cnts == NULL, -1);
+
+    safe_free(output->code_c);
+    safe_free(output->pt_c);
+    safe_free(output->code_w);
+    safe_free(output->pt_w);
+
+    class_size = output->output_opt.class_size;
+    if(output->output_opt.hs) {
+        if(class_size > 0 && output->output_opt.class_hs) {
+            sz = sizeof(char) * class_size;
+            output->code_c = (char *) malloc(sz);
+            if (output->code_c == NULL) {
+                ST_WARNING("Failed to malloc code_c.");
+                goto ERR;
+            }
+            memset(output->code_c, 0, sz);
+
+            sz = sizeof(int) * class_size;
+            output->pt_c = (int *) malloc(sz);
+            if (output->pt_c == NULL) {
+                ST_WARNING("Failed to malloc pt_c.");
+                goto ERR;
+            }
+            memset(output->pt_c, 0, sz);
+        }
+
+        sz = sizeof(char) * output->output_size;
+        output->code_w = (char *) malloc(sz);
+        if (output->code_w == NULL) {
+            ST_WARNING("Failed to malloc code_w.");
+            goto ERR;
+        }
+        memset(output->code_w, 0, sz);
+
+        sz = sizeof(int) * output->output_size;
+        output->pt_w = (int *) malloc(sz);
+        if (output->pt_w == NULL) {
+            ST_WARNING("Failed to malloc pt_w.");
+            goto ERR;
+        }
+        memset(output->pt_w, 0, sz);
+    }
+
+    return 0;
+
+ERR:
+    safe_free(output->code_c);
+    safe_free(output->pt_c);
+    safe_free(output->code_w);
+    safe_free(output->pt_w);
+
+    return -1;
+}
+
 int output_generate(output_t *output, count_t *word_cnts)
 {
     int class_size;
@@ -842,6 +903,13 @@ int output_generate(output_t *output, count_t *word_cnts)
     if (class_size > 0) {
         if (output_generate_class(output, class_size, word_cnts) < 0) {
             ST_WARNING("Failed to output_generate_class.");
+            return -1;
+        }
+    }
+
+    if (output->output_opt.hs) {
+        if (output_generate_hs(output, word_cnts) < 0) {
+            ST_WARNING("Failed to output_generate_hs.");
             return -1;
         }
     }

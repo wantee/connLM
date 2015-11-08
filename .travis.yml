@@ -4,12 +4,19 @@ addons:
   apt:
     packages:
     - bc
+    - gdb
 compiler:
   - clang
   - gcc
 install:
   - cd src; ./autogen.sh; cd -
   - make -C src
+before_script:
+  - ulimit -c unlimited -S
+after_failure:
+  - COREFILE=$(find . -name "core*" | head -n 1)
+  - if [[ -f "$COREFILE" ]]; then EXEFILE=$(strings "$COREFILE" | grep ^/ | tail -n 1); gdb -c "$COREFILE" "$EXEFILE" -ex "thread apply all bt" -ex "set pagination 0" -batch; fi
+
 env:
   global:
     - CONNLM_NO_OPT=1
@@ -21,7 +28,7 @@ script:
   - source tools/shutils/shutils.sh
   - if [ $CASE -eq 2 ]; then make -C src test; fi
   - if [ $CASE -eq 3 ]; then (cd egs/selection; shu-testing); fi
-  - cd egs/tiny; shu-testing $CASE
+  - ( cd egs/tiny; shu-testing $CASE )
 notifications:
   email:
     on_success: always
