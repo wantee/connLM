@@ -118,6 +118,9 @@ output_t* output_dup(output_t *o)
     output_t *output = NULL;
     size_t sz;
 
+    int class_size;
+    int max_code_len;
+
     ST_CHECK_PARAM(o == NULL, NULL);
 
     output = (output_t *) malloc(sizeof(output_t));
@@ -130,7 +133,10 @@ output_t* output_dup(output_t *o)
     output->output_opt = o->output_opt;
     *output = *o;
 
-    if(o->output_opt.class_size > 0) {
+    class_size = o->output_opt.class_size;
+    max_code_len = o->output_opt.max_code_len;
+
+    if(class_size > 0) {
         sz = sizeof(int) * o->output_size;
         output->w2c = (int *) malloc(sz);
         if (output->w2c == NULL) {
@@ -139,7 +145,7 @@ output_t* output_dup(output_t *o)
         }
         memcpy(output->w2c, o->w2c, sz);
 
-        sz = sizeof(int) * o->output_opt.class_size;
+        sz = sizeof(int) * class_size;
         output->c2w_s = (int *) malloc(sz);
         if (output->c2w_s == NULL) {
             ST_WARNING("Failed to malloc c2w_s.");
@@ -156,8 +162,8 @@ output_t* output_dup(output_t *o)
     }
 
     if(o->output_opt.hs) {
-        if(o->output_opt.class_size > 0 && o->output_opt.class_hs) {
-            sz = sizeof(char)*o->output_opt.class_size;
+        if(class_size > 0 && o->output_opt.class_hs) {
+            sz = sizeof(char) * class_size * max_code_len;
             output->code_c = (char *) malloc(sz);
             if (output->code_c == NULL) {
                 ST_WARNING("Failed to malloc code_c.");
@@ -165,7 +171,7 @@ output_t* output_dup(output_t *o)
             }
             memcpy(output->code_c, o->code_c, sz);
 
-            sz = sizeof(int)*o->output_opt.class_size;
+            sz = sizeof(int) * class_size * max_code_len;
             output->pt_c = (int *) malloc(sz);
             if (output->pt_c == NULL) {
                 ST_WARNING("Failed to malloc pt_c.");
@@ -174,7 +180,7 @@ output_t* output_dup(output_t *o)
             memcpy(output->pt_c, o->pt_c, sz);
         }
 
-        sz = sizeof(char)*o->output_size;
+        sz = sizeof(char)*o->output_size*o->output_opt.max_code_len;
         output->code_w = (char *) malloc(sz);
         if (output->code_w == NULL) {
             ST_WARNING("Failed to malloc code_w.");
@@ -182,7 +188,7 @@ output_t* output_dup(output_t *o)
         }
         memcpy(output->code_w, o->code_w, sz);
 
-        sz = sizeof(int)*o->output_size;
+        sz = sizeof(int)*o->output_size*o->output_opt.max_code_len;
         output->pt_w = (int *) malloc(sz);
         if (output->pt_w == NULL) {
             ST_WARNING("Failed to malloc pt_w.");
@@ -208,6 +214,7 @@ int output_load_header(output_t **output, int version,
 
     int output_size;
     int class_size;
+    int max_code_len = -1;
     bool hs;
     bool class_hs = false;
 
@@ -256,6 +263,10 @@ int output_load_header(output_t **output, int version,
         }
 
         if (version >= 2) {
+            if (fread(&max_code_len, sizeof(int), 1, fp) != 1) {
+                ST_WARNING("Failed to read max_code_len.");
+                return -1;
+            }
             if (fread(&class_hs, sizeof(bool), 1, fp) != 1) {
                 ST_WARNING("Failed to read class_hs.");
                 return -1;
@@ -295,6 +306,10 @@ int output_load_header(output_t **output, int version,
         hs = str2bool(sym);
 
         if (version >= 2) {
+            if (st_readline(fp, "Max code len: %d", &max_code_len) != 1) {
+                ST_WARNING("Failed to parse max_code_len.");
+                return -1;
+            }
             if (st_readline(fp, "Class HS: %s", sym) != 1) {
                 ST_WARNING("Failed to parse class_hs.");
                 return -1;
@@ -315,6 +330,7 @@ int output_load_header(output_t **output, int version,
         (*output)->output_opt.class_size = class_size;
         (*output)->output_opt.hs = hs;
         (*output)->output_opt.class_hs = class_hs;
+        (*output)->output_opt.max_code_len = max_code_len;
     }
 
     if (fo_info != NULL) {
@@ -323,6 +339,7 @@ int output_load_header(output_t **output, int version,
         fprintf(fo_info, "Class size: %d\n", class_size);
         fprintf(fo_info, "HS: %s\n", bool2str(hs));
         if (version >= 2) {
+            fprintf(fo_info, "Max code len: %d\n", max_code_len);
             fprintf(fo_info, "Class HS: %s\n", bool2str(class_hs));
         }
     }
@@ -343,6 +360,7 @@ int output_load_body(output_t *output, int version, FILE *fp, bool binary)
 
     int i;
     int class_size;
+    int max_code_len;
     int t;
 
     ST_CHECK_PARAM(output == NULL || fp == NULL, -1);
@@ -361,6 +379,7 @@ int output_load_body(output_t *output, int version, FILE *fp, bool binary)
     }
 
     class_size = output->output_opt.class_size;
+    max_code_len = output->output_opt.max_code_len;
     if (class_size > 0) {
         sz = sizeof(int) * output->output_size;
         output->w2c = (int *) malloc(sz);
@@ -388,38 +407,38 @@ int output_load_body(output_t *output, int version, FILE *fp, bool binary)
 
     if(version >= 2 && output->output_opt.hs) {
         if(class_size > 0 && output->output_opt.class_hs) {
-            sz = sizeof(char) * class_size;
+            sz = sizeof(char) * class_size * max_code_len;
             output->code_c = (char *) malloc(sz);
             if (output->code_c == NULL) {
                 ST_WARNING("Failed to malloc code_c.");
                 goto ERR;
             }
-            memset(output->code_c, 0, sz);
+            memset(output->code_c, -1, sz);
 
-            sz = sizeof(int) * class_size;
+            sz = sizeof(int) * class_size * max_code_len;
             output->pt_c = (int *) malloc(sz);
             if (output->pt_c == NULL) {
                 ST_WARNING("Failed to malloc pt_c.");
                 goto ERR;
             }
-            memset(output->pt_c, 0, sz);
+            memset(output->pt_c, -1, sz);
         }
 
-        sz = sizeof(char) * output->output_size;
+        sz = sizeof(char) * output->output_size * max_code_len;
         output->code_w = (char *) malloc(sz);
         if (output->code_w == NULL) {
             ST_WARNING("Failed to malloc code_w.");
             goto ERR;
         }
-        memset(output->code_w, 0, sz);
+        memset(output->code_w, -1, sz);
 
-        sz = sizeof(int) * output->output_size;
+        sz = sizeof(int) * output->output_size * max_code_len;
         output->pt_w = (int *) malloc(sz);
         if (output->pt_w == NULL) {
             ST_WARNING("Failed to malloc pt_w.");
             goto ERR;
         }
-        memset(output->pt_w, 0, sz);
+        memset(output->pt_w, -1, sz);
     }
 
     if (binary) {
@@ -455,27 +474,25 @@ int output_load_body(output_t *output, int version, FILE *fp, bool binary)
 
         if (version >= 2 && output->output_opt.hs) {
             if(class_size > 0 && output->output_opt.class_hs) {
-                if (fread(output->code_c, sizeof(char), class_size, fp)
-                        != class_size) {
+                sz = class_size * max_code_len;
+                if (fread(output->code_c, sizeof(char), sz, fp) != sz) {
                     ST_WARNING("Failed to read code_c.");
                     goto ERR;
                 }
 
-                if (fread(output->pt_c, sizeof(int), class_size, fp)
-                        != class_size) {
+                if (fread(output->pt_c, sizeof(int), sz, fp) != sz) {
                     ST_WARNING("Failed to read pt_c.");
                     goto ERR;
                 }
             }
 
-            if (fread(output->code_w, sizeof(char),
-                    output->output_size, fp) != output->output_size) {
+            sz = output->output_size * max_code_len;
+            if (fread(output->code_w, sizeof(char), sz, fp) != sz) {
                 ST_WARNING("Failed to read code_w.");
                 goto ERR;
             }
 
-            if (fread(output->pt_w, sizeof(int), output->output_size, fp)
-                    != output->output_size) {
+            if (fread(output->pt_w, sizeof(int), sz, fp) != sz) {
                 ST_WARNING("Failed to read pt_w.");
                 goto ERR;
             }
@@ -517,7 +534,8 @@ int output_load_body(output_t *output, int version, FILE *fp, bool binary)
                     ST_WARNING("code_c flag error.");
                     goto ERR;
                 }
-                for (i = 0; i < class_size; i++) {
+                sz = class_size * max_code_len;
+                for (i = 0; i < sz; i++) {
                     if (st_readline(fp, "\t%*d\t%d", &t) != 1) {
                         ST_WARNING("Failed to parse code_c.");
                         goto ERR;
@@ -529,7 +547,7 @@ int output_load_body(output_t *output, int version, FILE *fp, bool binary)
                     ST_WARNING("code_c flag error.");
                     goto ERR;
                 }
-                for (i = 0; i < class_size; i++) {
+                for (i = 0; i < sz; i++) {
                     if (st_readline(fp, "\t%*d\t%d", &t) != 1) {
                         ST_WARNING("Failed to parse pt_c.");
                         goto ERR;
@@ -542,7 +560,8 @@ int output_load_body(output_t *output, int version, FILE *fp, bool binary)
                 ST_WARNING("code_w flag error.");
                 goto ERR;
             }
-            for (i = 0; i < output->output_size; i++) {
+            sz = output->output_size * max_code_len;
+            for (i = 0; i < sz; i++) {
                 if (st_readline(fp, "\t%*d\t%d", &t) != 1) {
                     ST_WARNING("Failed to parse code_w.");
                     goto ERR;
@@ -554,7 +573,7 @@ int output_load_body(output_t *output, int version, FILE *fp, bool binary)
                 ST_WARNING("code_w flag error.");
                 goto ERR;
             }
-            for (i = 0; i < output->output_size; i++) {
+            for (i = 0; i < sz; i++) {
                 if (st_readline(fp, "\t%*d\t%d", &t) != 1) {
                     ST_WARNING("Failed to parse pt_w.");
                     goto ERR;
@@ -614,6 +633,13 @@ int output_save_header(output_t *output, FILE *fp, bool binary)
             return -1;
         }
 
+        // Version 2
+        if (fwrite(&output->output_opt.max_code_len, sizeof(int),
+                    1, fp) != 1) {
+            ST_WARNING("Failed to write max_code_len.");
+            return -1;
+        }
+
         if (fwrite(&output->output_opt.class_hs, sizeof(bool),
                     1, fp) != 1) {
             ST_WARNING("Failed to write class_hs.");
@@ -630,6 +656,8 @@ int output_save_header(output_t *output, FILE *fp, bool binary)
         fprintf(fp, "Output size: %d\n", output->output_size);
         fprintf(fp, "Class size: %d\n", output->output_opt.class_size);
         fprintf(fp, "HS: %s\n", bool2str(output->output_opt.hs));
+        // Version 2
+        fprintf(fp, "Max code len: %d\n", output->output_opt.max_code_len);
         fprintf(fp, "Class HS: %s\n", bool2str(output->output_opt.class_hs));
     }
 
@@ -638,6 +666,11 @@ int output_save_header(output_t *output, FILE *fp, bool binary)
 
 int output_save_body(output_t *output, FILE *fp, bool binary)
 {
+    size_t sz;
+
+    int class_size;
+    int max_code_len;
+
     int n;
 
     int i;
@@ -649,6 +682,9 @@ int output_save_body(output_t *output, FILE *fp, bool binary)
         return 0;
     }
 
+    class_size = output->output_opt.class_size;
+    max_code_len = output->output_opt.max_code_len;
+
     if (binary) {
         n = -OUTPUT_MAGIC_NUM;
         if (fwrite(&n, sizeof(int), 1, fp) != 1) {
@@ -656,7 +692,7 @@ int output_save_body(output_t *output, FILE *fp, bool binary)
             return -1;
         }
 
-        if (output->output_opt.class_size > 0) {
+        if (class_size > 0) {
             if (fwrite(output->w2c, sizeof(int), output->output_size, fp)
                     != output->output_size) {
                 ST_WARNING("Failed to write w2c.");
@@ -664,46 +700,39 @@ int output_save_body(output_t *output, FILE *fp, bool binary)
             }
 
             if (fwrite(output->c2w_s, sizeof(int),
-                        output->output_opt.class_size, fp)
-                    != output->output_opt.class_size) {
+                        class_size, fp) != class_size) {
                 ST_WARNING("Failed to write c2w_s.");
                 return -1;
             }
 
             if (fwrite(output->c2w_e, sizeof(int),
-                        output->output_opt.class_size, fp)
-                    != output->output_opt.class_size) {
+                        class_size, fp) != class_size) {
                 ST_WARNING("Failed to write c2w_e.");
                 return -1;
             }
         }
 
         if (output->output_opt.hs) {
-            if(output->output_opt.class_size > 0
-                    && output->output_opt.class_hs) {
-                if (fwrite(output->code_c, sizeof(char),
-                            output->output_opt.class_size, fp)
-                        != output->output_opt.class_size) {
+            if(class_size > 0 && output->output_opt.class_hs) {
+                sz = class_size * max_code_len;
+                if (fwrite(output->code_c, sizeof(char), sz, fp) != sz) {
                     ST_WARNING("Failed to write code_c.");
                     return -1;
                 }
 
-                if (fwrite(output->pt_c, sizeof(int),
-                            output->output_opt.class_size, fp)
-                        != output->output_opt.class_size) {
+                if (fwrite(output->pt_c, sizeof(int), sz, fp) != sz) {
                     ST_WARNING("Failed to write pt_c.");
                     return -1;
                 }
             }
 
-            if (fwrite(output->code_w, sizeof(char),
-                    output->output_size, fp) != output->output_size) {
+            sz = output->output_size * max_code_len;
+            if (fwrite(output->code_w, sizeof(char), sz, fp) != sz) {
                 ST_WARNING("Failed to write code_w.");
                 return -1;
             }
 
-            if (fwrite(output->pt_w, sizeof(int), output->output_size, fp)
-                    != output->output_size) {
+            if (fwrite(output->pt_w, sizeof(int), sz, fp) != sz) {
                 ST_WARNING("Failed to write pt_w.");
                 return -1;
             }
@@ -711,45 +740,46 @@ int output_save_body(output_t *output, FILE *fp, bool binary)
     } else {
         fprintf(fp, "<OUTPUT-DATA>\n");
 
-        if (output->output_opt.class_size > 0) {
+        if (class_size > 0) {
             fprintf(fp, "Words to Classes:\n");
             for (i = 0; i < output->output_size; i++) {
                 fprintf(fp, "\t%d\t%d\n", i, output->w2c[i]);
             }
 
             fprintf(fp, "Classes to Words:\n");
-            for (i = 0; i < output->output_opt.class_size; i++) {
+            for (i = 0; i < class_size; i++) {
                 fprintf(fp, "\t%d\t%d\t%d\n", i, output->c2w_s[i],
                         output->c2w_e[i]);
             }
         }
 
         if (output->output_opt.hs) {
-            if(output->output_opt.class_size > 0
-                    && output->output_opt.class_hs) {
+            if(class_size > 0 && output->output_opt.class_hs) {
+                sz = class_size * max_code_len;
                 fprintf(fp, "Class codes:\n");
-                for (i = 0; i < output->output_opt.class_size; i++) {
+                for (i = 0; i < sz; i++) {
                     t = output->code_c[i];
-                    fprintf(fp, "\t%d\t%d\n", i, t);
+                    fprintf(fp, "\t%d\t%d\n", i / max_code_len, t);
                 }
 
                 fprintf(fp, "Class points:\n");
-                for (i = 0; i < output->output_opt.class_size; i++) {
+                for (i = 0; i < sz; i++) {
                     t = output->pt_c[i];
-                    fprintf(fp, "\t%d\t%d\n", i, t);
+                    fprintf(fp, "\t%d\t%d\n", i / max_code_len, t);
                 }
             }
 
+            sz = output->output_size * max_code_len;
             fprintf(fp, "Word codes:\n");
-            for (i = 0; i < output->output_size; i++) {
+            for (i = 0; i < sz; i++) {
                 t = output->code_w[i];
-                fprintf(fp, "\t%d\t%d\n", i, t);
+                fprintf(fp, "\t%d\t%d\n", i / max_code_len, t);
             }
 
             fprintf(fp, "Word points:\n");
-            for (i = 0; i < output->output_size; i++) {
+            for (i = 0; i < sz; i++) {
                 t = output->pt_w[i];
-                fprintf(fp, "\t%d\t%d\n", i, t);
+                fprintf(fp, "\t%d\t%d\n", i / max_code_len, t);
             }
         }
     }
@@ -832,11 +862,79 @@ ERR:
     return -1;
 }
 
+#if 0
+void CreateBinaryTree() {
+  long long a, b, i, min1i, min2i, pos1, pos2, point[MAX_CODE_LENGTH];
+  char code[MAX_CODE_LENGTH];
+  long long *count = (long long *)calloc(vocab_size * 2 + 1, sizeof(long long));
+  long long *binary = (long long *)calloc(vocab_size * 2 + 1, sizeof(long long));
+  long long *parent_node = (long long *)calloc(vocab_size * 2 + 1, sizeof(long long));
+  for (a = 0; a < vocab_size; a++) count[a] = vocab[a].cn;
+  for (a = vocab_size; a < vocab_size * 2; a++) count[a] = 1e15;
+  pos1 = vocab_size - 1;
+  pos2 = vocab_size;
+  // Following algorithm constructs the Huffman tree by adding one node at a time
+  for (a = 0; a < vocab_size - 1; a++) {
+    // First, find two smallest nodes 'min1, min2'
+    if (pos1 >= 0) {
+      if (count[pos1] < count[pos2]) {
+        min1i = pos1;
+        pos1--;
+      } else {
+        min1i = pos2;
+        pos2++;
+      }
+    } else {
+      min1i = pos2;
+      pos2++;
+    }
+    if (pos1 >= 0) {
+      if (count[pos1] < count[pos2]) {
+        min2i = pos1;
+        pos1--;
+      } else {
+        min2i = pos2;
+        pos2++;
+      }
+    } else {
+      min2i = pos2;
+      pos2++;
+    }
+    count[vocab_size + a] = count[min1i] + count[min2i];
+    parent_node[min1i] = vocab_size + a;
+    parent_node[min2i] = vocab_size + a;
+    binary[min2i] = 1;
+  }
+  // Now assign binary code to each vocabulary word
+  for (a = 0; a < vocab_size; a++) {
+    b = a;
+    i = 0;
+    while (1) {
+      code[i] = binary[b];
+      point[i] = b;
+      i++;
+      b = parent_node[b];
+      if (b == vocab_size * 2 - 2) break;
+    }
+    vocab[a].codelen = i;
+    vocab[a].point[0] = vocab_size - 2;
+    for (b = 0; b < i; b++) {
+      vocab[a].code[i - b - 1] = code[b];
+      vocab[a].point[i - b] = point[b] - vocab_size;
+    }
+  }
+  free(count);
+  free(binary);
+  free(parent_node);
+}
+#endif
+
 int output_generate_hs(output_t *output, count_t *word_cnts)
 {
     size_t sz;
 
     int class_size;
+    int max_code_len;
 
     ST_CHECK_PARAM(output == NULL || word_cnts == NULL, -1);
 
@@ -846,40 +944,42 @@ int output_generate_hs(output_t *output, count_t *word_cnts)
     safe_free(output->pt_w);
 
     class_size = output->output_opt.class_size;
+    max_code_len = output->output_opt.max_code_len;
+
     if(output->output_opt.hs) {
         if(class_size > 0 && output->output_opt.class_hs) {
-            sz = sizeof(char) * class_size;
+            sz = sizeof(char) * class_size * max_code_len;
             output->code_c = (char *) malloc(sz);
             if (output->code_c == NULL) {
                 ST_WARNING("Failed to malloc code_c.");
                 goto ERR;
             }
-            memset(output->code_c, 0, sz);
+            memset(output->code_c, -1, sz);
 
-            sz = sizeof(int) * class_size;
+            sz = sizeof(int) * class_size * max_code_len;
             output->pt_c = (int *) malloc(sz);
             if (output->pt_c == NULL) {
                 ST_WARNING("Failed to malloc pt_c.");
                 goto ERR;
             }
-            memset(output->pt_c, 0, sz);
+            memset(output->pt_c, -1, sz);
         }
 
-        sz = sizeof(char) * output->output_size;
+        sz = sizeof(char) * output->output_size * max_code_len;
         output->code_w = (char *) malloc(sz);
         if (output->code_w == NULL) {
             ST_WARNING("Failed to malloc code_w.");
             goto ERR;
         }
-        memset(output->code_w, 0, sz);
+        memset(output->code_w, -1, sz);
 
-        sz = sizeof(int) * output->output_size;
+        sz = sizeof(int) * output->output_size * max_code_len;
         output->pt_w = (int *) malloc(sz);
         if (output->pt_w == NULL) {
             ST_WARNING("Failed to malloc pt_w.");
             goto ERR;
         }
-        memset(output->pt_w, 0, sz);
+        memset(output->pt_w, -1, sz);
     }
 
     return 0;
