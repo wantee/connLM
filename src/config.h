@@ -47,6 +47,7 @@ extern "C" {
 
 typedef unsigned long count_t;
 #define COUNT_FMT "%lu"
+#define COUNT_MAX ((count_t)-1)
 
 typedef unsigned long long hash_t;
 typedef long long hash_size_t;

@@ -46,15 +46,15 @@ int output_load_opt(output_opt_t *output_opt, st_opt_t *opt,
             output_opt->class_size, 100, "Size of class layer");
 
     ST_OPT_SEC_GET_BOOL(opt, sec_name, "HS",
-            output_opt->hs, true, "Hierarchical softmax");
+            output_opt->hs, false, "Hierarchical softmax");
 
     ST_OPT_SEC_GET_INT(opt, sec_name, "MAX_CODE_LEN",
             output_opt->max_code_len, 40,
-            "Maximum length for code used by HS"); 
+            "Maximum length for code used by HS");
 
     ST_OPT_SEC_GET_BOOL(opt, sec_name, "CLASS_HS",
             output_opt->class_hs, false,
-            "Whether using HS for classes"); 
+            "Whether using HS for classes");
 
     return 0;
 
@@ -180,7 +180,7 @@ output_t* output_dup(output_t *o)
             memcpy(output->pt_c, o->pt_c, sz);
         }
 
-        sz = sizeof(char)*o->output_size*o->output_opt.max_code_len;
+        sz = sizeof(char) * o->output_size * max_code_len;
         output->code_w = (char *) malloc(sz);
         if (output->code_w == NULL) {
             ST_WARNING("Failed to malloc code_w.");
@@ -188,7 +188,7 @@ output_t* output_dup(output_t *o)
         }
         memcpy(output->code_w, o->code_w, sz);
 
-        sz = sizeof(int)*o->output_size*o->output_opt.max_code_len;
+        sz = sizeof(int) * o->output_size * max_code_len;
         output->pt_w = (int *) malloc(sz);
         if (output->pt_w == NULL) {
             ST_WARNING("Failed to malloc pt_w.");
@@ -480,6 +480,7 @@ int output_load_body(output_t *output, int version, FILE *fp, bool binary)
                     goto ERR;
                 }
 
+                sz = class_size * max_code_len;
                 if (fread(output->pt_c, sizeof(int), sz, fp) != sz) {
                     ST_WARNING("Failed to read pt_c.");
                     goto ERR;
@@ -492,6 +493,7 @@ int output_load_body(output_t *output, int version, FILE *fp, bool binary)
                 goto ERR;
             }
 
+            sz = output->output_size * max_code_len;
             if (fread(output->pt_w, sizeof(int), sz, fp) != sz) {
                 ST_WARNING("Failed to read pt_w.");
                 goto ERR;
@@ -547,6 +549,7 @@ int output_load_body(output_t *output, int version, FILE *fp, bool binary)
                     ST_WARNING("code_c flag error.");
                     goto ERR;
                 }
+                sz = class_size * max_code_len;
                 for (i = 0; i < sz; i++) {
                     if (st_readline(fp, "\t%*d\t%d", &t) != 1) {
                         ST_WARNING("Failed to parse pt_c.");
@@ -573,6 +576,7 @@ int output_load_body(output_t *output, int version, FILE *fp, bool binary)
                 ST_WARNING("code_w flag error.");
                 goto ERR;
             }
+            sz = output->output_size * max_code_len;
             for (i = 0; i < sz; i++) {
                 if (st_readline(fp, "\t%*d\t%d", &t) != 1) {
                     ST_WARNING("Failed to parse pt_w.");
@@ -720,6 +724,7 @@ int output_save_body(output_t *output, FILE *fp, bool binary)
                     return -1;
                 }
 
+                sz = class_size * max_code_len;
                 if (fwrite(output->pt_c, sizeof(int), sz, fp) != sz) {
                     ST_WARNING("Failed to write pt_c.");
                     return -1;
@@ -732,6 +737,7 @@ int output_save_body(output_t *output, FILE *fp, bool binary)
                 return -1;
             }
 
+            sz = output->output_size * max_code_len;
             if (fwrite(output->pt_w, sizeof(int), sz, fp) != sz) {
                 ST_WARNING("Failed to write pt_w.");
                 return -1;
@@ -755,28 +761,30 @@ int output_save_body(output_t *output, FILE *fp, bool binary)
 
         if (output->output_opt.hs) {
             if(class_size > 0 && output->output_opt.class_hs) {
-                sz = class_size * max_code_len;
                 fprintf(fp, "Class codes:\n");
+                sz = class_size * max_code_len;
                 for (i = 0; i < sz; i++) {
                     t = output->code_c[i];
                     fprintf(fp, "\t%d\t%d\n", i / max_code_len, t);
                 }
 
                 fprintf(fp, "Class points:\n");
+                sz = class_size * max_code_len;
                 for (i = 0; i < sz; i++) {
                     t = output->pt_c[i];
                     fprintf(fp, "\t%d\t%d\n", i / max_code_len, t);
                 }
             }
 
-            sz = output->output_size * max_code_len;
             fprintf(fp, "Word codes:\n");
+            sz = output->output_size * max_code_len;
             for (i = 0; i < sz; i++) {
                 t = output->code_w[i];
                 fprintf(fp, "\t%d\t%d\n", i / max_code_len, t);
             }
 
             fprintf(fp, "Word points:\n");
+            sz = output->output_size * max_code_len;
             for (i = 0; i < sz; i++) {
                 t = output->pt_w[i];
                 fprintf(fp, "\t%d\t%d\n", i / max_code_len, t);
@@ -787,7 +795,7 @@ int output_save_body(output_t *output, FILE *fp, bool binary)
     return 0;
 }
 
-int output_generate_class(output_t *output, int class_size,
+static int output_generate_class(output_t *output, int class_size,
         count_t *word_cnts)
 {
     int i;
@@ -862,75 +870,203 @@ ERR:
     return -1;
 }
 
-#if 0
-void CreateBinaryTree() {
-  long long a, b, i, min1i, min2i, pos1, pos2, point[MAX_CODE_LENGTH];
-  char code[MAX_CODE_LENGTH];
-  long long *count = (long long *)calloc(vocab_size * 2 + 1, sizeof(long long));
-  long long *binary = (long long *)calloc(vocab_size * 2 + 1, sizeof(long long));
-  long long *parent_node = (long long *)calloc(vocab_size * 2 + 1, sizeof(long long));
-  for (a = 0; a < vocab_size; a++) count[a] = vocab[a].cn;
-  for (a = vocab_size; a < vocab_size * 2; a++) count[a] = 1e15;
-  pos1 = vocab_size - 1;
-  pos2 = vocab_size;
-  // Following algorithm constructs the Huffman tree by adding one node at a time
-  for (a = 0; a < vocab_size - 1; a++) {
-    // First, find two smallest nodes 'min1, min2'
-    if (pos1 >= 0) {
-      if (count[pos1] < count[pos2]) {
-        min1i = pos1;
-        pos1--;
-      } else {
-        min1i = pos2;
-        pos2++;
-      }
-    } else {
-      min1i = pos2;
-      pos2++;
-    }
-    if (pos1 >= 0) {
-      if (count[pos1] < count[pos2]) {
-        min2i = pos1;
-        pos1--;
-      } else {
-        min2i = pos2;
-        pos2++;
-      }
-    } else {
-      min2i = pos2;
-      pos2++;
-    }
-    count[vocab_size + a] = count[min1i] + count[min2i];
-    parent_node[min1i] = vocab_size + a;
-    parent_node[min2i] = vocab_size + a;
-    binary[min2i] = 1;
-  }
-  // Now assign binary code to each vocabulary word
-  for (a = 0; a < vocab_size; a++) {
-    b = a;
-    i = 0;
-    while (1) {
-      code[i] = binary[b];
-      point[i] = b;
-      i++;
-      b = parent_node[b];
-      if (b == vocab_size * 2 - 2) break;
-    }
-    vocab[a].codelen = i;
-    vocab[a].point[0] = vocab_size - 2;
-    for (b = 0; b < i; b++) {
-      vocab[a].code[i - b - 1] = code[b];
-      vocab[a].point[i - b] = point[b] - vocab_size;
-    }
-  }
-  free(count);
-  free(binary);
-  free(parent_node);
-}
-#endif
-
-int output_generate_hs(output_t *output, count_t *word_cnts)
+/**
+ * Generate binary tree for HS
+ * @ingroup output
+ * @param[in] cnts counts for leaf nodes. MUST be sorted descendingly.
+ * @param[out] pts generated points with length at least n_node * max_code_len.
+ * @param[out] codes generated codes with length at least n_node * max_code_len.
+ * @param[in] n_node number of leaf nodes.
+ * @param[in] max_code_len max length of code.
+ * @return non-zero value if any error.
+ */
+static int output_generate_hs_tree(count_t *cnts, int *pts, char *codes,
+        size_t n_node, int max_code_len)
 {
+    int *point = NULL;
+    char *code = NULL;
+    count_t *count = NULL;
+    char *binary = NULL;
+    int *parent = NULL;
+
+    size_t sz;
+    int i, j, k, min1i, min2i, pos1, pos2;
+
+    ST_CHECK_PARAM(cnts == NULL || pts == NULL || codes == NULL
+            || n_node <= 0 || max_code_len <= 0, -1);
+
+    sz = sizeof(int) * max_code_len;
+    point = (int *)malloc(sz);
+    if (point == NULL) {
+        ST_WARNING("Failed to malloc point.");
+        goto ERR;
+    }
+    memset(point, -1, sz);
+
+    sz = sizeof(char) * max_code_len;
+    code = (char *)malloc(sz);
+    if (code == NULL) {
+        ST_WARNING("Failed to malloc code.");
+        goto ERR;
+    }
+    memset(code, 0, sz);
+
+    sz = sizeof(count_t) * (n_node * 2 - 1);
+    count = (count_t *)malloc(sz);
+    if (count == NULL) {
+        ST_WARNING("Failed to malloc count.");
+        goto ERR;
+    }
+    memset(count, 0, sz);
+
+    sz = sizeof(char) * (n_node * 2 - 1);
+    binary = (char *)malloc(sz);
+    if (binary == NULL) {
+        ST_WARNING("Failed to malloc binary.");
+        goto ERR;
+    }
+    memset(binary, 0, sz);
+
+    sz = sizeof(int) * (n_node * 2 - 1);
+    parent = (int *)malloc(sz);
+    if (parent == NULL) {
+        ST_WARNING("Failed to malloc parent.");
+        goto ERR;
+    }
+    memset(parent, 0, sz);
+
+    for (i = 0; i < n_node; i++) {
+        count[i] = cnts[i];
+    }
+
+    for (i = n_node; i < n_node * 2 - 1; i++) {
+        count[i] = COUNT_MAX;
+    }
+
+    pos1 = n_node - 1;
+    pos2 = n_node;
+
+    // Construct Huffman Tree
+    for (i = 0; i < n_node - 1; i++) {
+        if (pos1 >= 0) {
+            if (count[pos1] < count[pos2]) {
+                min1i = pos1;
+                pos1--;
+            } else {
+                min1i = pos2;
+                pos2++;
+            }
+        } else {
+            min1i = pos2;
+            pos2++;
+        }
+        if (pos1 >= 0) {
+            if (count[pos1] < count[pos2]) {
+                min2i = pos1;
+                pos1--;
+            } else {
+                min2i = pos2;
+                pos2++;
+            }
+        } else {
+            min2i = pos2;
+            pos2++;
+        }
+
+        count[n_node + i] = count[min1i] + count[min2i];
+        parent[min1i] = n_node + i;
+        parent[min2i] = n_node + i;
+        binary[min2i] = 1;
+    }
+
+    // Assign binary code to each leaf node
+    for (i = 0; i < n_node; i++) {
+        j = i;
+        k = 0;
+        while (1) {
+            if (k >= max_code_len) {
+                ST_WARNING("Too deep tree.[%d/%d].", k, max_code_len);
+                goto ERR;
+            }
+            code[k] = binary[j];
+            point[k] = j;
+            k++;
+            j = parent[j];
+            if (j == n_node * 2 - 2) break;
+        }
+        pts[i * max_code_len] = n_node - 2;
+        for (j = 0; j < k; j++) {
+            codes[i * max_code_len + k - j - 1] = code[j];
+            if (j == 0 && k < max_code_len) {
+                pts[i * max_code_len + k - j] = -1;
+            } else {
+                pts[i * max_code_len + k - j] = point[j] - n_node;
+            }
+        }
+    }
+
+    safe_free(code);
+    safe_free(point);
+    safe_free(count);
+    safe_free(binary);
+    safe_free(parent);
+
+    return 0;
+
+ERR:
+    safe_free(code);
+    safe_free(point);
+    safe_free(count);
+    safe_free(binary);
+    safe_free(parent);
+
+    return -1;
+}
+
+static count_t* output_count_class(output_t *output, count_t *word_cnts)
+{
+    count_t *cls_cnts = NULL;
+
+    size_t sz;
+
+    int class_size;
+    int c;
+    int s;
+    int e;
+    int w;
+
+    ST_CHECK_PARAM(output == NULL || word_cnts == NULL, NULL);
+
+    class_size = output->output_opt.class_size;
+
+    sz = sizeof(count_t) * class_size;
+    cls_cnts = (count_t *)malloc(sz);
+    if (cls_cnts == NULL) {
+        ST_WARNING("Failed to malloc cls_cnts.");
+        goto ERR;
+    }
+    memset(cls_cnts, 0, sz);
+
+    for (c = 0; c < class_size; c++) {
+        s = output->c2w_s[c];
+        e = output->c2w_e[c];
+
+        for (w = s; w < e; w++) {
+            cls_cnts[c] += word_cnts[w];
+        }
+    }
+
+    return cls_cnts;
+
+ERR:
+    safe_free(cls_cnts);
+    return NULL;
+}
+
+static int output_generate_hs(output_t *output, count_t *word_cnts)
+{
+    count_t *cls_cnts = NULL;
+
     size_t sz;
 
     int class_size;
@@ -946,40 +1082,59 @@ int output_generate_hs(output_t *output, count_t *word_cnts)
     class_size = output->output_opt.class_size;
     max_code_len = output->output_opt.max_code_len;
 
-    if(output->output_opt.hs) {
-        if(class_size > 0 && output->output_opt.class_hs) {
-            sz = sizeof(char) * class_size * max_code_len;
-            output->code_c = (char *) malloc(sz);
-            if (output->code_c == NULL) {
-                ST_WARNING("Failed to malloc code_c.");
-                goto ERR;
-            }
-            memset(output->code_c, -1, sz);
-
-            sz = sizeof(int) * class_size * max_code_len;
-            output->pt_c = (int *) malloc(sz);
-            if (output->pt_c == NULL) {
-                ST_WARNING("Failed to malloc pt_c.");
-                goto ERR;
-            }
-            memset(output->pt_c, -1, sz);
-        }
-
-        sz = sizeof(char) * output->output_size * max_code_len;
-        output->code_w = (char *) malloc(sz);
-        if (output->code_w == NULL) {
-            ST_WARNING("Failed to malloc code_w.");
+    if(class_size > 0 && output->output_opt.class_hs) {
+        sz = sizeof(char) * class_size * max_code_len;
+        output->code_c = (char *) malloc(sz);
+        if (output->code_c == NULL) {
+            ST_WARNING("Failed to malloc code_c.");
             goto ERR;
         }
-        memset(output->code_w, -1, sz);
+        memset(output->code_c, -1, sz);
 
-        sz = sizeof(int) * output->output_size * max_code_len;
-        output->pt_w = (int *) malloc(sz);
-        if (output->pt_w == NULL) {
-            ST_WARNING("Failed to malloc pt_w.");
+        sz = sizeof(int) * class_size * max_code_len;
+        output->pt_c = (int *) malloc(sz);
+        if (output->pt_c == NULL) {
+            ST_WARNING("Failed to malloc pt_c.");
             goto ERR;
         }
-        memset(output->pt_w, -1, sz);
+        memset(output->pt_c, -1, sz);
+
+        cls_cnts = output_count_class(output, word_cnts);
+        if (cls_cnts == NULL) {
+            ST_WARNING("Failed to output_count_class.");
+            goto ERR;
+        }
+
+        /* cls_cnts was almost descending. */
+        if (output_generate_hs_tree(cls_cnts, output->pt_c,
+                    output->code_c, class_size, max_code_len) < 0) {
+            ST_WARNING("Failed to output_generate_hs_tree for class.");
+            goto ERR;
+        }
+
+        safe_free(cls_cnts);
+    }
+
+    sz = sizeof(char) * output->output_size * max_code_len;
+    output->code_w = (char *) malloc(sz);
+    if (output->code_w == NULL) {
+        ST_WARNING("Failed to malloc code_w.");
+        goto ERR;
+    }
+    memset(output->code_w, -1, sz);
+
+    sz = sizeof(int) * output->output_size * max_code_len;
+    output->pt_w = (int *) malloc(sz);
+    if (output->pt_w == NULL) {
+        ST_WARNING("Failed to malloc pt_w.");
+        goto ERR;
+    }
+    memset(output->pt_w, -1, sz);
+
+    if (output_generate_hs_tree(word_cnts, output->pt_w, output->code_w,
+            output->output_size, max_code_len) < 0) {
+        ST_WARNING("Failed to output_generate_hs_tree for word.");
+        goto ERR;
     }
 
     return 0;
@@ -989,6 +1144,8 @@ ERR:
     safe_free(output->pt_c);
     safe_free(output->code_w);
     safe_free(output->pt_w);
+
+    safe_free(cls_cnts);
 
     return -1;
 }
@@ -1057,7 +1214,7 @@ int output_activate_last_layer(output_t *output, int cls, int tid)
 int output_loss(output_t *output, int word, int tid)
 {
     output_neuron_t *neu;
-    
+
     int c;
     int s;
     int e;
@@ -1075,7 +1232,7 @@ int output_loss(output_t *output, int word, int tid)
         c = output->w2c[word];
         s = output->c2w_s[c];
         e = output->c2w_e[c];
-        
+
         for (o = 0; o < output->output_opt.class_size; o++) {
             neu->er_o_c[o] = (0 - neu->ac_o_c[o]);
         }
