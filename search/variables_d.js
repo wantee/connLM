@@ -4,5 +4,7 @@ var searchData=
   ['param_5farg_5fc',['param_arg_c',['../structmaxent__neuron__t.html#af8f14c8eaed26f8439c88c6f9cd6adba',1,'maxent_neuron_t']]],
   ['param_5farg_5fw',['param_arg_w',['../structmaxent__neuron__t.html#aa47b9030d98357afeaa8e86cd0485e41',1,'maxent_neuron_t']]],
   ['prefix_5ffile',['prefix_file',['../structconnlm__gen__opt__t.html#a039d9df611d5a43cd826d216dc877467',1,'connlm_gen_opt_t']]],
-  ['print_5fsent_5fprob',['print_sent_prob',['../structconnlm__test__opt__t.html#aa83b45cd3088f9c26e33f107ce96b05d',1,'connlm_test_opt_t']]]
+  ['print_5fsent_5fprob',['print_sent_prob',['../structconnlm__test__opt__t.html#aa83b45cd3088f9c26e33f107ce96b05d',1,'connlm_test_opt_t']]],
+  ['pt_5fc',['pt_c',['../structoutput__t.html#a44f8932823ff5bf24b4daa7adfc5a338',1,'output_t']]],
+  ['pt_5fw',['pt_w',['../structoutput__t.html#ae8b9d09583823247116aa9124cc65925',1,'output_t']]]
 ];

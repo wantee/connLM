@@ -1,6 +1,7 @@
 var searchData=
 [
   ['max_5falphabet_5fsize',['max_alphabet_size',['../structvocab__opt__t.html#a7c5a1c50ecc9abad0d80d6d7dc8d3526',1,'vocab_opt_t']]],
+  ['max_5fcode_5flen',['max_code_len',['../structoutput__opt__t.html#a5e1f701268dae9323021c3b51fde5e61',1,'output_opt_t']]],
   ['max_5fvocab_5fsize',['max_vocab_size',['../structvocab__learn__opt__t.html#a55577abf5e81e0bbd95348082777eb2e',1,'vocab_learn_opt_t']]],
   ['max_5fword_5fnum',['max_word_num',['../structvocab__learn__opt__t.html#aaf298129c00f00f326b0d57028f54bbc',1,'vocab_learn_opt_t']]],
   ['maxent',['maxent',['../structconnlm__t.html#af5e89bdebab8b9b2aa98ca74570bf938',1,'connlm_t']]],

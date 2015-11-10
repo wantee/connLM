@@ -1,8 +1,10 @@
 var group__output =
 [
     [ "output_opt_t", "structoutput__opt__t.html", [
+      [ "class_hs", "structoutput__opt__t.html#a696814b619013a065935e770f1df44b8", null ],
       [ "class_size", "structoutput__opt__t.html#a0be0b1e7c0c50ac79749443d7e78c243", null ],
-      [ "hs", "structoutput__opt__t.html#abd94214570727a3fd4d8afff6701a091", null ]
+      [ "hs", "structoutput__opt__t.html#abd94214570727a3fd4d8afff6701a091", null ],
+      [ "max_code_len", "structoutput__opt__t.html#a5e1f701268dae9323021c3b51fde5e61", null ]
     ] ],
     [ "output_neuron_t", "structoutput__neuron__t.html", [
       [ "ac_o_c", "structoutput__neuron__t.html#a68a9226399de4a99a2b2cc025aff180e", null ],
@@ -13,10 +15,14 @@ var group__output =
     [ "output_t", "structoutput__t.html", [
       [ "c2w_e", "structoutput__t.html#a00b1708d78efe8ddeb6fed4670041373", null ],
       [ "c2w_s", "structoutput__t.html#a8158d22bf9aae5458dfe46699035c865", null ],
+      [ "code_c", "structoutput__t.html#a2210f20969a58f96529a1a1f5538c5fe", null ],
+      [ "code_w", "structoutput__t.html#a84846e52e68ec46cf8231e485cf2ff43", null ],
       [ "neurons", "structoutput__t.html#a38f7a8e84a59d3616947c04fa8678143", null ],
       [ "num_thrs", "structoutput__t.html#ab60a8eff4b1b5e2035fd58b575dc5207", null ],
       [ "output_opt", "structoutput__t.html#a25a8ee731394d8b205ae7742c1397a3a", null ],
       [ "output_size", "structoutput__t.html#a8dadbf2b03d5cf2b1ee248be00c197bc", null ],
+      [ "pt_c", "structoutput__t.html#a44f8932823ff5bf24b4daa7adfc5a338", null ],
+      [ "pt_w", "structoutput__t.html#ae8b9d09583823247116aa9124cc65925", null ],
       [ "w2c", "structoutput__t.html#af8aa3b4b55710e80ecf3bdfcab280f65", null ]
     ] ],
     [ "safe_output_destroy", "group__output.html#ga88c9fc5b1c8fc91e975fcc95b9c34359", null ],
@@ -35,8 +41,8 @@ var group__output =
     [ "output_get_class_prob_for_class", "group__output.html#gaf1ba4fb3a3abec785ed3ec6ffa64b824", null ],
     [ "output_get_prob", "group__output.html#ga97f6c32d4392dad4e0bb161bf892b42f", null ],
     [ "output_get_word_prob", "group__output.html#ga49bb834760aa3827fb2393d00e4991b1", null ],
-    [ "output_load_body", "group__output.html#gaf8f27097fcc87abbb35d390baac0066d", null ],
-    [ "output_load_header", "group__output.html#ga73829da4604eb9196159b856acf5bef1", null ],
+    [ "output_load_body", "group__output.html#ga40b621b4ba8f802702502c3afe42ab97", null ],
+    [ "output_load_header", "group__output.html#gab67c24ec2c919b6c9b5c97081624b758", null ],
     [ "output_load_opt", "group__output.html#ga7180bc542158173b9a343d373e36f3a4", null ],
     [ "output_loss", "group__output.html#ga294ede6745f4dda4b6d056581997dd65", null ],
     [ "output_reset_gen", "group__output.html#ga4f8e091a9eed6151cdaccc8c1bff6de8", null ],

@@ -1,6 +1,7 @@
 var searchData=
 [
   ['max_5falphabet_5fsize',['max_alphabet_size',['../structvocab__opt__t.html#a7c5a1c50ecc9abad0d80d6d7dc8d3526',1,'vocab_opt_t']]],
+  ['max_5fcode_5flen',['max_code_len',['../structoutput__opt__t.html#a5e1f701268dae9323021c3b51fde5e61',1,'output_opt_t']]],
   ['max_5fvocab_5fsize',['max_vocab_size',['../structvocab__learn__opt__t.html#a55577abf5e81e0bbd95348082777eb2e',1,'vocab_learn_opt_t']]],
   ['max_5fword_5fnum',['max_word_num',['../structvocab__learn__opt__t.html#aaf298129c00f00f326b0d57028f54bbc',1,'vocab_learn_opt_t']]],
   ['maxent',['maxent',['../structconnlm__t.html#af5e89bdebab8b9b2aa98ca74570bf938',1,'connlm_t::maxent()'],['../group__maxent.html',1,'(Global Namespace)']]],
@@ -14,8 +15,8 @@ var searchData=
   ['maxent_5fforward_5flast_5flayer',['maxent_forward_last_layer',['../group__maxent.html#ga0e447e06e8668f42e535cc9ac60d897e',1,'maxent.h']]],
   ['maxent_5fforward_5fpre_5flayer',['maxent_forward_pre_layer',['../group__maxent.html#ga1673ee01e5e17c722d358e43672f4920',1,'maxent.h']]],
   ['maxent_5finit',['maxent_init',['../group__maxent.html#ga0f6d3a8e5d6e95de2c07bad037bf96f3',1,'maxent.h']]],
-  ['maxent_5fload_5fbody',['maxent_load_body',['../group__maxent.html#gae999e0f8a979d83f668615c8a74bf91b',1,'maxent.h']]],
-  ['maxent_5fload_5fheader',['maxent_load_header',['../group__maxent.html#gad4464c5e8e14abf7102b585aaf926800',1,'maxent.h']]],
+  ['maxent_5fload_5fbody',['maxent_load_body',['../group__maxent.html#gadf14a955b60540020e2c29f323500007',1,'maxent.h']]],
+  ['maxent_5fload_5fheader',['maxent_load_header',['../group__maxent.html#gaedcb9107d8bf154233df1736311cdda5',1,'maxent.h']]],
   ['maxent_5fload_5fmodel_5fopt',['maxent_load_model_opt',['../group__maxent.html#ga81bd70e9704e6fa236dbf8b7a811cca2',1,'maxent.h']]],
   ['maxent_5fload_5ftrain_5fopt',['maxent_load_train_opt',['../group__maxent.html#gabde11709726983dcb5a8efaf1ec43a3a',1,'maxent.h']]],
   ['maxent_5fmodel_5fopt_5ft',['maxent_model_opt_t',['../structmaxent__model__opt__t.html',1,'']]],

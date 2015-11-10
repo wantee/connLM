@@ -5,7 +5,7 @@
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.10"/>
-<title>connLM: hash_hist_t Struct Reference</title>
+<title>connLM: ConnLM I/O mechanisms</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <link rel="shortcut icon" href="connlm.ico" type="image/x-icon" />
 <script type="text/javascript" src="jquery.js"></script>
@@ -50,9 +50,9 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
   <div id="navrow1" class="tabs">
     <ul class="tablist">
       <li><a href="index.html"><span>Main&#160;Page</span></a></li>
-      <li><a href="pages.html"><span>Related&#160;Pages</span></a></li>
+      <li class="current"><a href="pages.html"><span>Related&#160;Pages</span></a></li>
       <li><a href="modules.html"><span>Modules</span></a></li>
-      <li class="current"><a href="annotated.html"><span>Data&#160;Structures</span></a></li>
+      <li><a href="annotated.html"><span>Data&#160;Structures</span></a></li>
       <li><a href="files.html"><span>Files</span></a></li>
       <li>
         <div id="MSearchBox" class="MSearchBoxInactive">
@@ -72,13 +72,6 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
       </li>
     </ul>
   </div>
-  <div id="navrow2" class="tabs2">
-    <ul class="tablist">
-      <li><a href="annotated.html"><span>Data&#160;Structures</span></a></li>
-      <li><a href="classes.html"><span>Data&#160;Structure&#160;Index</span></a></li>
-      <li><a href="functions.html"><span>Data&#160;Fields</span></a></li>
-    </ul>
-  </div>
 </div><!-- top -->
 <div id="side-nav" class="ui-resizable side-nav-resizable">
   <div id="nav-tree">
@@ -91,7 +84,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
   </div>
 </div>
 <script type="text/javascript">
-$(document).ready(function(){initNavTree('structhash__hist__t.html','');});
+$(document).ready(function(){initNavTree('io.html','');});
 </script>
 <div id="doc-content">
 <!-- window showing the filter options -->
@@ -109,69 +102,39 @@ $(document).ready(function(){initNavTree('structhash__hist__t.html','');});
 </div>
 
 <div class="header">
-  <div class="summary">
-<a href="#pub-attribs">Data Fields</a>  </div>
   <div class="headertitle">
-<div class="title">hash_hist_t Struct Reference<div class="ingroups"><a class="el" href="group__maxent.html">MaxEnt Model</a></div></div>  </div>
+<div class="title">ConnLM I/O mechanisms </div>  </div>
 </div><!--header-->
 <div class="contents">
-
-<p>Histories of hashes.  
- <a href="structhash__hist__t.html#details">More...</a></p>
-
-<p><code>#include &lt;<a class="el" href="maxent_8h_source.html">maxent.h</a>&gt;</code></p>
-<table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-attribs"></a>
-Data Fields</h2></td></tr>
-<tr class="memitem:a3467fb2edd1bdf675da8b61579a1a8d9"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structhash__hist__t.html#a3467fb2edd1bdf675da8b61579a1a8d9">order</a></td></tr>
-<tr class="memdesc:a3467fb2edd1bdf675da8b61579a1a8d9"><td class="mdescLeft">&#160;</td><td class="mdescRight">order of histories.  <a href="#a3467fb2edd1bdf675da8b61579a1a8d9">More...</a><br /></td></tr>
-<tr class="separator:a3467fb2edd1bdf675da8b61579a1a8d9"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae9fd3344b00c32ee352bcb9701db541c"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structhash__range__t.html">hash_range_t</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structhash__hist__t.html#ae9fd3344b00c32ee352bcb9701db541c">range</a></td></tr>
-<tr class="memdesc:ae9fd3344b00c32ee352bcb9701db541c"><td class="mdescLeft">&#160;</td><td class="mdescRight">range of every order.  <a href="#ae9fd3344b00c32ee352bcb9701db541c">More...</a><br /></td></tr>
-<tr class="separator:ae9fd3344b00c32ee352bcb9701db541c"><td class="memSeparator" colspan="2">&#160;</td></tr>
-</table>
-<a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p>Histories of hashes. </p>
-<p>Used for mini-batch updates. </p>
-</div><h2 class="groupheader">Field Documentation</h2>
-<a class="anchor" id="a3467fb2edd1bdf675da8b61579a1a8d9"></a>
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">int hash_hist_t::order</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>order of histories. </p>
-
-</div>
-</div>
-<a class="anchor" id="ae9fd3344b00c32ee352bcb9701db541c"></a>
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname"><a class="el" href="structhash__range__t.html">hash_range_t</a>* hash_hist_t::range</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>range of every order. </p>
-
-</div>
-</div>
-<hr/>The documentation for this struct was generated from the following file:<ul>
-<li><a class="el" href="maxent_8h_source.html">maxent.h</a></li>
+<div class="textblock"><h1><a class="anchor" id="io_intro"></a>
+Introduction</h1>
+<p>The low level I/O in connLM use the <a href="https://github.com/wantee/stutils">stutils</a> library.</p>
+<p>Most connLM tools has a <code>binary</code> option to determine whether write models in binary format.</p>
+<h1><a class="anchor" id="io_filter"></a>
+The Model filter</h1>
+<p>ConnLM supports a specific format used to refer a model file, which is called the <em> Model Filter </em>.</p>
+<p>The format of model filter is</p>
+<div class="fragment"><div class="line">mdl,[+-][ovmrlf]:file_name</div>
+</div><!-- fragment --><p><code>file_name</code> is the name of model file. The middle part is the filter. Adding <code>+/-</code> to add or remove responding component of the model, default is <code>+</code>.</p>
+<p>Filters include:</p>
+<ul>
+<li><code>o:</code> Output</li>
+<li><code>v:</code> Vocab</li>
+<li><code>m:</code> MaxEnt</li>
+<li><code>r:</code> RNN</li>
+<li><code>l:</code> LBL</li>
+<li><code>f:</code> FFNN </li>
 </ul>
-</div><!-- contents -->
+<p>For example, one can use following command line to view the weights of MaxEnt in one model:</p>
+<div class="fragment"><div class="line">$ connlm-copy --binary=<span class="keyword">false</span> exp/maxent/01.clm mdl,m:- | less</div>
+</div><!-- fragment --><p>Users can find many examples using model filter in the <code>egs/steps/run_cascade.sh</code>. </p>
+</div></div><!-- contents -->
 </div><!-- doc-content -->
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="navelem"><a class="el" href="structhash__hist__t.html">hash_hist_t</a></li>
-    <li class="footer">Generated on Tue Nov 10 2015 10:08:36 for connLM by
+    <li class="navelem"><a class="el" href="index.html">connLM</a></li>
+    <li class="footer">Generated on Tue Nov 10 2015 10:08:35 for connLM by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.10 </li>
   </ul>

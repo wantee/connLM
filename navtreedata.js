@@ -9,6 +9,10 @@ var NAVTREE =
       [ "Summary of the performance", "benchmark.html#summary", null ],
       [ "Details of training process", "benchmark.html#detail", null ]
     ] ],
+    [ "ConnLM I/O mechanisms", "io.html", [
+      [ "Introduction", "io.html#io_intro", null ],
+      [ "The Model filter", "io.html#io_filter", null ]
+    ] ],
     [ "The Vocabulary", "vocab.html", [
       [ "Introduction", "vocab.html#vocab_intro", null ],
       [ "Usage", "vocab.html#vocab_usage", null ],
@@ -25,8 +29,8 @@ var NAVTREE =
       ] ]
     ] ],
     [ "Modules", "modules.html", "modules" ],
-    [ "Data Structures", null, [
-      [ "Data Structures", "annotated.html", "annotated" ],
+    [ "Data Structures", "annotated.html", [
+      [ "Data Structures", "annotated.html", "annotated_dup" ],
       [ "Data Structure Index", "classes.html", null ],
       [ "Data Fields", "functions.html", [
         [ "All", "functions.html", null ],
@@ -42,7 +46,7 @@ var NAVTREE =
 var NAVTREEINDEX =
 [
 "about.html",
-"structconnlm__t.html#a8eddcb9d3461e61e31f4529769183ed9"
+"structconnlm__t.html#a77008d2830e1b8dc554dd15f8be30f2c"
 ];
 
 var SYNCONMSG = 'click to disable panel synchronisation';
