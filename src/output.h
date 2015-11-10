@@ -46,7 +46,7 @@ typedef struct _output_opt_t_ {
     int class_size; /**< size of class. May be zero. */
     bool hs;        /**< whether using Hierarchical softmax. */
     int max_code_len; /**< maximum length for code used by HS. */
-    bool class_hs; /** whether using HS for classes. */
+    bool class_hs; /**< whether using HS for classes. */
 } output_opt_t;
 
 /**

@@ -22,13 +22,50 @@
 // SOFTWARE.
 
 /**
-  @mainpage connLM
+  @page io ConnLM I/O mechanisms
 
+  @section io_intro Introduction
+  
+  The low level I/O in connLM use the
+  <a href="https://github.com/wantee/stutils">stutils</a> library.
+
+  Most connLM tools has a @c binary option to determine whether write
+  models in binary format.
+
+  @section io_filter The Model filter
+
+  ConnLM supports a specific format used to refer a model file,
+  which is called the <em> Model Filter </em>.
+  
+  The format of model filter is
+  
+  @code 
+  mdl,[+-][ovmrlf]:file_name
+  @endcode
+
+  @c file_name is the name of model file. The middle part is the filter.
+  Adding @c +/- to add or remove responding component of the model,
+  default is @c +.
+
+  Filters include:
+  
   <p>
-    - @subpage about
-    - @subpage benchmark
-    - @subpage io
-    - @subpage vocab
-    - @subpage selection
+  - @c o: Output
+  - @c v: Vocab
+  - @c m: MaxEnt
+  - @c r: RNN
+  - @c l: LBL
+  - @c f: FFNN
   </p>
+
+  For example, one can use following command line to view the weights
+  of MaxEnt in one model:
+
+  @code
+$ connlm-copy --binary=false exp/maxent/01.clm mdl,m:- | less
+  @endcode
+
+  Users can find many examples using model filter in the
+  @c egs/steps/run_cascade.sh.
+
 */
