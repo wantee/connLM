@@ -22,18 +22,10 @@
 // SOFTWARE.
 
 /**
-  @mainpage connLM
+  @page ffnn The FFNN Model
 
-  <p>
-    - @subpage about
-    - @subpage benchmark
-    - @subpage io
-    - @subpage vocab
-    - @subpage output
-    - @subpage rnn
-    - @subpage lbl
-    - @subpage ffnn
-    - @subpage maxent
-    - @subpage selection
-  </p>
+  @section ffnn_intro Introduction
+  
+  @section ffnn_conf Configurations
+
 */

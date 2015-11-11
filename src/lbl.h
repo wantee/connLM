@@ -35,13 +35,13 @@ extern "C" {
 #include "param.h"
 #include "output.h"
 
-/** @defgroup lbl LBL Model
+/** @defgroup g_lbl LBL Model
  * Data structures and functions for LBL model.
  */
 
 /**
  * Parameters for LBL model.
- * @ingroup lbl
+ * @ingroup g_lbl
  */
 typedef struct _lbl_model_opt_t_ {
     real_t scale;     /**< output scale. */
@@ -49,7 +49,7 @@ typedef struct _lbl_model_opt_t_ {
 
 /**
  * Parameters for training LBL model.
- * @ingroup lbl
+ * @ingroup g_lbl
  *
  */
 typedef struct _lbl_train_opt_t_ {
@@ -59,14 +59,14 @@ typedef struct _lbl_train_opt_t_ {
 /**
  * Neuron of LBL model.
  * Each neuron used in one single thread.
- * @ingroup lbl
+ * @ingroup g_lbl
  */
 typedef struct _lbl_neuron_t_ {
 } lbl_neuron_t;
 
 /**
  * LBL model.
- * @ingroup lbl
+ * @ingroup g_lbl
  */
 typedef struct _lbl_t_ {
     lbl_model_opt_t model_opt; /**< option for this model. */
@@ -79,7 +79,7 @@ typedef struct _lbl_t_ {
 
 /**
  * Load lbl model option.
- * @ingroup lbl
+ * @ingroup g_lbl
  * @param[out] model_opt options loaded.
  * @param[in] opt runtime options passed by caller.
  * @param[in] sec_name section name of runtime options to be loaded.
@@ -89,7 +89,7 @@ int lbl_load_model_opt(lbl_model_opt_t *model_opt, st_opt_t *opt,
         const char *sec_name);
 /**
  * Load lbl train option.
- * @ingroup lbl
+ * @ingroup g_lbl
  * @param[out] train_opt options loaded.
  * @param[in] opt runtime options passed by caller.
  * @param[in] sec_name section name of runtime options to be loaded.
@@ -101,7 +101,7 @@ int lbl_load_train_opt(lbl_train_opt_t *train_opt, st_opt_t *opt,
 
 /**
  * Initialise a lbl model.
- * @ingroup lbl
+ * @ingroup g_lbl
  * @param[out] plbl initialised lbl.
  * @param[in] model_opt model options used to initialise.
  * @param[in] output output layer for the model.
@@ -110,7 +110,7 @@ int lbl_load_train_opt(lbl_train_opt_t *train_opt, st_opt_t *opt,
 int lbl_init(lbl_t **plbl, lbl_model_opt_t *model_opt, output_t *output);
 /**
  * Destroy a LBL model and set the pointer to NULL.
- * @ingroup lbl
+ * @ingroup g_lbl
  * @param[in] ptr pointer to lbl_t.
  */
 #define safe_lbl_destroy(ptr) do {\
@@ -122,13 +122,13 @@ int lbl_init(lbl_t **plbl, lbl_model_opt_t *model_opt, output_t *output);
     } while(0)
 /**
  * Destroy a lbl model.
- * @ingroup lbl
+ * @ingroup g_lbl
  * @param[in] lbl lbl to be destroyed.
  */
 void lbl_destroy(lbl_t *lbl);
 /**
  * Duplicate a lbl model.
- * @ingroup lbl
+ * @ingroup g_lbl
  * @param[in] l lbl to be duplicated.
  * @return the duplicated lbl model
  */
@@ -136,7 +136,7 @@ lbl_t* lbl_dup(lbl_t *l);
 
 /**
  * Load lbl header and initialise a new lbl.
- * @ingroup lbl
+ * @ingroup g_lbl
  * @param[out] lbl lbl initialised.
  * @param[in] version file version of loading file.
  * @param[in] fp file stream loaded from.
@@ -150,7 +150,7 @@ int lbl_load_header(lbl_t **lbl, int version, FILE *fp,
         bool *binary, FILE *fo_info);
 /**
  * Load lbl body.
- * @ingroup lbl
+ * @ingroup g_lbl
  * @param[in] lbl lbl to be loaded.
  * @param[in] version file version of loading file.
  * @param[in] fp file stream loaded from.
@@ -162,7 +162,7 @@ int lbl_load_header(lbl_t **lbl, int version, FILE *fp,
 int lbl_load_body(lbl_t *lbl, int version, FILE *fp, bool binary);
 /**
  * Save lbl header.
- * @ingroup lbl
+ * @ingroup g_lbl
  * @param[in] lbl lbl to be saved.
  * @param[in] fp file stream saved to.
  * @param[in] binary whether to use binary format.
@@ -173,7 +173,7 @@ int lbl_load_body(lbl_t *lbl, int version, FILE *fp, bool binary);
 int lbl_save_header(lbl_t *lbl, FILE *fp, bool binary);
 /**
  * Save lbl body.
- * @ingroup lbl
+ * @ingroup g_lbl
  * @param[in] lbl lbl to be saved.
  * @param[in] fp file stream saved to.
  * @param[in] binary whether to use binary format.
@@ -185,7 +185,7 @@ int lbl_save_body(lbl_t *lbl, FILE *fp, bool binary);
 
 /**
  * Feed-forward one word for pre-non-output layer of one thread of lbl model.
- * @ingroup lbl
+ * @ingroup g_lbl
  * @param[in] lbl lbl model.
  * @param[in] tid thread id (neuron id).
  * @see lbl_forward_last_layer
@@ -194,7 +194,7 @@ int lbl_save_body(lbl_t *lbl, FILE *fp, bool binary);
 int lbl_forward_pre_layer(lbl_t *lbl, int tid);
 /**
  * Feed-forward one word for last output layer of one thread of lbl model.
- * @ingroup lbl
+ * @ingroup g_lbl
  * @param[in] lbl lbl model.
  * @param[in] cls class of current word. -1 if non-class.
  * @param[in] tid thread id (neuron id).
@@ -204,7 +204,7 @@ int lbl_forward_pre_layer(lbl_t *lbl, int tid);
 int lbl_forward_last_layer(lbl_t *lbl, int cls, int tid);
 /**
  * Back-propagate one word for a thread of lbl model.
- * @ingroup lbl
+ * @ingroup g_lbl
  * @param[in] lbl lbl model.
  * @param[in] word current word.
  * @param[in] tid thread id (neuron id).
@@ -216,7 +216,7 @@ int lbl_backprop(lbl_t *lbl, int word, int tid);
 /**
  * Setup training for lbl model.
  * Called before training.
- * @ingroup lbl
+ * @ingroup g_lbl
  * @param[in] lbl lbl model.
  * @param[in] train_opt training options.
  * @param[in] output output layer.
@@ -228,7 +228,7 @@ int lbl_setup_train(lbl_t *lbl, lbl_train_opt_t *train_opt,
 /**
  * Reset training for lbl model.
  * Called before every input sentence to be trained.
- * @ingroup lbl
+ * @ingroup g_lbl
  * @param[in] lbl lbl model.
  * @param[in] tid thread id (neuron id).
  * @return non-zero value if any error.
@@ -237,7 +237,7 @@ int lbl_reset_train(lbl_t *lbl, int tid);
 /**
  * Start training for lbl model.
  * Called before every input word to be trained.
- * @ingroup lbl
+ * @ingroup g_lbl
  * @param[in] lbl lbl model.
  * @param[in] word current word.
  * @param[in] tid thread id (neuron id).
@@ -247,7 +247,7 @@ int lbl_start_train(lbl_t *lbl, int word, int tid);
 /**
  * End training for lbl model.
  * Called after every input word trained.
- * @ingroup lbl
+ * @ingroup g_lbl
  * @param[in] lbl lbl model.
  * @param[in] word current word.
  * @param[in] tid thread id (neuron id).
@@ -257,7 +257,7 @@ int lbl_end_train(lbl_t *lbl, int word, int tid);
 /**
  * Finish training for lbl model.
  * Called after all words trained.
- * @ingroup lbl
+ * @ingroup g_lbl
  * @param[in] lbl lbl model.
  * @param[in] tid thread id (neuron id).
  * @return non-zero value if any error.
@@ -267,7 +267,7 @@ int lbl_finish_train(lbl_t *lbl, int tid);
 /**
  * Setup testing for lbl model.
  * Called before testing.
- * @ingroup lbl
+ * @ingroup g_lbl
  * @param[in] lbl lbl model.
  * @param[in] output output layer.
  * @param[in] num_thrs number of thread to be used.
@@ -277,7 +277,7 @@ int lbl_setup_test(lbl_t *lbl, output_t *output, int num_thrs);
 /**
  * Reset testing for lbl model.
  * Called before every input sentence to be tested.
- * @ingroup lbl
+ * @ingroup g_lbl
  * @param[in] lbl lbl model.
  * @param[in] tid thread id (neuron id).
  * @return non-zero value if any error.
@@ -286,7 +286,7 @@ int lbl_reset_test(lbl_t *lbl, int tid);
 /**
  * Start testing for lbl model.
  * Called before every input word to be tested.
- * @ingroup lbl
+ * @ingroup g_lbl
  * @param[in] lbl lbl model.
  * @param[in] word current word.
  * @param[in] tid thread id (neuron id).
@@ -296,7 +296,7 @@ int lbl_start_test(lbl_t *lbl, int word, int tid);
 /**
  * End testing for lbl model.
  * Called after every input word tested.
- * @ingroup lbl
+ * @ingroup g_lbl
  * @param[in] lbl lbl model.
  * @param[in] word current word.
  * @param[in] tid thread id (neuron id).
@@ -307,7 +307,7 @@ int lbl_end_test(lbl_t *lbl, int word, int tid);
 /**
  * Setup generating for lbl model.
  * Called before generating.
- * @ingroup lbl
+ * @ingroup g_lbl
  * @param[in] lbl lbl model.
  * @param[in] output output layer.
  * @return non-zero value if any error.
@@ -316,7 +316,7 @@ int lbl_setup_gen(lbl_t *lbl, output_t *output);
 /**
  * Reset generating for lbl model.
  * Called before every sentence to be generated.
- * @ingroup lbl
+ * @ingroup g_lbl
  * @param[in] lbl lbl model.
  * @return non-zero value if any error.
  */
@@ -324,7 +324,7 @@ int lbl_reset_gen(lbl_t *lbl);
 /**
  * End generating for lbl model.
  * Called after every word generated.
- * @ingroup lbl
+ * @ingroup g_lbl
  * @param[in] lbl lbl model.
  * @param[in] word current generated word.
  * @return non-zero value if any error.

@@ -22,18 +22,10 @@
 // SOFTWARE.
 
 /**
-  @mainpage connLM
+  @page lbl The LBL Model
 
-  <p>
-    - @subpage about
-    - @subpage benchmark
-    - @subpage io
-    - @subpage vocab
-    - @subpage output
-    - @subpage rnn
-    - @subpage lbl
-    - @subpage ffnn
-    - @subpage maxent
-    - @subpage selection
-  </p>
+  @section lbl_intro Introduction
+  
+  @section lbl_conf Configurations
+
 */

@@ -35,13 +35,13 @@ extern "C" {
 #include "param.h"
 #include "output.h"
 
-/** @defgroup rnn RNN Model
+/** @defgroup g_rnn RNN Model
  * Data structures and functions for RNN model.
  */
 
 /**
  * Parameters for RNN model.
- * @ingroup rnn
+ * @ingroup g_rnn
  */
 typedef struct _rnn_model_opt_t_ {
     real_t scale;     /**< output scale. */
@@ -51,7 +51,7 @@ typedef struct _rnn_model_opt_t_ {
 
 /**
  * Parameters for training RNN model.
- * @ingroup rnn
+ * @ingroup g_rnn
  *
  */
 typedef struct _rnn_train_opt_t_ {
@@ -65,7 +65,7 @@ typedef struct _rnn_train_opt_t_ {
 /**
  * Neuron of RNN model.
  * Each neuron used in one single thread.
- * @ingroup rnn
+ * @ingroup g_rnn
  */
 typedef struct _rnn_neuron_t {
     int last_word; /**< last input word. */
@@ -125,7 +125,7 @@ typedef struct _rnn_neuron_t {
 
 /**
  * RNN model.
- * @ingroup rnn
+ * @ingroup g_rnn
  */
 typedef struct _rnn_t_ {
     rnn_model_opt_t model_opt; /**< option for this model. */
@@ -151,7 +151,7 @@ typedef struct _rnn_t_ {
 
 /**
  * Load rnn model option.
- * @ingroup rnn
+ * @ingroup g_rnn
  * @param[out] model_opt options loaded.
  * @param[in] opt runtime options passed by caller.
  * @param[in] sec_name section name of runtime options to be loaded.
@@ -161,7 +161,7 @@ int rnn_load_model_opt(rnn_model_opt_t *model_opt, st_opt_t *opt,
         const char *sec_name);
 /**
  * Load rnn train option.
- * @ingroup rnn
+ * @ingroup g_rnn
  * @param[out] train_opt options loaded.
  * @param[in] opt runtime options passed by caller.
  * @param[in] sec_name section name of runtime options to be loaded.
@@ -173,7 +173,7 @@ int rnn_load_train_opt(rnn_train_opt_t *train_opt, st_opt_t *opt,
 
 /**
  * Initialise a rnn model.
- * @ingroup rnn
+ * @ingroup g_rnn
  * @param[out] prnn initialised rnn.
  * @param[in] model_opt model options used to initialise.
  * @param[in] output output layer for the model.
@@ -183,7 +183,7 @@ int rnn_init(rnn_t **prnn, rnn_model_opt_t *model_opt, output_t *output);
 
 /**
  * Destroy a RNN model and set the pointer to NULL.
- * @ingroup rnn
+ * @ingroup g_rnn
  * @param[in] ptr pointer to rnn_t.
  */
 #define safe_rnn_destroy(ptr) do {\
@@ -195,13 +195,13 @@ int rnn_init(rnn_t **prnn, rnn_model_opt_t *model_opt, output_t *output);
     } while(0)
 /**
  * Destroy a rnn model.
- * @ingroup rnn
+ * @ingroup g_rnn
  * @param[in] rnn rnn to be destroyed.
  */
 void rnn_destroy(rnn_t *rnn);
 /**
  * Duplicate a rnn model.
- * @ingroup rnn
+ * @ingroup g_rnn
  * @param[in] r rnn to be duplicated.
  * @return the duplicated rnn model
  */
@@ -209,7 +209,7 @@ rnn_t* rnn_dup(rnn_t *r);
 
 /**
  * Load rnn header and initialise a new rnn.
- * @ingroup rnn
+ * @ingroup g_rnn
  * @param[out] rnn rnn initialised.
  * @param[in] version file version of loading file.
  * @param[in] fp file stream loaded from.
@@ -223,7 +223,7 @@ int rnn_load_header(rnn_t **rnn, int version, FILE *fp,
         bool *binary, FILE *fo_info);
 /**
  * Load rnn body.
- * @ingroup rnn
+ * @ingroup g_rnn
  * @param[in] rnn rnn to be loaded.
  * @param[in] version file version of loading file.
  * @param[in] fp file stream loaded from.
@@ -235,7 +235,7 @@ int rnn_load_header(rnn_t **rnn, int version, FILE *fp,
 int rnn_load_body(rnn_t *rnn, int version, FILE *fp, bool binary);
 /**
  * Save rnn header.
- * @ingroup rnn
+ * @ingroup g_rnn
  * @param[in] rnn rnn to be saved.
  * @param[in] fp file stream saved to.
  * @param[in] binary whether to use binary format.
@@ -246,7 +246,7 @@ int rnn_load_body(rnn_t *rnn, int version, FILE *fp, bool binary);
 int rnn_save_header(rnn_t *rnn, FILE *fp, bool binary);
 /**
  * Save rnn body.
- * @ingroup rnn
+ * @ingroup g_rnn
  * @param[in] rnn rnn to be saved.
  * @param[in] fp file stream saved to.
  * @param[in] binary whether to use binary format.
@@ -258,7 +258,7 @@ int rnn_save_body(rnn_t *rnn, FILE *fp, bool binary);
 
 /**
  * Feed-forward one word for pre-non-output layer of one thread of rnn model.
- * @ingroup rnn
+ * @ingroup g_rnn
  * @param[in] rnn rnn model.
  * @param[in] tid thread id (neuron id).
  * @see rnn_forward_last_layer
@@ -267,7 +267,7 @@ int rnn_save_body(rnn_t *rnn, FILE *fp, bool binary);
 int rnn_forward_pre_layer(rnn_t *rnn, int tid);
 /**
  * Feed-forward one word for last output layer of one thread of rnn model.
- * @ingroup rnn
+ * @ingroup g_rnn
  * @param[in] rnn rnn model.
  * @param[in] cls class of current word. -1 if non-class.
  * @param[in] tid thread id (neuron id).
@@ -277,7 +277,7 @@ int rnn_forward_pre_layer(rnn_t *rnn, int tid);
 int rnn_forward_last_layer(rnn_t *rnn, int cls, int tid);
 /**
  * Back-propagate one word for a thread of rnn model.
- * @ingroup rnn
+ * @ingroup g_rnn
  * @param[in] rnn rnn model.
  * @param[in] word current word.
  * @param[in] tid thread id (neuron id).
@@ -289,7 +289,7 @@ int rnn_backprop(rnn_t *rnn, int word, int tid);
 /**
  * Setup training for rnn model.
  * Called before training.
- * @ingroup rnn
+ * @ingroup g_rnn
  * @param[in] rnn rnn model.
  * @param[in] train_opt training options.
  * @param[in] output output layer.
@@ -301,7 +301,7 @@ int rnn_setup_train(rnn_t *rnn, rnn_train_opt_t *train_opt,
 /**
  * Reset training for rnn model.
  * Called before every input sentence to be trained.
- * @ingroup rnn
+ * @ingroup g_rnn
  * @param[in] rnn rnn model.
  * @param[in] tid thread id (neuron id).
  * @return non-zero value if any error.
@@ -310,7 +310,7 @@ int rnn_reset_train(rnn_t *rnn, int tid);
 /**
  * Start training for rnn model.
  * Called before every input word to be trained.
- * @ingroup rnn
+ * @ingroup g_rnn
  * @param[in] rnn rnn model.
  * @param[in] word current word.
  * @param[in] tid thread id (neuron id).
@@ -320,7 +320,7 @@ int rnn_start_train(rnn_t *rnn, int word, int tid);
 /**
  * Training between feed-forward and back-propagate for rnn model.
  * Called between forward and backprop during training a word.
- * @ingroup rnn
+ * @ingroup g_rnn
  * @param[in] rnn rnn model.
  * @param[in] word current word.
  * @param[in] tid thread id (neuron id).
@@ -330,7 +330,7 @@ int rnn_fwd_bp(rnn_t *rnn, int word, int tid);
 /**
  * End training for rnn model.
  * Called after every input word trained.
- * @ingroup rnn
+ * @ingroup g_rnn
  * @param[in] rnn rnn model.
  * @param[in] word current word.
  * @param[in] tid thread id (neuron id).
@@ -340,7 +340,7 @@ int rnn_end_train(rnn_t *rnn, int word, int tid);
 /**
  * Finish training for rnn model.
  * Called after all words trained.
- * @ingroup rnn
+ * @ingroup g_rnn
  * @param[in] rnn rnn model.
  * @param[in] tid thread id (neuron id).
  * @return non-zero value if any error.
@@ -350,7 +350,7 @@ int rnn_finish_train(rnn_t *rnn, int tid);
 /**
  * Setup testing for rnn model.
  * Called before testing.
- * @ingroup rnn
+ * @ingroup g_rnn
  * @param[in] rnn rnn model.
  * @param[in] output output layer.
  * @param[in] num_thrs number of thread to be used.
@@ -360,7 +360,7 @@ int rnn_setup_test(rnn_t *rnn, output_t *output, int num_thrs);
 /**
  * Reset testing for rnn model.
  * Called before every input sentence to be tested.
- * @ingroup rnn
+ * @ingroup g_rnn
  * @param[in] rnn rnn model.
  * @param[in] tid thread id (neuron id).
  * @return non-zero value if any error.
@@ -369,7 +369,7 @@ int rnn_reset_test(rnn_t *rnn, int tid);
 /**
  * Start testing for rnn model.
  * Called before every input word to be tested.
- * @ingroup rnn
+ * @ingroup g_rnn
  * @param[in] rnn rnn model.
  * @param[in] word current word.
  * @param[in] tid thread id (neuron id).
@@ -379,7 +379,7 @@ int rnn_start_test(rnn_t *rnn, int word, int tid);
 /**
  * End testing for rnn model.
  * Called after every input word tested.
- * @ingroup rnn
+ * @ingroup g_rnn
  * @param[in] rnn rnn model.
  * @param[in] word current word.
  * @param[in] tid thread id (neuron id).
@@ -390,7 +390,7 @@ int rnn_end_test(rnn_t *rnn, int word, int tid);
 /**
  * Setup generating for rnn model.
  * Called before generating.
- * @ingroup rnn
+ * @ingroup g_rnn
  * @param[in] rnn rnn model.
  * @param[in] output output layer.
  * @return non-zero value if any error.
@@ -399,7 +399,7 @@ int rnn_setup_gen(rnn_t *rnn, output_t *output);
 /**
  * Reset generating for rnn model.
  * Called before every sentence to be generated.
- * @ingroup rnn
+ * @ingroup g_rnn
  * @param[in] rnn rnn model.
  * @return non-zero value if any error.
  */
@@ -407,7 +407,7 @@ int rnn_reset_gen(rnn_t *rnn);
 /**
  * End generating for rnn model.
  * Called after every word generated.
- * @ingroup rnn
+ * @ingroup g_rnn
  * @param[in] rnn rnn model.
  * @param[in] word current generated word.
  * @return non-zero value if any error.

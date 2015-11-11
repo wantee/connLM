@@ -9,11 +9,11 @@ connLM is a Connectionist Language Modelling Toolkit, implementing several neura
 * Recurrent Neural Network Language Model(RNN)[<sup> 1 </sup>](#rnn)
 * Log-Bilinear Language Model(LBL)[<sup> 2 </sup>](#lbl)
 * Feed-Forward Neural Network Language Model(FFNN)[<sup> 3 </sup>](#ffnn)
-* (Hash-Based) Maximum Entropy Model(maxEnt)[<sup> 4 </sup>](#maxent)
+* (Hash-Based) Maximum Entropy Model(MaxEnt)[<sup> 4 </sup>](#maxent)
 
 ### Training Algorithms
 * Asynchronous SGD (HOGWILD!)[<sup> 5 </sup>](#hogwild)
-* Hierarchical SoftMax[<sup> 6 </sup>](#hogwild)
+* Hierarchical Softmax[<sup> 6 </sup>](#hogwild)
 
 ## Benchmark
 

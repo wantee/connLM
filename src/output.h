@@ -34,13 +34,13 @@ extern "C" {
 
 #include "config.h"
 
-/** @defgroup output Output Layer
+/** @defgroup g_output Output Layer
  * Data structures and functions for Output Layer.
  */
 
 /**
  * Parameters for output layer.
- * @ingroup output
+ * @ingroup g_output
  */
 typedef struct _output_opt_t_ {
     int class_size; /**< size of class. May be zero. */
@@ -52,7 +52,7 @@ typedef struct _output_opt_t_ {
 /**
  * Neuron of Output Layer.
  * Each neuron used in one single thread.
- * @ingroup output
+ * @ingroup g_output
  */
 typedef struct _output_neuron_t_ {
     real_t *ac_o_w; /**< activation of output of word part. */
@@ -63,7 +63,7 @@ typedef struct _output_neuron_t_ {
 
 /**
  * Output Layer.
- * @ingroup output
+ * @ingroup g_output
  */
 typedef struct _output_t_ {
     output_opt_t output_opt; /**< output layer options. */
@@ -92,7 +92,7 @@ typedef struct _output_t_ {
 
 /**
  * Load output layer option.
- * @ingroup output
+ * @ingroup g_output
  * @param[out] output_opt options loaded.
  * @param[in] opt runtime options passed by caller.
  * @param[in] sec_name section name of runtime options to be loaded.
@@ -103,7 +103,7 @@ int output_load_opt(output_opt_t *output_opt, st_opt_t *opt,
 
 /**
  * Create a output layer with options.
- * @ingroup output
+ * @ingroup g_output
  * @param[in] output_opt options.
  * @param[in] output_size size of output layer.
  * @return a new output layer.
@@ -111,7 +111,7 @@ int output_load_opt(output_opt_t *output_opt, st_opt_t *opt,
 output_t *output_create(output_opt_t *output_opt, int output_size);
 /**
  * Destroy a output layer and set the pointer to NULL.
- * @ingroup output
+ * @ingroup g_output
  * @param[in] ptr pointer to output_t.
  */
 #define safe_output_destroy(ptr) do {\
@@ -123,13 +123,13 @@ output_t *output_create(output_opt_t *output_opt, int output_size);
     } while(0)
 /**
  * Destroy a output layer.
- * @ingroup output
+ * @ingroup g_output
  * @param[in] output output to be destroyed.
  */
 void output_destroy(output_t *output);
 /**
  * Duplicate a output layer.
- * @ingroup output
+ * @ingroup g_output
  * @param[in] o output to be duplicated.
  * @return the duplicated output.
  */
@@ -137,7 +137,7 @@ output_t* output_dup(output_t *o);
 
 /**
  * Load output layer header and initialise a new output layer.
- * @ingroup output
+ * @ingroup g_output
  * @param[out] output layer initialised.
  * @param[in] version file version of loading file.
  * @param[in] fp file stream loaded from.
@@ -151,7 +151,7 @@ int output_load_header(output_t **output, int version, FILE *fp,
         bool *binary, FILE *fo);
 /**
  * Load output layer body.
- * @ingroup output
+ * @ingroup g_output
  * @param[in] output output layer to be loaded.
  * @param[in] version file version of loading file.
  * @param[in] fp file stream loaded from.
@@ -163,7 +163,7 @@ int output_load_header(output_t **output, int version, FILE *fp,
 int output_load_body(output_t *output, int version, FILE *fp, bool binary);
 /**
  * Save output layer header.
- * @ingroup output
+ * @ingroup g_output
  * @param[in] output output layer to be saved.
  * @param[in] fp file stream saved to.
  * @param[in] binary whether to use binary format.
@@ -174,7 +174,7 @@ int output_load_body(output_t *output, int version, FILE *fp, bool binary);
 int output_save_header(output_t *output, FILE *fp, bool binary);
 /**
  * Save output layer body.
- * @ingroup output
+ * @ingroup g_output
  * @param[in] output output layer to be saved.
  * @param[in] fp file stream saved to.
  * @param[in] binary whether to use binary format.
@@ -186,7 +186,7 @@ int output_save_body(output_t *output, FILE *fp, bool binary);
 
 /**
  * Generate output layer with word counts.
- * @ingroup output
+ * @ingroup g_output
  * @param[in] output output layer to be generated.
  * @param[in] word_cnts counts of words.
  * @return non-zero value if any error.
@@ -195,7 +195,7 @@ int output_generate(output_t *output, count_t *word_cnts);
 
 /**
  * Activate neurons of pre output layer.
- * @ingroup output
+ * @ingroup g_output
  * @param[in] output output layer related.
  * @param[in] tid thread id (neuron id).
  * @return non-zero value if any error.
@@ -203,7 +203,7 @@ int output_generate(output_t *output, count_t *word_cnts);
 int output_activate_pre_layer(output_t *output, int tid);
 /**
  * Activate neurons of last output layer.
- * @ingroup output
+ * @ingroup g_output
  * @param[in] output output layer related.
  * @param[in] cls class of current word.
  * @param[in] tid thread id (neuron id).
@@ -212,7 +212,7 @@ int output_activate_pre_layer(output_t *output, int tid);
 int output_activate_last_layer(output_t *output, int cls, int tid);
 /**
  * Compute loss of neurons of output layer.
- * @ingroup output
+ * @ingroup g_output
  * @param[in] output output layer related.
  * @param[in] word current word.
  * @param[in] tid thread id (neuron id).
@@ -221,7 +221,7 @@ int output_activate_last_layer(output_t *output, int cls, int tid);
 int output_loss(output_t *output, int word, int tid);
 /**
  * Get probability of a word.
- * @ingroup output
+ * @ingroup g_output
  * @param[in] output output layer related.
  * @param[in] word current word.
  * @param[in] tid thread id (neuron id).
@@ -230,7 +230,7 @@ int output_loss(output_t *output, int word, int tid);
 double output_get_prob(output_t *output, int word, int tid);
 /**
  * Get class probability of a class.
- * @ingroup output
+ * @ingroup g_output
  * @param[in] output output layer related.
  * @param[in] cls the specific class.
  * @param[in] tid thread id (neuron id).
@@ -239,7 +239,7 @@ double output_get_prob(output_t *output, int word, int tid);
 double output_get_class_prob_for_class(output_t *output, int cls, int tid);
 /**
  * Get class probability of a word.
- * @ingroup output
+ * @ingroup g_output
  * @param[in] output output layer related.
  * @param[in] word the specific word.
  * @param[in] tid thread id (neuron id).
@@ -248,7 +248,7 @@ double output_get_class_prob_for_class(output_t *output, int cls, int tid);
 double output_get_class_prob(output_t *output, int word, int tid);
 /**
  * Get word probability of a word.
- * @ingroup output
+ * @ingroup g_output
  * @param[in] output output layer related.
  * @param[in] word the specific word.
  * @param[in] tid thread id (neuron id).
@@ -259,7 +259,7 @@ double output_get_word_prob(output_t *output, int word, int tid);
 /**
  * Setup training for output layer.
  * Called before training.
- * @ingroup output
+ * @ingroup g_output
  * @param[in] output output layer.
  * @param[in] num_thrs number of thread to be used.
  * @return non-zero value if any error.
@@ -268,7 +268,7 @@ int output_setup_train(output_t *output, int num_thrs);
 /**
  * Reset training for output layer.
  * Called before every input sentence to be trained.
- * @ingroup output
+ * @ingroup g_output
  * @param[in] output output model.
  * @param[in] tid thread id (neuron id).
  * @return non-zero value if any error.
@@ -277,7 +277,7 @@ int output_reset_train(output_t *output, int tid);
 /**
  * Start training for output layer.
  * Called before every input word to be trained.
- * @ingroup output
+ * @ingroup g_output
  * @param[in] output output layer.
  * @param[in] word current word.
  * @param[in] tid thread id (neuron id).
@@ -287,7 +287,7 @@ int output_start_train(output_t *output, int word, int tid);
 /**
  * End training for output layer.
  * Called after every input word trained.
- * @ingroup output
+ * @ingroup g_output
  * @param[in] output output layer.
  * @param[in] word current word.
  * @param[in] tid thread id (neuron id).
@@ -297,7 +297,7 @@ int output_end_train(output_t *output, int word, int tid);
 /**
  * Finish training for output model.
  * Called after all words trained.
- * @ingroup output
+ * @ingroup g_output
  * @param[in] output output layer.
  * @param[in] tid thread id (neuron id).
  * @return non-zero value if any error.
@@ -307,7 +307,7 @@ int output_finish_train(output_t *output, int tid);
 /**
  * Setup testing for output layer.
  * Called before testing.
- * @ingroup output
+ * @ingroup g_output
  * @param[in] output output layer.
  * @param[in] num_thrs number of thread to be used.
  * @return non-zero value if any error.
@@ -316,7 +316,7 @@ int output_setup_test(output_t *output, int num_thrs);
 /**
  * Reset testing for output layer.
  * Called before every input sentence to be tested.
- * @ingroup output
+ * @ingroup g_output
  * @param[in] output output layer.
  * @param[in] tid thread id (neuron id).
  * @return non-zero value if any error.
@@ -325,7 +325,7 @@ int output_reset_test(output_t *output, int tid);
 /**
  * Start testing for output layer.
  * Called before every input word to be tested.
- * @ingroup output
+ * @ingroup g_output
  * @param[in] output output layer.
  * @param[in] word current word.
  * @param[in] tid thread id (neuron id).
@@ -335,7 +335,7 @@ int output_start_test(output_t *output, int word, int tid);
 /**
  * End testing for output layer.
  * Called after every input word tested.
- * @ingroup output
+ * @ingroup g_output
  * @param[in] output output layer.
  * @param[in] word current word.
  * @param[in] tid thread id (neuron id).
@@ -346,7 +346,7 @@ int output_end_test(output_t *output, int word, int tid);
 /**
  * Setup generating for output layer.
  * Called before generating.
- * @ingroup output
+ * @ingroup g_output
  * @param[in] output output layer.
  * @return non-zero value if any error.
  */
@@ -354,7 +354,7 @@ int output_setup_gen(output_t *output);
 /**
  * Reset generating for output layer.
  * Called before every sentence to be generated.
- * @ingroup output
+ * @ingroup g_output
  * @param[in] output output layer.
  * @return non-zero value if any error.
  */
@@ -362,7 +362,7 @@ int output_reset_gen(output_t *output);
 /**
  * End generating for output layer.
  * Called after every word generated.
- * @ingroup output
+ * @ingroup g_output
  * @param[in] output output layer.
  * @param[in] word current generated word.
  * @return non-zero value if any error.
@@ -371,7 +371,7 @@ int output_end_gen(output_t *output, int word);
 
 /**
  * Whether two output layer is equal.
- * @ingroup output
+ * @ingroup g_output
  * @param[in] output1 first output.
  * @param[in] output2 second output.
  * @return true, if equal, false otherwise.

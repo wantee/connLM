@@ -30,7 +30,29 @@
   implementing several neural network based language models.
   connLM is written in C and licensed under the MIT License.
 
-  @section flavor The flavor of connLM
+  @section about_overview Overview of connLM
+
+  \image html connLMLogoLarge.png
+
+  As the logo of connLM shown, it is designed to integrate several
+  models together, with the models share the same output layer.
+
+  Currently, connLM supports following models:
+
+  - \ref rnn "Recurrent Neural Network Language Model(RNN)"
+  - \ref lbl "Log-Bilinear Language Model(LBL)"
+  - \ref ffnn "Feed-Forward Neural Network Language Model(FFNN)"
+  - \ref maxent "(Hash-Based) Maximum Entropy Model(MaxEnt)"
+
+  And supports following \ref output "output layer" type:
+
+  - 1-of-V vector
+  - Class based factorization
+  - Hierarchical Softmax
+
+  More details please refers to the related pages in the manual.
+
+  @section about_flavor The flavor of connLM
 
   The code structure and design pattern are mostly inspired by <a href="link=http://kaldi.sourceforge.net/">the Kaldi project</a>.
   Thus we release some easy-to-understand and ready-to-run example scripts 

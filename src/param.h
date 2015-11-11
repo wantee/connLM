@@ -33,13 +33,13 @@ extern "C" {
 
 #include "config.h"
 
-/** @defgroup param Parameter
+/** @defgroup g_param Parameter
  * Data structures and functions for training Parameter.
  */
 
 /**
  * Parameter.
- * @ingroup param
+ * @ingroup g_param
  */
 typedef struct _param_t_ {
     real_t learn_rate; /**< value of learning rate */
@@ -52,7 +52,7 @@ typedef struct _param_t_ {
 
 /**
  * Arguments updated for one parameter.
- * @ingroup param
+ * @ingroup g_param
  */
 typedef struct _param_arg_t_ {
     int l2_step; /**< step for L2 penalty */
@@ -60,14 +60,14 @@ typedef struct _param_arg_t_ {
 
 /**
  * Clear parameter argument
- * @ingroup param
+ * @ingroup g_param
  * @param[in] arg argument to be cleared.
  */
 void param_arg_clear(param_arg_t *arg);
 
 /**
  * Load param option.
- * @ingroup param
+ * @ingroup g_param
  * @param[out] param loaded.
  * @param[in] opt runtime options passed by caller.
  * @param[in] sec_name section name of runtime options to be loaded.
@@ -79,7 +79,7 @@ int param_load(param_t *param, st_opt_t *opt, const char *sec_name,
 
 /**
  * Accumulate weights.
- * @ingroup param
+ * @ingroup g_param
  *
  * in is [ in_size x 1];
  *
@@ -98,7 +98,7 @@ void param_acc_wt(real_t *wt, real_t *er, int er_size, real_t *in,
 
 /**
  * Update weight using parameters.
- * @ingroup param
+ * @ingroup g_param
  *
  * in is [ in_size x 1 ];
  *  
@@ -120,7 +120,7 @@ void param_update(param_t *param, param_arg_t *arg, bool update_arg,
 #ifdef _MINI_UPDATE_
 /**
  * Accumulate weights with mini-batch.
- * @ingroup param
+ * @ingroup g_param
  *
  * batch is the mini-batch size,
  * other arguments are the same as param_acc_wt.
@@ -132,7 +132,7 @@ void param_acc_wt_minibatch(int batch, real_t *wt, real_t *er, int er_size,
 
 /**
  * Update weight with mini-batch
- * @ingroup param
+ * @ingroup g_param
  *
  * batch is the mini-batch size,
  * other arguments are the same as param_update.

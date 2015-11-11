@@ -22,18 +22,10 @@
 // SOFTWARE.
 
 /**
-  @mainpage connLM
+  @page maxent The MaxEnt Model
 
-  <p>
-    - @subpage about
-    - @subpage benchmark
-    - @subpage io
-    - @subpage vocab
-    - @subpage output
-    - @subpage rnn
-    - @subpage lbl
-    - @subpage ffnn
-    - @subpage maxent
-    - @subpage selection
-  </p>
+  @section maxent_intro Introduction
+  
+  @section maxent_conf Configurations
+
 */

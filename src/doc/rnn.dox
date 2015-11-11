@@ -22,18 +22,10 @@
 // SOFTWARE.
 
 /**
-  @mainpage connLM
+  @page rnn The RNN Model
 
-  <p>
-    - @subpage about
-    - @subpage benchmark
-    - @subpage io
-    - @subpage vocab
-    - @subpage output
-    - @subpage rnn
-    - @subpage lbl
-    - @subpage ffnn
-    - @subpage maxent
-    - @subpage selection
-  </p>
+  @section rnn_intro Introduction
+  
+  @section rnn_conf Configurations
+
 */

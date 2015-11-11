@@ -34,13 +34,13 @@ extern "C" {
 
 #include "config.h"
 
-/** @defgroup vocab Vocab
+/** @defgroup g_vocab Vocab
  * Data structures and functions for Vocab.
  */
 
 /**
  * Parameters for Vocab.
- * @ingroup vocab
+ * @ingroup g_vocab
  */
 typedef struct _vocab_opt_t_ {
     int max_alphabet_size; /**< max size of alphabet. */
@@ -48,7 +48,7 @@ typedef struct _vocab_opt_t_ {
 
 /**
  * Vocab.
- * @ingroup vocab
+ * @ingroup g_vocab
  */
 typedef struct _vocab_t_ {
     vocab_opt_t vocab_opt; /**< vocab options. */
@@ -61,7 +61,7 @@ typedef struct _vocab_t_ {
 
 /**
  * Load vocab option.
- * @ingroup vocab
+ * @ingroup g_vocab
  * @param[out] vocab_opt options loaded.
  * @param[in] opt runtime options passed by caller.
  * @param[in] sec_name section name of runtime options to be loaded.
@@ -72,14 +72,14 @@ int vocab_load_opt(vocab_opt_t *vocab_opt, st_opt_t *opt,
 
 /**
  * Create a vocab with options.
- * @ingroup vocab
+ * @ingroup g_vocab
  * @param[in] vocab_opt options.
  * @return a new vocab.
  */
 vocab_t *vocab_create(vocab_opt_t *vocab_opt);
 /**
  * Destroy a vocab and set the pointer to NULL.
- * @ingroup vocab
+ * @ingroup g_vocab
  * @param[in] ptr pointer to vocab_t.
  */
 #define safe_vocab_destroy(ptr) do {\
@@ -91,13 +91,13 @@ vocab_t *vocab_create(vocab_opt_t *vocab_opt);
     } while(0)
 /**
  * Destroy a vocab.
- * @ingroup vocab
+ * @ingroup g_vocab
  * @param[in] vocab vocab to be destroyed.
  */
 void vocab_destroy(vocab_t *vocab);
 /**
  * Duplicate a vocab.
- * @ingroup vocab
+ * @ingroup g_vocab
  * @param[in] v vocab to be duplicated.
  * @return the duplicated vocab
  */
@@ -105,7 +105,7 @@ vocab_t* vocab_dup(vocab_t *v);
 
 /**
  * Load vocab header and initialise a new vocab.
- * @ingroup vocab
+ * @ingroup g_vocab
  * @param[out] vocab initialised.
  * @param[in] version file version of loading file.
  * @param[in] fp file stream loaded from.
@@ -119,7 +119,7 @@ int vocab_load_header(vocab_t **vocab, int version, FILE *fp,
         bool *binary, FILE *fo);
 /**
  * Load vocab body.
- * @ingroup vocab
+ * @ingroup g_vocab
  * @param[in] vocab vocab to be loaded.
  * @param[in] version file version of loading file.
  * @param[in] fp file stream loaded from.
@@ -131,7 +131,7 @@ int vocab_load_header(vocab_t **vocab, int version, FILE *fp,
 int vocab_load_body(vocab_t *vocab, int version, FILE *fp, bool binary);
 /**
  * Save vocab header.
- * @ingroup vocab
+ * @ingroup g_vocab
  * @param[in] vocab vocab to be saved.
  * @param[in] fp file stream saved to.
  * @param[in] binary whether to use binary format.
@@ -142,7 +142,7 @@ int vocab_load_body(vocab_t *vocab, int version, FILE *fp, bool binary);
 int vocab_save_header(vocab_t *vocab, FILE *fp, bool binary);
 /**
  * Save vocab body.
- * @ingroup vocab
+ * @ingroup g_vocab
  * @param[in] vocab vocab to be saved.
  * @param[in] fp file stream saved to.
  * @param[in] binary whether to use binary format.
@@ -154,7 +154,7 @@ int vocab_save_body(vocab_t *vocab, FILE *fp, bool binary);
 
 /**
  * Parameters for learning Vocab.
- * @ingroup vocab
+ * @ingroup g_vocab
  */
 typedef struct _vocab_learn_opt_t_ {
     int max_vocab_size; /**< max number of words in vocab. */
@@ -164,7 +164,7 @@ typedef struct _vocab_learn_opt_t_ {
 
 /**
  * Load learn vocab option.
- * @ingroup vocab
+ * @ingroup g_vocab
  * @param[out] lr_opt options loaded.
  * @param[in] opt runtime options passed by caller.
  * @param[in] sec_name section name of runtime options to be loaded.
@@ -175,7 +175,7 @@ int vocab_load_learn_opt(vocab_learn_opt_t *lr_opt, st_opt_t *opt,
 
 /**
  * Learn vocab from corpus.
- * @ingroup vocab
+ * @ingroup g_vocab
  * @param[in] vocab vocab to be learned.
  * @param[in] fp file stream for corpus.
  * @param[in] lr_opt option for learning vocab.
@@ -185,7 +185,7 @@ int vocab_learn(vocab_t *vocab, FILE *fp, vocab_learn_opt_t *lr_opt);
 
 /**
  * Get id of a word.
- * @ingroup vocab
+ * @ingroup g_vocab
  * @param[in] vocab vocab used.
  * @param[in] word string of word.
  * @return id of the word, negative value indicates error.
@@ -193,7 +193,7 @@ int vocab_learn(vocab_t *vocab, FILE *fp, vocab_learn_opt_t *lr_opt);
 int vocab_get_id(vocab_t *vocab, const char *word);
 /**
  * Get string of a word id.
- * @ingroup vocab
+ * @ingroup g_vocab
  * @param[in] vocab vocab used.
  * @param[in] id id of the word.
  * @return string of the word, NULL indicates error.
@@ -201,7 +201,7 @@ int vocab_get_id(vocab_t *vocab, const char *word);
 char* vocab_get_word(vocab_t *vocab, int id);
 /**
  * Add a word to vocab
- * @ingroup vocab
+ * @ingroup g_vocab
  * @param[in] vocab vocab used.
  * @param[in] word string of the word.
  * @return non-zero value if any error.
@@ -210,7 +210,7 @@ int vocab_add_word(vocab_t *vocab, const char* word);
 
 /**
  * Whether two vocab is equal.
- * @ingroup vocab
+ * @ingroup g_vocab
  * @param[in] vocab1 first vocab.
  * @param[in] vocab2 second vocab.
  * @return true, if equal, false otherwise.

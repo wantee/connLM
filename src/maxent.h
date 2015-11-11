@@ -35,13 +35,13 @@ extern "C" {
 #include "param.h"
 #include "output.h"
 
-/** @defgroup maxent MaxEnt Model
+/** @defgroup g_maxent MaxEnt Model
  * Data structures and functions for MaxEnt model.
  */
 
 /**
  * Parameters for MaxEnt model.
- * @ingroup maxent
+ * @ingroup g_maxent
  */
 typedef struct _maxent_model_opt_t_ {
     real_t scale;      /**< output scale. */
@@ -53,7 +53,7 @@ typedef struct _maxent_model_opt_t_ {
 
 /**
  * Parameters for training MaxEnt model.
- * @ingroup maxent
+ * @ingroup g_maxent
  *
  */
 typedef struct _maxent_train_opt_t_ {
@@ -63,7 +63,7 @@ typedef struct _maxent_train_opt_t_ {
 /**
  * An interval for a hash array.
  * Used to get union of sets of hashes.
- * @ingroup maxent
+ * @ingroup g_maxent
  */
 typedef struct _hash_range_t_ {
     hash_t s;         /**< start position. */
@@ -76,7 +76,7 @@ typedef struct _hash_range_t_ {
 /**
  * Histories of hashes.
  * Used for mini-batch updates.
- * @ingroup maxent
+ * @ingroup g_maxent
  */
 typedef struct _hash_hist_t_ {
     int order;           /**< order of histories. */
@@ -86,7 +86,7 @@ typedef struct _hash_hist_t_ {
 /**
  * Neuron of MaxEnt model.
  * Each neuron used in one single thread.
- * @ingroup maxent
+ * @ingroup g_maxent
  */
 typedef struct _maxent_neuron_t_ {
     param_arg_t param_arg_c;  /**< parameter arguments for classes. */
@@ -118,7 +118,7 @@ typedef struct _maxent_neuron_t_ {
 
 /**
  * MaxEnt model.
- * @ingroup maxent
+ * @ingroup g_maxent
  */
 typedef struct _maxent_t_ {
     maxent_model_opt_t model_opt; /**< option for this model. */
@@ -138,7 +138,7 @@ typedef struct _maxent_t_ {
 
 /**
  * Load maxent model option.
- * @ingroup maxent
+ * @ingroup g_maxent
  * @param[out] model_opt options loaded.
  * @param[in] opt runtime options passed by caller.
  * @param[in] sec_name section name of runtime options to be loaded.
@@ -149,7 +149,7 @@ int maxent_load_model_opt(maxent_model_opt_t *model_opt,
 
 /**
  * Load maxent train option.
- * @ingroup maxent
+ * @ingroup g_maxent
  * @param[out] train_opt options loaded.
  * @param[in] opt runtime options passed by caller.
  * @param[in] sec_name section name of runtime options to be loaded.
@@ -161,7 +161,7 @@ int maxent_load_train_opt(maxent_train_opt_t *train_opt,
 
 /**
  * Initialise a maxent model.
- * @ingroup maxent
+ * @ingroup g_maxent
  * @param[out] pmaxent initialised maxent.
  * @param[in] model_opt model options used to initialise.
  * @param[in] output output layer for the model.
@@ -172,7 +172,7 @@ int maxent_init(maxent_t **pmaxent, maxent_model_opt_t *model_opt,
 
 /**
  * Destroy a MaxEnt model and set the pointer to NULL.
- * @ingroup maxent
+ * @ingroup g_maxent
  * @param[in] ptr pointer to maxent_t.
  */
 #define safe_maxent_destroy(ptr) do {\
@@ -184,14 +184,14 @@ int maxent_init(maxent_t **pmaxent, maxent_model_opt_t *model_opt,
     } while(0)
 /**
  * Destroy a maxent model.
- * @ingroup maxent
+ * @ingroup g_maxent
  * @param[in] maxent maxent to be destroyed.
  */
 void maxent_destroy(maxent_t *maxent);
 
 /**
  * Duplicate a maxent model.
- * @ingroup maxent
+ * @ingroup g_maxent
  * @param[in] m maxent to be duplicated.
  * @return the duplicated maxent model
  */
@@ -199,7 +199,7 @@ maxent_t* maxent_dup(maxent_t *m);
 
 /**
  * Load maxent header and initialise a new maxent.
- * @ingroup maxent
+ * @ingroup g_maxent
  * @param[out] maxent maxent initialised.
  * @param[in] version file version of loading file.
  * @param[in] fp file stream loaded from.
@@ -213,7 +213,7 @@ int maxent_load_header(maxent_t **maxent, int version, FILE *fp,
         bool *binary, FILE *fo_info);
 /**
  * Load maxent body.
- * @ingroup maxent
+ * @ingroup g_maxent
  * @param[in] maxent maxent to be loaded.
  * @param[in] version file version of loading file.
  * @param[in] fp file stream loaded from.
@@ -225,7 +225,7 @@ int maxent_load_header(maxent_t **maxent, int version, FILE *fp,
 int maxent_load_body(maxent_t *maxent, int version, FILE *fp, bool binary);
 /**
  * Save maxent header.
- * @ingroup maxent
+ * @ingroup g_maxent
  * @param[in] maxent maxent to be saved.
  * @param[in] fp file stream saved to.
  * @param[in] binary whether to use binary format.
@@ -236,7 +236,7 @@ int maxent_load_body(maxent_t *maxent, int version, FILE *fp, bool binary);
 int maxent_save_header(maxent_t *maxent, FILE *fp, bool binary);
 /**
  * Save maxent body.
- * @ingroup maxent
+ * @ingroup g_maxent
  * @param[in] maxent maxent to be saved.
  * @param[in] fp file stream saved to.
  * @param[in] binary whether to use binary format.
@@ -248,7 +248,7 @@ int maxent_save_body(maxent_t *maxent, FILE *fp, bool binary);
 
 /**
  * Feed-forward one word for pre-non-output layer of one thread of maxent model.
- * @ingroup maxent
+ * @ingroup g_maxent
  * @param[in] maxent maxent model.
  * @param[in] tid thread id (neuron id).
  * @see maxent_forward_last_layer
@@ -257,7 +257,7 @@ int maxent_save_body(maxent_t *maxent, FILE *fp, bool binary);
 int maxent_forward_pre_layer(maxent_t *maxent, int tid);
 /**
  * Feed-forward one word for last output layer of one thread of maxent model.
- * @ingroup maxent
+ * @ingroup g_maxent
  * @param[in] maxent maxent model.
  * @param[in] cls class of current word. -1 if non-class.
  * @param[in] tid thread id (neuron id).
@@ -267,7 +267,7 @@ int maxent_forward_pre_layer(maxent_t *maxent, int tid);
 int maxent_forward_last_layer(maxent_t *maxent, int cls, int tid);
 /**
  * Back-propagate one word for a thread of maxent model.
- * @ingroup maxent
+ * @ingroup g_maxent
  * @param[in] maxent maxent model.
  * @param[in] word current word.
  * @param[in] tid thread id (neuron id).
@@ -279,7 +279,7 @@ int maxent_backprop(maxent_t *maxent, int word, int tid);
 /**
  * Setup training for maxent model.
  * Called before training.
- * @ingroup maxent
+ * @ingroup g_maxent
  * @param[in] maxent maxent model.
  * @param[in] train_opt training options.
  * @param[in] output output layer.
@@ -291,7 +291,7 @@ int maxent_setup_train(maxent_t *maxent, maxent_train_opt_t *train_opt,
 /**
  * Reset training for maxent model.
  * Called before every input sentence to be trained.
- * @ingroup maxent
+ * @ingroup g_maxent
  * @param[in] maxent maxent model.
  * @param[in] tid thread id (neuron id).
  * @return non-zero value if any error.
@@ -300,7 +300,7 @@ int maxent_reset_train(maxent_t *maxent, int tid);
 /**
  * Start training for maxent model.
  * Called before every input word to be trained.
- * @ingroup maxent
+ * @ingroup g_maxent
  * @param[in] maxent maxent model.
  * @param[in] word current word.
  * @param[in] tid thread id (neuron id).
@@ -310,7 +310,7 @@ int maxent_start_train(maxent_t *maxent, int word, int tid);
 /**
  * End training for maxent model.
  * Called after every input word trained.
- * @ingroup maxent
+ * @ingroup g_maxent
  * @param[in] maxent maxent model.
  * @param[in] word current word.
  * @param[in] tid thread id (neuron id).
@@ -320,7 +320,7 @@ int maxent_end_train(maxent_t *maxent, int word, int tid);
 /**
  * Finish training for maxent model.
  * Called after all words trained.
- * @ingroup maxent
+ * @ingroup g_maxent
  * @param[in] maxent maxent model.
  * @param[in] tid thread id (neuron id).
  * @return non-zero value if any error.
@@ -330,7 +330,7 @@ int maxent_finish_train(maxent_t *maxent, int tid);
 /**
  * Setup testing for maxent model.
  * Called before testing.
- * @ingroup maxent
+ * @ingroup g_maxent
  * @param[in] maxent maxent model.
  * @param[in] output output layer.
  * @param[in] num_thrs number of thread to be used.
@@ -340,7 +340,7 @@ int maxent_setup_test(maxent_t *maxent, output_t *output, int num_thrs);
 /**
  * Reset testing for maxent model.
  * Called before every input sentence to be tested.
- * @ingroup maxent
+ * @ingroup g_maxent
  * @param[in] maxent maxent model.
  * @param[in] tid thread id (neuron id).
  * @return non-zero value if any error.
@@ -349,7 +349,7 @@ int maxent_reset_test(maxent_t *maxent, int tid);
 /**
  * Start testing for maxent model.
  * Called before every input word to be tested.
- * @ingroup maxent
+ * @ingroup g_maxent
  * @param[in] maxent maxent model.
  * @param[in] word current word.
  * @param[in] tid thread id (neuron id).
@@ -359,7 +359,7 @@ int maxent_start_test(maxent_t *maxent, int word, int tid);
 /**
  * End testing for maxent model.
  * Called after every input word tested.
- * @ingroup maxent
+ * @ingroup g_maxent
  * @param[in] maxent maxent model.
  * @param[in] word current word.
  * @param[in] tid thread id (neuron id).
@@ -370,7 +370,7 @@ int maxent_end_test(maxent_t *maxent, int word, int tid);
 /**
  * Setup generating for maxent model.
  * Called before generating.
- * @ingroup maxent
+ * @ingroup g_maxent
  * @param[in] maxent maxent model.
  * @param[in] output output layer.
  * @return non-zero value if any error.
@@ -379,7 +379,7 @@ int maxent_setup_gen(maxent_t *maxent, output_t *output);
 /**
  * Reset generating for maxent model.
  * Called before every sentence to be generated.
- * @ingroup maxent
+ * @ingroup g_maxent
  * @param[in] maxent maxent model.
  * @return non-zero value if any error.
  */
@@ -387,7 +387,7 @@ int maxent_reset_gen(maxent_t *maxent);
 /**
  * End generating for maxent model.
  * Called after every word generated.
- * @ingroup maxent
+ * @ingroup g_maxent
  * @param[in] maxent maxent model.
  * @param[in] word current generated word.
  * @return non-zero value if any error.
