@@ -159,9 +159,23 @@ clean:
 	rm -rf ../include
 	rm -f tags cscope.*
 
-gen-doc:
+gen-doc: prepare-doc
+	rm -rf html/*
 	doxygen doc/Doxyfile > /dev/null
-	cd html && git add * && git commit -a -m"generate doc on $(shell date)" && git push origin gh-pages
+
+prepare-doc:
+	mkdir -p html
+	if [ ! -d html/.git ]; then \
+      git clone git@github.com:wantee/connLM.git html; \
+    fi
+	cd html && \
+    git checkout gh-pages
+
+publish-doc: gen-doc
+	cd html && \
+	git add * && \
+	git commit -a -m"generate doc on $(shell date)" && \
+	git push origin gh-pages
 
 $(BIN_TEST_OBJ_DOUBLE)/%-test.o : %-test.c
 	$(CC) $(CFLAGS) $(CFLAGS_DOUBLE) -UNDEBUG -c -o $@ $^
