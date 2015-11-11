@@ -109,7 +109,27 @@ $(document).ready(function(){initNavTree('about.html','');});
 <div class="textblock"><h1><a class="anchor" id="about_what"></a>
 What is connLM?</h1>
 <p>connLM is a Connectionist Language Modelling Toolkit, implementing several neural network based language models. connLM is written in C and licensed under the MIT License.</p>
-<h1><a class="anchor" id="flavor"></a>
+<h1><a class="anchor" id="about_overview"></a>
+Overview of connLM</h1>
+<div class="image">
+<img src="connLMLogoLarge.png" alt="connLMLogoLarge.png"/>
+</div>
+<p>As the logo of connLM shown, it is designed to integrate several models together, with the models share the same output layer.</p>
+<p>Currently, connLM supports following models:</p>
+<ul>
+<li><a class="el" href="rnn.html">Recurrent Neural Network Language Model(RNN)</a></li>
+<li><a class="el" href="lbl.html">Log-Bilinear Language Model(LBL)</a></li>
+<li><a class="el" href="ffnn.html">Feed-Forward Neural Network Language Model(FFNN)</a></li>
+<li><a class="el" href="maxent.html">(Hash-Based) Maximum Entropy Model(MaxEnt)</a></li>
+</ul>
+<p>And supports following <a class="el" href="output.html">output layer</a> type:</p>
+<ul>
+<li>1-of-V vector</li>
+<li>Class based factorization</li>
+<li>Hierarchical Softmax</li>
+</ul>
+<p>More details please refers to the related pages in the manual.</p>
+<h1><a class="anchor" id="about_flavor"></a>
 The flavor of connLM</h1>
 <p>The code structure and design pattern are mostly inspired by <a href="link=http://kaldi.sourceforge.net/">the Kaldi project</a>. Thus we release some easy-to-understand and ready-to-run example scripts along with the codes. Some extra feature of connLM are:</p>
 <ul>
@@ -131,7 +151,7 @@ The flavor of connLM</h1>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="index.html">connLM</a></li>
-    <li class="footer">Generated on Tue Nov 10 2015 10:08:35 for connLM by
+    <li class="footer">Generated on Wed Nov 11 2015 15:39:36 for connLM by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.10 </li>
   </ul>

@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['vocab',['Vocab',['../group__vocab.html',1,'']]]
+  ['vocab',['Vocab',['../group__g__vocab.html',1,'']]]
 ];

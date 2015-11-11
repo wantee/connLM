@@ -3,7 +3,8 @@ var NAVTREE =
   [ "connLM", "index.html", [
     [ "About the connLM toolkit", "about.html", [
       [ "What is connLM?", "about.html#about_what", null ],
-      [ "The flavor of connLM", "about.html#flavor", null ]
+      [ "Overview of connLM", "about.html#about_overview", null ],
+      [ "The flavor of connLM", "about.html#about_flavor", null ]
     ] ],
     [ "Benchmark of the connLM toolkit", "benchmark.html", [
       [ "Summary of the performance", "benchmark.html#summary", null ],
@@ -17,6 +18,26 @@ var NAVTREE =
       [ "Introduction", "vocab.html#vocab_intro", null ],
       [ "Usage", "vocab.html#vocab_usage", null ],
       [ "Limited Vocabulary", "vocab.html#vocab_limited", null ]
+    ] ],
+    [ "The Output Layer", "output.html", [
+      [ "Introduction", "output.html#output_intro", null ],
+      [ "Usage", "output.html#output_usage", null ]
+    ] ],
+    [ "The RNN Model", "rnn.html", [
+      [ "Introduction", "rnn.html#rnn_intro", null ],
+      [ "Configurations", "rnn.html#rnn_conf", null ]
+    ] ],
+    [ "The LBL Model", "lbl.html", [
+      [ "Introduction", "lbl.html#lbl_intro", null ],
+      [ "Configurations", "lbl.html#lbl_conf", null ]
+    ] ],
+    [ "The FFNN Model", "ffnn.html", [
+      [ "Introduction", "ffnn.html#ffnn_intro", null ],
+      [ "Configurations", "ffnn.html#ffnn_conf", null ]
+    ] ],
+    [ "The MaxEnt Model", "maxent.html", [
+      [ "Introduction", "maxent.html#maxent_intro", null ],
+      [ "Configurations", "maxent.html#maxent_conf", null ]
     ] ],
     [ "Data Selection", "selection.html", [
       [ "Introduction", "selection.html#selection_intro", null ],
@@ -46,7 +67,7 @@ var NAVTREE =
 var NAVTREEINDEX =
 [
 "about.html",
-"structconnlm__t.html#a77008d2830e1b8dc554dd15f8be30f2c"
+"structconnlm__model__opt__t.html#a38f8b2c20ffa93140cefd2f5834139d5"
 ];
 
 var SYNCONMSG = 'click to disable panel synchronisation';

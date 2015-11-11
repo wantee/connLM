@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['parameter',['Parameter',['../group__param.html',1,'']]]
+  ['parameter',['Parameter',['../group__g__param.html',1,'']]]
 ];
