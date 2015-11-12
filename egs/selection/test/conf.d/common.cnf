@@ -1,0 +1,2 @@
+start="cd ../../src && ./autogen.sh > /dev/null && make clean > /dev/null && CONNLM_NO_OPT=1 make > /dev/null"
+finish="cd ../../src && make clean > /dev/null && make > /dev/null"
