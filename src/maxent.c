@@ -240,6 +240,13 @@ ERR:
     return NULL;
 }
 
+int maxent_get_hs_size(maxent_t *maxent)
+{
+    ST_WARNING("MaxEnt model does not support HS tree.");
+
+    return -1;
+}
+
 int maxent_load_header(maxent_t **maxent, int version, FILE *fp,
         bool *binary, FILE *fo_info)
 {
@@ -751,14 +758,17 @@ int maxent_forward_pre_layer(maxent_t *maxent, int tid)
 
 }
 
-int maxent_forward_last_layer(maxent_t *maxent, int cls, int tid)
+int maxent_forward_last_layer(maxent_t *maxent, int word, int tid)
 {
+    int cls;
+
     int s;
     int e;
 
     ST_CHECK_PARAM(maxent == NULL || tid < 0, -1);
 
-    if (maxent->class_size > 0 && cls >= 0) {
+    if (maxent->class_size > 0 && word >= 0) {
+        cls = maxent->output->w2c[word];
         s = maxent->output->c2w_s[cls];
         e = maxent->output->c2w_e[cls];
     } else {

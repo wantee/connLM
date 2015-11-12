@@ -301,6 +301,13 @@ ERR:
     return NULL;
 }
 
+int rnn_get_hs_size(rnn_t *rnn)
+{
+    ST_CHECK_PARAM(rnn == NULL, -1);
+
+    return rnn->model_opt.hidden_size;
+}
+
 int rnn_load_header(rnn_t **rnn, int version, FILE *fp,
         bool *binary, FILE *fo_info)
 {
@@ -750,12 +757,13 @@ int rnn_forward_pre_layer(rnn_t *rnn, int tid)
     return 0;
 }
 
-int rnn_forward_last_layer(rnn_t *rnn, int cls, int tid)
+int rnn_forward_last_layer(rnn_t *rnn, int word, int tid)
 {
     rnn_neuron_t *neu;
     output_neuron_t *output_neu;
     int hidden_size;
 
+    int cls;
     int s;
     int e;
 
@@ -765,10 +773,12 @@ int rnn_forward_last_layer(rnn_t *rnn, int cls, int tid)
     output_neu = rnn->output->neurons + tid;
     hidden_size = rnn->model_opt.hidden_size;
 
-    if (rnn->class_size > 0 && cls >= 0) {
+    if (rnn->class_size > 0 && word >= 0) {
+        cls = rnn->output->w2c[word];
         s = rnn->output->c2w_s[cls];
         e = rnn->output->c2w_e[cls];
     } else {
+        cls = 0;
         s = 0;
         e = rnn->vocab_size;
     }

@@ -208,6 +208,14 @@ void rnn_destroy(rnn_t *rnn);
 rnn_t* rnn_dup(rnn_t *r);
 
 /**
+ * Get the size for HS tree input.
+ * @ingroup g_rnn
+ * @param[in] rnn rnn model.
+ * @return the size, zero or negtive value if any error.
+ */
+int rnn_get_hs_size(rnn_t *rnn);
+
+/**
  * Load rnn header and initialise a new rnn.
  * @ingroup g_rnn
  * @param[out] rnn rnn initialised.
@@ -269,12 +277,12 @@ int rnn_forward_pre_layer(rnn_t *rnn, int tid);
  * Feed-forward one word for last output layer of one thread of rnn model.
  * @ingroup g_rnn
  * @param[in] rnn rnn model.
- * @param[in] cls class of current word. -1 if non-class.
+ * @param[in] word current word.
  * @param[in] tid thread id (neuron id).
  * @see rnn_forward_pre_layer
  * @return non-zero value if any error.
  */
-int rnn_forward_last_layer(rnn_t *rnn, int cls, int tid);
+int rnn_forward_last_layer(rnn_t *rnn, int word, int tid);
 /**
  * Back-propagate one word for a thread of rnn model.
  * @ingroup g_rnn

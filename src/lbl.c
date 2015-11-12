@@ -136,6 +136,13 @@ ERR:
     return NULL;
 }
 
+int lbl_get_hs_size(lbl_t *lbl)
+{
+    ST_CHECK_PARAM(lbl == NULL, -1);
+
+    return 0;
+}
+
 int lbl_load_header(lbl_t **lbl, int version, FILE *fp,
         bool *binary, FILE *fo_info)
 {
@@ -321,7 +328,7 @@ int lbl_forward_pre_layer(lbl_t *lbl, int tid)
     return 0;
 }
 
-int lbl_forward_last_layer(lbl_t *lbl, int cls, int tid)
+int lbl_forward_last_layer(lbl_t *lbl, int word, int tid)
 {
     ST_CHECK_PARAM(lbl == NULL || tid < 0, -1);
 

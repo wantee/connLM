@@ -91,6 +91,7 @@ int main(int argc, const char *argv[])
     int ret;
     int i;
 
+    int hs_size = -1;
     bool mdl_rnn = false;
     bool mdl_maxent = false;
     bool mdl_lbl = false;
@@ -193,6 +194,14 @@ int main(int argc, const char *argv[])
         goto ERR;
     }
 
+    if (connlm->output->output_opt.hs) {
+        hs_size = connlm_get_hs_size(connlm1);
+        if (hs_size <= 0) {
+            ST_WARNING("Failed to connlm_get_hs_size.");
+            goto ERR;
+        }
+    }
+
     i = 0;
     ST_NOTICE("Merging Model %d(%s)...", i, argv[i + 1]);
     if (mfs[i] & MF_MAXENT) {
@@ -279,6 +288,13 @@ int main(int argc, const char *argv[])
             ST_WARNING("Can't merge: Output not equal. [%s].",
                     fnames + i * MAX_DIR_LEN);
             goto ERR;
+        }
+
+        if (connlm->output->output_opt.hs) {
+            if (hs_size != connlm_get_hs_size(connlm1)) {
+                ST_WARNING("Can not merge: hs_size not match.");
+                goto ERR;
+            }
         }
 
         if (mfs[i] & MF_MAXENT) {

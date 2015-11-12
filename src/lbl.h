@@ -135,6 +135,14 @@ void lbl_destroy(lbl_t *lbl);
 lbl_t* lbl_dup(lbl_t *l);
 
 /**
+ * Get the size for HS tree input.
+ * @ingroup g_lbl
+ * @param[in] lbl lbl model.
+ * @return the size, zero or negtive value if any error.
+ */
+int lbl_get_hs_size(lbl_t *lbl);
+
+/**
  * Load lbl header and initialise a new lbl.
  * @ingroup g_lbl
  * @param[out] lbl lbl initialised.
@@ -196,12 +204,12 @@ int lbl_forward_pre_layer(lbl_t *lbl, int tid);
  * Feed-forward one word for last output layer of one thread of lbl model.
  * @ingroup g_lbl
  * @param[in] lbl lbl model.
- * @param[in] cls class of current word. -1 if non-class.
+ * @param[in] word current word.
  * @param[in] tid thread id (neuron id).
  * @see lbl_forward_pre_layer
  * @return non-zero value if any error.
  */
-int lbl_forward_last_layer(lbl_t *lbl, int cls, int tid);
+int lbl_forward_last_layer(lbl_t *lbl, int word, int tid);
 /**
  * Back-propagate one word for a thread of lbl model.
  * @ingroup g_lbl

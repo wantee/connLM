@@ -46,7 +46,7 @@ typedef struct _output_opt_t_ {
     int class_size; /**< size of class. May be zero. */
     bool hs;        /**< whether using Hierarchical softmax. */
     int max_code_len; /**< maximum length for code used by HS. */
-    bool class_hs; /**< whether using HS for classes. */
+    bool class_hs; /**< whether using HS for class. */
 } output_opt_t;
 
 /**
@@ -59,6 +59,9 @@ typedef struct _output_neuron_t_ {
     real_t *er_o_w; /**< error of output of word part. */
     real_t *ac_o_c; /**< activation of output of class part. */
     real_t *er_o_c; /**< error of output of class part. */
+
+    real_t *wt_hs_c /**< HS weights for classes. */;
+    real_t *wt_hs_w; /**< HS weights for words. */
 } output_neuron_t;
 
 /**
@@ -69,6 +72,7 @@ typedef struct _output_t_ {
     output_opt_t output_opt; /**< output layer options. */
 
     int output_size; /**< size of output layer. */
+    int hs_input_size; /**< size of input for HS tree. */
 
     output_neuron_t *neurons; /**< output layer neurons. */
     int num_thrs; /**< number of threads/neurons. */
@@ -87,6 +91,9 @@ typedef struct _output_t_ {
 
     char *code_w; /**< code for words. */
     int *pt_w; /**< point for words. */
+
+    real_t *wt_hs_c /**< HS weights for classes. */;
+    real_t *wt_hs_w; /**< HS weights for words. */
     /**@}*/
 } output_t;
 
@@ -197,19 +204,20 @@ int output_generate(output_t *output, count_t *word_cnts);
  * Activate neurons of pre output layer.
  * @ingroup g_output
  * @param[in] output output layer related.
- * @param[in] tid thread id (neuron id).
- * @return non-zero value if any error.
- */
-int output_activate_pre_layer(output_t *output, int tid);
-/**
- * Activate neurons of last output layer.
- * @ingroup g_output
- * @param[in] output output layer related.
  * @param[in] cls class of current word.
  * @param[in] tid thread id (neuron id).
  * @return non-zero value if any error.
  */
-int output_activate_last_layer(output_t *output, int cls, int tid);
+int output_activate_pre_layer(output_t *output, int cls, int tid);
+/**
+ * Activate neurons of last output layer.
+ * @ingroup g_output
+ * @param[in] output output layer related.
+ * @param[in] word current word.
+ * @param[in] tid thread id (neuron id).
+ * @return non-zero value if any error.
+ */
+int output_activate_last_layer(output_t *output, int word, int tid);
 /**
  * Compute loss of neurons of output layer.
  * @ingroup g_output
@@ -262,9 +270,10 @@ double output_get_word_prob(output_t *output, int word, int tid);
  * @ingroup g_output
  * @param[in] output output layer.
  * @param[in] num_thrs number of thread to be used.
+ * @param[in] hs_input_size input size of HS tree.
  * @return non-zero value if any error.
  */
-int output_setup_train(output_t *output, int num_thrs);
+int output_setup_train(output_t *output, int num_thrs, int hs_input_size);
 /**
  * Reset training for output layer.
  * Called before every input sentence to be trained.

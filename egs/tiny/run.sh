@@ -107,3 +107,13 @@ echo "Step $st: ${stepnames[$st]} ..."
 fi
 ((st++))
 
+if shu-in-range $st $steps; then
+echo
+echo "Step $st: ${stepnames[$st]} ..."
+../steps/run_standalone.sh --class-size "$class_size" \
+      --train-thr $tr_thr --test-thr $test_thr \
+    rnn-hs $conf_dir $exp_dir $train_file $valid_file $test_file \
+  || exit 1;
+fi
+((st++))
+

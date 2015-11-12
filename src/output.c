@@ -880,7 +880,7 @@ ERR:
  * @param[in] max_code_len max length of code.
  * @return non-zero value if any error.
  */
-static int output_generate_hs_tree(count_t *cnts, int *pts, char *codes,
+static int output_hs_generate_tree(count_t *cnts, int *pts, char *codes,
         size_t n_node, int max_code_len)
 {
     int *point = NULL;
@@ -1106,9 +1106,9 @@ static int output_generate_hs(output_t *output, count_t *word_cnts)
         }
 
         /* cls_cnts was almost descending. */
-        if (output_generate_hs_tree(cls_cnts, output->pt_c,
+        if (output_hs_generate_tree(cls_cnts, output->pt_c,
                     output->code_c, class_size, max_code_len) < 0) {
-            ST_WARNING("Failed to output_generate_hs_tree for class.");
+            ST_WARNING("Failed to output_hs_generate_tree for class.");
             goto ERR;
         }
 
@@ -1131,9 +1131,9 @@ static int output_generate_hs(output_t *output, count_t *word_cnts)
     }
     memset(output->pt_w, -1, sz);
 
-    if (output_generate_hs_tree(word_cnts, output->pt_w, output->code_w,
+    if (output_hs_generate_tree(word_cnts, output->pt_w, output->code_w,
             output->output_size, max_code_len) < 0) {
-        ST_WARNING("Failed to output_generate_hs_tree for word.");
+        ST_WARNING("Failed to output_hs_generate_tree for word.");
         goto ERR;
     }
 
@@ -1174,7 +1174,17 @@ int output_generate(output_t *output, count_t *word_cnts)
     return 0;
 }
 
-int output_activate_pre_layer(output_t *output, int tid)
+static int output_hs_forward(real_t *ac, real_t *wt, int input_size,
+        int num_leaf, int node, int *pts, char* codes, int max_code_len)
+{
+    ST_CHECK_PARAM(ac == NULL || wt == NULL || input_size <= 0
+            || num_leaf <= 0 || node < 0 || pts == NULL
+            || codes == NULL || max_code_len <= 0, -1);
+
+    return 0;
+}
+
+int output_activate_pre_layer(output_t *output, int cls, int tid)
 {
     output_neuron_t *neu;
 
@@ -1182,31 +1192,72 @@ int output_activate_pre_layer(output_t *output, int tid)
 
     neu = output->neurons + tid;
     if (output->output_opt.class_size > 0) {
-        softmax(neu->ac_o_c, output->output_opt.class_size);
+        if (output->output_opt.hs && output->output_opt.class_hs) {
+            if (cls < 0) {
+                ST_WARNING("class not specified.");
+                return -1;
+            }
+            if (output_hs_forward(neu->ac_o_c, neu->wt_hs_c,
+                        output->hs_input_size,
+                        output->output_opt.class_size,
+                        cls, output->pt_c, output->code_c,
+                        output->output_opt.max_code_len) < 0) {
+                ST_WARNING("Failed to output_hs_forward class");
+                return -1;
+            }
+        } else {
+            softmax(neu->ac_o_c, output->output_opt.class_size);
+        }
     }
 
     return 0;
 }
 
-int output_activate_last_layer(output_t *output, int cls, int tid)
+static inline int output_hs_code_pos(int cls, int s)
+{
+    if (cls < 0) {
+        return 0;
+    }
+
+    return 2 * s - cls;
+}
+
+int output_activate_last_layer(output_t *output, int word, int tid)
 {
     output_neuron_t *neu;
 
+    int cls;
     int s;
     int e;
 
-    ST_CHECK_PARAM(output == NULL || tid < 0, -1);
+    ST_CHECK_PARAM(output == NULL || word < 0 || tid < 0, -1);
 
     neu = output->neurons + tid;
-    if (output->output_opt.class_size > 0 && cls >= 0) {
+
+    if (output->output_opt.class_size > 0) {
+        cls = output->w2c[word];
         s = output->c2w_s[cls];
         e = output->c2w_e[cls];
     } else {
+        cls = -1;
         s = 0;
         e = output->output_size;
     }
 
-    softmax(neu->ac_o_w + s, e - s);
+    if (output->output_opt.hs) {
+        if (output_hs_forward(neu->ac_o_w + s,
+                    neu->wt_hs_w + output->hs_input_size
+                                   * output_hs_code_pos(cls, s),
+                    output->hs_input_size, e - s,
+                    word - s, output->pt_w + output_hs_code_pos(cls, s),
+                    output->code_w + output_hs_code_pos(cls, s),
+                    output->output_opt.max_code_len) < 0) {
+            ST_WARNING("Failed to output_hs_forward word");
+            return -1;
+        }
+    } else {
+        softmax(neu->ac_o_w + s, e - s);
+    }
 
     return 0;
 }
@@ -1298,12 +1349,13 @@ double output_get_word_prob(output_t *output, int word, int tid)
     return neu->ac_o_w[word];
 }
 
-int output_setup_train(output_t *output, int num_thrs)
+int output_setup_train(output_t *output, int num_thrs, int hs_input_size)
 {
     output_neuron_t *neu;
     size_t sz;
 
     int class_size;
+    int word_size;
 
     int i;
     int t;
@@ -1319,11 +1371,23 @@ int output_setup_train(output_t *output, int num_thrs)
     }
     memset(output->neurons, 0, sz);
 
-    class_size = output->output_opt.class_size;
+    if (output->output_opt.hs) {
+        if (hs_input_size <= 0) {
+            ST_WARNING("Error hs_input_size[%d].", hs_input_size);
+            goto ERR;
+        }
 
-    for (t = 0; t < num_thrs; t++) {
-        neu = output->neurons + t;
-        if (class_size > 0) {
+        output->hs_input_size = hs_input_size;
+    }
+
+    class_size = output->output_opt.class_size;
+    if (class_size > 0) {
+        if (output->output_opt.class_hs) {
+            class_size = hs_input_size;
+        }
+
+        for (t = 0; t < num_thrs; t++) {
+            neu = output->neurons + t;
             if (posix_memalign((void **)&neu->ac_o_c, ALIGN_SIZE,
                         sizeof(real_t) * class_size) != 0
                     || neu->ac_o_c == NULL) {
@@ -1343,22 +1407,32 @@ int output_setup_train(output_t *output, int num_thrs)
                 neu->er_o_c[i] = 0;
             }
         }
+    }
+
+    if (output->output_opt.hs) {
+        word_size = hs_input_size;
+    } else {
+        word_size = output->output_size;
+    }
+
+    for (t = 0; t < num_thrs; t++) {
+        neu = output->neurons + t;
 
         if (posix_memalign((void **)&neu->ac_o_w, ALIGN_SIZE,
-                    sizeof(real_t) * output->output_size) != 0
+                    sizeof(real_t) * word_size) != 0
                 || neu->ac_o_w == NULL) {
             ST_WARNING("Failed to malloc ac_o_w.");
             goto ERR;
         }
 
         if (posix_memalign((void **)&neu->er_o_w, ALIGN_SIZE,
-                    sizeof(real_t) * output->output_size) != 0
+                    sizeof(real_t) * word_size) != 0
                 || neu->er_o_w == NULL) {
             ST_WARNING("Failed to malloc er_o_w.");
             goto ERR;
         }
 
-        for (i = 0; i < output->output_size; i++) {
+        for (i = 0; i < word_size; i++) {
             neu->ac_o_w[i] = 0;
             neu->er_o_w[i] = 0;
         }

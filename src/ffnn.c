@@ -136,6 +136,13 @@ ERR:
     return NULL;
 }
 
+int ffnn_get_hs_size(ffnn_t *ffnn)
+{
+    ST_CHECK_PARAM(ffnn == NULL, -1);
+
+    return 0;
+}
+
 int ffnn_load_header(ffnn_t **ffnn, int version, FILE *fp,
         bool *binary, FILE *fo_info)
 {
@@ -322,7 +329,7 @@ int ffnn_forward_pre_layer(ffnn_t *ffnn, int tid)
     return 0;
 }
 
-int ffnn_forward_last_layer(ffnn_t *ffnn, int cls, int tid)
+int ffnn_forward_last_layer(ffnn_t *ffnn, int word, int tid)
 {
     ST_CHECK_PARAM(ffnn == NULL || tid < 0, -1);
 

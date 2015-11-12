@@ -265,6 +265,14 @@ int connlm_save(connlm_t *connlm, FILE *fp, bool binary);
 int connlm_print_info(FILE *model_fp, FILE *fo);
 
 /**
+ * Get the size for HS tree input.
+ * @ingroup g_connlm
+ * @param[in] connlm connlm model.
+ * @return the size, zero or negtive value if any error.
+ */
+int connlm_get_hs_size(connlm_t *connlm);
+
+/**
  * Feed-forward one word for a thread of connlm model.
  * @ingroup g_connlm
  * @param[in] connlm connlm model.

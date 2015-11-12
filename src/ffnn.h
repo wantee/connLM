@@ -136,6 +136,14 @@ void ffnn_destroy(ffnn_t *ffnn);
 ffnn_t* ffnn_dup(ffnn_t *f);
 
 /**
+ * Get the size for HS tree input.
+ * @ingroup g_ffnn
+ * @param[in] ffnn ffnn model.
+ * @return the size, zero or negtive value if any error.
+ */
+int ffnn_get_hs_size(ffnn_t *ffnn);
+
+/**
  * Load ffnn header and initialise a new ffnn.
  * @ingroup g_ffnn
  * @param[out] ffnn ffnn initialised.
@@ -197,12 +205,12 @@ int ffnn_forward_pre_layer(ffnn_t *ffnn, int tid);
  * Feed-forward one word for last output layer of one thread of ffnn model.
  * @ingroup g_ffnn
  * @param[in] ffnn ffnn model.
- * @param[in] cls class of current word. -1 if non-class.
+ * @param[in] word current word.
  * @param[in] tid thread id (neuron id).
  * @see ffnn_forward_pre_layer
  * @return non-zero value if any error.
  */
-int ffnn_forward_last_layer(ffnn_t *ffnn, int cls, int tid);
+int ffnn_forward_last_layer(ffnn_t *ffnn, int word, int tid);
 /**
  * Back-propagate one word for a thread of ffnn model.
  * @ingroup g_ffnn

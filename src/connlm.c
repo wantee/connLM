@@ -341,6 +341,87 @@ void connlm_destroy(connlm_t *connlm)
     safe_ffnn_destroy(connlm->ffnn);
 }
 
+int connlm_get_hs_size(connlm_t *connlm)
+{
+    int hs_size = 0;
+
+    int t;
+
+    ST_CHECK_PARAM(connlm == NULL, -1);
+
+    if (connlm->output->output_opt.hs) {
+        if (connlm->rnn != NULL) {
+            t = rnn_get_hs_size(connlm->rnn);
+            if (t <= 0) {
+                ST_WARNING("Failed to rnn_get_hs_size.");
+                return -1;
+            }
+
+            if (hs_size <= 0) {
+                hs_size = t;
+            } else {
+                if (hs_size != t) {
+                    ST_WARNING("hs_size not match for RNN.");
+                    return -1;
+                }
+            }
+        }
+
+        if (connlm->maxent != NULL) {
+            t = maxent_get_hs_size(connlm->maxent);
+            if (t <= 0) {
+                ST_WARNING("Failed to maxent_get_hs_size.");
+                return -1;
+            }
+
+            if (hs_size <= 0) {
+                hs_size = t;
+            } else {
+                if (hs_size != t) {
+                    ST_WARNING("hs_size not match for MaxEnt.");
+                    return -1;
+                }
+            }
+        }
+
+        if (connlm->lbl != NULL) {
+            t = lbl_get_hs_size(connlm->lbl);
+            if (t <= 0) {
+                ST_WARNING("Failed to lbl_get_hs_size.");
+                return -1;
+            }
+
+            if (hs_size <= 0) {
+                hs_size = t;
+            } else {
+                if (hs_size != t) {
+                    ST_WARNING("hs_size not match for LBL.");
+                    return -1;
+                }
+            }
+        }
+
+        if (connlm->ffnn != NULL) {
+            t = ffnn_get_hs_size(connlm->ffnn);
+            if (t <= 0) {
+                ST_WARNING("Failed to ffnn_get_hs_size.");
+                return -1;
+            }
+
+            if (hs_size <= 0) {
+                hs_size = t;
+            } else {
+                if (hs_size != t) {
+                    ST_WARNING("hs_size not match for FFNN.");
+                    return -1;
+                }
+            }
+        }
+    }
+
+    return hs_size;
+}
+
 int connlm_init(connlm_t *connlm, connlm_model_opt_t *model_opt)
 {
     ST_CHECK_PARAM(connlm == NULL || model_opt == NULL, -1);
@@ -369,6 +450,13 @@ int connlm_init(connlm_t *connlm, connlm_model_opt_t *model_opt)
                 connlm->output) < 0) {
         ST_WARNING("Failed to ffnn_init.");
         goto ERR;
+    }
+
+    if (connlm->output->output_opt.hs) {
+        if (connlm_get_hs_size(connlm) <= 0) {
+            ST_WARNING("Failed to connlm_get_hs_size.");
+            goto ERR;
+        }
     }
 
     return 0;
@@ -964,6 +1052,7 @@ int connlm_setup_train(connlm_t *connlm, connlm_train_opt_t *train_opt,
     int pool_size;
 
     int num_thrs;
+    int hs_size;
 
     int i;
 
@@ -1027,7 +1116,17 @@ int connlm_setup_train(connlm_t *connlm, connlm_train_opt_t *train_opt,
         }
     }
 
-    if (output_setup_train(connlm->output, num_thrs) < 0) {
+    if (connlm->output->output_opt.hs) {
+        hs_size = connlm_get_hs_size(connlm);
+        if (hs_size <= 0) {
+            ST_WARNING("Failed to connlm_get_hs_size.");
+            goto ERR;
+        }
+    } else {
+        hs_size = -1;
+    }
+
+    if (output_setup_train(connlm->output, num_thrs, hs_size) < 0) {
         ST_WARNING("Failed to output_setup_train.");
         goto ERR;
     }
@@ -1258,7 +1357,7 @@ int connlm_finish_train(connlm_t *connlm, int tid)
 }
 
 /* forward non-output-word layer */
-int connlm_forward_pre_layer(connlm_t *connlm, int tid)
+int connlm_forward_pre_layer(connlm_t *connlm, int cls, int tid)
 {
     ST_CHECK_PARAM(connlm == NULL, -1);
 
@@ -1290,7 +1389,7 @@ int connlm_forward_pre_layer(connlm_t *connlm, int tid)
         }
     }
 
-    if (output_activate_pre_layer(connlm->output, tid) < 0) {
+    if (output_activate_pre_layer(connlm->output, cls, tid) < 0) {
         ST_WARNING("Failed to output_activate_pre_layer.");
         return -1;
     }
@@ -1299,39 +1398,39 @@ int connlm_forward_pre_layer(connlm_t *connlm, int tid)
 }
 
 /* forward the last output-word layer */
-int connlm_forward_last_layer(connlm_t *connlm, int cls, int tid)
+int connlm_forward_last_layer(connlm_t *connlm, int word, int tid)
 {
     ST_CHECK_PARAM(connlm == NULL, -1);
 
     if (connlm->rnn != NULL) {
-        if (rnn_forward_last_layer(connlm->rnn, cls, tid) < 0) {
+        if (rnn_forward_last_layer(connlm->rnn, word, tid) < 0) {
             ST_WARNING("Failed to rnn_forward_last_layer.");
             return -1;
         }
     }
 
     if (connlm->maxent != NULL) {
-        if (maxent_forward_last_layer(connlm->maxent, cls, tid) < 0) {
+        if (maxent_forward_last_layer(connlm->maxent, word, tid) < 0) {
             ST_WARNING("Failed to maxent_forward_last_layer.");
             return -1;
         }
     }
 
     if (connlm->lbl != NULL) {
-        if (lbl_forward_last_layer(connlm->lbl, cls, tid) < 0) {
+        if (lbl_forward_last_layer(connlm->lbl, word, tid) < 0) {
             ST_WARNING("Failed to lbl_forward_last_layer.");
             return -1;
         }
     }
 
     if (connlm->ffnn != NULL) {
-        if (ffnn_forward_last_layer(connlm->ffnn, cls, tid) < 0) {
+        if (ffnn_forward_last_layer(connlm->ffnn, word, tid) < 0) {
             ST_WARNING("Failed to ffnn_forward_last_layer.");
             return -1;
         }
     }
 
-    if (output_activate_last_layer(connlm->output, cls, tid) < 0) {
+    if (output_activate_last_layer(connlm->output, word, tid) < 0) {
         ST_WARNING("Failed to output_activate_last_layer.");
         return -1;
     }
@@ -1345,18 +1444,18 @@ int connlm_forward(connlm_t *connlm, int word, int tid)
 
     ST_CHECK_PARAM(connlm == NULL, -1);
 
-    if (connlm_forward_pre_layer(connlm, tid) < 0) {
-        ST_WARNING("Failed to connlm_forward_pre_layer.");
-        return -1;
-    }
-
     if (connlm->output->output_opt.class_size > 0) {
         cls = connlm->output->w2c[word];
     } else {
         cls = -1;
     }
 
-    if (connlm_forward_last_layer(connlm, cls, tid) < 0) {
+    if (connlm_forward_pre_layer(connlm, cls, tid) < 0) {
+        ST_WARNING("Failed to connlm_forward_pre_layer.");
+        return -1;
+    }
+
+    if (connlm_forward_last_layer(connlm, word, tid) < 0) {
         ST_WARNING("Failed to connlm_forward_last_layer.");
         return -1;
     }
@@ -2716,6 +2815,125 @@ int connlm_end_gen(connlm_t *connlm, int word)
     return 0;
 }
 
+static int connlm_gen_class(connlm_t *connlm)
+{
+    double u;
+    double p;
+    int cls;
+
+    int class_size;
+
+    ST_CHECK_PARAM(connlm == NULL, -1);
+
+    class_size = connlm->output->output_opt.class_size;
+    if (class_size <= 0) {
+        ST_WARNING("No class to generate.");
+        return -1;
+    }
+
+    if (connlm_forward_pre_layer(connlm, 0, 0) < 0) {
+        ST_WARNING("Failed to connlm_forward_pre_layer.");
+        return -1;
+    }
+
+    u = st_random(0, 1);
+    cls = 0;
+
+    p = output_get_class_prob_for_class(connlm->output, cls, 0);
+    if (p >= u) {
+        return cls;
+    }
+
+    for (cls = 1; cls < class_size; cls++) {
+        if (connlm->output->output_opt.hs
+                && connlm->output->output_opt.class_hs) {
+            if (output_activate_pre_layer(connlm->output, cls, 0) < 0) {
+                ST_WARNING("Failed to output_activate_pre_layer.");
+                return -1;
+            }
+        }
+
+        p += output_get_class_prob_for_class(connlm->output, cls, 0);
+
+        if (p >= u) {
+            return cls;
+        }
+    }
+
+    return class_size - 1;
+}
+
+static int connlm_gen_word(connlm_t *connlm, int cls)
+{
+    int word;
+
+    int s;
+    int e;
+    double u;
+    double p;
+
+    ST_CHECK_PARAM(connlm == NULL, -1);
+
+    if (connlm->output->output_opt.class_size > 0) {
+        if (cls < 0) {
+            ST_WARNING("Invalid class id[%d].", cls);
+            return -1;
+        }
+
+        s = connlm->output->c2w_s[cls];
+        e = connlm->output->c2w_e[cls];
+
+        if (e - s == 1 && s == UNK_ID) {
+            return UNK_ID;
+        }
+    } else {
+        cls = -1;
+        s = 0;
+        e = connlm->output->output_size;
+    }
+
+    if (connlm_forward_last_layer(connlm, s, 0) < 0) {
+        ST_WARNING("Failed to connlm_forward_last_layer.");
+        return -1;
+    }
+
+    while (true) {
+        u = st_random(0, 1);
+        word = s;
+
+        p = output_get_word_prob(connlm->output, word, 0);
+        if (p >= u) {
+            if (word == UNK_ID) {
+                continue;
+            } else {
+                return word;
+            }
+        }
+
+        for (word = s + 1; word < e; word++) {
+            if (connlm->output->output_opt.hs) {
+                if (output_activate_last_layer(connlm->output,
+                            word, 0) < 0) {
+                    ST_WARNING("Failed to output_activate_last_layer.");
+                    return -1;
+                }
+            }
+
+            p += output_get_word_prob(connlm->output, word, 0);
+
+            if (p >= u) {
+                break;
+            }
+        }
+
+        if (word != UNK_ID) {
+            return word;
+        }
+    }
+
+    return e - 1;
+}
+
 int connlm_gen(connlm_t *connlm, int num_sents)
 {
     count_t words;
@@ -2733,10 +2951,6 @@ int connlm_gen(connlm_t *connlm, int num_sents)
 
     int word;
     int cls;
-    int s;
-    int e;
-    double u;
-    double p;
     int i;
 
     struct timeval tts_gen, tte_gen;
@@ -2802,49 +3016,19 @@ int connlm_gen(connlm_t *connlm, int num_sents)
             }
             if (class_size > 0) {
                 // generate class
-                if (connlm_forward_pre_layer(connlm, 0) < 0) {
-                    ST_WARNING("Failed to connlm_forward_pre_layer.");
+                cls = connlm_gen_class(connlm);
+                if (cls < 0) {
+                    ST_WARNING("Failed to connlm_gen_class.");
                     goto ERR;
                 }
-
-                u = st_random(0, 1);
-                p = 0;
-                for (cls = 0; cls < class_size; cls++) {
-                    p += output_get_class_prob_for_class(connlm->output,
-                            cls, 0);
-
-                    if (p >= u) {
-                        break;
-                    }
-                }
-
-                s = connlm->output->c2w_s[cls];
-                e = connlm->output->c2w_e[cls];
             } else {
                 cls = -1;
-                s = 0;
-                e = connlm->output->output_size;
             }
 
-            if (connlm_forward_last_layer(connlm, cls, 0) < 0) {
-                ST_WARNING("Failed to connlm_forward_last_layer.");
+            word = connlm_gen_word(connlm, cls);
+            if (word < 0) {
+                ST_WARNING("Failed to connlm_gen_word.");
                 goto ERR;
-            }
-
-            while (true) {
-                u = st_random(0, 1);
-                p = 0;
-                for (word = s; word < e; word++) {
-                    p += output_get_word_prob(connlm->output, word, 0);
-
-                    if (p >= u) {
-                        break;
-                    }
-                }
-
-                if (word != UNK_ID) {
-                    break;
-                }
             }
 
             if (word == SENT_END_ID) {

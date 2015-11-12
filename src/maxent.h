@@ -198,6 +198,14 @@ void maxent_destroy(maxent_t *maxent);
 maxent_t* maxent_dup(maxent_t *m);
 
 /**
+ * Get the size for HS tree input.
+ * @ingroup g_maxent
+ * @param[in] maxent maxent model.
+ * @return the size, zero or negtive value if any error.
+ */
+int maxent_get_hs_size(maxent_t *maxent);
+
+/**
  * Load maxent header and initialise a new maxent.
  * @ingroup g_maxent
  * @param[out] maxent maxent initialised.
@@ -259,12 +267,12 @@ int maxent_forward_pre_layer(maxent_t *maxent, int tid);
  * Feed-forward one word for last output layer of one thread of maxent model.
  * @ingroup g_maxent
  * @param[in] maxent maxent model.
- * @param[in] cls class of current word. -1 if non-class.
+ * @param[in] word current word.
  * @param[in] tid thread id (neuron id).
  * @see maxent_forward_pre_layer
  * @return non-zero value if any error.
  */
-int maxent_forward_last_layer(maxent_t *maxent, int cls, int tid);
+int maxent_forward_last_layer(maxent_t *maxent, int word, int tid);
 /**
  * Back-propagate one word for a thread of maxent model.
  * @ingroup g_maxent
