@@ -452,6 +452,12 @@ int connlm_init(connlm_t *connlm, connlm_model_opt_t *model_opt)
         goto ERR;
     }
 
+    if (connlm->rnn == NULL && connlm->maxent == NULL
+            && connlm->lbl == NULL && connlm->ffnn == NULL) {
+        ST_WARNING("Nothing initialised.");
+        goto ERR;
+    }
+
     if (connlm->output->output_opt.hs) {
         if (connlm_get_hs_size(connlm) <= 0) {
             ST_WARNING("Failed to connlm_get_hs_size.");

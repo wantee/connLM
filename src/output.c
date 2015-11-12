@@ -565,7 +565,7 @@ int output_load_body(output_t *output, int version, FILE *fp, bool binary)
             }
             sz = output->output_size * max_code_len;
             for (i = 0; i < sz; i++) {
-                if (st_readline(fp, "\t%*d\t%d", &t) != 1) {
+                if (st_readline(fp, "\t%*d\t%*d\t%d", &t) != 1) {
                     ST_WARNING("Failed to parse code_w.");
                     goto ERR;
                 }
@@ -578,7 +578,7 @@ int output_load_body(output_t *output, int version, FILE *fp, bool binary)
             }
             sz = output->output_size * max_code_len;
             for (i = 0; i < sz; i++) {
-                if (st_readline(fp, "\t%*d\t%d", &t) != 1) {
+                if (st_readline(fp, "\t%*d\t%*d\t%d", &t) != 1) {
                     ST_WARNING("Failed to parse pt_w.");
                     goto ERR;
                 }
@@ -679,6 +679,7 @@ int output_save_body(output_t *output, FILE *fp, bool binary)
 
     int i;
     int t;
+    int c, s, e;
 
     ST_CHECK_PARAM(fp == NULL, -1);
 
@@ -777,17 +778,43 @@ int output_save_body(output_t *output, FILE *fp, bool binary)
             }
 
             fprintf(fp, "Word codes:\n");
-            sz = output->output_size * max_code_len;
-            for (i = 0; i < sz; i++) {
-                t = output->code_w[i];
-                fprintf(fp, "\t%d\t%d\n", i / max_code_len, t);
+            if (class_size > 0) {
+                for (c = 0; c < class_size; c++) {
+                    s = output->c2w_s[c];
+                    e = output->c2w_e[c];
+                    sz = (e - s) * max_code_len;
+                    for (i = 0; i < sz; i++) {
+                        t = output->code_w[s * max_code_len + i];
+                        fprintf(fp, "\t%d\t%d\t%d\n", c,
+                                i / max_code_len, t);
+                    }
+                }
+            } else {
+                sz = output->output_size * max_code_len;
+                for (i = 0; i < sz; i++) {
+                    t = output->code_w[i];
+                    fprintf(fp, "\t%d\t%d\t%d\n", -1, i / max_code_len, t);
+                }
             }
 
             fprintf(fp, "Word points:\n");
-            sz = output->output_size * max_code_len;
-            for (i = 0; i < sz; i++) {
-                t = output->pt_w[i];
-                fprintf(fp, "\t%d\t%d\n", i / max_code_len, t);
+            if (class_size > 0) {
+                for (c = 0; c < class_size; c++) {
+                    s = output->c2w_s[c];
+                    e = output->c2w_e[c];
+                    sz = (e - s) * max_code_len;
+                    for (i = 0; i < sz; i++) {
+                        t = output->pt_w[s * max_code_len + i];
+                        fprintf(fp, "\t%d\t%d\t%d\n", c,
+                                i / max_code_len, t);
+                    }
+                }
+            } else {
+                sz = output->output_size * max_code_len;
+                for (i = 0; i < sz; i++) {
+                    t = output->pt_w[i];
+                    fprintf(fp, "\t%d\t%d\t%d\n", -1, i / max_code_len, t);
+                }
             }
         }
     }
@@ -1072,6 +1099,8 @@ static int output_generate_hs(output_t *output, count_t *word_cnts)
     int class_size;
     int max_code_len;
 
+    int c, s, e;
+
     ST_CHECK_PARAM(output == NULL || word_cnts == NULL, -1);
 
     safe_free(output->code_c);
@@ -1131,10 +1160,26 @@ static int output_generate_hs(output_t *output, count_t *word_cnts)
     }
     memset(output->pt_w, -1, sz);
 
-    if (output_hs_generate_tree(word_cnts, output->pt_w, output->code_w,
-            output->output_size, max_code_len) < 0) {
-        ST_WARNING("Failed to output_hs_generate_tree for word.");
-        goto ERR;
+    if(class_size > 0) {
+        for (c = 0; c < class_size; c++) {
+            s = output->c2w_s[c];
+            e = output->c2w_e[c];
+
+            if (output_hs_generate_tree(word_cnts + s,
+                        output->pt_w + s * max_code_len,
+                        output->code_w + s * max_code_len,
+                        e - s, max_code_len) < 0) {
+                ST_WARNING("Failed to output_hs_generate_tree for word.");
+                goto ERR;
+            }
+        }
+    } else {
+        if (output_hs_generate_tree(word_cnts, output->pt_w,
+                    output->code_w, output->output_size,
+                    max_code_len) < 0) {
+            ST_WARNING("Failed to output_hs_generate_tree for word.");
+            goto ERR;
+        }
     }
 
     return 0;

@@ -110,7 +110,7 @@ int main(int argc, const char *argv[])
         goto ERR;
     }
 
-    st_opt_show(g_cmd_opt, "connLM Info Options");
+    st_opt_show(g_cmd_opt, "connLM Merge Options");
     for (i = 1; i < argc - 1; i++) {
         ST_CLEAN("Model-in-%d: %s", i, argv[i]);
     }

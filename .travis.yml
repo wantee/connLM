@@ -24,6 +24,9 @@ env:
     - CASE=1
     - CASE=2
     - CASE=3
+    - CASE=4
+    - CASE=5
+    - CASE=6
 script: 
   - source tools/shutils/shutils.sh
   - if [ $CASE -eq 2 ]; then make -C src test; fi

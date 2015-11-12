@@ -140,7 +140,7 @@ int lbl_get_hs_size(lbl_t *lbl)
 {
     ST_CHECK_PARAM(lbl == NULL, -1);
 
-    return 0;
+    return 15;
 }
 
 int lbl_load_header(lbl_t **lbl, int version, FILE *fp,

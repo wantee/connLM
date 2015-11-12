@@ -102,7 +102,7 @@ int main(int argc, const char *argv[])
         goto ERR;
     }
 
-    st_opt_show(g_cmd_opt, "connLM Info Options");
+    st_opt_show(g_cmd_opt, "connLM Copy Options");
     ST_CLEAN("Model-in: %s, Model-out: %s", argv[1], argv[2]);
 
     fp = st_fopen(argv[1], "rb");

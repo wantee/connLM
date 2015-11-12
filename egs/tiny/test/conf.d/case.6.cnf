@@ -1,0 +1,6 @@
+name="I/O testing" 
+
+before="rm -rf test/tmp/case-06; mkdir -p test/tmp/case-06;"
+
+script="./test/test_io.sh data/train test/tmp/case-06 >/dev/null 2>&1"
+

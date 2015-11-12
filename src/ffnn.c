@@ -140,7 +140,7 @@ int ffnn_get_hs_size(ffnn_t *ffnn)
 {
     ST_CHECK_PARAM(ffnn == NULL, -1);
 
-    return 0;
+    return 15;
 }
 
 int ffnn_load_header(ffnn_t **ffnn, int version, FILE *fp,
