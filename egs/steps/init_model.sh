@@ -72,21 +72,21 @@ function init_model ()
   fi
 
   if [ -z "$output_config_file" ]; then
-  connlm-output --log-file=$output_log $output_opt \
+  shu-run connlm-output --log-file=$output_log $output_opt \
              $vocab $output_mdl \
   || exit 1; 
   else
-  connlm-output --log-file=$output_log $output_opt \
+  shu-run connlm-output --log-file=$output_log $output_opt \
              --config=$output_config_file \
              $vocab $output_mdl \
   || exit 1; 
   fi
   if [ -z "$init_config_file" ]; then
-  connlm-init --log-file=$init_log \
+  shu-run connlm-init --log-file=$init_log \
              $output_mdl $init_mdl \
   || exit 1; 
   else
-  connlm-init --log-file=$init_log \
+  shu-run connlm-init --log-file=$init_log \
              --config=$init_config_file \
              $output_mdl $init_mdl \
   || exit 1; 
@@ -135,7 +135,7 @@ else
     init_model
 
     train_log="$log_dir/train.$size.log"
-    connlm-train --log-file=$train_log \
+    shu-run connlm-train --log-file=$train_log \
                --config="$train_config" \
                --num-thread=$train_threads \
                "$train_part" "$init_mdl" "-" > /dev/null \

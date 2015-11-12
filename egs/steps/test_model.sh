@@ -49,12 +49,12 @@ test_opts="--config=$config_file $test_opts"
 fi
 
 if $pipe_input; then
-eval "$test_file" | connlm-test $test_opts \
+shu-run eval "$test_file" | connlm-test $test_opts \
        --log-file=$log_file --num-thread=$test_threads \
        $dir/final.clm - $out_prob || exit 1;
 
 else
-connlm-test $test_opts --log-file=$log_file \
+shu-run connlm-test $test_opts --log-file=$log_file \
            --num-thread=$test_threads \
            $dir/final.clm $test_file $out_prob || exit 1;
 fi

@@ -37,11 +37,11 @@ mkdir -p $dir
 
 echo "$0: Learning vocab $model_file from $train_file"
 if [ -z $config_file ]; then
-cat $train_file | connlm-vocab --log-file=$log_file \
+shu-run cat $train_file | connlm-vocab --log-file=$log_file \
            - $model_file \
 || exit 1; 
 else
-cat $train_file | connlm-vocab --log-file=$log_file \
+shu-run cat $train_file | connlm-vocab --log-file=$log_file \
            --config=$config_file \
            - $model_file \
 || exit 1; 

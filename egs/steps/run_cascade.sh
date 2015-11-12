@@ -110,7 +110,7 @@ for i in `seq ${#models[@]}`; do
     mkdir -p "$this_init_dir"
   fi
   echo "$0: Stage $st --- Merging $model with $m..."
-  connlm-merge --log-file=$exp/log/merge.$model~$m.log \
+  shu-run connlm-merge --log-file=$exp/log/merge.$model~$m.log \
          mdl,$(model2filter $model):$exp/$model/final.clm \
          mdl,$(model2filter $m):$exp/$m/init.clm \
          "$this_init_dir/init.clm" || exit 1;

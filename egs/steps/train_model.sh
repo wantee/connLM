@@ -53,9 +53,10 @@ begin_ts=`date +%s`
 log_dir=$dir/log
 
 if [ ! -e $dir/.learn_rate ]; then
-  connlm-train --dry-run=true --log-file="$log_dir/conf.log" \
+  shu-run connlm-train --dry-run=true --log-file="$log_dir/conf.log" \
              --config="$train_config" || exit 1
-  ../utils/parse_lr.pl < "$log_dir/conf.log" > "$dir/.learn_rate" || exit 1
+  shu-run ../utils/parse_lr.pl < "$log_dir/conf.log" > "$dir/.learn_rate" \
+    || exit 1
 fi
 
 lr_rnn=$(sed -n '1p' $dir/.learn_rate)
@@ -66,7 +67,7 @@ lr_ffnn=$(sed -n '4p' $dir/.learn_rate)
 mdl_best=$mdl_init
 [ -e $dir/.mdl_best ] && mdl_best=$(cat $dir/.mdl_best)
 
-connlm-test --log-file="$log_dir/valid.prerun.log" \
+shu-run connlm-test --log-file="$log_dir/valid.prerun.log" \
            --config="$test_config" \
            --num-thread=$test_threads \
            "$dir/$mdl_best" "$valid_file" \
@@ -85,7 +86,7 @@ for iter in $(seq -w $max_iters); do
 
   [ -e $dir/.done_iter$iter ] && echo -n "skipping... " && ls $dir/$mdl_next* && continue 
   
-  connlm-train --log-file="$log_dir/train.${iter}.log" \
+  shu-run connlm-train --log-file="$log_dir/train.${iter}.log" \
              --config="$train_config" \
              --num-thread=$train_threads \
              --rnn^learn-rate=$lr_rnn \
@@ -106,7 +107,7 @@ for iter in $(seq -w $max_iters); do
   echo -n "/$(printf "%.6g" $lr_lbl)/$(printf "%.6g" $lr_ffnn)), "
   echo -n "W/s $wpc, "
   
-  connlm-test --log-file="$log_dir/valid.${iter}.log" \
+  shu-run connlm-test --log-file="$log_dir/valid.${iter}.log" \
              --config="$test_config" \
              --num-thread=$test_threads \
              "$dir/$mdl_next" "$valid_file" \
