@@ -424,6 +424,8 @@ int connlm_get_hs_size(connlm_t *connlm)
 
 int connlm_init(connlm_t *connlm, connlm_model_opt_t *model_opt)
 {
+    int hs_size;
+
     ST_CHECK_PARAM(connlm == NULL || model_opt == NULL, -1);
 
     connlm->model_opt = *model_opt;
@@ -459,8 +461,14 @@ int connlm_init(connlm_t *connlm, connlm_model_opt_t *model_opt)
     }
 
     if (connlm->output->output_opt.hs) {
-        if (connlm_get_hs_size(connlm) <= 0) {
+        hs_size = connlm_get_hs_size(connlm);
+        if (hs_size <= 0) {
             ST_WARNING("Failed to connlm_get_hs_size.");
+            goto ERR;
+        }
+
+        if (output_hs_init(connlm->output, hs_size) < 0) {
+            ST_WARNING("Failed to output_hs_init.");
             goto ERR;
         }
     }
@@ -1058,7 +1066,6 @@ int connlm_setup_train(connlm_t *connlm, connlm_train_opt_t *train_opt,
     int pool_size;
 
     int num_thrs;
-    int hs_size;
 
     int i;
 
@@ -1122,17 +1129,7 @@ int connlm_setup_train(connlm_t *connlm, connlm_train_opt_t *train_opt,
         }
     }
 
-    if (connlm->output->output_opt.hs) {
-        hs_size = connlm_get_hs_size(connlm);
-        if (hs_size <= 0) {
-            ST_WARNING("Failed to connlm_get_hs_size.");
-            goto ERR;
-        }
-    } else {
-        hs_size = -1;
-    }
-
-    if (output_setup_train(connlm->output, num_thrs, hs_size) < 0) {
+    if (output_setup_train(connlm->output, num_thrs) < 0) {
         ST_WARNING("Failed to output_setup_train.");
         goto ERR;
     }

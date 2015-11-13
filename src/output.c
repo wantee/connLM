@@ -37,6 +37,16 @@
 
 static const int OUTPUT_MAGIC_NUM = 626140498 + 6;
 
+static inline int output_hs_wt_w_pos(int cls, int s)
+{
+    if (cls < 0) {
+        return 0;
+    }
+
+    /* Every class should contain n_c - 1 nodes */
+    return s - cls;
+}
+
 int output_load_opt(output_opt_t *output_opt, st_opt_t *opt,
         const char *sec_name)
 {
@@ -101,12 +111,18 @@ void output_destroy(output_t *output)
     safe_free(output->code_w);
     safe_free(output->pt_w);
 
+    safe_free(output->wt_hs_c);
+    safe_free(output->wt_hs_w);
+
     if (output->neurons != NULL) {
         for (i = 0; i < output->num_thrs; i++) {
             safe_free(output->neurons[i].ac_o_c);
             safe_free(output->neurons[i].er_o_c);
             safe_free(output->neurons[i].ac_o_w);
             safe_free(output->neurons[i].er_o_w);
+
+            safe_free(output->neurons[i].wt_hs_c);
+            safe_free(output->neurons[i].wt_hs_w);
         }
         safe_free(output->neurons);
     }
@@ -215,7 +231,8 @@ int output_load_header(output_t **output, int version,
     int output_size;
     int class_size;
     int max_code_len = -1;
-    bool hs;
+    int hs_input_size = 0;
+    bool hs = false;
     bool class_hs = false;
 
     ST_CHECK_PARAM((output == NULL && fo_info == NULL) || fp == NULL
@@ -263,13 +280,19 @@ int output_load_header(output_t **output, int version,
         }
 
         if (version >= 2) {
-            if (fread(&max_code_len, sizeof(int), 1, fp) != 1) {
-                ST_WARNING("Failed to read max_code_len.");
-                return -1;
-            }
-            if (fread(&class_hs, sizeof(bool), 1, fp) != 1) {
-                ST_WARNING("Failed to read class_hs.");
-                return -1;
+            if (hs) {
+                if (fread(&max_code_len, sizeof(int), 1, fp) != 1) {
+                    ST_WARNING("Failed to read max_code_len.");
+                    return -1;
+                }
+                if (fread(&class_hs, sizeof(bool), 1, fp) != 1) {
+                    ST_WARNING("Failed to read class_hs.");
+                    return -1;
+                }
+                if (fread(&hs_input_size, sizeof(int), 1, fp) != 1) {
+                    ST_WARNING("Failed to read hs_input_size.");
+                    return -1;
+                }
             }
         }
     } else {
@@ -306,15 +329,24 @@ int output_load_header(output_t **output, int version,
         hs = str2bool(sym);
 
         if (version >= 2) {
-            if (st_readline(fp, "Max code len: %d", &max_code_len) != 1) {
-                ST_WARNING("Failed to parse max_code_len.");
-                return -1;
+            if (hs) {
+                if (st_readline(fp, "\tMax code len: %d",
+                            &max_code_len) != 1) {
+                    ST_WARNING("Failed to parse max_code_len.");
+                    return -1;
+                }
+                if (st_readline(fp, "\tClass HS: %s", sym) != 1) {
+                    ST_WARNING("Failed to parse class_hs.");
+                    return -1;
+                }
+                class_hs = str2bool(sym);
+
+                if (st_readline(fp, "\tHS input size: %d",
+                            &hs_input_size) != 1) {
+                    ST_WARNING("Failed to parse hs_input_size.");
+                    return -1;
+                }
             }
-            if (st_readline(fp, "Class HS: %s", sym) != 1) {
-                ST_WARNING("Failed to parse class_hs.");
-                return -1;
-            }
-            class_hs = str2bool(sym);
         }
     }
 
@@ -331,6 +363,7 @@ int output_load_header(output_t **output, int version,
         (*output)->output_opt.hs = hs;
         (*output)->output_opt.class_hs = class_hs;
         (*output)->output_opt.max_code_len = max_code_len;
+        (*output)->hs_input_size = hs_input_size;
     }
 
     if (fo_info != NULL) {
@@ -339,8 +372,11 @@ int output_load_header(output_t **output, int version,
         fprintf(fo_info, "Class size: %d\n", class_size);
         fprintf(fo_info, "HS: %s\n", bool2str(hs));
         if (version >= 2) {
-            fprintf(fo_info, "Max code len: %d\n", max_code_len);
-            fprintf(fo_info, "Class HS: %s\n", bool2str(class_hs));
+            if (hs) {
+                fprintf(fo_info, "    Max code len: %d\n", max_code_len);
+                fprintf(fo_info, "    Class HS: %s\n", bool2str(class_hs));
+                fprintf(fo_info, "    HS input size: %d\n", hs_input_size);
+            }
         }
     }
 
@@ -361,6 +397,9 @@ int output_load_body(output_t *output, int version, FILE *fp, bool binary)
     int i;
     int class_size;
     int max_code_len;
+    int hs_input_size;
+    int word_size = -1;
+
     int t;
 
     ST_CHECK_PARAM(output == NULL || fp == NULL, -1);
@@ -380,6 +419,8 @@ int output_load_body(output_t *output, int version, FILE *fp, bool binary)
 
     class_size = output->output_opt.class_size;
     max_code_len = output->output_opt.max_code_len;
+    hs_input_size = output->hs_input_size;
+
     if (class_size > 0) {
         sz = sizeof(int) * output->output_size;
         output->w2c = (int *) malloc(sz);
@@ -422,6 +463,14 @@ int output_load_body(output_t *output, int version, FILE *fp, bool binary)
                 goto ERR;
             }
             memset(output->pt_c, -1, sz);
+
+            sz = (class_size - 1) * hs_input_size;
+            if (posix_memalign((void **)&output->wt_hs_c, ALIGN_SIZE,
+                        sizeof(real_t) * sz) != 0
+                    || output->wt_hs_c == NULL) {
+                ST_WARNING("Failed to malloc wt_hs_c.");
+                goto ERR;
+            }
         }
 
         sz = sizeof(char) * output->output_size * max_code_len;
@@ -439,6 +488,19 @@ int output_load_body(output_t *output, int version, FILE *fp, bool binary)
             goto ERR;
         }
         memset(output->pt_w, -1, sz);
+
+        if (class_size > 0) {
+            word_size = output->output_size - class_size;
+        } else {
+            word_size = output->output_size - 1;
+        }
+        sz = word_size * hs_input_size;
+        if (posix_memalign((void **)&output->wt_hs_w, ALIGN_SIZE,
+                    sizeof(real_t) * sz) != 0
+                || output->wt_hs_w == NULL) {
+            ST_WARNING("Failed to malloc wt_hs_w.");
+            goto ERR;
+        }
     }
 
     if (binary) {
@@ -485,6 +547,12 @@ int output_load_body(output_t *output, int version, FILE *fp, bool binary)
                     ST_WARNING("Failed to read pt_c.");
                     goto ERR;
                 }
+
+                sz = (class_size - 1) * hs_input_size;
+                if (fread(output->wt_hs_c, sizeof(real_t), sz, fp) != sz) {
+                    ST_WARNING("Failed to read wt_hs_c.");
+                    goto ERR;
+                }
             }
 
             sz = output->output_size * max_code_len;
@@ -496,6 +564,12 @@ int output_load_body(output_t *output, int version, FILE *fp, bool binary)
             sz = output->output_size * max_code_len;
             if (fread(output->pt_w, sizeof(int), sz, fp) != sz) {
                 ST_WARNING("Failed to read pt_w.");
+                goto ERR;
+            }
+
+            sz = word_size * hs_input_size;
+            if (fread(output->wt_hs_w, sizeof(real_t), sz, fp) != sz) {
+                ST_WARNING("Failed to read wt_hs_w.");
                 goto ERR;
             }
         }
@@ -557,6 +631,21 @@ int output_load_body(output_t *output, int version, FILE *fp, bool binary)
                     }
                     output->pt_c[i] = t;
                 }
+
+                if (hs_input_size > 0) {
+                    if (st_readline(fp, "Class HS weights:") != 0) {
+                        ST_WARNING("wt_hs_c flag error.");
+                        goto ERR;
+                    }
+                    sz = (class_size - 1) * hs_input_size;
+                    for (i = 0; i < sz; i++) {
+                        if (st_readline(fp, "\t%*d\t" REAL_FMT,
+                                    output->wt_hs_c + i) != 1) {
+                            ST_WARNING("Failed to parse wt_hs_c.");
+                            goto ERR;
+                        }
+                    }
+                }
             }
 
             if (st_readline(fp, "Word codes:") != 0) {
@@ -584,6 +673,21 @@ int output_load_body(output_t *output, int version, FILE *fp, bool binary)
                 }
                 output->pt_w[i] = t;
             }
+
+            if (hs_input_size > 0) {
+                if (st_readline(fp, "Word HS weights:") != 0) {
+                    ST_WARNING("wt_hs_w flag error.");
+                    goto ERR;
+                }
+                sz = word_size * hs_input_size;
+                for (i = 0; i < sz; i++) {
+                    if (st_readline(fp, "\t%*d\t%*d\t" REAL_FMT,
+                                output->wt_hs_w + i) != 1) {
+                        ST_WARNING("Failed to parse wt_hs_w.");
+                        goto ERR;
+                    }
+                }
+            }
         }
     }
 
@@ -597,6 +701,9 @@ ERR:
     safe_free(output->pt_c);
     safe_free(output->code_w);
     safe_free(output->pt_w);
+
+    safe_free(output->wt_hs_c);
+    safe_free(output->wt_hs_w);
 
     return -1;
 }
@@ -638,16 +745,23 @@ int output_save_header(output_t *output, FILE *fp, bool binary)
         }
 
         // Version 2
-        if (fwrite(&output->output_opt.max_code_len, sizeof(int),
-                    1, fp) != 1) {
-            ST_WARNING("Failed to write max_code_len.");
-            return -1;
-        }
+        if (output->output_opt.hs) {
+            if (fwrite(&output->output_opt.max_code_len, sizeof(int),
+                        1, fp) != 1) {
+                ST_WARNING("Failed to write max_code_len.");
+                return -1;
+            }
 
-        if (fwrite(&output->output_opt.class_hs, sizeof(bool),
-                    1, fp) != 1) {
-            ST_WARNING("Failed to write class_hs.");
-            return -1;
+            if (fwrite(&output->output_opt.class_hs, sizeof(bool),
+                        1, fp) != 1) {
+                ST_WARNING("Failed to write class_hs.");
+                return -1;
+            }
+
+            if (fwrite(&output->hs_input_size, sizeof(int), 1, fp) != 1) {
+                ST_WARNING("Failed to write hs_input_size.");
+                return -1;
+            }
         }
     } else {
         fprintf(fp, "    \n<OUTPUT>\n");
@@ -661,8 +775,13 @@ int output_save_header(output_t *output, FILE *fp, bool binary)
         fprintf(fp, "Class size: %d\n", output->output_opt.class_size);
         fprintf(fp, "HS: %s\n", bool2str(output->output_opt.hs));
         // Version 2
-        fprintf(fp, "Max code len: %d\n", output->output_opt.max_code_len);
-        fprintf(fp, "Class HS: %s\n", bool2str(output->output_opt.class_hs));
+        if (output->output_opt.hs) {
+            fprintf(fp, "    Max code len: %d\n",
+                    output->output_opt.max_code_len);
+            fprintf(fp, "    Class HS: %s\n",
+                    bool2str(output->output_opt.class_hs));
+            fprintf(fp, "    HS input size: %d\n", output->hs_input_size);
+        }
     }
 
     return 0;
@@ -674,6 +793,7 @@ int output_save_body(output_t *output, FILE *fp, bool binary)
 
     int class_size;
     int max_code_len;
+    int hs_input_size;
 
     int n;
 
@@ -689,6 +809,7 @@ int output_save_body(output_t *output, FILE *fp, bool binary)
 
     class_size = output->output_opt.class_size;
     max_code_len = output->output_opt.max_code_len;
+    hs_input_size = output->hs_input_size;
 
     if (binary) {
         n = -OUTPUT_MAGIC_NUM;
@@ -730,6 +851,12 @@ int output_save_body(output_t *output, FILE *fp, bool binary)
                     ST_WARNING("Failed to write pt_c.");
                     return -1;
                 }
+
+                sz = (class_size - 1) * output->hs_input_size;
+                if (fwrite(output->wt_hs_c, sizeof(real_t), sz, fp) != sz) {
+                    ST_WARNING("Failed to write wt_hs_c.");
+                    return -1;
+                }
             }
 
             sz = output->output_size * max_code_len;
@@ -741,6 +868,17 @@ int output_save_body(output_t *output, FILE *fp, bool binary)
             sz = output->output_size * max_code_len;
             if (fwrite(output->pt_w, sizeof(int), sz, fp) != sz) {
                 ST_WARNING("Failed to write pt_w.");
+                return -1;
+            }
+
+            if (class_size > 0) {
+                sz = (output->output_size - class_size);
+            } else {
+                sz = (output->output_size - 1);
+            }
+            sz = sz * output->hs_input_size;
+            if (fwrite(output->wt_hs_w, sizeof(real_t), sz, fp) != sz) {
+                ST_WARNING("Failed to write wt_hs_w.");
                 return -1;
             }
         }
@@ -774,6 +912,15 @@ int output_save_body(output_t *output, FILE *fp, bool binary)
                 for (i = 0; i < sz; i++) {
                     t = output->pt_c[i];
                     fprintf(fp, "\t%d\t%d\n", i / max_code_len, t);
+                }
+
+                if (hs_input_size > 0) {
+                    fprintf(fp, "Class HS weights:\n");
+                    sz = (class_size  - 1) * hs_input_size;
+                    for (i = 0; i < sz; i++) {
+                        fprintf(fp, "\t%d\t" REAL_FMT "\n",
+                                i / hs_input_size, output->wt_hs_c[i]);
+                    }
                 }
             }
 
@@ -814,6 +961,29 @@ int output_save_body(output_t *output, FILE *fp, bool binary)
                 for (i = 0; i < sz; i++) {
                     t = output->pt_w[i];
                     fprintf(fp, "\t%d\t%d\t%d\n", -1, i / max_code_len, t);
+                }
+            }
+
+            if (hs_input_size > 0) {
+                fprintf(fp, "Word HS weights:\n");
+                if (class_size > 0) {
+                    for (c = 0; c < class_size; c++) {
+                        s = output->c2w_s[c];
+                        e = output->c2w_e[c];
+                        sz = (e - s - 1) * hs_input_size;
+                        for (i = 0; i < sz; i++) {
+                            fprintf(fp, "\t%d\t%d\t" REAL_FMT "\n", c,
+                                i / hs_input_size,
+                                output->wt_hs_w[output_hs_wt_w_pos(c, s)
+                                    * hs_input_size + i]);
+                        }
+                    }
+                } else {
+                    sz = (output->output_size - 1) * hs_input_size;
+                    for (i = 0; i < sz; i++) {
+                        fprintf(fp, "\t%d\t%d\t" REAL_FMT "\n", -1,
+                            i / hs_input_size, output->wt_hs_w[i]);
+                    }
                 }
             }
         }
@@ -1219,6 +1389,69 @@ int output_generate(output_t *output, count_t *word_cnts)
     return 0;
 }
 
+int output_hs_init(output_t *output, int hs_input_size)
+{
+    size_t i;
+    size_t sz;
+
+    int class_size;
+    int word_size;
+
+    ST_CHECK_PARAM(output == NULL || hs_input_size < 0, -1);
+
+    safe_free(output->wt_hs_c);
+    safe_free(output->wt_hs_w);
+
+    if (!output->output_opt.hs) {
+        return 0;
+    }
+
+    output->hs_input_size = hs_input_size;
+    class_size = output->output_opt.class_size;
+
+    if (class_size > 0) { 
+        if (output->output_opt.class_hs) {
+            sz = (class_size - 1) * hs_input_size;
+            if (posix_memalign((void **)&output->wt_hs_c, ALIGN_SIZE,
+                        sizeof(real_t) * sz) != 0
+                    || output->wt_hs_c == NULL) {
+                ST_WARNING("Failed to malloc wt_hs_c.");
+                goto ERR;
+            }
+
+            for (i = 0; i < sz; i++) {
+                output->wt_hs_c[i] = st_random(-0.1, 0.1)
+                    + st_random(-0.1, 0.1) + st_random(-0.1, 0.1);
+            }
+        }
+
+        word_size = output->output_size - class_size;
+    } else {
+        word_size = output->output_size - 1;
+    }
+
+    sz = word_size * hs_input_size;
+    if (posix_memalign((void **)&output->wt_hs_w, ALIGN_SIZE,
+                sizeof(real_t) * sz) != 0
+            || output->wt_hs_w == NULL) {
+        ST_WARNING("Failed to malloc wt_hs_w.");
+        goto ERR;
+    }
+
+    for (i = 0; i < sz; i++) {
+        output->wt_hs_w[i] = st_random(-0.1, 0.1)
+            + st_random(-0.1, 0.1) + st_random(-0.1, 0.1);
+    }
+
+    return 0;
+
+ERR:
+    safe_free(output->wt_hs_c);
+    safe_free(output->wt_hs_w);
+
+    return -1;
+}
+
 static int output_hs_forward(real_t *ac, real_t *wt, int input_size,
         int num_leaf, int node, int *pts, char* codes, int max_code_len)
 {
@@ -1258,15 +1491,6 @@ int output_activate_pre_layer(output_t *output, int cls, int tid)
     return 0;
 }
 
-static inline int output_hs_code_pos(int cls, int s)
-{
-    if (cls < 0) {
-        return 0;
-    }
-
-    return 2 * s - cls;
-}
-
 int output_activate_last_layer(output_t *output, int word, int tid)
 {
     output_neuron_t *neu;
@@ -1292,10 +1516,10 @@ int output_activate_last_layer(output_t *output, int word, int tid)
     if (output->output_opt.hs) {
         if (output_hs_forward(neu->ac_o_w + s,
                     neu->wt_hs_w + output->hs_input_size
-                                   * output_hs_code_pos(cls, s),
+                                   * output_hs_wt_w_pos(cls, s),
                     output->hs_input_size, e - s,
-                    word - s, output->pt_w + output_hs_code_pos(cls, s),
-                    output->code_w + output_hs_code_pos(cls, s),
+                    word - s, output->pt_w + s,
+                    output->code_w + s,
                     output->output_opt.max_code_len) < 0) {
             ST_WARNING("Failed to output_hs_forward word");
             return -1;
@@ -1394,7 +1618,7 @@ double output_get_word_prob(output_t *output, int word, int tid)
     return neu->ac_o_w[word];
 }
 
-int output_setup_train(output_t *output, int num_thrs, int hs_input_size)
+int output_setup_train(output_t *output, int num_thrs)
 {
     output_neuron_t *neu;
     size_t sz;
@@ -1416,19 +1640,10 @@ int output_setup_train(output_t *output, int num_thrs, int hs_input_size)
     }
     memset(output->neurons, 0, sz);
 
-    if (output->output_opt.hs) {
-        if (hs_input_size <= 0) {
-            ST_WARNING("Error hs_input_size[%d].", hs_input_size);
-            goto ERR;
-        }
-
-        output->hs_input_size = hs_input_size;
-    }
-
     class_size = output->output_opt.class_size;
     if (class_size > 0) {
         if (output->output_opt.class_hs) {
-            class_size = hs_input_size;
+            class_size = output->hs_input_size;
         }
 
         for (t = 0; t < num_thrs; t++) {
@@ -1455,7 +1670,7 @@ int output_setup_train(output_t *output, int num_thrs, int hs_input_size)
     }
 
     if (output->output_opt.hs) {
-        word_size = hs_input_size;
+        word_size = output->hs_input_size;
     } else {
         word_size = output->output_size;
     }
@@ -1492,6 +1707,9 @@ ERR:
             safe_free(output->neurons[i].er_o_c);
             safe_free(output->neurons[i].ac_o_w);
             safe_free(output->neurons[i].er_o_w);
+
+            safe_free(output->neurons[i].wt_hs_c);
+            safe_free(output->neurons[i].wt_hs_w);
         }
         safe_free(output->neurons);
     }
@@ -1641,6 +1859,9 @@ ERR:
             safe_free(output->neurons[i].er_o_c);
             safe_free(output->neurons[i].ac_o_w);
             safe_free(output->neurons[i].er_o_w);
+
+            safe_free(output->neurons[i].wt_hs_c);
+            safe_free(output->neurons[i].wt_hs_w);
         }
         safe_free(output->neurons);
     }

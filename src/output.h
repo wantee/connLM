@@ -201,6 +201,15 @@ int output_save_body(output_t *output, FILE *fp, bool binary);
 int output_generate(output_t *output, count_t *word_cnts);
 
 /**
+ * Initializing HS for output layer.
+ * @ingroup g_output
+ * @param[in] output output layer.
+ * @param[in] hs_size input size for HS.
+ * @return non-zero value if any error.
+ */
+int output_hs_init(output_t *output, int hs_input_size);
+
+/**
  * Activate neurons of pre output layer.
  * @ingroup g_output
  * @param[in] output output layer related.
@@ -270,10 +279,9 @@ double output_get_word_prob(output_t *output, int word, int tid);
  * @ingroup g_output
  * @param[in] output output layer.
  * @param[in] num_thrs number of thread to be used.
- * @param[in] hs_input_size input size of HS tree.
  * @return non-zero value if any error.
  */
-int output_setup_train(output_t *output, int num_thrs, int hs_input_size);
+int output_setup_train(output_t *output, int num_thrs);
 /**
  * Reset training for output layer.
  * Called before every input sentence to be trained.

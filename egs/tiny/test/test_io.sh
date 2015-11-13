@@ -58,11 +58,18 @@ for cls in 0 100; do
                 exit 1
               fi
 
-              t=`echo "$info" | grep "^Class HS" \
+              t=`echo "$info" | grep "Class HS" \
                   | awk -F':' '{gsub (" ", "", $2); print $2}'`
-              if [ "$t" != "$cls_hs" ]; then
-                shu-err "Class HS not match"
-                exit 1
+              if [ $hs == true ]; then
+                if [ "$t" != "$cls_hs" ]; then
+                  shu-err "$t $hs $cls_hs Class HS not match"
+                  exit 1
+                fi
+              else
+                if [ -n "$t" ]; then
+                  shu-err "$t Class HS not match"
+                  exit 1
+                fi
               fi
 
               t=`echo "$info" | grep "^<RNN>" \
