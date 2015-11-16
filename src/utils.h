@@ -45,6 +45,8 @@ void matXvec(real_t *dst, real_t *mat, real_t *vec,
 void vecXmat(real_t *dst, real_t *vec, real_t *mat,
         int mat_col, int vec_size, real_t scale);
 
+real_t dot_product(real_t *v1, real_t *v2, int vec_size);
+
 void sigmoid(real_t *vec, int vec_size);
 
 void softmax(real_t *vec, int vec_size);

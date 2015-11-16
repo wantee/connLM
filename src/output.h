@@ -60,8 +60,14 @@ typedef struct _output_neuron_t_ {
     real_t *ac_o_c; /**< activation of output of class part. */
     real_t *er_o_c; /**< error of output of class part. */
 
-    real_t *wt_hs_c /**< HS weights for classes. */;
+    real_t *wt_hs_c; /**< HS weights for classes. */
     real_t *wt_hs_w; /**< HS weights for words. */
+
+    real_t *ac_hs_c; /**< HS activiation for classes. */
+    real_t *ac_hs_w; /**< HS activiation for words. */
+
+    real_t p_hs_c; /**< Probility for class of HS. */
+    real_t p_hs_w; /**< Probility for word of HS. */
 } output_neuron_t;
 
 /**

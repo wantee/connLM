@@ -179,6 +179,19 @@ void vecXmat(real_t *dst, real_t *vec, real_t *mat,
 #endif
 }
 
+real_t dot_product(real_t *v1, real_t *v2, int vec_size)
+{
+    double s;
+    int a;
+
+    s = 0.0;
+    for (a = 0; a < vec_size; a++) {
+        s += v1[a] * v2[a];
+    }
+
+    return (real_t)s;
+}
+
 void sigmoid(real_t *vec, int vec_size)
 {
     int a;

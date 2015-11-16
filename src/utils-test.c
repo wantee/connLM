@@ -40,7 +40,7 @@ static int unit_test_matXvec()
 
     int i;
 
-    fprintf(stderr, " Testing matXvec...\n");
+    fprintf(stderr, " Testing matXvec...");
 
     for (i = 0; i < N; i++) {
         vec[i] = (i + 1);
@@ -58,11 +58,16 @@ static int unit_test_matXvec()
 
     for (i = 0; i < M; i++) {
         if (dst[i] != ref[i]) {
-            return -1;
+            goto FAILED;
         }
     }
 
+    fprintf(stderr, "Passed\n");
     return 0;
+
+FAILED:
+    fprintf(stderr, "Failed\n");
+    return -1;
 }
 
 static int unit_test_vecXMat()
@@ -75,7 +80,7 @@ static int unit_test_vecXMat()
 
     int i;
 
-    fprintf(stderr, " Testing vecXmat...\n");
+    fprintf(stderr, " Testing vecXmat...");
 
     for (i = 0; i < M; i++) {
         vec[i] = (i + 1);
@@ -93,11 +98,50 @@ static int unit_test_vecXMat()
 
     for (i = 0; i < N; i++) {
         if (dst[i] != ref[i]) {
-            return -1;
+            goto FAILED;
         }
     }
 
+    fprintf(stderr, "Passed\n");
     return 0;
+
+FAILED:
+    fprintf(stderr, "Failed\n");
+    return -1;
+}
+
+static int unit_test_dot_product()
+{
+    real_t v1[M];
+    real_t v2[M];
+    real_t ret;
+    real_t ref = 16;
+
+    int i;
+
+    fprintf(stderr, " Testing dot_product...");
+
+    for (i = 0; i < M; i++) {
+        v1[i] = (i + 1);
+    }
+
+    for (i = 0; i < M; i++) {
+        v2[i] = i * 2;
+    }
+
+    ret = dot_product(v1, v2, M);
+
+    fprintf(stderr, "%g\n", ret);
+    if (ret != ref) {
+        goto FAILED;
+    }
+
+    fprintf(stderr, "Passed\n");
+    return 0;
+
+FAILED:
+    fprintf(stderr, "Failed\n");
+    return -1;
 }
 
 static int unit_test_parse_model_filter()
@@ -410,9 +454,14 @@ static int run_all_tests()
         ret = -1;
     }
 
+    if (unit_test_dot_product() != 0) {
+        ret = -1;
+    }
+
     if (unit_test_parse_model_filter() != 0) {
         ret = -1;
     }
+
     return ret;
 }
 

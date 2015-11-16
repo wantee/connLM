@@ -123,6 +123,12 @@ void output_destroy(output_t *output)
 
             safe_free(output->neurons[i].wt_hs_c);
             safe_free(output->neurons[i].wt_hs_w);
+
+            safe_free(output->neurons[i].ac_hs_c);
+            safe_free(output->neurons[i].ac_hs_w);
+
+            output->neurons[i].p_hs_c = -1.0;
+            output->neurons[i].p_hs_w = -1.0;
         }
         safe_free(output->neurons);
     }
@@ -1452,12 +1458,34 @@ ERR:
     return -1;
 }
 
-static int output_hs_forward(real_t *ac, real_t *wt, int input_size,
-        int num_leaf, int node, int *pts, char* codes, int max_code_len)
+static int output_hs_forward(real_t *p, real_t *in, real_t *wt,
+        int input_size, int *pts, char *codes, int max_code_len,
+        real_t *ac)
 {
-    ST_CHECK_PARAM(ac == NULL || wt == NULL || input_size <= 0
-            || num_leaf <= 0 || node < 0 || pts == NULL
-            || codes == NULL || max_code_len <= 0, -1);
+    double d;
+    int c;
+
+    ST_CHECK_PARAM(p == NULL || in == NULL || wt == NULL
+            || input_size <= 0 || pts == NULL || codes == NULL
+            || max_code_len <= 0 || ac == NULL, -1);
+
+    d = 1.0;
+    c = 0;
+    while (pts[c] > 0 && c < max_code_len) {
+        ac[c] = dot_product(ac, wt + pts[c] * input_size, input_size);
+
+        sigmoid(ac + c, 1);
+
+        if (codes[c] == 0) {
+            d *= ac[c];
+        } else {
+            d *= (1 - ac[c]);
+        }
+
+        c++;
+    }
+
+    *p = d;
 
     return 0;
 }
@@ -1475,11 +1503,13 @@ int output_activate_pre_layer(output_t *output, int cls, int tid)
                 ST_WARNING("class not specified.");
                 return -1;
             }
-            if (output_hs_forward(neu->ac_o_c, neu->wt_hs_c,
-                        output->hs_input_size,
-                        output->output_opt.class_size,
-                        cls, output->pt_c, output->code_c,
-                        output->output_opt.max_code_len) < 0) {
+            if (output_hs_forward(&neu->p_hs_c, neu->ac_o_c,
+                    output->wt_hs_c,
+                    output->hs_input_size,
+                    output->pt_c + cls * output->output_opt.max_code_len,
+                    output->code_c + cls * output->output_opt.max_code_len,
+                    output->output_opt.max_code_len,
+                    neu->ac_hs_c) < 0) {
                 ST_WARNING("Failed to output_hs_forward class");
                 return -1;
             }
@@ -1514,13 +1544,14 @@ int output_activate_last_layer(output_t *output, int word, int tid)
     }
 
     if (output->output_opt.hs) {
-        if (output_hs_forward(neu->ac_o_w + s,
-                    neu->wt_hs_w + output->hs_input_size
-                                   * output_hs_wt_w_pos(cls, s),
-                    output->hs_input_size, e - s,
-                    word - s, output->pt_w + s,
-                    output->code_w + s,
-                    output->output_opt.max_code_len) < 0) {
+        if (output_hs_forward(&neu->p_hs_w, neu->ac_o_w + s,
+                output->wt_hs_w + output->hs_input_size
+                               * output_hs_wt_w_pos(cls, s),
+                output->hs_input_size,
+                output->pt_w + word * output->output_opt.max_code_len,
+                output->code_w + word * output->output_opt.max_code_len,
+                output->output_opt.max_code_len,
+                neu->ac_hs_w) < 0) {
             ST_WARNING("Failed to output_hs_forward word");
             return -1;
         }
@@ -1576,11 +1607,19 @@ double output_get_prob(output_t *output, int word, int tid)
     double p = 1;
 
     neu = output->neurons + tid;
-    if (output->output_opt.class_size > 0) {
-        p *= neu->ac_o_c[output->w2c[word]];
-    }
 
-    p *= neu->ac_o_w[word];
+    if (output->output_opt.hs) {
+        if (output->output_opt.class_size > 0) {
+            p *= neu->p_hs_c;
+        }
+        p *= neu->p_hs_w;
+    } else {
+        if (output->output_opt.class_size > 0) {
+            p *= neu->ac_o_c[output->w2c[word]];
+        }
+
+        p *= neu->ac_o_w[word];
+    }
 
     return p;
 }
@@ -1590,11 +1629,16 @@ double output_get_class_prob_for_class(output_t *output, int cls, int tid)
     output_neuron_t *neu;
 
     neu = output->neurons + tid;
+
     if (output->output_opt.class_size > 0) {
-        return neu->ac_o_c[cls];
+        if (output->output_opt.hs) {
+            return neu->p_hs_c;
+        } else {
+            return neu->ac_o_c[cls];
+        }
     }
 
-    return 0;
+    return 1.0;
 }
 
 double output_get_class_prob(output_t *output, int word, int tid)
@@ -1602,11 +1646,16 @@ double output_get_class_prob(output_t *output, int word, int tid)
     output_neuron_t *neu;
 
     neu = output->neurons + tid;
+
     if (output->output_opt.class_size > 0) {
-        return neu->ac_o_c[output->w2c[word]];
+        if (output->output_opt.hs) {
+            return neu->p_hs_c;
+        } else {
+            return neu->ac_o_c[output->w2c[word]];
+        }
     }
 
-    return 0;
+    return 1.0;
 }
 
 double output_get_word_prob(output_t *output, int word, int tid)
@@ -1615,7 +1664,11 @@ double output_get_word_prob(output_t *output, int word, int tid)
 
     neu = output->neurons + tid;
 
-    return neu->ac_o_w[word];
+    if (output->output_opt.hs) {
+        return neu->p_hs_w;
+    } else {
+        return neu->ac_o_w[word];
+    }
 }
 
 int output_setup_train(output_t *output, int num_thrs)
@@ -1625,6 +1678,7 @@ int output_setup_train(output_t *output, int num_thrs)
 
     int class_size;
     int word_size;
+    int max_code_len;
 
     int i;
     int t;
@@ -1640,6 +1694,7 @@ int output_setup_train(output_t *output, int num_thrs)
     }
     memset(output->neurons, 0, sz);
 
+    max_code_len = output->output_opt.max_code_len;
     class_size = output->output_opt.class_size;
     if (class_size > 0) {
         if (output->output_opt.class_hs) {
@@ -1665,6 +1720,21 @@ int output_setup_train(output_t *output, int num_thrs)
             for (i = 0; i < class_size; i++) {
                 neu->ac_o_c[i] = 0;
                 neu->er_o_c[i] = 0;
+            }
+
+            if (output->output_opt.hs && output->output_opt.class_hs) {
+                if (posix_memalign((void **)&neu->ac_hs_c, ALIGN_SIZE,
+                            sizeof(real_t) * max_code_len) != 0
+                        || neu->ac_hs_c == NULL) {
+                    ST_WARNING("Failed to malloc ac_hs_c.");
+                    goto ERR;
+                }
+
+                for (i = 0; i < max_code_len; i++) {
+                    neu->ac_hs_c[i] = 0;
+                }
+
+                neu->p_hs_c = -1.0;
             }
         }
     }
@@ -1696,6 +1766,21 @@ int output_setup_train(output_t *output, int num_thrs)
             neu->ac_o_w[i] = 0;
             neu->er_o_w[i] = 0;
         }
+
+        if (output->output_opt.hs) {
+            if (posix_memalign((void **)&neu->ac_hs_w, ALIGN_SIZE,
+                        sizeof(real_t) * max_code_len) != 0
+                    || neu->ac_hs_w == NULL) {
+                ST_WARNING("Failed to malloc ac_hs_w.");
+                goto ERR;
+            }
+
+            for (i = 0; i < max_code_len; i++) {
+                neu->ac_hs_w[i] = 0;
+            }
+
+            neu->p_hs_w = -1.0;
+        }
     }
 
     return 0;
@@ -1710,6 +1795,12 @@ ERR:
 
             safe_free(output->neurons[i].wt_hs_c);
             safe_free(output->neurons[i].wt_hs_w);
+
+            safe_free(output->neurons[i].ac_hs_c);
+            safe_free(output->neurons[i].ac_hs_w);
+
+            output->neurons[i].p_hs_c = -1.0;
+            output->neurons[i].p_hs_w = -1.0;
         }
         safe_free(output->neurons);
     }
@@ -1805,6 +1896,7 @@ int output_setup_test(output_t *output, int num_thrs)
     size_t sz;
 
     int class_size;
+    int max_code_len;
 
     int i;
     int t;
@@ -1821,6 +1913,7 @@ int output_setup_test(output_t *output, int num_thrs)
     memset(output->neurons, 0, sz);
 
     class_size = output->output_opt.class_size;
+    max_code_len = output->output_opt.max_code_len;
 
     for (t = 0; t < num_thrs; t++) {
         neu = output->neurons + t;
@@ -1836,6 +1929,21 @@ int output_setup_test(output_t *output, int num_thrs)
             for (i = 0; i < class_size; i++) {
                 neu->ac_o_c[i] = 0;
             }
+
+            if (output->output_opt.hs && output->output_opt.class_hs) {
+                if (posix_memalign((void **)&neu->ac_hs_c, ALIGN_SIZE,
+                            sizeof(real_t) * max_code_len) != 0
+                        || neu->ac_hs_c == NULL) {
+                    ST_WARNING("Failed to malloc ac_hs_c.");
+                    goto ERR;
+                }
+
+                for (i = 0; i < max_code_len; i++) {
+                    neu->ac_hs_c[i] = 0;
+                }
+
+                neu->p_hs_c = -1.0;
+            }
         }
 
         if (posix_memalign((void **)&neu->ac_o_w, ALIGN_SIZE,
@@ -1847,6 +1955,21 @@ int output_setup_test(output_t *output, int num_thrs)
 
         for (i = 0; i < output->output_size; i++) {
             neu->ac_o_w[i] = 0;
+        }
+
+        if (output->output_opt.hs) {
+            if (posix_memalign((void **)&neu->ac_hs_w, ALIGN_SIZE,
+                        sizeof(real_t) * max_code_len) != 0
+                    || neu->ac_hs_w == NULL) {
+                ST_WARNING("Failed to malloc ac_hs_w.");
+                goto ERR;
+            }
+
+            for (i = 0; i < max_code_len; i++) {
+                neu->ac_hs_w[i] = 0;
+            }
+
+            neu->p_hs_w = -1.0;
         }
     }
 
@@ -1862,6 +1985,12 @@ ERR:
 
             safe_free(output->neurons[i].wt_hs_c);
             safe_free(output->neurons[i].wt_hs_w);
+
+            safe_free(output->neurons[i].ac_hs_c);
+            safe_free(output->neurons[i].ac_hs_w);
+
+            output->neurons[i].p_hs_c = -1.0;
+            output->neurons[i].p_hs_w = -1.0;
         }
         safe_free(output->neurons);
     }
