@@ -79,7 +79,6 @@ Options  :
 
   Note that, there are some constraints on the using of HS:
 
-  -# HS is not supported by MaxEnt model.
   -# with HS, the pre-output layer of all component models
      must be the same size.
 

@@ -15,8 +15,8 @@ exp_dir=./exp/
 
 #class_size=""
 class_size="100"
-tr_thr=4
-test_thr=4
+tr_thr=1
+test_thr=1
 
 realtype="float"
 

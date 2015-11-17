@@ -73,6 +73,8 @@ After tests, one should rebuild the binaries for speed up: `make clean && make`.
 ## Related Tools
 1. [RNNLM Toolkit](http://rnnlm.org/)
 2. [word2vec](https://code.google.com/p/word2vec/)
-3. [NPLM Toolkit](http://nlg.isi.edu/software/nplm/)
-4. [LBL4word2vec](https://github.com/qunluo/LBL4word2vec)
-5. [neural_lm](https://github.com/ddahlmeier/neural_lm/)
+3. [faster-rnnlm](https://github.com/yandex/faster-rnnlm/)
+4. [rnnlm-hs](https://svn.code.sf.net/p/kaldi/code/trunk/tools/rnnlm-hs-0.1b/)
+5. [NPLM Toolkit](http://nlg.isi.edu/software/nplm/)
+6. [LBL4word2vec](https://github.com/qunluo/LBL4word2vec)
+7. [neural_lm](https://github.com/ddahlmeier/neural_lm/)
