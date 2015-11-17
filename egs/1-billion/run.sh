@@ -1,9 +1,9 @@
 #!/bin/bash
 
-data=./corpus
+data=$PWD/corpus
 
 # base url for downloads.
-data_url=http://www.fit.vutbr.cz/~imikolov/rnnlm/simple-examples.tgz
+data_url=http://statmt.org/wmt11/training-monolingual.tgz
 
 train_file=./data/train
 valid_file=./data/valid
@@ -15,8 +15,8 @@ exp_dir=./exp/
 
 #class_size=""
 class_size="100"
-tr_thr=1
-test_thr=1
+tr_thr=24
+test_thr=24
 
 realtype="float"
 
@@ -74,12 +74,20 @@ echo "Step $st: ${stepnames[$st]} ..."
 local/download_data.sh $data_url $data || exit 1
 
 data=`cd $data; pwd`
-mkdir -p `dirname "$train_file"`
-ln -sf $data/simple-examples/data/ptb.train.txt $train_file || exit 1
-mkdir -p `dirname "$valid_file"`
-ln -sf $data/simple-examples/data/ptb.valid.txt $valid_file || exit 1
-mkdir -p `dirname "$test_file"`
-ln -sf $data/simple-examples/data/ptb.test.txt $test_file || exit 1
+if [ ! -f "$train_file" ]; then
+  mkdir -p `dirname "$train_file"`
+  cat $data/1-billion-word-language-modeling-benchmark/heldout-monolingual.tokenized.shuffled/news.en.heldout-0000[2-9]-of-00050 > $train_file || exit 1
+  cat $data/1-billion-word-language-modeling-benchmark/heldout-monolingual.tokenized.shuffled/news.en.heldout-000[1-9]?-of-00050 >> $train_file || exit 1
+  cat $data/1-billion-word-language-modeling-benchmark/training-monolingual.tokenized.shuffled/news.en-*-of-00100 >> $train_file || exit 1
+fi
+if [ ! -f "$valid_file" ]; then
+  mkdir -p `dirname "$valid_file"`
+  cp $data/1-billion-word-language-modeling-benchmark/heldout-monolingual.tokenized.shuffled/news.en.heldout-00000-of-00050 $valid_file || exit 1
+fi
+if [ ! -f "$test_file" ]; then
+  mkdir -p `dirname "$test_file"`
+  cp $data/1-billion-word-language-modeling-benchmark/heldout-monolingual.tokenized.shuffled/news.en.heldout-00001-of-00050 $test_file || exit 1
+fi
 
 fi
 ((st++))
