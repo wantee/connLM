@@ -6,7 +6,7 @@ Step 1: Learn Vocab ...
 Words:  81350
 Vocab size:  3721
 =================================
-../steps/learn_vocab.sh: Elapse time: 0hr0m2s
+../steps/learn_vocab.sh: Elapse time: 0hr0m3s
 
 Step 2: Train MaxEnt model ...
 ../steps/run_standalone.sh --class-size  --train-thr 1 --test-thr 1 maxent test/tmp/case-03/exp/conf test/tmp/case-03/exp ./data/train ./data/valid ./data/test
@@ -16,30 +16,30 @@ Step 2: Train MaxEnt model ...
 ../steps/init_model.sh: Elapse time: 0hr0m0s
 ../steps/run_standalone.sh: Stage 2 --- Training model...
 ../steps/train_model.sh --train-config test/tmp/case-03/exp/conf/maxent/train.conf --test-config test/tmp/case-03/exp/conf/test.conf --train-threads 1 --test-threads 1 ./data/train ./data/valid test/tmp/case-03/exp/maxent
-Prerun Valid Entropy: 8.857643
-ITERATION 01: TrEnt 7.654640, lr(0.1/0.005/0.1/0.1), W/s 90.3k, CVEnt: 7.472616
+Prerun Valid Entropy: 8.857732
+ITERATION 01: TrEnt 7.654829, lr(0.1/0.005/0.1/0.1), W/s 95.4k, CVEnt: 7.473052
 nnet accepted (01.clm)
-ITERATION 02: TrEnt 7.323397, lr(0.1/0.005/0.1/0.1), W/s 90.2k, CVEnt: 7.381858
+ITERATION 02: TrEnt 7.323919, lr(0.1/0.005/0.1/0.1), W/s 97.4k, CVEnt: 7.382656
 nnet accepted (02.clm)
-ITERATION 03: TrEnt 7.192573, lr(0.1/0.005/0.1/0.1), W/s 89.8k, CVEnt: 7.322828
+ITERATION 03: TrEnt 7.193449, lr(0.1/0.005/0.1/0.1), W/s 73.1k, CVEnt: 7.323851
 nnet accepted (03.clm)
-ITERATION 04: TrEnt 7.099852, lr(0.1/0.005/0.1/0.1), W/s 90.2k, CVEnt: 7.277546
+ITERATION 04: TrEnt 7.100913, lr(0.1/0.005/0.1/0.1), W/s 71.5k, CVEnt: 7.278992
 nnet accepted (04.clm)
-ITERATION 05: TrEnt 7.025917, lr(0.1/0.005/0.1/0.1), W/s 90.2k, CVEnt: 7.246837
+ITERATION 05: TrEnt 7.027097, lr(0.1/0.005/0.1/0.1), W/s 72.7k, CVEnt: 7.247929
 nnet accepted (05.clm)
-ITERATION 06: TrEnt 6.965264, lr(0.1/0.005/0.1/0.1), W/s 90.2k, CVEnt: 7.215345
+ITERATION 06: TrEnt 6.966545, lr(0.1/0.005/0.1/0.1), W/s 97.2k, CVEnt: 7.216395
 nnet accepted (06.clm)
-ITERATION 07: TrEnt 6.911523, lr(0.1/0.005/0.1/0.1), W/s 90.2k, CVEnt: 7.191556
+ITERATION 07: TrEnt 6.912962, lr(0.1/0.005/0.1/0.1), W/s 98.7k, CVEnt: 7.192876
 nnet accepted (07.clm)
-ITERATION 08: TrEnt 6.863947, lr(0.1/0.005/0.1/0.1), W/s 90.2k, CVEnt: 7.174971
+ITERATION 08: TrEnt 6.865280, lr(0.1/0.005/0.1/0.1), W/s 98.7k, CVEnt: 7.176243
 nnet accepted (08.clm)
-ITERATION 09: TrEnt 6.825526, lr(0.05/0.0025/0.05/0.05), W/s 90.2k, CVEnt: 7.161882
+ITERATION 09: TrEnt 6.826944, lr(0.05/0.0025/0.05/0.05), W/s 97.5k, CVEnt: 7.163259
 nnet accepted (09.clm)
-ITERATION 10: TrEnt 6.807021, lr(0.025/0.00125/0.025/0.025), W/s 90.2k, CVEnt: 7.154955
+ITERATION 10: TrEnt 6.808512, lr(0.025/0.00125/0.025/0.025), W/s 99.7k, CVEnt: 7.156305
 nnet accepted (10.clm)
-ITERATION 11: TrEnt 6.797898, lr(0.0125/0.000625/0.0125/0.0125), W/s 89.9k, CVEnt: 7.153656
+ITERATION 11: TrEnt 6.799402, lr(0.0125/0.000625/0.0125/0.0125), W/s 101.7k, CVEnt: 7.154985
 nnet accepted (11.clm)
-../steps/train_model.sh: finished, too small rel. improvement .0001815525
+../steps/train_model.sh: finished, too small rel. improvement .0001844527
 ../steps/train_model.sh: Succeeded training the Neural Network : test/tmp/case-03/exp/maxent/final.clm
 ../steps/train_model.sh: Elapse time: 0hr0m13s
 ../steps/train_model.sh: Effective speed: 68.8k words/sec
@@ -47,9 +47,9 @@ nnet accepted (11.clm)
 ../steps/test_model.sh --config-file test/tmp/case-03/exp/conf/test.conf --test-threads 1 test/tmp/case-03/exp/maxent ./data/test
 ../steps/test_model.sh: Testing model test/tmp/case-03/exp/maxent/final.clm ...
 =================================
-Test Entropy: 7.040253
-Test PPL: 131.621615
-Test Speed: 146.5k words/sec
+Test Entropy: 7.040397
+Test PPL: 131.634755
+Test Speed: 124.9k words/sec
 =================================
-../steps/test_model.sh: Elapse time: 0hr0m0s
-../steps/run_standalone.sh: Elapse time: 0hr0m13s
+../steps/test_model.sh: Elapse time: 0hr0m1s
+../steps/run_standalone.sh: Elapse time: 0hr0m15s

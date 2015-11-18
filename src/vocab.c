@@ -397,14 +397,16 @@ typedef struct _word_info_t_ {
     count_t cnt;
 } word_info_t;
 
-/* TODO: sort by count and string. */
-int word_info_comp(const void *elem1, const void *elem2) 
+int word_info_comp(const void *elem1, const void *elem2, void *args) 
 {
     word_info_t *f = (word_info_t *)elem1;
     word_info_t *s = (word_info_t *)elem2;
+
     if (f->cnt < s->cnt) return  1;
     if (f->cnt > s->cnt) return -1;
-    return 0;
+    return strncmp(st_alphabet_get_label((st_alphabet_t *)args, f->id),
+                st_alphabet_get_label((st_alphabet_t *)args, s->id),
+                MAX_SYM_LEN);
 }
 
 static int vocab_sort(vocab_t *vocab, word_info_t *word_infos,
@@ -443,8 +445,8 @@ static int vocab_sort(vocab_t *vocab, word_info_t *word_infos,
         word_infos[a] = swap;
     }
 #endif
-    qsort(word_infos + UNK_ID + 1, total_vocab_size - UNK_ID - 1,
-            sizeof(word_info_t), word_info_comp);
+    st_qsort(word_infos + UNK_ID + 1, total_vocab_size - UNK_ID - 1,
+            sizeof(word_info_t), word_info_comp, vocab->alphabet);
 
     if (lr_opt->max_vocab_size > 0) {
         vocab->vocab_size = min(total_vocab_size, lr_opt->max_vocab_size);
