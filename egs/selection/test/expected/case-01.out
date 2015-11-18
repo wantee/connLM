@@ -22,41 +22,43 @@ Step 2: Train in-domain model ...
 Words:  6349
 Vocab size:  932
 =================================
-../steps/learn_vocab.sh: Elapse time: 0hr0m3s
+../steps/learn_vocab.sh: Elapse time: 0hr0m2s
 ../steps/run_standalone.sh --class-size  --train-thr 1 --test-thr 1 rnn+maxent test/tmp/case-01/exp/conf test/tmp/case-01/exp/indomain test/tmp/data/indomain/train test/tmp/data/indomain/valid test/tmp/data/test
 ../steps/run_standalone.sh: Stage 1 --- Initialising model...
 ../steps/init_model.sh --init-config-file test/tmp/case-01/exp/conf/rnn+maxent/init.conf --output-config-file test/tmp/case-01/exp/conf/rnn+maxent/output.conf --class-size  --hs  --train-file test/tmp/data/indomain/train --train-config test/tmp/case-01/exp/conf/rnn+maxent/train.conf --train-threads 1 test/tmp/case-01/exp/indomain/vocab.clm test/tmp/case-01/exp/indomain/rnn+maxent
 ../steps/init_model.sh: Initializing model test/tmp/case-01/exp/indomain/vocab.clm to test/tmp/case-01/exp/indomain/rnn+maxent/init.clm ...
-../steps/init_model.sh: Elapse time: 0hr0m1s
+../steps/init_model.sh: Elapse time: 0hr0m0s
 ../steps/run_standalone.sh: Stage 2 --- Training model...
 ../steps/train_model.sh --train-config test/tmp/case-01/exp/conf/rnn+maxent/train.conf --test-config test/tmp/case-01/exp/conf/test.conf --train-threads 1 --test-threads 1 test/tmp/data/indomain/train test/tmp/data/indomain/valid test/tmp/case-01/exp/indomain/rnn+maxent
-Prerun Valid Entropy: 8.143344
-ITERATION 01: TrEnt 7.287213, lr(0.5/0.1/0.5/0.5), W/s 38.2k, CVEnt: 7.096608
+Prerun Valid Entropy: 8.143520
+ITERATION 01: TrEnt 7.282309, lr(0.5/0.1/0.5/0.5), W/s 27.7k, CVEnt: 7.265239
 nnet accepted (01.clm)
-ITERATION 02: TrEnt 6.612204, lr(0.5/0.1/0.5/0.5), W/s 40.1k, CVEnt: 7.152002
-nnet rejected (02.clm)
-ITERATION 03: TrEnt 6.591974, lr(0.25/0.05/0.25/0.25), W/s 37.7k, CVEnt: 7.026932
+ITERATION 02: TrEnt 6.597884, lr(0.5/0.1/0.5/0.5), W/s 27.6k, CVEnt: 7.189536
+nnet accepted (02.clm)
+ITERATION 03: TrEnt 6.149057, lr(0.5/0.1/0.5/0.5), W/s 27.7k, CVEnt: 7.036525
 nnet accepted (03.clm)
-ITERATION 04: TrEnt 6.316460, lr(0.125/0.025/0.125/0.125), W/s 37.5k, CVEnt: 7.011399
+ITERATION 04: TrEnt 5.784593, lr(0.5/0.1/0.5/0.5), W/s 27.8k, CVEnt: 7.034450
 nnet accepted (04.clm)
-ITERATION 05: TrEnt 6.184669, lr(0.0625/0.0125/0.0625/0.0625), W/s 39.1k, CVEnt: 6.981983
+ITERATION 05: TrEnt 5.416461, lr(0.25/0.05/0.25/0.25), W/s 27.7k, CVEnt: 6.975389
 nnet accepted (05.clm)
-ITERATION 06: TrEnt 6.114836, lr(0.03125/0.00625/0.03125/0.03125), W/s 38.0k, CVEnt: 6.984661
-nnet rejected (06.clm)
+ITERATION 06: TrEnt 5.231099, lr(0.125/0.025/0.125/0.125), W/s 27.7k, CVEnt: 6.959853
+nnet accepted (06.clm)
+ITERATION 07: TrEnt 5.139289, lr(0.0625/0.0125/0.0625/0.0625), W/s 27.8k, CVEnt: 7.000448
+nnet rejected (07.clm)
 ../steps/train_model.sh: finished, too small rel. improvement 0
 ../steps/train_model.sh: Succeeded training the Neural Network : test/tmp/case-01/exp/indomain/rnn+maxent/final.clm
 ../steps/train_model.sh: Elapse time: 0hr0m3s
-../steps/train_model.sh: Effective speed: 12.6k words/sec
+../steps/train_model.sh: Effective speed: 14.8k words/sec
 ../steps/run_standalone.sh: Stage 3 --- Testing model...
 ../steps/test_model.sh --config-file test/tmp/case-01/exp/conf/test.conf --test-threads 1 test/tmp/case-01/exp/indomain/rnn+maxent test/tmp/data/test
 ../steps/test_model.sh: Testing model test/tmp/case-01/exp/indomain/rnn+maxent/final.clm ...
 =================================
-Test Entropy: 7.050372
-Test PPL: 132.548069
-Test Speed: 102.3k words/sec
+Test Entropy: 7.099588
+Test PPL: 137.147844
+Test Speed: 76.5k words/sec
 =================================
 ../steps/test_model.sh: Elapse time: 0hr0m0s
-../steps/run_standalone.sh: Elapse time: 0hr0m4s
+../steps/run_standalone.sh: Elapse time: 0hr0m3s
 
 Step 3: Train general model ...
 ../steps/learn_vocab.sh --config-file test/tmp/case-01/exp/conf/vocab.conf test/tmp/data/general/train test/tmp/case-01/exp/general
@@ -65,7 +67,7 @@ Step 3: Train general model ...
 Words:  7289
 Vocab size:  1062
 =================================
-../steps/learn_vocab.sh: Elapse time: 0hr0m2s
+../steps/learn_vocab.sh: Elapse time: 0hr0m1s
 ../steps/run_standalone.sh --class-size  --train-thr 1 --test-thr 1 rnn+maxent test/tmp/case-01/exp/conf test/tmp/case-01/exp/general test/tmp/data/general/train test/tmp/data/general/valid test/tmp/data/test
 ../steps/run_standalone.sh: Stage 1 --- Initialising model...
 ../steps/init_model.sh --init-config-file test/tmp/case-01/exp/conf/rnn+maxent/init.conf --output-config-file test/tmp/case-01/exp/conf/rnn+maxent/output.conf --class-size  --hs  --train-file test/tmp/data/general/train --train-config test/tmp/case-01/exp/conf/rnn+maxent/train.conf --train-threads 1 test/tmp/case-01/exp/general/vocab.clm test/tmp/case-01/exp/general/rnn+maxent
@@ -73,24 +75,24 @@ Vocab size:  1062
 ../steps/init_model.sh: Elapse time: 0hr0m0s
 ../steps/run_standalone.sh: Stage 2 --- Training model...
 ../steps/train_model.sh --train-config test/tmp/case-01/exp/conf/rnn+maxent/train.conf --test-config test/tmp/case-01/exp/conf/test.conf --train-threads 1 --test-threads 1 test/tmp/data/general/train test/tmp/data/general/valid test/tmp/case-01/exp/general/rnn+maxent
-Prerun Valid Entropy: 8.163037
-ITERATION 01: TrEnt 7.339767, lr(0.5/0.1/0.5/0.5), W/s 35.2k, CVEnt: 7.106952
+Prerun Valid Entropy: 8.164855
+ITERATION 01: TrEnt 7.334751, lr(0.5/0.1/0.5/0.5), W/s 27.8k, CVEnt: 7.111339
 nnet accepted (01.clm)
-ITERATION 02: TrEnt 6.675202, lr(0.5/0.1/0.5/0.5), W/s 38.7k, CVEnt: 7.111995
+ITERATION 02: TrEnt 6.673409, lr(0.5/0.1/0.5/0.5), W/s 27.8k, CVEnt: 7.117105
 nnet rejected (02.clm)
-ITERATION 03: TrEnt 6.657565, lr(0.25/0.05/0.25/0.25), W/s 38.1k, CVEnt: 7.118618
+ITERATION 03: TrEnt 6.656396, lr(0.25/0.05/0.25/0.25), W/s 27.7k, CVEnt: 7.129523
 nnet rejected (03.clm)
 ../steps/train_model.sh: finished, too small rel. improvement 0
 ../steps/train_model.sh: Succeeded training the Neural Network : test/tmp/case-01/exp/general/rnn+maxent/final.clm
-../steps/train_model.sh: Elapse time: 0hr0m2s
-../steps/train_model.sh: Effective speed: 10.9k words/sec
+../steps/train_model.sh: Elapse time: 0hr0m1s
+../steps/train_model.sh: Effective speed: 21.8k words/sec
 ../steps/run_standalone.sh: Stage 3 --- Testing model...
 ../steps/test_model.sh --config-file test/tmp/case-01/exp/conf/test.conf --test-threads 1 test/tmp/case-01/exp/general/rnn+maxent test/tmp/data/test
 ../steps/test_model.sh: Testing model test/tmp/case-01/exp/general/rnn+maxent/final.clm ...
 =================================
-Test Entropy: 7.069443
-Test PPL: 134.311853
-Test Speed: 98.8k words/sec
+Test Entropy: 7.070836
+Test PPL: 134.441588
+Test Speed: 75.8k words/sec
 =================================
 ../steps/test_model.sh: Elapse time: 0hr0m0s
 ../steps/run_standalone.sh: Elapse time: 0hr0m2s
@@ -103,54 +105,54 @@ Step 4: Score general corpus ...
 ../steps/test_model.sh --test-threads 1 --out-prob test/tmp/case-01/exp/indomain/rnn+maxent//score//score.1.prob --test-opts --print-sent-prob=true --out-log-base=10 --log-file test/tmp/case-01/exp/indomain/rnn+maxent//score//log/score.1.log --pipe-input true test/tmp/case-01/exp/indomain/rnn+maxent/ sed -n '1,2500p' test/tmp/data/general.corpus
 ../steps/test_model.sh: Testing model test/tmp/case-01/exp/indomain/rnn+maxent//final.clm ...
 =================================
-Test Entropy: 6.924998
-Test PPL: 121.515647
-Test Speed: 54.0k words/sec
+Test Entropy: 6.981354
+Test PPL: 126.356333
+Test Speed: 77.3k words/sec
 =================================
 1 warnings in test/tmp/case-01/exp/indomain/rnn+maxent//score//log/score.1.log.wf.
 Total 1 warnings found.
-../steps/test_model.sh: Elapse time: 0hr0m1s
+../steps/test_model.sh: Elapse time: 0hr0m0s
 ./local/score.sh: Score job 2 log: 
 ../steps/test_model.sh --test-threads 1 --out-prob test/tmp/case-01/exp/indomain/rnn+maxent//score//score.2.prob --test-opts --print-sent-prob=true --out-log-base=10 --log-file test/tmp/case-01/exp/indomain/rnn+maxent//score//log/score.2.log --pipe-input true test/tmp/case-01/exp/indomain/rnn+maxent/ sed -n '2501,5000p' test/tmp/data/general.corpus
 ../steps/test_model.sh: Testing model test/tmp/case-01/exp/indomain/rnn+maxent//final.clm ...
 =================================
-Test Entropy: 6.955904
-Test PPL: 124.146860
-Test Speed: 53.6k words/sec
+Test Entropy: 7.059363
+Test PPL: 133.376699
+Test Speed: 77.5k words/sec
 =================================
 1 warnings in test/tmp/case-01/exp/indomain/rnn+maxent//score//log/score.2.log.wf.
 Total 1 warnings found.
-../steps/test_model.sh: Elapse time: 0hr0m1s
+../steps/test_model.sh: Elapse time: 0hr0m0s
 ./local/score.sh: Score job 3 log: 
 ../steps/test_model.sh --test-threads 1 --out-prob test/tmp/case-01/exp/indomain/rnn+maxent//score//score.3.prob --test-opts --print-sent-prob=true --out-log-base=10 --log-file test/tmp/case-01/exp/indomain/rnn+maxent//score//log/score.3.log --pipe-input true test/tmp/case-01/exp/indomain/rnn+maxent/ sed -n '5001,7500p' test/tmp/data/general.corpus
 ../steps/test_model.sh: Testing model test/tmp/case-01/exp/indomain/rnn+maxent//final.clm ...
 =================================
-Test Entropy: 6.995363
-Test PPL: 127.589291
-Test Speed: 55.2k words/sec
+Test Entropy: 7.060754
+Test PPL: 133.505399
+Test Speed: 76.6k words/sec
 =================================
 1 warnings in test/tmp/case-01/exp/indomain/rnn+maxent//score//log/score.3.log.wf.
 Total 1 warnings found.
-../steps/test_model.sh: Elapse time: 0hr0m1s
+../steps/test_model.sh: Elapse time: 0hr0m0s
 ./local/score.sh: Score job 4 log: 
 ../steps/test_model.sh --test-threads 1 --out-prob test/tmp/case-01/exp/indomain/rnn+maxent//score//score.4.prob --test-opts --print-sent-prob=true --out-log-base=10 --log-file test/tmp/case-01/exp/indomain/rnn+maxent//score//log/score.4.log --pipe-input true test/tmp/case-01/exp/indomain/rnn+maxent/ sed -n '7501,10000p' test/tmp/data/general.corpus
 ../steps/test_model.sh: Testing model test/tmp/case-01/exp/indomain/rnn+maxent//final.clm ...
 =================================
-Test Entropy: 6.907266
-Test PPL: 120.031255
-Test Speed: 61.9k words/sec
+Test Entropy: 6.975365
+Test PPL: 125.832874
+Test Speed: 77.1k words/sec
 =================================
 1 warnings in test/tmp/case-01/exp/indomain/rnn+maxent//score//log/score.4.log.wf.
 Total 1 warnings found.
-../steps/test_model.sh: Elapse time: 0hr0m1s
+../steps/test_model.sh: Elapse time: 0hr0m0s
 ./local/score.sh: Stage 2 --- Scoring general corpus...
 ./local/score.sh: Score job 1 log: 
 ../steps/test_model.sh --test-threads 1 --out-prob test/tmp/case-01/exp/general/rnn+maxent//score//score.1.prob --test-opts --print-sent-prob=true --out-log-base=10 --log-file test/tmp/case-01/exp/general/rnn+maxent//score//log/score.1.log --pipe-input true test/tmp/case-01/exp/general/rnn+maxent/ sed -n '1,2500p' test/tmp/data/general.corpus
 ../steps/test_model.sh: Testing model test/tmp/case-01/exp/general/rnn+maxent//final.clm ...
 =================================
-Test Entropy: 6.854438
-Test PPL: 115.715505
-Test Speed: 50.8k words/sec
+Test Entropy: 6.856890
+Test PPL: 115.912281
+Test Speed: 76.4k words/sec
 =================================
 1 warnings in test/tmp/case-01/exp/general/rnn+maxent//score//log/score.1.log.wf.
 Total 1 warnings found.
@@ -159,9 +161,9 @@ Total 1 warnings found.
 ../steps/test_model.sh --test-threads 1 --out-prob test/tmp/case-01/exp/general/rnn+maxent//score//score.2.prob --test-opts --print-sent-prob=true --out-log-base=10 --log-file test/tmp/case-01/exp/general/rnn+maxent//score//log/score.2.log --pipe-input true test/tmp/case-01/exp/general/rnn+maxent/ sed -n '2501,5000p' test/tmp/data/general.corpus
 ../steps/test_model.sh: Testing model test/tmp/case-01/exp/general/rnn+maxent//final.clm ...
 =================================
-Test Entropy: 6.886468
-Test PPL: 118.313272
-Test Speed: 53.3k words/sec
+Test Entropy: 6.889498
+Test PPL: 118.562042
+Test Speed: 76.6k words/sec
 =================================
 1 warnings in test/tmp/case-01/exp/general/rnn+maxent//score//log/score.2.log.wf.
 Total 1 warnings found.
@@ -170,9 +172,9 @@ Total 1 warnings found.
 ../steps/test_model.sh --test-threads 1 --out-prob test/tmp/case-01/exp/general/rnn+maxent//score//score.3.prob --test-opts --print-sent-prob=true --out-log-base=10 --log-file test/tmp/case-01/exp/general/rnn+maxent//score//log/score.3.log --pipe-input true test/tmp/case-01/exp/general/rnn+maxent/ sed -n '5001,7500p' test/tmp/data/general.corpus
 ../steps/test_model.sh: Testing model test/tmp/case-01/exp/general/rnn+maxent//final.clm ...
 =================================
-Test Entropy: 6.920702
-Test PPL: 121.154276
-Test Speed: 50.8k words/sec
+Test Entropy: 6.925191
+Test PPL: 121.531876
+Test Speed: 76.0k words/sec
 =================================
 1 warnings in test/tmp/case-01/exp/general/rnn+maxent//score//log/score.3.log.wf.
 Total 1 warnings found.
@@ -181,29 +183,29 @@ Total 1 warnings found.
 ../steps/test_model.sh --test-threads 1 --out-prob test/tmp/case-01/exp/general/rnn+maxent//score//score.4.prob --test-opts --print-sent-prob=true --out-log-base=10 --log-file test/tmp/case-01/exp/general/rnn+maxent//score//log/score.4.log --pipe-input true test/tmp/case-01/exp/general/rnn+maxent/ sed -n '7501,10000p' test/tmp/data/general.corpus
 ../steps/test_model.sh: Testing model test/tmp/case-01/exp/general/rnn+maxent//final.clm ...
 =================================
-Test Entropy: 6.862014
-Test PPL: 116.324746
-Test Speed: 59.9k words/sec
+Test Entropy: 6.857129
+Test PPL: 115.931526
+Test Speed: 76.5k words/sec
 =================================
 1 warnings in test/tmp/case-01/exp/general/rnn+maxent//score//log/score.4.log.wf.
 Total 1 warnings found.
 ../steps/test_model.sh: Elapse time: 0hr0m1s
-./local/score.sh: Elapse time: 0hr0m2s
+./local/score.sh: Elapse time: 0hr0m1s
 
 Step 5: Select data ...
 ./local/select.sh test/tmp/data/general.corpus test/tmp/case-01/exp/indomain/rnn+maxent/score test/tmp/case-01/exp/general/rnn+maxent/score 0.0 test/tmp/case-01/exp/selected.rnn+maxent.0.0
 Total sentences: 9981
-Selected sentences: 4274
+Selected sentences: 4687
 ./local/select.sh: Elapse time: 0hr0m0s
 
 Step 5: Select data ...
 ./local/select.sh test/tmp/data/general.corpus test/tmp/case-01/exp/indomain/rnn+maxent/score test/tmp/case-01/exp/general/rnn+maxent/score 0.5 test/tmp/case-01/exp/selected.rnn+maxent.0.5
 Total sentences: 9981
-Selected sentences: 36
-./local/select.sh: Elapse time: 0hr0m1s
+Selected sentences: 189
+./local/select.sh: Elapse time: 0hr0m0s
 
 Step 5: Select data ...
 ./local/select.sh test/tmp/data/general.corpus test/tmp/case-01/exp/indomain/rnn+maxent/score test/tmp/case-01/exp/general/rnn+maxent/score 1.0 test/tmp/case-01/exp/selected.rnn+maxent.1.0
 Total sentences: 9981
-Selected sentences: 0
+Selected sentences: 2
 ./local/select.sh: Elapse time: 0hr0m0s
