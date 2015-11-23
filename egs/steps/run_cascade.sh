@@ -5,7 +5,7 @@
 class_size="" # if not empty, choose a optimal size among candidate sizes,
               # which are seperated by semicolon
 train_thr=1
-test_thr=1
+eval_thr=1
 stage=""
 # end configuration sections
 
@@ -16,7 +16,7 @@ function print_help()
   echo "e.g.: $0 maxent~rnn conf exp data/train data/valid data/test"
   echo "options: "
   echo "     --train-thr <threads>    # default: 1."         
-  echo "     --test-thr <threads>     # default: 1."         
+  echo "     --eval-thr <threads>     # default: 1."         
   echo "     --class-size <xx:xx:xx>  # default: \"\". Class sizes to be tried."
 }
 
@@ -70,7 +70,7 @@ mkdir -p $exp
 
 # for run_standalone to get standard layout
 ln -sf "`pwd`/$exp_dir/vocab.clm" $exp/vocab.clm || exit 1
-ln -sf "`pwd`/$conf_dir/test.conf" $conf/test.conf || exit 1
+ln -sf "`pwd`/$conf_dir/eval.conf" $conf/eval.conf || exit 1
 
 model="${models[0]}"
 
@@ -78,7 +78,7 @@ st=1
 if shu-in-range $st $stage; then
 echo "$0: Stage $st --- Training $model..."
 ../steps/run_standalone.sh --class-size "$class_size" \
-      --train-thr $train_thr --test-thr $test_thr \
+      --train-thr $train_thr --eval-thr $eval_thr \
     $model $conf $exp $train_file $valid_file $test_file || exit 1
 fi
 ((st++))
@@ -96,7 +96,7 @@ for i in `seq ${#models[@]}`; do
   ln -sf "`pwd`/$conf/$model/output.conf" "$conf/$m/output.conf" || exit 1
 
   ../steps/run_standalone.sh --hs "$hs" --class-size "$cls" \
-        --stage 1 --train-thr $train_thr --test-thr $test_thr \
+        --stage 1 --train-thr $train_thr --eval-thr $eval_thr \
       $m $conf $exp $train_file $valid_file $test_file || exit 1
 
   if [ $i -eq ${#models[@]} ]; then
@@ -120,11 +120,11 @@ for i in `seq ${#models[@]}`; do
   echo "$0: Stage $st --- Training $model..."
   if [ $i -eq ${#models[@]} ]; then
     ../steps/run_standalone.sh --stage 2- \
-          --train-thr $train_thr --test-thr $test_thr \
+          --train-thr $train_thr --eval-thr $eval_thr \
         $model $conf_dir $exp_dir $train_file $valid_file $test_file || exit 1
   else
     ../steps/run_standalone.sh --stage 2- \
-          --train-thr $train_thr --test-thr $test_thr \
+          --train-thr $train_thr --eval-thr $eval_thr \
         $model $conf $exp $train_file $valid_file $test_file || exit 1
   fi
   fi

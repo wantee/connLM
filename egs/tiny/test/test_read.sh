@@ -50,8 +50,8 @@ done
 
 for thr in $thrs; do
   for sz in 1 2 5 10; do
-    echo -n "Testing test: thread=$thr, sz=$sz..."
-    connlm-test --log-file=/dev/null --debug-file=- \
+    echo -n "Testing eval: thread=$thr, sz=$sz..."
+    connlm-eval --log-file=/dev/null --debug-file=- \
                 --num-thread=$thr --epoch-size=$sz \
                 $exp_dir/01.clm data/train \
       | grep "<EGS>:" | cut -d' ' -f2- | sort > $out_file

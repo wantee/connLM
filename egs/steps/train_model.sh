@@ -2,9 +2,9 @@
 
 # Begin configuration section.
 train_config=./conf/train.conf
-test_config=./conf/test.conf
+eval_config=./conf/eval.conf
 train_threads=1
-test_threads=1
+eval_threads=1
 max_iters=50
 min_iters=0 # keep training, disable weight rejection, start learn-rate halving as usual,
 keep_lr_iters=0 # fix learning rate for N initial epochs,
@@ -20,10 +20,10 @@ function print_help()
   echo "e.g.: $0 data/train data/valid exp/rnn"
   echo "options: "
   echo "     --train-config <config-file>         # default: ./conf/train.conf, trian config file."
-  echo "     --test-config <config-file>          # default: ./conf/test.conf, valid config file."
+  echo "     --eval-config <config-file>          # default: ./conf/eval.conf, valid config file."
   echo "     --max-iters <number>                 # default: 20, maximum number of iterations"
   echo "     --train-threads <number>             # default: 1, number of training threads"
-  echo "     --test-threads <number>              # default: 1, number of testing threads"
+  echo "     --eval-threads <number>              # default: 1, number of evaluating threads"
   echo "     --min-iters <number>                 # default: 0, minimum number of iterations"
   echo "     --keep-lr-iters <number>             # default: 0, fix learning rate for N initial iterations"
   echo "     --start-halving-impr <value>         # default: 0.01, improvement starting halving"
@@ -67,9 +67,9 @@ lr_ffnn=$(sed -n '4p' $dir/.learn_rate)
 mdl_best=$mdl_init
 [ -e $dir/.mdl_best ] && mdl_best=$(cat $dir/.mdl_best)
 
-shu-run connlm-test --log-file="$log_dir/valid.prerun.log" \
-           --config="$test_config" \
-           --num-thread=$test_threads \
+shu-run connlm-eval --log-file="$log_dir/valid.prerun.log" \
+           --config="$eval_config" \
+           --num-thread=$eval_threads \
            "$dir/$mdl_best" "$valid_file" \
 || exit 1; 
 
@@ -107,9 +107,9 @@ for iter in $(seq -w $max_iters); do
   echo -n "/$(printf "%.6g" $lr_lbl)/$(printf "%.6g" $lr_ffnn)), "
   echo -n "W/s $wpc, "
   
-  shu-run connlm-test --log-file="$log_dir/valid.${iter}.log" \
-             --config="$test_config" \
-             --num-thread=$test_threads \
+  shu-run connlm-eval --log-file="$log_dir/valid.${iter}.log" \
+             --config="$eval_config" \
+             --num-thread=$eval_threads \
              "$dir/$mdl_next" "$valid_file" \
   || exit 1; 
   

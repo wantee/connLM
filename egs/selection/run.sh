@@ -11,7 +11,7 @@ thresh=0
 class_size=""
 #class_size="50;100;150;200"
 tr_thr=1
-test_thr=1
+eval_thr=1
 score_job=4
 
 realtype="float"
@@ -95,7 +95,7 @@ exp=$exp_dir/indomain
     $train_file $exp || exit 1;
 
 ../steps/run_standalone.sh --class-size "$class_size" \
-      --train-thr $tr_thr --test-thr $test_thr \
+      --train-thr $tr_thr --eval-thr $eval_thr \
     $model_type $conf_dir $exp $train_file $valid_file $test_file \
   || exit 1;
 fi
@@ -113,7 +113,7 @@ exp=$exp_dir/general
     $train_file $exp || exit 1;
 
 ../steps/run_standalone.sh --class-size "$class_size" \
-      --train-thr $tr_thr --test-thr $test_thr \
+      --train-thr $tr_thr --eval-thr $eval_thr \
     $model_type $conf_dir $exp $train_file $valid_file $test_file \
   || exit 1;
 fi
@@ -122,7 +122,7 @@ fi
 if shu-in-range $st $steps; then
 echo
 echo "Step $st: ${stepnames[$st]} ..."
-./local/score.sh --test-conf "$conf_dir/test.conf" \
+./local/score.sh --eval-conf "$conf_dir/eval.conf" \
     "$data_dir/general.corpus" \
     "$exp_dir/indomain/$model_type/" "$exp_dir/general/$model_type/" \
     $score_job  || exit 1

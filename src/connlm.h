@@ -85,10 +85,10 @@ typedef struct _connlm_train_opt_t_ {
 } connlm_train_opt_t;
 
 /**
- * Parameters for testing connLM model.
+ * Parameters for evaluating connLM model.
  * @ingroup g_connlm
  */
-typedef struct _connlm_test_opt_t_ {
+typedef struct _connlm_eval_opt_t_ {
     int num_thread;           /**< number of threads. */
 
     int epoch_size; /**< number sentences read one time per thread. */
@@ -96,7 +96,7 @@ typedef struct _connlm_test_opt_t_ {
     real_t out_log_base; /**< log base for printing prob. */
 
     char debug_file[MAX_DIR_LEN]; /**< file to print out debug infos. */
-} connlm_test_opt_t;
+} connlm_eval_opt_t;
 
 /**
  * Parameters for generate text.
@@ -125,7 +125,7 @@ typedef struct _connlm_egs_t_ {
 typedef struct _connlm_t_ {
     connlm_model_opt_t model_opt; /**< model options */
     connlm_train_opt_t train_opt; /**< training options */
-    connlm_test_opt_t test_opt; /**< testing options */
+    connlm_eval_opt_t eval_opt; /**< evaluating options */
     connlm_gen_opt_t gen_opt; /**< generating options */
 
     char text_file[MAX_DIR_LEN]; /**< training/testing file name. */
@@ -175,14 +175,14 @@ int connlm_load_train_opt(connlm_train_opt_t *train_opt,
         st_opt_t *opt, const char *sec_name);
 
 /**
- * Load connlm test option.
+ * Load connlm eval option.
  * @ingroup g_connlm
- * @param[out] test_opt options loaded.
+ * @param[out] eval_opt options loaded.
  * @param[in] opt runtime options passed by caller.
  * @param[in] sec_name section name of runtime options to be loaded.
  * @return non-zero value if any error.
  */
-int connlm_load_test_opt(connlm_test_opt_t *test_opt, 
+int connlm_load_eval_opt(connlm_eval_opt_t *eval_opt, 
         st_opt_t *opt, const char *sec_name);
 
 /**
@@ -367,14 +367,14 @@ int connlm_fwd_bp(connlm_t *connlm, int word, int tid);
 int connlm_train(connlm_t *connlm);
 
 /**
- * Setup testing for connlm model. Called before testing.
+ * Setup evaluating for connlm model. Called before evaluating.
  * @ingroup g_connlm
  * @param[in] connlm connlm model.
- * @param[in] test_opt testing options.
+ * @param[in] eval_opt evaluating options.
  * @param[in] test_file testing corpus file.
  * @return non-zero value if any error.
  */
-int connlm_setup_test(connlm_t *connlm, connlm_test_opt_t *test_opt,
+int connlm_setup_eval(connlm_t *connlm, connlm_eval_opt_t *eval_opt,
         const char *test_file);
 
 /**
@@ -410,13 +410,13 @@ int connlm_start_test(connlm_t *connlm, int word, int tid);
 int connlm_end_test(connlm_t *connlm, int word, int tid);
 
 /**
- * Testing a connlm model.
+ * Evaluating a connlm model.
  * @ingroup g_connlm
  * @param[in] connlm connlm model.
  * @param[in] fp_log file stream to write log out.
  * @return non-zero value if any error.
  */
-int connlm_test(connlm_t *connlm, FILE *fp_log);
+int connlm_eval(connlm_t *connlm, FILE *fp_log);
 
 /**
  * Setup generating for connlm model. Called before generating.

@@ -2,9 +2,9 @@
 
 # Begin configuration section.
 config_file=""
-test_opts=""
+eval_opts=""
 out_prob=""
-test_threads=1
+eval_threads=1
 log_file=""
 pipe_input=false
 # end configuration sections
@@ -16,8 +16,8 @@ function print_help()
   echo "e.g.: $0 exp/rnn data/test"
   echo "options: "
   echo "     --config-file <config-file>         # config file."
-  echo "     --test-threads <number>             # default: 1, number of testing threads."
-  echo "     --test-opts <opts>                  # default: \"\", options to be passed to connlm-test."
+  echo "     --eval-threads <number>             # default: 1, number of evaluating threads."
+  echo "     --eval-opts <opts>                  # default: \"\", options to be passed to connlm-eval."
   echo "     --out-prob <prob-file>              # default: \"\", output probs to specific file."
   echo "     --log-file <log-file>               # default: \"\", specify log file."
   echo "     --pipe-input <true|false>           # default: false, whether input test file is through a pipe."
@@ -41,33 +41,33 @@ test_file=$2
 
 begin_date=`date +"%Y-%m-%d %H:%M:%S"`
 begin_ts=`date +%s`
-log_file=${log_file:-"$dir/log/test.log"}
+log_file=${log_file:-"$dir/log/eval.log"}
 
-echo "$0: Testing model $dir/final.clm ..."
+echo "$0: Evaluating model $dir/final.clm ..."
 if [ ! -z $config_file ]; then
-test_opts="--config=$config_file $test_opts" 
+eval_opts="--config=$config_file $eval_opts" 
 fi
 
 if $pipe_input; then
-shu-run eval "$test_file" | connlm-test $test_opts \
-       --log-file=$log_file --num-thread=$test_threads \
+shu-run eval "$test_file" | connlm-eval $eval_opts \
+       --log-file=$log_file --num-thread=$eval_threads \
        $dir/final.clm - $out_prob || exit 1;
 
 else
-shu-run connlm-test $test_opts --log-file=$log_file \
-           --num-thread=$test_threads \
+shu-run connlm-eval $eval_opts --log-file=$log_file \
+           --num-thread=$eval_threads \
            $dir/final.clm $test_file $out_prob || exit 1;
 fi
 
 echo "================================="
 ent=`../utils/get_value.sh "Entropy" $log_file`
-echo "Test Entropy: $(printf "%.6f" $ent)"
+echo "Eval Entropy: $(printf "%.6f" $ent)"
 
 ppl=`../utils/get_value.sh "PPL" $log_file`
-echo "Test PPL: $(printf "%.6f" $ppl)"
+echo "Eval PPL: $(printf "%.6f" $ppl)"
 
 wpc=`../utils/get_value.sh "words/sec" $log_file`
-echo "Test Speed: $(bc <<< "scale=1; $wpc / 1000")k words/sec"
+echo "Eval Speed: $(bc <<< "scale=1; $wpc / 1000")k words/sec"
 echo "================================="
 
 ../utils/check_log.sh -b "$begin_date" $log_file.wf

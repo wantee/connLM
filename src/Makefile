@@ -75,7 +75,7 @@ TARGET_SO_FLOAT = $(OUTLIBDIR_FLOAT)/libconnlm.so
 SO_FLAGS_FLOAT = -shared
 endif
 
-BIN = connlm-train connlm-test connlm-info connlm-copy \
+BIN = connlm-train connlm-eval connlm-info connlm-copy \
       connlm-vocab connlm-init connlm-output connlm-gen connlm-merge
 
 TARGET_BIN_DOUBLE = $(addprefix $(BINDIR_DOUBLE)/, $(BIN))

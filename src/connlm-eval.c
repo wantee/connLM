@@ -38,9 +38,9 @@ bool g_binary;
 
 st_opt_t *g_cmd_opt;
 
-connlm_test_opt_t g_test_opt;
+connlm_eval_opt_t g_eval_opt;
 
-int connlm_test_parse_opt(int *argc, const char *argv[])
+int connlm_eval_parse_opt(int *argc, const char *argv[])
 {
     st_log_opt_t log_opt;
     bool b;
@@ -66,8 +66,8 @@ int connlm_test_parse_opt(int *argc, const char *argv[])
         goto ST_OPT_ERR;
     }
 
-    if (connlm_load_test_opt(&g_test_opt, g_cmd_opt, NULL) < 0) {
-        ST_WARNING("Failed to connlm_load_test_opt");
+    if (connlm_load_eval_opt(&g_eval_opt, g_cmd_opt, NULL) < 0) {
+        ST_WARNING("Failed to connlm_load_eval_opt");
         goto ST_OPT_ERR;
     }
 
@@ -100,7 +100,7 @@ int main(int argc, const char *argv[])
 
     (void)st_escape_args(argc, argv, args, 1024);
 
-    ret = connlm_test_parse_opt(&argc, argv);
+    ret = connlm_eval_parse_opt(&argc, argv);
     if (ret < 0) {
         goto ERR;
     } if (ret == 1) {
@@ -130,8 +130,8 @@ int main(int argc, const char *argv[])
     }
     safe_st_fclose(fp);
 
-    if (connlm_setup_test(connlm, &g_test_opt, argv[2]) < 0) {
-        ST_WARNING("Failed to connlm_setup_test.");
+    if (connlm_setup_eval(connlm, &g_eval_opt, argv[2]) < 0) {
+        ST_WARNING("Failed to connlm_setup_eval.");
         goto ERR;
     }
 
@@ -145,8 +145,8 @@ int main(int argc, const char *argv[])
         fp = NULL;
     }
 
-    if (connlm_test(connlm, fp) < 0) {
-        ST_WARNING("Failed to connlm_test.");
+    if (connlm_eval(connlm, fp) < 0) {
+        ST_WARNING("Failed to connlm_eval.");
         goto ERR;
     }
 

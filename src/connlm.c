@@ -240,36 +240,36 @@ ST_OPT_ERR:
     return -1;
 }
 
-int connlm_load_test_opt(connlm_test_opt_t *test_opt,
+int connlm_load_eval_opt(connlm_eval_opt_t *eval_opt,
         st_opt_t *opt, const char *sec_name)
 {
     char str[MAX_ST_CONF_LEN];
 
-    ST_CHECK_PARAM(test_opt == NULL || opt == NULL, -1);
+    ST_CHECK_PARAM(eval_opt == NULL || opt == NULL, -1);
 
     ST_OPT_SEC_GET_INT(opt, sec_name, "NUM_THREAD",
-            test_opt->num_thread, 1, "Number of threads");
+            eval_opt->num_thread, 1, "Number of threads");
 
     ST_OPT_SEC_GET_INT(opt, sec_name, "EPOCH_SIZE",
-            test_opt->epoch_size, 1,
+            eval_opt->epoch_size, 1,
             "Number of sentences read in one epoch per thread (in kilos)");
-    test_opt->epoch_size *= 1000;
+    eval_opt->epoch_size *= 1000;
 
     ST_OPT_SEC_GET_BOOL(opt, sec_name, "PRINT_SENT_PROB",
-            test_opt->print_sent_prob, false,
+            eval_opt->print_sent_prob, false,
             "Print sentence prob only, if true. ");
 
     ST_OPT_SEC_GET_STR(opt, sec_name, "OUT_LOG_BASE",
             str, MAX_ST_CONF_LEN, "e",
             "Log base for printing prob. Could be 'e' or other number.");
     if (str[0] == 'e' && str[1] == '\0') {
-        test_opt->out_log_base = 0;
+        eval_opt->out_log_base = 0;
     } else {
-        test_opt->out_log_base = (real_t)atof(str);
+        eval_opt->out_log_base = (real_t)atof(str);
     }
 
     ST_OPT_SEC_GET_STR(opt, sec_name, "DEBUG_FILE",
-            test_opt->debug_file, MAX_DIR_LEN, "",
+            eval_opt->debug_file, MAX_DIR_LEN, "",
             "file to print out debug infos.");
 
     return 0;
@@ -592,7 +592,13 @@ static int connlm_load_header(connlm_t *connlm, FILE *fp,
 
         if (version > CONNLM_FILE_VERSION) {
             ST_WARNING("Too high file versoin[%d], "
-                    "please update connlm toolkit");
+                    "please upgrade connlm toolkit", version);
+            return -1;
+        }
+
+        if (version < 3) {
+            ST_WARNING("File versoin[%d] less than 3 is not supported, "
+                    "please downgrade connlm toolkit", version);
             return -1;
         }
 
@@ -2112,7 +2118,7 @@ ERR:
     return -1;
 }
 
-int connlm_setup_test(connlm_t *connlm, connlm_test_opt_t *test_opt,
+int connlm_setup_eval(connlm_t *connlm, connlm_eval_opt_t *eval_opt,
         const char *test_file)
 {
     connlm_egs_t *egs;
@@ -2124,20 +2130,20 @@ int connlm_setup_test(connlm_t *connlm, connlm_test_opt_t *test_opt,
 
     int i;
 
-    ST_CHECK_PARAM(connlm == NULL || test_opt == NULL
+    ST_CHECK_PARAM(connlm == NULL || eval_opt == NULL
             || test_file == NULL, -1);
 
-    connlm->test_opt = *test_opt;
+    connlm->eval_opt = *eval_opt;
 
-    if (connlm->test_opt.num_thread < 1) {
-        connlm->test_opt.num_thread = 1;
+    if (connlm->eval_opt.num_thread < 1) {
+        connlm->eval_opt.num_thread = 1;
     }
-    num_thrs = connlm->test_opt.num_thread;
+    num_thrs = connlm->eval_opt.num_thread;
 
     strncpy(connlm->text_file, test_file, MAX_DIR_LEN);
     connlm->text_file[MAX_DIR_LEN - 1] = '\0';
 
-    pool_size = 2 * test_opt->num_thread;
+    pool_size = 2 * eval_opt->num_thread;
     connlm->full_egs = NULL;
     connlm->empty_egs = NULL;;
     for (i = 0; i < pool_size; i++) {
@@ -2171,11 +2177,11 @@ int connlm_setup_test(connlm_t *connlm, connlm_test_opt_t *test_opt,
         goto ERR;
     }
 
-    if (test_opt->debug_file[0] != '\0') {
-        connlm->fp_debug = st_fopen(test_opt->debug_file, "w");
+    if (eval_opt->debug_file[0] != '\0') {
+        connlm->fp_debug = st_fopen(eval_opt->debug_file, "w");
         if (connlm->fp_debug == NULL) {
             ST_WARNING("Failed to st_fopen debug_file[%s].",
-                    test_opt->debug_file);
+                    eval_opt->debug_file);
             goto ERR;
         }
         if (pthread_mutex_init(&connlm->fp_debug_lock, NULL) != 0) {
@@ -2370,7 +2376,7 @@ int connlm_end_test(connlm_t *connlm, int word, int tid)
     return 0;
 }
 
-static void* connlm_test_thread(void *args)
+static void* connlm_eval_thread(void *args)
 {
     connlm_t *connlm;
     connlm_thr_t *thr;
@@ -2416,7 +2422,7 @@ static void* connlm_test_thread(void *args)
         if (connlm->full_egs == NULL) {
             finish = true;
         } else {
-            if (connlm->test_opt.num_thread == 1) {
+            if (connlm->eval_opt.num_thread == 1) {
                 /* ensure FIFO */
                 connlm_egs_t *prev_egs = NULL;
                 egs = connlm->full_egs;
@@ -2474,7 +2480,7 @@ static void* connlm_test_thread(void *args)
 
             p = output_get_prob(connlm->output, word, tid);
             logp += log10(p);
-            logp_sent += logn(p, connlm->test_opt.out_log_base);
+            logp_sent += logn(p, connlm->eval_opt.out_log_base);
 
             if ((logp != logp) || (isinf(logp))) {
                 if (connlm->output->output_opt.class_size > 0) {
@@ -2501,10 +2507,10 @@ static void* connlm_test_thread(void *args)
             }
 
             if (connlm->fp_log != NULL
-                    && (! connlm->test_opt.print_sent_prob)) {
+                    && (! connlm->eval_opt.print_sent_prob)) {
                 (void)pthread_mutex_lock(&connlm->fp_lock);
                 fprintf(connlm->fp_log, "%d\t%.6f\t%s", word,
-                        logn(p, connlm->test_opt.out_log_base),
+                        logn(p, connlm->eval_opt.out_log_base),
                         vocab_get_word(connlm->vocab, word));
 
                 fprintf(connlm->fp_log, "\n");
@@ -2519,7 +2525,7 @@ static void* connlm_test_thread(void *args)
                 sents++;
 
                 if (connlm->fp_log != NULL
-                        && connlm->test_opt.print_sent_prob) {
+                        && connlm->eval_opt.print_sent_prob) {
                     (void)pthread_mutex_lock(&connlm->fp_lock);
                     fprintf(connlm->fp_log, "%.6f\n", logp_sent);
                     (void)pthread_mutex_unlock(&connlm->fp_lock);
@@ -2558,7 +2564,7 @@ ERR:
     return NULL;
 }
 
-int connlm_test(connlm_t *connlm, FILE *fp_log)
+int connlm_eval(connlm_t *connlm, FILE *fp_log)
 {
     connlm_thr_t *thrs = NULL;
     pthread_t *pts = NULL;
@@ -2572,7 +2578,7 @@ int connlm_test(connlm_t *connlm, FILE *fp_log)
 
     int i;
 
-    struct timeval tts_test, tte_test;
+    struct timeval tts_eval, tte_eval;
     long ms;
 
     ST_CHECK_PARAM(connlm == NULL, -1);
@@ -2581,17 +2587,17 @@ int connlm_test(connlm_t *connlm, FILE *fp_log)
         connlm->fp_log = fp_log;
         pthread_mutex_init(&connlm->fp_lock, NULL);
         if (connlm->fp_log != NULL
-                && (! connlm->test_opt.print_sent_prob)) {
+                && (! connlm->eval_opt.print_sent_prob)) {
             fprintf(fp_log, "Index   logP(NET)          Word\n");
             fprintf(fp_log, "----------------------------------\n");
         }
         ST_NOTICE("Printing Probs, setting num_thread to 1.")
-            connlm->test_opt.num_thread = 1;
+            connlm->eval_opt.num_thread = 1;
     }
 
-    gettimeofday(&tts_test, NULL);
+    gettimeofday(&tts_eval, NULL);
 
-    num_thrs = connlm->test_opt.num_thread;
+    num_thrs = connlm->eval_opt.num_thread;
     pts = (pthread_t *)malloc((num_thrs + 1) * sizeof(pthread_t));
     if (pts == NULL) {
         ST_WARNING("Failed to malloc pts");
@@ -2609,8 +2615,8 @@ int connlm_test(connlm_t *connlm, FILE *fp_log)
 
     read_thr.connlm = connlm;
     read_thr.thrs = thrs;
-    read_thr.num_thrs = connlm->test_opt.num_thread;
-    read_thr.epoch_size = connlm->test_opt.epoch_size;
+    read_thr.num_thrs = connlm->eval_opt.num_thread;
+    read_thr.epoch_size = connlm->eval_opt.epoch_size;
     read_thr.shuffle = false;
     read_thr.random = 0;
 
@@ -2620,7 +2626,7 @@ int connlm_test(connlm_t *connlm, FILE *fp_log)
     for (i = 0; i < num_thrs; i++) {
         thrs[i].connlm = connlm;
         thrs[i].tid = i;
-        pthread_create(pts + i, NULL, connlm_test_thread,
+        pthread_create(pts + i, NULL, connlm_eval_thread,
                 (void *)(thrs + i));
     }
 
@@ -2649,10 +2655,10 @@ int connlm_test(connlm_t *connlm, FILE *fp_log)
                 words, read_thr.words, sents, read_thr.sents);
     }
 
-    gettimeofday(&tte_test, NULL);
-    ms = TIMEDIFF(tts_test, tte_test);
+    gettimeofday(&tte_eval, NULL);
+    ms = TIMEDIFF(tts_eval, tte_eval);
 
-    ST_NOTICE("Finish test in %ldms.", ms);
+    ST_NOTICE("Finish eval in %ldms.", ms);
 
     ST_NOTICE("Words: " COUNT_FMT "    OOVs: " COUNT_FMT
             "    Sentences: " COUNT_FMT
@@ -2663,7 +2669,7 @@ int connlm_test(connlm_t *connlm, FILE *fp_log)
     ST_NOTICE("PPL: %f", exp10(-logp / (double) words));
 
     if (fp_log != NULL
-            && (! connlm->test_opt.print_sent_prob)) {
+            && (! connlm->eval_opt.print_sent_prob)) {
         fprintf(fp_log, "\nSummary:\n");
         fprintf(fp_log, "Words: " COUNT_FMT "    OOVs: " COUNT_FMT "\n",
                 words, read_thr.oovs);
@@ -2705,7 +2711,7 @@ int connlm_setup_gen(connlm_t *connlm, connlm_gen_opt_t *gen_opt)
 
     if (connlm->rnn != NULL) {
         if (rnn_setup_gen(connlm->rnn, connlm->output) < 0) {
-            ST_WARNING("Failed to rnn_setup_test.");
+            ST_WARNING("Failed to rnn_setup_gen.");
             goto ERR;
         }
     }
