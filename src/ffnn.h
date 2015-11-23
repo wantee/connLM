@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef  _FFNN_H_
-#define  _FFNN_H_
+#ifndef  _CONNLM_FFNN_H_
+#define  _CONNLM_FFNN_H_
 
 #ifdef __cplusplus
 extern "C" {

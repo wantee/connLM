@@ -22,15 +22,14 @@
  * SOFTWARE.
  */
 
-#ifndef  _OUTPUT_H_
-#define  _OUTPUT_H_
+#ifndef  _CONNLM_OUTPUT_H_
+#define  _CONNLM_OUTPUT_H_
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 #include <st_opt.h>
-#include <st_alphabet.h>
 
 #include "config.h"
 
@@ -292,7 +291,7 @@ int output_setup_train(output_t *output, int num_thrs);
  * Reset training for output layer.
  * Called before every input sentence to be trained.
  * @ingroup g_output
- * @param[in] output output model.
+ * @param[in] output output layer.
  * @param[in] tid thread id (neuron id).
  * @return non-zero value if any error.
  */
@@ -318,7 +317,7 @@ int output_start_train(output_t *output, int word, int tid);
  */
 int output_end_train(output_t *output, int word, int tid);
 /**
- * Finish training for output model.
+ * Finish training for output layer.
  * Called after all words trained.
  * @ingroup g_output
  * @param[in] output output layer.

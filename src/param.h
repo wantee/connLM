@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef  _PARAM_H_
-#define  _PARAM_H_
+#ifndef  _CONNLM_PARAM_H_
+#define  _CONNLM_PARAM_H_
 
 #ifdef __cplusplus
 extern "C" {

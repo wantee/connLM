@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef  _RNN_H_
-#define  _RNN_H_
+#ifndef  _CONNLM_RNN_H_
+#define  _CONNLM_RNN_H_
 
 #ifdef __cplusplus
 extern "C" {

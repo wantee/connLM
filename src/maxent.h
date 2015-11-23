@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef  _MAXENT_H_
-#define  _MAXENT_H_
+#ifndef  _CONNLM_MAXENT_H_
+#define  _CONNLM_MAXENT_H_
 
 #ifdef __cplusplus
 extern "C" {

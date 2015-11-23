@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef  _VOCAB_H_
-#define  _VOCAB_H_
+#ifndef  _CONNLM_VOCAB_H_
+#define  _CONNLM_VOCAB_H_
 
 #ifdef __cplusplus
 extern "C" {

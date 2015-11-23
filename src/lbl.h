@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef  _LBL_H_
-#define  _LBL_H_
+#ifndef  _CONNLM_LBL_H_
+#define  _CONNLM_LBL_H_
 
 #ifdef __cplusplus
 extern "C" {
