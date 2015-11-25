@@ -29,3 +29,5 @@ tmp/
 output/
 nohup.out
 blas.mk
+
+!src/bin/

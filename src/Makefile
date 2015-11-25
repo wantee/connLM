@@ -41,7 +41,7 @@ else
 LDFLAGS+=-lm
 endif
 
-CFLAGS += -I../tools/stutils/include/stutils/
+CFLAGS += -I../tools/stutils/include/stutils/ -I.
 LDFLAGS += -L../tools/stutils/lib/
 LDFLAGS += -lstutils -lpthread
 LDFLAGS += -Wl,-rpath,'$$ORIGIN'
@@ -122,7 +122,7 @@ $(TARGET_SO_DOUBLE) : $(addprefix $(SO_OBJ_DOUBLE)/, $(OBJ_SO))
 	$(CC) $(CFLAGS) $(CFLAGS_DOUBLE) $(SO_FLAGS_DOUBLE) \
           -o $@ $^ $(LDFLAGS) $(LDFLAGS_DOUBLE)
 
-$(BIN_OBJ_DOUBLE)/%.o : %.c
+$(BIN_OBJ_DOUBLE)/%.o : bin/%.c
 	$(CC) $(CFLAGS) $(CFLAGS_DOUBLE) -c -o $@ $^
 
 $(TARGET_BIN_DOUBLE) : $(BINDIR_DOUBLE)/connlm-% \
@@ -138,7 +138,7 @@ $(TARGET_SO_FLOAT) : $(addprefix $(SO_OBJ_FLOAT)/, $(OBJ_SO))
 	$(CC) $(CFLAGS) $(CFLAGS_FLOAT) $(SO_FLAGS_FLOAT) \
           -o $@ $^ $(LDFLAGS) $(LDFLAGS_FLOAT)
 
-$(BIN_OBJ_FLOAT)/%.o : %.c
+$(BIN_OBJ_FLOAT)/%.o : bin/%.c
 	$(CC) $(CFLAGS) $(CFLAGS_FLOAT) -c -o $@ $^
 
 $(TARGET_BIN_FLOAT) : $(BINDIR_FLOAT)/connlm-% \
