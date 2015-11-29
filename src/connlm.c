@@ -484,13 +484,14 @@ ERR:
 }
 
 connlm_t *connlm_new(vocab_t *vocab, output_t *output,
-        rnn_t *rnn, maxent_t *maxent, lbl_t* lbl, ffnn_t *ffnn)
+        component_t **comps, int n_comp)
 {
     connlm_t *connlm = NULL;
 
+    int i;
+
     ST_CHECK_PARAM(vocab == NULL && output == NULL
-            && rnn == NULL && maxent == NULL
-            && lbl == NULL && ffnn == NULL, NULL);
+            && comps == NULL, NULL);
 
     connlm = (connlm_t *)malloc(sizeof(connlm_t));
     if (connlm == NULL) {
@@ -514,36 +515,23 @@ connlm_t *connlm_new(vocab_t *vocab, output_t *output,
             goto ERR;
         }
     }
-    if (rnn != NULL) {
-        connlm->rnn = rnn_dup(rnn);
-        if (connlm->rnn == NULL) {
-            ST_WARNING("Failed to rnn_dup.");
-            goto ERR;
-        }
-    }
 
-    if (maxent != NULL) {
-        connlm->maxent = maxent_dup(maxent);
-        if (connlm->maxent == NULL) {
-            ST_WARNING("Failed to maxent_dup.");
+    if (comps != NULL && n_comp > 0) {
+        connlm->comps = (component_t **)malloc(sizeof(component_t *)
+                * n_comp);
+        if (connlm->comps == NULL) {
+            ST_WARNING("Failed to malloc comps.");
             goto ERR;
         }
-    }
 
-    if (lbl != NULL) {
-        connlm->lbl = lbl_dup(lbl);
-        if (connlm->lbl == NULL) {
-            ST_WARNING("Failed to lbl_dup.");
-            goto ERR;
+        for (i = 0; i < n_comp; i++) {
+            connlm->comps[i] = comp_dup(comps[i]);
+            if (connlm->comps[i] == NULL) {
+                ST_WARNING("Failed to comp_dup. i[%d]", i);
+                goto ERR;
+            }
         }
-    }
-
-    if (ffnn != NULL) {
-        connlm->ffnn = ffnn_dup(ffnn);
-        if (connlm->ffnn == NULL) {
-            ST_WARNING("Failed to ffnn_dup.");
-            goto ERR;
-        }
+        connlm->num_comp = n_comp;
     }
 
     return connlm;

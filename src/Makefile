@@ -14,7 +14,12 @@ INC = connlm.h vocab.h output.h param.h rnn.h maxent.h lbl.h ffnn.h
 TARGET_INC = $(addprefix $(OUTINC_DIR)/, $(INC))
 
 OBJ_SO = utils.o vocab.o output.o param.o rnn.o maxent.o lbl.o ffnn.o \
-         connlm.o
+         connlm.o component.o \
+         input.o \
+         layers/layer.o \
+         weights/weight.o \
+         weights/embedding_weight.o \
+         weights/output_weight.o \
 
 BIN = connlm-train connlm-eval connlm-info connlm-copy \
       connlm-vocab connlm-init connlm-output connlm-gen connlm-merge

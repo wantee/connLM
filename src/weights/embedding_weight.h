@@ -22,51 +22,60 @@
  * SOFTWARE.
  */
 
-#ifndef  _CONNLM_CONFIG_H_
-#define  _CONNLM_CONFIG_H_
+#ifndef  _CONNLM_EMBEDDING_WEIGHT_H_
+#define  _CONNLM_EMBEDDING_WEIGHT_H_
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#define CONNLM_VERSION   "1.0"
+#include "config.h"
 
-#define CONNLM_FILE_VERSION   3
+/** @defgroup g_wt_embedding NNet embedding weight. 
+ * @ingroup g_weight
+ * Data structures and functions for NNet embedding weight.
+ */
 
-#ifndef _USE_DOUBLE_
-#define _USE_DOUBLE_ 0
-#endif
+/**
+ * Embedding weight.
+ * @ingroup g_wt_embedding
+ */
+typedef struct _embedding_weight_t_ {
+    /** forward function. */
+    int (*forward)(struct _embedding_weight_t_ *wt);
+    /** backpro function. */
+    int (*backprop)(struct _embedding_weight_t_ *wt);
+} emb_wt_t;
 
-#if _USE_DOUBLE_ == 1
-   typedef double real_t;
-#  define REAL_FMT "%lf"
-#else
-   typedef float real_t;
-#  define REAL_FMT "%f"
-#endif
+/**
+ * Destroy a embedding weight and set the pointer to NULL.
+ * @ingroup g_wt_embedding
+ * @param[in] ptr pointer to emb_wt_t.
+ */
+#define safe_emb_wt_destroy(ptr) do {\
+    if((ptr) != NULL) {\
+        emb_wt_destroy(ptr);\
+        safe_free(ptr);\
+        (ptr) = NULL;\
+    }\
+    } while(0)
+/**
+ * Destroy a embedding weight.
+ * @ingroup g_wt_embedding
+ * @param[in] emb embedding weight to be destroyed.
+ */
+void emb_wt_destroy(emb_wt_t* emb);
 
-typedef unsigned long count_t;
-#define COUNT_FMT "%lu"
-#define COUNT_MAX ((count_t)-1)
-
-typedef unsigned long long hash_t;
-typedef long long hash_size_t;
-#define HASH_SIZE_FMT "%lld"
-
-#define ALIGN_SIZE 128
-
-#ifdef _USE_BLAS_
-#  define _MINI_UPDATE_
-#endif
-
-#define SENT_END "</s>"
-#define SENT_END_ID 0
-#define UNK "<unk>"
-#define UNK_ID 1
+/**
+ * Duplicate a embedding weight.
+ * @ingroup g_wt_embedding
+ * @param[in] e embedding weight to be duplicated.
+ * @return the duplicated embedding weight. 
+ */
+emb_wt_t* emb_wt_dup(emb_wt_t *e);
 
 #ifdef __cplusplus
 }
 #endif
 
 #endif
-

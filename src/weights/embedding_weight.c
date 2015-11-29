@@ -22,51 +22,38 @@
  * SOFTWARE.
  */
 
-#ifndef  _CONNLM_CONFIG_H_
-#define  _CONNLM_CONFIG_H_
+#include <st_log.h>
+#include <st_utils.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#include "embedding_weight.h"
 
-#define CONNLM_VERSION   "1.0"
-
-#define CONNLM_FILE_VERSION   3
-
-#ifndef _USE_DOUBLE_
-#define _USE_DOUBLE_ 0
-#endif
-
-#if _USE_DOUBLE_ == 1
-   typedef double real_t;
-#  define REAL_FMT "%lf"
-#else
-   typedef float real_t;
-#  define REAL_FMT "%f"
-#endif
-
-typedef unsigned long count_t;
-#define COUNT_FMT "%lu"
-#define COUNT_MAX ((count_t)-1)
-
-typedef unsigned long long hash_t;
-typedef long long hash_size_t;
-#define HASH_SIZE_FMT "%lld"
-
-#define ALIGN_SIZE 128
-
-#ifdef _USE_BLAS_
-#  define _MINI_UPDATE_
-#endif
-
-#define SENT_END "</s>"
-#define SENT_END_ID 0
-#define UNK "<unk>"
-#define UNK_ID 1
-
-#ifdef __cplusplus
+void emb_wt_destroy(emb_wt_t *emb_wt)
+{
+    if (emb_wt == NULL) {
+        return;
+    }
 }
-#endif
 
-#endif
+emb_wt_t* emb_wt_dup(emb_wt_t *e)
+{
+    emb_wt_t *emb_wt = NULL;
+
+    ST_CHECK_PARAM(e == NULL, NULL);
+
+    emb_wt = (emb_wt_t *) malloc(sizeof(emb_wt_t));
+    if (emb_wt == NULL) {
+        ST_WARNING("Falied to malloc emb_wt_t.");
+        goto ERR;
+    }
+    memset(emb_wt, 0, sizeof(emb_wt_t));
+
+    emb_wt->forward = e->forward;
+    emb_wt->backprop = e->backprop;
+
+    return emb_wt;
+
+ERR:
+    safe_emb_wt_destroy(emb_wt);
+    return NULL;
+}
 

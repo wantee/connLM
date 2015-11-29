@@ -22,51 +22,54 @@
  * SOFTWARE.
  */
 
-#ifndef  _CONNLM_CONFIG_H_
-#define  _CONNLM_CONFIG_H_
+#include <st_log.h>
+#include <st_utils.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#include "layer.h"
 
-#define CONNLM_VERSION   "1.0"
+void layer_destroy(layer_t *layer)
+{
+    if (layer == NULL) {
+        return;
+    }
 
-#define CONNLM_FILE_VERSION   3
-
-#ifndef _USE_DOUBLE_
-#define _USE_DOUBLE_ 0
-#endif
-
-#if _USE_DOUBLE_ == 1
-   typedef double real_t;
-#  define REAL_FMT "%lf"
-#else
-   typedef float real_t;
-#  define REAL_FMT "%f"
-#endif
-
-typedef unsigned long count_t;
-#define COUNT_FMT "%lu"
-#define COUNT_MAX ((count_t)-1)
-
-typedef unsigned long long hash_t;
-typedef long long hash_size_t;
-#define HASH_SIZE_FMT "%lld"
-
-#define ALIGN_SIZE 128
-
-#ifdef _USE_BLAS_
-#  define _MINI_UPDATE_
-#endif
-
-#define SENT_END "</s>"
-#define SENT_END_ID 0
-#define UNK "<unk>"
-#define UNK_ID 1
-
-#ifdef __cplusplus
+    layer->name[0] = '\0';
+    layer->id = -1;
 }
-#endif
 
-#endif
+layer_t* layer_parse_topo(const char *line)
+{
+    layer_t *layer = NULL;
+
+    ST_CHECK_PARAM(line == NULL, NULL);
+
+    return layer;
+}
+
+layer_t* layer_dup(layer_t *l)
+{
+    layer_t *layer = NULL;
+
+    ST_CHECK_PARAM(l == NULL, NULL);
+
+    layer = (layer_t *) malloc(sizeof(layer_t));
+    if (layer == NULL) {
+        ST_WARNING("Falied to malloc layer_t.");
+        goto ERR;
+    }
+    memset(layer, 0, sizeof(layer_t));
+
+    strncpy(layer->name, l->name, MAX_NAME_LEN);
+    layer->name[MAX_NAME_LEN - 1] = '\0';
+    layer->id = l->id;
+
+    layer->forward = l->forward;
+    layer->backprop = l->backprop;
+
+    return layer;
+
+ERR:
+    safe_layer_destroy(layer);
+    return NULL;
+}
 

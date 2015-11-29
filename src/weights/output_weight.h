@@ -22,51 +22,64 @@
  * SOFTWARE.
  */
 
-#ifndef  _CONNLM_CONFIG_H_
-#define  _CONNLM_CONFIG_H_
+#ifndef  _CONNLM_OUTPUT_WEIGHT_H_
+#define  _CONNLM_OUTPUT_WEIGHT_H_
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#define CONNLM_VERSION   "1.0"
+#include "config.h"
 
-#define CONNLM_FILE_VERSION   3
+#include "output.h"
 
-#ifndef _USE_DOUBLE_
-#define _USE_DOUBLE_ 0
-#endif
+/** @defgroup g_wt_output NNet output weight. 
+ * @ingroup g_weight
+ * Data structures and functions for NNet output weight.
+ */
 
-#if _USE_DOUBLE_ == 1
-   typedef double real_t;
-#  define REAL_FMT "%lf"
-#else
-   typedef float real_t;
-#  define REAL_FMT "%f"
-#endif
+/**
+ * Output weight.
+ * @ingroup g_wt_output
+ */
+typedef struct _output_weight_t_ {
+    output_t *output; /**< associating output layer. */
 
-typedef unsigned long count_t;
-#define COUNT_FMT "%lu"
-#define COUNT_MAX ((count_t)-1)
+    /** forward function. */
+    int (*forward)(struct _output_weight_t_ *wt);
+    /** backprop function. */
+    int (*backprop)(struct _output_weight_t_ *wt);
+} output_wt_t;
 
-typedef unsigned long long hash_t;
-typedef long long hash_size_t;
-#define HASH_SIZE_FMT "%lld"
+/**
+ * Destroy a output weight and set the pointer to NULL.
+ * @ingroup g_wt_output
+ * @param[in] ptr pointer to output_wt_t.
+ */
+#define safe_output_wt_destroy(ptr) do {\
+    if((ptr) != NULL) {\
+        output_wt_destroy(ptr);\
+        safe_free(ptr);\
+        (ptr) = NULL;\
+    }\
+    } while(0)
+/**
+ * Destroy a output weight.
+ * @ingroup g_wt_output
+ * @param[in] output_wt output weight to be destroyed.
+ */
+void output_wt_destroy(output_wt_t* output_wt);
 
-#define ALIGN_SIZE 128
-
-#ifdef _USE_BLAS_
-#  define _MINI_UPDATE_
-#endif
-
-#define SENT_END "</s>"
-#define SENT_END_ID 0
-#define UNK "<unk>"
-#define UNK_ID 1
+/**
+ * Duplicate a output weight.
+ * @ingroup g_wt_output
+ * @param[in] o output weight to be duplicated.
+ * @return the duplicated output weight. 
+ */
+output_wt_t* output_wt_dup(output_wt_t *o);
 
 #ifdef __cplusplus
 }
 #endif
 
 #endif
-

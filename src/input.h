@@ -22,51 +22,65 @@
  * SOFTWARE.
  */
 
-#ifndef  _CONNLM_CONFIG_H_
-#define  _CONNLM_CONFIG_H_
+#ifndef  _CONNLM_INPUT_H_
+#define  _CONNLM_INPUT_H_
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#define CONNLM_VERSION   "1.0"
+#include <st_opt.h>
 
-#define CONNLM_FILE_VERSION   3
+#include "config.h"
 
-#ifndef _USE_DOUBLE_
-#define _USE_DOUBLE_ 0
-#endif
+/** @defgroup g_input Input Layer
+ * Data structures and functions for Input Layer.
+ */
 
-#if _USE_DOUBLE_ == 1
-   typedef double real_t;
-#  define REAL_FMT "%lf"
-#else
-   typedef float real_t;
-#  define REAL_FMT "%f"
-#endif
+/**
+ * Input Layer.
+ * @ingroup g_input
+ */
+typedef struct _input_t_ {
+} input_t;
 
-typedef unsigned long count_t;
-#define COUNT_FMT "%lu"
-#define COUNT_MAX ((count_t)-1)
+/**
+ * Destroy a input layer and set the pointer to NULL.
+ * @ingroup g_input
+ * @param[in] ptr pointer to input_t.
+ */
+#define safe_input_destroy(ptr) do {\
+    if((ptr) != NULL) {\
+        input_destroy(ptr);\
+        safe_free(ptr);\
+        (ptr) = NULL;\
+    }\
+    } while(0)
+/**
+ * Destroy a input layer.
+ * @ingroup g_input
+ * @param[in] input input layer to be destroyed.
+ */
+void input_destroy(input_t* input);
 
-typedef unsigned long long hash_t;
-typedef long long hash_size_t;
-#define HASH_SIZE_FMT "%lld"
+/**
+ * Duplicate a input layer.
+ * @ingroup g_input
+ * @param[in] i input layer to be duplicated.
+ * @return the duplicated input layer. 
+ */
+input_t* input_dup(input_t *i);
 
-#define ALIGN_SIZE 128
-
-#ifdef _USE_BLAS_
-#  define _MINI_UPDATE_
-#endif
-
-#define SENT_END "</s>"
-#define SENT_END_ID 0
-#define UNK "<unk>"
-#define UNK_ID 1
+/**
+ * Parse a topo config line, and return a new input layer.
+ * @ingroup g_input
+ * @param[in] line topo config line.
+ * @return a new input layer or NULL if error.
+ */
+input_t* input_parse_topo(const char *line);
 
 #ifdef __cplusplus
 }
 #endif
 
 #endif
-

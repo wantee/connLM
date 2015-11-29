@@ -22,51 +22,42 @@
  * SOFTWARE.
  */
 
-#ifndef  _CONNLM_CONFIG_H_
-#define  _CONNLM_CONFIG_H_
+#include <st_log.h>
+#include <st_utils.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#include "output_weight.h"
 
-#define CONNLM_VERSION   "1.0"
+void output_wt_destroy(output_wt_t *output_wt)
+{
+    if (output_wt == NULL) {
+        return;
+    }
 
-#define CONNLM_FILE_VERSION   3
-
-#ifndef _USE_DOUBLE_
-#define _USE_DOUBLE_ 0
-#endif
-
-#if _USE_DOUBLE_ == 1
-   typedef double real_t;
-#  define REAL_FMT "%lf"
-#else
-   typedef float real_t;
-#  define REAL_FMT "%f"
-#endif
-
-typedef unsigned long count_t;
-#define COUNT_FMT "%lu"
-#define COUNT_MAX ((count_t)-1)
-
-typedef unsigned long long hash_t;
-typedef long long hash_size_t;
-#define HASH_SIZE_FMT "%lld"
-
-#define ALIGN_SIZE 128
-
-#ifdef _USE_BLAS_
-#  define _MINI_UPDATE_
-#endif
-
-#define SENT_END "</s>"
-#define SENT_END_ID 0
-#define UNK "<unk>"
-#define UNK_ID 1
-
-#ifdef __cplusplus
+    output_wt->output = NULL;
 }
-#endif
 
-#endif
+output_wt_t* output_wt_dup(output_wt_t *o)
+{
+    output_wt_t *output_wt = NULL;
+
+    ST_CHECK_PARAM(o == NULL, NULL);
+
+    output_wt = (output_wt_t *) malloc(sizeof(output_wt_t));
+    if (output_wt == NULL) {
+        ST_WARNING("Falied to malloc output_wt_t.");
+        goto ERR;
+    }
+    memset(output_wt, 0, sizeof(output_wt_t));
+
+    output_wt->output = o->output;
+
+    output_wt->forward = o->forward;
+    output_wt->backprop = o->backprop;
+
+    return output_wt;
+
+ERR:
+    safe_output_wt_destroy(output_wt);
+    return NULL;
+}
 

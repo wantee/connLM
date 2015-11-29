@@ -44,6 +44,8 @@ extern "C" {
 #include "lbl.h"
 #include "ffnn.h"
 
+#include "component.h"
+
 /** @defgroup g_connlm connLM Model 
  * Data structure and functions for connLM model.
  */
@@ -150,6 +152,9 @@ typedef struct _connlm_t_ {
     maxent_t *maxent; /**< MaxEnt model. May be NULL */
     lbl_t *lbl;       /**< LBL model. May be NULL */
     ffnn_t *ffnn;     /**< FFNN model. May be NULL */
+
+    component_t **comps; /**< components. */
+    int num_comp; /**< number of components. */
 } connlm_t;
 
 /**
@@ -229,14 +234,12 @@ int connlm_init(connlm_t *connlm, connlm_model_opt_t *model_opt);
  * @ingroup g_connlm
  * @param[in] vocab vocab.
  * @param[in] output output layer.
- * @param[in] rnn RNN model.
- * @param[in] maxent MaxEnt model.
- * @param[in] lbl LBL model.
- * @param[in] ffnn FFNN model.
+ * @param[in] comps components.
+ * @param[in] n_comp number of components.
  * @return a connlm model.
  */
 connlm_t *connlm_new(vocab_t *vocab, output_t *output,
-        rnn_t *rnn, maxent_t *maxent, lbl_t* lbl, ffnn_t *ffnn);
+        component_t **comps, int n_comp);
 
 /**
  * Load a connlm model from file stream.

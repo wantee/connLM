@@ -22,51 +22,54 @@
  * SOFTWARE.
  */
 
-#ifndef  _CONNLM_CONFIG_H_
-#define  _CONNLM_CONFIG_H_
+#include <st_log.h>
+#include <st_utils.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#include "weight.h"
 
-#define CONNLM_VERSION   "1.0"
+void wt_destroy(weight_t *wt)
+{
+    if (wt == NULL) {
+        return;
+    }
 
-#define CONNLM_FILE_VERSION   3
-
-#ifndef _USE_DOUBLE_
-#define _USE_DOUBLE_ 0
-#endif
-
-#if _USE_DOUBLE_ == 1
-   typedef double real_t;
-#  define REAL_FMT "%lf"
-#else
-   typedef float real_t;
-#  define REAL_FMT "%f"
-#endif
-
-typedef unsigned long count_t;
-#define COUNT_FMT "%lu"
-#define COUNT_MAX ((count_t)-1)
-
-typedef unsigned long long hash_t;
-typedef long long hash_size_t;
-#define HASH_SIZE_FMT "%lld"
-
-#define ALIGN_SIZE 128
-
-#ifdef _USE_BLAS_
-#  define _MINI_UPDATE_
-#endif
-
-#define SENT_END "</s>"
-#define SENT_END_ID 0
-#define UNK "<unk>"
-#define UNK_ID 1
-
-#ifdef __cplusplus
+    wt->name[0] = '\0';
+    wt->id = -1;
 }
-#endif
 
-#endif
+weight_t* wt_parse_topo(const char *line)
+{
+    weight_t *wt = NULL;
+
+    ST_CHECK_PARAM(line == NULL, NULL);
+
+    return wt;
+}
+
+weight_t* wt_dup(weight_t *w)
+{
+    weight_t *wt = NULL;
+
+    ST_CHECK_PARAM(w == NULL, NULL);
+
+    wt = (weight_t *) malloc(sizeof(weight_t));
+    if (wt == NULL) {
+        ST_WARNING("Falied to malloc weight_t.");
+        goto ERR;
+    }
+    memset(wt, 0, sizeof(weight_t));
+
+    strncpy(wt->name, w->name, MAX_NAME_LEN);
+    wt->name[MAX_NAME_LEN - 1] = '\0';
+    wt->id = w->id;
+
+    wt->forward = w->forward;
+    wt->backprop = w->backprop;
+
+    return wt;
+
+ERR:
+    safe_wt_destroy(wt);
+    return NULL;
+}
 

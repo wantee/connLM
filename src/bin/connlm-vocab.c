@@ -142,7 +142,7 @@ int main(int argc, const char *argv[])
     }
     safe_st_fclose(fp);
 
-    connlm = connlm_new(vocab, NULL, NULL, NULL, NULL, NULL);
+    connlm = connlm_new(vocab, NULL, NULL, -1);
     if (connlm == NULL) {
         ST_WARNING("Failed to connlm_new.");
         goto ERR;
