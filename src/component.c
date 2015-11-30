@@ -137,44 +137,79 @@ ERR:
 
 static int comp_parse_topo(component_t *comp, const char *line)
 {
+    char keyvalue[2][MAX_LINE_LEN];
+    char token[MAX_LINE_LEN];
+    char *p;
+
     ST_CHECK_PARAM(comp == NULL || line == NULL, -1);
+
+    p = (char *)line;
+
+    p = get_next_token(p, token);
+    if (strcasecmp("property", token) != 0) {
+        ST_WARNING("Not property line.");
+        return -1;
+    }
+
+    while (p != NULL) {
+        p = get_next_token(p, token);
+        if (split_line(token, keyvalue, 2, "=") < 0) {
+            ST_WARNING("Failed to split key/value. [%s]", token);
+            return -1;
+        }
+
+        if (strcasecmp("name", keyvalue[0]) == 0) {
+            strncpy(comp->name, keyvalue[1], MAX_NAME_LEN);
+            comp->name[MAX_NAME_LEN - 1] = '\0';
+        } else {
+            ST_WARNING("Unkown key[%s].", keyvalue[0]);
+        }
+    }
 
     return 0;
 }
 
-component_t *comp_init_from_topo(FILE *topo_fp)
+component_t *comp_init_from_topo(const char* topo_content)
 {
     component_t *comp = NULL;
 
     char token[MAX_LINE_LEN];
     char *line = NULL;
     size_t line_sz = 0;
+    size_t line_cap = 0;
 
-    bool err;
-    bool has_comp;
+    const char *p;
 
-    ST_CHECK_PARAM(topo_fp == NULL, NULL);
+    ST_CHECK_PARAM(topo_content == NULL, NULL);
 
-    has_comp = false;
-    while (st_fgets(&line, &line_sz, topo_fp, &err)) {
-        remove_newline(line);
-        remove_leading_space(line);
+    comp = (component_t *)malloc(sizeof(component_t));
+    if (comp == NULL) {
+        ST_WARNING("Failed to malloc comp.");
+        goto ERR;
+    }
+    memset(comp, 0, sizeof(component_t));
 
-        if (line[0] == '\0' || line[0] == '#') {
-            continue;
-        }
-
-        if (has_comp) {
-            if (strncasecmp("</component>", line, 12) == 0) {
-                break;
-            } 
-        } else {
-            if (strncasecmp("<component>", line, 11) == 0) {
-                has_comp = true;
+    p = topo_content;
+    while (*p != '\0') {
+        line_sz = 0;
+        while (*p != '\n' && *p != '\0') {
+            if (line_sz >= line_cap) {
+                line_cap += 1024;
+                line = (char *)realloc(line, line_cap);
+                if (line == NULL) {
+                    ST_WARNING("Failed to realloc line.");
+                    goto ERR;
+                }
             }
-            continue;
+            line[line_sz++] = *p;
+            p++;
         }
+        line[line_sz] = '\0';
 
+        if (*p == '\n') {
+            p++;
+        }
+        
         (void)get_next_token(line, token);
         if (strcasecmp("property", token) == 0) {
             if(comp_parse_topo(comp, line) < 0) {
@@ -192,12 +227,8 @@ component_t *comp_init_from_topo(FILE *topo_fp)
                 goto ERR;
             }
         } else if (strcasecmp("layer", token) == 0) {
-            if (comp->layers == NULL) {
-                comp->layers = (layer_t **)malloc(sizeof(layer_t *));
-            } else {
-                comp->layers = (layer_t **)realloc(comp->layers,
-                        sizeof(layer_t *) * (comp->num_layer + 1));
-            }
+            comp->layers = (layer_t **)realloc(comp->layers,
+                    sizeof(layer_t *) * (comp->num_layer + 1));
             if (comp->layers == NULL) {
                 ST_WARNING("Failed to alloc layers.");
                 goto ERR;
@@ -210,12 +241,8 @@ component_t *comp_init_from_topo(FILE *topo_fp)
             }
             comp->num_layer++;
         } else if (strcasecmp("weight", token) == 0) {
-            if (comp->wts == NULL) {
-                comp->wts = (weight_t **)malloc(sizeof(weight_t *));
-            } else {
-                comp->wts = (weight_t **)realloc(comp->wts,
-                        sizeof(weight_t *) * (comp->num_wt + 1));
-            }
+            comp->wts = (weight_t **)realloc(comp->wts,
+                    sizeof(weight_t *) * (comp->num_wt + 1));
             if (comp->wts == NULL) {
                 ST_WARNING("Failed to alloc wts.");
                 goto ERR;
@@ -230,16 +257,6 @@ component_t *comp_init_from_topo(FILE *topo_fp)
         }
     }
 
-    if (err) {
-        ST_WARNING("st_fgets error.");
-        goto ERR;
-    }
-
-    if (!has_comp) {
-        ST_WARNING("No component found.");
-        goto ERR;
-    }
-
     safe_free(line);
 
     return comp;
@@ -247,13 +264,13 @@ component_t *comp_init_from_topo(FILE *topo_fp)
 ERR:
     safe_free(line);
 
-    comp_destroy(comp);
+    safe_comp_destroy(comp);
     return NULL;
 }
 
-int comp_init_output_wt(component_t *comp, output_t *output)
+int comp_init_output_wt(component_t *comp, output_t *output, real_t scale)
 {
-    ST_CHECK_PARAM(comp == NULL || output == NULL, -1);
+    ST_CHECK_PARAM(comp == NULL || output == NULL || scale <= 0, -1);
 
     return 0;
 }

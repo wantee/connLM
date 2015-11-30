@@ -139,5 +139,23 @@ test-$(1): $(call get_test_targets,$(1),$(2))
 
 endef
 
+define val_test_targets
+
+val-test-$(1): $(call get_test_targets,$(1),$(2))
+	@result=0; \
+    for x in $(call get_test_targets,$(1),$(2)); do \
+      printf "Valgrinding $$$$x ..."; \
+      valgrind ./$$$$x; \
+      if [ $$$$? -ne 0 ]; then \
+        echo "... FAIL"; \
+        result=1; \
+      else \
+        echo "... SUCCESS"; \
+      fi; \
+    done; \
+    exit $$$$result
+
+endef
+
 # To debug, replace $(eval, ...) to $(info, ...)
 

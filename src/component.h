@@ -93,19 +93,20 @@ component_t* comp_dup(component_t *c);
 /**
  * Initialize input and hidden layers for a component with topology file.
  * @ingroup g_component
- * @param[in] topo_fp file stream for topology file.
+ * @param[in] topo_content content for component in a topology file.
  * @return component initialised, NULL if any error.
  */
-component_t *comp_init_from_topo(FILE *topo_fp);
+component_t *comp_init_from_topo(const char* topo_content);
 
 /**
  * Initialize output weight for a component with specific output layer.
  * @ingroup g_component
  * @param[out] comp component to be initialised.
  * @param[in] output output layer.
+ * @param[in] scale output scale.
  * @return non-zero value if any error.
  */
-int comp_init_output_wt(component_t *comp, output_t *output);
+int comp_init_output_wt(component_t *comp, output_t *output, real_t scale);
 
 #ifdef __cplusplus
 }

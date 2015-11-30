@@ -105,62 +105,6 @@ static int connlm_egs_print(FILE *fp, pthread_mutex_t *fp_lock,
     return 0;
 }
 
-int connlm_load_model_opt(connlm_model_opt_t *model_opt,
-        st_opt_t *opt, const char *sec_name)
-{
-    char name[MAX_ST_CONF_LEN];
-
-    ST_CHECK_PARAM(model_opt == NULL || opt == NULL, -1);
-
-    ST_OPT_SEC_GET_UINT(opt, sec_name, "RANDOM_SEED",
-            model_opt->rand_seed, 1, "Random seed");
-
-    if (sec_name == NULL || sec_name[0] == '\0') {
-        snprintf(name, MAX_ST_CONF_LEN, "RNN");
-    } else {
-        snprintf(name, MAX_ST_CONF_LEN, "%s/RNN", sec_name);
-    }
-    if (rnn_load_model_opt(&model_opt->rnn_opt, opt, name) < 0) {
-        ST_WARNING("Failed to rnn_load_model_opt.");
-        goto ST_OPT_ERR;
-    }
-
-    if (sec_name == NULL || sec_name[0] == '\0') {
-        snprintf(name, MAX_ST_CONF_LEN, "MAXENT");
-    } else {
-        snprintf(name, MAX_ST_CONF_LEN, "%s/MAXENT", sec_name);
-    }
-    if (maxent_load_model_opt(&model_opt->maxent_opt, opt, name) < 0) {
-        ST_WARNING("Failed to maxent_load_model_opt.");
-        goto ST_OPT_ERR;
-    }
-
-    if (sec_name == NULL || sec_name[0] == '\0') {
-        snprintf(name, MAX_ST_CONF_LEN, "LBL");
-    } else {
-        snprintf(name, MAX_ST_CONF_LEN, "%s/LBL", sec_name);
-    }
-    if (lbl_load_model_opt(&model_opt->lbl_opt, opt, name) < 0) {
-        ST_WARNING("Failed to lbl_load_model_opt.");
-        goto ST_OPT_ERR;
-    }
-
-    if (sec_name == NULL || sec_name[0] == '\0') {
-        snprintf(name, MAX_ST_CONF_LEN, "FFNN");
-    } else {
-        snprintf(name, MAX_ST_CONF_LEN, "%s/FFNN", sec_name);
-    }
-    if (ffnn_load_model_opt(&model_opt->ffnn_opt, opt, name) < 0) {
-        ST_WARNING("Failed to ffnn_load_model_opt.");
-        goto ST_OPT_ERR;
-    }
-
-    return 0;
-
-ST_OPT_ERR:
-    return -1;
-}
-
 int connlm_load_train_opt(connlm_train_opt_t *train_opt,
         st_opt_t *opt, const char *sec_name)
 {
@@ -302,6 +246,8 @@ void connlm_destroy(connlm_t *connlm)
     connlm_egs_t *p;
     connlm_egs_t *q;
 
+    int i;
+
     if (connlm == NULL) {
         return;
     }
@@ -339,6 +285,12 @@ void connlm_destroy(connlm_t *connlm)
     safe_maxent_destroy(connlm->maxent);
     safe_lbl_destroy(connlm->lbl);
     safe_ffnn_destroy(connlm->ffnn);
+
+    for (i = 0; i < connlm->num_comp; i++) {
+        safe_comp_destroy(connlm->comps[i]);
+    }
+    safe_free(connlm->comps);
+    connlm->num_comp = 0;
 }
 
 int connlm_get_hs_size(connlm_t *connlm)
@@ -422,64 +374,94 @@ int connlm_get_hs_size(connlm_t *connlm)
     return hs_size;
 }
 
-int connlm_init(connlm_t *connlm, connlm_model_opt_t *model_opt)
+int connlm_init(connlm_t *connlm, FILE *topo_fp)
 {
-    int hs_size;
+    char *content = NULL;
+    size_t content_sz = 0;
+    size_t content_cap = 0;
 
-    ST_CHECK_PARAM(connlm == NULL || model_opt == NULL, -1);
+    char *line = NULL;
+    size_t line_sz = 0;
 
-    connlm->model_opt = *model_opt;
-    st_srand(model_opt->rand_seed);
+    int i;
+    bool err;
 
-    if (rnn_init(&connlm->rnn, &model_opt->rnn_opt,
-            connlm->output) < 0) {
-        ST_WARNING("Failed to rnn_init.");
-        goto ERR;
-    }
+    bool is_content;
 
-    if (maxent_init(&connlm->maxent, &model_opt->maxent_opt,
-                connlm->output) < 0) {
-        ST_WARNING("Failed to maxent_init.");
-        goto ERR;
-    }
+    ST_CHECK_PARAM(connlm == NULL || topo_fp == NULL, -1);
 
-    if (lbl_init(&connlm->lbl, &model_opt->lbl_opt, connlm->output) < 0) {
-        ST_WARNING("Failed to lbl_init.");
-        goto ERR;
-    }
+    connlm->num_comp = 0;
+    is_content = false;
+    while (st_fgets(&line, &line_sz, topo_fp, &err)) {
+        remove_newline(line);
+        remove_leading_space(line);
 
-    if (ffnn_init(&connlm->ffnn, &model_opt->ffnn_opt,
-                connlm->output) < 0) {
-        ST_WARNING("Failed to ffnn_init.");
-        goto ERR;
-    }
-
-    if (connlm->rnn == NULL && connlm->maxent == NULL
-            && connlm->lbl == NULL && connlm->ffnn == NULL) {
-        ST_WARNING("Nothing initialised.");
-        goto ERR;
-    }
-
-    if (connlm->output->output_opt.hs) {
-        hs_size = connlm_get_hs_size(connlm);
-        if (hs_size <= 0) {
-            ST_WARNING("Failed to connlm_get_hs_size.");
-            goto ERR;
+        if (line[0] == '\0' || line[0] == '#') {
+            continue;
         }
 
-        if (output_hs_init(connlm->output, hs_size) < 0) {
-            ST_WARNING("Failed to output_hs_init.");
-            goto ERR;
+        if (!is_content) {
+            if (strncasecmp("<component>", line, 11) == 0) {
+                is_content = true;
+            } 
+            continue;
         }
+
+        if (strncasecmp("</component>", line, 12) == 0) {
+            connlm->comps = (component_t **)realloc(connlm->comps,
+                    sizeof(component_t *) * (connlm->num_comp + 1));
+            if (connlm->comps == NULL) {
+                ST_WARNING("Failed to alloc comps.");
+                goto ERR;
+            }
+            connlm->comps[connlm->num_comp] = comp_init_from_topo(content);
+            if (connlm->comps[connlm->num_comp] == NULL) {
+                ST_WARNING("Failed to comp_init_from_topo.");
+                goto ERR;
+            }
+            connlm->num_comp++;
+
+            content_sz = 0;
+            is_content = false;
+            continue;
+        } 
+
+        if (strlen(line) + 2 + content_sz > content_cap) {
+            content_cap += (strlen(line) + 2);
+            content = (char *)realloc(content, content_cap);
+            if (content == NULL) {
+                ST_WARNING("Failed to realloc content.");
+                goto ERR;
+            }
+        }
+
+        strcpy(content + content_sz, line);
+        content_sz += strlen(line);
+        content[content_sz] = '\n';
+        content_sz++;
+        content[content_sz] = '\0';
     }
+
+    if (err) {
+        ST_WARNING("st_fgets error.");
+        goto ERR;
+    }
+
+    safe_free(line);
+    safe_free(content);
 
     return 0;
 
 ERR:
-    safe_rnn_destroy(connlm->rnn);
-    safe_maxent_destroy(connlm->maxent);
-    safe_lbl_destroy(connlm->lbl);
-    safe_ffnn_destroy(connlm->ffnn);
+    safe_free(line);
+    safe_free(content);
+
+    for (i = 0; i < connlm->num_comp; i++) {
+        safe_comp_destroy(connlm->comps[i]);
+    }
+    safe_free(connlm->comps);
+    connlm->num_comp = 0;
+
     return -1;
 }
 

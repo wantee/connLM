@@ -41,9 +41,56 @@ layer_t* layer_parse_topo(const char *line)
 {
     layer_t *layer = NULL;
 
+    char keyvalue[2][MAX_LINE_LEN];
+    char token[MAX_LINE_LEN];
+    char *p;
+
     ST_CHECK_PARAM(line == NULL, NULL);
 
+    layer = (layer_t *)malloc(sizeof(layer_t));
+    if (layer == NULL) {
+        ST_WARNING("Failed to malloc layer_t.");
+        goto ERR;
+    }
+    memset(layer, 0, sizeof(layer_t));
+
+    p = (char *)line;
+
+    p = get_next_token(p, token);
+    if (strcasecmp("layer", token) != 0) {
+        ST_WARNING("Not layer line.");
+        goto ERR;
+    }
+
+    while (p != NULL) {
+        p = get_next_token(p, token);
+        if (split_line(token, keyvalue, 2, "=") < 0) {
+            ST_WARNING("Failed to split key/value. [%s]", token);
+            goto ERR;
+        }
+
+        if (strcasecmp("name", keyvalue[0]) == 0) {
+            strncpy(layer->name, keyvalue[1], MAX_NAME_LEN);
+            layer->name[MAX_NAME_LEN - 1] = '\0';
+        } else if (strcasecmp("type", keyvalue[0]) == 0) {
+            strncpy(layer->type, keyvalue[1], MAX_NAME_LEN);
+            layer->type[MAX_NAME_LEN - 1] = '\0';
+        } else if (strcasecmp("size", keyvalue[0]) == 0) {
+            layer->size = atoi(keyvalue[1]);
+            if (layer->size <= 0) {
+                ST_WARNING("Invalid layer size[%s].", keyvalue[1]);
+                goto ERR;
+            }
+        } else {
+            ST_WARNING("Unkown key[%s].", keyvalue[0]);
+        }
+    }
+
     return layer;
+
+ERR:
+    safe_layer_destroy(layer);
+    return NULL;
 }
 
 layer_t* layer_dup(layer_t *l)

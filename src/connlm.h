@@ -51,21 +51,6 @@ extern "C" {
  */
 
 /**
- * Parameters for connLM model.
- * @ingroup g_connlm
- */
-typedef struct _connlm_model_opt_t_ {
-    unsigned int rand_seed;       /**< seed for random function. */
-
-    output_opt_t output_opt;       /**< options for output layer */
-
-    rnn_model_opt_t rnn_opt;       /**< options for RNN model */
-    maxent_model_opt_t maxent_opt; /**< options for MaxEnt model */
-    lbl_model_opt_t lbl_opt;       /**< options for LBL model */
-    ffnn_model_opt_t ffnn_opt;     /**< options for FFNN model */
-} connlm_model_opt_t;
-
-/**
  * Parameters for training connLM model.
  * @ingroup g_connlm
  */
@@ -125,7 +110,6 @@ typedef struct _connlm_egs_t_ {
  * @ingroup g_connlm
  */
 typedef struct _connlm_t_ {
-    connlm_model_opt_t model_opt; /**< model options */
     connlm_train_opt_t train_opt; /**< training options */
     connlm_eval_opt_t eval_opt; /**< evaluating options */
     connlm_gen_opt_t gen_opt; /**< generating options */
@@ -156,17 +140,6 @@ typedef struct _connlm_t_ {
     component_t **comps; /**< components. */
     int num_comp; /**< number of components. */
 } connlm_t;
-
-/**
- * Load connlm model option.
- * @ingroup g_connlm
- * @param[out] connlm_opt options loaded.
- * @param[in] opt runtime options passed by caller.
- * @param[in] sec_name section name of runtime options to be loaded.
- * @return non-zero value if any error.
- */
-int connlm_load_model_opt(connlm_model_opt_t *connlm_opt, 
-        st_opt_t *opt, const char *sec_name);
 
 /**
  * Load connlm train option.
@@ -224,10 +197,10 @@ void connlm_destroy(connlm_t *connlm);
  * Initialise a connlm model.
  * @ingroup g_connlm
  * @param[in] connlm connlm to be initialised.
- * @param[in] model_opt model options used to initialise.
+ * @param[in] topo_fp File stream for topology file.
  * @return non-zero value if any error.
  */
-int connlm_init(connlm_t *connlm, connlm_model_opt_t *model_opt);
+int connlm_init(connlm_t *connlm, FILE *topo_fp);
 
 /**
  * New a connlm model with some components.

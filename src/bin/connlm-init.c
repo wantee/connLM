@@ -29,14 +29,15 @@
 #include "connlm.h"
 
 bool g_binary;
+char g_topo_file[MAX_DIR_LEN];
 
 st_opt_t *g_cmd_opt;
-
-connlm_model_opt_t g_model_opt;
 
 int connlm_init_parse_opt(int *argc, const char *argv[])
 {
     st_log_opt_t log_opt;
+
+    unsigned int rand_seed;
     bool b;
 
     g_cmd_opt = st_opt_create();
@@ -60,10 +61,9 @@ int connlm_init_parse_opt(int *argc, const char *argv[])
         goto ST_OPT_ERR;
     }
 
-    if (connlm_load_model_opt(&g_model_opt, g_cmd_opt, NULL) < 0) {
-        ST_WARNING("Failed to connlm_load_model_opt");
-        goto ST_OPT_ERR;
-    }
+    ST_OPT_SEC_GET_UINT(g_cmd_opt, NULL, "RANDOM_SEED",
+            rand_seed, 1, "Random seed");
+    st_srand(rand_seed);
 
     ST_OPT_SEC_GET_BOOL(g_cmd_opt, NULL, "BINARY", g_binary, true,
             "Save file as binary format");
@@ -128,10 +128,16 @@ int main(int argc, const char *argv[])
     safe_st_fclose(fp);
 
     ST_NOTICE("Initialising Model...");
-    if (connlm_init(connlm, &g_model_opt) < 0) {
+    fp = st_fopen(g_topo_file, "rb");
+    if (fp == NULL) {
+        ST_WARNING("Failed to st_fopen topo file. [%s]", g_topo_file);
+        goto ERR;
+    }
+    if (connlm_init(connlm, fp) < 0) {
         ST_WARNING("Failed to connlm_create.");
         goto ERR;
     }
+    safe_st_fclose(fp);
 
     fp = st_fopen(argv[2], "wb");
     if (fp == NULL) {

@@ -24,10 +24,11 @@ OBJ_SO = utils.o vocab.o output.o param.o rnn.o maxent.o lbl.o ffnn.o \
 BIN = connlm-train connlm-eval connlm-info connlm-copy \
       connlm-vocab connlm-init connlm-output connlm-gen connlm-merge
 
-TEST_BIN = maxent-test utils-test param-test
+TEST_BIN = maxent-test utils-test param-test connlm-test
 ifneq (,$(findstring _USE_BLAS_,$(CFLAGS)))
     TEST_BIN += blas-test
 endif
+VAL_TEST_BIN = maxent-test utils-test param-test connlm-test
 
 .PHONY: all double float clean
 .PHONY: test test-double test-float
@@ -72,6 +73,10 @@ $(call mktargets,compile_all_test_obj,$(TEST_BIN))
 $(call mktargets,link_all_test,$(TEST_BIN))
 
 $(call mktargets,test_targets,$(TEST_BIN))
+
+val-test: val-test-double val-test-float
+
+$(call mktargets,val_test_targets,$(VAL_TEST_BIN))
 
 gen-doc: prepare-doc
 	rm -rf html/*

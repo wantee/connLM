@@ -1214,15 +1214,17 @@ static int maxent_union_insert(hash_range_t *range, int *n_range,
 
     n = *n_range;
 
-    if (e < range[0].s) {
-        memmove(range + 1, range, sizeof(hash_range_t)*n);
-        range[0].s = s;
-        range[0].e = e;
-        (*n_range)++;
-        return 0;
-    } else if (e == range[0].s) {
-        range[0].s = s;
-        return 0;
+    if (n > 0) {
+        if (e < range[0].s) {
+            memmove(range + 1, range, sizeof(hash_range_t)*n);
+            range[0].s = s;
+            range[0].e = e;
+            (*n_range)++;
+            return 0;
+        } else if (e == range[0].s) {
+            range[0].s = s;
+            return 0;
+        }
     }
 
     // skip non-intersected sets
