@@ -13,18 +13,25 @@ include templates.mk
 INC = utils.h config.h \
       connlm.h param.h rnn.h maxent.h lbl.h ffnn.h \
       vocab.h \
+      output.h \
       component.h \
       input.h \
-      output.h \
       layers/layer.h \
+      layers/sigmoid_layer.h \
+      layers/tanh_layer.h \
       weights/weight.h \
       weights/embedding_weight.h \
       weights/output_weight.h
 
-OBJ_SO = utils.o vocab.o output.o param.o rnn.o maxent.o lbl.o ffnn.o \
-         connlm.o component.o \
+OBJ_SO = utils.o param.o rnn.o maxent.o lbl.o ffnn.o \
+         connlm.o \
+         vocab.o \
+         output.o \
+         component.o \
          input.o \
          layers/layer.o \
+         layers/sigmoid_layer.o \
+         layers/tanh_layer.o \
          weights/weight.o \
          weights/embedding_weight.o \
          weights/output_weight.o \

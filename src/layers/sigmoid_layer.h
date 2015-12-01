@@ -22,70 +22,55 @@
  * SOFTWARE.
  */
 
-#ifndef  _CONNLM_LAYER_H_
-#define  _CONNLM_LAYER_H_
+#ifndef  _CONNLM_SIGMOID_LAYER_H_
+#define  _CONNLM_SIGMOID_LAYER_H_
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 #include "config.h"
+#include "layer.h"
 
-/** @defgroup g_layer NNet hidden layer. 
- * Data structures and functions for NNet hidden layer.
+/** @defgroup g_layer_sigmoid sigmoid layer. 
+ * @ingroup g_layer
+ * Data structures and functions for sigmoid layer.
  */
 
+#define SIGMOID_NAME "sigmoid"
+
 /**
- * NNet hidden layer.
- * @ingroup g_layer
+ * Destroy a sigmoid layer.
+ * @ingroup g_layer_sigmoid
+ * @param[in] layer sigmoid layer to be destroyed.
  */
-typedef struct _layer_t_ {
-    char name[MAX_NAME_LEN]; /**< layer name. */
-    char type[MAX_NAME_LEN]; /**< layer type. */
-    int size; /**< layer size. */
-
-    int id; /**< layer ID. */
-
-    int (*forward)(struct _layer_t_ *layer); /**< forward function. */
-    int (*backprop)(struct _layer_t_ *layer); /**< backprop function. */
-
-    void *extra; /**< hook to store extra data. */
-} layer_t;
+void sigmoid_destroy(layer_t* layer);
 
 /**
- * Destroy a layer and set the pointer to NULL.
- * @ingroup g_layer
- * @param[in] ptr pointer to layer_t.
+ * Initialize a sigmoid layer.
+ * @ingroup g_layer_sigmoid
+ * @param[in] layer sigmoid layer to be initialized.
+ * @return non-zero if any error
  */
-#define safe_layer_destroy(ptr) do {\
-    if((ptr) != NULL) {\
-        layer_destroy(ptr);\
-        safe_free(ptr);\
-        (ptr) = NULL;\
-    }\
-    } while(0)
-/**
- * Destroy a layer.
- * @ingroup g_layer
- * @param[in] layer layer to be destroyed.
- */
-void layer_destroy(layer_t* layer);
+int sigmoid_init(layer_t *layer);
 
 /**
- * Duplicate a layer.
- * @ingroup g_layer
- * @param[in] l layer to be duplicated.
- * @return the duplicated layer. 
+ * Duplicate a sigmoid layer.
+ * @ingroup g_layer_sigmoid
+ * @param[out] dst dst layer to be duplicated.
+ * @param[in] src src layer to be duplicated.
+ * @return non-zero if any error
  */
-layer_t* layer_dup(layer_t *l);
+int sigmoid_dup(layer_t *dst, layer_t *src);
 
 /**
- * Parse a topo config line, and return a new layer.
- * @ingroup g_layer
+ * Parse a topo config line.
+ * @ingroup g_layer_sigmoid
+ * @param[in] layer specific layer.
  * @param[in] line topo config line.
- * @return a new layer or NULL if error.
+ * @return non-zero if any error
  */
-layer_t* layer_parse_topo(const char *line);
+int sigmoid_parse_topo(layer_t *layer, const char *line);
 
 #ifdef __cplusplus
 }
