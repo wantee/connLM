@@ -10,8 +10,16 @@ SO_OBJ_DIR=./so_obj
 include flags.mk
 include templates.mk
 
-INC = connlm.h vocab.h output.h param.h rnn.h maxent.h lbl.h ffnn.h
-TARGET_INC = $(addprefix $(OUTINC_DIR)/, $(INC))
+INC = utils.h config.h \
+      connlm.h param.h rnn.h maxent.h lbl.h ffnn.h \
+      vocab.h \
+      component.h \
+      input.h \
+      output.h \
+      layers/layer.h \
+      weights/weight.h \
+      weights/embedding_weight.h \
+      weights/output_weight.h
 
 OBJ_SO = utils.o vocab.o output.o param.o rnn.o maxent.o lbl.o ffnn.o \
          connlm.o component.o \
@@ -30,19 +38,19 @@ ifneq (,$(findstring _USE_BLAS_,$(CFLAGS)))
 endif
 VAL_TEST_BIN = maxent-test utils-test param-test connlm-test
 
-.PHONY: all double float clean
+.PHONY: all double float clean inc
 .PHONY: test test-double test-float
 .PHONY: prepare-doc gen-doc publish-doc
 
 all: double float 
 
-double: $(call get_targets,double,$(BIN))
-
-float: $(call get_targets,float,$(BIN))
-
-$(TARGET_INC) : $(INC)
+inc: $(INC)
 	@mkdir -p $(OUTINC_DIR)
-	cp $^ $(OUTINC_DIR)
+	$(foreach f,$(INC),$(call copy_inc,$f,$(OUTINC_DIR)))
+
+double: inc $(call get_targets,double,$(BIN))
+
+float: inc $(call get_targets,float,$(BIN))
 
 mktargets = $(foreach type, float double, $(eval $(call $(1),$(type),$(2))))
 

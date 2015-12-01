@@ -123,7 +123,7 @@ endef
 
 define test_targets
 
-test-$(1): $(call get_test_targets,$(1),$(2))
+test-$(1): inc $(call get_test_targets,$(1),$(2))
 	@result=0; \
     for x in $(call get_test_targets,$(1),$(2)); do \
       printf "Running $$$$x ..."; \
@@ -141,7 +141,7 @@ endef
 
 define val_test_targets
 
-val-test-$(1): $(call get_test_targets,$(1),$(2))
+val-test-$(1): inc $(call get_test_targets,$(1),$(2))
 	@result=0; \
     for x in $(call get_test_targets,$(1),$(2)); do \
       printf "Valgrinding $$$$x ..."; \
@@ -157,5 +157,11 @@ val-test-$(1): $(call get_test_targets,$(1),$(2))
 
 endef
 
+define copy_inc
+
+    @mkdir -p "$(2)/$(dir $(1))"
+    @cp "$(1)" "$(2)/$(dir $(1))"
+
+endef
 # To debug, replace $(eval, ...) to $(info, ...)
 
