@@ -22,6 +22,8 @@
  * SOFTWARE.
  */
 
+#include <string.h>
+
 #include <st_log.h>
 #include <st_utils.h>
 
