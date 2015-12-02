@@ -39,7 +39,7 @@ typedef struct _layer_register_t_ {
 
 static layer_reg_t LAYER_REG[] = {
     {SIGMOID_NAME, sigmoid_init, sigmoid_destroy, sigmoid_dup, sigmoid_parse_topo},
-    {TANH_NAME, tanh_init, tanh_destroy, tanh_dup, tanh_parse_topo}
+    {TANH_NAME, tanh_init, tanh_destroy, tanh_dup, tanh_parse_topo},
 };
 
 
@@ -105,15 +105,21 @@ layer_t* layer_parse_topo(const char *line)
     reg_topo[0] = '\0';
     while (p != NULL) {
         p = get_next_token(p, token);
-        if (split_line(token, keyvalue, 2, "=") < 0) {
-            ST_WARNING("Failed to split key/value. [%s]", token);
+        if (split_line(token, keyvalue, 2, "=") != 2) {
+            ST_WARNING("Failed to split key/value. [%s][%s]", line, token);
             goto ERR;
         }
 
         if (strcasecmp("name", keyvalue[0]) == 0) {
+            if (layer->name[0] != '\0') {
+                ST_WARNING("Duplicated name.");
+            }
             strncpy(layer->name, keyvalue[1], MAX_NAME_LEN);
             layer->name[MAX_NAME_LEN - 1] = '\0';
         } else if (strcasecmp("type", keyvalue[0]) == 0) {
+            if (layer->type[0] != '\0') {
+                ST_WARNING("Duplicated type.");
+            }
             strncpy(layer->type, keyvalue[1], MAX_NAME_LEN);
             layer->type[MAX_NAME_LEN - 1] = '\0';
 
@@ -128,6 +134,9 @@ layer_t* layer_parse_topo(const char *line)
                 goto ERR;
             }
         } else if (strcasecmp("size", keyvalue[0]) == 0) {
+            if (layer->size != 0) {
+                ST_WARNING("Duplicated size.");
+            }
             layer->size = atoi(keyvalue[1]);
             if (layer->size <= 0) {
                 ST_WARNING("Invalid layer size[%s].", keyvalue[1]);
@@ -143,16 +152,20 @@ layer_t* layer_parse_topo(const char *line)
         }
     }
 
-    if (reg == NULL) {
-        ST_WARNING("No type found.");
+    if (layer->name[0] == '\0') {
+        ST_WARNING("No layer name found.");
         goto ERR;
     }
-    if (reg->parse_topo(layer, reg_topo) < 0) {
-        ST_WARNING("Failed to parse_topo for reg layer.");
+    if (reg == NULL) {
+        ST_WARNING("No layer type found.");
         goto ERR;
     }
     if (layer->size <= 0) {
         ST_WARNING("No layer size found.");
+        goto ERR;
+    }
+    if (reg->parse_topo(layer, reg_topo) < 0) {
+        ST_WARNING("Failed to parse_topo for reg layer.");
         goto ERR;
     }
 

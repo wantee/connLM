@@ -390,11 +390,11 @@ int connlm_init(connlm_t *connlm, FILE *topo_fp)
 
     ST_CHECK_PARAM(connlm == NULL || topo_fp == NULL, -1);
 
+    safe_free(connlm->comps);
     connlm->num_comp = 0;
     is_content = false;
     while (st_fgets(&line, &line_sz, topo_fp, &err)) {
-        remove_newline(line);
-        remove_leading_space(line);
+        trim(line);
 
         if (line[0] == '\0' || line[0] == '#') {
             continue;
@@ -444,6 +444,11 @@ int connlm_init(connlm_t *connlm, FILE *topo_fp)
 
     if (err) {
         ST_WARNING("st_fgets error.");
+        goto ERR;
+    }
+
+    if (connlm->comps == NULL) {
+        ST_WARNING("No componet found.");
         goto ERR;
     }
 

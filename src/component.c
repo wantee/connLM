@@ -47,11 +47,11 @@ void comp_destroy(component_t *comp)
     safe_free(comp->layers);
     comp->num_layer = 0;
 
-    for (i = 0; i < comp->num_wt; i++) {
-        safe_wt_destroy(comp->wts[i]);
+    for (i = 0; i < comp->num_glue; i++) {
+        safe_glue_destroy(comp->glues[i]);
     }
-    safe_free(comp->wts);
-    comp->num_wt = 0;
+    safe_free(comp->glues);
+    comp->num_glue = 0;
 
     safe_output_wt_destroy(comp->output_wt);
 }
@@ -105,22 +105,22 @@ component_t* comp_dup(component_t *c)
         comp->num_layer = c->num_layer;
     }
 
-    if (c->num_wt > 0) {
-        comp->wts = (weight_t **)malloc(sizeof(weight_t *)
-                * c->num_wt);
-        if (comp->wts == NULL) {
-            ST_WARNING("Failed to malloc wts.");
+    if (c->num_glue > 0) {
+        comp->glues = (glue_t **)malloc(sizeof(glue_t *)
+                * c->num_glue);
+        if (comp->glues == NULL) {
+            ST_WARNING("Failed to malloc glues.");
             goto ERR;
         }
 
-        for (i = 0; i < c->num_wt; i++) {
-            comp->wts[i] = wt_dup(c->wts[i]);
-            if (comp->wts[i] == NULL) {
-                ST_WARNING("Failed to wt_dup.");
+        for (i = 0; i < c->num_glue; i++) {
+            comp->glues[i] = glue_dup(c->glues[i]);
+            if (comp->glues[i] == NULL) {
+                ST_WARNING("Failed to glue_dup.");
                 goto ERR;
             }
         }
-        comp->num_wt = c->num_wt;
+        comp->num_glue = c->num_glue;
     }
 
     comp->output_wt = output_wt_dup(c->output_wt);
@@ -240,20 +240,21 @@ component_t *comp_init_from_topo(const char* topo_content)
                 goto ERR;
             }
             comp->num_layer++;
-        } else if (strcasecmp("weight", token) == 0) {
-            comp->wts = (weight_t **)realloc(comp->wts,
-                    sizeof(weight_t *) * (comp->num_wt + 1));
-            if (comp->wts == NULL) {
-                ST_WARNING("Failed to alloc wts.");
+        } else if (strcasecmp("glue", token) == 0) {
+            comp->glues = (glue_t **)realloc(comp->glues,
+                    sizeof(glue_t *) * (comp->num_glue + 1));
+            if (comp->glues == NULL) {
+                ST_WARNING("Failed to alloc glues.");
                 goto ERR;
             }
 
-            comp->wts[comp->num_wt] = wt_parse_topo(line);
-            if (comp->wts[comp->num_wt] == NULL) {
-                ST_WARNING("Failed to wt_parse_topo.");
+            comp->glues[comp->num_glue] = glue_parse_topo(line,
+                    comp->layers, comp->num_layer);
+            if (comp->glues[comp->num_glue] == NULL) {
+                ST_WARNING("Failed to glue_parse_topo.");
                 goto ERR;
             }
-            comp->num_wt++;
+            comp->num_glue++;
         }
     }
 

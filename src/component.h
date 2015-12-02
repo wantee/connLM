@@ -36,8 +36,8 @@ extern "C" {
 #include "input.h"
 #include "output.h"
 #include "layers/layer.h"
+#include "glues/glue.h"
 #include "weights/embedding_weight.h"
-#include "weights/weight.h"
 #include "weights/output_weight.h"
 
 /** @defgroup g_component NNet component. 
@@ -57,8 +57,8 @@ typedef struct _component_t_ {
 
     layer_t **layers; /**< hidden layers. */
     int num_layer; /**< number of hidden layers. */
-    weight_t **wts; /**< hidden weights. */
-    int num_wt; /**< number of hidden weights. */
+    glue_t **glues; /**< glues. */
+    int num_glue; /**< number of glues. */
 
     output_wt_t *output_wt; /**< output weights. */
 } component_t;

@@ -19,6 +19,10 @@ INC = utils.h config.h \
       layers/layer.h \
       layers/sigmoid_layer.h \
       layers/tanh_layer.h \
+      glues/glue.h \
+      glues/sum_glue.h \
+      glues/append_glue.h \
+      glues/clone_glue.h \
       weights/weight.h \
       weights/embedding_weight.h \
       weights/output_weight.h
@@ -32,6 +36,10 @@ OBJ_SO = utils.o param.o rnn.o maxent.o lbl.o ffnn.o \
          layers/layer.o \
          layers/sigmoid_layer.o \
          layers/tanh_layer.o \
+         glues/glue.o \
+         glues/sum_glue.o \
+         glues/append_glue.o \
+         glues/clone_glue.o \
          weights/weight.o \
          weights/embedding_weight.o \
          weights/output_weight.o \
