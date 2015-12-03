@@ -1,7 +1,7 @@
 # connLM Toolkit
 connLM is a Connectionist Language Modelling Toolkit, implementing several neural network based language models.
 
-[![Build Status](https://travis-ci.org/wantee/connLM.svg)](https://travis-ci.org/wantee/connLM)
+[![Build Status](https://travis-ci.org/wantee/connLM.svg?branch=master)](https://travis-ci.org/wantee/connLM)
 [![License](http://img.shields.io/:license-mit-blue.svg)](https://github.com/wantee/connLM/blob/master/LICENSE)
 
 ## Features
