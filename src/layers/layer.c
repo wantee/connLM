@@ -81,7 +81,7 @@ layer_t* layer_parse_topo(const char *line)
     layer_t *layer = NULL;
     layer_reg_t *reg;
 
-    char keyvalue[2][MAX_LINE_LEN];
+    char keyvalue[2*MAX_LINE_LEN];
     char token[MAX_LINE_LEN];
     char reg_topo[MAX_LINE_LEN];
 
@@ -107,22 +107,22 @@ layer_t* layer_parse_topo(const char *line)
     reg_topo[0] = '\0';
     while (p != NULL) {
         p = get_next_token(p, token);
-        if (split_line(token, keyvalue, 2, "=") != 2) {
+        if (split_line(token, keyvalue, 2, MAX_LINE_LEN, "=") != 2) {
             ST_WARNING("Failed to split key/value. [%s][%s]", line, token);
             goto ERR;
         }
 
-        if (strcasecmp("name", keyvalue[0]) == 0) {
+        if (strcasecmp("name", keyvalue) == 0) {
             if (layer->name[0] != '\0') {
                 ST_WARNING("Duplicated name.");
             }
-            strncpy(layer->name, keyvalue[1], MAX_NAME_LEN);
+            strncpy(layer->name, keyvalue + MAX_LINE_LEN, MAX_NAME_LEN);
             layer->name[MAX_NAME_LEN - 1] = '\0';
-        } else if (strcasecmp("type", keyvalue[0]) == 0) {
+        } else if (strcasecmp("type", keyvalue) == 0) {
             if (layer->type[0] != '\0') {
                 ST_WARNING("Duplicated type.");
             }
-            strncpy(layer->type, keyvalue[1], MAX_NAME_LEN);
+            strncpy(layer->type, keyvalue + MAX_LINE_LEN, MAX_NAME_LEN);
             layer->type[MAX_NAME_LEN - 1] = '\0';
 
             reg = layer_get_reg(layer->type);
@@ -135,13 +135,14 @@ layer_t* layer_parse_topo(const char *line)
                 ST_WARNING("Failed to init reg layer.");
                 goto ERR;
             }
-        } else if (strcasecmp("size", keyvalue[0]) == 0) {
+        } else if (strcasecmp("size", keyvalue) == 0) {
             if (layer->size != 0) {
                 ST_WARNING("Duplicated size.");
             }
-            layer->size = atoi(keyvalue[1]);
+            layer->size = atoi(keyvalue + MAX_LINE_LEN);
             if (layer->size <= 0) {
-                ST_WARNING("Invalid layer size[%s].", keyvalue[1]);
+                ST_WARNING("Invalid layer size[%s].",
+                        keyvalue + MAX_LINE_LEN);
                 goto ERR;
             }
         } else {

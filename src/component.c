@@ -139,7 +139,7 @@ ERR:
 
 static int comp_parse_topo(component_t *comp, const char *line)
 {
-    char keyvalue[2][MAX_LINE_LEN];
+    char keyvalue[2*MAX_LINE_LEN];
     char token[MAX_LINE_LEN];
     char *p;
 
@@ -155,16 +155,16 @@ static int comp_parse_topo(component_t *comp, const char *line)
 
     while (p != NULL) {
         p = get_next_token(p, token);
-        if (split_line(token, keyvalue, 2, "=") < 0) {
+        if (split_line(token, keyvalue, 2, MAX_LINE_LEN, "=") < 0) {
             ST_WARNING("Failed to split key/value. [%s]", token);
             return -1;
         }
 
-        if (strcasecmp("name", keyvalue[0]) == 0) {
-            strncpy(comp->name, keyvalue[1], MAX_NAME_LEN);
+        if (strcasecmp("name", keyvalue) == 0) {
+            strncpy(comp->name, keyvalue + MAX_LINE_LEN, MAX_NAME_LEN);
             comp->name[MAX_NAME_LEN - 1] = '\0';
         } else {
-            ST_WARNING("Unkown key[%s].", keyvalue[0]);
+            ST_WARNING("Unkown key[%s].", keyvalue);
         }
     }
 

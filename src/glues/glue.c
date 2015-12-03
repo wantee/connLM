@@ -103,16 +103,16 @@ void glue_destroy(glue_t *glue)
     glue->num_out_layer = 0;
 }
 
-#define MAX_LAYERS 16
 glue_t* glue_parse_topo(const char *line, layer_t **layers, int n_layer)
 {
     glue_t *glue = NULL;
     glue_reg_t *reg;
 
-    char keyvalue[2][MAX_LINE_LEN];
+    char keyvalue[2*MAX_LINE_LEN];
     char token[MAX_LINE_LEN];
     char reg_topo[MAX_LINE_LEN];
-    char names[MAX_LAYERS][MAX_LINE_LEN];
+    char *names = NULL;
+    size_t name_cap = 16;
 
     char *p;
     int i;
@@ -127,6 +127,12 @@ glue_t* glue_parse_topo(const char *line, layer_t **layers, int n_layer)
     }
     memset(glue, 0, sizeof(glue_t));
 
+    names = (char *)malloc(name_cap * MAX_LINE_LEN);
+    if (names == NULL) {
+        ST_WARNING("Failed to malloc names");
+        goto ERR;
+    }
+
     p = (char *)line;
 
     p = get_next_token(p, token);
@@ -138,16 +144,16 @@ glue_t* glue_parse_topo(const char *line, layer_t **layers, int n_layer)
     reg_topo[0] = '\0';
     while (p != NULL) {
         p = get_next_token(p, token);
-        if (split_line(token, keyvalue, 2, "=") != 2) {
+        if (split_line(token, keyvalue, 2, MAX_LINE_LEN, "=") != 2) {
             ST_WARNING("Failed to split key/value. [%s]", token);
             goto ERR;
         }
 
-        if (strcasecmp("name", keyvalue[0]) == 0) {
-            strncpy(glue->name, keyvalue[1], MAX_NAME_LEN);
+        if (strcasecmp("name", keyvalue) == 0) {
+            strncpy(glue->name, keyvalue + MAX_LINE_LEN, MAX_NAME_LEN);
             glue->name[MAX_NAME_LEN - 1] = '\0';
-        } else if (strcasecmp("type", keyvalue[0]) == 0) {
-            strncpy(glue->type, keyvalue[1], MAX_NAME_LEN);
+        } else if (strcasecmp("type", keyvalue) == 0) {
+            strncpy(glue->type, keyvalue + MAX_LINE_LEN, MAX_NAME_LEN);
             glue->type[MAX_NAME_LEN - 1] = '\0';
 
             reg = glue_get_reg(glue->type);
@@ -160,16 +166,22 @@ glue_t* glue_parse_topo(const char *line, layer_t **layers, int n_layer)
                 ST_WARNING("Failed to init reg glue.");
                 goto ERR;
             }
-        } else if (strcasecmp("in", keyvalue[0]) == 0) {
+        } else if (strcasecmp("in", keyvalue) == 0) {
             if (glue->num_in_layer != 0) {
                 ST_WARNING("Duplicated in-layers.");
                 goto ERR;
             }
-            glue->num_in_layer = split_line(keyvalue[1], names,
-                    MAX_LAYERS, ",");
-            if (glue->num_in_layer < 0) {
-                ST_WARNING("Enlarge MAX_LAYERS and recompile. [%s]", token);
-                goto ERR;
+            glue->num_in_layer = split_line(keyvalue + MAX_LINE_LEN, names,
+                    name_cap, MAX_LINE_LEN, ",");
+            while (glue->num_in_layer < 0) {
+                name_cap += 16;
+                names = (char *)realloc(names, name_cap * MAX_LINE_LEN);
+                if (names == NULL) {
+                    ST_WARNING("Failed to malloc names");
+                    goto ERR;
+                }
+                glue->num_in_layer = split_line(keyvalue + MAX_LINE_LEN,
+                        names, name_cap, MAX_LINE_LEN, ",");
             }
             glue->in_layers = (layer_t **)malloc(sizeof(layer_t *)
                     * glue->num_in_layer);
@@ -179,13 +191,14 @@ glue_t* glue_parse_topo(const char *line, layer_t **layers, int n_layer)
             }
             for (i = 0; i < glue->num_in_layer; i++) {
                 glue->in_layers[i] = glue_get_layer(layers, n_layer,
-                        names[i]);
+                        names + i*MAX_LINE_LEN);
                 if (glue->in_layers[i] == NULL) {
-                    ST_WARNING("No layer named [%s] is found.", names[i]);
+                    ST_WARNING("No layer named [%s] is found.",
+                            names + i*MAX_LINE_LEN);
                     goto ERR;
                 }
             }
-        } else if (strcasecmp("in-offset", keyvalue[0]) == 0) {
+        } else if (strcasecmp("in-offset", keyvalue) == 0) {
             if (glue->num_in_layer <= 0) {
                 ST_WARNING("in-offset must after in-layers.");
                 goto ERR;
@@ -194,8 +207,19 @@ glue_t* glue_parse_topo(const char *line, layer_t **layers, int n_layer)
                 ST_WARNING("Duplicated in-offset.");
                 goto ERR;
             }
-            n= split_line(keyvalue[1], names, MAX_LAYERS, ",");
-            if (n < 0 || n > glue->num_in_layer) {
+            n = split_line(keyvalue + MAX_LINE_LEN,
+                    names, name_cap, MAX_LINE_LEN, ",");
+            while (n < 0) {
+                name_cap += 16;
+                names = (char *)realloc(names, name_cap * MAX_LINE_LEN);
+                if (names == NULL) {
+                    ST_WARNING("Failed to malloc names");
+                    goto ERR;
+                }
+                n = split_line(keyvalue + MAX_LINE_LEN,
+                        names, name_cap, MAX_LINE_LEN, ",");
+            }
+            if (n > glue->num_in_layer) {
                 ST_WARNING("Too many in-offset [%s]", token);
                 goto ERR;
             }
@@ -206,16 +230,17 @@ glue_t* glue_parse_topo(const char *line, layer_t **layers, int n_layer)
                 goto ERR;
             }
             for (i = 0; i < n; i++) {
-                glue->in_offsets[i] = atoi(names[i]);
+                glue->in_offsets[i] = atoi(names + i*MAX_LINE_LEN);
                 if (glue->in_offsets[i] < 0) {
-                    ST_WARNING("Invalid offset[%s].", names[i]);
+                    ST_WARNING("Invalid offset[%s].",
+                            names+ i*MAX_LINE_LEN);
                     goto ERR;
                 }
             }
             for (; i < glue->num_in_layer; i++) {
                 glue->in_offsets[i] = 0;
             }
-        } else if (strcasecmp("in-scale", keyvalue[0]) == 0) {
+        } else if (strcasecmp("in-scale", keyvalue) == 0) {
             if (glue->num_in_layer <= 0) {
                 ST_WARNING("in-scale must after in-layers.");
                 goto ERR;
@@ -224,8 +249,19 @@ glue_t* glue_parse_topo(const char *line, layer_t **layers, int n_layer)
                 ST_WARNING("Duplicated in-scale.");
                 goto ERR;
             }
-            n= split_line(keyvalue[1], names, MAX_LAYERS, ",");
-            if (n < 0 || n > glue->num_in_layer) {
+            n = split_line(keyvalue + MAX_LINE_LEN,
+                    names, name_cap, MAX_LINE_LEN, ",");
+            while (n < 0) {
+                name_cap += 16;
+                names = (char *)realloc(names, name_cap * MAX_LINE_LEN);
+                if (names == NULL) {
+                    ST_WARNING("Failed to malloc names");
+                    goto ERR;
+                }
+                n = split_line(keyvalue + MAX_LINE_LEN,
+                        names, name_cap, MAX_LINE_LEN, ",");
+            }
+            if (n > glue->num_in_layer) {
                 ST_WARNING("Too many in-scale [%s]", token);
                 goto ERR;
             }
@@ -236,21 +272,27 @@ glue_t* glue_parse_topo(const char *line, layer_t **layers, int n_layer)
                 goto ERR;
             }
             for (i = 0; i < n; i++) {
-                glue->in_scales[i] = (real_t)atof(names[i]);
+                glue->in_scales[i] = (real_t)atof(names + i*MAX_LINE_LEN);
             }
             for (; i < glue->num_in_layer; i++) {
                 glue->in_scales[i] = (real_t)1.0;
             }
-        } else if (strcasecmp("out", keyvalue[0]) == 0) {
+        } else if (strcasecmp("out", keyvalue) == 0) {
             if (glue->num_out_layer != 0) {
                 ST_WARNING("Duplicated out-layers.");
                 goto ERR;
             }
-            glue->num_out_layer = split_line(keyvalue[1], names,
-                    MAX_LAYERS, ",");
-            if (glue->num_out_layer < 0) {
-                ST_WARNING("Enlarge MAX_LAYERS and recompile. [%s]", token);
-                goto ERR;
+            glue->num_out_layer = split_line(keyvalue + MAX_LINE_LEN,
+                    names, name_cap, MAX_LINE_LEN, ",");
+            while (glue->num_out_layer < 0) {
+                name_cap += 16;
+                names = (char *)realloc(names, name_cap * MAX_LINE_LEN);
+                if (names == NULL) {
+                    ST_WARNING("Failed to malloc names");
+                    goto ERR;
+                }
+                glue->num_out_layer = split_line(keyvalue + MAX_LINE_LEN,
+                        names, name_cap, MAX_LINE_LEN, ",");
             }
             glue->out_layers = (layer_t **)malloc(sizeof(layer_t *)
                     * glue->num_out_layer);
@@ -260,13 +302,14 @@ glue_t* glue_parse_topo(const char *line, layer_t **layers, int n_layer)
             }
             for (i = 0; i < glue->num_out_layer; i++) {
                 glue->out_layers[i] = glue_get_layer(layers, n_layer,
-                        names[i]);
+                        names + i*MAX_LINE_LEN);
                 if (glue->out_layers[i] == NULL) {
-                    ST_WARNING("No layer named [%s] is found.", names[i]);
+                    ST_WARNING("No layer named [%s] is found.",
+                            names + i*MAX_LINE_LEN);
                     goto ERR;
                 }
             }
-        } else if (strcasecmp("out-offset", keyvalue[0]) == 0) {
+        } else if (strcasecmp("out-offset", keyvalue) == 0) {
             if (glue->num_out_layer <= 0) {
                 ST_WARNING("out-offset must after out-layers.");
                 goto ERR;
@@ -275,8 +318,19 @@ glue_t* glue_parse_topo(const char *line, layer_t **layers, int n_layer)
                 ST_WARNING("Duplicated out-offset.");
                 goto ERR;
             }
-            n= split_line(keyvalue[1], names, MAX_LAYERS, ",");
-            if (n < 0 || n > glue->num_out_layer) {
+            n = split_line(keyvalue + MAX_LINE_LEN,
+                    names, name_cap, MAX_LINE_LEN, ",");
+            while (n < 0) {
+                name_cap += 16;
+                names = (char *)realloc(names, name_cap * MAX_LINE_LEN);
+                if (names == NULL) {
+                    ST_WARNING("Failed to malloc names");
+                    goto ERR;
+                }
+                n = split_line(keyvalue + MAX_LINE_LEN,
+                        names, name_cap, MAX_LINE_LEN, ",");
+            }
+            if (n > glue->num_out_layer) {
                 ST_WARNING("Too many out-offset [%s]", token);
                 goto ERR;
             }
@@ -287,16 +341,17 @@ glue_t* glue_parse_topo(const char *line, layer_t **layers, int n_layer)
                 goto ERR;
             }
             for (i = 0; i < n; i++) {
-                glue->out_offsets[i] = atoi(names[i]);
+                glue->out_offsets[i] = atoi(names + i*MAX_LINE_LEN);
                 if (glue->out_offsets[i] < 0) {
-                    ST_WARNING("Invalid offset[%s].", names[i]);
+                    ST_WARNING("Invalid offset[%s].",
+                            names + i*MAX_LINE_LEN);
                     goto ERR;
                 }
             }
             for (; i < glue->num_out_layer; i++) {
                 glue->out_offsets[i] = 0;
             }
-        } else if (strcasecmp("out-scale", keyvalue[0]) == 0) {
+        } else if (strcasecmp("out-scale", keyvalue) == 0) {
             if (glue->num_out_layer <= 0) {
                 ST_WARNING("out-scale must after out-layers.");
                 goto ERR;
@@ -305,8 +360,19 @@ glue_t* glue_parse_topo(const char *line, layer_t **layers, int n_layer)
                 ST_WARNING("Duplicated out-scale.");
                 goto ERR;
             }
-            n= split_line(keyvalue[1], names, MAX_LAYERS, ",");
-            if (n < 0 || n > glue->num_out_layer) {
+            n = split_line(keyvalue + MAX_LINE_LEN,
+                    names, name_cap, MAX_LINE_LEN, ",");
+            while (n < 0) {
+                name_cap += 16;
+                names = (char *)realloc(names, name_cap * MAX_LINE_LEN);
+                if (names == NULL) {
+                    ST_WARNING("Failed to malloc names");
+                    goto ERR;
+                }
+                n = split_line(keyvalue + MAX_LINE_LEN,
+                        names, name_cap, MAX_LINE_LEN, ",");
+            }
+            if (n > glue->num_out_layer) {
                 ST_WARNING("Too many out-scale [%s]", token);
                 goto ERR;
             }
@@ -317,7 +383,7 @@ glue_t* glue_parse_topo(const char *line, layer_t **layers, int n_layer)
                 goto ERR;
             }
             for (i = 0; i < n; i++) {
-                glue->out_scales[i] = (real_t)atof(names[i]);
+                glue->out_scales[i] = (real_t)atof(names + i*MAX_LINE_LEN);
             }
             for (; i < glue->num_out_layer; i++) {
                 glue->out_scales[i] = (real_t)1.0;
@@ -401,9 +467,11 @@ glue_t* glue_parse_topo(const char *line, layer_t **layers, int n_layer)
         goto ERR;
     }
 
+    safe_free(names);
     return glue;
 
 ERR:
+    safe_free(names);
     safe_glue_destroy(glue);
     return NULL;
 }
