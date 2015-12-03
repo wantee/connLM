@@ -2,7 +2,7 @@
 #
 
 TOOL_DIR="$(git rev-parse --show-toplevel)/tools/"
-REV_FILE=$TOOL_DIR/.git-revs
+REV_FILE="$(git rev-parse --show-toplevel)/misc/git-hooks/tools-revs"
 REPOS="stutils shutils"
 
 cd $TOOL_DIR || exit 1

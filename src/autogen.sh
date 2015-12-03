@@ -11,15 +11,15 @@ fi
 $PWD/../misc/git-hooks/create-hook-symlinks || exit 1
 
 TOOL_DIR="$PWD/../tools/"
-REV_FILE=.git-revs
+REV_FILE="$PWD/../misc/git-hooks/tools-revs"
 ST_UTILS_ROOT="$TOOL_DIR/stutils"
 if [ ! -e "$ST_UTILS_ROOT/include/stutils/st_macro.h" ]; then
   git clone https://github.com/wantee/stutils.git $ST_UTILS_ROOT || exit 1
 else
   ( cd "$ST_UTILS_ROOT" && git checkout master && git pull ) || exit 1
 fi
-if [ -e "$TOOL_DIR/$REV_FILE" ]; then
-  commit=`grep stutils "$TOOL_DIR/$REV_FILE" | awk '{print $2}'`
+if [ -e "$REV_FILE" ]; then
+  commit=`grep stutils "$REV_FILE" | awk '{print $2}'`
   (cd "$ST_UTILS_ROOT" && git rev-parse --verify connlm > /dev/null && git branch -d connlm)
   (cd "$ST_UTILS_ROOT" && git checkout -b connlm $commit) || exit 1
 fi
@@ -31,8 +31,8 @@ if [ ! -e "$SH_UTILS_ROOT/shutils.sh" ]; then
 else
   ( cd "$SH_UTILS_ROOT" && git checkout master && git pull ) || exit 1
 fi
-if [ -e "$TOOL_DIR/$REV_FILE" ]; then
-  commit=`grep shutils "$TOOL_DIR/$REV_FILE" | awk '{print $2}'`
+if [ -e "$REV_FILE" ]; then
+  commit=`grep shutils "$REV_FILE" | awk '{print $2}'`
   (cd "$SH_UTILS_ROOT" && git rev-parse --verify connlm > /dev/null && git branch -d connlm)
   (cd "$SH_UTILS_ROOT" && git checkout -b connlm $commit) || exit 1
 fi
