@@ -55,6 +55,11 @@ typedef struct _ref_t_ {
     int num_glue_out[MAX_REF_COMP_NUM][MAX_REF_GLUE_NUM];
     int glue_out_offset[MAX_REF_COMP_NUM][MAX_REF_GLUE_NUM][MAX_REF_GLUE_OUT_NUM];
     real_t glue_out_scale[MAX_REF_COMP_NUM][MAX_REF_GLUE_NUM][MAX_REF_GLUE_OUT_NUM];
+
+    struct sum_glue_ref {
+        bool avg;
+        bool set;
+    } sum_glue[MAX_REF_GLUE_NUM];
 } ref_t;
 
 static FILE* mk_topo_file(ref_t *ref)
@@ -63,6 +68,8 @@ static FILE* mk_topo_file(ref_t *ref)
 
     int c, l, g;
     int i, n;
+
+    int sum_i = 0;
 
     fp = tmpfile();
     assert(fp != NULL);
@@ -90,6 +97,17 @@ static FILE* mk_topo_file(ref_t *ref)
                 fprintf(fp, "%d", ref->glue_out[c][g][i]);
             }
             fprintf(fp, " type=%s", ref->glue_type[c][g]);
+
+            if (strcasecmp(ref->glue_type[c][g], "sum") == 0) {
+                if (ref->sum_glue[sum_i].avg) {
+                    fprintf(fp, " avg=true");
+                } else {
+                    if (ref->sum_glue[sum_i].set) {
+                        fprintf(fp, " avg=false");
+                    }
+                }
+                sum_i++;
+            }
 
             fprintf(fp, " in=");
             for (i = 0; i < ref->num_glue_in[c][g] - 1; i++) {
@@ -166,7 +184,7 @@ static FILE* mk_topo_file(ref_t *ref)
     }
     rewind(fp);
 
-#if 0
+#if 1
     {
         char line[MAX_LINE_LEN];
         while(fgets(line, MAX_LINE_LEN, fp)) {
@@ -320,6 +338,7 @@ static int unit_test_connlm_read_topo()
                            {{8, 8}}},
         .glue_out_scale = {{{1.0}, {1.0}},
                            {{1.0, 2.0}}},
+        .sum_glue = {{true, true}},
     };
 
     fprintf(stderr, "  Testing Reading topology file...\n");
