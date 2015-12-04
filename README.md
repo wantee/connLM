@@ -47,7 +47,7 @@ Quick tests:
 $ cd $CONNLM_HOME/src
 $ make clean
 $ make test
-$ CONNLM_NO_OPT=1 make
+$ make
 $ cd ..
 $ source tools/shutils/shutils.sh
 $ cd egs/tiny
@@ -55,8 +55,6 @@ $ shu-testing
 ```
 
 Normally the tests should be passed. However, there may be differences between the output and the expected, which may be caused by floating point operations. If the differences are small, this should not be a problem.
-
-After tests, one should rebuild the binaries for speed up: `make clean && make`.
 
 ## License
 
@@ -78,3 +76,11 @@ After tests, one should rebuild the binaries for speed up: `make clean && make`.
 5. [NPLM Toolkit](http://nlg.isi.edu/software/nplm/)
 6. [LBL4word2vec](https://github.com/qunluo/LBL4word2vec)
 7. [neural_lm](https://github.com/ddahlmeier/neural_lm/)
+
+## Contributing
+
+1. Fork it ( https://github.com/wantee/connLM.git )
+2. Create your feature branch (`git checkout -b my-new-feature`)
+3. Commit your changes (`git commit -am 'Add some feature'`)
+4. Push to the branch (`git push origin my-new-feature`)
+5. Create a new Pull Request
