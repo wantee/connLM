@@ -6,7 +6,6 @@ bin/
 include/
 lib/
 log/
-tools/
 corpus/
 *.o
 *.wav
