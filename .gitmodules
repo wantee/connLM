@@ -1,0 +1,6 @@
+[submodule "tools/stutils"]
+	path = tools/stutils
+	url = https://github.com/wantee/stutils.git
+[submodule "tools/shutils"]
+	path = tools/shutils
+	url = https://github.com/wantee/shutils.git

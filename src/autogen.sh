@@ -8,34 +8,11 @@ if [ "`basename $PWD`" != "src" ]; then
   exit 1
 fi
 
-$PWD/../misc/git-hooks/create-hook-symlinks || exit 1
+git submodule update --init || exit 1
 
 TOOL_DIR="$PWD/../tools/"
-REV_FILE="$PWD/../misc/git-hooks/tools-revs"
 ST_UTILS_ROOT="$TOOL_DIR/stutils"
-if [ ! -e "$ST_UTILS_ROOT/include/stutils/st_macro.h" ]; then
-  git clone https://github.com/wantee/stutils.git $ST_UTILS_ROOT || exit 1
-else
-  ( cd "$ST_UTILS_ROOT" && git checkout master && git pull ) || exit 1
-fi
-if [ -e "$REV_FILE" ]; then
-  commit=`grep stutils "$REV_FILE" | awk '{print $2}'`
-  (cd "$ST_UTILS_ROOT" && git rev-parse --verify connlm > /dev/null && git branch -d connlm)
-  (cd "$ST_UTILS_ROOT" && git checkout -b connlm $commit) || exit 1
-fi
 ( cd "$ST_UTILS_ROOT/src" && make ) || exit 1
-
-SH_UTILS_ROOT="$TOOL_DIR/shutils"
-if [ ! -e "$SH_UTILS_ROOT/shutils.sh" ]; then
-  git clone https://github.com/wantee/shutils $SH_UTILS_ROOT || exit 1
-else
-  ( cd "$SH_UTILS_ROOT" && git checkout master && git pull ) || exit 1
-fi
-if [ -e "$REV_FILE" ]; then
-  commit=`grep shutils "$REV_FILE" | awk '{print $2}'`
-  (cd "$SH_UTILS_ROOT" && git rev-parse --verify connlm > /dev/null && git branch -d connlm)
-  (cd "$SH_UTILS_ROOT" && git checkout -b connlm $commit) || exit 1
-fi
 
 mkfile=blas.mk
 > $mkfile
