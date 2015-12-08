@@ -39,6 +39,10 @@ extern "C" {
 
 #define SUM_GLUE_NAME "sum"
 
+typedef struct _sum_glue_data_t_ {
+    bool avg;
+} sum_glue_data_t;
+
 /**
  * Destroy a sum glue.
  * @ingroup g_glue_sum

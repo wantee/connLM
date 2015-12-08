@@ -114,7 +114,7 @@ glue_t* glue_parse_topo(const char *line, layer_t **layers, int n_layer)
     char *names = NULL;
     size_t name_cap = 16;
 
-    char *p;
+    const char *p;
     int i;
     int n;
 
@@ -133,7 +133,7 @@ glue_t* glue_parse_topo(const char *line, layer_t **layers, int n_layer)
         goto ERR;
     }
 
-    p = (char *)line;
+    p = line;
 
     p = get_next_token(p, token);
     if (strcasecmp("glue", token) != 0) {

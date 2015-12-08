@@ -85,7 +85,7 @@ layer_t* layer_parse_topo(const char *line)
     char token[MAX_LINE_LEN];
     char reg_topo[MAX_LINE_LEN];
 
-    char *p;
+    const char *p;
 
     ST_CHECK_PARAM(line == NULL, NULL);
 
@@ -96,7 +96,7 @@ layer_t* layer_parse_topo(const char *line)
     }
     memset(layer, 0, sizeof(layer_t));
 
-    p = (char *)line;
+    p = line;
 
     p = get_next_token(p, token);
     if (strcasecmp("layer", token) != 0) {

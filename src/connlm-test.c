@@ -27,6 +27,7 @@
 
 #include <st_utils.h>
 
+#include "glues/sum_glue.h"
 #include "connlm.h"
 
 #define MAX_REF_COMP_NUM 16
@@ -98,17 +99,6 @@ static FILE* mk_topo_file(ref_t *ref)
             }
             fprintf(fp, " type=%s", ref->glue_type[c][g]);
 
-            if (strcasecmp(ref->glue_type[c][g], "sum") == 0) {
-                if (ref->sum_glue[sum_i].avg) {
-                    fprintf(fp, " avg=true");
-                } else {
-                    if (ref->sum_glue[sum_i].set) {
-                        fprintf(fp, " avg=false");
-                    }
-                }
-                sum_i++;
-            }
-
             fprintf(fp, " in=");
             for (i = 0; i < ref->num_glue_in[c][g] - 1; i++) {
                 fprintf(fp, "%s%d,", ref->layer_name, ref->glue_in[c][g][i]);
@@ -177,6 +167,18 @@ static FILE* mk_topo_file(ref_t *ref)
                 }
                 fprintf(fp, "%g", ref->glue_out_scale[c][g][i]);
             }
+
+            if (strcasecmp(ref->glue_type[c][g], "sum") == 0) {
+                if (ref->sum_glue[sum_i].avg) {
+                    fprintf(fp, " avg=true");
+                } else {
+                    if (ref->sum_glue[sum_i].set) {
+                        fprintf(fp, " avg=false");
+                    }
+                }
+                sum_i++;
+            }
+
             fprintf(fp, "\n");
         }
         fprintf(fp, "</component>\n");
@@ -184,7 +186,7 @@ static FILE* mk_topo_file(ref_t *ref)
     }
     rewind(fp);
 
-#if 1
+#if 0
     {
         char line[MAX_LINE_LEN];
         while(fgets(line, MAX_LINE_LEN, fp)) {
@@ -232,36 +234,101 @@ static int check_layer(layer_t *layer, char *name, int id,
     return 0;
 }
 
-static int check_glue(glue_t *glue, ref_t *ref, int c, int g)
+static int check_glue(glue_t *glue, ref_t *ref, int c, int g, int sum_i)
 { 
-#if 0
     char name[MAX_NAME_LEN];
+    char tmp[MAX_NAME_LEN];
 
-    strcpy(name, ref->glue_name);
-    strcat(name, ref->glue_);
-    if (strncmp(layer->name, name, strlen(name)) != 0
-            || layer->name[strlen(name)] != '0' + id
-            || layer->name[strlen(name) + 1] != '\0') {
-        fprintf(stderr, "layer name not match.\n");
+    int i;
+
+    snprintf(name, MAX_NAME_LEN, "%s", ref->glue_name);
+    for (i = 0; i < ref->num_glue_in[c][g]; i++) {
+        snprintf(tmp, MAX_NAME_LEN, "%d", ref->glue_in[c][g][i]);
+        strncat(name, tmp, MAX_NAME_LEN - strlen(name) - 1);
+    }
+    strncat(name, "-", MAX_NAME_LEN - strlen(name) - 1);
+    for (i = 0; i < ref->num_glue_out[c][g]; i++) {
+        snprintf(tmp, MAX_NAME_LEN, "%d", ref->glue_out[c][g][i]);
+        strncat(name, tmp, MAX_NAME_LEN - strlen(name) - 1);
+    }
+
+    if (strcmp(name, glue->name) != 0) {
+        fprintf(stderr, "glue name not match.[%s/%s]\n", name, glue->name);
         return -1;
     }
 
-    if (strcmp(layer->type, type) != 0) {
-        fprintf(stderr, "layer type not match.\n");
+    if (strcmp(ref->glue_type[c][g], glue->type) != 0) {
+        fprintf(stderr, "glue type not match.[%s/%s]\n",
+                ref->glue_type[c][g], glue->type);
         return -1;
     }
 
-    if (layer->size != size) {
-        fprintf(stderr, "layer size not match.\n");
+    if (glue->num_in_layer != ref->num_glue_in[c][g]
+            || glue->in_layers == NULL) {
+        fprintf(stderr, "glue in num not match.[%d/%d]\n",
+                ref->num_glue_in[c][g], glue->num_in_layer);
         return -1;
     }
-#endif
+    for (i = 0; i < ref->num_glue_in[c][g]; i++) {
+        snprintf(name, MAX_NAME_LEN, "%s%d", ref->layer_name,
+                ref->glue_in[c][g][i]);
+        if (strcmp(name, glue->in_layers[i]->name) != 0) {
+            fprintf(stderr, "glue in layer not match.[%s/%s]\n",
+                    name, glue->in_layers[i]->name);
+            return -1;
+        }
+
+        if (ref->glue_in_offset[c][g][i] != glue->in_offsets[i]) {
+            fprintf(stderr, "glue in offset not match.[%d/%d]\n",
+                    ref->glue_in_offset[c][g][i], glue->in_offsets[i]);
+            return -1;
+        }
+
+        if (ref->glue_in_scale[c][g][i] != glue->in_scales[i]) {
+            fprintf(stderr, "glue in scale not match.[%g/%g]\n",
+                    ref->glue_in_scale[c][g][i], glue->in_scales[i]);
+            return -1;
+        }
+    }
+
+    for (i = 0; i < ref->num_glue_out[c][g]; i++) {
+        snprintf(name, MAX_NAME_LEN, "%s%d", ref->layer_name,
+                ref->glue_out[c][g][i]);
+        if (strcmp(name, glue->out_layers[i]->name) != 0) {
+            fprintf(stderr, "glue out layer not match.[%s/%s]\n",
+                    name, glue->out_layers[i]->name);
+            return -1;
+        }
+
+        if (ref->glue_out_offset[c][g][i] != glue->out_offsets[i]) {
+            fprintf(stderr, "glue out offset not match.[%d/%d]\n",
+                    ref->glue_out_offset[c][g][i], glue->out_offsets[i]);
+            return -1;
+        }
+
+        if (ref->glue_out_scale[c][g][i] != glue->out_scales[i]) {
+            fprintf(stderr, "glue out scale not match.[%g/%g]\n",
+                    ref->glue_out_scale[c][g][i], glue->out_scales[i]);
+            return -1;
+        }
+    }
+
+    if (strcasecmp(ref->glue_type[c][g], "sum") == 0) {
+        if (((sum_glue_data_t *)(glue->extra))->avg
+                != ref->sum_glue[sum_i].avg) {
+            fprintf(stderr, "sum glue avg not match.[%s/%s]\n",
+                    bool2str(ref->sum_glue[sum_i].avg),
+                    bool2str(((sum_glue_data_t *)glue->extra)->avg));
+            return -1;
+        }
+    }
+
     return 0;
 }
 
 static int check_connlm(connlm_t *connlm, ref_t *ref)
 {
-    int c, l;
+    int c, l, sum_i;
 
     if (connlm->num_comp != ref->num_comp) {
         fprintf(stderr, "num_comp not match\n");
@@ -291,10 +358,15 @@ static int check_connlm(connlm_t *connlm, ref_t *ref)
             return -1;
         }
 
+        sum_i = 0;
         for (l = 0; l < connlm->comps[c]->num_glue; l++) {
-            if (check_glue(connlm->comps[c]->glues[l], ref, c, l) != 0) {
+            if (check_glue(connlm->comps[c]->glues[l], ref,
+                        c, l, sum_i) != 0) {
                 fprintf(stderr, "glue not match\n");
                 return -1;
+            }
+            if (strcasecmp(ref->glue_type[c][l], "sum") == 0) {
+                sum_i++;
             }
         }
     }

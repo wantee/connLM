@@ -41,6 +41,60 @@ static int sum_glue_backprop(glue_t *glue)
     return 0;
 }
 
+#define safe_sum_glue_data_destroy(ptr) do {\
+    if((ptr) != NULL) {\
+        sum_glue_data_destroy((sum_glue_data_t *)ptr);\
+        safe_free(ptr);\
+        (ptr) = NULL;\
+    }\
+    } while(0)
+
+void sum_glue_data_destroy(sum_glue_data_t *data)
+{
+    if (data == NULL) {
+        return;
+    }
+
+    data->avg = false;
+}
+
+sum_glue_data_t* sum_glue_data_init()
+{
+    sum_glue_data_t *data = NULL;
+
+    data = (sum_glue_data_t *)malloc(sizeof(sum_glue_data_t));
+    if (data == NULL) {
+        ST_WARNING("Failed to malloc sum_glue_data.");
+        goto ERR;
+    }
+    memset(data, 0, sizeof(sum_glue_data_t));
+
+    return data;
+ERR:
+    safe_sum_glue_data_destroy(data);
+    return NULL;
+}
+
+sum_glue_data_t* sum_glue_data_dup(sum_glue_data_t *src)
+{
+    sum_glue_data_t *dst = NULL;
+
+    ST_CHECK_PARAM(src == NULL, NULL);
+
+    dst = sum_glue_data_init();
+    if (dst == NULL) {
+        ST_WARNING("Failed to sum_glue_data_init.");
+        goto ERR;
+    }
+
+    dst->avg = src->avg;
+
+    return dst;
+ERR:
+    safe_sum_glue_data_destroy(dst);
+    return NULL;
+}
+
 void sum_glue_destroy(glue_t *glue)
 {
     if (glue == NULL) {
@@ -49,7 +103,7 @@ void sum_glue_destroy(glue_t *glue)
 
     glue->forward = NULL;
     glue->backprop = NULL;
-    glue->extra = NULL;
+    safe_sum_glue_data_destroy(glue->extra);
 }
 
 int sum_glue_init(glue_t *glue)
@@ -63,9 +117,17 @@ int sum_glue_init(glue_t *glue)
 
     glue->forward = sum_glue_forward;
     glue->backprop = sum_glue_backprop;
-    glue->extra = NULL;
+    glue->extra = (void *)sum_glue_data_init();
+    if (glue->extra == NULL) {
+        ST_WARNING("Failed to sum_glue_data_init.");
+        goto ERR;
+    }
 
     return 0;
+
+ERR:
+    safe_sum_glue_data_destroy(glue->extra);
+    return -1;
 }
 
 int sum_glue_dup(glue_t *dst, glue_t *src)
@@ -84,26 +146,61 @@ int sum_glue_dup(glue_t *dst, glue_t *src)
 
     dst->forward = src->forward;
     dst->backprop = src->forward;
-    dst->extra = src->extra;
+
+    dst->extra = (void *)sum_glue_data_dup((sum_glue_data_t *)src->extra);
+    if (dst->extra == NULL) {
+        ST_WARNING("Failed to sum_glue_data_dup.");
+        goto ERR;
+    }
 
     return 0;
+ERR:
+    safe_sum_glue_data_destroy(dst->extra);
+    return -1;
 }
 
 int sum_glue_parse_topo(glue_t *glue, const char *line)
 {
-    char *p;
+    char keyvalue[2*MAX_LINE_LEN];
+    char token[MAX_LINE_LEN];
+
+    sum_glue_data_t *data = NULL;
+    const char *p;
 
     ST_CHECK_PARAM(glue == NULL || line == NULL, -1);
 
-    p = (char *)line;
-    while(*p != '\0') {
-        if (*p != ' ' || *p != '\t') {
-            ST_WARNING("sum glue should be empty. [%s]", line);
-            return -1;
+    data = sum_glue_data_init();
+    if (data == NULL) {
+        ST_WARNING("Failed to sum_glue_data_init.");
+        goto ERR;
+    }
+
+    p = line;
+
+    while (p != NULL) {
+        p = get_next_token(p, token);
+        if (*token == '\0') {
+            break;
+        }
+
+        if (split_line(token, keyvalue, 2, MAX_LINE_LEN, "=") != 2) {
+            ST_WARNING("Failed to split key/value. [%s]", token);
+            goto ERR;
+        }
+
+        if (strcasecmp("avg", keyvalue) == 0) {
+            data->avg = str2bool(keyvalue + MAX_LINE_LEN);
+        } else {
+            ST_WARNING("Unknown key/value[%s]", token);
         }
     }
 
+    glue->extra = (void *)data;
     return 0;
+
+ERR:
+    safe_sum_glue_data_destroy(data);
+    return -1;
 }
 
 bool sum_glue_check(glue_t *glue)

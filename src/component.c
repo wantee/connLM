@@ -141,11 +141,11 @@ static int comp_parse_topo(component_t *comp, const char *line)
 {
     char keyvalue[2*MAX_LINE_LEN];
     char token[MAX_LINE_LEN];
-    char *p;
+    const char *p;
 
     ST_CHECK_PARAM(comp == NULL || line == NULL, -1);
 
-    p = (char *)line;
+    p = line;
 
     p = get_next_token(p, token);
     if (strcasecmp("property", token) != 0) {
