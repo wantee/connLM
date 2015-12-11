@@ -169,11 +169,7 @@ int sum_glue_parse_topo(glue_t *glue, const char *line)
 
     ST_CHECK_PARAM(glue == NULL || line == NULL, -1);
 
-    data = sum_glue_data_init();
-    if (data == NULL) {
-        ST_WARNING("Failed to sum_glue_data_init.");
-        goto ERR;
-    }
+    data = (sum_glue_data_t *)glue->extra;
 
     p = line;
 
@@ -195,11 +191,9 @@ int sum_glue_parse_topo(glue_t *glue, const char *line)
         }
     }
 
-    glue->extra = (void *)data;
     return 0;
 
 ERR:
-    safe_sum_glue_data_destroy(data);
     return -1;
 }
 

@@ -39,10 +39,13 @@ extern "C" {
 #include "glues/glue.h"
 #include "weights/embedding_weight.h"
 #include "weights/output_weight.h"
+#include "graph.h"
 
 /** @defgroup g_component NNet component. 
  * Data structures and functions for NNet component.
  */
+
+typedef int comp_id_t;
 
 /**
  * NNet component.
@@ -50,15 +53,16 @@ extern "C" {
  */
 typedef struct _component_t_ {
     char name[MAX_NAME_LEN]; /**< component name. */
-    int id; /**< component ID. */
 
     input_t *input; /**< input layer. */
     emb_wt_t *emb; /**< embedding weight. */
 
     layer_t **layers; /**< hidden layers. */
-    int num_layer; /**< number of hidden layers. */
+    layer_id_t num_layer; /**< number of hidden layers. */
     glue_t **glues; /**< glues. */
-    int num_glue; /**< number of glues. */
+    glue_id_t num_glue; /**< number of glues. */
+
+    graph_t *graph; /**< nnet graph for this component. */
 
     output_wt_t *output_wt; /**< output weights. */
 } component_t;
@@ -97,6 +101,14 @@ component_t* comp_dup(component_t *c);
  * @return component initialised, NULL if any error.
  */
 component_t *comp_init_from_topo(const char* topo_content);
+
+/**
+ * Construct the nnet graph for a component.
+ * @ingroup g_component
+ * @param[in] comp component to construct graph.
+ * @return non-zero value if any error.
+ */
+int comp_construct_graph(component_t *comp);
 
 /**
  * Initialize output weight for a component with specific output layer.

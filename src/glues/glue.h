@@ -36,6 +36,9 @@ extern "C" {
  * Data structures and functions for NNet glue.
  */
 
+typedef int glue_id_t;
+typedef int glue_offset_t;
+
 /**
  * NNet glue.
  * @ingroup g_glue
@@ -44,15 +47,13 @@ typedef struct _glue_t_ {
     char name[MAX_NAME_LEN]; /**< glue name. */
     char type[MAX_NAME_LEN]; /**< glue type. */
     layer_t** in_layers; /**< input layers. */
-    int* in_offsets; /**< offset for input layers. */
+    glue_offset_t* in_offsets; /**< offset for input layers. */
     real_t* in_scales; /**< scale for input layers. */
-    int num_in_layer; /**< number of input layers. */
+    layer_id_t num_in_layer; /**< number of input layers. */
     layer_t** out_layers; /**< output layers. */
-    int* out_offsets; /**< offset for output layers. */
+    glue_offset_t* out_offsets; /**< offset for output layers. */
     real_t* out_scales; /**< scale for output layers. */
-    int num_out_layer; /**< number of output layers. */
-
-    int id; /**< glue ID. */
+    layer_id_t num_out_layer; /**< number of output layers. */
 
     int (*forward)(struct _glue_t_ *glue); /**< forward function. */
     int (*backprop)(struct _glue_t_ *glue); /**< backprop function. */

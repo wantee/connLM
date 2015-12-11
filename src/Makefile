@@ -25,7 +25,8 @@ INC = utils.h config.h \
       glues/clone_glue.h \
       weights/weight.h \
       weights/embedding_weight.h \
-      weights/output_weight.h
+      weights/output_weight.h \
+      graph.h
 
 OBJ_SO = utils.o param.o rnn.o maxent.o lbl.o ffnn.o \
          connlm.o \
@@ -43,6 +44,7 @@ OBJ_SO = utils.o param.o rnn.o maxent.o lbl.o ffnn.o \
          weights/weight.o \
          weights/embedding_weight.o \
          weights/output_weight.o \
+         graph.o
 
 BIN = connlm-train connlm-eval connlm-info connlm-copy \
       connlm-vocab connlm-init connlm-output connlm-gen connlm-merge

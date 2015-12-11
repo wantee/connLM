@@ -439,11 +439,7 @@ static int unit_test_connlm_read_topo()
     fp = mk_topo_file(&ref);
 
     memset(&connlm, 0, sizeof(connlm_t));
-    if (connlm_init(&connlm, fp) < 0) {
-        fprintf(stderr, "Failed\n");
-        goto ERR;
-    }
-    if (check_connlm(&connlm, &ref) != 0) {
+    if (connlm_init(&connlm, fp) >= 0) {
         fprintf(stderr, "Failed\n");
         goto ERR;
     }
@@ -463,11 +459,7 @@ static int unit_test_connlm_read_topo()
     fp = mk_topo_file(&ref);
 
     memset(&connlm, 0, sizeof(connlm_t));
-    if (connlm_init(&connlm, fp) < 0) {
-        fprintf(stderr, "Failed\n");
-        goto ERR;
-    }
-    if (check_connlm(&connlm, &ref) != 0) {
+    if (connlm_init(&connlm, fp) >= 0) {
         fprintf(stderr, "Failed\n");
         goto ERR;
     }

@@ -1,18 +1,18 @@
 /*
  * The MIT License (MIT)
- * 
+ *
  * Copyright (c) 2015 Wang Jian
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in all
  * copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -56,21 +56,21 @@ static glue_reg_t* glue_get_reg(const char *type)
     for (t = 0; t < sizeof(GLUE_REG) / sizeof(GLUE_REG[0]); t++) {
         if (strcasecmp(type, GLUE_REG[t].type) == 0) {
             return GLUE_REG + t;
-        } 
+        }
     }
 
     return NULL;
 }
 
-static layer_t* glue_get_layer(layer_t **layers, int n_layer,
+static layer_t* glue_get_layer(layer_t **layers, layer_id_t n_layer,
         const char *name)
 {
-    int t;
+    layer_id_t t;
 
     for (t = 0; t < n_layer; t++) {
         if (strcmp(layers[t]->name, name) == 0) {
             return layers[t];
-        } 
+        }
     }
 
     return NULL;
@@ -85,7 +85,6 @@ void glue_destroy(glue_t *glue)
     }
 
     glue->name[0] = '\0';
-    glue->id = -1;
 
     reg = glue_get_reg(glue->type);
     if (reg != NULL) {
@@ -103,7 +102,7 @@ void glue_destroy(glue_t *glue)
     glue->num_out_layer = 0;
 }
 
-glue_t* glue_parse_topo(const char *line, layer_t **layers, int n_layer)
+glue_t* glue_parse_topo(const char *line, layer_t **layers, layer_id_t n_layer)
 {
     glue_t *glue = NULL;
     glue_reg_t *reg;
@@ -115,7 +114,7 @@ glue_t* glue_parse_topo(const char *line, layer_t **layers, int n_layer)
     size_t name_cap = 16;
 
     const char *p;
-    int i;
+    layer_id_t l;
     int n;
 
     ST_CHECK_PARAM(line == NULL || layers == NULL || n_layer <= 0, NULL);
@@ -189,12 +188,12 @@ glue_t* glue_parse_topo(const char *line, layer_t **layers, int n_layer)
                 ST_WARNING("Failed to malloc in_layers.");
                 goto ERR;
             }
-            for (i = 0; i < glue->num_in_layer; i++) {
-                glue->in_layers[i] = glue_get_layer(layers, n_layer,
-                        names + i*MAX_LINE_LEN);
-                if (glue->in_layers[i] == NULL) {
+            for (l = 0; l < glue->num_in_layer; l++) {
+                glue->in_layers[l] = glue_get_layer(layers, n_layer,
+                        names + l*MAX_LINE_LEN);
+                if (glue->in_layers[l] == NULL) {
                     ST_WARNING("No layer named [%s] is found.",
-                            names + i*MAX_LINE_LEN);
+                            names + l*MAX_LINE_LEN);
                     goto ERR;
                 }
             }
@@ -223,22 +222,22 @@ glue_t* glue_parse_topo(const char *line, layer_t **layers, int n_layer)
                 ST_WARNING("Too many in-offset [%s]", token);
                 goto ERR;
             }
-            glue->in_offsets = (int *)malloc(sizeof(int) 
+            glue->in_offsets = (glue_offset_t *)malloc(sizeof(glue_offset_t)
                     * glue->num_in_layer);
             if (glue->in_offsets == NULL) {
                 ST_WARNING("Failed to malloc in_offsets.");
                 goto ERR;
             }
-            for (i = 0; i < n; i++) {
-                glue->in_offsets[i] = atoi(names + i*MAX_LINE_LEN);
-                if (glue->in_offsets[i] < 0) {
+            for (l = 0; l < n; l++) {
+                glue->in_offsets[l] = atoi(names + l*MAX_LINE_LEN);
+                if (glue->in_offsets[l] < 0) {
                     ST_WARNING("Invalid offset[%s].",
-                            names+ i*MAX_LINE_LEN);
+                            names+ l*MAX_LINE_LEN);
                     goto ERR;
                 }
             }
-            for (; i < glue->num_in_layer; i++) {
-                glue->in_offsets[i] = 0;
+            for (; l < glue->num_in_layer; l++) {
+                glue->in_offsets[l] = 0;
             }
         } else if (strcasecmp("in-scale", keyvalue) == 0) {
             if (glue->num_in_layer <= 0) {
@@ -265,17 +264,17 @@ glue_t* glue_parse_topo(const char *line, layer_t **layers, int n_layer)
                 ST_WARNING("Too many in-scale [%s]", token);
                 goto ERR;
             }
-            glue->in_scales = (real_t *)malloc(sizeof(real_t) 
+            glue->in_scales = (real_t *)malloc(sizeof(real_t)
                     * glue->num_in_layer);
             if (glue->in_scales == NULL) {
                 ST_WARNING("Failed to malloc in_scales.");
                 goto ERR;
             }
-            for (i = 0; i < n; i++) {
-                glue->in_scales[i] = (real_t)atof(names + i*MAX_LINE_LEN);
+            for (l = 0; l < n; l++) {
+                glue->in_scales[l] = (real_t)atof(names + l*MAX_LINE_LEN);
             }
-            for (; i < glue->num_in_layer; i++) {
-                glue->in_scales[i] = (real_t)1.0;
+            for (; l < glue->num_in_layer; l++) {
+                glue->in_scales[l] = (real_t)1.0;
             }
         } else if (strcasecmp("out", keyvalue) == 0) {
             if (glue->num_out_layer != 0) {
@@ -300,12 +299,12 @@ glue_t* glue_parse_topo(const char *line, layer_t **layers, int n_layer)
                 ST_WARNING("Failed to malloc out_layers.");
                 goto ERR;
             }
-            for (i = 0; i < glue->num_out_layer; i++) {
-                glue->out_layers[i] = glue_get_layer(layers, n_layer,
-                        names + i*MAX_LINE_LEN);
-                if (glue->out_layers[i] == NULL) {
+            for (l = 0; l < glue->num_out_layer; l++) {
+                glue->out_layers[l] = glue_get_layer(layers, n_layer,
+                        names + l*MAX_LINE_LEN);
+                if (glue->out_layers[l] == NULL) {
                     ST_WARNING("No layer named [%s] is found.",
-                            names + i*MAX_LINE_LEN);
+                            names + l*MAX_LINE_LEN);
                     goto ERR;
                 }
             }
@@ -334,22 +333,22 @@ glue_t* glue_parse_topo(const char *line, layer_t **layers, int n_layer)
                 ST_WARNING("Too many out-offset [%s]", token);
                 goto ERR;
             }
-            glue->out_offsets = (int *)malloc(sizeof(int) 
+            glue->out_offsets = (glue_offset_t *)malloc(sizeof(glue_offset_t)
                     * glue->num_out_layer);
             if (glue->out_offsets == NULL) {
                 ST_WARNING("Failed to malloc out_offsets.");
                 goto ERR;
             }
-            for (i = 0; i < n; i++) {
-                glue->out_offsets[i] = atoi(names + i*MAX_LINE_LEN);
-                if (glue->out_offsets[i] < 0) {
+            for (l = 0; l < n; l++) {
+                glue->out_offsets[l] = atoi(names + l*MAX_LINE_LEN);
+                if (glue->out_offsets[l] < 0) {
                     ST_WARNING("Invalid offset[%s].",
-                            names + i*MAX_LINE_LEN);
+                            names + l*MAX_LINE_LEN);
                     goto ERR;
                 }
             }
-            for (; i < glue->num_out_layer; i++) {
-                glue->out_offsets[i] = 0;
+            for (; l < glue->num_out_layer; l++) {
+                glue->out_offsets[l] = 0;
             }
         } else if (strcasecmp("out-scale", keyvalue) == 0) {
             if (glue->num_out_layer <= 0) {
@@ -376,17 +375,17 @@ glue_t* glue_parse_topo(const char *line, layer_t **layers, int n_layer)
                 ST_WARNING("Too many out-scale [%s]", token);
                 goto ERR;
             }
-            glue->out_scales = (real_t *)malloc(sizeof(real_t) 
+            glue->out_scales = (real_t *)malloc(sizeof(real_t)
                     * glue->num_out_layer);
             if (glue->out_scales == NULL) {
                 ST_WARNING("Failed to malloc out_scales.");
                 goto ERR;
             }
-            for (i = 0; i < n; i++) {
-                glue->out_scales[i] = (real_t)atof(names + i*MAX_LINE_LEN);
+            for (l = 0; l < n; l++) {
+                glue->out_scales[l] = (real_t)atof(names + l*MAX_LINE_LEN);
             }
-            for (; i < glue->num_out_layer; i++) {
-                glue->out_scales[i] = (real_t)1.0;
+            for (; l < glue->num_out_layer; l++) {
+                glue->out_scales[l] = (real_t)1.0;
             }
         } else {
             strncpy(reg_topo + strlen(reg_topo), token,
@@ -411,25 +410,25 @@ glue_t* glue_parse_topo(const char *line, layer_t **layers, int n_layer)
         goto ERR;
     }
     if (glue->in_offsets == NULL) {
-        glue->in_offsets = (int *)malloc(sizeof(int) 
+        glue->in_offsets = (glue_offset_t *)malloc(sizeof(glue_offset_t)
                 * glue->num_in_layer);
         if (glue->in_offsets == NULL) {
             ST_WARNING("Failed to malloc in_offsets.");
             goto ERR;
         }
-        for (i = 0; i < glue->num_in_layer; i++) {
-            glue->in_offsets[i] = 0;
+        for (l = 0; l < glue->num_in_layer; l++) {
+            glue->in_offsets[l] = 0;
         }
     }
     if (glue->in_scales == NULL) {
-        glue->in_scales = (real_t *)malloc(sizeof(real_t) 
+        glue->in_scales = (real_t *)malloc(sizeof(real_t)
                 * glue->num_in_layer);
         if (glue->in_scales == NULL) {
             ST_WARNING("Failed to malloc in_scales.");
             goto ERR;
         }
-        for (i = 0; i < glue->num_in_layer; i++) {
-            glue->in_scales[i] = (real_t)1.0;
+        for (l = 0; l < glue->num_in_layer; l++) {
+            glue->in_scales[l] = (real_t)1.0;
         }
     }
     if (glue->num_out_layer <= 0) {
@@ -437,25 +436,25 @@ glue_t* glue_parse_topo(const char *line, layer_t **layers, int n_layer)
         goto ERR;
     }
     if (glue->out_offsets == NULL) {
-        glue->out_offsets = (int *)malloc(sizeof(int) 
+        glue->out_offsets = (glue_offset_t *)malloc(sizeof(glue_offset_t)
                 * glue->num_out_layer);
         if (glue->out_offsets == NULL) {
             ST_WARNING("Failed to malloc out_offsets.");
             goto ERR;
         }
-        for (i = 0; i < glue->num_out_layer; i++) {
-            glue->out_offsets[i] = 0;
+        for (l = 0; l < glue->num_out_layer; l++) {
+            glue->out_offsets[l] = 0;
         }
     }
     if (glue->out_scales == NULL) {
-        glue->out_scales = (real_t *)malloc(sizeof(real_t) 
+        glue->out_scales = (real_t *)malloc(sizeof(real_t)
                 * glue->num_out_layer);
         if (glue->out_scales == NULL) {
             ST_WARNING("Failed to malloc out_scales.");
             goto ERR;
         }
-        for (i = 0; i < glue->num_out_layer; i++) {
-            glue->out_scales[i] = (real_t)1.0;
+        for (l = 0; l < glue->num_out_layer; l++) {
+            glue->out_scales[l] = (real_t)1.0;
         }
     }
     if (!reg->check(glue)) {
@@ -491,7 +490,6 @@ glue_t* glue_dup(glue_t *l)
 
     strncpy(glue->name, l->name, MAX_NAME_LEN);
     glue->name[MAX_NAME_LEN - 1] = '\0';
-    glue->id = l->id;
 
     glue->forward = l->forward;
     glue->backprop = l->backprop;

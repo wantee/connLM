@@ -67,7 +67,6 @@ void layer_destroy(layer_t *layer)
     }
 
     layer->name[0] = '\0';
-    layer->id = -1;
 
     reg = layer_get_reg(layer->type);
     if (reg != NULL) {
@@ -194,7 +193,6 @@ layer_t* layer_dup(layer_t *l)
 
     strncpy(layer->name, l->name, MAX_NAME_LEN);
     layer->name[MAX_NAME_LEN - 1] = '\0';
-    layer->id = l->id;
 
     layer->forward = l->forward;
     layer->backprop = l->backprop;

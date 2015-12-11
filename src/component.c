@@ -31,29 +31,31 @@
 
 void comp_destroy(component_t *comp)
 {
-    int i;
+    layer_id_t l;
+    glue_id_t g;
 
     if (comp == NULL) {
         return;
     }
 
     comp->name[0] = 0;
-    comp->id = -1;
 
     safe_input_destroy(comp->input);
     safe_emb_wt_destroy(comp->emb);
 
-    for (i = 0; i < comp->num_layer; i++) {
-        safe_layer_destroy(comp->layers[i]);
+    for (l = 0; l < comp->num_layer; l++) {
+        safe_layer_destroy(comp->layers[l]);
     }
     safe_free(comp->layers);
     comp->num_layer = 0;
 
-    for (i = 0; i < comp->num_glue; i++) {
-        safe_glue_destroy(comp->glues[i]);
+    for (g = 0; g < comp->num_glue; g++) {
+        safe_glue_destroy(comp->glues[g]);
     }
     safe_free(comp->glues);
     comp->num_glue = 0;
+
+    safe_graph_destroy(comp->graph);
 
     safe_output_wt_destroy(comp->output_wt);
 }
@@ -62,7 +64,8 @@ component_t* comp_dup(component_t *c)
 {
     component_t *comp = NULL;
 
-    int i;
+    layer_id_t l;
+    glue_id_t g;
 
     ST_CHECK_PARAM(c == NULL, NULL);
 
@@ -75,7 +78,6 @@ component_t* comp_dup(component_t *c)
 
     strncpy(comp->name, c->name, MAX_NAME_LEN);
     comp->name[MAX_NAME_LEN - 1] = '\0';
-    comp->id = c->id;
 
     comp->input = input_dup(c->input);
     if (comp->input == NULL) {
@@ -97,14 +99,17 @@ component_t* comp_dup(component_t *c)
             goto ERR;
         }
 
-        for (i = 0; i < c->num_layer; i++) {
-            comp->layers[i] = layer_dup(c->layers[i]);
-            if (comp->layers[i] == NULL) {
+        for (l = 0; l < c->num_layer; l++) {
+            comp->layers[l] = layer_dup(c->layers[l]);
+            if (comp->layers[l] == NULL) {
                 ST_WARNING("Failed to layer_dup.");
                 goto ERR;
             }
         }
         comp->num_layer = c->num_layer;
+    } else {
+        comp->layers = NULL;
+        comp->num_layer = 0;
     }
 
     if (c->num_glue > 0) {
@@ -115,14 +120,27 @@ component_t* comp_dup(component_t *c)
             goto ERR;
         }
 
-        for (i = 0; i < c->num_glue; i++) {
-            comp->glues[i] = glue_dup(c->glues[i]);
-            if (comp->glues[i] == NULL) {
+        for (g = 0; g < c->num_glue; g++) {
+            comp->glues[g] = glue_dup(c->glues[g]);
+            if (comp->glues[g] == NULL) {
                 ST_WARNING("Failed to glue_dup.");
                 goto ERR;
             }
         }
         comp->num_glue = c->num_glue;
+    } else {
+        comp->glues = NULL;
+        comp->num_glue = 0;
+    }
+
+    if (comp->graph != NULL) {
+        comp->graph = graph_dup(c->graph);
+        if (comp->graph == NULL) {
+            ST_WARNING("Failed to graph_dup.");
+            goto ERR;
+        }
+    } else {
+        comp->graph = NULL;
     }
 
     comp->output_wt = output_wt_dup(c->output_wt);
@@ -276,5 +294,48 @@ int comp_init_output_wt(component_t *comp, output_t *output, real_t scale)
     ST_CHECK_PARAM(comp == NULL || output == NULL || scale <= 0, -1);
 
     return 0;
+}
+
+int comp_construct_graph(component_t *comp)
+{
+    layer_id_t l, m;
+    glue_id_t g, h;
+
+    ST_CHECK_PARAM(comp == NULL, -1);
+
+    comp->graph = NULL;
+
+    for (l = 0; l < comp->num_layer - 1; l++) {
+        for (m = l+1; m < comp->num_layer; m++) {
+            if (strcmp(comp->layers[l]->name, comp->layers[m]->name) == 0) {
+                ST_WARNING("Duplicated layer name[%s]",
+                        comp->layers[l]->name);
+                return -1;
+            }
+        }
+    }
+
+    for (g = 0; g < comp->num_glue - 1; g++) {
+        for (h = g+1; h < comp->num_glue; h++) {
+            if (strcmp(comp->glues[g]->name, comp->glues[h]->name) == 0) {
+                ST_WARNING("Duplicated glue name[%s]",
+                        comp->glues[g]->name);
+                return -1;
+            }
+        }
+    }
+
+    comp->graph = graph_construct(comp->layers, comp->num_layer,
+            comp->glues, comp->num_glue);
+    if (comp->graph == NULL) {
+        ST_WARNING("Failed to graph_construct.");
+        goto ERR;
+    }
+
+    return 0;
+
+ERR:
+    safe_graph_destroy(comp->graph);
+    return -1;
 }
 

@@ -246,7 +246,7 @@ void connlm_destroy(connlm_t *connlm)
     connlm_egs_t *p;
     connlm_egs_t *q;
 
-    int i;
+    comp_id_t c;
 
     if (connlm == NULL) {
         return;
@@ -286,8 +286,8 @@ void connlm_destroy(connlm_t *connlm)
     safe_lbl_destroy(connlm->lbl);
     safe_ffnn_destroy(connlm->ffnn);
 
-    for (i = 0; i < connlm->num_comp; i++) {
-        safe_comp_destroy(connlm->comps[i]);
+    for (c = 0; c < connlm->num_comp; c++) {
+        safe_comp_destroy(connlm->comps[c]);
     }
     safe_free(connlm->comps);
     connlm->num_comp = 0;
@@ -383,7 +383,7 @@ int connlm_init(connlm_t *connlm, FILE *topo_fp)
     char *line = NULL;
     size_t line_sz = 0;
 
-    int i;
+    comp_id_t c, d;
     bool err;
 
     bool is_content;
@@ -455,14 +455,32 @@ int connlm_init(connlm_t *connlm, FILE *topo_fp)
     safe_free(line);
     safe_free(content);
 
+    for (c = 0; c < connlm->num_comp - 1; c++) {
+        for (d = c+1; d < connlm->num_comp; d++) {
+            if (strcmp(connlm->comps[c]->name, connlm->comps[d]->name) == 0) {
+                ST_WARNING("Duplicated component name[%s]",
+                        connlm->comps[c]->name);
+                goto ERR;
+            }
+        }
+    }
+
+    for (c = 0; c < connlm->num_comp; c++) {
+        if (comp_construct_graph(connlm->comps[c]) < 0) {
+            ST_WARNING("Failed to construct graph for component [%s]",
+                    connlm->comps[c]->name);
+            goto ERR;
+        }
+    }
+
     return 0;
 
 ERR:
     safe_free(line);
     safe_free(content);
 
-    for (i = 0; i < connlm->num_comp; i++) {
-        safe_comp_destroy(connlm->comps[i]);
+    for (c = 0; c < connlm->num_comp; c++) {
+        safe_comp_destroy(connlm->comps[c]);
     }
     safe_free(connlm->comps);
     connlm->num_comp = 0;
@@ -475,7 +493,7 @@ connlm_t *connlm_new(vocab_t *vocab, output_t *output,
 {
     connlm_t *connlm = NULL;
 
-    int i;
+    comp_id_t c;
 
     ST_CHECK_PARAM(vocab == NULL && output == NULL
             && comps == NULL, NULL);
@@ -511,10 +529,10 @@ connlm_t *connlm_new(vocab_t *vocab, output_t *output,
             goto ERR;
         }
 
-        for (i = 0; i < n_comp; i++) {
-            connlm->comps[i] = comp_dup(comps[i]);
-            if (connlm->comps[i] == NULL) {
-                ST_WARNING("Failed to comp_dup. i[%d]", i);
+        for (c = 0; c < n_comp; c++) {
+            connlm->comps[c] = comp_dup(comps[c]);
+            if (connlm->comps[c] == NULL) {
+                ST_WARNING("Failed to comp_dup. c[%d]", c);
                 goto ERR;
             }
         }

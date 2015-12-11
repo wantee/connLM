@@ -35,6 +35,8 @@ extern "C" {
  * Data structures and functions for NNet hidden layer.
  */
 
+typedef int layer_id_t;
+
 /**
  * NNet hidden layer.
  * @ingroup g_layer
@@ -43,8 +45,6 @@ typedef struct _layer_t_ {
     char name[MAX_NAME_LEN]; /**< layer name. */
     char type[MAX_NAME_LEN]; /**< layer type. */
     int size; /**< layer size. */
-
-    int id; /**< layer ID. */
 
     int (*forward)(struct _layer_t_ *layer); /**< forward function. */
     int (*backprop)(struct _layer_t_ *layer); /**< backprop function. */

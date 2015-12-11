@@ -138,7 +138,7 @@ typedef struct _connlm_t_ {
     ffnn_t *ffnn;     /**< FFNN model. May be NULL */
 
     component_t **comps; /**< components. */
-    int num_comp; /**< number of components. */
+    comp_id_t num_comp; /**< number of components. */
 } connlm_t;
 
 /**
