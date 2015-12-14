@@ -40,6 +40,7 @@ extern "C" {
 
 typedef layer_id_t node_id_t;
 typedef glue_id_t link_id_t;
+#define LINK_ID_NONE LAYER_ID_NONE
 
 /**
  * NNet graph link.

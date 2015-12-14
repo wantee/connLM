@@ -80,9 +80,11 @@ int sum_glue_parse_topo(glue_t *glue, const char *line);
  * Check a sum glue is valid.
  * @ingroup g_glue_sum
  * @param[in] glue specific glue.
+ * @param[in] layers layers in the component.
+ * @param[in] n_layer number of layers.
  * @return non-zero if any error
  */
-bool sum_glue_check(glue_t *glue);
+bool sum_glue_check(glue_t *glue, layer_t **layers, layer_id_t n_layer);
 
 #ifdef __cplusplus
 }

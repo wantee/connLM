@@ -106,7 +106,7 @@ int clone_glue_parse_topo(glue_t *glue, const char *line)
     return 0;
 }
 
-bool clone_glue_check(glue_t *glue)
+bool clone_glue_check(glue_t *glue, layer_t **layers, layer_id_t n_layer)
 {
     int i;
 
@@ -128,15 +128,15 @@ bool clone_glue_check(glue_t *glue)
     }
 
     for (i = 0; i < glue->num_out_layer; i++) {
-        if (glue->out_layers[i]->size - glue->out_offsets[i]
-                != glue->in_layers[0]->size - glue->in_offsets[0]) {
+        if (layers[glue->out_layers[i]]->size - glue->out_offsets[i]
+                != layers[glue->in_layers[0]]->size - glue->in_offsets[0]) {
             ST_WARNING("in_layer[%s]([%d/%d]) size not match with "
                     "out_layer[%s]([%d/%d]).",
-                    glue->in_layers[0]->name,
-                    glue->in_layers[0]->size,
+                    layers[glue->in_layers[0]]->name,
+                    layers[glue->in_layers[0]]->size,
                     glue->in_offsets[0],
-                    glue->out_layers[i]->name,
-                    glue->out_layers[i]->size,
+                    layers[glue->out_layers[i]]->name,
+                    layers[glue->out_layers[i]]->size,
                     glue->out_offsets[i]);
             return false;
         }

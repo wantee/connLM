@@ -88,6 +88,21 @@ ERR:
     return NULL;
 }
 
+static link_id_t node_add_link(node_t *node, link_id_t lk)
+{
+    ST_CHECK_PARAM(node == NULL || lk == LINK_ID_NONE, LINK_ID_NONE);
+
+    node->links = (link_id_t *)realloc(node->links, sizeof(link_id_t)
+            * (node->num_link + 1));
+    if (node->links == NULL) {
+        ST_WARNING("Failed to realloc node links.");
+        return LINK_ID_NONE;
+    }
+    node->links[node->num_link] = lk;
+
+    return node->num_link;
+}
+
 graph_t* graph_construct(layer_t **layers, layer_id_t n_layer,
         glue_t **glues, glue_id_t n_glue)
 {
@@ -141,11 +156,19 @@ graph_t* graph_construct(layer_t **layers, layer_id_t n_layer,
                 graph->links[lk].glue = g;
                 graph->links[lk].glue_in = l;
                 graph->links[lk].glue_out = m;
+
+                graph->links[lk].to = glues[g]->out_layers[m];
+                if (node_add_link(graph->nodes + glues[g]->in_layers[l],
+                            lk) == LINK_ID_NONE) {
+                    ST_WARNING("Failed to node_add_link.");
+                    goto ERR;
+                }
                 lk++;
             }
         }
     }
 
+    /* initial node MUST be the first layer. */
     return graph;
 
 ERR:

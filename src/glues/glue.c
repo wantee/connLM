@@ -36,7 +36,7 @@ typedef struct _glue_register_t_ {
     void (*destroy)(glue_t *glue);
     int (*dup)(glue_t *dst, glue_t *src);
     int (*parse_topo)(glue_t *glue, const char *line);
-    bool (*check)(glue_t *glue);
+    bool (*check)(glue_t *glue, layer_t **layers, layer_id_t n_layer);
 } glue_reg_t;
 
 static glue_reg_t GLUE_REG[] = {
@@ -62,18 +62,18 @@ static glue_reg_t* glue_get_reg(const char *type)
     return NULL;
 }
 
-static layer_t* glue_get_layer(layer_t **layers, layer_id_t n_layer,
+static layer_id_t glue_get_layer(layer_t **layers, layer_id_t n_layer,
         const char *name)
 {
     layer_id_t t;
 
     for (t = 0; t < n_layer; t++) {
         if (strcmp(layers[t]->name, name) == 0) {
-            return layers[t];
+            return t;
         }
     }
 
-    return NULL;
+    return LAYER_ID_NONE;
 }
 
 void glue_destroy(glue_t *glue)
@@ -182,7 +182,7 @@ glue_t* glue_parse_topo(const char *line, layer_t **layers, layer_id_t n_layer)
                 glue->num_in_layer = split_line(keyvalue + MAX_LINE_LEN,
                         names, name_cap, MAX_LINE_LEN, ",");
             }
-            glue->in_layers = (layer_t **)malloc(sizeof(layer_t *)
+            glue->in_layers = (layer_id_t *)malloc(sizeof(layer_id_t)
                     * glue->num_in_layer);
             if (glue->in_layers == NULL) {
                 ST_WARNING("Failed to malloc in_layers.");
@@ -191,7 +191,7 @@ glue_t* glue_parse_topo(const char *line, layer_t **layers, layer_id_t n_layer)
             for (l = 0; l < glue->num_in_layer; l++) {
                 glue->in_layers[l] = glue_get_layer(layers, n_layer,
                         names + l*MAX_LINE_LEN);
-                if (glue->in_layers[l] == NULL) {
+                if (glue->in_layers[l] == LAYER_ID_NONE) {
                     ST_WARNING("No layer named [%s] is found.",
                             names + l*MAX_LINE_LEN);
                     goto ERR;
@@ -293,7 +293,7 @@ glue_t* glue_parse_topo(const char *line, layer_t **layers, layer_id_t n_layer)
                 glue->num_out_layer = split_line(keyvalue + MAX_LINE_LEN,
                         names, name_cap, MAX_LINE_LEN, ",");
             }
-            glue->out_layers = (layer_t **)malloc(sizeof(layer_t *)
+            glue->out_layers = (layer_id_t *)malloc(sizeof(layer_id_t)
                     * glue->num_out_layer);
             if (glue->out_layers == NULL) {
                 ST_WARNING("Failed to malloc out_layers.");
@@ -302,7 +302,7 @@ glue_t* glue_parse_topo(const char *line, layer_t **layers, layer_id_t n_layer)
             for (l = 0; l < glue->num_out_layer; l++) {
                 glue->out_layers[l] = glue_get_layer(layers, n_layer,
                         names + l*MAX_LINE_LEN);
-                if (glue->out_layers[l] == NULL) {
+                if (glue->out_layers[l] == LAYER_ID_NONE) {
                     ST_WARNING("No layer named [%s] is found.",
                             names + l*MAX_LINE_LEN);
                     goto ERR;
@@ -457,7 +457,7 @@ glue_t* glue_parse_topo(const char *line, layer_t **layers, layer_id_t n_layer)
             glue->out_scales[l] = (real_t)1.0;
         }
     }
-    if (!reg->check(glue)) {
+    if (!reg->check(glue, layers, n_layer)) {
         ST_WARNING("check glue failed.");
         goto ERR;
     }

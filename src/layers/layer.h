@@ -36,6 +36,7 @@ extern "C" {
  */
 
 typedef int layer_id_t;
+#define LAYER_ID_NONE -1
 
 /**
  * NNet hidden layer.

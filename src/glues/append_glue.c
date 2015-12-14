@@ -106,7 +106,7 @@ int append_glue_parse_topo(glue_t *glue, const char *line)
     return 0;
 }
 
-bool append_glue_check(glue_t *glue)
+bool append_glue_check(glue_t *glue, layer_t **layers, layer_id_t n_layer)
 {
     int i;
     int n;
@@ -130,14 +130,14 @@ bool append_glue_check(glue_t *glue)
 
     n = 0;
     for (i = 0; i < glue->num_in_layer; i++) {
-        n += glue->in_layers[i]->size - glue->in_offsets[i];
+        n += layers[glue->in_layers[i]]->size - glue->in_offsets[i];
     }
-    if (n != glue->out_layers[0]->size - glue->out_offsets[0]) {
+    if (n != layers[glue->out_layers[0]]->size - glue->out_offsets[0]) {
         ST_WARNING("total in_layer size([%d]) not match with "
                 "out_layer[%s]([%d/%d]).",
                 n,
-                glue->out_layers[0]->name,
-                glue->out_layers[0]->size,
+                layers[glue->out_layers[0]]->name,
+                layers[glue->out_layers[0]]->size,
                 glue->out_offsets[0]);
         return false;
     }

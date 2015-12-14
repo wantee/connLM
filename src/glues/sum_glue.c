@@ -197,7 +197,7 @@ ERR:
     return -1;
 }
 
-bool sum_glue_check(glue_t *glue)
+bool sum_glue_check(glue_t *glue, layer_t **layers, layer_id_t n_layer)
 {
     int i;
 
@@ -219,15 +219,15 @@ bool sum_glue_check(glue_t *glue)
     }
 
     for (i = 0; i < glue->num_in_layer; i++) {
-        if (glue->in_layers[i]->size - glue->in_offsets[i]
-                != glue->out_layers[0]->size - glue->out_offsets[0]) {
+        if (layers[glue->in_layers[i]]->size - glue->in_offsets[i]
+                != layers[glue->out_layers[0]]->size - glue->out_offsets[0]) {
             ST_WARNING("in_layer[%s]([%d/%d]) size not match with "
                     "out_layer[%s]([%d/%d]).",
-                    glue->in_layers[i]->name,
-                    glue->in_layers[i]->size,
+                    layers[glue->in_layers[i]]->name,
+                    layers[glue->in_layers[i]]->size,
                     glue->in_offsets[i],
-                    glue->out_layers[0]->name,
-                    glue->out_layers[0]->size,
+                    layers[glue->out_layers[0]]->name,
+                    layers[glue->out_layers[0]]->size,
                     glue->out_offsets[0]);
             return false;
         }

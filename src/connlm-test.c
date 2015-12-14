@@ -234,7 +234,8 @@ static int check_layer(layer_t *layer, char *name, int id,
     return 0;
 }
 
-static int check_glue(glue_t *glue, ref_t *ref, int c, int g, int sum_i)
+static int check_glue(glue_t *glue, ref_t *ref, int c, int g, int sum_i,
+        layer_t **layers, layer_id_t n_layer)
 { 
     char name[MAX_NAME_LEN];
     char tmp[MAX_NAME_LEN];
@@ -272,9 +273,9 @@ static int check_glue(glue_t *glue, ref_t *ref, int c, int g, int sum_i)
     for (i = 0; i < ref->num_glue_in[c][g]; i++) {
         snprintf(name, MAX_NAME_LEN, "%s%d", ref->layer_name,
                 ref->glue_in[c][g][i]);
-        if (strcmp(name, glue->in_layers[i]->name) != 0) {
+        if (strcmp(name, layers[glue->in_layers[i]]->name) != 0) {
             fprintf(stderr, "glue in layer not match.[%s/%s]\n",
-                    name, glue->in_layers[i]->name);
+                    name, layers[glue->in_layers[i]]->name);
             return -1;
         }
 
@@ -294,9 +295,9 @@ static int check_glue(glue_t *glue, ref_t *ref, int c, int g, int sum_i)
     for (i = 0; i < ref->num_glue_out[c][g]; i++) {
         snprintf(name, MAX_NAME_LEN, "%s%d", ref->layer_name,
                 ref->glue_out[c][g][i]);
-        if (strcmp(name, glue->out_layers[i]->name) != 0) {
+        if (strcmp(name, layers[glue->out_layers[i]]->name) != 0) {
             fprintf(stderr, "glue out layer not match.[%s/%s]\n",
-                    name, glue->out_layers[i]->name);
+                    name, layers[glue->out_layers[i]]->name);
             return -1;
         }
 
@@ -361,7 +362,8 @@ static int check_connlm(connlm_t *connlm, ref_t *ref)
         sum_i = 0;
         for (l = 0; l < connlm->comps[c]->num_glue; l++) {
             if (check_glue(connlm->comps[c]->glues[l], ref,
-                        c, l, sum_i) != 0) {
+                        c, l, sum_i, connlm->comps[c]->layers,
+                        connlm->comps[c]->num_layer) != 0) {
                 fprintf(stderr, "glue not match\n");
                 return -1;
             }

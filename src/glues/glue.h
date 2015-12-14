@@ -46,11 +46,11 @@ typedef int glue_offset_t;
 typedef struct _glue_t_ {
     char name[MAX_NAME_LEN]; /**< glue name. */
     char type[MAX_NAME_LEN]; /**< glue type. */
-    layer_t** in_layers; /**< input layers. */
+    layer_id_t* in_layers; /**< input layers. */
     glue_offset_t* in_offsets; /**< offset for input layers. */
     real_t* in_scales; /**< scale for input layers. */
     layer_id_t num_in_layer; /**< number of input layers. */
-    layer_t** out_layers; /**< output layers. */
+    layer_id_t* out_layers; /**< output layers. */
     glue_offset_t* out_offsets; /**< offset for output layers. */
     real_t* out_scales; /**< scale for output layers. */
     layer_id_t num_out_layer; /**< number of output layers. */
