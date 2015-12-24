@@ -52,6 +52,8 @@ typedef struct _link_t_ {
     glue_id_t glue; /**< corresponding glue. */
     layer_id_t glue_in; /**< corresponding in layer of glue. */
     layer_id_t glue_out; /**< corresponding out layer of glue. */
+
+    bool cycle;
 } link_t;
 
 /**
@@ -75,6 +77,8 @@ typedef struct _graph_t_ {
 
     link_t *links; /**< links in graph. */
     link_id_t num_link; /**< number of links. */
+
+    node_id_t* fwd_order; /**< forward order of nodes. */
 } graph_t;
 
 /**

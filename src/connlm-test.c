@@ -376,7 +376,7 @@ static int check_connlm(connlm_t *connlm, ref_t *ref)
     return 0;
 }
 
-static int unit_test_connlm_read_topo()
+static int unit_test_connlm_read_topo_bad()
 {
     FILE *fp = NULL;
     int ncase = 0;
@@ -415,7 +415,7 @@ static int unit_test_connlm_read_topo()
         .sum_glue = {{true, true}},
     };
 
-    fprintf(stderr, "  Testing Reading topology file...\n");
+    fprintf(stderr, "  Testing Reading topology file(bad)...\n");
     /***************************************************/
     /***************************************************/
     fprintf(stderr, "    Case %d...", ncase++);
@@ -481,6 +481,115 @@ static int unit_test_connlm_read_topo()
     fp = mk_topo_file(&ref);
 
     memset(&connlm, 0, sizeof(connlm_t));
+    if (connlm_init(&connlm, fp) == 0) {
+        fprintf(stderr, "Failed\n");
+        goto ERR;
+    }
+    connlm_destroy(&connlm);
+    safe_fclose(fp);
+    fprintf(stderr, "Success\n");
+
+    /***************************************************/
+    /***************************************************/
+    fprintf(stderr, "    Case %d...", ncase++);
+    ref.num_comp = 2;
+    ref.num_layer[0] = 3;
+    ref.num_layer[1] = 3;
+    ref.num_glue[0] = 2;
+    ref.num_glue[1] = 1;
+    fp = mk_topo_file(&ref);
+
+    memset(&connlm, 0, sizeof(connlm_t));
+    if (connlm_init(&connlm, fp) >= 0) {
+        fprintf(stderr, "Failed\n");
+        goto ERR;
+    }
+    connlm_destroy(&connlm);
+    safe_fclose(fp);
+    fprintf(stderr, "Success\n");
+    return 0;
+
+ERR:
+    connlm_destroy(&connlm);
+    safe_fclose(fp);
+    return -1;
+}
+
+static int unit_test_connlm_read_topo_good()
+{
+#if 0
+    FILE *fp = NULL;
+    int ncase = 0;
+    connlm_t connlm;
+    ref_t ref;
+    ref_t std_ref = {
+        .comp_name = "comp",
+        .num_comp = 3,
+
+        .layer_name = "layer",
+        .num_layer = {1, 1, 1},
+        .layer_type = {{"sigmoid"},
+                       {"tanh"},
+                       {"sigmoid"}},
+        .layer_size = {{16},
+                       {32},
+                       {32}},
+
+        .glue_name = "glue",
+        .num_glue = {2, 1},
+        .glue_type = {{"sum", "append"},
+                      {"clone"}},
+        .num_glue_in = {{2, 2},
+                        {1}},
+        .glue_in = {{{0, 1}, {1, 2}},
+                    {{0}}},
+        .glue_in_offset = {{{16, 0}, {0, 0}},
+                           {{24}}},
+        .glue_in_scale = {{{1.0, 1.0}, {1.0, 0.8}},
+                           {{0.5}}},
+        .num_glue_out = {{1, 1},
+                        {2}},
+        .glue_out = {{{2}, {0}},
+                    {{1, 2}}},
+        .glue_out_offset = {{{0}, {0}},
+                           {{8, 8}}},
+        .glue_out_scale = {{{1.0}, {1.0}},
+                           {{1.0, 2.0}}},
+        .sum_glue = {{true, true}},
+    };
+
+    fprintf(stderr, "  Testing Reading topology file...\n");
+    /***************************************************/
+    /***************************************************/
+    fprintf(stderr, "    Case %d...", ncase++);
+    ref = std_ref;
+    ref.num_comp = 0;
+    fp = mk_topo_file(&ref);
+    memset(&connlm, 0, sizeof(connlm_t));
+    if (connlm_init(&connlm, fp) < 0) {
+        fprintf(stderr, "Failed\n");
+        goto ERR;
+    }
+    if (check_connlm(&connlm, &ref) != 0) {
+        fprintf(stderr, "Failed\n");
+        goto ERR;
+    }
+    connlm_destroy(&connlm);
+    safe_fclose(fp);
+    fprintf(stderr, "Success\n");
+
+    /***************************************************/
+    /***************************************************/
+    fprintf(stderr, "    Case %d...", ncase++);
+    ref = std_ref;
+    ref.num_comp = 2;
+    ref.num_layer[0] = 0;
+    ref.num_layer[1] = 0;
+    ref.num_glue[0] = 0;
+    ref.num_glue[1] = 0;
+    fp = mk_topo_file(&ref);
+
+    memset(&connlm, 0, sizeof(connlm_t));
     if (connlm_init(&connlm, fp) < 0) {
         fprintf(stderr, "Failed\n");
         goto ERR;
@@ -520,7 +629,21 @@ static int unit_test_connlm_read_topo()
 ERR:
     connlm_destroy(&connlm);
     safe_fclose(fp);
-    return -1;
+#endif
+    return 0;
+}
+
+static int unit_test_connlm_read_topo()
+{
+    if (unit_test_connlm_read_topo_bad() != 0) {
+        return -1;
+    }
+
+    if (unit_test_connlm_read_topo_good() != 0) {
+        return -1;
+    }
+
+    return 0;
 }
 
 static int run_all_tests()

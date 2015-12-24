@@ -25,6 +25,7 @@
 #include <string.h>
 
 #include <st_log.h>
+#include <st_stack.h>
 
 #include "graph.h"
 
@@ -60,6 +61,7 @@ void graph_destroy(graph_t* graph)
     }
     safe_free(graph->nodes);
     graph->num_node = 0;
+    safe_free(graph->fwd_order);
 
     for (l = 0; l < graph->num_link; l++) {
         link_destroy(graph->links + l);
@@ -100,7 +102,202 @@ static link_id_t node_add_link(node_t *node, link_id_t lk)
     }
     node->links[node->num_link] = lk;
 
-    return node->num_link;
+    return node->num_link++;
+}
+
+static int graph_dfs(graph_t *graph, node_id_t start,
+        st_stack_t *node_stack, st_stack_t *link_stack,
+        bool *on_stack, bool *visited, bool *passed,
+        node_id_t *post_order, node_id_t *post_i)
+{
+    node_t *node;
+
+    link_id_t l, lk;
+    node_id_t n, to;
+    st_stack_id_t s;
+
+    ST_CHECK_PARAM(graph == NULL, -1);
+
+    visited[start] = true;
+    ST_DEBUG("DFS: %d", start);
+
+    if (st_stack_push(node_stack, (void *)(long)start) != ST_STACK_OK) {
+        ST_WARNING("Failed to st_stack_push node[%d].", start);
+        return -1;
+    }
+    ST_DEBUG("Node push: %d", start);
+    on_stack[start] = true;
+
+    node = graph->nodes + start;
+    for (l = 0; l < node->num_link; l++) {
+        lk = node->links[l];
+        if (st_stack_push(link_stack, (void *)(long)lk) != ST_STACK_OK) {
+            ST_WARNING("Failed to st_stack_push link[%d].", lk);
+            return -1;
+        }
+        ST_DEBUG("Link push: %d", lk);
+
+        to = graph->links[node->links[l]].to;
+        if(!visited[to]) {
+            if (graph_dfs(graph, to, node_stack, link_stack,
+                    on_stack, visited, passed, post_order, post_i) < 0) {
+                ST_WARNING("Failed to graph_dfs[%d].", to);
+                return -1;
+            }
+        } else if(on_stack[to]) {
+            for(s = 1; s <= node_stack->top; s++) {
+                if (st_stack_topn(node_stack, s, (void *)&n) != ST_STACK_OK) {
+                    ST_WARNING("Failed to st_stack_topn node.[%d]", s);
+                    return -1;
+                }
+
+                if (st_stack_topn(link_stack, s, (void *)&lk) != ST_STACK_OK) {
+                    ST_WARNING("Failed to st_stack_topn link.[%d]", s);
+                    return -1;
+                }
+
+                graph->links[lk].cycle = true;
+
+                if (n == to) {
+                    break;
+                }
+            }
+        }
+
+        if (st_stack_pop(link_stack, (void **)&lk) != ST_STACK_OK) {
+            ST_WARNING("Failed to st_stack_pop link.");
+            return -1;
+        }
+        ST_DEBUG("Link pop: %d", lk);
+    }
+
+    if (st_stack_pop(node_stack, (void **)&n) != ST_STACK_OK) {
+        ST_WARNING("Failed to st_stack_pop node.");
+        return -1;
+    }
+    ST_DEBUG("Node pop: %d", n);
+    on_stack[start] = false;
+    post_order[*post_i] = start;
+    *post_i += 1;
+
+    return 0;
+}
+
+static int graph_sort(graph_t *graph)
+{
+    st_stack_t *node_stack = NULL; /* node stack. */
+    st_stack_t *link_stack = NULL; /* link stack. */
+    bool *on_stack = NULL; /* node whether on current stack. */
+    bool *visited = NULL; /* node whether visited. */
+    bool *passed = NULL; /* link whether passed. */
+    node_id_t *post_order = NULL; /* sequence for post-order traverse. */
+    node_id_t post_i;
+
+    node_id_t n;
+    link_id_t l;
+
+    ST_CHECK_PARAM(graph == NULL || graph->fwd_order == NULL, -1);
+
+    if (graph->num_link <= 0) {
+        if (graph->num_node == 1) {
+            graph->fwd_order[0] = 0;
+            return 0;
+        }
+
+        ST_WARNING("Graph has no links.");
+        return -1;
+    }
+
+    node_stack = st_stack_create((st_stack_id_t)graph->num_node);
+    if (node_stack == NULL) {
+        ST_WARNING("Failed to st_stack_create node_stack.");
+        goto ERR;
+    }
+    (void)st_stack_clear(node_stack);
+
+    link_stack = st_stack_create((st_stack_id_t)graph->num_link);
+    if (link_stack == NULL) {
+        ST_WARNING("Failed to st_stack_create link_stack.");
+        goto ERR;
+    }
+    (void)st_stack_clear(link_stack);
+
+    on_stack = (bool *)malloc(sizeof(bool) * graph->num_node);
+    if (on_stack == NULL) {
+        ST_WARNING("Failed to malloc on_stack");
+        goto ERR;
+    }
+    memset(on_stack, 0, sizeof(bool) * graph->num_node);
+
+    visited = (bool *)malloc(sizeof(bool) * graph->num_node);
+    if (visited == NULL) {
+        ST_WARNING("Failed to malloc visited");
+        goto ERR;
+    }
+    memset(visited, 0, sizeof(bool) * graph->num_node);
+
+    passed = (bool *)malloc(sizeof(bool) * graph->num_link);
+    if (passed == NULL) {
+        ST_WARNING("Failed to malloc passed");
+        goto ERR;
+    }
+    memset(passed, 0, sizeof(bool) * graph->num_link);
+
+    post_order = (node_id_t *)malloc(sizeof(node_id_t) * graph->num_node);
+    if (post_order == NULL) {
+        ST_WARNING("Failed to malloc post_order");
+        goto ERR;
+    }
+    memset(post_order, 0, sizeof(node_id_t) * graph->num_node);
+
+    post_i = 0;
+    /* initial node MUST be the first layer. */
+    if (graph_dfs(graph, 0, node_stack, link_stack,
+                on_stack, visited, passed, post_order, &post_i) < 0) {
+        ST_WARNING("Failed to dfs.");
+        goto ERR;
+    }
+
+    for (n = 0; n < graph->num_node; n++) {
+        if (!visited[n]) {
+            ST_WARNING("Node[%d] not visited.", n);
+            goto ERR;
+        }
+    }
+
+    for (l = 0; l < graph->num_link; l++) {
+        if (!passed[l]) {
+            ST_WARNING("link[%d] not visited.", l);
+            goto ERR;
+        }
+    }
+
+    if (post_i != graph->num_node) {
+        ST_WARNING("post order not finished.");
+        goto ERR;
+    }
+
+    for (n = 0; n < graph->num_node; n++) {
+        graph->fwd_order[n] = post_order[graph->num_node - n - 1];
+    }
+
+    safe_st_stack_destroy(node_stack);
+    safe_st_stack_destroy(link_stack);
+    safe_free(on_stack);
+    safe_free(visited);
+    safe_free(passed);
+    safe_free(post_order);
+    return 0;
+
+ERR:
+    safe_st_stack_destroy(node_stack);
+    safe_st_stack_destroy(link_stack);
+    safe_free(on_stack);
+    safe_free(visited);
+    safe_free(passed);
+    safe_free(post_order);
+
+    return -1;
 }
 
 graph_t* graph_construct(layer_t **layers, layer_id_t n_layer,
@@ -129,6 +326,13 @@ graph_t* graph_construct(layer_t **layers, layer_id_t n_layer,
     }
     memset(graph->nodes, 0, sizeof(node_t) * n_layer);
     graph->num_node = n_layer;
+
+    graph->fwd_order = (node_id_t *)malloc(sizeof(node_id_t) * graph->num_node);
+    if (graph->fwd_order == NULL) {
+        ST_WARNING("Falied to malloc fwd_order.");
+        goto ERR;
+    }
+    memset(graph->fwd_order, 0, sizeof(node_id_t) * graph->num_node);
 
     if (n_glue > 0) {
         graph->num_link = 0;
@@ -168,7 +372,13 @@ graph_t* graph_construct(layer_t **layers, layer_id_t n_layer,
         }
     }
 
-    /* initial node MUST be the first layer. */
+    ST_DEBUG("Graph: node: %d, link: %d", graph->num_node, graph->num_link);
+
+    if (graph_sort(graph) < 0) {
+        ST_WARNING("Failed to graph_sort.");
+        goto ERR;
+    }
+
     return graph;
 
 ERR:
