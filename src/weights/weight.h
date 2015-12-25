@@ -29,7 +29,7 @@
 extern "C" {
 #endif
 
-#include "config.h"
+#include <connlm/config.h>
 
 /** @defgroup g_weight NNet weight. 
  * Data structures and functions for NNet weight.

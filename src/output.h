@@ -31,7 +31,7 @@ extern "C" {
 
 #include <st_opt.h>
 
-#include "config.h"
+#include <connlm/config.h>
 
 /** @defgroup g_output Output Layer
  * Data structures and functions for Output Layer.

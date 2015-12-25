@@ -19,7 +19,7 @@ else
 LDFLAGS+=-lm
 endif
 
-CFLAGS += -I../tools/stutils/include/stutils/ -I$(OUTINC_DIR)
+CFLAGS += -I. -I../tools/stutils/include/stutils/ -I$(OUTINC_DIR)
 LDFLAGS += -L../tools/stutils/lib/
 LDFLAGS += -lstutils -lpthread
 LDFLAGS += -Wl,-rpath,$(abspath ../tools/stutils/lib/)

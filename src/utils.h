@@ -33,7 +33,7 @@ extern "C" {
 
 #include <st_opt.h>
 
-#include "config.h"
+#include <connlm/config.h>
 
 #define exp10(a) pow(10.0, a)
 

@@ -29,7 +29,7 @@
 extern "C" {
 #endif
 
-#include "config.h"
+#include <connlm/config.h>
 #include "layer.h"
 
 /** @defgroup g_layer_tanh tanh layer. 

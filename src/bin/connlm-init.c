@@ -25,8 +25,8 @@
 #include <st_log.h>
 #include <st_io.h>
 
-#include "utils.h"
-#include "connlm.h"
+#include <connlm/utils.h>
+#include <connlm/connlm.h>
 
 bool g_binary;
 char g_topo_file[MAX_DIR_LEN];

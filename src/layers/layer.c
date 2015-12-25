@@ -78,7 +78,7 @@ void layer_destroy(layer_t *layer)
 layer_t* layer_parse_topo(const char *line)
 {
     layer_t *layer = NULL;
-    layer_reg_t *reg;
+    layer_reg_t *reg = NULL;
 
     char keyvalue[2*MAX_LINE_LEN];
     char token[MAX_LINE_LEN];

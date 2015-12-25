@@ -22,6 +22,8 @@
  * SOFTWARE.
  */
 
+#include <string.h>
+
 #include <st_log.h>
 #include <st_utils.h>
 
@@ -105,7 +107,7 @@ void glue_destroy(glue_t *glue)
 glue_t* glue_parse_topo(const char *line, layer_t **layers, layer_id_t n_layer)
 {
     glue_t *glue = NULL;
-    glue_reg_t *reg;
+    glue_reg_t *reg = NULL;
 
     char keyvalue[2*MAX_LINE_LEN];
     char token[MAX_LINE_LEN];

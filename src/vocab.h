@@ -32,7 +32,7 @@ extern "C" {
 #include <st_opt.h>
 #include <st_alphabet.h>
 
-#include "config.h"
+#include <connlm/config.h>
 
 /** @defgroup g_vocab Vocab
  * Data structures and functions for Vocab.

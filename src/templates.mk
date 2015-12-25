@@ -6,8 +6,8 @@ target_so = $(OUTLIB_DIR)/$(1)/libconnlm.so
 so_flags = -shared
 endif
 
-CFLAGS_double = -D_USE_double_=1
-CFLAGS_float = -D_USE_double_=0
+CFLAGS_double = -D_USE_DOUBLE_=1
+CFLAGS_float = -D_USE_DOUBLE_=0
 
 define get_targets
 $(addprefix $(BIN_DIR)/$(1)/,$(2))

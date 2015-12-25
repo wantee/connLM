@@ -118,6 +118,7 @@ static int graph_dfs(graph_t *graph, node_id_t start,
 
     ST_CHECK_PARAM(graph == NULL, -1);
 
+    ST_DEBUG("%p", post_order);
     visited[start] = true;
     ST_DEBUG("DFS: %d", start);
 
@@ -175,11 +176,13 @@ static int graph_dfs(graph_t *graph, node_id_t start,
         ST_WARNING("Failed to st_stack_pop node.");
         return -1;
     }
+    ST_DEBUG("%p", post_order);
     ST_DEBUG("Node pop: %d", n);
     on_stack[start] = false;
     post_order[*post_i] = start;
     *post_i += 1;
 
+        ST_DEBUG("%p", post_order);
     return 0;
 }
 
@@ -249,14 +252,15 @@ static int graph_sort(graph_t *graph)
         goto ERR;
     }
     memset(post_order, 0, sizeof(node_id_t) * graph->num_node);
+    ST_DEBUG("%p", post_order);
 
     post_i = 0;
-    /* initial node MUST be the first layer. */
     if (graph_dfs(graph, 0, node_stack, link_stack,
                 on_stack, visited, passed, post_order, &post_i) < 0) {
         ST_WARNING("Failed to dfs.");
         goto ERR;
     }
+    ST_DEBUG("%p", post_order);
 
     for (n = 0; n < graph->num_node; n++) {
         if (!visited[n]) {
@@ -287,6 +291,7 @@ static int graph_sort(graph_t *graph)
     safe_free(visited);
     safe_free(passed);
     safe_free(post_order);
+
     return 0;
 
 ERR:
@@ -295,6 +300,7 @@ ERR:
     safe_free(on_stack);
     safe_free(visited);
     safe_free(passed);
+    ST_DEBUG("%p", post_order);
     safe_free(post_order);
 
     return -1;

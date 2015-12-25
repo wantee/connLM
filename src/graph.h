@@ -29,7 +29,7 @@
 extern "C" {
 #endif
 
-#include "config.h"
+#include <connlm/config.h>
 
 #include "layers/layer.h"
 #include "glues/glue.h"

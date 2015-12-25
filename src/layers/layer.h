@@ -29,7 +29,7 @@
 extern "C" {
 #endif
 
-#include "config.h"
+#include <connlm/config.h>
 
 /** @defgroup g_layer NNet hidden layer. 
  * Data structures and functions for NNet hidden layer.

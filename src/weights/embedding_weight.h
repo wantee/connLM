@@ -29,7 +29,7 @@
 extern "C" {
 #endif
 
-#include "config.h"
+#include <connlm/config.h>
 
 /** @defgroup g_wt_embedding NNet embedding weight. 
  * @ingroup g_weight

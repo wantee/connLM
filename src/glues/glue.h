@@ -29,7 +29,7 @@
 extern "C" {
 #endif
 
-#include "config.h"
+#include <connlm/config.h>
 #include "layers/layer.h"
 
 /** @defgroup g_glue NNet glue. 

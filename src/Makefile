@@ -1,6 +1,6 @@
 CC = gcc
 
-OUTINC_DIR = ../include/connlm/
+OUTINC_DIR = ../include/
 
 BIN_DIR=../bin
 OUTLIB_DIR=../lib
@@ -10,7 +10,7 @@ SO_OBJ_DIR=./so_obj
 include flags.mk
 include templates.mk
 
-INC = utils.h config.h \
+INC = utils.h \
       connlm.h param.h rnn.h maxent.h lbl.h ffnn.h \
       vocab.h \
       output.h \
@@ -27,6 +27,9 @@ INC = utils.h config.h \
       weights/embedding_weight.h \
       weights/output_weight.h \
       graph.h
+
+CONFIG_INC=config.h
+OUT_CONFIG=$(OUTINC_DIR)/connlm/config.h
 
 OBJ_SO = utils.o param.o rnn.o maxent.o lbl.o ffnn.o \
          connlm.o \
@@ -55,19 +58,26 @@ ifneq (,$(findstring _USE_BLAS_,$(CFLAGS)))
 endif
 VAL_TEST_BIN = maxent-test utils-test param-test connlm-test
 
-.PHONY: all double float clean inc
+.PHONY: all double float clean inc config
+.PHONY: depend depend-double depend-float
 .PHONY: test test-double test-float
 .PHONY: prepare-doc gen-doc publish-doc
 
 all: double float 
 
-inc: $(INC)
-	@mkdir -p $(OUTINC_DIR)
-	$(foreach f,$(INC),$(call copy_inc,$f,$(OUTINC_DIR)))
+config:
+	@../tools/replace_revision.sh $(CONFIG_INC) $(OUT_CONFIG)
 
-double: inc $(call get_targets,double,$(BIN))
+$(OUT_CONFIG): $(CONFIG_INC)
+	@../tools/replace_revision.sh $(CONFIG_INC) $(OUT_CONFIG) 1
 
-float: inc $(call get_targets,float,$(BIN))
+inc: $(INC) config
+	@mkdir -p "$(OUTINC_DIR)/connlm"
+	$(foreach f,$(INC),$(call copy_inc,$f,"$(OUTINC_DIR)/connlm"))
+
+double: inc $(OUT_CONFIG) $(call get_targets,double,$(BIN))
+
+float: inc $(OUT_CONFIG) $(call get_targets,float,$(BIN))
 
 mktargets = $(foreach type, float double, $(eval $(call $(1),$(type),$(2))))
 
@@ -88,7 +98,6 @@ clean:
 	rm -rf $(BIN_DIR)
 	rm -rf $(OUTLIB_DIR)
 	rm -rf $(OUTINC_DIR)
-	rm -rf ../include
 	rm -f tags cscope.*
 
 test: test-double test-float
@@ -120,4 +129,3 @@ publish-doc: gen-doc
 	git add * && \
 	git commit -a -m"generate doc on $(shell date)" && \
 	git push origin gh-pages
-

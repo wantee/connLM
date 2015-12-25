@@ -31,7 +31,7 @@ extern "C" {
 
 #include <st_opt.h>
 
-#include "config.h"
+#include <connlm/config.h>
 #include "param.h"
 #include "output.h"
 

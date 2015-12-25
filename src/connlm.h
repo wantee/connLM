@@ -35,7 +35,7 @@ extern "C" {
 #include <st_alphabet.h>
 #include <st_semaphore.h>
 
-#include "config.h"
+#include <connlm/config.h>
 #include "vocab.h"
 #include "output.h"
 #include "param.h"

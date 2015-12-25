@@ -33,6 +33,8 @@ extern "C" {
 
 #define CONNLM_FILE_VERSION   3
 
+#define CONNLM_COMMIT "0"
+
 #ifndef _USE_DOUBLE_
 #define _USE_DOUBLE_ 0
 #endif
@@ -69,4 +71,3 @@ typedef long long hash_size_t;
 #endif
 
 #endif
-

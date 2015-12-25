@@ -29,7 +29,7 @@
 extern "C" {
 #endif
 
-#include "config.h"
+#include <connlm/config.h>
 
 #ifdef _USE_BLAS_
 #  ifdef _HAVE_MKL_

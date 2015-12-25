@@ -30,7 +30,6 @@
 #include <st_log.h>
 #include <st_utils.h>
 
-#include "config.h"
 #include "utils.h"
 #include "fastexp.h"
 #include "blas.h"
@@ -246,8 +245,8 @@ void connlm_show_usage(const char *module_name, const char *header,
         const char *usage, st_opt_t *opt)
 {
     fprintf(stderr, "\nConnectionist Language Modelling Toolkit\n");
-    fprintf(stderr, "  -- %s\n", header);
-    fprintf(stderr, "Version  : %s\n", CONNLM_VERSION);
+    fprintf(stderr, "    -- %s\n", header);
+    fprintf(stderr, "Version  : %s (%s)\n", CONNLM_VERSION, CONNLM_COMMIT);
     fprintf(stderr, "File version: %d\n", CONNLM_FILE_VERSION);
     fprintf(stderr, "Real type: %s\n",
             (sizeof(real_t) == sizeof(double)) ? "double" : "float");

@@ -29,7 +29,7 @@
 extern "C" {
 #endif
 
-#include "config.h"
+#include <connlm/config.h>
 #include "glue.h"
 
 /** @defgroup g_glue_clone clone glue. 
