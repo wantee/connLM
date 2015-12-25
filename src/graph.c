@@ -116,9 +116,10 @@ static int graph_dfs(graph_t *graph, node_id_t start,
     node_id_t n, to;
     st_stack_id_t s;
 
+    void *tmp;
+
     ST_CHECK_PARAM(graph == NULL, -1);
 
-    ST_DEBUG("%p", post_order);
     visited[start] = true;
     ST_DEBUG("DFS: %d", start);
 
@@ -138,7 +139,7 @@ static int graph_dfs(graph_t *graph, node_id_t start,
         }
         ST_DEBUG("Link push: %d", lk);
 
-        to = graph->links[node->links[l]].to;
+        to = graph->links[lk].to;
         if(!visited[to]) {
             if (graph_dfs(graph, to, node_stack, link_stack,
                     on_stack, visited, passed, post_order, post_i) < 0) {
@@ -147,42 +148,39 @@ static int graph_dfs(graph_t *graph, node_id_t start,
             }
         } else if(on_stack[to]) {
             for(s = 1; s <= node_stack->top; s++) {
-                if (st_stack_topn(node_stack, s, (void *)&n) != ST_STACK_OK) {
-                    ST_WARNING("Failed to st_stack_topn node.[%d]", s);
-                    return -1;
-                }
-
-                if (st_stack_topn(link_stack, s, (void *)&lk) != ST_STACK_OK) {
+                if (st_stack_topn(link_stack, s, &tmp) != ST_STACK_OK) {
                     ST_WARNING("Failed to st_stack_topn link.[%d]", s);
                     return -1;
                 }
 
-                graph->links[lk].cycle = true;
+                graph->links[(link_id_t)tmp].cycle = true;
 
-                if (n == to) {
+                if (st_stack_topn(node_stack, s, &tmp) != ST_STACK_OK) {
+                    ST_WARNING("Failed to st_stack_topn node.[%d]", s);
+                    return -1;
+                }
+                if ((node_id_t)tmp == to) {
                     break;
                 }
             }
         }
 
-        if (st_stack_pop(link_stack, (void **)&lk) != ST_STACK_OK) {
+        if (st_stack_pop(link_stack, &tmp) != ST_STACK_OK) {
             ST_WARNING("Failed to st_stack_pop link.");
             return -1;
         }
-        ST_DEBUG("Link pop: %d", lk);
+        ST_DEBUG("Link pop: %d", (link_id_t)tmp);
     }
 
-    if (st_stack_pop(node_stack, (void **)&n) != ST_STACK_OK) {
+    if (st_stack_pop(node_stack, &tmp) != ST_STACK_OK) {
         ST_WARNING("Failed to st_stack_pop node.");
         return -1;
     }
-    ST_DEBUG("%p", post_order);
-    ST_DEBUG("Node pop: %d", n);
+    ST_DEBUG("Node pop: %d", (node_id_t)tmp);
     on_stack[start] = false;
     post_order[*post_i] = start;
     *post_i += 1;
 
-        ST_DEBUG("%p", post_order);
     return 0;
 }
 
@@ -252,7 +250,6 @@ static int graph_sort(graph_t *graph)
         goto ERR;
     }
     memset(post_order, 0, sizeof(node_id_t) * graph->num_node);
-    ST_DEBUG("%p", post_order);
 
     post_i = 0;
     if (graph_dfs(graph, 0, node_stack, link_stack,
@@ -260,7 +257,6 @@ static int graph_sort(graph_t *graph)
         ST_WARNING("Failed to dfs.");
         goto ERR;
     }
-    ST_DEBUG("%p", post_order);
 
     for (n = 0; n < graph->num_node; n++) {
         if (!visited[n]) {
@@ -300,7 +296,6 @@ ERR:
     safe_free(on_stack);
     safe_free(visited);
     safe_free(passed);
-    ST_DEBUG("%p", post_order);
     safe_free(post_order);
 
     return -1;
