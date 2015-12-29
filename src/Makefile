@@ -1,11 +1,11 @@
 CC = gcc
 
 OUTINC_DIR = ../include/
-
 BIN_DIR=../bin
 OUTLIB_DIR=../lib
-BIN_OBJ_DIR=./bin_obj
-SO_OBJ_DIR=./so_obj
+
+OBJ_DIR=./.objs
+DEP_DIR=./.deps
 
 include flags.mk
 include templates.mk
@@ -31,32 +31,51 @@ INC = utils.h \
 CONFIG_INC=config.h
 OUT_CONFIG=$(OUTINC_DIR)/connlm/config.h
 
-OBJ_SO = utils.o param.o rnn.o maxent.o lbl.o ffnn.o \
-         connlm.o \
-         vocab.o \
-         output.o \
-         component.o \
-         input.o \
-         layers/layer.o \
-         layers/sigmoid_layer.o \
-         layers/tanh_layer.o \
-         glues/glue.o \
-         glues/sum_glue.o \
-         glues/append_glue.o \
-         glues/clone_glue.o \
-         weights/weight.o \
-         weights/embedding_weight.o \
-         weights/output_weight.o \
-         graph.o
+OBJS = utils.o \
+       param.o \
+       rnn.o \
+       maxent.o \
+       lbl.o \
+       ffnn.o \
+       connlm.o \
+       vocab.o \
+       output.o \
+       component.o \
+       input.o \
+       layers/layer.o \
+       layers/sigmoid_layer.o \
+       layers/tanh_layer.o \
+       glues/glue.o \
+       glues/sum_glue.o \
+       glues/append_glue.o \
+       glues/clone_glue.o \
+       weights/weight.o \
+       weights/embedding_weight.o \
+       weights/output_weight.o \
+       graph.o
 
-BIN = connlm-train connlm-eval connlm-info connlm-copy \
-      connlm-vocab connlm-init connlm-output connlm-gen connlm-merge
+BINS = bin/connlm-train \
+       bin/connlm-eval \
+       bin/connlm-info \
+       bin/connlm-copy \
+       bin/connlm-vocab \
+       bin/connlm-init \
+       bin/connlm-output \
+       bin/connlm-gen \
+       bin/connlm-merge
 
-TEST_BIN = maxent-test utils-test param-test connlm-test
+TEST_BINS = tests/maxent-test \
+            tests/utils-test \
+            tests/param-test \
+            tests/connlm-test
 ifneq (,$(findstring _USE_BLAS_,$(CFLAGS)))
-    TEST_BIN += blas-test
+    TEST_BINS += tests/blas-test
 endif
-VAL_TEST_BIN = maxent-test utils-test param-test connlm-test
+
+VAL_TEST_BINS = tests/maxent-test \
+                tests/utils-test \
+                tests/param-test \
+                tests/connlm-test
 
 .PHONY: all double float clean inc config
 .PHONY: depend depend-double depend-float
@@ -75,26 +94,24 @@ inc: $(INC) config
 	@mkdir -p "$(OUTINC_DIR)/connlm"
 	$(foreach f,$(INC),$(call copy_inc,$f,"$(OUTINC_DIR)/connlm"))
 
-double: inc $(OUT_CONFIG) $(call get_targets,double,$(BIN))
+double: inc $(OUT_CONFIG) $(call get_targets,double,$(BINS))
 
-float: inc $(OUT_CONFIG) $(call get_targets,float,$(BIN))
+float: inc $(OUT_CONFIG) $(call get_targets,float,$(BINS))
 
 mktargets = $(foreach type, float double, $(eval $(call $(1),$(type),$(2))))
 
-$(call mktargets,compile_all_so_obj,$(OBJ_SO))
+$(call mktargets,compile_objs,$(OBJS))
 
-$(call mktargets,link_so,$(OBJ_SO))
+$(call mktargets,link_so,$(OBJS))
 
-$(call mktargets,compile_all_bin_obj,$(BIN))
-
-$(call mktargets,link_all_bin,$(BIN))
+$(call mktargets,link_bins,$(BINS))
 
 lint-check : *.h *.c
 	splint +posixlib +D__gnuc_va_list=int -fileextensions $^
 
 clean:
-	rm -rf $(BIN_OBJ_DIR)
-	rm -rf $(SO_OBJ_DIR)
+	rm -rf $(OBJ_DIR)
+	rm -rf $(DEP_DIR)
 	rm -rf $(BIN_DIR)
 	rm -rf $(OUTLIB_DIR)
 	rm -rf $(OUTINC_DIR)
@@ -102,15 +119,13 @@ clean:
 
 test: test-double test-float
 
-$(call mktargets,compile_all_test_obj,$(TEST_BIN))
+$(call mktargets,link_tests,$(TEST_BINS))
 
-$(call mktargets,link_all_test,$(TEST_BIN))
-
-$(call mktargets,test_targets,$(TEST_BIN))
+$(call mktargets,test_targets,$(TEST_BINS))
 
 val-test: val-test-double val-test-float
 
-$(call mktargets,val_test_targets,$(VAL_TEST_BIN))
+$(call mktargets,val_test_targets,$(VAL_TEST_BINS))
 
 gen-doc: prepare-doc
 	rm -rf html/*
@@ -129,3 +144,8 @@ publish-doc: gen-doc
 	git add * && \
 	git commit -a -m"generate doc on $(shell date)" && \
 	git push origin gh-pages
+
+.deps/%.mk:%.c
+	mkdir -p `dirname "$@"`
+	$(CC) $(CFLAGS) -M $< > $@
+	echo '	$(CC) -c $(CFLAGS) $< -o $@.o' >> $@

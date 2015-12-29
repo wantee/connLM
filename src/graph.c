@@ -113,7 +113,7 @@ static int graph_dfs(graph_t *graph, node_id_t start,
     node_t *node;
 
     link_id_t l, lk;
-    node_id_t n, to;
+    node_id_t to;
     st_stack_id_t s;
 
     void *tmp;

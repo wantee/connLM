@@ -1,18 +1,18 @@
 /*
  * The MIT License (MIT)
- * 
+ *
  * Copyright (c) 2015 Wang Jian
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in all
  * copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -214,7 +214,7 @@ static int check_comp(component_t *comp, char *name, int id)
 
 static int check_layer(layer_t *layer, char *name, int id,
         char *type, int size)
-{ 
+{
     if (strncmp(layer->name, name, strlen(name)) != 0
             || layer->name[strlen(name)] != '0' + id
             || layer->name[strlen(name) + 1] != '\0') {
@@ -237,7 +237,7 @@ static int check_layer(layer_t *layer, char *name, int id,
 
 static int check_glue(glue_t *glue, ref_t *ref, int c, int g, int sum_i,
         layer_t **layers, layer_id_t n_layer)
-{ 
+{
     char name[MAX_NAME_LEN];
     char tmp[MAX_NAME_LEN];
 

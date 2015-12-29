@@ -1,18 +1,18 @@
 /*
  * The MIT License (MIT)
- * 
+ *
  * Copyright (c) 2015 Wang Jian
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in all
  * copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -94,7 +94,7 @@ static void test_sgemm(int m, int n, int k, bool transa, bool transb)
 
     fprintf(stderr, "Average time: %e secs\n", time_avg);
     fprintf(stderr, "GFlop       : %.5f\n", gflop);
-    fprintf(stderr, "GFlop/sec   : %.5f\n", gflop/time_avg); 
+    fprintf(stderr, "GFlop/sec   : %.5f\n", gflop/time_avg);
 
     fprintf(stderr, "Running raw code...\n");
     time_st = clock();
@@ -120,7 +120,7 @@ static void test_sgemm(int m, int n, int k, bool transa, bool transb)
     gflop = (2.0*m*n*k)*1E-9;
     fprintf(stderr, "Average time: %e secs\n", time_avg);
     fprintf(stderr, "GFlop       : %.5f\n", gflop);
-    fprintf(stderr, "GFlop/sec   : %.5f\n", gflop/time_avg); 
+    fprintf(stderr, "GFlop/sec   : %.5f\n", gflop/time_avg);
 
     free(a);
     free(b);
