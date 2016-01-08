@@ -115,6 +115,11 @@ int main(int argc, const char *argv[])
         goto ERR;
     }
 
+    if (strcmp(connlm_revision(), CONNLM_COMMIT) != 0) {
+        ST_WARNING("Binary revision[%s] not match with library[%s].",
+                CONNLM_COMMIT, connlm_revision());
+    }
+
     if (g_dry_run) {
         st_opt_show(g_cmd_opt, "connLM Train Options");
         return 0;

@@ -40,6 +40,11 @@
 
 static const int CONNLM_MAGIC_NUM = 626140498;
 
+const char* connlm_revision()
+{
+    return CONNLM_COMMIT;
+}
+
 static void connlm_egs_destroy(connlm_egs_t *egs)
 {
     if (egs != NULL) {

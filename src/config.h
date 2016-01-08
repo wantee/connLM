@@ -29,7 +29,7 @@
 extern "C" {
 #endif
 
-#define CONNLM_VERSION   "1.0"
+#define CONNLM_VERSION   "2.0.0"
 
 #define CONNLM_FILE_VERSION   3
 

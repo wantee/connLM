@@ -145,7 +145,7 @@ publish-doc: gen-doc
 	git commit -a -m"generate doc on $(shell date)" && \
 	git push origin gh-pages
 
-.deps/%.mk:%.c
+DEP_DIR/%.mk:%.c
 	mkdir -p `dirname "$@"`
 	$(CC) $(CFLAGS) -M $< > $@
 	echo '	$(CC) -c $(CFLAGS) $< -o $@.o' >> $@

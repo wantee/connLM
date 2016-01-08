@@ -22,6 +22,8 @@
  * SOFTWARE.
  */
 
+#include <string.h>
+
 #include <st_log.h>
 #include <st_io.h>
 
@@ -95,6 +97,11 @@ int main(int argc, const char *argv[])
     } if (ret == 1) {
         show_usage(argv[0]);
         goto ERR;
+    }
+
+    if (strcmp(connlm_revision(), CONNLM_COMMIT) != 0) {
+        ST_WARNING("Binary revision[%s] not match with library[%s].",
+                CONNLM_COMMIT, connlm_revision());
     }
 
     if (argc != 3) {

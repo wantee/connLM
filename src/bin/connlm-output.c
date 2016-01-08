@@ -109,6 +109,11 @@ int main(int argc, const char *argv[])
         goto ERR;
     }
 
+    if (strcmp(connlm_revision(), CONNLM_COMMIT) != 0) {
+        ST_WARNING("Binary revision[%s] not match with library[%s].",
+                CONNLM_COMMIT, connlm_revision());
+    }
+
     if (argc != 3) {
         show_usage(argv[0]);
         goto ERR;

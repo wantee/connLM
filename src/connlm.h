@@ -51,6 +51,13 @@ extern "C" {
  */
 
 /**
+ * Return connLM git revision.
+ * @ingroup g_connlm
+ * @return revision.
+ */
+const char* connlm_revision();
+
+/**
  * Parameters for training connLM model.
  * @ingroup g_connlm
  */
