@@ -125,8 +125,9 @@ endef
 
 define copy_inc
 
-    @mkdir -p "$(2)/$(dir $(1))"
-    @cp "$(1)" "$(2)/$(dir $(1))"
+$(2): $(1)
+	@mkdir -p "$(dir $(2))"
+	cp "$(1)" "$(2)"
 
 endef
 # To debug, replace $(eval, ...) to $(info, ...)

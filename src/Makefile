@@ -10,7 +10,7 @@ DEP_DIR=./.deps
 include flags.mk
 include templates.mk
 
-INC = utils.h \
+INCS = utils.h \
       connlm.h param.h rnn.h maxent.h lbl.h ffnn.h \
       vocab.h \
       output.h \
@@ -82,21 +82,23 @@ VAL_TEST_BINS = tests/maxent-test \
 .PHONY: test test-double test-float
 .PHONY: prepare-doc gen-doc publish-doc
 
-all: double float 
+all: double float
 
+# always check revision
 config:
 	@../tools/replace_revision.sh $(CONFIG_INC) $(OUT_CONFIG)
 
+# copy config.h when updated
 $(OUT_CONFIG): $(CONFIG_INC)
-	@../tools/replace_revision.sh $(CONFIG_INC) $(OUT_CONFIG) 1
+	../tools/replace_revision.sh $(CONFIG_INC) $(OUT_CONFIG) 1
 
-inc: $(INC) config
-	@mkdir -p "$(OUTINC_DIR)/connlm"
-	$(foreach f,$(INC),$(call copy_inc,$f,"$(OUTINC_DIR)/connlm"))
+OUT_INCS = $(addprefix $(OUTINC_DIR)/connlm/,$(INCS))
 
-double: inc $(OUT_CONFIG) $(call get_targets,double,$(BINS))
+$(foreach f,$(INCS),$(eval $(call copy_inc,$f,$(OUTINC_DIR)/connlm/$f)))
 
-float: inc $(OUT_CONFIG) $(call get_targets,float,$(BINS))
+double: $(OUT_INCS) config $(OUT_CONFIG) $(call get_targets,double,$(BINS))
+
+float: $(OUT_INCS) config $(OUT_CONFIG) $(call get_targets,float,$(BINS))
 
 mktargets = $(foreach type, float double, $(eval $(call $(1),$(type),$(2))))
 
