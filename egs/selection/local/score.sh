@@ -123,4 +123,3 @@ end_ts=`date +%s`
 echo "$0: Elapse time: $(shu-diff-timestamp $begin_ts $end_ts)"
 
 exit 0;
-

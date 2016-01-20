@@ -14,4 +14,3 @@ compare_normalize=("expected/case-01.out:test/output/case-01.out")
 compare=("expected/case-01.selected.rnn+maxent.0.0:test/tmp/case-01/exp/selected.rnn+maxent.0.0"
          "expected/case-01.selected.rnn+maxent.0.5:test/tmp/case-01/exp/selected.rnn+maxent.0.5"
          "expected/case-01.selected.rnn+maxent.1.0:test/tmp/case-01/exp/selected.rnn+maxent.1.0"
-        )

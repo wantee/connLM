@@ -237,4 +237,3 @@ bool sum_glue_check(glue_t *glue, layer_t **layers, layer_id_t n_layer)
 
     return true;
 }
-

@@ -338,4 +338,3 @@ ERR:
     safe_graph_destroy(comp->graph);
     return -1;
 }
-

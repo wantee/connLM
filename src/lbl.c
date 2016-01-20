@@ -458,4 +458,3 @@ int lbl_end_gen(lbl_t *lbl, int word)
 {
     return lbl_end_test(lbl, word, 0);
 }
-

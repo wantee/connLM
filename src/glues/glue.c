@@ -502,4 +502,3 @@ ERR:
     safe_glue_destroy(glue);
     return NULL;
 }
-

@@ -116,4 +116,3 @@ echo "Step $st: ${stepnames[$st]} ..."
   || exit 1;
 fi
 ((st++))
-

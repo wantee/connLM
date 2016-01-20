@@ -122,4 +122,3 @@ usage: ./local/select.sh <corpus> <indomain-score-dir> <general-score-dir> <thre
 e.g.: ./local/select.sh data/general.corpus exp/indomain/rnn+maxent/score exp/general/rnn+maxent/score 0.0 exp/selected
    @endcode
 */
-

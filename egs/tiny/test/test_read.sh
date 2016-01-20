@@ -63,4 +63,3 @@ for thr in $thrs; do
     echo "[SUCCESS]"
   done
 done
-

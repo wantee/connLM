@@ -94,4 +94,3 @@ if $remove_archive; then
   echo "$0: removing $data/$archive file since --remove-archive option was supplied."
   rm $data/$archive
 fi
-

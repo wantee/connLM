@@ -18,4 +18,3 @@ if ($help) {
 
 srand($seed);
 print shuffle(<STDIN>);
-

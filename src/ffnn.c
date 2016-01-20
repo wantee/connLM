@@ -459,4 +459,3 @@ int ffnn_end_gen(ffnn_t *ffnn, int word)
 {
     return ffnn_end_test(ffnn, word, 0);
 }
-

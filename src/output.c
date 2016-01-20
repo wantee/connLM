@@ -2124,4 +2124,3 @@ bool output_equal(output_t *output1, output_t *output2)
 
     return true;
 }
-

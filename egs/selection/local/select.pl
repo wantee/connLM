@@ -26,4 +26,3 @@ while (my $line = <STDIN>) {
 
 print STDERR "Total sentences: $total\n";
 print STDERR "Selected sentences: $selected\n";
-

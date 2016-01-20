@@ -75,4 +75,3 @@ done
 if [ "$total" -gt 0 ]; then
   echo "Total $total warnings found."
 fi
-

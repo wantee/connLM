@@ -62,4 +62,3 @@ ERR:
     safe_output_wt_destroy(output_wt);
     return NULL;
 }
-

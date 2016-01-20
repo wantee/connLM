@@ -64,4 +64,3 @@ ERR:
     safe_input_destroy(input);
     return NULL;
 }
-

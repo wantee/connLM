@@ -58,4 +58,3 @@ ERR:
     safe_emb_wt_destroy(emb_wt);
     return NULL;
 }
-

@@ -1572,4 +1572,3 @@ int maxent_end_gen(maxent_t *maxent, int word)
 {
     return maxent_end_test(maxent, word, 0);
 }
-

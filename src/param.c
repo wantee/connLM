@@ -381,4 +381,3 @@ void param_update_minibatch(param_t *param, param_arg_t *arg, bool update_arg,
             1.0 - l2, wt, in_size);
 }
 #endif
-

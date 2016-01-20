@@ -691,4 +691,3 @@ bool vocab_equal(vocab_t *vocab1, vocab_t *vocab2)
 
     return true;
 }
-

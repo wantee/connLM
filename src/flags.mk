@@ -27,4 +27,3 @@ LDFLAGS += -Wl,-rpath,$(abspath ../tools/stutils/lib/)
 CFLAGS += -g -Wall -Winline -pipe
 CFLAGS += -DNDEBUG
 #CFLAGS += -D_TIME_PROF_
-

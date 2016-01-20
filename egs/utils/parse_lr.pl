@@ -32,4 +32,3 @@ print $lrs{"RNN"} . "\n";
 print $lrs{"MAXENT"} . "\n";
 print $lrs{"LBL"} . "\n";
 print $lrs{"FFNN"} . "\n";
-

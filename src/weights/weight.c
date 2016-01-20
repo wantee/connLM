@@ -74,4 +74,3 @@ ERR:
     safe_wt_destroy(wt);
     return NULL;
 }
-

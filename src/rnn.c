@@ -1872,4 +1872,3 @@ int rnn_end_gen(rnn_t *rnn, int word)
 {
     return rnn_end_test(rnn, word, 0);
 }
-

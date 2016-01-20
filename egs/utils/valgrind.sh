@@ -50,4 +50,3 @@ function val_exit()
 }
 
 trap val_exit EXIT
-
