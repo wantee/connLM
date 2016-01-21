@@ -42,6 +42,8 @@ extern "C" {
  * @ingroup g_input
  */
 typedef struct _input_t_ {
+    int *context;
+    int num_ctx;
 } input_t;
 
 /**

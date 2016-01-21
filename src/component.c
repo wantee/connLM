@@ -278,6 +278,11 @@ component_t *comp_init_from_topo(const char* topo_content)
         }
     }
 
+    if (comp->input == NULL) {
+        ST_WARNING("NO input layer.");
+        goto ERR;
+    }
+
     safe_free(line);
 
     return comp;

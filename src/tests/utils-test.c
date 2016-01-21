@@ -131,7 +131,9 @@ static int unit_test_dot_product()
 
     ret = dot_product(v1, v2, M);
 
-    fprintf(stderr, "%g\n", ret);
+#ifdef _CONNLM_TEST_DEBUG_
+    printf("%g\n", ret);
+#endif
     if (ret != ref) {
         goto FAILED;
     }

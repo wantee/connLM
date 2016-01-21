@@ -187,7 +187,7 @@ static FILE* mk_topo_file(ref_t *ref)
     }
     rewind(fp);
 
-#if 0
+#ifdef _CONNLM_TEST_PRINT_TOPO_
     {
         char line[MAX_LINE_LEN];
         while(fgets(line, MAX_LINE_LEN, fp)) {
@@ -526,16 +526,18 @@ static int unit_test_connlm_read_topo_good()
     ref_t ref;
     ref_t std_ref = {
         .comp_name = "comp",
-        .num_comp = 3,
+        .num_comp = 4, /* RNN, MAXENT, LBL, FFNN */
 
         .layer_name = "layer",
-        .num_layer = {1, 1, 1},
+        .num_layer = {1, 0, 1, 1},
         .layer_type = {{"sigmoid"},
                        {"tanh"},
-                       {"sigmoid"}},
+                       {"sigmoid"},
+                       {"tanh"}},
         .layer_size = {{16},
-                       {32},
-                       {32}},
+                       {1024},
+                       {16},
+                       {16}},
 
         .glue_name = "glue",
         .num_glue = {2, 1},

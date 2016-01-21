@@ -67,7 +67,8 @@ BINS = bin/connlm-train \
 TEST_BINS = tests/maxent-test \
             tests/utils-test \
             tests/param-test \
-            tests/connlm-test
+            tests/connlm-test \
+            tests/input-test
 ifneq (,$(findstring _USE_BLAS_,$(CFLAGS)))
     TEST_BINS += tests/blas-test
 endif
@@ -75,7 +76,8 @@ endif
 VAL_TEST_BINS = tests/maxent-test \
                 tests/utils-test \
                 tests/param-test \
-                tests/connlm-test
+                tests/connlm-test \
+                tests/input-test
 
 .PHONY: all double float clean inc config
 .PHONY: depend depend-double depend-float
@@ -94,11 +96,13 @@ $(OUT_CONFIG): $(CONFIG_INC)
 
 OUT_INCS = $(addprefix $(OUTINC_DIR)/connlm/,$(INCS))
 
+inc: $(OUT_INCS) config $(OUT_CONFIG)
+
 $(foreach f,$(INCS),$(eval $(call copy_inc,$f,$(OUTINC_DIR)/connlm/$f)))
 
-double: $(OUT_INCS) config $(OUT_CONFIG) $(call get_targets,double,$(BINS))
+double: inc $(call get_targets,double,$(BINS))
 
-float: $(OUT_INCS) config $(OUT_CONFIG) $(call get_targets,float,$(BINS))
+float: inc $(call get_targets,float,$(BINS))
 
 mktargets = $(foreach type, float double, $(eval $(call $(1),$(type),$(2))))
 

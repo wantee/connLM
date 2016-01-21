@@ -104,7 +104,8 @@ void glue_destroy(glue_t *glue)
     glue->num_out_layer = 0;
 }
 
-glue_t* glue_parse_topo(const char *line, layer_t **layers, layer_id_t n_layer)
+glue_t* glue_parse_topo(const char *line, layer_t **layers,
+        layer_id_t n_layer)
 {
     glue_t *glue = NULL;
     glue_reg_t *reg = NULL;

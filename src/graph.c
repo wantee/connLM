@@ -184,6 +184,9 @@ static int graph_dfs(graph_t *graph, node_id_t start,
     return 0;
 }
 
+/*
+ * Get the forward order of nodes in a graph.
+ */
 static int graph_sort(graph_t *graph)
 {
     st_stack_t *node_stack = NULL; /* node stack. */
