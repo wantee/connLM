@@ -31,9 +31,9 @@ extern "C" {
 
 #include <pthread.h>
 
-#include <st_utils.h>
-#include <st_alphabet.h>
-#include <st_semaphore.h>
+#include <stutils/st_utils.h>
+#include <stutils/st_alphabet.h>
+#include <stutils/st_semaphore.h>
 
 #include <connlm/config.h>
 #include "vocab.h"

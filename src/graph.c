@@ -24,8 +24,8 @@
 
 #include <string.h>
 
-#include <st_log.h>
-#include <st_stack.h>
+#include <stutils/st_log.h>
+#include <stutils/st_stack.h>
 
 #include "graph.h"
 

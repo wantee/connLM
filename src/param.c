@@ -26,8 +26,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <st_macro.h>
-#include <st_log.h>
+#include <stutils/st_macro.h>
+#include <stutils/st_log.h>
 
 #include "blas.h"
 #include "param.h"

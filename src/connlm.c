@@ -28,10 +28,10 @@
 #include <unistd.h>
 #include <math.h>
 
-#include <st_macro.h>
-#include <st_log.h>
-#include <st_opt.h>
-#include <st_io.h>
+#include <stutils/st_macro.h>
+#include <stutils/st_log.h>
+#include <stutils/st_opt.h>
+#include <stutils/st_io.h>
 
 #include "utils.h"
 #include "connlm.h"
@@ -42,7 +42,7 @@ static const int CONNLM_MAGIC_NUM = 626140498;
 
 const char* connlm_revision()
 {
-    return CONNLM_COMMIT;
+    return CONNLM_GIT_COMMIT;
 }
 
 static void connlm_egs_destroy(connlm_egs_t *egs)

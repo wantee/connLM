@@ -1,8 +1,8 @@
 ifeq ($(shell uname -s),Darwin)
-target_so = $(OUTLIB_DIR)/$(1)/libconnlm.dylib
+target_so = $(OUTLIB_DIR)/$(1)/lib$(PROJECT).dylib
 so_flags = -dynamiclib -install_name $(abspath $(call target_so,$(1)))
 else
-target_so = $(OUTLIB_DIR)/$(1)/libconnlm.so
+target_so = $(OUTLIB_DIR)/$(1)/lib$(PROJECT).so
 so_flags = -shared
 endif
 
@@ -47,7 +47,7 @@ define link_one_bin
 $(call get_targets,$(1),$(2)) : $(2).c $(call target_so,$(1)) $(TARGET_INC)
 	@mkdir -p "$$(dir $$@)"
 	$(CC) $(CFLAGS) $(CFLAGS_$(1)) -o $$@ $$< \
-          -L$(OUTLIB_DIR)/$(1) -lconnlm $(LDFLAGS) \
+          -L$(OUTLIB_DIR)/$(1) -l$(PROJECT) $(LDFLAGS) \
           -Wl,-rpath,$(abspath $(OUTLIB_DIR)/$(1))
 
 endef
@@ -74,7 +74,7 @@ define link_one_test
 $(OBJ_DIR)/$(1)/$(2) : $(2).c $(call target_so,$(1)) $(TARGET_INC)
 	@mkdir -p "$$(dir $$@)"
 	$(CC) $(CFLAGS) $(CFLAGS_$(1)) -UNDEBUG -o $$@ $$< \
-          -L$(OUTLIB_DIR)/$(1) -lconnlm $(LDFLAGS) \
+          -L$(OUTLIB_DIR)/$(1) -l$(PROJECT) $(LDFLAGS) \
           -Wl,-rpath,$(abspath $(OUTLIB_DIR)/$(1))
 
 endef

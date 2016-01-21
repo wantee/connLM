@@ -24,8 +24,8 @@
 
 #include <string.h>
 
-#include <st_log.h>
-#include <st_utils.h>
+#include <stutils/st_log.h>
+#include <stutils/st_utils.h>
 
 #include "weight.h"
 

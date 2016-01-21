@@ -26,7 +26,7 @@
 #include <assert.h>
 #include <string.h>
 
-#include <st_utils.h>
+#include <stutils/st_utils.h>
 
 #include "glues/sum_glue.h"
 #include "connlm.h"

@@ -10,26 +10,27 @@ DEP_DIR=./.deps
 include flags.mk
 include templates.mk
 
-INCS = utils.h \
-      connlm.h param.h rnn.h maxent.h lbl.h ffnn.h \
-      vocab.h \
-      output.h \
-      component.h \
-      input.h \
-      layers/layer.h \
-      layers/sigmoid_layer.h \
-      layers/tanh_layer.h \
-      glues/glue.h \
-      glues/sum_glue.h \
-      glues/append_glue.h \
-      glues/clone_glue.h \
-      weights/weight.h \
-      weights/embedding_weight.h \
-      weights/output_weight.h \
-      graph.h
-
+PROJECT = connlm
 CONFIG_INC=config.h
-OUT_CONFIG=$(OUTINC_DIR)/connlm/config.h
+OUT_CONFIG=$(OUTINC_DIR)/$(PROJECT)/config.h
+
+INCS = utils.h \
+       connlm.h param.h rnn.h maxent.h lbl.h ffnn.h \
+       vocab.h \
+       output.h \
+       component.h \
+       input.h \
+       layers/layer.h \
+       layers/sigmoid_layer.h \
+       layers/tanh_layer.h \
+       glues/glue.h \
+       glues/sum_glue.h \
+       glues/append_glue.h \
+       glues/clone_glue.h \
+       weights/weight.h \
+       weights/embedding_weight.h \
+       weights/output_weight.h \
+       graph.h
 
 OBJS = utils.o \
        param.o \
@@ -79,7 +80,7 @@ VAL_TEST_BINS = tests/maxent-test \
                 tests/connlm-test \
                 tests/input-test
 
-.PHONY: all double float clean inc config
+.PHONY: all double float clean inc config lint-check
 .PHONY: depend depend-double depend-float
 .PHONY: test test-double test-float
 .PHONY: prepare-doc gen-doc publish-doc
@@ -88,17 +89,17 @@ all: double float
 
 # always check revision
 config:
-	@../tools/replace_revision.sh $(CONFIG_INC) $(OUT_CONFIG)
+	@../tools/stutils/src/replace_revision.sh $(CONFIG_INC) $(OUT_CONFIG) CONNLM_GIT_COMMIT
 
 # copy config.h when updated
 $(OUT_CONFIG): $(CONFIG_INC)
-	../tools/replace_revision.sh $(CONFIG_INC) $(OUT_CONFIG) 1
+	../tools/stutils/src/replace_revision.sh $(CONFIG_INC) $(OUT_CONFIG) CONNLM_GIT_COMMIT 1
 
-OUT_INCS = $(addprefix $(OUTINC_DIR)/connlm/,$(INCS))
+OUT_INCS = $(addprefix $(OUTINC_DIR)/$(PROJECT)/,$(INCS))
 
 inc: $(OUT_INCS) config $(OUT_CONFIG)
 
-$(foreach f,$(INCS),$(eval $(call copy_inc,$f,$(OUTINC_DIR)/connlm/$f)))
+$(foreach f,$(INCS),$(eval $(call copy_inc,$f,$(OUTINC_DIR)/$(PROJECT)/$f)))
 
 double: inc $(call get_targets,double,$(BINS))
 
@@ -140,7 +141,7 @@ gen-doc: prepare-doc
 prepare-doc:
 	mkdir -p html
 	if [ ! -d html/.git ]; then \
-      git clone git@github.com:wantee/connLM.git html; \
+      git clone git@github.com:wantee/$(PROJECT).git html; \
     fi
 	cd html && \
     git checkout gh-pages

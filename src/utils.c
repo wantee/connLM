@@ -26,9 +26,9 @@
 #include <string.h>
 #include <float.h>
 
-#include <st_macro.h>
-#include <st_log.h>
-#include <st_utils.h>
+#include <stutils/st_macro.h>
+#include <stutils/st_log.h>
+#include <stutils/st_utils.h>
 
 #include "utils.h"
 #include "fastexp.h"
@@ -246,7 +246,7 @@ void connlm_show_usage(const char *module_name, const char *header,
 {
     fprintf(stderr, "\nConnectionist Language Modelling Toolkit\n");
     fprintf(stderr, "    -- %s\n", header);
-    fprintf(stderr, "Version  : %s (%s)\n", CONNLM_VERSION, CONNLM_COMMIT);
+    fprintf(stderr, "Version  : %s (%s)\n", CONNLM_VERSION, CONNLM_GIT_COMMIT);
     fprintf(stderr, "File version: %d\n", CONNLM_FILE_VERSION);
     fprintf(stderr, "Real type: %s\n",
             (sizeof(real_t) == sizeof(double)) ? "double" : "float");

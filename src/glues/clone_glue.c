@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#include <st_log.h>
-#include <st_utils.h>
+#include <stutils/st_log.h>
+#include <stutils/st_utils.h>
 
 #include "clone_glue.h"
 

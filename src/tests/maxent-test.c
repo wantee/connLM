@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-#include <st_utils.h>
+#include <stutils/st_utils.h>
 
 #include "maxent.h"
 

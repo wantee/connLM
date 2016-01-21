@@ -27,9 +27,9 @@
 #include <string.h>
 #include <unistd.h>
 
-#include <st_opt.h>
-#include <st_log.h>
-#include <st_io.h>
+#include <stutils/st_opt.h>
+#include <stutils/st_log.h>
+#include <stutils/st_io.h>
 
 #include <connlm/utils.h>
 #include <connlm/connlm.h>
@@ -115,9 +115,9 @@ int main(int argc, const char *argv[])
         goto ERR;
     }
 
-    if (strcmp(connlm_revision(), CONNLM_COMMIT) != 0) {
+    if (strcmp(connlm_revision(), CONNLM_GIT_COMMIT) != 0) {
         ST_WARNING("Binary revision[%s] not match with library[%s].",
-                CONNLM_COMMIT, connlm_revision());
+                CONNLM_GIT_COMMIT, connlm_revision());
     }
 
     if (g_dry_run) {

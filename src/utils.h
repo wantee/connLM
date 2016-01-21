@@ -31,7 +31,7 @@ extern "C" {
 
 #include <math.h>
 
-#include <st_opt.h>
+#include <stutils/st_opt.h>
 
 #include <connlm/config.h>
 

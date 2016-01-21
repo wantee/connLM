@@ -29,8 +29,8 @@
 extern "C" {
 #endif
 
-#include <st_opt.h>
-#include <st_alphabet.h>
+#include <stutils/st_opt.h>
+#include <stutils/st_alphabet.h>
 
 #include <connlm/config.h>
 

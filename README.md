@@ -38,7 +38,7 @@ Run following commands to build this project:
 $ git clone https://github.com/wantee/connLM.git
 $ cd connLM/src
 $ ./autogen.sh
-$ make
+$ make -j 4
 ```
 
 Quick tests:
