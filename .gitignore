@@ -32,3 +32,4 @@ nohup.out
 blas.mk
 
 !src/bin/
+.replace_revision.sh

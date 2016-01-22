@@ -1,18 +1,9 @@
-CC = gcc
-
-OUTINC_DIR = ../include/
-BIN_DIR=../bin
-OUTLIB_DIR=../lib
-
-OBJ_DIR=./.objs
-DEP_DIR=./.deps
+PROJECT = connlm
 
 include flags.mk
-include templates.mk
 
-PROJECT = connlm
-CONFIG_INC=config.h
-OUT_CONFIG=$(OUTINC_DIR)/$(PROJECT)/config.h
+REV_INC=config.h
+GIT_COMMIT_MACRO = CONNLM_GIT_COMMIT
 
 INCS = utils.h \
        connlm.h param.h rnn.h maxent.h lbl.h ffnn.h \
@@ -32,28 +23,28 @@ INCS = utils.h \
        weights/output_weight.h \
        graph.h
 
-OBJS = utils.o \
-       param.o \
-       rnn.o \
-       maxent.o \
-       lbl.o \
-       ffnn.o \
-       connlm.o \
-       vocab.o \
-       output.o \
-       component.o \
-       input.o \
-       layers/layer.o \
-       layers/sigmoid_layer.o \
-       layers/tanh_layer.o \
-       glues/glue.o \
-       glues/sum_glue.o \
-       glues/append_glue.o \
-       glues/clone_glue.o \
-       weights/weight.o \
-       weights/embedding_weight.o \
-       weights/output_weight.o \
-       graph.o
+SRCS = utils.c \
+       param.c \
+       rnn.c \
+       maxent.c \
+       lbl.c \
+       ffnn.c \
+       connlm.c \
+       vocab.c \
+       output.c \
+       component.c \
+       input.c \
+       layers/layer.c \
+       layers/sigmoid_layer.c \
+       layers/tanh_layer.c \
+       glues/glue.c \
+       glues/sum_glue.c \
+       glues/append_glue.c \
+       glues/clone_glue.c \
+       weights/weight.c \
+       weights/embedding_weight.c \
+       weights/output_weight.c \
+       graph.c
 
 BINS = bin/connlm-train \
        bin/connlm-eval \
@@ -65,94 +56,54 @@ BINS = bin/connlm-train \
        bin/connlm-gen \
        bin/connlm-merge
 
-TEST_BINS = tests/maxent-test \
+TESTS = tests/maxent-test \
+        tests/utils-test \
+        tests/param-test \
+        tests/connlm-test \
+        tests/input-test
+ifneq (,$(findstring _USE_BLAS_,$(CFLAGS)))
+    TESTS += tests/blas-test
+endif
+
+VAL_TESTS = tests/maxent-test \
             tests/utils-test \
             tests/param-test \
             tests/connlm-test \
             tests/input-test
-ifneq (,$(findstring _USE_BLAS_,$(CFLAGS)))
-    TEST_BINS += tests/blas-test
-endif
 
-VAL_TEST_BINS = tests/maxent-test \
-                tests/utils-test \
-                tests/param-test \
-                tests/connlm-test \
-                tests/input-test
+define get_target
 
-.PHONY: all double float clean inc config lint-check
-.PHONY: depend depend-double depend-float
-.PHONY: test test-double test-float
-.PHONY: prepare-doc gen-doc publish-doc
+.PHONY: $(1) $(1)-double $(1)-float
 
-all: double float
+$(1): $(1)-float $(1)-double
 
-# always check revision
-config:
-	@../tools/stutils/src/replace_revision.sh $(CONFIG_INC) $(OUT_CONFIG) CONNLM_GIT_COMMIT
+$(1)-float: PREFIX = float
+$(1)-float: CPPFLAGS = -D_USE_DOUBLE_=0
+$(1)-float: float$(1)
 
-# copy config.h when updated
-$(OUT_CONFIG): $(CONFIG_INC)
-	../tools/stutils/src/replace_revision.sh $(CONFIG_INC) $(OUT_CONFIG) CONNLM_GIT_COMMIT 1
+$(1)-double: PREFIX = double
+$(1)-double: CPPFLAGS = -D_USE_DOUBLE_=1
+$(1)-double: double$(1)
 
-OUT_INCS = $(addprefix $(OUTINC_DIR)/$(PROJECT)/,$(INCS))
+endef
 
-inc: $(OUT_INCS) config $(OUT_CONFIG)
+$(eval $(call get_target,all))
 
-$(foreach f,$(INCS),$(eval $(call copy_inc,$f,$(OUTINC_DIR)/$(PROJECT)/$f)))
+$(eval $(call get_target,test))
 
-double: inc $(call get_targets,double,$(BINS))
+$(eval $(call get_target,val-test))
 
-float: inc $(call get_targets,float,$(BINS))
+clean: clean-static
+	rm -rf ../float/
+	rm -rf ../double/
+	rm -rf .objs/
+	rm -rf .deps/
 
-mktargets = $(foreach type, float double, $(eval $(call $(1),$(type),$(2))))
+COMMON_MK_DIR=../tools/stutils/src
+include $(COMMON_MK_DIR)/common_static.mk
 
-$(call mktargets,compile_objs,$(OBJS))
+PREFIX = float
+include $(COMMON_MK_DIR)/common.mk
 
-$(call mktargets,link_so,$(OBJS))
-
-$(call mktargets,link_bins,$(BINS))
-
-lint-check : *.h *.c
-	splint +posixlib +D__gnuc_va_list=int -fileextensions $^
-
-clean:
-	rm -rf $(OBJ_DIR)
-	rm -rf $(DEP_DIR)
-	rm -rf $(BIN_DIR)
-	rm -rf $(OUTLIB_DIR)
-	rm -rf $(OUTINC_DIR)
-	rm -f tags cscope.*
-
-test: test-double test-float
-
-$(call mktargets,link_tests,$(TEST_BINS))
-
-$(call mktargets,test_targets,$(TEST_BINS))
-
-val-test: val-test-double val-test-float
-
-$(call mktargets,val_test_targets,$(VAL_TEST_BINS))
-
-gen-doc: prepare-doc
-	rm -rf html/*
-	doxygen doc/Doxyfile > /dev/null
-
-prepare-doc:
-	mkdir -p html
-	if [ ! -d html/.git ]; then \
-      git clone git@github.com:wantee/$(PROJECT).git html; \
-    fi
-	cd html && \
-    git checkout gh-pages
-
-publish-doc: gen-doc
-	cd html && \
-	git add * && \
-	git commit -a -m"generate doc on $(shell date)" && \
-	git push origin gh-pages
-
-DEP_DIR/%.mk:%.c
-	mkdir -p `dirname "$@"`
-	$(CC) $(CFLAGS) -M $< > $@
-	echo '	$(CC) -c $(CFLAGS) $< -o $@.o' >> $@
+PREFIX = double
+include $(COMMON_MK_DIR)/common.mk

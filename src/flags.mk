@@ -1,3 +1,11 @@
+CC = gcc
+
+OUTINC_DIR = ../$(PREFIX)/include/
+OUTLIB_DIR = ../$(PREFIX)/lib/
+OUTBIN_DIR = ../$(PREFIX)/
+OBJ_DIR = ./.objs/$(PREFIX)
+DEP_DIR = ./.deps/$(PREFIX)
+
 ifndef CONNLM_NO_OPT
   ifeq ($(shell echo 'int main(){return 0;}' | $(CC) -xc - -Ofast -o /dev/null >/dev/null 2>&1 ; echo $$?),0)
   CFLAGS += -Ofast
