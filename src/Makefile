@@ -93,6 +93,8 @@ $(eval $(call get_target,test))
 
 $(eval $(call get_target,val-test))
 
+$(eval $(call get_target,clean-test))
+
 clean: clean-static
 	rm -rf ../float/
 	rm -rf ../double/
