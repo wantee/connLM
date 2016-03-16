@@ -44,11 +44,8 @@ $ make -j 4
 Quick tests:
 
 ```shell
-$ cd $CONNLM_HOME/src
-$ make clean
-$ make test
-$ make
-$ cd ..
+$ cd $CONNLM_HOME
+$ make -C src test
 $ source tools/shutils/shutils.sh
 $ cd egs/tiny
 $ shu-testing
