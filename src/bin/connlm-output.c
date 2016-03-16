@@ -143,13 +143,9 @@ int main(int argc, const char *argv[])
     }
 
     ST_NOTICE("Generating Output Layer...");
-    output = output_create(&g_output_opt, connlm_in->vocab->vocab_size);
+    output = output_generate(&g_output_opt, connlm_in->vocab->cnts,
+            connlm_in->vocab->vocab_size);
     if (output == NULL) {
-        ST_WARNING("Failed to output_create.");
-        goto ERR;
-    }
-
-    if (output_generate(output, connlm_in->vocab->cnts) < 0) {
         ST_WARNING("Failed to output_generate.");
         goto ERR;
     }

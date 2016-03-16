@@ -6,7 +6,8 @@ REV_INC=config.h
 GIT_COMMIT_MACRO = CONNLM_GIT_COMMIT
 
 INCS = utils.h \
-       connlm.h param.h rnn.h maxent.h lbl.h ffnn.h \
+       param.h \
+       connlm.h \
        vocab.h \
        output.h \
        component.h \
@@ -25,10 +26,6 @@ INCS = utils.h \
 
 SRCS = utils.c \
        param.c \
-       rnn.c \
-       maxent.c \
-       lbl.c \
-       ffnn.c \
        connlm.c \
        vocab.c \
        output.c \
@@ -54,7 +51,7 @@ BINS = bin/connlm-train \
        bin/connlm-init \
        bin/connlm-output \
        bin/connlm-gen \
-       bin/connlm-merge
+#       bin/connlm-merge maybe rename to connlm-edit
 
 TESTS = tests/maxent-test \
         tests/utils-test \

@@ -50,21 +50,45 @@ static inline int output_hs_wt_w_pos(int cls, int s)
 int output_load_opt(output_opt_t *output_opt, st_opt_t *opt,
         const char *sec_name)
 {
+    char method_str[MAX_ST_CONF_LEN];
+    int def_depth;
+    int def_branch;
+
     ST_CHECK_PARAM(output_opt == NULL || opt == NULL, -1);
 
-    ST_OPT_SEC_GET_INT(opt, sec_name, "CLASS_SIZE",
-            output_opt->class_size, 100, "Size of class layer");
+    ST_OPT_SEC_GET_STR(opt, sec_name, "METHOD",
+            method_str, MAX_ST_CONF_LEN, "TopDown",
+            "Constructing method(TopDown/BottomUp)");
+    if (strcasecmp(method_str, "topdown") == 0
+            || strcasecmp(method_str, "t") == 0
+            || strcasecmp(method_str, "td") == 0) {
+        output_opt->method = TOP_DOWN;
+        /* default value for class-based output. */
+        def_depth = 1;
+        def_branch = 100;
+    } else if (strcasecmp(method_str, "bottomup") == 0
+            || strcasecmp(method_str, "b") == 0
+            || strcasecmp(method_str, "bu") == 0) {
+        output_opt->method = BOTTOM_UP;
+        /* default value for hierarchical softmax output. */
+        def_depth = 0;
+        def_branch = 2;
+    } else {
+        ST_WARNING("Unknown construcing method[%s].", method_str);
+        goto ST_OPT_ERR;
+    }
 
-    ST_OPT_SEC_GET_BOOL(opt, sec_name, "HS",
-            output_opt->hs, false, "Hierarchical softmax");
+    ST_OPT_SEC_GET_INT(opt, sec_name, "MAX_DEPTH",
+            output_opt->max_depth, def_depth,
+            "Maximum depth of output tree");
 
-    ST_OPT_SEC_GET_INT(opt, sec_name, "MAX_CODE_LEN",
-            output_opt->max_code_len, 40,
-            "Maximum length for code used by HS");
-
-    ST_OPT_SEC_GET_BOOL(opt, sec_name, "CLASS_HS",
-            output_opt->class_hs, false,
-            "Whether using HS for classes");
+    ST_OPT_SEC_GET_INT(opt, sec_name, "MAX_BRANCH",
+            output_opt->max_branch, def_branch,
+            "Maximum branch of output tree");
+    if (output_opt->max_branch <= 1) {
+        ST_WARNING("MAX_BRANCH must larger than 1.");
+        goto ST_OPT_ERR;
+    }
 
     return 0;
 
@@ -72,26 +96,117 @@ ST_OPT_ERR:
     return -1;
 }
 
-output_t *output_create(output_opt_t *output_opt, int output_size)
+#define safe_tree_destroy(ptr) do {\
+    if((ptr) != NULL) {\
+        output_tree_destroy(ptr);\
+        safe_free(ptr);\
+        (ptr) = NULL;\
+    }\
+    } while(0)
+
+static void output_tree_destroy(output_tree_t *tree)
 {
-    output_t *output = NULL;
+    if (tree == NULL) {
+        return;
+    }
 
-    ST_CHECK_PARAM(output_opt == NULL, NULL);
+    safe_free(tree->nodes);
 
-    output = (output_t *) malloc(sizeof(output_t));
-    if (output == NULL) {
-        ST_WARNING("Falied to malloc output_t.");
+    tree->cap_nodes = 0;
+    tree->num_nodes = 0;
+    tree->root = OUTPUT_NODE_NONE;
+}
+
+static output_tree_t* output_tree_init(output_node_id_t cap_nodes)
+{
+    output_tree_t *tree = NULL;
+    size_t sz;
+
+    ST_CHECK_PARAM(cap_nodes <= 0, NULL);
+
+    sz = sizeof(output_tree_t);
+    tree = (output_tree_t *)malloc(sz);
+    if (tree == NULL) {
+        ST_WARNING("Failed to malloc tree.");
         goto ERR;
     }
-    memset(output, 0, sizeof(output_t));
+    memset(tree, 0, sz);
 
-    output->output_opt = *output_opt;
-    output->output_size = output_size;
+    sz = cap_nodes * sizeof(output_tree_node_t);
+    tree->nodes = (output_tree_node_t *)malloc(sz);
+    if (tree->nodes == NULL) {
+        ST_WARNING("Failed to malloc nodes.");
+        goto ERR;
+    }
 
-    return output;
-  ERR:
-    safe_output_destroy(output);
+    tree->num_nodes = 0;
+    tree->cap_nodes = cap_nodes;
+    tree->root = OUTPUT_NODE_NONE;
+
+    return tree;
+ERR:
+    safe_tree_destroy(tree);
     return NULL;
+}
+
+#define s_children(tree, node) tree->nodes[node].children_s
+#define e_children(tree, node) tree->nodes[node].children_e
+#define n_children(tree, node) e_children(tree, node) - s_children(tree, node)
+
+#define NUM_REALLOC 100
+static output_node_id_t output_tree_add_node(output_tree_t *tree)
+{
+    output_node_id_t node;
+
+    ST_CHECK_PARAM(tree == NULL, OUTPUT_NODE_NONE);
+
+    if (tree->num_nodes >= tree->cap_nodes) {
+        tree->cap_nodes += NUM_REALLOC;
+        tree->nodes = (output_tree_node_t *)realloc(tree->nodes,
+                sizeof(output_tree_node_t) * tree->cap_nodes);
+        if (tree->nodes == NULL) {
+            ST_WARNING("Failed to realloc nodes.");
+            return OUTPUT_NODE_NONE;
+        }
+    }
+
+    node = tree->num_nodes;
+    s_children(tree, node) = 0;
+    e_children(tree, node) = 0;
+
+    ++tree->num_nodes;
+
+    return node;
+}
+
+static output_node_id_t output_tree_add_node_m(output_tree_t *tree,
+        output_node_id_t n)
+{
+    output_node_id_t node;
+    output_node_id_t i;
+
+    ST_CHECK_PARAM(tree == NULL || n <= 0, OUTPUT_NODE_NONE);
+
+    if (tree->num_nodes >= tree->cap_nodes) {
+        tree->cap_nodes += n + NUM_REALLOC;
+        tree->nodes = (output_tree_node_t *)realloc(tree->nodes,
+                sizeof(output_tree_node_t) * tree->cap_nodes);
+        if (tree->nodes == NULL) {
+            ST_WARNING("Failed to realloc nodes.");
+            return OUTPUT_NODE_NONE;
+        }
+    }
+
+    node = tree->num_nodes;
+
+    for (i = node; i < node + n; ++i) {
+        s_children(tree, i) = 0;
+        e_children(tree, i) = 0;
+    }
+
+    tree->num_nodes += n;
+
+    return node;
 }
 
 void output_destroy(output_t *output)
@@ -102,17 +217,8 @@ void output_destroy(output_t *output)
         return;
     }
 
-    safe_free(output->w2c);
-    safe_free(output->c2w_s);
-    safe_free(output->c2w_e);
-
-    safe_free(output->code_c);
-    safe_free(output->pt_c);
-    safe_free(output->code_w);
-    safe_free(output->pt_w);
-
-    safe_free(output->wt_hs_c);
-    safe_free(output->wt_hs_w);
+    safe_tree_destroy(output->tree);
+    safe_free(output->paths);
 
     if (output->neurons != NULL) {
         for (i = 0; i < output->num_thrs; i++) {
@@ -1371,28 +1477,165 @@ ERR:
     return -1;
 }
 
-int output_generate(output_t *output, count_t *word_cnts)
+static int output_gen_td_split(output_t *output, output_node_id_t node,
+        count_t *word_cnts)
 {
-    int class_size;
+    int i;
+    int a;
+    long b;
+    double dd;
+    double df;
+
+    int start;
+    int end;
+    int branches;
 
     ST_CHECK_PARAM(output == NULL || word_cnts == NULL, -1);
 
-    class_size = output->output_opt.class_size;
-    if (class_size > 0) {
-        if (output_generate_class(output, class_size, word_cnts) < 0) {
-            ST_WARNING("Failed to output_generate_class.");
-            return -1;
-        }
+    start = s_children(output->tree, node);
+    end = e_children(output->tree, node);
+    branches = output->output_opt.max_branch;
+
+    if (end - start <= branches) {
+        return 0;
     }
 
-    if (output->output_opt.hs) {
-        if (output_generate_hs(output, word_cnts) < 0) {
-            ST_WARNING("Failed to output_generate_hs.");
+    if (start >= output->output_size) {
+        ST_WARNING("parent of non-leaf node can not be splited.");
+        return -1;
+    }
+
+    new_node = output_tree_add_node_m(output->tree, branches);
+    if (new_node == OUTPUT_NODE_NONE) {
+        ST_WARNING("Failed to output_tree_add_node_m.");
+        return -1;
+    }
+
+    a = 0;
+    b = 0;
+    dd = 0.0;
+    df = 0.0;
+
+    for (i = start; i < end; i++) {
+        b += word_cnts[i];
+    }
+    for (i = start; i < end; i++) {
+        dd += sqrt(word_cnts[i] / (double) b);
+    }
+
+    s_children(output->tree, new_node) = start;
+    for (i = start; i < end; i++) {
+        df += sqrt(word_cnts[i] / (double) b) / dd;
+        if (df > 1) {
+            df = 1;
+        }
+        if (df > (a + 1) / (double) branches) {
+            if (a < branches - 1) {
+                e_children(output->tree, new_node + a) = i + 1;
+                a++;
+                s_children(output->tree, new_node + a) = i + 1;
+            }
+        }
+    }
+    e_children(output->tree, new_node + branches - 1) = end;
+
+    return 0;
+}
+
+static int output_gen_td(output_t *output, count_t *word_cnts)
+{
+    output_node_id_t node;
+
+    ST_CHECK_PARAM(output == NULL || word_cnts == NULL, -1);
+
+    node = output_tree_add_node(output->tree);
+    if (node == OUTPUT_NODE_NONE) {
+        ST_WARNING("Failed to output_tree_add_node.");
+        return -1;
+    }
+    s_children(output->tree, node) = 0;
+    e_children(output->tree, node) = output->output_size;
+
+    output->tree->root = node;
+
+    for (; node < output->tree->num_nodes; ++node) {
+        if (output_gen_td_split(output, node, word_cnts) < 0) {
+            ST_WARNING("Failed to output_gen_td_split.");
             return -1;
         }
     }
 
     return 0;
+}
+
+output_t* output_generate(output_opt_t *output_opt, count_t *word_cnts,
+       int output_size)
+{
+    output_t *output = NULL;
+    size_t sz;
+    output_node_id_t cap_nodes;
+
+    ST_CHECK_PARAM(output_opt == NULL || word_cnts == NULL
+            || output_size <= 0, NULL);
+
+    output = (output_t *) malloc(sizeof(output_t));
+    if (output == NULL) {
+        ST_WARNING("Falied to malloc output_t.");
+        goto ERR;
+    }
+    memset(output, 0, sizeof(output_t));
+
+    output->output_opt = *output_opt;
+    output->output_size = output_size;
+
+    cap_nodes = output->output_size;
+    cap_nodes += (cap_nodes - 1)/(output->output_opt->max_branch - 1) + 1;
+
+    output->tree = output_tree_init(cap_nodes);
+    if (tree == NULL) {
+        ST_WARNING("Failed to output_tree_init.");
+        goto ERR;
+    }
+
+    /* init leaf nodes */
+    if ((output_tree_add_node_m(output->tree, output->output_size))
+            == OUTPUT_NODE_NONE) {
+        ST_WARNING("Failed to output_tree_add_node_m.");
+        goto ERR;
+    }
+
+    sz = output->output_size * sizeof(output_tree_path_t);
+    output->paths = (output_tree_path_t *)malloc(sz);
+    if (output->paths == NULL) {
+        ST_WARNING("Failed to malloc paths.");
+        goto ERR;
+    }
+    memset(output->paths, 0, sz);
+
+    switch (output->output_opt.method) {
+        case TOP_DOWN:
+            if (output_gen_td(output, word_cnts) < 0) {
+                ST_WARNING("Failed to output_gen_td.");
+                goto ERR;
+            }
+            break;
+        case BOTTOM_UP:
+            if (output_gen_bu(output, word_cnts) < 0) {
+                ST_WARNING("Failed to output_gen_bu.");
+                goto ERR;
+            }
+            break;
+        default:
+            ST_WARNING("Unknown constructing method[%d]",
+                    output->output_opt.method);
+            break;
+    }
+
+    return output;
+
+  ERR:
+    safe_output_destroy(output);
+    return NULL;
 }
 
 int output_hs_init(output_t *output, int hs_input_size)
