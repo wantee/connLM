@@ -96,6 +96,11 @@ ST_OPT_ERR:
     return -1;
 }
 
+#define s_children(tree, node) tree->nodes[node].children_s
+#define e_children(tree, node) tree->nodes[node].children_e
+
+#define NUM_REALLOC 100
+
 #define safe_tree_destroy(ptr) do {\
     if((ptr) != NULL) {\
         output_tree_destroy(ptr);\
@@ -149,11 +154,6 @@ ERR:
     return NULL;
 }
 
-#define s_children(tree, node) tree->nodes[node].children_s
-#define e_children(tree, node) tree->nodes[node].children_e
-#define n_children(tree, node) e_children(tree, node) - s_children(tree, node)
-
-#define NUM_REALLOC 100
 static output_node_id_t output_tree_add_node(output_tree_t *tree)
 {
     output_node_id_t node;
@@ -202,6 +202,136 @@ static output_node_id_t output_tree_add_node_m(output_tree_t *tree,
     for (i = node; i < node + n; ++i) {
         s_children(tree, i) = 0;
         e_children(tree, i) = 0;
+    }
+
+    tree->num_nodes += n;
+
+    return node;
+}
+
+typedef struct _huffman_tree_node_t_ { // two range of nodes for children
+    output_node_id_t children_s[2];
+    output_node_id_t children_e[2];
+    count_t cnt;
+} huffman_tree_node_t;
+
+typedef struct _huffman_tree_t_ {
+    huffman_tree_node_t *nodes;
+    output_node_id_t num_nodes;
+    output_node_id_t cap_nodes;
+
+    output_node_id_t root;
+} huffman_tree_t;
+
+#define n_cnt(tree, node) tree->nodes[node].cnt
+
+#define safe_huffman_tree_destroy(ptr) do {\
+    if((ptr) != NULL) {\
+        huffman_tree_destroy(ptr);\
+        safe_free(ptr);\
+        (ptr) = NULL;\
+    }\
+    } while(0)
+
+static void huffman_tree_destroy(huffman_tree_t *tree)
+{
+    if (tree == NULL) {
+        return;
+    }
+
+    safe_free(tree->nodes);
+
+    tree->cap_nodes = 0;
+    tree->num_nodes = 0;
+    tree->root = OUTPUT_NODE_NONE;
+}
+
+static huffman_tree_t* huffman_tree_init(output_node_id_t cap_nodes)
+{
+    huffman_tree_t *tree = NULL;
+    size_t sz;
+
+    ST_CHECK_PARAM(cap_nodes <= 0, NULL);
+
+    sz = sizeof(huffman_tree_t);
+    tree = (huffman_tree_t *)malloc(sz);
+    if (tree == NULL) {
+        ST_WARNING("Failed to malloc tree.");
+        goto ERR;
+    }
+    memset(tree, 0, sz);
+
+    sz = cap_nodes * sizeof(huffman_tree_node_t);
+    tree->nodes = (huffman_tree_node_t *)malloc(sz);
+    if (tree->nodes == NULL) {
+        ST_WARNING("Failed to malloc nodes.");
+        goto ERR;
+    }
+
+    tree->num_nodes = 0;
+    tree->cap_nodes = cap_nodes;
+    tree->root = OUTPUT_NODE_NONE;
+
+    return tree;
+ERR:
+    safe_huffman_tree_destroy(tree);
+    return NULL;
+}
+
+static output_node_id_t huffman_tree_add_node(huffman_tree_t *tree)
+{
+    output_node_id_t node;
+
+    ST_CHECK_PARAM(tree == NULL, OUTPUT_NODE_NONE);
+
+    if (tree->num_nodes >= tree->cap_nodes) {
+        tree->cap_nodes += NUM_REALLOC;
+        tree->nodes = (huffman_tree_node_t *)realloc(tree->nodes,
+                sizeof(huffman_tree_node_t) * tree->cap_nodes);
+        if (tree->nodes == NULL) {
+            ST_WARNING("Failed to realloc nodes.");
+            return OUTPUT_NODE_NONE;
+        }
+    }
+
+    node = tree->num_nodes;
+    n_cnt(tree, node) = 0;
+    s_children(tree, node)[0] = 0;
+    e_children(tree, node)[0] = 0;
+    s_children(tree, node)[1] = 0;
+    e_children(tree, node)[1] = 0;
+
+    ++tree->num_nodes;
+
+    return node;
+}
+
+static output_node_id_t huffman_tree_add_node_m(huffman_tree_t *tree,
+        output_node_id_t n)
+{
+    output_node_id_t node;
+    output_node_id_t i;
+
+    ST_CHECK_PARAM(tree == NULL || n <= 0, OUTPUT_NODE_NONE);
+
+    if (tree->num_nodes >= tree->cap_nodes) {
+        tree->cap_nodes += n + NUM_REALLOC;
+        tree->nodes = (huffman_tree_node_t *)realloc(tree->nodes,
+                sizeof(huffman_tree_node_t) * tree->cap_nodes);
+        if (tree->nodes == NULL) {
+            ST_WARNING("Failed to realloc nodes.");
+            return OUTPUT_NODE_NONE;
+        }
+    }
+
+    node = tree->num_nodes;
+
+    for (i = node; i < node + n; ++i) {
+        n_cnt(tree, i) = 0;
+        s_children(tree, i)[0] = 0;
+        e_children(tree, i)[0] = 0;
+        s_children(tree, i)[1] = 0;
+        e_children(tree, i)[1] = 0;
     }
 
     tree->num_nodes += n;
@@ -1104,81 +1234,6 @@ int output_save_body(output_t *output, FILE *fp, bool binary)
     return 0;
 }
 
-static int output_generate_class(output_t *output, int class_size,
-        count_t *word_cnts)
-{
-    int i;
-    int a;
-    long b;
-    double dd;
-    double df;
-
-    ST_CHECK_PARAM(output == NULL || class_size <= 0
-            || word_cnts == NULL, -1);
-
-    safe_free(output->w2c);
-    safe_free(output->c2w_s);
-    safe_free(output->c2w_e);
-
-    output->w2c = (int *) malloc(sizeof(int) * output->output_size);
-    if (output->w2c == NULL) {
-        ST_WARNING("Failed to malloc w2c.");
-        goto ERR;
-    }
-    memset(output->w2c, 0, sizeof(int) * output->output_size);
-
-    output->c2w_s = (int *) malloc(sizeof(int) * class_size);
-    if (output->c2w_s == NULL) {
-        ST_WARNING("Failed to malloc c2w_s.");
-        goto ERR;
-    }
-    memset(output->c2w_s, 0, sizeof(int) * class_size);
-
-    output->c2w_e = (int *) malloc(sizeof(int) * class_size);
-    if (output->c2w_e == NULL) {
-        ST_WARNING("Failed to malloc c2w_e.");
-        goto ERR;
-    }
-    memset(output->c2w_e, 0, sizeof(int) * class_size);
-
-    a = 0;
-    b = 0;
-    dd = 0.0;
-    df = 0.0;
-    for (i = 0; i < output->output_size; i++) {
-        b += word_cnts[i];
-    }
-    for (i = 0; i < output->output_size; i++) {
-        dd += sqrt(word_cnts[i] / (double) b);
-    }
-
-    for (i = 0; i < output->output_size; i++) {
-        df += sqrt(word_cnts[i] / (double) b) / dd;
-        if (df > 1) {
-            df = 1;
-        }
-        if (df > (a + 1) / (double) class_size) {
-            output->w2c[i] = a;
-            if (a < class_size - 1) {
-                output->c2w_e[a] = i + 1;
-                a++;
-                output->c2w_s[a] = i + 1;
-            }
-        } else {
-            output->w2c[i] = a;
-        }
-    }
-    output->c2w_e[class_size - 1] = output->output_size;
-
-    return 0;
-
-ERR:
-    safe_free(output->w2c);
-    safe_free(output->c2w_s);
-    safe_free(output->c2w_e);
-    return -1;
-}
-
 /**
  * Generate binary tree for HS
  * @ingroup output
@@ -1545,8 +1600,25 @@ static int output_gen_td_split(output_t *output, output_node_id_t node,
 static int output_gen_td(output_t *output, count_t *word_cnts)
 {
     output_node_id_t node;
+    output_node_id_t cap_nodes;
 
     ST_CHECK_PARAM(output == NULL || word_cnts == NULL, -1);
+
+    cap_nodes = output->output_size;
+    cap_nodes += iceil(cap_nodes - 1, output->output_opt->max_branch - 1);
+
+    output->tree = output_tree_init(cap_nodes);
+    if (tree == NULL) {
+        ST_WARNING("Failed to output_tree_init.");
+        goto ERR;
+    }
+
+    /* init leaf nodes */
+    if ((output_tree_add_node_m(output->tree, output->output_size))
+            == OUTPUT_NODE_NONE) {
+        ST_WARNING("Failed to output_tree_add_node_m.");
+        goto ERR;
+    }
 
     node = output_tree_add_node(output->tree);
     if (node == OUTPUT_NODE_NONE) {
@@ -1568,6 +1640,121 @@ static int output_gen_td(output_t *output, count_t *word_cnts)
     return 0;
 }
 
+static huffman_tree_t* output_gen_bu_huffman(output_t *output,
+        count_t *cnts)
+{
+    huffman_tree_t *huffman = NULL;
+
+    output_node_id_t cap_nodes;
+    size_t sz;
+    int n, pos0, pos1;
+
+    ST_CHECK_PARAM(output == NULL || cnts == NULL, NULL);
+
+    cap_nodes = output->output_size;
+    cap_nodes += iceil(cap_nodes - 1, output->output_opt->max_branch - 1);
+
+    huffman = huffman_tree_init(cap_nodes);
+    if (huffman == NULL) {
+        ST_WARNING("Failed to huffman_tree_init.");
+        goto ERR;
+    }
+
+    /* init leaf nodes */
+    if ((huffman_tree_add_node_m(huffman, output->output_size))
+            == OUTPUT_NODE_NONE) {
+        ST_WARNING("Failed to huffman_tree_add_node_m.");
+        goto ERR;
+    }
+
+    for (n = 0; n < huffman->num_nodes; ++n) {
+        n_cnt(huffman, n) = cnts[n];
+    }
+
+    // Construct Huffman Tree
+    pos0 = huffman->num_nodes - 1;
+    pos1 = huffman->num_nodes;
+    br = output->output_opt.max_branch;
+
+    while (br < output->output_opt.max_branch) {
+        parent = huffman_tree_add_node(huffman);
+        if (parent == OUTPUT_NODE_NONE) {
+            ST_WARNING("Failed to huffman_tree_add_node parent.");
+            goto ERR;
+        }
+        s_children(huffman, parent)[0] = pos0 + 1;
+        e_children(huffman, parent)[0] = pos0 + 1;
+        s_children(huffman, parent)[1] = pos1;
+        e_children(huffman, parent)[1] = pos1;
+        n_cnt(huffman, parent) = 0;
+
+        br = 0;
+        while (br < output->output_opt.max_branch) {
+            move = -1;
+            if (pos0 >= 0 && pos1 < huffman->num_nodes - 1) { // both sides
+                if (n_cnt(huffman, pos0) <= n_cnt(huffman, pos1)) {
+                    move = 0;
+                } else {
+                    move = 1;
+                }
+            } else if (pos0 >= 0) { // only leaf side
+                move = 0;
+            } else if (pos1 < huffman->num_nodes - 1) {
+                // only internal side
+                move = 1;
+            } else {
+                break;
+            }
+
+            if (move == 0) {
+                n_cnt(huffman, paraent) += n_cnt(huffman, pos0);
+                --pos0;
+                --(s_children(huffman, parent)[0]);
+            } else if (move == 1) {
+                n_cnt(huffman, paraent) += n_cnt(huffman, pos1);
+                ++pos1;
+                ++(e_children(huffman, parent)[1]);
+            } else {
+                ST_WARNING("Impossible!!!");
+                goto ERR;
+            }
+
+            ++br;
+        }
+    }
+
+    return 0;
+
+ERR:
+    safe_huffman_tree_destroy(huffman);
+    return -1;
+}
+
+static int output_gen_bu(output_t *output, count_t *word_cnts)
+{
+    huffman_tree_t *huffman = NULL;
+
+    ST_CHECK_PARAM(output == NULL || word_cnts == NULL, -1);
+
+    huffman = output_gen_bu_huffman(output, word_cnts);
+    if (huffman == NULL) {
+        ST_WARNING("Failed to output_gen_bu_huffman.");
+        goto ERR;
+    }
+
+    if (output_gen_bu_huffman2tree(output, huffman) < 0) {
+        ST_WARNING("Failed to output_gen_bu_huffman2tree.");
+        goto ERR;
+    }
+    safe_huffman_tree_destroy(huffman);
+
+    return 0;
+
+ERR:
+    safe_huffman_tree_destroy(huffman);
+    return -1;
+}
+
 output_t* output_generate(output_opt_t *output_opt, count_t *word_cnts,
        int output_size)
 {
@@ -1587,22 +1774,6 @@ output_t* output_generate(output_opt_t *output_opt, count_t *word_cnts,
 
     output->output_opt = *output_opt;
     output->output_size = output_size;
-
-    cap_nodes = output->output_size;
-    cap_nodes += (cap_nodes - 1)/(output->output_opt->max_branch - 1) + 1;
-
-    output->tree = output_tree_init(cap_nodes);
-    if (tree == NULL) {
-        ST_WARNING("Failed to output_tree_init.");
-        goto ERR;
-    }
-
-    /* init leaf nodes */
-    if ((output_tree_add_node_m(output->tree, output->output_size))
-            == OUTPUT_NODE_NONE) {
-        ST_WARNING("Failed to output_tree_add_node_m.");
-        goto ERR;
-    }
 
     sz = output->output_size * sizeof(output_tree_path_t);
     output->paths = (output_tree_path_t *)malloc(sz);

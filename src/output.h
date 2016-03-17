@@ -107,7 +107,7 @@ typedef struct _output_tree_t_ {
  * @ingroup g_output
  */
 typedef struct _output_tree_path_t_ {
-    output_node_id_t *nodes; /**< nodes on the path exclude root. */
+    output_node_id_t *nodes; /**< nodes on the path. */ // may exclude root
     output_node_id_t num_node; /**< number of nodes in the path. */
 } output_path_t;
 
@@ -226,7 +226,7 @@ int output_save_body(output_t *output, FILE *fp, bool binary);
  * Generate output tree with word counts.
  * @ingroup g_output
  * @param[in] output output tree to be generated.
- * @param[in] word_cnts counts of words.
+ * @param[in] word_cnts counts of words, descendingly sorted.
  * @return non-zero value if any error.
  */
 int output_generate(output_t *output, count_t *word_cnts);
