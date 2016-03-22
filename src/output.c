@@ -1,18 +1,18 @@
 /*
  * The MIT License (MIT)
- * 
+ *
  * Copyright (c) 2015 Wang Jian
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in all
  * copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -171,8 +171,8 @@ static output_node_id_t output_tree_add_node(output_tree_t *tree)
     }
 
     node = tree->num_nodes;
-    s_children(tree, node) = 0;
-    e_children(tree, node) = 0;
+    s_children(tree, node) = OUTPUT_NODE_NONE;
+    e_children(tree, node) = OUTPUT_NODE_NONE;
 
     ++tree->num_nodes;
 
@@ -200,8 +200,8 @@ static output_node_id_t output_tree_add_node_m(output_tree_t *tree,
     node = tree->num_nodes;
 
     for (i = node; i < node + n; ++i) {
-        s_children(tree, i) = 0;
-        e_children(tree, i) = 0;
+        s_children(tree, i) = OUTPUT_NODE_NONE;
+        e_children(tree, i) = OUTPUT_NODE_NONE;
     }
 
     tree->num_nodes += n;
@@ -296,10 +296,10 @@ static output_node_id_t huffman_tree_add_node(huffman_tree_t *tree)
 
     node = tree->num_nodes;
     n_cnt(tree, node) = 0;
-    s_children(tree, node)[0] = 0;
-    e_children(tree, node)[0] = 0;
-    s_children(tree, node)[1] = 0;
-    e_children(tree, node)[1] = 0;
+    s_children(tree, node)[0] = OUTPUT_NODE_NONE;
+    e_children(tree, node)[0] = OUTPUT_NODE_NONE;
+    s_children(tree, node)[1] = OUTPUT_NODE_NONE;
+    e_children(tree, node)[1] = OUTPUT_NODE_NONE;
 
     ++tree->num_nodes;
 
@@ -328,10 +328,10 @@ static output_node_id_t huffman_tree_add_node_m(huffman_tree_t *tree,
 
     for (i = node; i < node + n; ++i) {
         n_cnt(tree, i) = 0;
-        s_children(tree, i)[0] = 0;
-        e_children(tree, i)[0] = 0;
-        s_children(tree, i)[1] = 0;
-        e_children(tree, i)[1] = 0;
+        s_children(tree, i)[0] = OUTPUT_NODE_NONE;
+        e_children(tree, i)[0] = OUTPUT_NODE_NONE;
+        s_children(tree, i)[1] = OUTPUT_NODE_NONE;
+        e_children(tree, i)[1] = OUTPUT_NODE_NONE;
     }
 
     tree->num_nodes += n;
@@ -497,7 +497,7 @@ int output_load_header(output_t **output, int version,
     if (output != NULL) {
         *output = NULL;
     }
-    
+
     if (*binary) {
         if (fread(&output_size, sizeof(int), 1, fp) != 1) {
             ST_WARNING("Failed to read output size.");
@@ -1676,7 +1676,7 @@ static huffman_tree_t* output_gen_bu_huffman(output_t *output,
     pos1 = huffman->num_nodes;
     br = output->output_opt.max_branch;
 
-    while (br < output->output_opt.max_branch) {
+    while (br == output->output_opt.max_branch) {
         parent = huffman_tree_add_node(huffman);
         if (parent == OUTPUT_NODE_NONE) {
             ST_WARNING("Failed to huffman_tree_add_node parent.");
@@ -1723,10 +1723,207 @@ static huffman_tree_t* output_gen_bu_huffman(output_t *output,
         }
     }
 
+    huffman->root = parent;
     return 0;
 
 ERR:
     safe_huffman_tree_destroy(huffman);
+    return -1;
+}
+
+typedef struct _renum_arg_t_ {
+    output_node_id_t *nodemap;
+    output_node_id_t num_nodes;
+} renum_arg_t;
+
+static int huffman_trav_renumber(huffman_tree_t *huffman,
+        output_node_id_t node, void *args)
+{
+    renum_arg_t *renum;
+
+    ST_CHECK_PARAM(huffman == NULL || args == NULL
+            || node == OUTPUT_NODE_NONE, -1);
+
+    renum = (renum_arg_t *)args;
+
+    if (renum.nodemap[node] != OUTPUT_NODE_NONE) {
+        ST_WARNING("node[" OUTPUT_NODE_FMT "] visited twice.");
+        return -1;
+    }
+
+    renum->nodemap[node] = renum->num_nodes++;
+
+    return 0;
+}
+
+typedef struct _h2t_arg_t_ {
+    output_node_id_t *nodemap;
+    output_tree_t *tree;
+} h2t_arg_t;
+
+static int huffman_trav_2tree(huffman_tree_t *huffman,
+        output_node_id_t node, void *args)
+{
+    h2t_arg_t *h2t;
+
+    output_node_id_t tnode;
+
+    ST_CHECK_PARAM(huffman == NULL || args == NULL
+            || node == OUTPUT_NODE_NONE, -1);
+
+    h2t = (h2t_arg_t *)args;
+
+    tnode = output_tree_add_node(h2t->tree);
+    if (tnode == OUTPUT_NODE_NONE) {
+        ST_WARNING("Failed to output_tree_add_node.");
+        return -1;
+    }
+    if (tnode != h2t->nodemap[node]) {
+        ST_WARNING("nodemap not match.");
+        return -1;
+    }
+
+    start = OUTPUT_NODE_NONE;
+    end = OUTPUT_NODE_NONE;
+
+    if (s_children(huffman, node)[0] < e_children(huffman, node)[0]) {
+        start = h2t->nodemap[s_children(huffman, node)[0]];
+        end = h2t->nodemap[e_children(huffman,node)[0]];
+    }
+
+    if (s_children(huffman, node)[1] < e_children(huffman, node)[1]) {
+        if (start == OUTPUT_NODE_NONE) {
+            start = h2t->nodemap[s_children(huffman,node)[1]];
+        } else {
+            if (end != h2t->nodemap[s_children(huffman, node)[1]]) {
+                ST_WARNING("children not continuous.");
+                return -1;
+            }
+        }
+        end = h2t->nodemap[e_children(huffman,node)[1]];
+    }
+
+    if (start == OUTPUT_NODE_NONE || end == OUTPUT_NODE_NONE) {
+        ST_WARNING("Error start[" OUTPUT_NODE_FMT "] or end["
+                OUTPUT_NODE_FMT "].", start, end);
+        return -1;
+    }
+
+    s_children(h2t->tree, tnode) = start;
+    e_children(h2t->tree, tnode) = end;
+
+    return 0;
+}
+
+static int huffman_traverse(huffman_tree_t *huffman,
+        int (*visitor)(huffman_tree_t *huffman,
+            output_node_id_t node, void* args), void *args)
+{
+    st_queue_t *node_queue = NULL;
+
+    ST_CHECK_PARAM(huffman == NULL || visitor == NULL, -1);
+
+    void *tmp;
+
+    node_queue = st_queue_create(huffman->num_nodes);
+    if(node_queue == NULL) {
+        ST_WARNING("Failed to create node_queue.");
+        goto ERR;
+    }
+
+    st_queue_clear(node_queue);
+    if(st_enqueue(node_queue, (void *)(long)huffman->root)
+            != ST_QUEUE_OK) {
+        ST_WARNING("Failed to st_enqueue root");
+        goto ERR;
+    }
+
+    while(!st_queue_empty(node_queue)) {
+        if(st_dequeue(node_queue, &tmp) != ST_QUEUE_OK) {
+            ST_WARNING("Failed to st_dequeue.");
+            goto ERR;
+        }
+        node = (output_node_id_t)(long)tmp;
+
+        if(visitor(huffman, node, arg) < 0) {
+            ST_WARNING("Failed to visitor.");
+            goto ERR;
+        }
+
+        for (sub = 0; sub <= 1; ++sub) {
+            for (child = s_children(huffman, node)[sub];
+                    child < e_children(huffman, node)[sub]; ++child) {
+                if(st_enqueue(node_queue, (void *)(long)child)
+                        != ST_QUEUE_OK) {
+                    ST_WARNING("Failed to st_enqueue child");
+                    goto ERR;
+                }
+            }
+        }
+    }
+
+    safe_st_queue_destroy(node_queue);
+    return 0;
+
+ERR:
+    safe_st_queue_destroy(node_queue);
+    return -1;
+}
+
+static int output_gen_bu_huffman2tree(output_t *output,
+        huffman_tree_t *huffman)
+{
+    renum_arg_t renum;
+    h2t_arg_t h2t;
+
+    output_node_id_t *nodemap = NULL;
+
+    size_t sz;
+    output_node_id_t i;
+
+    ST_CHECK_PARAM(output == NULL || huffman == NULL, -1);
+
+    sz = sizeof(output_node_id_t)*huffman->num_nodes;
+    nodemap = (output_node_id_t *)malloc(sz);
+    if (nodemap == NULL) {
+        ST_WARNING("Failed to malloc nodemap.");
+        goto ERR;
+    }
+    for (i = 0; i < huffman->num_nodes; ++i) {
+        nodemap[i] = OUTPUT_NODE_NONE;
+    }
+
+    renum.nodemap = nodemap;
+    renum.num_nodes = 0;
+    if (huffman_traverse(huffman, huffman_trav_renumber, &renum) < 0) {
+        ST_WARNING("Failed to huffman_traverse renumbering.");
+        goto ERR;
+    }
+    if (renum.num_nodes != huffman->num_nodes) {
+        ST_WARNING("some nodes are not renumbered.");
+        goto ERR;
+    }
+
+    output->tree = output_tree_init(huffman->num_nodes);
+    if (tree == NULL) {
+        ST_WARNING("Failed to output_tree_init.");
+        goto ERR;
+    }
+    output->tree->root = nodemap[huffman->root];
+
+    h2t.nodemap = nodemap;
+    h2t.tree = output->tree;
+    if (huffman_traverse(huffman, huffman_trav_2tree, &h2t) < 0) {
+        ST_WARNING("Failed to huffman_traverse huffman2tree.");
+        goto ERR;
+    }
+
+    safe_free(nodemap);
+
+    return 0;
+
+ERR:
+    safe_free(nodemap);
     return -1;
 }
 
@@ -1829,7 +2026,7 @@ int output_hs_init(output_t *output, int hs_input_size)
     output->hs_input_size = hs_input_size;
     class_size = output->output_opt.class_size;
 
-    if (class_size > 0) { 
+    if (class_size > 0) {
         if (output->output_opt.class_hs) {
             sz = (class_size - 1) * hs_input_size;
             if (posix_memalign((void **)&output->wt_hs_c, ALIGN_SIZE,

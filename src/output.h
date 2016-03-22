@@ -38,6 +38,7 @@ extern "C" {
  */
 
 typedef unsigned int output_node_id_t;
+#define OUTPUT_NODE_FMT "%u"
 
 #define OUTPUT_NODE_NONE ((output_node_id_t)-1)
 
