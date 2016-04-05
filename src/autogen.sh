@@ -8,7 +8,7 @@ if [ "`basename $PWD`" != "src" ]; then
   exit 1
 fi
 
-git submodule update --init || exit 1
+(cd .. && git submodule update --init) || exit 1
 
 TOOL_DIR="$PWD/../tools/"
 ST_UTILS_ROOT="$TOOL_DIR/stutils"
