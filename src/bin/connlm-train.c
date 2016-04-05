@@ -72,17 +72,13 @@ int connlm_train_parse_opt(int *argc, const char *argv[])
         goto ST_OPT_ERR;
     }
 
-    ST_OPT_SEC_GET_BOOL(g_cmd_opt, NULL, "BINARY", g_binary, true,
+    ST_OPT_GET_BOOL(g_cmd_opt, "BINARY", g_binary, true,
             "Save file as binary format");
 
-    ST_OPT_SEC_GET_BOOL(g_cmd_opt, NULL, "DRY_RUN", g_dry_run, false,
+    ST_OPT_GET_BOOL(g_cmd_opt, "DRY_RUN", g_dry_run, false,
             "Read config and exit");
 
-    if (st_opt_get_bool(g_cmd_opt, NULL, "help", &b, false,
-                "Print help") < 0) {
-        ST_WARNING("Failed to st_opt_get_bool for help");
-        goto ST_OPT_ERR;
-    }
+    ST_OPT_GET_BOOL(g_cmd_opt, "help", b, false, "Print help");
 
     return (b ? 1 : 0);
 

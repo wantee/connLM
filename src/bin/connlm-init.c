@@ -61,18 +61,14 @@ int connlm_init_parse_opt(int *argc, const char *argv[])
         goto ST_OPT_ERR;
     }
 
-    ST_OPT_SEC_GET_UINT(g_cmd_opt, NULL, "RANDOM_SEED",
-            rand_seed, 1, "Random seed");
+    ST_OPT_GET_UINT(g_cmd_opt, "RANDOM_SEED", rand_seed, 1,
+            "Random seed");
     st_srand(rand_seed);
 
-    ST_OPT_SEC_GET_BOOL(g_cmd_opt, NULL, "BINARY", g_binary, true,
+    ST_OPT_GET_BOOL(g_cmd_opt, "BINARY", g_binary, true,
             "Save file as binary format");
 
-    if (st_opt_get_bool(g_cmd_opt, NULL, "help", &b, false,
-                "Print help") < 0) {
-        ST_WARNING("Failed to st_opt_get_bool for help");
-        goto ST_OPT_ERR;
-    }
+    ST_OPT_GET_BOOL(g_cmd_opt, "help", b, false, "Print help");
 
     return (b ? 1 : 0);
 

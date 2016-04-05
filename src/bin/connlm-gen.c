@@ -71,11 +71,7 @@ int connlm_gen_parse_opt(int *argc, const char *argv[])
         goto ST_OPT_ERR;
     }
 
-    if (st_opt_get_bool(g_cmd_opt, NULL, "help", &b, false,
-                "Print help") < 0) {
-        ST_WARNING("Failed to st_opt_get_bool for help");
-        goto ST_OPT_ERR;
-    }
+    ST_OPT_GET_BOOL(g_cmd_opt, "help", b, false, "Print help");
 
     return (b ? 1 : 0);
 
