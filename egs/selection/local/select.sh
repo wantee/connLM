@@ -108,8 +108,8 @@ if $parallel; then
     exit 1
   fi
 
-  cat "$log_dir"/select.*.log | awk -F: ' \
-           {if(NR%2){sp = $1; s += $2}else{tp = $1; t += $2}}\
+  cat "$log_dir"/select.*.log | awk -F, ' \
+           {if(NR%2){sp = $(NF-1); s += $NF}else{tp = $(NF - 1); t += $NF}}\
            END{print sp":", s; print tp":", t;}'
 
   if $merge_out; then

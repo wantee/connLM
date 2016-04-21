@@ -43,6 +43,11 @@ hadoop jar $HADOOP_HOME/contrib/streaming/hadoop-streaming*.jar \
            -mapper "perl select.pl $thresh" \
            -file "$(cd `dirname $0`; pwd)/select.pl" \
            > "$log_dir/mr_select.log" 2>&1 || exit 1
+jobid=`grep "Running job" "$log_dir/mr_select.log" | awk -F: '{print $NF}'`
+total=`hadoop job -counter $jobid connLM "Total Sentences"`
+selected=`hadoop job -counter $jobid connLM "Selected Sentences"`
+echo "Total Sentences: $total" | tee -a "$log_dir/mr_select.log"
+echo "Selected Sentences: $selected" | tee -a "$log_dir/mr_select.log"
 
 end_ts=`date +%s`
 echo "$0: Elapse time: $(shu-diff-timestamp $begin_ts $end_ts)"

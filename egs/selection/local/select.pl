@@ -24,5 +24,5 @@ while (my $line = <STDIN>) {
     }
 }
 
-print STDERR "Total sentences: $total\n";
-print STDERR "Selected sentences: $selected\n";
+print STDERR "reporter:counter:connLM,Total Sentences,$total\n";
+print STDERR "reporter:counter:connLM,Selected Sentences,$selected\n";
