@@ -180,8 +180,13 @@ int connlm_load_train_opt(connlm_train_opt_t *train_opt,
 
     ST_OPT_SEC_GET_INT(opt, sec_name, "EPOCH_SIZE",
             train_opt->epoch_size, 10,
-            "Number of sentences read in one epoch per thread (in kilos)");
-    train_opt->epoch_size *= 1000;
+            "Number of sentences read in one epoch (in kilos)");
+    if (train_opt->epoch_size > 0) {
+        train_opt->epoch_size *= 1000;
+    } else {
+        train_opt->epoch_size = 1;
+    }
+
     ST_OPT_SEC_GET_BOOL(opt, sec_name, "SHUFFLE",
             train_opt->shuffle, true,
             "Shuffle after reading");
@@ -252,8 +257,12 @@ int connlm_load_test_opt(connlm_test_opt_t *test_opt,
 
     ST_OPT_SEC_GET_INT(opt, sec_name, "EPOCH_SIZE",
             test_opt->epoch_size, 1,
-            "Number of sentences read in one epoch per thread (in kilos)");
-    test_opt->epoch_size *= 1000;
+            "Number of sentences read in one epoch (in kilos)");
+    if (test_opt->epoch_size > 0) {
+        test_opt->epoch_size *= 1000;
+    } else {
+        test_opt->epoch_size = 1;
+    }
 
     ST_OPT_SEC_GET_BOOL(opt, sec_name, "PRINT_SENT_PROB",
             test_opt->print_sent_prob, false,
