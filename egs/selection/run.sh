@@ -15,6 +15,7 @@ test_thr=1
 score_job=4
 hdfs_corpus=""
 hdfs_output=""
+hdfs_to_local=false
 
 realtype="float"
 
@@ -45,6 +46,7 @@ function print_help()
   echo "     --exp-dir <exp-dir>           # exp directory."
   echo "     --hdfs-corpus <hdfs://path/to/corpus> # hdfs path of corpus."
   echo "     --hdfs-output <hdfs://path/to/output-dir> # hdfs path of output dir."
+  echo "     --hdfs-to-local <true|false>  # whether get result to local."
 }
 
 help_message=`print_help`
@@ -154,8 +156,10 @@ if [ -n "$hdfs_corpus" ]; then
   ./local/mr_select.sh "$hdfs_output/score" "$thresh" \
          "$exp_dir" "$hdfs_output/selected.$model_type.$thresh" \
          || exit 1
-  hadoop fs -cat "$hdfs_output/selected.$model_type.$thresh/part-*" \
+  if $hdfs_to_local; then
+    hadoop fs -cat "$hdfs_output/selected.$model_type.$thresh/part-*" \
          > $exp_dir/selected.$model_type.$thresh || exit 1
+  fi
 else
   ./local/select.sh "$data_dir/general.corpus" \
          "$exp_dir/indomain/$model_type/score" \
