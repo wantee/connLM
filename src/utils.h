@@ -1,18 +1,18 @@
 /*
  * The MIT License (MIT)
- * 
+ *
  * Copyright (c) 2015 Wang Jian
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in all
  * copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -38,6 +38,7 @@ extern "C" {
 #define exp10(a) pow(10.0, a)
 
 #define logn(a, base) ((base) == 0) ? log(a) : (log(a) / log(base))
+#define logn10(log10a, base) ((base) == 0) ? (log10a / M_LOG10E) : (log10a / log10(base))
 
 void matXvec(real_t *dst, real_t *mat, real_t *vec,
         int mat_wid, int vec_size, real_t scale);
@@ -60,11 +61,8 @@ typedef enum _model_filter_t_ {
     MF_NONE       = 0x0000,
     MF_VOCAB      = 0x0001,
     MF_OUTPUT     = 0x0002,
-    MF_MAXENT     = 0x0004,
-    MF_RNN        = 0x0008,
-    MF_LBL        = 0x0010,
-    MF_FFNN       = 0x0020,
-    MF_ALL        = 0x003F,
+//    MF_COMP0-28  = 0x0004 - 0x7FFF,
+    MF_ALL        = 0xFFFF,
 } model_filter_t;
 
 /**

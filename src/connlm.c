@@ -1102,9 +1102,18 @@ int connlm_finish(connlm_t *connlm, int tid, bool backprop)
     return 0;
 }
 
-int connlm_forward_hidden_layers(connlm_t *connlm, int tid)
+static int connlm_forward_hidden(connlm_t *connlm, int tid)
 {
+    comp_id_t c;
+
     ST_CHECK_PARAM(connlm == NULL, -1);
+
+    for (c = 0; c < connlm->num_comp; c++) {
+        if (comp_forward(connlm->comps[c], tid) < 0) {
+            ST_WARNING("Failed to comp_forward.");
+            return -1;
+        }
+    }
 
     return 0;
 }
@@ -1113,13 +1122,13 @@ int connlm_forward(connlm_t *connlm, int word, int tid)
 {
     ST_CHECK_PARAM(connlm == NULL, -1);
 
-    if (connlm_forward_hidden_layers(connlm, tid) < 0) {
-        ST_WARNING("Failed to connlm_forward_hidden_layers.");
+    if (connlm_forward_hidden(connlm, tid) < 0) {
+        ST_WARNING("Failed to connlm_forward_hidden.");
         return -1;
     }
 
-    if (output_activate_last_layer(connlm->output, word, tid) < 0) {
-        ST_WARNING("Failed to output_activate_last_layer.");
+    if (output_forward(connlm->output, word, tid) < 0) {
+        ST_WARNING("Failed to output_forward.");
         return -1;
     }
 
@@ -1543,16 +1552,16 @@ static void* connlm_train_thread(void *args)
             }
         }
 
-        if (connlm_reset_train(connlm, tid) < 0) {
-            ST_WARNING("Failed to connlm_reset_train.");
+        if (connlm_reset(connlm, tid, true) < 0) {
+            ST_WARNING("Failed to connlm_reset.");
             goto ERR;
         }
 
         for (i = 0; i < egs->size; i++) {
             word = egs->words[i];
 
-            if (connlm_start_train(connlm, word, tid) < 0) {
-                ST_WARNING("connlm_start_train.");
+            if (connlm_start(connlm, word, tid, true) < 0) {
+                ST_WARNING("connlm_start.");
                 goto ERR;
             }
 
@@ -1561,12 +1570,12 @@ static void* connlm_train_thread(void *args)
                 goto ERR;
             }
 
-            logp += log10(output_get_prob(connlm->output, word, tid));
+            logp += output_get_logprob(connlm->output, word, tid);
 
             if ((logp != logp) || (isinf(logp))) {
-                ST_WARNING("Numerical error. tid[%d], p_word(%d) = %g",
+                ST_WARNING("Numerical error. tid[%d], log(p_word(%d)) = %g",
                         tid, word,
-                        output_get_prob(connlm->output, word, tid));
+                        output_get_logprob(connlm->output, word, tid));
                 goto ERR;
             }
 
@@ -1580,14 +1589,14 @@ static void* connlm_train_thread(void *args)
                 goto ERR;
             }
 
-            if (connlm_end_train(connlm, word, tid) < 0) {
-                ST_WARNING("connlm_end_train.");
+            if (connlm_end(connlm, word, tid, true) < 0) {
+                ST_WARNING("connlm_end.");
                 goto ERR;
             }
 
             if (word == SENT_END_ID) {
-                if (connlm_reset_train(connlm, tid) < 0) {
-                    ST_WARNING("Failed to connlm_reset_train.");
+                if (connlm_reset(connlm, tid, true) < 0) {
+                    ST_WARNING("Failed to connlm_reset.");
                     goto ERR;
                 }
                 sents++;
@@ -1636,6 +1645,22 @@ ERR:
 
     /* TODO: unlock mutex and post semaphore */
     return NULL;
+}
+
+int connlm_setup_train(connlm_t *connlm, connlm_opt_t *connlm_opt,
+        const char *train_file)
+{
+    if (connlm_setup_read(connlm, connlm_opt, train_file) < 0) {
+        ST_WARNING("Failed to connlm_setup_read.");
+        return -1;
+    }
+
+    if (connlm_setup(connlm, true) < 0) {
+        ST_WARNING("Failed to connlm_setup.");
+        return -1;
+    }
+
+    return 0;
 }
 
 int connlm_train(connlm_t *connlm)
@@ -1700,8 +1725,8 @@ int connlm_train(connlm_t *connlm)
     }
 
     for (i = 0; i < num_thrs; i++) {
-        if (connlm_finish_train(connlm, i) < 0) {
-            ST_WARNING("Failed to connlm_finish_train.");
+        if (connlm_finish(connlm, i, true) < 0) {
+            ST_WARNING("Failed to connlm_finish.");
             goto ERR;
         }
     }
@@ -1759,7 +1784,7 @@ static void* connlm_eval_thread(void *args)
     bool finish;
 
     int word;
-    double p;
+    double logp_word;
 
     int i;
 
@@ -1828,16 +1853,16 @@ static void* connlm_eval_thread(void *args)
             }
         }
 
-        if (connlm_reset_test(connlm, tid) < 0) {
-            ST_WARNING("Failed to connlm_reset_test.");
+        if (connlm_reset(connlm, tid, false) < 0) {
+            ST_WARNING("Failed to connlm_reset.");
             goto ERR;
         }
         logp_sent = 0.0;
         for (i = 0; i < egs->size; i++) {
             word = egs->words[i];
 
-            if (connlm_start_test(connlm, word, tid) < 0) {
-                ST_WARNING("connlm_start_test.");
+            if (connlm_start(connlm, word, tid, false) < 0) {
+                ST_WARNING("connlm_start.");
                 goto ERR;
             }
 
@@ -1846,19 +1871,19 @@ static void* connlm_eval_thread(void *args)
                 goto ERR;
             }
 
-            p = output_get_prob(connlm->output, word, tid);
-            logp += log10(p);
-            logp_sent += logn(p, connlm->eval_opt.out_log_base);
+            logp_word = output_get_logprob(connlm->output, word, tid);
+            logp += logp_word;
+            logp_sent += logn10(logp_word, connlm->eval_opt.out_log_base);
 
             if ((logp != logp) || (isinf(logp))) {
-                ST_WARNING("Numerical error. tid[%d], p_word(%d) = %g",
+                ST_WARNING("Numerical error. tid[%d], log(p_word(%d)) = %g",
                         tid, word,
-                        output_get_prob(connlm->output, word, tid));
+                        output_get_logprob(connlm->output, word, tid));
                 goto ERR;
             }
 
-            if (connlm_end_test(connlm, word, tid) < 0) {
-                ST_WARNING("connlm_end_test.");
+            if (connlm_end(connlm, word, tid, false) < 0) {
+                ST_WARNING("connlm_end.");
                 goto ERR;
             }
 
@@ -1866,7 +1891,7 @@ static void* connlm_eval_thread(void *args)
                     && (! connlm->eval_opt.print_sent_prob)) {
                 (void)pthread_mutex_lock(&connlm->fp_lock);
                 fprintf(connlm->fp_log, "%d\t%.6f\t%s", word,
-                        logn(p, connlm->eval_opt.out_log_base),
+                        logn10(logp_word, connlm->eval_opt.out_log_base),
                         vocab_get_word(connlm->vocab, word));
 
                 fprintf(connlm->fp_log, "\n");
@@ -1874,8 +1899,8 @@ static void* connlm_eval_thread(void *args)
             }
 
             if (word == SENT_END_ID) {
-                if (connlm_reset_test(connlm, tid) < 0) {
-                    ST_WARNING("Failed to connlm_reset_test.");
+                if (connlm_reset(connlm, tid, false) < 0) {
+                    ST_WARNING("Failed to connlm_reset.");
                     goto ERR;
                 }
                 sents++;
@@ -1918,6 +1943,22 @@ ERR:
 
     /* TODO: unlock mutex and post semaphore */
     return NULL;
+}
+
+int connlm_setup_eval(connlm_t *connlm, connlm_opt_t *connlm_opt,
+        const char *eval_file)
+{
+    if (connlm_setup_read(connlm, connlm_opt, eval_file) < 0) {
+        ST_WARNING("Failed to connlm_setup_read.");
+        return -1;
+    }
+
+    if (connlm_setup(connlm, false) < 0) {
+        ST_WARNING("Failed to connlm_setup.");
+        return -1;
+    }
+
+    return 0;
 }
 
 int connlm_eval(connlm_t *connlm, FILE *fp_log)
@@ -2074,12 +2115,12 @@ static int connlm_gen_word(connlm_t *connlm)
 
     ST_CHECK_PARAM(connlm == NULL, -1);
 
-    if (connlm_forward_hidden_layers(connlm, 0) < 0) {
-        ST_WARNING("Failed to connlm_forward_hidden_layers.");
+    if (connlm_forward_hidden(connlm, 0) < 0) {
+        ST_WARNING("Failed to connlm_forward_hidden.");
         return -1;
     }
 
-    word = output_gen_word(connlm->output) < 0;
+    word = output_gen_word(connlm->output, 0);
     if (word < 0) {
         ST_WARNING("Failed to output_gen_word.");
         return -1;

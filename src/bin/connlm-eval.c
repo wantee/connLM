@@ -136,13 +136,8 @@ int main(int argc, const char *argv[])
     }
     safe_st_fclose(fp);
 
-    if (connlm_setup_read(connlm, argv[2]) < 0) {
-        ST_WARNING("Failed to connlm_setup_read.");
-        goto ERR;
-    }
-
-    if (connlm_setup(connlm, false) < 0) {
-        ST_WARNING("Failed to connlm_setup.");
+    if (connlm_setup_eval(connlm, &g_connlm_opt, argv[2]) < 0) {
+        ST_WARNING("Failed to connlm_setup_eval.");
         goto ERR;
     }
 

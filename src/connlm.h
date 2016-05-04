@@ -116,7 +116,7 @@ typedef struct _connlm_t_ {
     connlm_eval_opt_t eval_opt; /**< evaluating options */
     connlm_gen_opt_t gen_opt; /**< generating options */
 
-    char text_file[MAX_DIR_LEN]; /**< training/testing file name. */
+    char text_file[MAX_DIR_LEN]; /**< training/evaling file name. */
 
     connlm_egs_t *full_egs; /**< pool for egs filled with data. */
     connlm_egs_t *empty_egs; /**< pool for egs with data consumed. */
@@ -287,50 +287,8 @@ int connlm_backprop(connlm_t *connlm, int word, int tid);
  * @param[in] train_file training corpus file.
  * @return non-zero value if any error.
  */
-int connlm_setup_train(connlm_t *connlm, connlm_train_opt_t *train_opt,
+int connlm_setup_train(connlm_t *connlm, connlm_opt_t *connlm_opt,
         const char *train_file);
-
-/**
- * Reset training for connlm model.
- * Called before every input sentence to be trained.
- * @ingroup g_connlm
- * @param[in] connlm connlm model.
- * @param[in] tid thread id.
- * @return non-zero value if any error.
- */
-int connlm_reset_train(connlm_t *connlm, int tid);
-
-/**
- * Start training for connlm model.
- * Called before every input word to be trained.
- * @ingroup g_connlm
- * @param[in] connlm connlm model.
- * @param[in] word current word.
- * @param[in] tid thread id.
- * @return non-zero value if any error.
- */
-int connlm_start_train(connlm_t *connlm, int word, int tid);
-
-/**
- * End training for connlm model.
- * Called after every input word trained.
- * @ingroup g_connlm
- * @param[in] connlm connlm model.
- * @param[in] word current word.
- * @param[in] tid thread id.
- * @return non-zero value if any error.
- */
-int connlm_end_train(connlm_t *connlm, int word, int tid);
-
-/**
- * Finish training for connlm model.
- * Called after all words trained.
- * @ingroup g_connlm
- * @param[in] connlm connlm model.
- * @param[in] tid thread id.
- * @return non-zero value if any error.
- */
-int connlm_finish_train(connlm_t *connlm, int tid);
 
 /**
  * Training between feed-forward and back-propagate for connlm model.
@@ -356,43 +314,11 @@ int connlm_train(connlm_t *connlm);
  * @ingroup g_connlm
  * @param[in] connlm connlm model.
  * @param[in] eval_opt evaluating options.
- * @param[in] test_file testing corpus file.
+ * @param[in] eval_file evaluating corpus file.
  * @return non-zero value if any error.
  */
-int connlm_setup_eval(connlm_t *connlm, connlm_eval_opt_t *eval_opt,
-        const char *test_file);
-
-/**
- * Reset testing for connlm model.
- * Called before every input sentence to be tested.
- * @ingroup g_connlm
- * @param[in] connlm connlm model.
- * @param[in] tid thread id.
- * @return non-zero value if any error.
- */
-int connlm_reset_test(connlm_t *connlm, int tid);
-
-/**
- * Start testing for connlm model.
- * Called before every input word to be tested.
- * @ingroup g_connlm
- * @param[in] connlm connlm model.
- * @param[in] word current word.
- * @param[in] tid thread id.
- * @return non-zero value if any error.
- */
-int connlm_start_test(connlm_t *connlm, int word, int tid);
-
-/**
- * End testing for connlm model.
- * Called after every input word tested.
- * @ingroup g_connlm
- * @param[in] connlm connlm model.
- * @param[in] word current word.
- * @param[in] tid thread id.
- * @return non-zero value if any error.
- */
-int connlm_end_test(connlm_t *connlm, int word, int tid);
+int connlm_setup_eval(connlm_t *connlm, connlm_opt_t *eval_opt,
+        const char *eval_file);
 
 /**
  * Evaluating a connlm model.

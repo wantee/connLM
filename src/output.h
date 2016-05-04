@@ -226,23 +226,15 @@ output_t* output_generate(output_opt_t *output_opt, count_t *word_cnts,
        int output_size);
 
 /**
- * Activate neurons of pre output tree.
- * @ingroup g_output
- * @param[in] output output tree related.
- * @param[in] cls class of current word.
- * @param[in] tid thread id (neuron id).
- * @return non-zero value if any error.
- */
-int output_activate_pre_layer(output_t *output, int cls, int tid);
-/**
- * Activate neurons of last output tree.
+ * Feed-forward neurons of output tree.
  * @ingroup g_output
  * @param[in] output output tree related.
  * @param[in] word current word.
  * @param[in] tid thread id (neuron id).
  * @return non-zero value if any error.
  */
-int output_activate_last_layer(output_t *output, int word, int tid);
+int output_forward(output_t *output, int word, int tid);
+
 /**
  * Compute loss of neurons of output tree.
  * @ingroup g_output
@@ -252,15 +244,25 @@ int output_activate_last_layer(output_t *output, int word, int tid);
  * @return non-zero value if any error.
  */
 int output_loss(output_t *output, int word, int tid);
+
 /**
- * Get probability of a word.
+ * Generate a word from output tree.
+ * @ingroup g_output
+ * @param[in] output output tree related.
+ * @param[in] tid thread id (neuron id).
+ * @return non-zero value if any error.
+ */
+int output_gen_word(output_t *output, int tid);
+
+/**
+ * Get log probability of a word.
  * @ingroup g_output
  * @param[in] output output tree related.
  * @param[in] word current word.
  * @param[in] tid thread id (neuron id).
  * @return non-zero value if any error.
  */
-double output_get_prob(output_t *output, int word, int tid);
+double output_get_logprob(output_t *output, int word, int tid);
 
 /**
  * Setup runinng for output tree.
@@ -318,14 +320,6 @@ int output_end(output_t *output, int word, int tid, bool backprop);
  * @return non-zero value if any error.
  */
 int output_finish(output_t *output, int tid, bool backprop);
-
-/**
- * Generate word from output tree.
- * @ingroup g_output
- * @param[in] output output tree.
- * @return word index generated, -1 if any error.
- */
-int output_gen_word(output_t *output);
 
 /**
  * Whether two output tree is equal.

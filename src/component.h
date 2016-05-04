@@ -265,6 +265,16 @@ int comp_finish(component_t *comp, int tid, bool backprop);
 int comp_fwd_bp(component_t *comp, int word, int tid);
 
 /**
+ * Feed-forward one word for a thread of component.
+ * @ingroup g_component
+ * @param[in] comp component.
+ * @param[in] tid thread id (neuron id).
+ * @see rnn_forward
+ * @return non-zero value if any error.
+ */
+int comp_forward(component_t *comp, int tid);
+
+/**
  * Back-propagate one word for a thread of component.
  * @ingroup g_component
  * @param[in] comp component.

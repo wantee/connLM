@@ -1280,6 +1280,11 @@ output_t* output_generate(output_opt_t *output_opt, count_t *word_cnts,
     return NULL;
 }
 
+int output_forward(output_t *output, int word, int tid)
+{
+    return 0;
+}
+
 int output_loss(output_t *output, int word, int tid)
 {
     output_neuron_t *neu;
@@ -1303,6 +1308,13 @@ int output_loss(output_t *output, int word, int tid)
         neu->er[n] = (0 - neu->ac[n]);
     }
     neu->er[word] = (1 - neu->ac[word]);
+
+    return 0;
+}
+
+int output_gen_word(output_t *output, int tid)
+{
+    ST_CHECK_PARAM(output == NULL, -1);
 
     return 0;
 }

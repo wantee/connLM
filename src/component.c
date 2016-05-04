@@ -661,7 +661,6 @@ ERR:
 
 int comp_save_header(component_t *comp, FILE *fp, bool binary)
 {
-    int n;
     layer_id_t l;
     glue_id_t g;
 
@@ -784,6 +783,13 @@ int comp_save_body(component_t *comp, FILE *fp, bool binary)
 
 int comp_fwd_bp(component_t *comp, int word, int tid)
 {
+    return 0;
+}
+
+int comp_forward(component_t *comp, int tid)
+{
+    ST_CHECK_PARAM(comp == NULL, -1);
+
     return 0;
 }
 
