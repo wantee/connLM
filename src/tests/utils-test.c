@@ -151,6 +151,8 @@ static int unit_test_parse_model_filter()
     char in[MAX_DIR_LEN];
     char out[MAX_DIR_LEN];
     model_filter_t mf;
+    char *comp_names = NULL;
+    int num_comp;
 
     int ncase;
 
@@ -160,288 +162,233 @@ static int unit_test_parse_model_filter()
     fprintf(stderr, "    Case %d...", ncase++);
     strncpy(in, "model1.clm", MAX_DIR_LEN);
     in[MAX_DIR_LEN - 1] = '\0';
-    mf = parse_model_filter(in, out, MAX_DIR_LEN);
+    mf = parse_model_filter(in, out, MAX_DIR_LEN, &comp_names, &num_comp);
     if (mf != MF_ALL || strcmp(in, out) != 0) {
         fprintf(stderr, "Failed\n");
-        return -1;
+        goto ERR;
     }
+    safe_free(comp_names);
     fprintf(stderr, "Success\n");
 
     fprintf(stderr, "    Case %d...", ncase++);
     strncpy(in, "mdl,model1.clm", MAX_DIR_LEN);
     in[MAX_DIR_LEN - 1] = '\0';
-    mf = parse_model_filter(in, out, MAX_DIR_LEN);
+    mf = parse_model_filter(in, out, MAX_DIR_LEN, &comp_names, &num_comp);
     if (mf != MF_ALL || strcmp(in, out) != 0) {
         fprintf(stderr, "Failed\n");
-        return -1;
+        goto ERR;
     }
+    safe_free(comp_names);
     fprintf(stderr, "Success\n");
 
     fprintf(stderr, "    Case %d...", ncase++);
     strncpy(in, "mdl,oxt:model1.clm", MAX_DIR_LEN);
     in[MAX_DIR_LEN - 1] = '\0';
-    mf = parse_model_filter(in, out, MAX_DIR_LEN);
+    mf = parse_model_filter(in, out, MAX_DIR_LEN, &comp_names, &num_comp);
     if (mf != MF_ALL || strcmp(in, out) != 0) {
         fprintf(stderr, "Failed\n");
-        return -1;
+        goto ERR;
     }
+    safe_free(comp_names);
+    fprintf(stderr, "Success\n");
+
+    fprintf(stderr, "    Case %d...", ncase++);
+    strncpy(in, "mdl,oc<rnn:model1.clm", MAX_DIR_LEN);
+    in[MAX_DIR_LEN - 1] = '\0';
+    mf = parse_model_filter(in, out, MAX_DIR_LEN, &comp_names, &num_comp);
+    if (mf != MF_ALL || strcmp(in, out) != 0) {
+        fprintf(stderr, "Failed\n");
+        goto ERR;
+    }
+    safe_free(comp_names);
     fprintf(stderr, "Success\n");
 
     fprintf(stderr, "    Case %d...", ncase++);
     strncpy(in, "mdl,o:model1.clm", MAX_DIR_LEN);
     in[MAX_DIR_LEN - 1] = '\0';
-    mf = parse_model_filter(in, out, MAX_DIR_LEN);
+    mf = parse_model_filter(in, out, MAX_DIR_LEN, &comp_names, &num_comp);
     if ((strcmp(out, "model1.clm") != 0)
             || (!(mf & MF_OUTPUT))
-            || (mf & ~MF_OUTPUT)) {
-        fprintf(stderr, "Failed\n");
-        return -1;
+            || (mf & ~MF_OUTPUT)
+            || num_comp != 0) {
+        goto ERR;
     }
+    safe_free(comp_names);
     fprintf(stderr, "Success\n");
 
     fprintf(stderr, "    Case %d...", ncase++);
     strncpy(in, "mdl,v:model1.clm", MAX_DIR_LEN);
     in[MAX_DIR_LEN - 1] = '\0';
-    mf = parse_model_filter(in, out, MAX_DIR_LEN);
+    mf = parse_model_filter(in, out, MAX_DIR_LEN, &comp_names, &num_comp);
     if ((strcmp(out, "model1.clm") != 0)
             || (!(mf & MF_VOCAB))
-            || (mf & ~MF_VOCAB)) {
+            || (mf & ~MF_VOCAB)
+            || num_comp != 0) {
         fprintf(stderr, "Failed\n");
-        return -1;
+        goto ERR;
     }
+    safe_free(comp_names);
     fprintf(stderr, "Success\n");
 
     fprintf(stderr, "    Case %d...", ncase++);
-    strncpy(in, "mdl,m:model1.clm", MAX_DIR_LEN);
+    strncpy(in, "mdl,c<rnn>:model1.clm", MAX_DIR_LEN);
     in[MAX_DIR_LEN - 1] = '\0';
-    mf = parse_model_filter(in, out, MAX_DIR_LEN);
+    mf = parse_model_filter(in, out, MAX_DIR_LEN, &comp_names, &num_comp);
     if ((strcmp(out, "model1.clm") != 0)
-            || (!(mf & MF_MAXENT))
-            || (mf & ~MF_MAXENT)) {
+            || num_comp != 1
+            || strcasecmp(comp_names, "rnn") != 0
+            || mf != 0) {
         fprintf(stderr, "Failed\n");
-        return -1;
+        goto ERR;
     }
+    safe_free(comp_names);
     fprintf(stderr, "Success\n");
 
     fprintf(stderr, "    Case %d...", ncase++);
-    strncpy(in, "mdl,r:model1.clm", MAX_DIR_LEN);
+    strncpy(in, "mdl,c<rnn>c<lbl>:model1.clm", MAX_DIR_LEN);
     in[MAX_DIR_LEN - 1] = '\0';
-    mf = parse_model_filter(in, out, MAX_DIR_LEN);
+    mf = parse_model_filter(in, out, MAX_DIR_LEN, &comp_names, &num_comp);
     if ((strcmp(out, "model1.clm") != 0)
-            || (!(mf & MF_RNN))
-            || (mf & ~MF_RNN)) {
+            || num_comp != 2
+            || strcasecmp(comp_names, "rnn") != 0
+            || strcasecmp(comp_names + MAX_NAME_LEN, "lbl") != 0
+            || mf != 0) {
         fprintf(stderr, "Failed\n");
-        return -1;
+        goto ERR;
     }
-    fprintf(stderr, "Success\n");
-
-    fprintf(stderr, "    Case %d...", ncase++);
-    strncpy(in, "mdl,l:model1.clm", MAX_DIR_LEN);
-    in[MAX_DIR_LEN - 1] = '\0';
-    mf = parse_model_filter(in, out, MAX_DIR_LEN);
-    if ((strcmp(out, "model1.clm") != 0)
-            || (!(mf & MF_LBL))
-            || (mf & ~MF_LBL)) {
-        fprintf(stderr, "Failed\n");
-        return -1;
-    }
-    fprintf(stderr, "Success\n");
-
-    fprintf(stderr, "    Case %d...", ncase++);
-    strncpy(in, "mdl,f:model1.clm", MAX_DIR_LEN);
-    in[MAX_DIR_LEN - 1] = '\0';
-    mf = parse_model_filter(in, out, MAX_DIR_LEN);
-    if ((strcmp(out, "model1.clm") != 0)
-            || (!(mf & MF_FFNN))
-            || (mf & ~MF_FFNN)) {
-        fprintf(stderr, "Failed\n");
-        return -1;
-    }
+    safe_free(comp_names);
     fprintf(stderr, "Success\n");
 
     fprintf(stderr, "    Case %d...", ncase++);
     strncpy(in, "mdl,-o:model1.clm", MAX_DIR_LEN);
     in[MAX_DIR_LEN - 1] = '\0';
-    mf = parse_model_filter(in, out, MAX_DIR_LEN);
+    mf = parse_model_filter(in, out, MAX_DIR_LEN, &comp_names, &num_comp);
     if ((strcmp(out, "model1.clm") != 0)
             || (mf & MF_OUTPUT)
             || !(mf & MF_VOCAB)
-            || !(mf & MF_MAXENT)
-            || !(mf & MF_RNN)
-            || !(mf & MF_LBL)
-            || !(mf & MF_FFNN)) {
+            || !(mf & MF_COMP_NEG)
+            || num_comp != 0) {
         fprintf(stderr, "Failed\n");
-        return -1;
+        goto ERR;
     }
+    safe_free(comp_names);
     fprintf(stderr, "Success\n");
 
     fprintf(stderr, "    Case %d...", ncase++);
     strncpy(in, "mdl,-v:model1.clm", MAX_DIR_LEN);
     in[MAX_DIR_LEN - 1] = '\0';
-    mf = parse_model_filter(in, out, MAX_DIR_LEN);
+    mf = parse_model_filter(in, out, MAX_DIR_LEN, &comp_names, &num_comp);
     if ((strcmp(out, "model1.clm") != 0)
             || !(mf & MF_OUTPUT)
             || (mf & MF_VOCAB)
-            || !(mf & MF_MAXENT)
-            || !(mf & MF_RNN)
-            || !(mf & MF_LBL)
-            || !(mf & MF_FFNN)) {
+            || !(mf & MF_COMP_NEG)
+            || num_comp != 0) {
         fprintf(stderr, "Failed\n");
-        return -1;
+        goto ERR;
     }
+    safe_free(comp_names);
     fprintf(stderr, "Success\n");
 
     fprintf(stderr, "    Case %d...", ncase++);
-    strncpy(in, "mdl,-m:model1.clm", MAX_DIR_LEN);
+    strncpy(in, "mdl,-c<rnn>:model1.clm", MAX_DIR_LEN);
     in[MAX_DIR_LEN - 1] = '\0';
-    mf = parse_model_filter(in, out, MAX_DIR_LEN);
+    mf = parse_model_filter(in, out, MAX_DIR_LEN, &comp_names, &num_comp);
     if ((strcmp(out, "model1.clm") != 0)
             || !(mf & MF_OUTPUT)
             || !(mf & MF_VOCAB)
-            || (mf & MF_MAXENT)
-            || !(mf & MF_RNN)
-            || !(mf & MF_LBL)
-            || !(mf & MF_FFNN)) {
+            || !(mf & MF_COMP_NEG)
+            || num_comp != 1
+            || strcasecmp(comp_names, "rnn") != 0) {
         fprintf(stderr, "Failed\n");
-        return -1;
+        goto ERR;
     }
+    safe_free(comp_names);
     fprintf(stderr, "Success\n");
 
     fprintf(stderr, "    Case %d...", ncase++);
-    strncpy(in, "mdl,-r:model1.clm", MAX_DIR_LEN);
+    strncpy(in, "mdl,-c<rnn>c<lbl>:model1.clm", MAX_DIR_LEN);
     in[MAX_DIR_LEN - 1] = '\0';
-    mf = parse_model_filter(in, out, MAX_DIR_LEN);
+    mf = parse_model_filter(in, out, MAX_DIR_LEN, &comp_names, &num_comp);
     if ((strcmp(out, "model1.clm") != 0)
             || !(mf & MF_OUTPUT)
             || !(mf & MF_VOCAB)
-            || !(mf & MF_MAXENT)
-            || (mf & MF_RNN)
-            || !(mf & MF_LBL)
-            || !(mf & MF_FFNN)) {
+            || !(mf & MF_COMP_NEG)
+            || num_comp != 2
+            || strcasecmp(comp_names, "rnn") != 0
+            || strcasecmp(comp_names + MAX_NAME_LEN, "lbl") != 0) {
         fprintf(stderr, "Failed\n");
-        return -1;
+        goto ERR;
     }
+    safe_free(comp_names);
     fprintf(stderr, "Success\n");
 
     fprintf(stderr, "    Case %d...", ncase++);
-    strncpy(in, "mdl,-l:model1.clm", MAX_DIR_LEN);
+    strncpy(in, "mdl,c<rnn>v:model1.clm", MAX_DIR_LEN);
     in[MAX_DIR_LEN - 1] = '\0';
-    mf = parse_model_filter(in, out, MAX_DIR_LEN);
-    if ((strcmp(out, "model1.clm") != 0)
-            || !(mf & MF_OUTPUT)
-            || !(mf & MF_VOCAB)
-            || !(mf & MF_MAXENT)
-            || !(mf & MF_RNN)
-            || (mf & MF_LBL)
-            || !(mf & MF_FFNN)) {
-        fprintf(stderr, "Failed\n");
-        return -1;
-    }
-    fprintf(stderr, "Success\n");
-
-    fprintf(stderr, "    Case %d...", ncase++);
-    strncpy(in, "mdl,-f:model1.clm", MAX_DIR_LEN);
-    in[MAX_DIR_LEN - 1] = '\0';
-    mf = parse_model_filter(in, out, MAX_DIR_LEN);
-    if ((strcmp(out, "model1.clm") != 0)
-            || !(mf & MF_OUTPUT)
-            || !(mf & MF_VOCAB)
-            || !(mf & MF_MAXENT)
-            || !(mf & MF_RNN)
-            || !(mf & MF_LBL)
-            || (mf & MF_FFNN)) {
-        fprintf(stderr, "Failed\n");
-        return -1;
-    }
-    fprintf(stderr, "Success\n");
-
-    fprintf(stderr, "    Case %d...", ncase++);
-    strncpy(in, "mdl,fv:model1.clm", MAX_DIR_LEN);
-    in[MAX_DIR_LEN - 1] = '\0';
-    mf = parse_model_filter(in, out, MAX_DIR_LEN);
+    mf = parse_model_filter(in, out, MAX_DIR_LEN, &comp_names, &num_comp);
     if ((strcmp(out, "model1.clm") != 0)
             || (mf & MF_OUTPUT)
             || !(mf & MF_VOCAB)
-            || (mf & MF_MAXENT)
-            || (mf & MF_RNN)
-            || (mf & MF_LBL)
-            || !(mf & MF_FFNN)) {
+            || (mf & MF_COMP_NEG)
+            || num_comp != 1
+            || strcasecmp(comp_names, "rnn") != 0) {
         fprintf(stderr, "Failed\n");
-        return -1;
+        goto ERR;
     }
+    safe_free(comp_names);
     fprintf(stderr, "Success\n");
 
     fprintf(stderr, "    Case %d...", ncase++);
-    strncpy(in, "mdl,olr:model1.clm", MAX_DIR_LEN);
+    strncpy(in, "mdl,-oc<rnn>:model1.clm", MAX_DIR_LEN);
     in[MAX_DIR_LEN - 1] = '\0';
-    mf = parse_model_filter(in, out, MAX_DIR_LEN);
+    mf = parse_model_filter(in, out, MAX_DIR_LEN, &comp_names, &num_comp);
     if ((strcmp(out, "model1.clm") != 0)
-            || !(mf & MF_OUTPUT)
-            || (mf & MF_VOCAB)
-            || (mf & MF_MAXENT)
-            || !(mf & MF_RNN)
-            || !(mf & MF_LBL)
-            || (mf & MF_FFNN)) {
+            || (mf & MF_OUTPUT)
+            || !(mf & MF_VOCAB)
+            || !(mf & MF_COMP_NEG)
+            || num_comp != 1
+            || strcasecmp(comp_names, "rnn") != 0) {
         fprintf(stderr, "Failed\n");
-        return -1;
+        goto ERR;
     }
+    safe_free(comp_names);
     fprintf(stderr, "Success\n");
 
     fprintf(stderr, "    Case %d...", ncase++);
-    strncpy(in, "mdl,-rl:model1.clm", MAX_DIR_LEN);
+    strncpy(in, "mdl,voc:model1.clm", MAX_DIR_LEN);
     in[MAX_DIR_LEN - 1] = '\0';
-    mf = parse_model_filter(in, out, MAX_DIR_LEN);
+    mf = parse_model_filter(in, out, MAX_DIR_LEN, &comp_names, &num_comp);
     if ((strcmp(out, "model1.clm") != 0)
             || !(mf & MF_OUTPUT)
             || !(mf & MF_VOCAB)
-            || !(mf & MF_MAXENT)
-            || (mf & MF_RNN)
-            || (mf & MF_LBL)
-            || !(mf & MF_FFNN)) {
+            || (mf & MF_COMP_NEG)
+            || num_comp != -1) {
         fprintf(stderr, "Failed\n");
-        return -1;
+        goto ERR;
     }
+    safe_free(comp_names);
     fprintf(stderr, "Success\n");
 
     fprintf(stderr, "    Case %d...", ncase++);
-    strncpy(in, "mdl,-vof:model1.clm", MAX_DIR_LEN);
+    strncpy(in, "mdl,-voc:model1.clm", MAX_DIR_LEN);
     in[MAX_DIR_LEN - 1] = '\0';
-    mf = parse_model_filter(in, out, MAX_DIR_LEN);
+    mf = parse_model_filter(in, out, MAX_DIR_LEN, &comp_names, &num_comp);
     if ((strcmp(out, "model1.clm") != 0)
             || (mf & MF_OUTPUT)
             || (mf & MF_VOCAB)
-            || !(mf & MF_MAXENT)
-            || !(mf & MF_RNN)
-            || !(mf & MF_LBL)
-            || (mf & MF_FFNN)) {
+            || !(mf & MF_COMP_NEG)
+            || num_comp != -1) {
         fprintf(stderr, "Failed\n");
-        return -1;
+        goto ERR;
     }
-    fprintf(stderr, "Success\n");
-
-    fprintf(stderr, "    Case %d...", ncase++);
-    strncpy(in, "mdl,vofmlr:model1.clm", MAX_DIR_LEN);
-    in[MAX_DIR_LEN - 1] = '\0';
-    mf = parse_model_filter(in, out, MAX_DIR_LEN);
-    if ((strcmp(out, "model1.clm") != 0)
-            || (mf != MF_ALL)) {
-        fprintf(stderr, "Failed\n");
-        return -1;
-    }
-    fprintf(stderr, "Success\n");
-
-    fprintf(stderr, "    Case %d...", ncase++);
-    strncpy(in, "mdl,-vofmlr:model1.clm", MAX_DIR_LEN);
-    in[MAX_DIR_LEN - 1] = '\0';
-    mf = parse_model_filter(in, out, MAX_DIR_LEN);
-    if ((strcmp(out, "model1.clm") != 0)
-            || (mf != MF_NONE)) {
-        fprintf(stderr, "Failed\n");
-        return -1;
-    }
+    safe_free(comp_names);
     fprintf(stderr, "Success\n");
 
     return 0;
+
+ERR:
+    safe_free(comp_names);
+    return -1;
 }
 
 static int run_all_tests()

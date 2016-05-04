@@ -84,8 +84,15 @@ int main(int argc, const char *argv[])
     char fname[MAX_DIR_LEN];
     FILE *fp = NULL;
     connlm_t *connlm = NULL;
+
+    char *comp_names = NULL;
+    int num_comp;
     model_filter_t mf;
     int ret;
+
+    comp_id_t c;
+    int i;
+    bool found;
 
     ret = connlm_copy_parse_opt(&argc, argv);
     if (ret < 0) {
@@ -121,7 +128,8 @@ int main(int argc, const char *argv[])
     }
     safe_st_fclose(fp);
 
-    mf = parse_model_filter(argv[2], fname, MAX_DIR_LEN);
+    mf = parse_model_filter(argv[2], fname, MAX_DIR_LEN,
+            &comp_names, &num_comp);
     if (mf == MF_NONE) {
         ST_WARNING("Failed to parse_model_filter.");
         goto ERR;
@@ -139,23 +147,41 @@ int main(int argc, const char *argv[])
     if (!(mf & MF_VOCAB)) {
         safe_vocab_destroy(connlm->vocab);
     }
-    if (!(mf & MF_MAXENT)) {
-        safe_maxent_destroy(connlm->maxent);
-    }
-    if (!(mf & MF_RNN)) {
-        safe_rnn_destroy(connlm->rnn);
-    }
-    if (!(mf & MF_LBL)) {
-        safe_lbl_destroy(connlm->lbl);
-    }
-    if (!(mf & MF_FFNN)) {
-        safe_ffnn_destroy(connlm->ffnn);
+
+    if (mf & MF_COMP_NEG) {
+        if (num_comp == -1) {
+            for (c = 0; c < connlm->num_comp; c++) {
+                safe_comp_destroy(connlm->comps[c]);
+            }
+            safe_free(connlm->comps);
+            connlm->num_comp = 0;
+        } else {
+            for (i = 0; i < num_comp; i++) {
+                found = false;
+                for (c = 0; c < connlm->num_comp; c++) {
+                    if (strcasecmp(connlm->comps[c]->name,
+                                comp_names + MAX_NAME_LEN*i)==0) {
+                        safe_comp_destroy(connlm->comps[c]);
+                        memmove(connlm->comps + c, connlm->comps + c + 1,
+                            sizeof(component_t *) * connlm->num_comp - c - 1);
+                        connlm->num_comp--;
+                        found = true;
+                        break;
+                    }
+                }
+                if (!found) {
+                    ST_WARNING("No component named [%s]", comp_names[i]);
+                    goto ERR;
+                }
+            }
+        }
     }
     if (connlm_save(connlm, fp, g_binary) < 0) {
         ST_WARNING("Failed to connlm_save. [%s]", fname);
         goto ERR;
     }
 
+    safe_free(comp_names);
     safe_st_fclose(fp);
     safe_st_opt_destroy(g_cmd_opt);
     safe_connlm_destroy(connlm);
@@ -164,6 +190,7 @@ int main(int argc, const char *argv[])
     return 0;
 
 ERR:
+    safe_free(comp_names);
     safe_st_fclose(fp);
     safe_st_opt_destroy(g_cmd_opt);
     safe_connlm_destroy(connlm);

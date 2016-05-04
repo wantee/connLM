@@ -53,8 +53,8 @@ BINS = bin/connlm-train \
        bin/connlm-gen \
 #       bin/connlm-merge maybe rename to connlm-edit
 
-TESTS = tests/maxent-test \
-        tests/utils-test \
+#TESTS = tests/maxent-test
+TESTS = tests/utils-test \
         tests/param-test \
         tests/connlm-test \
         tests/input-test
@@ -62,8 +62,8 @@ ifneq (,$(findstring _USE_BLAS_,$(CFLAGS)))
     TESTS += tests/blas-test
 endif
 
-VAL_TESTS = tests/maxent-test \
-            tests/utils-test \
+#VAL_TESTS = tests/maxent-test
+VAL_TESTS = tests/utils-test \
             tests/param-test \
             tests/connlm-test \
             tests/input-test

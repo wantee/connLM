@@ -1,18 +1,18 @@
 /*
  * The MIT License (MIT)
- * 
+ *
  * Copyright (c) 2015 Wang Jian
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in all
  * copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -256,7 +256,7 @@ void connlm_show_usage(const char *module_name, const char *header,
     st_opt_show_usage(opt, stderr);
 }
 
-int int_comp(const void *elem1, const void *elem2) 
+int int_comp(const void *elem1, const void *elem2)
 {
     int f = *((int*)elem1);
     int s = *((int*)elem2);
@@ -271,14 +271,17 @@ void int_sort(int *A, size_t n)
 }
 
 model_filter_t parse_model_filter(const char *mdl_filter,
-        char *mdl_file, size_t mdl_file_len) 
+        char *mdl_file, size_t mdl_file_len, char **comp_names,
+        int *num_comp)
 {
     char *ptr;
     char *ptr_fname;
+    char *ptr_comp;
     model_filter_t mf;
     bool add;
 
-    ST_CHECK_PARAM(mdl_filter == NULL || mdl_file == NULL, MF_NONE);
+    ST_CHECK_PARAM(mdl_filter == NULL || mdl_file == NULL ||
+            comp_names == NULL || num_comp == NULL, MF_NONE);
 
     if (strncmp(mdl_filter, "mdl,", 4) != 0) {
         ptr_fname = (char *)mdl_filter;
@@ -294,6 +297,8 @@ model_filter_t parse_model_filter(const char *mdl_filter,
         goto RET;
     }
 
+    *comp_names = NULL;
+    *num_comp = 0;
     if (*ptr == '-') {
         mf = MF_ALL;
         ptr++;
@@ -328,34 +333,40 @@ model_filter_t parse_model_filter(const char *mdl_filter,
                     mf &= ~MF_VOCAB;
                 }
                 break;
-            case 'm':
-                if (add) {
-                    mf |= MF_MAXENT;
+            case 'c':
+                if (*(ptr + 1) != '<') {
+                    *num_comp = -1;
+                    break;
                 } else {
-                    mf &= ~MF_MAXENT;
+                    ptr++;
+                    ptr++;
+                    ptr_comp = ptr;
+                    while (ptr < ptr_fname) {
+                        if (*ptr == '>') {
+                            break;
+                        }
+                        ptr++;
+                    }
+                    if (*ptr == '>') {
+                        *comp_names = realloc(*comp_names,
+                                MAX_NAME_LEN*(*num_comp + 1));
+                        if (*comp_names == NULL) {
+                            ST_WARNING("Failed to realloc comp_names");
+                            goto ERR;
+                        }
+
+                        if (ptr - ptr_comp >= MAX_NAME_LEN) {
+                            ST_WARNING("Too long name[%s]", ptr_comp);
+                            goto ERR;
+                        }
+                        strncpy(*comp_names + MAX_NAME_LEN*(*num_comp),
+                                ptr_comp, ptr - ptr_comp);
+                        (*comp_names)[MAX_NAME_LEN*(*num_comp) + ptr - ptr_comp] = '\0';
+                        (*num_comp)++;
+                        break;
+                    }
                 }
-                break;
-            case 'r':
-                if (add) {
-                    mf |= MF_RNN;
-                } else {
-                    mf &= ~MF_RNN;
-                }
-                break;
-            case 'l':
-                if (add) {
-                    mf |= MF_LBL;
-                } else {
-                    mf &= ~MF_LBL;
-                }
-                break;
-            case 'f':
-                if (add) {
-                    mf |= MF_FFNN;
-                } else {
-                    mf &= ~MF_FFNN;
-                }
-                break;
+                /* FALL THROUGH */
             default:
                 ptr_fname = (char *)mdl_filter;
                 mf = MF_ALL;
@@ -371,10 +382,14 @@ RET:
     if (strlen(ptr_fname) >= mdl_file_len) {
         ST_WARNING("mdl_file_len too small.[%zu/%zu]",
                 mdl_file_len, strlen(ptr_fname));
-        mdl_file[0] = '0';
-        return MF_NONE;
+        goto ERR;
     }
     strcpy(mdl_file, ptr_fname);
 
     return mf;
+
+ERR:
+    safe_free(*comp_names);
+    mdl_file[0] = '\0';
+    return MF_ERR;
 }
