@@ -1,18 +1,18 @@
 /*
  * The MIT License (MIT)
- * 
+ *
  * Copyright (c) 2015 Wang Jian
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in all
  * copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -131,4 +131,25 @@ input_t* input_dup(input_t *in)
 ERR:
     safe_input_destroy(input);
     return NULL;
+}
+
+int input_load_header(input_t **input, int version,
+        FILE *fp, bool *binary, FILE *fo_info)
+{
+    return 0;
+}
+
+int input_load_body(input_t *input, int version, FILE *fp, bool binary)
+{
+    return 0;
+}
+
+int input_save_header(input_t *input, FILE *fp, bool binary)
+{
+    return 0;
+}
+
+int input_save_body(input_t *input, FILE *fp, bool binary)
+{
+    return 0;
 }

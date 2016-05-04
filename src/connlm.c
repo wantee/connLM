@@ -1,18 +1,18 @@
 /*
  * The MIT License (MIT)
- * 
+ *
  * Copyright (c) 2015 Wang Jian
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in all
  * copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -110,77 +110,58 @@ static int connlm_egs_print(FILE *fp, pthread_mutex_t *fp_lock,
     return 0;
 }
 
-int connlm_load_train_opt(connlm_train_opt_t *train_opt,
+int connlm_load_opt(connlm_opt_t *connlm_opt,
         st_opt_t *opt, const char *sec_name)
 {
+    ST_CHECK_PARAM(connlm_opt == NULL || opt == NULL, -1);
+
+    ST_OPT_SEC_GET_INT(opt, sec_name, "NUM_THREAD",
+            connlm_opt->num_thread, 1, "Number of threads");
+    ST_OPT_SEC_GET_UINT(opt, sec_name, "RANDOM_SEED",
+            connlm_opt->rand_seed, 1, "Random seed");
+
+    ST_OPT_SEC_GET_INT(opt, sec_name, "EPOCH_SIZE",
+            connlm_opt->epoch_size, 10,
+            "Number of sentences read in one epoch per thread (in kilos)");
+    connlm_opt->epoch_size *= 1000;
+    ST_OPT_SEC_GET_BOOL(opt, sec_name, "SHUFFLE",
+            connlm_opt->shuffle, true,
+            "Shuffle after reading");
+
+    ST_OPT_SEC_GET_STR(opt, sec_name, "DEBUG_FILE",
+            connlm_opt->debug_file, MAX_DIR_LEN, "",
+            "file to print out debug infos.");
+
+    return 0;
+
+ST_OPT_ERR:
+    return -1;
+}
+
+int connlm_load_train_opt(connlm_t *connlm, st_opt_t *opt,
+        const char *sec_name)
+{
     char name[MAX_ST_CONF_LEN];
+    comp_id_t c;
 
-    ST_CHECK_PARAM(train_opt == NULL || opt == NULL, -1);
+    ST_CHECK_PARAM(connlm == NULL || opt == NULL, -1);
 
-    if (param_load(&train_opt->param, opt, sec_name, NULL) < 0) {
+    if (param_load(&connlm->train_opt.param, opt, sec_name, NULL) < 0) {
         ST_WARNING("Failed to param_load.");
         goto ST_OPT_ERR;
     }
 
-    ST_OPT_SEC_GET_INT(opt, sec_name, "NUM_THREAD",
-            train_opt->num_thread, 1, "Number of threads");
-    ST_OPT_SEC_GET_UINT(opt, sec_name, "RANDOM_SEED",
-            train_opt->rand_seed, 1, "Random seed");
-
-    ST_OPT_SEC_GET_INT(opt, sec_name, "EPOCH_SIZE",
-            train_opt->epoch_size, 10,
-            "Number of sentences read in one epoch per thread (in kilos)");
-    train_opt->epoch_size *= 1000;
-    ST_OPT_SEC_GET_BOOL(opt, sec_name, "SHUFFLE",
-            train_opt->shuffle, true,
-            "Shuffle after reading");
-
-    ST_OPT_SEC_GET_STR(opt, sec_name, "DEBUG_FILE",
-            train_opt->debug_file, MAX_DIR_LEN, "",
-            "file to print out debug infos.");
-
-    if (sec_name == NULL || sec_name[0] == '\0') {
-        snprintf(name, MAX_ST_CONF_LEN, "RNN");
-    } else {
-        snprintf(name, MAX_ST_CONF_LEN, "%s/RNN", sec_name);
-    }
-    if (rnn_load_train_opt(&train_opt->rnn_opt, opt, name,
-                &train_opt->param) < 0) {
-        ST_WARNING("Failed to rnn_load_train_opt.");
-        goto ST_OPT_ERR;
-    }
-
-    if (sec_name == NULL || sec_name[0] == '\0') {
-        snprintf(name, MAX_ST_CONF_LEN, "MAXENT");
-    } else {
-        snprintf(name, MAX_ST_CONF_LEN, "%s/MAXENT", sec_name);
-    }
-    if (maxent_load_train_opt(&train_opt->maxent_opt, opt, name,
-                &train_opt->param) < 0) {
-        ST_WARNING("Failed to maxent_load_train_opt.");
-        goto ST_OPT_ERR;
-    }
-
-    if (sec_name == NULL || sec_name[0] == '\0') {
-        snprintf(name, MAX_ST_CONF_LEN, "LBL");
-    } else {
-        snprintf(name, MAX_ST_CONF_LEN, "%s/LBL", sec_name);
-    }
-    if (lbl_load_train_opt(&train_opt->lbl_opt, opt, name,
-                &train_opt->param) < 0) {
-        ST_WARNING("Failed to lbl_load_train_opt.");
-        goto ST_OPT_ERR;
-    }
-
-    if (sec_name == NULL || sec_name[0] == '\0') {
-        snprintf(name, MAX_ST_CONF_LEN, "FFNN");
-    } else {
-        snprintf(name, MAX_ST_CONF_LEN, "%s/FFNN", sec_name);
-    }
-    if (ffnn_load_train_opt(&train_opt->ffnn_opt, opt, name,
-                &train_opt->param) < 0) {
-        ST_WARNING("Failed to ffnn_load_train_opt.");
-        goto ST_OPT_ERR;
+    for (c = 0; c < connlm->num_comp; c++) {
+        if (sec_name == NULL || sec_name[0] == '\0') {
+            snprintf(name, MAX_ST_CONF_LEN, "%s", connlm->comps[c]->name);
+        } else {
+            snprintf(name, MAX_ST_CONF_LEN, "%s/%s", sec_name,
+                    connlm->comps[c]->name);
+        }
+        if (comp_load_train_opt(connlm->comps[c], opt, name) < 0) {
+            ST_WARNING("Failed to comp_load_train_opt.");
+            goto ST_OPT_ERR;
+        }
     }
 
     return 0;
@@ -196,14 +177,6 @@ int connlm_load_eval_opt(connlm_eval_opt_t *eval_opt,
 
     ST_CHECK_PARAM(eval_opt == NULL || opt == NULL, -1);
 
-    ST_OPT_SEC_GET_INT(opt, sec_name, "NUM_THREAD",
-            eval_opt->num_thread, 1, "Number of threads");
-
-    ST_OPT_SEC_GET_INT(opt, sec_name, "EPOCH_SIZE",
-            eval_opt->epoch_size, 1,
-            "Number of sentences read in one epoch per thread (in kilos)");
-    eval_opt->epoch_size *= 1000;
-
     ST_OPT_SEC_GET_BOOL(opt, sec_name, "PRINT_SENT_PROB",
             eval_opt->print_sent_prob, false,
             "Print sentence prob only, if true. ");
@@ -216,10 +189,6 @@ int connlm_load_eval_opt(connlm_eval_opt_t *eval_opt,
     } else {
         eval_opt->out_log_base = (real_t)atof(str);
     }
-
-    ST_OPT_SEC_GET_STR(opt, sec_name, "DEBUG_FILE",
-            eval_opt->debug_file, MAX_DIR_LEN, "",
-            "file to print out debug infos.");
 
     return 0;
 
@@ -286,10 +255,6 @@ void connlm_destroy(connlm_t *connlm)
 
     safe_vocab_destroy(connlm->vocab);
     safe_output_destroy(connlm->output);
-    safe_rnn_destroy(connlm->rnn);
-    safe_maxent_destroy(connlm->maxent);
-    safe_lbl_destroy(connlm->lbl);
-    safe_ffnn_destroy(connlm->ffnn);
 
     for (c = 0; c < connlm->num_comp; c++) {
         safe_comp_destroy(connlm->comps[c]);
@@ -327,7 +292,7 @@ int connlm_init(connlm_t *connlm, FILE *topo_fp)
         if (!is_content) {
             if (strncasecmp("<component>", line, 11) == 0) {
                 is_content = true;
-            } 
+            }
             continue;
         }
 
@@ -348,7 +313,7 @@ int connlm_init(connlm_t *connlm, FILE *topo_fp)
             content_sz = 0;
             is_content = false;
             continue;
-        } 
+        }
 
         if (strlen(line) + 2 + content_sz > content_cap) {
             content_cap += (strlen(line) + 2);
@@ -483,6 +448,7 @@ static int connlm_load_header(connlm_t *connlm, FILE *fp,
 
     int version;
     int real_size;
+    comp_id_t c;
 
     ST_CHECK_PARAM((connlm == NULL && fo_info == NULL) || fp == NULL
             || binary == NULL, -1);
@@ -528,6 +494,11 @@ static int connlm_load_header(connlm_t *connlm, FILE *fp,
             ST_WARNING("Real type not match. Please recompile toolkit");
             return -1;
         }
+
+        if (fread(&connlm->num_comp, sizeof(comp_id_t), 1, fp) != 1) {
+            ST_WARNING("Failed to read num_comp.");
+            return -1;
+        }
     } else {
         if (st_readline(fp, "    ") != 0) {
             ST_WARNING("Failed to read tag.");
@@ -565,6 +536,11 @@ static int connlm_load_header(connlm_t *connlm, FILE *fp,
             ST_WARNING("Real type not match. Please recompile toolkit");
             return -1;
         }
+
+        if (st_readline(fp, "Num comp: " COMP_ID_FMT, &connlm->num_comp) != 1) {
+            ST_WARNING("Failed to read num_comp.");
+            return -1;
+        }
     }
 
     if (fo_info != NULL) {
@@ -573,6 +549,7 @@ static int connlm_load_header(connlm_t *connlm, FILE *fp,
         fprintf(fo_info, "Real type: %s\n",
                 (real_size == sizeof(double)) ? "double" : "float");
         fprintf(fo_info, "Binary: %s\n", bool2str(*binary));
+        fprintf(fo_info, "Num comp: %d\n", connlm->num_comp);
     }
 
     b = *binary;
@@ -597,44 +574,24 @@ static int connlm_load_header(connlm_t *connlm, FILE *fp,
         return -1;
     }
 
-    if (rnn_load_header((connlm == NULL) ? NULL : &connlm->rnn,
-                version, fp, binary, fo_info) < 0) {
-        ST_WARNING("Failed to rnn_load_header.");
-        return -1;
+    if (connlm != NULL ) {
+        connlm->comps = (component_t **)malloc(sizeof(component_t *)
+                * (connlm->num_comp));
+        if (connlm->comps == NULL) {
+            ST_WARNING("Failed to alloc comps.");
+            goto ERR;
+        }
     }
-    if (*binary != b) {
-        ST_WARNING("Both binary and text format in one file.");
-        return -1;
-    }
-
-    if (maxent_load_header((connlm == NULL) ? NULL : &connlm->maxent,
-                version, fp, binary, fo_info) < 0) {
-        ST_WARNING("Failed to maxent_load_header.");
-        return -1;
-    }
-    if (*binary != b) {
-        ST_WARNING("Both binary and text format in one file.");
-        return -1;
-    }
-
-    if (lbl_load_header((connlm == NULL) ? NULL : &connlm->lbl,
-                version, fp, binary, fo_info) < 0) {
-        ST_WARNING("Failed to lbl_load_header.");
-        return -1;
-    }
-    if (*binary != b) {
-        ST_WARNING("Both binary and text format in one file.");
-        return -1;
-    }
-
-    if (ffnn_load_header((connlm == NULL) ? NULL : &connlm->ffnn,
-                version, fp, binary, fo_info) < 0) {
-        ST_WARNING("Failed to ffnn_load_header.");
-        return -1;
-    }
-    if (*binary != b) {
-        ST_WARNING("Both binary and text format in one file.");
-        return -1;
+    for (c = 0; c < connlm->num_comp; c++) {
+        if (comp_load_header((connlm == NULL) ? NULL : &connlm->comps[c],
+                    version, fp, binary, fo_info) < 0) {
+            ST_WARNING("Failed to comp_load_header.");
+            goto ERR;
+        }
+        if (*binary != b) {
+            ST_WARNING("Both binary and text format in one file.");
+            goto ERR;
+        }
     }
 
     if (fo_info != NULL) {
@@ -642,50 +599,32 @@ static int connlm_load_header(connlm_t *connlm, FILE *fp,
     }
 
     return version;
+
+ERR:
+    safe_free(connlm->comps);
+    return -1;
 }
 
 static int connlm_load_body(connlm_t *connlm, int version,
         FILE *fp, bool binary)
 {
+    comp_id_t c;
+
     ST_CHECK_PARAM(connlm == NULL || fp == NULL, -1);
 
-    if (connlm->vocab != NULL) {
-        if (vocab_load_body(connlm->vocab, version, fp, binary) < 0) {
-            ST_WARNING("Failed to vocab_load_body.");
-            return -1;
-        }
+    if (vocab_load_body(connlm->vocab, version, fp, binary) < 0) {
+        ST_WARNING("Failed to vocab_load_body.");
+        return -1;
     }
 
-    if (connlm->output != NULL) {
-        if (output_load_body(connlm->output, version, fp, binary) < 0) {
-            ST_WARNING("Failed to output_load_body.");
-            return -1;
-        }
-    }
-    if (connlm->rnn != NULL) {
-        if (rnn_load_body(connlm->rnn, version, fp, binary) < 0) {
-            ST_WARNING("Failed to rnn_load_body.");
-            return -1;
-        }
+    if (output_load_body(connlm->output, version, fp, binary) < 0) {
+        ST_WARNING("Failed to output_load_body.");
+        return -1;
     }
 
-    if (connlm->maxent != NULL) {
-        if (maxent_load_body(connlm->maxent, version, fp, binary) < 0) {
-            ST_WARNING("Failed to maxent_load_body.");
-            return -1;
-        }
-    }
-
-    if (connlm->lbl != NULL) {
-        if (lbl_load_body(connlm->lbl, version, fp, binary) < 0) {
-            ST_WARNING("Failed to lbl_load_body.");
-            return -1;
-        }
-    }
-
-    if (connlm->ffnn != NULL) {
-        if (ffnn_load_body(connlm->ffnn, version, fp, binary) < 0) {
-            ST_WARNING("Failed to ffnn_load_body.");
+    for (c = 0; c < connlm->num_comp; c++) {
+        if (comp_load_body(connlm->comps[c], version, fp, binary) < 0) {
+            ST_WARNING("Failed to comp_load_body.");
             return -1;
         }
     }
@@ -743,6 +682,7 @@ int connlm_print_info(FILE *fp, FILE *fo_info)
 static int connlm_save_header(connlm_t *connlm, FILE *fp, bool binary)
 {
     int n;
+    comp_id_t c;
 
     ST_CHECK_PARAM(connlm == NULL || fp == NULL, -1);
 
@@ -763,15 +703,21 @@ static int connlm_save_header(connlm_t *connlm, FILE *fp, bool binary)
             ST_WARNING("Failed to write real size.");
             return -1;
         }
+
+        if (fwrite(&connlm->num_comp, sizeof(comp_id_t), 1, fp) != 1) {
+            ST_WARNING("Failed to write num_comp.");
+            return -1;
+        }
     } else {
         fprintf(fp, "    \n<CONNLM>\n");
         fprintf(fp, "Version: %d\n", CONNLM_FILE_VERSION);
         fprintf(fp, "Real type: %s\n",
                 (sizeof(double) == sizeof(real_t)) ? "double" : "float");
+        fprintf(fp, "Num comp: " COMP_ID_FMT "\n", connlm->num_comp);
     }
 
     if (vocab_save_header(connlm->vocab, fp, binary) < 0) {
-        ST_WARNING("Failed to vocab_save_header.");
+        ST_WARNING("Failed to vocab_saveheader.");
         return -1;
     }
 
@@ -780,24 +726,11 @@ static int connlm_save_header(connlm_t *connlm, FILE *fp, bool binary)
         return -1;
     }
 
-    if (rnn_save_header(connlm->rnn, fp, binary) < 0) {
-        ST_WARNING("Failed to rnn_save_header.");
-        return -1;
-    }
-
-    if (maxent_save_header(connlm->maxent, fp, binary) < 0) {
-        ST_WARNING("Failed to maxent_save_header.");
-        return -1;
-    }
-
-    if (lbl_save_header(connlm->lbl, fp, binary) < 0) {
-        ST_WARNING("Failed to lbl_save_header.");
-        return -1;
-    }
-
-    if (ffnn_save_header(connlm->ffnn, fp, binary) < 0) {
-        ST_WARNING("Failed to ffnn_save_header.");
-        return -1;
+    for (c = 0; c < connlm->num_comp; c++) {
+        if (comp_save_header(connlm->comps[c], fp, binary) < 0) {
+            ST_WARNING("Failed to comp_save_header.");
+            return -1;
+        }
     }
 
     return 0;
@@ -805,45 +738,23 @@ static int connlm_save_header(connlm_t *connlm, FILE *fp, bool binary)
 
 static int connlm_save_body(connlm_t *connlm, FILE *fp, bool binary)
 {
+    comp_id_t c;
+
     ST_CHECK_PARAM(connlm == NULL || fp == NULL, -1);
 
-    if (connlm->vocab != NULL) {
-        if (vocab_save_body(connlm->vocab, fp, binary) < 0) {
-            ST_WARNING("Failed to vocab_save_body.");
-            return -1;
-        }
+    if (vocab_save_body(connlm->vocab, fp, binary) < 0) {
+        ST_WARNING("Failed to vocab_save_body.");
+        return -1;
     }
 
-    if (connlm->output != NULL) {
-        if (output_save_body(connlm->output, fp, binary) < 0) {
-            ST_WARNING("Failed to output_save_body.");
-            return -1;
-        }
-    }
-    if (connlm->rnn != NULL) {
-        if (rnn_save_body(connlm->rnn, fp, binary) < 0) {
-            ST_WARNING("Failed to rnn_save_body.");
-            return -1;
-        }
+    if (output_save_body(connlm->output, fp, binary) < 0) {
+        ST_WARNING("Failed to output_save_body.");
+        return -1;
     }
 
-    if (connlm->maxent != NULL) {
-        if (maxent_save_body(connlm->maxent, fp, binary) < 0) {
-            ST_WARNING("Failed to maxent_save_body.");
-            return -1;
-        }
-    }
-
-    if (connlm->lbl != NULL) {
-        if (lbl_save_body(connlm->lbl, fp, binary) < 0) {
-            ST_WARNING("Failed to lbl_save_body.");
-            return -1;
-        }
-    }
-
-    if (connlm->ffnn != NULL) {
-        if (ffnn_save_body(connlm->ffnn, fp, binary) < 0) {
-            ST_WARNING("Failed to ffnn_save_body.");
+    for (c = 0; c < connlm->num_comp; c++) {
+        if (comp_save_body(connlm->comps[c], fp, binary) < 0) {
+            ST_WARNING("Failed to comp_save_body.");
             return -1;
         }
     }
@@ -980,8 +891,8 @@ ERR:
     return -1;
 }
 
-int connlm_setup_train(connlm_t *connlm, connlm_train_opt_t *train_opt,
-        const char *train_file)
+int connlm_setup_read(connlm_t *connlm, connlm_opt_t *opt,
+        const char *text_file)
 {
     connlm_egs_t *egs;
     connlm_egs_t *p;
@@ -992,20 +903,20 @@ int connlm_setup_train(connlm_t *connlm, connlm_train_opt_t *train_opt,
 
     int i;
 
-    ST_CHECK_PARAM(connlm == NULL || train_opt == NULL
-            || train_file == NULL, -1);
+    ST_CHECK_PARAM(connlm == NULL || opt == NULL
+            || text_file == NULL, -1);
 
-    connlm->train_opt = *train_opt;
+    connlm->opt = *opt;
 
-    if (connlm->train_opt.num_thread < 1) {
-        connlm->train_opt.num_thread = 1;
+    if (connlm->opt.num_thread < 1) {
+        connlm->opt.num_thread = 1;
     }
-    num_thrs = connlm->train_opt.num_thread;
+    num_thrs = connlm->opt.num_thread;
 
-    strncpy(connlm->text_file, train_file, MAX_DIR_LEN);
+    strncpy(connlm->text_file, text_file, MAX_DIR_LEN);
     connlm->text_file[MAX_DIR_LEN - 1] = '\0';
 
-    pool_size = 2 * train_opt->num_thread;
+    pool_size = 2 * opt->num_thread;
     connlm->full_egs = NULL;
     connlm->empty_egs = NULL;;
     for (i = 0; i < pool_size; i++) {
@@ -1039,52 +950,15 @@ int connlm_setup_train(connlm_t *connlm, connlm_train_opt_t *train_opt,
         goto ERR;
     }
 
-    if (train_opt->debug_file[0] != '\0') {
-        connlm->fp_debug = st_fopen(train_opt->debug_file, "w");
+    if (opt->debug_file[0] != '\0') {
+        connlm->fp_debug = st_fopen(opt->debug_file, "w");
         if (connlm->fp_debug == NULL) {
             ST_WARNING("Failed to st_fopen debug_file[%s].",
-                    train_opt->debug_file);
+                    opt->debug_file);
             goto ERR;
         }
         if (pthread_mutex_init(&connlm->fp_debug_lock, NULL) != 0) {
             ST_WARNING("Failed to pthread_mutex_init fp_debug_lock.");
-            goto ERR;
-        }
-    }
-
-    if (output_setup_train(connlm->output, num_thrs) < 0) {
-        ST_WARNING("Failed to output_setup_train.");
-        goto ERR;
-    }
-
-    if (connlm->rnn != NULL) {
-        if (rnn_setup_train(connlm->rnn, &train_opt->rnn_opt,
-                    connlm->output, num_thrs) < 0) {
-            ST_WARNING("Failed to rnn_setup_train.");
-            goto ERR;
-        }
-    }
-
-    if (connlm->maxent != NULL) {
-        if (maxent_setup_train(connlm->maxent, &train_opt->maxent_opt,
-                    connlm->output, num_thrs) < 0) {
-            ST_WARNING("Failed to maxent_setup_train.");
-            goto ERR;
-        }
-    }
-
-    if (connlm->lbl != NULL) {
-        if (lbl_setup_train(connlm->lbl, &train_opt->lbl_opt,
-                    connlm->output, num_thrs) < 0) {
-            ST_WARNING("Failed to lbl_setup_train.");
-            goto ERR;
-        }
-    }
-
-    if (connlm->ffnn != NULL) {
-        if (ffnn_setup_train(connlm->ffnn, &train_opt->ffnn_opt,
-                    connlm->output, num_thrs) < 0) {
-            ST_WARNING("Failed to ffnn_setup_train.");
             goto ERR;
         }
     }
@@ -1122,39 +996,21 @@ ERR:
     return -1;
 }
 
-int connlm_reset_train(connlm_t *connlm, int tid)
+int connlm_setup(connlm_t *connlm, bool backprop)
 {
+    comp_id_t c;
+
     ST_CHECK_PARAM(connlm == NULL, -1);
 
-    if (output_reset_train(connlm->output, tid) < 0) {
-        ST_WARNING("Failed to output_reset_train.");
+    if (output_setup(connlm->output, connlm->opt.num_thread, backprop) < 0) {
+        ST_WARNING("Failed to output_setup.");
         return -1;
     }
 
-    if (connlm->rnn != NULL) {
-        if (rnn_reset_train(connlm->rnn, tid) < 0) {
-            ST_WARNING("Failed to rnn_reset_train.");
-            return -1;
-        }
-    }
-
-    if (connlm->maxent != NULL) {
-        if (maxent_reset_train(connlm->maxent, tid) < 0) {
-            ST_WARNING("Failed to maxent_reset_train.");
-            return -1;
-        }
-    }
-
-    if (connlm->lbl != NULL) {
-        if (lbl_reset_train(connlm->lbl, tid) < 0) {
-            ST_WARNING("Failed to lbl_reset_train.");
-            return -1;
-        }
-    }
-
-    if (connlm->ffnn != NULL) {
-        if (ffnn_reset_train(connlm->ffnn, tid) < 0) {
-            ST_WARNING("Failed to ffnn_reset_train.");
+    for (c = 0; c < connlm->num_comp; c++) {
+        if (comp_setup(connlm->comps[c], connlm->output,
+                    connlm->opt.num_thread, backprop) < 0) {
+            ST_WARNING("Failed to comp_setup[%s].", connlm->comps[c]->name);
             return -1;
         }
     }
@@ -1162,39 +1018,20 @@ int connlm_reset_train(connlm_t *connlm, int tid)
     return 0;
 }
 
-int connlm_start_train(connlm_t *connlm, int word, int tid)
+int connlm_reset(connlm_t *connlm, int tid, bool backprop)
 {
+    comp_id_t c;
+
     ST_CHECK_PARAM(connlm == NULL, -1);
 
-    if (output_start_train(connlm->output, word, tid) < 0) {
-        ST_WARNING("Failed to output_start_train.");
+    if (output_reset(connlm->output, tid, backprop) < 0) {
+        ST_WARNING("Failed to output_reset.");
         return -1;
     }
 
-    if (connlm->rnn != NULL) {
-        if (rnn_start_train(connlm->rnn, word, tid) < 0) {
-            ST_WARNING("Failed to rnn_start_train.");
-            return -1;
-        }
-    }
-
-    if (connlm->maxent != NULL) {
-        if (maxent_start_train(connlm->maxent, word, tid) < 0) {
-            ST_WARNING("Failed to maxent_start_train.");
-            return -1;
-        }
-    }
-
-    if (connlm->lbl != NULL) {
-        if (lbl_start_train(connlm->lbl, word, tid) < 0) {
-            ST_WARNING("Failed to lbl_start_train.");
-            return -1;
-        }
-    }
-
-    if (connlm->ffnn != NULL) {
-        if (ffnn_start_train(connlm->ffnn, word, tid) < 0) {
-            ST_WARNING("Failed to ffnn_start_train.");
+    for (c = 0; c < connlm->num_comp; c++) {
+        if (comp_reset(connlm->comps[c], tid, backprop) < 0) {
+            ST_WARNING("Failed to comp_reset[%s].", connlm->comps[c]->name);
             return -1;
         }
     }
@@ -1202,39 +1039,20 @@ int connlm_start_train(connlm_t *connlm, int word, int tid)
     return 0;
 }
 
-int connlm_end_train(connlm_t *connlm, int word, int tid)
+int connlm_start(connlm_t *connlm, int word, int tid, bool backprop)
 {
+    comp_id_t c;
+
     ST_CHECK_PARAM(connlm == NULL, -1);
 
-    if (output_end_train(connlm->output, word, tid) < 0) {
-        ST_WARNING("Failed to output_end_train.");
+    if (output_start(connlm->output, word, tid, backprop) < 0) {
+        ST_WARNING("Failed to output_start.");
         return -1;
     }
 
-    if (connlm->rnn != NULL) {
-        if (rnn_end_train(connlm->rnn, word, tid) < 0) {
-            ST_WARNING("Failed to rnn_end_train.");
-            return -1;
-        }
-    }
-
-    if (connlm->maxent != NULL) {
-        if (maxent_end_train(connlm->maxent, word, tid) < 0) {
-            ST_WARNING("Failed to maxent_end_train.");
-            return -1;
-        }
-    }
-
-    if (connlm->lbl != NULL) {
-        if (lbl_end_train(connlm->lbl, word, tid) < 0) {
-            ST_WARNING("Failed to lbl_end_train.");
-            return -1;
-        }
-    }
-
-    if (connlm->ffnn != NULL) {
-        if (ffnn_end_train(connlm->ffnn, word, tid) < 0) {
-            ST_WARNING("Failed to ffnn_end_train.");
+    for (c = 0; c < connlm->num_comp; c++) {
+        if (comp_start(connlm->comps[c], word, tid, backprop) < 0) {
+            ST_WARNING("Failed to comp_start[%s].", connlm->comps[c]->name);
             return -1;
         }
     }
@@ -1242,39 +1060,20 @@ int connlm_end_train(connlm_t *connlm, int word, int tid)
     return 0;
 }
 
-int connlm_finish_train(connlm_t *connlm, int tid)
+int connlm_end(connlm_t *connlm, int word, int tid, bool backprop)
 {
+    comp_id_t c;
+
     ST_CHECK_PARAM(connlm == NULL, -1);
 
-    if (output_finish_train(connlm->output, tid) < 0) {
-        ST_WARNING("Failed to output_finish_train.");
+    if (output_end(connlm->output, word, tid, backprop) < 0) {
+        ST_WARNING("Failed to output_end.");
         return -1;
     }
 
-    if (connlm->rnn != NULL) {
-        if (rnn_finish_train(connlm->rnn, tid) < 0) {
-            ST_WARNING("Failed to rnn_finish_train.");
-            return -1;
-        }
-    }
-
-    if (connlm->maxent != NULL) {
-        if (maxent_finish_train(connlm->maxent, tid) < 0) {
-            ST_WARNING("Failed to maxent_finish_train.");
-            return -1;
-        }
-    }
-
-    if (connlm->lbl != NULL) {
-        if (lbl_finish_train(connlm->lbl, tid) < 0) {
-            ST_WARNING("Failed to lbl_finish_train.");
-            return -1;
-        }
-    }
-
-    if (connlm->ffnn != NULL) {
-        if (ffnn_finish_train(connlm->ffnn, tid) < 0) {
-            ST_WARNING("Failed to ffnn_finish_train.");
+    for (c = 0; c < connlm->num_comp; c++) {
+        if (comp_end(connlm->comps[c], word, tid, backprop) < 0) {
+            ST_WARNING("Failed to comp_end[%s].", connlm->comps[c]->name);
             return -1;
         }
     }
@@ -1282,78 +1081,41 @@ int connlm_finish_train(connlm_t *connlm, int tid)
     return 0;
 }
 
-/* forward non-output-word layer */
-int connlm_forward_pre_layer(connlm_t *connlm, int cls, int tid)
+int connlm_finish(connlm_t *connlm, int tid, bool backprop)
 {
+    comp_id_t c;
+
     ST_CHECK_PARAM(connlm == NULL, -1);
 
-    if (connlm->rnn != NULL) {
-        if (rnn_forward_pre_layer(connlm->rnn, tid) < 0) {
-            ST_WARNING("Failed to rnn_forward_pre_layer.");
-            return -1;
-        }
-    }
-
-    if (connlm->maxent != NULL) {
-        if (maxent_forward_pre_layer(connlm->maxent, tid) < 0) {
-            ST_WARNING("Failed to maxent_forward_pre_layer.");
-            return -1;
-        }
-    }
-
-    if (connlm->lbl != NULL) {
-        if (lbl_forward_pre_layer(connlm->lbl, tid) < 0) {
-            ST_WARNING("Failed to lbl_forward_pre_layer.");
-            return -1;
-        }
-    }
-
-    if (connlm->ffnn != NULL) {
-        if (ffnn_forward_pre_layer(connlm->ffnn, tid) < 0) {
-            ST_WARNING("Failed to ffnn_forward_pre_layer.");
-            return -1;
-        }
-    }
-
-    if (output_activate_pre_layer(connlm->output, cls, tid) < 0) {
-        ST_WARNING("Failed to output_activate_pre_layer.");
+    if (output_finish(connlm->output, tid, backprop) < 0) {
+        ST_WARNING("Failed to output_finish.");
         return -1;
+    }
+
+    for (c = 0; c < connlm->num_comp; c++) {
+        if (comp_finish(connlm->comps[c], tid, backprop) < 0) {
+            ST_WARNING("Failed to comp_finish[%s].", connlm->comps[c]->name);
+            return -1;
+        }
     }
 
     return 0;
 }
 
-/* forward the last output-word layer */
-int connlm_forward_last_layer(connlm_t *connlm, int word, int tid)
+int connlm_forward_hidden_layers(connlm_t *connlm, int tid)
 {
     ST_CHECK_PARAM(connlm == NULL, -1);
 
-    if (connlm->rnn != NULL) {
-        if (rnn_forward_last_layer(connlm->rnn, word, tid) < 0) {
-            ST_WARNING("Failed to rnn_forward_last_layer.");
-            return -1;
-        }
-    }
+    return 0;
+}
 
-    if (connlm->maxent != NULL) {
-        if (maxent_forward_last_layer(connlm->maxent, word, tid) < 0) {
-            ST_WARNING("Failed to maxent_forward_last_layer.");
-            return -1;
-        }
-    }
+int connlm_forward(connlm_t *connlm, int word, int tid)
+{
+    ST_CHECK_PARAM(connlm == NULL, -1);
 
-    if (connlm->lbl != NULL) {
-        if (lbl_forward_last_layer(connlm->lbl, word, tid) < 0) {
-            ST_WARNING("Failed to lbl_forward_last_layer.");
-            return -1;
-        }
-    }
-
-    if (connlm->ffnn != NULL) {
-        if (ffnn_forward_last_layer(connlm->ffnn, word, tid) < 0) {
-            ST_WARNING("Failed to ffnn_forward_last_layer.");
-            return -1;
-        }
+    if (connlm_forward_hidden_layers(connlm, tid) < 0) {
+        ST_WARNING("Failed to connlm_forward_hidden_layers.");
+        return -1;
     }
 
     if (output_activate_last_layer(connlm->output, word, tid) < 0) {
@@ -1364,38 +1126,15 @@ int connlm_forward_last_layer(connlm_t *connlm, int word, int tid)
     return 0;
 }
 
-int connlm_forward(connlm_t *connlm, int word, int tid)
-{
-    int cls;
-
-    ST_CHECK_PARAM(connlm == NULL, -1);
-
-    if (connlm->output->output_opt.class_size > 0) {
-        cls = connlm->output->w2c[word];
-    } else {
-        cls = -1;
-    }
-
-    if (connlm_forward_pre_layer(connlm, cls, tid) < 0) {
-        ST_WARNING("Failed to connlm_forward_pre_layer.");
-        return -1;
-    }
-
-    if (connlm_forward_last_layer(connlm, word, tid) < 0) {
-        ST_WARNING("Failed to connlm_forward_last_layer.");
-        return -1;
-    }
-
-    return 0;
-}
-
 int connlm_fwd_bp(connlm_t *connlm, int word, int tid)
 {
+    comp_id_t c;
+
     ST_CHECK_PARAM(connlm == NULL, -1);
 
-    if (connlm->rnn != NULL) {
-        if (rnn_fwd_bp(connlm->rnn, word, tid) < 0) {
-            ST_WARNING("Failed to rnn_fwd_bp.");
+    for (c = 0; c < connlm->num_comp; c++) {
+        if (comp_fwd_bp(connlm->comps[c], word, tid) < 0) {
+            ST_WARNING("Failed to comp_fwd_bp[%s].", connlm->comps[c]->name);
             return -1;
         }
     }
@@ -1405,6 +1144,8 @@ int connlm_fwd_bp(connlm_t *connlm, int word, int tid)
 
 int connlm_backprop(connlm_t *connlm, int word, int tid)
 {
+    comp_id_t c;
+
     ST_CHECK_PARAM(connlm == NULL, -1);
 
     if (output_loss(connlm->output, word, tid) < 0) {
@@ -1412,30 +1153,10 @@ int connlm_backprop(connlm_t *connlm, int word, int tid)
         return -1;
     }
 
-    if (connlm->rnn != NULL) {
-        if (rnn_backprop(connlm->rnn, word, tid) < 0) {
-            ST_WARNING("Failed to rnn_backprop.");
-            return -1;
-        }
-    }
-
-    if (connlm->maxent != NULL) {
-        if (maxent_backprop(connlm->maxent, word, tid) < 0) {
-            ST_WARNING("Failed to maxent_backprop.");
-            return -1;
-        }
-    }
-
-    if (connlm->lbl != NULL) {
-        if (lbl_backprop(connlm->lbl, word, tid) < 0) {
-            ST_WARNING("Failed to lbl_backprop.");
-            return -1;
-        }
-    }
-
-    if (connlm->ffnn != NULL) {
-        if (ffnn_backprop(connlm->ffnn, word, tid) < 0) {
-            ST_WARNING("Failed to ffnn_backprop.");
+    for (c = 0; c < connlm->num_comp; c++) {
+        if (comp_backprop(connlm->comps[c], word, tid) < 0) {
+            ST_WARNING("Failed to comp_backprop[%s].",
+                    connlm->comps[c]->name);
             return -1;
         }
     }
@@ -1843,21 +1564,9 @@ static void* connlm_train_thread(void *args)
             logp += log10(output_get_prob(connlm->output, word, tid));
 
             if ((logp != logp) || (isinf(logp))) {
-                if (connlm->output->output_opt.class_size > 0) {
-                    ST_WARNING("Numerical error. tid[%d], "
-                            "p_class(%d) = %g, p_word(%d) = %g", tid,
-                            connlm->output->w2c[word],
-                            output_get_class_prob(connlm->output,
-                                word, tid),
-                            word,
-                            output_get_word_prob(connlm->output,
-                                word, tid));
-                } else {
-                    ST_WARNING("Numerical error. tid[%d], p_word(%d) = %g",
-                            tid, word,
-                            output_get_word_prob(connlm->output,
-                                word, tid));
-                }
+                ST_WARNING("Numerical error. tid[%d], p_word(%d) = %g",
+                        tid, word,
+                        output_get_prob(connlm->output, word, tid));
                 goto ERR;
             }
 
@@ -1949,7 +1658,7 @@ int connlm_train(connlm_t *connlm)
 
     gettimeofday(&tts_train, NULL);
 
-    num_thrs = connlm->train_opt.num_thread;
+    num_thrs = connlm->opt.num_thread;
     pts = (pthread_t *)malloc((num_thrs + 1) * sizeof(pthread_t));
     if (pts == NULL) {
         ST_WARNING("Failed to malloc pts");
@@ -1967,10 +1676,10 @@ int connlm_train(connlm_t *connlm)
 
     read_thr.connlm = connlm;
     read_thr.thrs = thrs;
-    read_thr.num_thrs = connlm->train_opt.num_thread;
-    read_thr.epoch_size = connlm->train_opt.epoch_size;
-    read_thr.shuffle = connlm->train_opt.shuffle;
-    read_thr.random = connlm->train_opt.rand_seed;
+    read_thr.num_thrs = connlm->opt.num_thread;
+    read_thr.epoch_size = connlm->opt.epoch_size;
+    read_thr.shuffle = connlm->opt.shuffle;
+    read_thr.random = connlm->opt.rand_seed;
 
     pthread_create(pts + num_thrs, NULL,
             connlm_read_thread, (void *)&read_thr);
@@ -2035,264 +1744,6 @@ ERR:
     return -1;
 }
 
-int connlm_setup_eval(connlm_t *connlm, connlm_eval_opt_t *eval_opt,
-        const char *test_file)
-{
-    connlm_egs_t *egs;
-    connlm_egs_t *p;
-    connlm_egs_t *q;
-    int pool_size;
-
-    int num_thrs;
-
-    int i;
-
-    ST_CHECK_PARAM(connlm == NULL || eval_opt == NULL
-            || test_file == NULL, -1);
-
-    connlm->eval_opt = *eval_opt;
-
-    if (connlm->eval_opt.num_thread < 1) {
-        connlm->eval_opt.num_thread = 1;
-    }
-    num_thrs = connlm->eval_opt.num_thread;
-
-    strncpy(connlm->text_file, test_file, MAX_DIR_LEN);
-    connlm->text_file[MAX_DIR_LEN - 1] = '\0';
-
-    pool_size = 2 * eval_opt->num_thread;
-    connlm->full_egs = NULL;
-    connlm->empty_egs = NULL;;
-    for (i = 0; i < pool_size; i++) {
-        egs = (connlm_egs_t *)malloc(sizeof(connlm_egs_t));
-        if (egs == NULL) {
-            ST_WARNING("Failed to malloc egs.");
-            goto ERR;
-        }
-        memset(egs, 0, sizeof(connlm_egs_t));
-        egs->next = connlm->empty_egs;
-        connlm->empty_egs = egs;
-    }
-
-    if (st_sem_init(&connlm->sem_empty, pool_size) != 0) {
-        ST_WARNING("Failed to st_sem_init sem_empty.");
-        goto ERR;
-    }
-
-    if (st_sem_init(&connlm->sem_full, 0) != 0) {
-        ST_WARNING("Failed to st_sem_init sem_full.");
-        goto ERR;
-    }
-
-    if (pthread_mutex_init(&connlm->full_egs_lock, NULL) != 0) {
-        ST_WARNING("Failed to pthread_mutex_init full_egs_lock.");
-        goto ERR;
-    }
-
-    if (pthread_mutex_init(&connlm->empty_egs_lock, NULL) != 0) {
-        ST_WARNING("Failed to pthread_mutex_init empty_egs_lock.");
-        goto ERR;
-    }
-
-    if (eval_opt->debug_file[0] != '\0') {
-        connlm->fp_debug = st_fopen(eval_opt->debug_file, "w");
-        if (connlm->fp_debug == NULL) {
-            ST_WARNING("Failed to st_fopen debug_file[%s].",
-                    eval_opt->debug_file);
-            goto ERR;
-        }
-        if (pthread_mutex_init(&connlm->fp_debug_lock, NULL) != 0) {
-            ST_WARNING("Failed to pthread_mutex_init fp_debug_lock.");
-            goto ERR;
-        }
-    }
-
-    if (output_setup_test(connlm->output, num_thrs) < 0) {
-        ST_WARNING("Failed to output_setup_test.");
-        goto ERR;
-    }
-
-    if (connlm->rnn != NULL) {
-        if (rnn_setup_test(connlm->rnn, connlm->output, num_thrs) < 0) {
-            ST_WARNING("Failed to rnn_setup_test.");
-            goto ERR;
-        }
-    }
-
-    if (connlm->maxent != NULL) {
-        if (maxent_setup_test(connlm->maxent, connlm->output,
-                    num_thrs) < 0) {
-            ST_WARNING("Failed to maxent_setup_test.");
-            goto ERR;
-        }
-    }
-
-    if (connlm->lbl != NULL) {
-        if (lbl_setup_test(connlm->lbl, connlm->output, num_thrs) < 0) {
-            ST_WARNING("Failed to lbl_setup_test.");
-            goto ERR;
-        }
-    }
-
-    if (connlm->ffnn != NULL) {
-        if (ffnn_setup_test(connlm->ffnn, connlm->output, num_thrs) < 0) {
-            ST_WARNING("Failed to ffnn_setup_test.");
-            goto ERR;
-        }
-    }
-
-    return 0;
-
-ERR:
-    p = connlm->full_egs;
-    while (p != NULL) {
-        q = p;
-        p = p->next;
-
-        connlm_egs_destroy(q);
-        safe_free(q);
-    }
-    connlm->full_egs = NULL;
-
-    p = connlm->empty_egs;;
-    while (p != NULL) {
-        q = p;
-        p = p->next;
-
-        connlm_egs_destroy(q);
-        safe_free(q);
-    }
-    connlm->empty_egs = NULL;
-    (void)pthread_mutex_destroy(&connlm->full_egs_lock);
-    (void)pthread_mutex_destroy(&connlm->empty_egs_lock);
-    (void)st_sem_destroy(&connlm->sem_full);
-    (void)st_sem_destroy(&connlm->sem_empty);
-    safe_fclose(connlm->fp_debug);
-    (void)pthread_mutex_destroy(&connlm->fp_debug_lock);
-
-    return -1;
-}
-
-int connlm_reset_test(connlm_t *connlm, int tid)
-{
-    ST_CHECK_PARAM(connlm == NULL, -1);
-
-    if (output_reset_test(connlm->output, tid) < 0) {
-        ST_WARNING("Failed to output_reset_test.");
-        return -1;
-    }
-
-    if (connlm->rnn != NULL) {
-        if (rnn_reset_test(connlm->rnn, tid) < 0) {
-            ST_WARNING("Failed to rnn_reset_test.");
-            return -1;
-        }
-    }
-
-    if (connlm->maxent != NULL) {
-        if (maxent_reset_test(connlm->maxent, tid) < 0) {
-            ST_WARNING("Failed to maxent_reset_test.");
-            return -1;
-        }
-    }
-
-    if (connlm->lbl != NULL) {
-        if (lbl_reset_test(connlm->lbl, tid) < 0) {
-            ST_WARNING("Failed to lbl_reset_test.");
-            return -1;
-        }
-    }
-
-    if (connlm->ffnn != NULL) {
-        if (ffnn_reset_test(connlm->ffnn, tid) < 0) {
-            ST_WARNING("Failed to ffnn_reset_test.");
-            return -1;
-        }
-    }
-
-    return 0;
-}
-
-int connlm_start_test(connlm_t *connlm, int word, int tid)
-{
-    ST_CHECK_PARAM(connlm == NULL, -1);
-
-    if (output_start_test(connlm->output, word, tid) < 0) {
-        ST_WARNING("Failed to output_start_test.");
-        return -1;
-    }
-
-    if (connlm->rnn != NULL) {
-        if (rnn_start_test(connlm->rnn, word, tid) < 0) {
-            ST_WARNING("Failed to rnn_start_test.");
-            return -1;
-        }
-    }
-
-    if (connlm->maxent != NULL) {
-        if (maxent_start_test(connlm->maxent, word, tid) < 0) {
-            ST_WARNING("Failed to maxent_start_test.");
-            return -1;
-        }
-    }
-
-    if (connlm->lbl != NULL) {
-        if (lbl_start_test(connlm->lbl, word, tid) < 0) {
-            ST_WARNING("Failed to lbl_start_test.");
-            return -1;
-        }
-    }
-
-    if (connlm->ffnn != NULL) {
-        if (ffnn_start_test(connlm->ffnn, word, tid) < 0) {
-            ST_WARNING("Failed to ffnn_start_test.");
-            return -1;
-        }
-    }
-
-    return 0;
-}
-
-int connlm_end_test(connlm_t *connlm, int word, int tid)
-{
-    ST_CHECK_PARAM(connlm == NULL, -1);
-
-    if (output_end_test(connlm->output, word, tid) < 0) {
-        ST_WARNING("Failed to output_end_test.");
-        return -1;
-    }
-
-    if (connlm->rnn != NULL) {
-        if (rnn_end_test(connlm->rnn, word, tid) < 0) {
-            ST_WARNING("Failed to rnn_end_test.");
-            return -1;
-        }
-    }
-
-    if (connlm->maxent != NULL) {
-        if (maxent_end_test(connlm->maxent, word, tid) < 0) {
-            ST_WARNING("Failed to maxent_end_test.");
-            return -1;
-        }
-    }
-
-    if (connlm->lbl != NULL) {
-        if (lbl_end_test(connlm->lbl, word, tid) < 0) {
-            ST_WARNING("Failed to lbl_end_test.");
-            return -1;
-        }
-    }
-
-    if (connlm->ffnn != NULL) {
-        if (ffnn_end_test(connlm->ffnn, word, tid) < 0) {
-            ST_WARNING("Failed to ffnn_end_test.");
-            return -1;
-        }
-    }
-
-    return 0;
-}
-
 static void* connlm_eval_thread(void *args)
 {
     connlm_t *connlm;
@@ -2339,7 +1790,7 @@ static void* connlm_eval_thread(void *args)
         if (connlm->full_egs == NULL) {
             finish = true;
         } else {
-            if (connlm->eval_opt.num_thread == 1) {
+            if (connlm->opt.num_thread == 1) {
                 /* ensure FIFO */
                 connlm_egs_t *prev_egs = NULL;
                 egs = connlm->full_egs;
@@ -2400,21 +1851,9 @@ static void* connlm_eval_thread(void *args)
             logp_sent += logn(p, connlm->eval_opt.out_log_base);
 
             if ((logp != logp) || (isinf(logp))) {
-                if (connlm->output->output_opt.class_size > 0) {
-                    ST_WARNING("Numerical error. tid[%d], "
-                            "p_class(%d) = %g, p_word(%d) = %g", tid,
-                            connlm->output->w2c[word],
-                            output_get_class_prob(connlm->output,
-                                word, tid),
-                            word,
-                            output_get_word_prob(connlm->output,
-                                word, tid));
-                } else {
-                    ST_WARNING("Numerical error. tid[%d], p_word(%d) = %g",
-                            tid, word,
-                            output_get_word_prob(connlm->output,
-                                word, tid));
-                }
+                ST_WARNING("Numerical error. tid[%d], p_word(%d) = %g",
+                        tid, word,
+                        output_get_prob(connlm->output, word, tid));
                 goto ERR;
             }
 
@@ -2509,12 +1948,12 @@ int connlm_eval(connlm_t *connlm, FILE *fp_log)
             fprintf(fp_log, "----------------------------------\n");
         }
         ST_NOTICE("Printing Probs, setting num_thread to 1.")
-            connlm->eval_opt.num_thread = 1;
+            connlm->opt.num_thread = 1;
     }
 
     gettimeofday(&tts_eval, NULL);
 
-    num_thrs = connlm->eval_opt.num_thread;
+    num_thrs = connlm->opt.num_thread;
     pts = (pthread_t *)malloc((num_thrs + 1) * sizeof(pthread_t));
     if (pts == NULL) {
         ST_WARNING("Failed to malloc pts");
@@ -2532,8 +1971,8 @@ int connlm_eval(connlm_t *connlm, FILE *fp_log)
 
     read_thr.connlm = connlm;
     read_thr.thrs = thrs;
-    read_thr.num_thrs = connlm->eval_opt.num_thread;
-    read_thr.epoch_size = connlm->eval_opt.epoch_size;
+    read_thr.num_thrs = connlm->opt.num_thread;
+    read_thr.epoch_size = connlm->opt.epoch_size;
     read_thr.shuffle = false;
     read_thr.random = 0;
 
@@ -2621,243 +2060,32 @@ int connlm_setup_gen(connlm_t *connlm, connlm_gen_opt_t *gen_opt)
 
     st_srand(gen_opt->rand_seed);
 
-    if (output_setup_gen(connlm->output) < 0) {
-        ST_WARNING("Failed to output_setup_gen.");
-        goto ERR;
-    }
-
-    if (connlm->rnn != NULL) {
-        if (rnn_setup_gen(connlm->rnn, connlm->output) < 0) {
-            ST_WARNING("Failed to rnn_setup_gen.");
-            goto ERR;
-        }
-    }
-
-    if (connlm->maxent != NULL) {
-        if (maxent_setup_gen(connlm->maxent, connlm->output) < 0) {
-            ST_WARNING("Failed to maxent_setup_gen.");
-            goto ERR;
-        }
-    }
-
-    if (connlm->lbl != NULL) {
-        if (lbl_setup_gen(connlm->lbl, connlm->output) < 0) {
-            ST_WARNING("Failed to lbl_setup_gen.");
-            goto ERR;
-        }
-    }
-
-    if (connlm->ffnn != NULL) {
-        if (ffnn_setup_gen(connlm->ffnn, connlm->output) < 0) {
-            ST_WARNING("Failed to ffnn_setup_gen.");
-            goto ERR;
-        }
-    }
-
-    return 0;
-
-ERR:
-
-    return -1;
-}
-
-int connlm_reset_gen(connlm_t *connlm)
-{
-    ST_CHECK_PARAM(connlm == NULL, -1);
-
-    if (output_reset_gen(connlm->output) < 0) {
-        ST_WARNING("Failed to output_reset_gen.");
+    if (connlm_setup(connlm, 1) < 0) {
+        ST_WARNING("Failed to connlm_setup.");
         return -1;
-    }
-
-    if (connlm->rnn != NULL) {
-        if (rnn_reset_gen(connlm->rnn) < 0) {
-            ST_WARNING("Failed to rnn_reset_gen.");
-            return -1;
-        }
-    }
-
-    if (connlm->maxent != NULL) {
-        if (maxent_reset_gen(connlm->maxent) < 0) {
-            ST_WARNING("Failed to maxent_reset_gen.");
-            return -1;
-        }
-    }
-
-    if (connlm->lbl != NULL) {
-        if (lbl_reset_gen(connlm->lbl) < 0) {
-            ST_WARNING("Failed to lbl_reset_gen.");
-            return -1;
-        }
-    }
-
-    if (connlm->ffnn != NULL) {
-        if (ffnn_reset_gen(connlm->ffnn) < 0) {
-            ST_WARNING("Failed to ffnn_reset_gen.");
-            return -1;
-        }
     }
 
     return 0;
 }
 
-int connlm_end_gen(connlm_t *connlm, int word)
-{
-    ST_CHECK_PARAM(connlm == NULL, -1);
-
-    if (output_end_gen(connlm->output, word) < 0) {
-        ST_WARNING("Failed to output_end_gen.");
-        return -1;
-    }
-
-    if (connlm->rnn != NULL) {
-        if (rnn_end_gen(connlm->rnn, word) < 0) {
-            ST_WARNING("Failed to rnn_end_gen.");
-            return -1;
-        }
-    }
-
-    if (connlm->maxent != NULL) {
-        if (maxent_end_gen(connlm->maxent, word) < 0) {
-            ST_WARNING("Failed to maxent_end_gen.");
-            return -1;
-        }
-    }
-
-    if (connlm->lbl != NULL) {
-        if (lbl_end_gen(connlm->lbl, word) < 0) {
-            ST_WARNING("Failed to lbl_end_gen.");
-            return -1;
-        }
-    }
-
-    if (connlm->ffnn != NULL) {
-        if (ffnn_end_gen(connlm->ffnn, word) < 0) {
-            ST_WARNING("Failed to ffnn_end_gen.");
-            return -1;
-        }
-    }
-
-    return 0;
-}
-
-static int connlm_gen_class(connlm_t *connlm)
-{
-    double u;
-    double p;
-    int cls;
-
-    int class_size;
-
-    ST_CHECK_PARAM(connlm == NULL, -1);
-
-    class_size = connlm->output->output_opt.class_size;
-    if (class_size <= 0) {
-        ST_WARNING("No class to generate.");
-        return -1;
-    }
-
-    if (connlm_forward_pre_layer(connlm, 0, 0) < 0) {
-        ST_WARNING("Failed to connlm_forward_pre_layer.");
-        return -1;
-    }
-
-    u = st_random(0, 1);
-    cls = 0;
-
-    p = output_get_class_prob_for_class(connlm->output, cls, 0);
-    if (p >= u) {
-        return cls;
-    }
-
-    for (cls = 1; cls < class_size; cls++) {
-        if (connlm->output->output_opt.hs
-                && connlm->output->output_opt.class_hs) {
-            if (output_activate_pre_layer(connlm->output, cls, 0) < 0) {
-                ST_WARNING("Failed to output_activate_pre_layer.");
-                return -1;
-            }
-        }
-
-        p += output_get_class_prob_for_class(connlm->output, cls, 0);
-
-        if (p >= u) {
-            return cls;
-        }
-    }
-
-    return class_size - 1;
-}
-
-static int connlm_gen_word(connlm_t *connlm, int cls)
+static int connlm_gen_word(connlm_t *connlm)
 {
     int word;
 
-    int s;
-    int e;
-    double u;
-    double p;
-
     ST_CHECK_PARAM(connlm == NULL, -1);
 
-    if (connlm->output->output_opt.class_size > 0) {
-        if (cls < 0) {
-            ST_WARNING("Invalid class id[%d].", cls);
-            return -1;
-        }
-
-        s = connlm->output->c2w_s[cls];
-        e = connlm->output->c2w_e[cls];
-
-        if (e - s == 1 && s == UNK_ID) {
-            return UNK_ID;
-        }
-    } else {
-        cls = -1;
-        s = 0;
-        e = connlm->output->output_size;
-    }
-
-    if (connlm_forward_last_layer(connlm, s, 0) < 0) {
-        ST_WARNING("Failed to connlm_forward_last_layer.");
+    if (connlm_forward_hidden_layers(connlm, 0) < 0) {
+        ST_WARNING("Failed to connlm_forward_hidden_layers.");
         return -1;
     }
 
-    while (true) {
-        u = st_random(0, 1);
-        word = s;
-
-        p = output_get_word_prob(connlm->output, word, 0);
-        if (p >= u) {
-            if (word == UNK_ID) {
-                continue;
-            } else {
-                return word;
-            }
-        }
-
-        for (word = s + 1; word < e; word++) {
-            if (connlm->output->output_opt.hs) {
-                if (output_activate_last_layer(connlm->output,
-                            word, 0) < 0) {
-                    ST_WARNING("Failed to output_activate_last_layer.");
-                    return -1;
-                }
-            }
-
-            p += output_get_word_prob(connlm->output, word, 0);
-
-            if (p >= u) {
-                break;
-            }
-        }
-
-        if (word != UNK_ID) {
-            return word;
-        }
+    word = output_gen_word(connlm->output) < 0;
+    if (word < 0) {
+        ST_WARNING("Failed to output_gen_word.");
+        return -1;
     }
 
-    return e - 1;
+    return word;
 }
 
 int connlm_gen(connlm_t *connlm, int num_sents)
@@ -2873,18 +2101,13 @@ int connlm_gen(connlm_t *connlm, int num_sents)
         .capacity = 0,
     };
 
-    int class_size;
-
     int word;
-    int cls;
     int i;
 
     struct timeval tts_gen, tte_gen;
     long ms;
 
     ST_CHECK_PARAM(connlm == NULL || num_sents < 0, -1);
-
-    class_size = connlm->output->output_opt.class_size;
 
     if (connlm->gen_opt.prefix_file[0] != '\0') {
         text_fp = st_fopen(connlm->gen_opt.prefix_file, "rb");
@@ -2899,8 +2122,8 @@ int connlm_gen(connlm_t *connlm, int num_sents)
     sents = 0;
     words = 0;
     while(true) {
-        if (connlm_reset_gen(connlm) < 0) {
-            ST_WARNING("Failed to connlm_reset_gen.");
+        if (connlm_reset(connlm, 0, false) < 0) {
+            ST_WARNING("Failed to connlm_reset.");
             goto ERR;
         }
         if (text_fp != NULL && !feof(text_fp)) {
@@ -2919,7 +2142,7 @@ int connlm_gen(connlm_t *connlm, int num_sents)
                         goto ERR;
                     }
 
-                    if (connlm_end_gen(connlm, word) < 0) {
+                    if (connlm_end(connlm, word, 0, false) < 0) {
                         ST_WARNING("connlm_end_gen.");
                         goto ERR;
                     }
@@ -2940,18 +2163,8 @@ int connlm_gen(connlm_t *connlm, int num_sents)
             if (word != -1) { // not first word
                 printf(" ");
             }
-            if (class_size > 0) {
-                // generate class
-                cls = connlm_gen_class(connlm);
-                if (cls < 0) {
-                    ST_WARNING("Failed to connlm_gen_class.");
-                    goto ERR;
-                }
-            } else {
-                cls = -1;
-            }
 
-            word = connlm_gen_word(connlm, cls);
+            word = connlm_gen_word(connlm);
             if (word < 0) {
                 ST_WARNING("Failed to connlm_gen_word.");
                 goto ERR;
@@ -2964,7 +2177,7 @@ int connlm_gen(connlm_t *connlm, int num_sents)
             }
             fflush(stdout);
 
-            if (connlm_end_gen(connlm, word) < 0) {
+            if (connlm_end(connlm, word, 0, false) < 0) {
                 ST_WARNING("connlm_end_gen.");
                 goto ERR;
             }

@@ -31,20 +31,35 @@
 #include <stutils/st_macro.h>
 #include <stutils/st_log.h>
 #include <stutils/st_utils.h>
+#include <stutils/st_queue.h>
 
 #include "utils.h"
 #include "output.h"
 
-static const int OUTPUT_MAGIC_NUM = 626140498 + 6;
+static const int OUTPUT_MAGIC_NUM = 626140498 + 2;
+static const int OUTPUT_TREE_MAGIC_NUM = 626140498 + 3;
 
-static inline int output_hs_wt_w_pos(int cls, int s)
+static const char *method_str[] = {
+    "TopDown",
+    "BottomUp",
+};
+
+const char* method2str(output_method_t m)
 {
-    if (cls < 0) {
-        return 0;
+    return method_str[m];
+}
+
+output_method_t str2method(const char *str)
+{
+    int i;
+
+    for (i = 0; i < sizeof(method_str); i++) {
+        if (strcasecmp(method_str[i], str) == 0) {
+            return (output_method_t)i;
+        }
     }
 
-    /* Every class should contain n_c - 1 nodes */
-    return s - cls;
+    return (output_method_t)-1;
 }
 
 int output_load_opt(output_opt_t *output_opt, st_opt_t *opt,
@@ -117,17 +132,353 @@ static void output_tree_destroy(output_tree_t *tree)
 
     safe_free(tree->nodes);
 
-    tree->cap_nodes = 0;
-    tree->num_nodes = 0;
+    tree->cap_node = 0;
+    tree->num_node = 0;
     tree->root = OUTPUT_NODE_NONE;
 }
 
-static output_tree_t* output_tree_init(output_node_id_t cap_nodes)
+output_tree_t* output_tree_dup(output_tree_t *t)
 {
     output_tree_t *tree = NULL;
     size_t sz;
 
-    ST_CHECK_PARAM(cap_nodes <= 0, NULL);
+    ST_CHECK_PARAM(t == NULL, NULL);
+
+    tree = (output_tree_t *) malloc(sizeof(output_tree_t));
+    if (tree == NULL) {
+        ST_WARNING("Falied to malloc output_tree_t.");
+        goto ERR;
+    }
+    memset(tree, 0, sizeof(output_tree_t));
+
+    *tree = *t;
+
+    if (t->nodes != NULL) {
+        sz = sizeof(output_tree_node_t) * tree->cap_node;
+        tree->nodes = (output_tree_node_t *)malloc(sz);
+        if (tree->nodes == NULL) {
+            ST_WARNING("Failed to malloc nodes for tree.");
+            goto ERR;
+        }
+
+        sz = sizeof(output_tree_node_t) * tree->num_node;
+        memcpy(tree->nodes, t->nodes, sz);
+        if (tree->cap_node > tree->num_node) {
+            sz = sizeof(output_tree_node_t)*(tree->cap_node-tree->num_node);
+            memset(tree->nodes, 0, sz);
+        }
+    }
+
+    return tree;
+
+ERR:
+    safe_tree_destroy(tree);
+    return NULL;
+}
+
+bool output_tree_equal(output_tree_t *tree1, output_tree_t *tree2)
+{
+    output_node_id_t n;
+
+    ST_CHECK_PARAM(tree1 == NULL || tree2 == NULL, false);
+
+    if (tree1->root != tree2->root) {
+        return false;
+    }
+
+    if (tree1->num_node != tree2->num_node) {
+        return false;
+    }
+
+    for (n = 0; n < tree1->num_node; n++) {
+        if (s_children(tree1, n) != s_children(tree2, n)) {
+            return false;
+        }
+        if (e_children(tree1, n) != e_children(tree2, n)) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+int output_tree_load_header(output_tree_t **tree, int version,
+        FILE *fp, bool *binary, FILE *fo_info)
+{
+    union {
+        char str[4];
+        int magic_num;
+    } flag;
+
+    output_node_id_t num_node;
+    output_node_id_t root;
+
+    ST_CHECK_PARAM((tree == NULL && fo_info == NULL) || fp == NULL
+            || binary == NULL, -1);
+
+    if (version < 3) {
+        ST_WARNING("Too old version of connlm file");
+        return -1;
+    }
+
+    if (fread(&flag.magic_num, sizeof(int), 1, fp) != 1) {
+        ST_WARNING("Failed to load magic num.");
+        return -1;
+    }
+
+    if (strncmp(flag.str, "    ", 4) == 0) {
+        *binary = false;
+    } else if (OUTPUT_TREE_MAGIC_NUM != flag.magic_num) {
+        ST_WARNING("magic num wrong.");
+        return -2;
+    } else {
+        *binary = true;
+    }
+
+    if (tree != NULL) {
+        *tree = NULL;
+    }
+
+    if (*binary) {
+        if (fread(&num_node, sizeof(output_node_id_t), 1, fp) != 1) {
+            ST_WARNING("Failed to read output size.");
+            return -1;
+        }
+
+        if (num_node <= 0) {
+            if (fo_info != NULL) {
+                fprintf(fo_info, "\n<OUTPUT-TREE>: None\n");
+            }
+            return 0;
+        }
+
+        if (fread(&root, sizeof(output_node_id_t), 1, fp) != 1) {
+            ST_WARNING("Failed to read root.");
+            return -1;
+        }
+    } else {
+        if (st_readline(fp, "") != 0) {
+            ST_WARNING("tag error.");
+            goto ERR;
+        }
+        if (st_readline(fp, "<OUTPUT-TREE>") != 0) {
+            ST_WARNING("tag error.");
+            goto ERR;
+        }
+
+        if (st_readline(fp, "Num Nodes: " OUTPUT_NODE_FMT, &num_node) != 1) {
+            ST_WARNING("Failed to parse num_node.");
+            goto ERR;
+        }
+
+        if (num_node <= 0) {
+            if (fo_info != NULL) {
+                fprintf(fo_info, "\n<OUTPUT-TREE>: None\n");
+            }
+            return 0;
+        }
+
+        if (st_readline(fp, "Root: " OUTPUT_NODE_FMT, &root) != 1) {
+            ST_WARNING("Failed to parse root.");
+            return -1;
+        }
+    }
+
+    if (tree != NULL) {
+        *tree = (output_tree_t *)malloc(sizeof(output_tree_t));
+        if (*tree == NULL) {
+            ST_WARNING("Failed to malloc output_tree_t");
+            goto ERR;
+        }
+        memset(*tree, 0, sizeof(output_tree_t));
+
+        (*tree)->num_node = num_node;
+        (*tree)->cap_node = num_node;
+        (*tree)->root = root;
+    }
+
+    if (fo_info != NULL) {
+        fprintf(fo_info, "\n<OUTPUT-TREE>\n");
+        fprintf(fo_info, "Num Nodes: " OUTPUT_NODE_FMT "\n", num_node);
+        fprintf(fo_info, "Root: " OUTPUT_NODE_FMT "\n", root);
+    }
+
+    return 0;
+
+ERR:
+    if (tree != NULL) {
+        safe_tree_destroy(*tree);
+    }
+    return -1;
+}
+
+int output_tree_load_body(output_tree_t *tree, int version,
+        FILE *fp, bool binary)
+{
+    size_t sz;
+
+    int n;
+    output_node_id_t i;
+
+    ST_CHECK_PARAM(tree == NULL || fp == NULL, -1);
+
+    if (version < 3) {
+        ST_WARNING("Too old version of connlm file");
+        return -1;
+    }
+
+    tree->nodes = NULL;
+
+    if (tree->num_node > 0) {
+        sz = sizeof(output_tree_node_t) * tree->num_node;
+        tree->nodes = (output_tree_node_t *) malloc(sz);
+        if (tree->nodes == NULL) {
+            ST_WARNING("Failed to malloc nodes.");
+            goto ERR;
+        }
+        memset(tree->nodes, 0, sz);
+    }
+
+    if (binary) {
+        if (fread(&n, sizeof(int), 1, fp) != 1) {
+            ST_WARNING("Failed to read magic num.");
+            goto ERR;
+        }
+
+        if (n != -OUTPUT_TREE_MAGIC_NUM) {
+            ST_WARNING("Magic num error.");
+            goto ERR;
+        }
+
+        if (tree->num_node > 0) {
+            if (fread(tree->nodes, sizeof(output_tree_node_t),
+                        tree->num_node, fp) != tree->num_node) {
+                ST_WARNING("Failed to read nodes.");
+                goto ERR;
+            }
+        }
+    } else {
+        if (st_readline(fp, "<OUTPUT-TREE-DATA>") != 0) {
+            ST_WARNING("body flag error.");
+            goto ERR;
+        }
+
+        if (tree->num_node > 0) {
+            if (st_readline(fp, "Nodes:") != 0) {
+                ST_WARNING("nodes flag error.");
+                goto ERR;
+            }
+            for (i = 0; i < tree->num_node; i++) {
+                if (st_readline(fp, "\t" OUTPUT_NODE_FMT "\t"
+                            OUTPUT_NODE_FMT,
+                            &(s_children(tree, i)),
+                            &(e_children(tree, i))) != 2) {
+                    ST_WARNING("Failed to parse w2c.");
+                    goto ERR;
+                }
+            }
+        }
+    }
+
+    return 0;
+ERR:
+    safe_free(tree->nodes);
+
+    return -1;
+}
+
+int output_tree_save_header(output_tree_t *tree, FILE *fp, bool binary)
+{
+    int n;
+
+    ST_CHECK_PARAM(fp == NULL, -1);
+
+    if (binary) {
+        if (fwrite(&OUTPUT_TREE_MAGIC_NUM, sizeof(int), 1, fp) != 1) {
+            ST_WARNING("Failed to write magic num.");
+            return -1;
+        }
+        if (tree == NULL) {
+            n = 0;
+            if (fwrite(&n, sizeof(int), 1, fp) != 1) {
+                ST_WARNING("Failed to write output size.");
+                return -1;
+            }
+            return 0;
+        }
+
+        if (fwrite(&tree->num_node, sizeof(output_node_id_t), 1, fp) != 1) {
+            ST_WARNING("Failed to write num_node.");
+            return -1;
+        }
+
+        if (tree->num_node > 0) {
+            if (fwrite(&tree->root, sizeof(output_node_id_t), 1, fp) != 1) {
+                ST_WARNING("Failed to write root.");
+                return -1;
+            }
+        }
+    } else {
+        fprintf(fp, "    \n<OUTPUT-TREE>\n");
+
+        if (tree == NULL || tree->num_node <= 0) {
+            fprintf(fp, "Num nodes: 0\n");
+            return 0;
+        }
+
+        fprintf(fp, "Num nodes: " OUTPUT_NODE_FMT "\n", tree->num_node);
+        fprintf(fp, "Root: " OUTPUT_NODE_FMT "\n", tree->root);
+    }
+
+    return 0;
+}
+
+int output_tree_save_body(output_tree_t *tree, FILE *fp, bool binary)
+{
+    output_node_id_t i;
+    int n;
+
+    ST_CHECK_PARAM(fp == NULL, -1);
+
+    if (tree == NULL) {
+        return 0;
+    }
+
+    if (binary) {
+        n = -OUTPUT_TREE_MAGIC_NUM;
+        if (fwrite(&n, sizeof(int), 1, fp) != 1) {
+            ST_WARNING("Failed to write magic num.");
+            return -1;
+        }
+
+        if (tree->num_node > 0) {
+            if (fwrite(tree->nodes, sizeof(output_tree_node_t),
+                        tree->num_node, fp) != tree->num_node) {
+                ST_WARNING("Failed to write nodes.");
+                return -1;
+            }
+        }
+    } else {
+        fprintf(fp, "<OUTPUT-TREE-DATA>\n");
+        if (tree->num_node > 0) {
+            fprintf(fp, "Nodes:\n");
+            for (i = 0; i < tree->num_node; i++) {
+                fprintf(fp, "\t" OUTPUT_NODE_FMT "\t" OUTPUT_NODE_FMT "\n",
+                            s_children(tree, i),
+                            e_children(tree, i));
+            }
+        }
+    }
+
+    return 0;
+}
+
+static output_tree_t* output_tree_init(output_node_id_t cap_node)
+{
+    output_tree_t *tree = NULL;
+    size_t sz;
+
+    ST_CHECK_PARAM(cap_node <= 0, NULL);
 
     sz = sizeof(output_tree_t);
     tree = (output_tree_t *)malloc(sz);
@@ -137,15 +488,15 @@ static output_tree_t* output_tree_init(output_node_id_t cap_nodes)
     }
     memset(tree, 0, sz);
 
-    sz = cap_nodes * sizeof(output_tree_node_t);
+    sz = cap_node * sizeof(output_tree_node_t);
     tree->nodes = (output_tree_node_t *)malloc(sz);
     if (tree->nodes == NULL) {
         ST_WARNING("Failed to malloc nodes.");
         goto ERR;
     }
 
-    tree->num_nodes = 0;
-    tree->cap_nodes = cap_nodes;
+    tree->num_node = 0;
+    tree->cap_node = cap_node;
     tree->root = OUTPUT_NODE_NONE;
 
     return tree;
@@ -160,21 +511,21 @@ static output_node_id_t output_tree_add_node(output_tree_t *tree)
 
     ST_CHECK_PARAM(tree == NULL, OUTPUT_NODE_NONE);
 
-    if (tree->num_nodes >= tree->cap_nodes) {
-        tree->cap_nodes += NUM_REALLOC;
+    if (tree->num_node >= tree->cap_node) {
+        tree->cap_node += NUM_REALLOC;
         tree->nodes = (output_tree_node_t *)realloc(tree->nodes,
-                sizeof(output_tree_node_t) * tree->cap_nodes);
+                sizeof(output_tree_node_t) * tree->cap_node);
         if (tree->nodes == NULL) {
             ST_WARNING("Failed to realloc nodes.");
             return OUTPUT_NODE_NONE;
         }
     }
 
-    node = tree->num_nodes;
+    node = tree->num_node;
     s_children(tree, node) = OUTPUT_NODE_NONE;
     e_children(tree, node) = OUTPUT_NODE_NONE;
 
-    ++tree->num_nodes;
+    ++tree->num_node;
 
     return node;
 }
@@ -187,24 +538,24 @@ static output_node_id_t output_tree_add_node_m(output_tree_t *tree,
 
     ST_CHECK_PARAM(tree == NULL || n <= 0, OUTPUT_NODE_NONE);
 
-    if (tree->num_nodes >= tree->cap_nodes) {
-        tree->cap_nodes += n + NUM_REALLOC;
+    if (tree->num_node >= tree->cap_node) {
+        tree->cap_node += n + NUM_REALLOC;
         tree->nodes = (output_tree_node_t *)realloc(tree->nodes,
-                sizeof(output_tree_node_t) * tree->cap_nodes);
+                sizeof(output_tree_node_t) * tree->cap_node);
         if (tree->nodes == NULL) {
             ST_WARNING("Failed to realloc nodes.");
             return OUTPUT_NODE_NONE;
         }
     }
 
-    node = tree->num_nodes;
+    node = tree->num_node;
 
     for (i = node; i < node + n; ++i) {
         s_children(tree, i) = OUTPUT_NODE_NONE;
         e_children(tree, i) = OUTPUT_NODE_NONE;
     }
 
-    tree->num_nodes += n;
+    tree->num_node += n;
 
     return node;
 }
@@ -217,8 +568,8 @@ typedef struct _huffman_tree_node_t_ { // two range of nodes for children
 
 typedef struct _huffman_tree_t_ {
     huffman_tree_node_t *nodes;
-    output_node_id_t num_nodes;
-    output_node_id_t cap_nodes;
+    output_node_id_t num_node;
+    output_node_id_t cap_node;
 
     output_node_id_t root;
 } huffman_tree_t;
@@ -241,17 +592,17 @@ static void huffman_tree_destroy(huffman_tree_t *tree)
 
     safe_free(tree->nodes);
 
-    tree->cap_nodes = 0;
-    tree->num_nodes = 0;
+    tree->cap_node = 0;
+    tree->num_node = 0;
     tree->root = OUTPUT_NODE_NONE;
 }
 
-static huffman_tree_t* huffman_tree_init(output_node_id_t cap_nodes)
+static huffman_tree_t* huffman_tree_init(output_node_id_t cap_node)
 {
     huffman_tree_t *tree = NULL;
     size_t sz;
 
-    ST_CHECK_PARAM(cap_nodes <= 0, NULL);
+    ST_CHECK_PARAM(cap_node <= 0, NULL);
 
     sz = sizeof(huffman_tree_t);
     tree = (huffman_tree_t *)malloc(sz);
@@ -261,15 +612,15 @@ static huffman_tree_t* huffman_tree_init(output_node_id_t cap_nodes)
     }
     memset(tree, 0, sz);
 
-    sz = cap_nodes * sizeof(huffman_tree_node_t);
+    sz = cap_node * sizeof(huffman_tree_node_t);
     tree->nodes = (huffman_tree_node_t *)malloc(sz);
     if (tree->nodes == NULL) {
         ST_WARNING("Failed to malloc nodes.");
         goto ERR;
     }
 
-    tree->num_nodes = 0;
-    tree->cap_nodes = cap_nodes;
+    tree->num_node = 0;
+    tree->cap_node = cap_node;
     tree->root = OUTPUT_NODE_NONE;
 
     return tree;
@@ -284,24 +635,24 @@ static output_node_id_t huffman_tree_add_node(huffman_tree_t *tree)
 
     ST_CHECK_PARAM(tree == NULL, OUTPUT_NODE_NONE);
 
-    if (tree->num_nodes >= tree->cap_nodes) {
-        tree->cap_nodes += NUM_REALLOC;
+    if (tree->num_node >= tree->cap_node) {
+        tree->cap_node += NUM_REALLOC;
         tree->nodes = (huffman_tree_node_t *)realloc(tree->nodes,
-                sizeof(huffman_tree_node_t) * tree->cap_nodes);
+                sizeof(huffman_tree_node_t) * tree->cap_node);
         if (tree->nodes == NULL) {
             ST_WARNING("Failed to realloc nodes.");
             return OUTPUT_NODE_NONE;
         }
     }
 
-    node = tree->num_nodes;
+    node = tree->num_node;
     n_cnt(tree, node) = 0;
     s_children(tree, node)[0] = OUTPUT_NODE_NONE;
     e_children(tree, node)[0] = OUTPUT_NODE_NONE;
     s_children(tree, node)[1] = OUTPUT_NODE_NONE;
     e_children(tree, node)[1] = OUTPUT_NODE_NONE;
 
-    ++tree->num_nodes;
+    ++tree->num_node;
 
     return node;
 }
@@ -314,17 +665,17 @@ static output_node_id_t huffman_tree_add_node_m(huffman_tree_t *tree,
 
     ST_CHECK_PARAM(tree == NULL || n <= 0, OUTPUT_NODE_NONE);
 
-    if (tree->num_nodes >= tree->cap_nodes) {
-        tree->cap_nodes += n + NUM_REALLOC;
+    if (tree->num_node >= tree->cap_node) {
+        tree->cap_node += n + NUM_REALLOC;
         tree->nodes = (huffman_tree_node_t *)realloc(tree->nodes,
-                sizeof(huffman_tree_node_t) * tree->cap_nodes);
+                sizeof(huffman_tree_node_t) * tree->cap_node);
         if (tree->nodes == NULL) {
             ST_WARNING("Failed to realloc nodes.");
             return OUTPUT_NODE_NONE;
         }
     }
 
-    node = tree->num_nodes;
+    node = tree->num_node;
 
     for (i = node; i < node + n; ++i) {
         n_cnt(tree, i) = 0;
@@ -334,7 +685,7 @@ static output_node_id_t huffman_tree_add_node_m(huffman_tree_t *tree,
         e_children(tree, i)[1] = OUTPUT_NODE_NONE;
     }
 
-    tree->num_nodes += n;
+    tree->num_node += n;
 
     return node;
 }
@@ -352,19 +703,10 @@ void output_destroy(output_t *output)
 
     if (output->neurons != NULL) {
         for (i = 0; i < output->num_thrs; i++) {
-            safe_free(output->neurons[i].ac_o_c);
-            safe_free(output->neurons[i].er_o_c);
-            safe_free(output->neurons[i].ac_o_w);
-            safe_free(output->neurons[i].er_o_w);
+            safe_free(output->neurons[i].ac);
+            safe_free(output->neurons[i].er);
 
-            safe_free(output->neurons[i].wt_hs_c);
-            safe_free(output->neurons[i].wt_hs_w);
-
-            safe_free(output->neurons[i].ac_hs_c);
-            safe_free(output->neurons[i].ac_hs_w);
-
-            output->neurons[i].p_hs_c = -1.0;
-            output->neurons[i].p_hs_w = -1.0;
+            output->neurons[i].p = -1.0;
         }
         safe_free(output->neurons);
     }
@@ -376,8 +718,7 @@ output_t* output_dup(output_t *o)
     output_t *output = NULL;
     size_t sz;
 
-    int class_size;
-    int max_code_len;
+    int i;
 
     ST_CHECK_PARAM(o == NULL, NULL);
 
@@ -391,1145 +732,43 @@ output_t* output_dup(output_t *o)
     output->output_opt = o->output_opt;
     *output = *o;
 
-    class_size = o->output_opt.class_size;
-    max_code_len = o->output_opt.max_code_len;
-
-    if(class_size > 0) {
-        sz = sizeof(int) * o->output_size;
-        output->w2c = (int *) malloc(sz);
-        if (output->w2c == NULL) {
-            ST_WARNING("Failed to malloc w2c.");
+    if (o->tree != NULL) {
+        output->tree = output_tree_dup(o->tree);
+        if (output->tree == NULL) {
+            ST_WARNING("Failed to output_tree_dup.");
             goto ERR;
         }
-        memcpy(output->w2c, o->w2c, sz);
-
-        sz = sizeof(int) * class_size;
-        output->c2w_s = (int *) malloc(sz);
-        if (output->c2w_s == NULL) {
-            ST_WARNING("Failed to malloc c2w_s.");
-            goto ERR;
-        }
-        memcpy(output->c2w_s, o->c2w_s, sz);
-
-        output->c2w_e = (int *) malloc(sz);
-        if (output->c2w_e == NULL) {
-            ST_WARNING("Failed to malloc c2w_e.");
-            goto ERR;
-        }
-        memcpy(output->c2w_e, o->c2w_e, sz);
     }
 
-    if(o->output_opt.hs) {
-        if(class_size > 0 && o->output_opt.class_hs) {
-            sz = sizeof(char) * class_size * max_code_len;
-            output->code_c = (char *) malloc(sz);
-            if (output->code_c == NULL) {
-                ST_WARNING("Failed to malloc code_c.");
-                goto ERR;
-            }
-            memcpy(output->code_c, o->code_c, sz);
-
-            sz = sizeof(int) * class_size * max_code_len;
-            output->pt_c = (int *) malloc(sz);
-            if (output->pt_c == NULL) {
-                ST_WARNING("Failed to malloc pt_c.");
-                goto ERR;
-            }
-            memcpy(output->pt_c, o->pt_c, sz);
-        }
-
-        sz = sizeof(char) * o->output_size * max_code_len;
-        output->code_w = (char *) malloc(sz);
-        if (output->code_w == NULL) {
-            ST_WARNING("Failed to malloc code_w.");
+    if (o->paths != NULL) {
+        sz = sizeof(output_path_t) * output->output_size;
+        output->paths = (output_path_t *)malloc(sz);
+        if (output->paths == NULL) {
+            ST_WARNING("Failed to malloc paths.");
             goto ERR;
         }
-        memcpy(output->code_w, o->code_w, sz);
-
-        sz = sizeof(int) * o->output_size * max_code_len;
-        output->pt_w = (int *) malloc(sz);
-        if (output->pt_w == NULL) {
-            ST_WARNING("Failed to malloc pt_w.");
-            goto ERR;
+        for (i = 0; i < output->output_size; i++) {
+            if (o->paths[i].num_node > 0) {
+                output->paths[i].num_node = o->paths[i].num_node;
+                sz = sizeof(output_node_id_t) * output->paths[i].num_node;
+                output->paths[i].nodes = (output_node_id_t *)malloc(sz);
+                if (output->paths[i].nodes == NULL) {
+                    ST_WARNING("Failed to malloc nodes for path");
+                    goto ERR;
+                }
+                memcpy(output->paths[i].nodes, o->paths[i].nodes, sz);
+            } else {
+                output->paths[i].nodes = NULL;
+                output->paths[i].num_node = 0;
+            }
         }
-        memcpy(output->pt_w, o->pt_w, sz);
     }
+
     return output;
 
 ERR:
     safe_output_destroy(output);
     return NULL;
-}
-
-int output_load_header(output_t **output, int version,
-        FILE *fp, bool *binary, FILE *fo_info)
-{
-    char sym[MAX_LINE_LEN];
-    union {
-        char str[4];
-        int magic_num;
-    } flag;
-
-    int output_size;
-    int class_size;
-    int max_code_len = -1;
-    int hs_input_size = 0;
-    bool hs = false;
-    bool class_hs = false;
-
-    ST_CHECK_PARAM((output == NULL && fo_info == NULL) || fp == NULL
-            || binary == NULL, -1);
-
-    if (fread(&flag.magic_num, sizeof(int), 1, fp) != 1) {
-        ST_WARNING("Failed to load magic num.");
-        return -1;
-    }
-
-    if (strncmp(flag.str, "    ", 4) == 0) {
-        *binary = false;
-    } else if (OUTPUT_MAGIC_NUM != flag.magic_num) {
-        ST_WARNING("magic num wrong.");
-        return -2;
-    } else {
-        *binary = true;
-    }
-
-    if (output != NULL) {
-        *output = NULL;
-    }
-
-    if (*binary) {
-        if (fread(&output_size, sizeof(int), 1, fp) != 1) {
-            ST_WARNING("Failed to read output size.");
-            return -1;
-        }
-
-        if (output_size <= 0) {
-            if (fo_info != NULL) {
-                fprintf(fo_info, "\n<OUTPUT>: None\n");
-            }
-            return 0;
-        }
-
-        if (fread(&class_size, sizeof(int), 1, fp) != 1) {
-            ST_WARNING("Failed to read class size.");
-            return -1;
-        }
-
-        if (fread(&hs, sizeof(bool), 1, fp) != 1) {
-            ST_WARNING("Failed to read hs.");
-            return -1;
-        }
-
-        if (version >= 2) {
-            if (hs) {
-                if (fread(&max_code_len, sizeof(int), 1, fp) != 1) {
-                    ST_WARNING("Failed to read max_code_len.");
-                    return -1;
-                }
-                if (fread(&class_hs, sizeof(bool), 1, fp) != 1) {
-                    ST_WARNING("Failed to read class_hs.");
-                    return -1;
-                }
-                if (fread(&hs_input_size, sizeof(int), 1, fp) != 1) {
-                    ST_WARNING("Failed to read hs_input_size.");
-                    return -1;
-                }
-            }
-        }
-    } else {
-        if (st_readline(fp, "") != 0) {
-            ST_WARNING("tag error.");
-            goto ERR;
-        }
-        if (st_readline(fp, "<OUTPUT>") != 0) {
-            ST_WARNING("tag error.");
-            goto ERR;
-        }
-
-        if (st_readline(fp, "Output size: %d", &output_size) != 1) {
-            ST_WARNING("Failed to parse output_size.");
-            goto ERR;
-        }
-
-        if (output_size <= 0) {
-            if (fo_info != NULL) {
-                fprintf(fo_info, "\n<OUTPUT>: None\n");
-            }
-            return 0;
-        }
-
-        if (st_readline(fp, "Class size: %d", &class_size) != 1) {
-            ST_WARNING("Failed to parse class size.");
-            return -1;
-        }
-
-        if (st_readline(fp, "HS: %s", sym) != 1) {
-            ST_WARNING("Failed to parse hs.");
-            return -1;
-        }
-        hs = str2bool(sym);
-
-        if (version >= 2) {
-            if (hs) {
-                if (st_readline(fp, "\tMax code len: %d",
-                            &max_code_len) != 1) {
-                    ST_WARNING("Failed to parse max_code_len.");
-                    return -1;
-                }
-                if (st_readline(fp, "\tClass HS: %s", sym) != 1) {
-                    ST_WARNING("Failed to parse class_hs.");
-                    return -1;
-                }
-                class_hs = str2bool(sym);
-
-                if (st_readline(fp, "\tHS input size: %d",
-                            &hs_input_size) != 1) {
-                    ST_WARNING("Failed to parse hs_input_size.");
-                    return -1;
-                }
-            }
-        }
-    }
-
-    if (output != NULL) {
-        *output = (output_t *)malloc(sizeof(output_t));
-        if (*output == NULL) {
-            ST_WARNING("Failed to malloc output_t");
-            goto ERR;
-        }
-        memset(*output, 0, sizeof(output_t));
-
-        (*output)->output_size = output_size;
-        (*output)->output_opt.class_size = class_size;
-        (*output)->output_opt.hs = hs;
-        (*output)->output_opt.class_hs = class_hs;
-        (*output)->output_opt.max_code_len = max_code_len;
-        (*output)->hs_input_size = hs_input_size;
-    }
-
-    if (fo_info != NULL) {
-        fprintf(fo_info, "\n<OUTPUT>\n");
-        fprintf(fo_info, "Output size: %d\n", output_size);
-        fprintf(fo_info, "Class size: %d\n", class_size);
-        fprintf(fo_info, "HS: %s\n", bool2str(hs));
-        if (version >= 2) {
-            if (hs) {
-                fprintf(fo_info, "    Max code len: %d\n", max_code_len);
-                fprintf(fo_info, "    Class HS: %s\n", bool2str(class_hs));
-                fprintf(fo_info, "    HS input size: %d\n", hs_input_size);
-            }
-        }
-    }
-
-    return 0;
-
-ERR:
-    if (output != NULL) {
-        safe_output_destroy(*output);
-    }
-    return -1;
-}
-
-int output_load_body(output_t *output, int version, FILE *fp, bool binary)
-{
-    size_t sz;
-    int n;
-
-    int i;
-    int class_size;
-    int max_code_len;
-    int hs_input_size;
-    int word_size = -1;
-
-    int t;
-
-    ST_CHECK_PARAM(output == NULL || fp == NULL, -1);
-
-    output->w2c = NULL;
-    output->c2w_s = NULL;
-    output->c2w_e = NULL;
-
-    output->code_c = NULL;
-    output->pt_c = NULL;
-    output->code_w = NULL;
-    output->pt_w = NULL;
-
-    if (output->output_size <= 0) {
-        return 0;
-    }
-
-    class_size = output->output_opt.class_size;
-    max_code_len = output->output_opt.max_code_len;
-    hs_input_size = output->hs_input_size;
-
-    if (class_size > 0) {
-        sz = sizeof(int) * output->output_size;
-        output->w2c = (int *) malloc(sz);
-        if (output->w2c == NULL) {
-            ST_WARNING("Failed to malloc w2c.");
-            goto ERR;
-        }
-        memset(output->w2c, 0, sz);
-
-        sz = sizeof(int) * class_size;
-        output->c2w_s = (int *) malloc(sz);
-        if (output->c2w_s == NULL) {
-            ST_WARNING("Failed to malloc c2w_s.");
-            goto ERR;
-        }
-        memset(output->c2w_s, 0, sz);
-
-        output->c2w_e = (int *) malloc(sz);
-        if (output->c2w_e == NULL) {
-            ST_WARNING("Failed to malloc c2w_e.");
-            goto ERR;
-        }
-        memset(output->c2w_e, 0, sz);
-    }
-
-    if(version >= 2 && output->output_opt.hs) {
-        if(class_size > 0 && output->output_opt.class_hs) {
-            sz = sizeof(char) * class_size * max_code_len;
-            output->code_c = (char *) malloc(sz);
-            if (output->code_c == NULL) {
-                ST_WARNING("Failed to malloc code_c.");
-                goto ERR;
-            }
-            memset(output->code_c, -1, sz);
-
-            sz = sizeof(int) * class_size * max_code_len;
-            output->pt_c = (int *) malloc(sz);
-            if (output->pt_c == NULL) {
-                ST_WARNING("Failed to malloc pt_c.");
-                goto ERR;
-            }
-            memset(output->pt_c, -1, sz);
-
-            sz = (class_size - 1) * hs_input_size;
-            if (posix_memalign((void **)&output->wt_hs_c, ALIGN_SIZE,
-                        sizeof(real_t) * sz) != 0
-                    || output->wt_hs_c == NULL) {
-                ST_WARNING("Failed to malloc wt_hs_c.");
-                goto ERR;
-            }
-        }
-
-        sz = sizeof(char) * output->output_size * max_code_len;
-        output->code_w = (char *) malloc(sz);
-        if (output->code_w == NULL) {
-            ST_WARNING("Failed to malloc code_w.");
-            goto ERR;
-        }
-        memset(output->code_w, -1, sz);
-
-        sz = sizeof(int) * output->output_size * max_code_len;
-        output->pt_w = (int *) malloc(sz);
-        if (output->pt_w == NULL) {
-            ST_WARNING("Failed to malloc pt_w.");
-            goto ERR;
-        }
-        memset(output->pt_w, -1, sz);
-
-        if (class_size > 0) {
-            word_size = output->output_size - class_size;
-        } else {
-            word_size = output->output_size - 1;
-        }
-        sz = word_size * hs_input_size;
-        if (posix_memalign((void **)&output->wt_hs_w, ALIGN_SIZE,
-                    sizeof(real_t) * sz) != 0
-                || output->wt_hs_w == NULL) {
-            ST_WARNING("Failed to malloc wt_hs_w.");
-            goto ERR;
-        }
-    }
-
-    if (binary) {
-        if (fread(&n, sizeof(int), 1, fp) != 1) {
-            ST_WARNING("Failed to read magic num.");
-            goto ERR;
-        }
-
-        if (n != -OUTPUT_MAGIC_NUM) {
-            ST_WARNING("Magic num error.");
-            goto ERR;
-        }
-
-        if (class_size > 0) {
-            if (fread(output->w2c, sizeof(int), output->output_size, fp)
-                    != output->output_size) {
-                ST_WARNING("Failed to read w2c.");
-                goto ERR;
-            }
-
-            if (fread(output->c2w_s, sizeof(int), class_size, fp)
-                    != class_size) {
-                ST_WARNING("Failed to read c2w_s.");
-                goto ERR;
-            }
-
-            if (fread(output->c2w_e, sizeof(int), class_size, fp)
-                    != class_size) {
-                ST_WARNING("Failed to read c2w_e.");
-                goto ERR;
-            }
-        }
-
-        if (version >= 2 && output->output_opt.hs) {
-            if(class_size > 0 && output->output_opt.class_hs) {
-                sz = class_size * max_code_len;
-                if (fread(output->code_c, sizeof(char), sz, fp) != sz) {
-                    ST_WARNING("Failed to read code_c.");
-                    goto ERR;
-                }
-
-                sz = class_size * max_code_len;
-                if (fread(output->pt_c, sizeof(int), sz, fp) != sz) {
-                    ST_WARNING("Failed to read pt_c.");
-                    goto ERR;
-                }
-
-                sz = (class_size - 1) * hs_input_size;
-                if (fread(output->wt_hs_c, sizeof(real_t), sz, fp) != sz) {
-                    ST_WARNING("Failed to read wt_hs_c.");
-                    goto ERR;
-                }
-            }
-
-            sz = output->output_size * max_code_len;
-            if (fread(output->code_w, sizeof(char), sz, fp) != sz) {
-                ST_WARNING("Failed to read code_w.");
-                goto ERR;
-            }
-
-            sz = output->output_size * max_code_len;
-            if (fread(output->pt_w, sizeof(int), sz, fp) != sz) {
-                ST_WARNING("Failed to read pt_w.");
-                goto ERR;
-            }
-
-            sz = word_size * hs_input_size;
-            if (fread(output->wt_hs_w, sizeof(real_t), sz, fp) != sz) {
-                ST_WARNING("Failed to read wt_hs_w.");
-                goto ERR;
-            }
-        }
-    } else {
-        if (st_readline(fp, "<OUTPUT-DATA>") != 0) {
-            ST_WARNING("body flag error.");
-            goto ERR;
-        }
-
-        if (class_size > 0) {
-            if (st_readline(fp, "Words to Classes:") != 0) {
-                ST_WARNING("w2c flag error.");
-                goto ERR;
-            }
-            for (i = 0; i < output->output_size; i++) {
-                if (st_readline(fp, "\t%*d\t%d", output->w2c + i) != 1) {
-                    ST_WARNING("Failed to parse w2c.");
-                    goto ERR;
-                }
-            }
-
-            if (st_readline(fp, "Classes to Words:") != 0) {
-                ST_WARNING("c2w flag error.");
-                goto ERR;
-            }
-            for (i = 0; i < class_size; i++) {
-                if (st_readline(fp, "\t%*d\t%d\t%d", output->c2w_s + i,
-                            output->c2w_e + i) != 2) {
-                    ST_WARNING("Failed to parse c2w.");
-                    goto ERR;
-                }
-            }
-        }
-
-        if (version >= 2 && output->output_opt.hs) {
-            if(class_size > 0 && output->output_opt.class_hs) {
-                if (st_readline(fp, "Class codes:") != 0) {
-                    ST_WARNING("code_c flag error.");
-                    goto ERR;
-                }
-                sz = class_size * max_code_len;
-                for (i = 0; i < sz; i++) {
-                    if (st_readline(fp, "\t%*d\t%d", &t) != 1) {
-                        ST_WARNING("Failed to parse code_c.");
-                        goto ERR;
-                    }
-                    output->code_c[i] = t;
-                }
-
-                if (st_readline(fp, "Class points:") != 0) {
-                    ST_WARNING("code_c flag error.");
-                    goto ERR;
-                }
-                sz = class_size * max_code_len;
-                for (i = 0; i < sz; i++) {
-                    if (st_readline(fp, "\t%*d\t%d", &t) != 1) {
-                        ST_WARNING("Failed to parse pt_c.");
-                        goto ERR;
-                    }
-                    output->pt_c[i] = t;
-                }
-
-                if (hs_input_size > 0) {
-                    if (st_readline(fp, "Class HS weights:") != 0) {
-                        ST_WARNING("wt_hs_c flag error.");
-                        goto ERR;
-                    }
-                    sz = (class_size - 1) * hs_input_size;
-                    for (i = 0; i < sz; i++) {
-                        if (st_readline(fp, "\t%*d\t" REAL_FMT,
-                                    output->wt_hs_c + i) != 1) {
-                            ST_WARNING("Failed to parse wt_hs_c.");
-                            goto ERR;
-                        }
-                    }
-                }
-            }
-
-            if (st_readline(fp, "Word codes:") != 0) {
-                ST_WARNING("code_w flag error.");
-                goto ERR;
-            }
-            sz = output->output_size * max_code_len;
-            for (i = 0; i < sz; i++) {
-                if (st_readline(fp, "\t%*d\t%*d\t%d", &t) != 1) {
-                    ST_WARNING("Failed to parse code_w.");
-                    goto ERR;
-                }
-                output->code_w[i] = t;
-            }
-
-            if (st_readline(fp, "Word points:") != 0) {
-                ST_WARNING("code_w flag error.");
-                goto ERR;
-            }
-            sz = output->output_size * max_code_len;
-            for (i = 0; i < sz; i++) {
-                if (st_readline(fp, "\t%*d\t%*d\t%d", &t) != 1) {
-                    ST_WARNING("Failed to parse pt_w.");
-                    goto ERR;
-                }
-                output->pt_w[i] = t;
-            }
-
-            if (hs_input_size > 0) {
-                if (st_readline(fp, "Word HS weights:") != 0) {
-                    ST_WARNING("wt_hs_w flag error.");
-                    goto ERR;
-                }
-                sz = word_size * hs_input_size;
-                for (i = 0; i < sz; i++) {
-                    if (st_readline(fp, "\t%*d\t%*d\t" REAL_FMT,
-                                output->wt_hs_w + i) != 1) {
-                        ST_WARNING("Failed to parse wt_hs_w.");
-                        goto ERR;
-                    }
-                }
-            }
-        }
-    }
-
-    return 0;
-ERR:
-    safe_free(output->w2c);
-    safe_free(output->c2w_s);
-    safe_free(output->c2w_e);
-
-    safe_free(output->code_c);
-    safe_free(output->pt_c);
-    safe_free(output->code_w);
-    safe_free(output->pt_w);
-
-    safe_free(output->wt_hs_c);
-    safe_free(output->wt_hs_w);
-
-    return -1;
-}
-
-int output_save_header(output_t *output, FILE *fp, bool binary)
-{
-    int n;
-
-    ST_CHECK_PARAM(fp == NULL, -1);
-
-    if (binary) {
-        if (fwrite(&OUTPUT_MAGIC_NUM, sizeof(int), 1, fp) != 1) {
-            ST_WARNING("Failed to write magic num.");
-            return -1;
-        }
-        if (output == NULL) {
-            n = 0;
-            if (fwrite(&n, sizeof(int), 1, fp) != 1) {
-                ST_WARNING("Failed to write output size.");
-                return -1;
-            }
-            return 0;
-        }
-
-        if (fwrite(&output->output_size, sizeof(int), 1, fp) != 1) {
-            ST_WARNING("Failed to write output size.");
-            return -1;
-        }
-
-        if (fwrite(&output->output_opt.class_size,
-                    sizeof(int), 1, fp) != 1) {
-            ST_WARNING("Failed to write class size.");
-            return -1;
-        }
-
-        if (fwrite(&output->output_opt.hs, sizeof(bool), 1, fp) != 1) {
-            ST_WARNING("Failed to write hs.");
-            return -1;
-        }
-
-        // Version 2
-        if (output->output_opt.hs) {
-            if (fwrite(&output->output_opt.max_code_len, sizeof(int),
-                        1, fp) != 1) {
-                ST_WARNING("Failed to write max_code_len.");
-                return -1;
-            }
-
-            if (fwrite(&output->output_opt.class_hs, sizeof(bool),
-                        1, fp) != 1) {
-                ST_WARNING("Failed to write class_hs.");
-                return -1;
-            }
-
-            if (fwrite(&output->hs_input_size, sizeof(int), 1, fp) != 1) {
-                ST_WARNING("Failed to write hs_input_size.");
-                return -1;
-            }
-        }
-    } else {
-        fprintf(fp, "    \n<OUTPUT>\n");
-
-        if (output == NULL) {
-            fprintf(fp, "Output size: 0\n");
-            return 0;
-        }
-
-        fprintf(fp, "Output size: %d\n", output->output_size);
-        fprintf(fp, "Class size: %d\n", output->output_opt.class_size);
-        fprintf(fp, "HS: %s\n", bool2str(output->output_opt.hs));
-        // Version 2
-        if (output->output_opt.hs) {
-            fprintf(fp, "    Max code len: %d\n",
-                    output->output_opt.max_code_len);
-            fprintf(fp, "    Class HS: %s\n",
-                    bool2str(output->output_opt.class_hs));
-            fprintf(fp, "    HS input size: %d\n", output->hs_input_size);
-        }
-    }
-
-    return 0;
-}
-
-int output_save_body(output_t *output, FILE *fp, bool binary)
-{
-    size_t sz;
-
-    int class_size;
-    int max_code_len;
-    int hs_input_size;
-
-    int n;
-
-    int i;
-    int t;
-    int c, s, e;
-
-    ST_CHECK_PARAM(fp == NULL, -1);
-
-    if (output == NULL) {
-        return 0;
-    }
-
-    class_size = output->output_opt.class_size;
-    max_code_len = output->output_opt.max_code_len;
-    hs_input_size = output->hs_input_size;
-
-    if (binary) {
-        n = -OUTPUT_MAGIC_NUM;
-        if (fwrite(&n, sizeof(int), 1, fp) != 1) {
-            ST_WARNING("Failed to write magic num.");
-            return -1;
-        }
-
-        if (class_size > 0) {
-            if (fwrite(output->w2c, sizeof(int), output->output_size, fp)
-                    != output->output_size) {
-                ST_WARNING("Failed to write w2c.");
-                return -1;
-            }
-
-            if (fwrite(output->c2w_s, sizeof(int),
-                        class_size, fp) != class_size) {
-                ST_WARNING("Failed to write c2w_s.");
-                return -1;
-            }
-
-            if (fwrite(output->c2w_e, sizeof(int),
-                        class_size, fp) != class_size) {
-                ST_WARNING("Failed to write c2w_e.");
-                return -1;
-            }
-        }
-
-        if (output->output_opt.hs) {
-            if(class_size > 0 && output->output_opt.class_hs) {
-                sz = class_size * max_code_len;
-                if (fwrite(output->code_c, sizeof(char), sz, fp) != sz) {
-                    ST_WARNING("Failed to write code_c.");
-                    return -1;
-                }
-
-                sz = class_size * max_code_len;
-                if (fwrite(output->pt_c, sizeof(int), sz, fp) != sz) {
-                    ST_WARNING("Failed to write pt_c.");
-                    return -1;
-                }
-
-                sz = (class_size - 1) * output->hs_input_size;
-                if (fwrite(output->wt_hs_c, sizeof(real_t), sz, fp) != sz) {
-                    ST_WARNING("Failed to write wt_hs_c.");
-                    return -1;
-                }
-            }
-
-            sz = output->output_size * max_code_len;
-            if (fwrite(output->code_w, sizeof(char), sz, fp) != sz) {
-                ST_WARNING("Failed to write code_w.");
-                return -1;
-            }
-
-            sz = output->output_size * max_code_len;
-            if (fwrite(output->pt_w, sizeof(int), sz, fp) != sz) {
-                ST_WARNING("Failed to write pt_w.");
-                return -1;
-            }
-
-            if (class_size > 0) {
-                sz = (output->output_size - class_size);
-            } else {
-                sz = (output->output_size - 1);
-            }
-            sz = sz * output->hs_input_size;
-            if (fwrite(output->wt_hs_w, sizeof(real_t), sz, fp) != sz) {
-                ST_WARNING("Failed to write wt_hs_w.");
-                return -1;
-            }
-        }
-    } else {
-        fprintf(fp, "<OUTPUT-DATA>\n");
-
-        if (class_size > 0) {
-            fprintf(fp, "Words to Classes:\n");
-            for (i = 0; i < output->output_size; i++) {
-                fprintf(fp, "\t%d\t%d\n", i, output->w2c[i]);
-            }
-
-            fprintf(fp, "Classes to Words:\n");
-            for (i = 0; i < class_size; i++) {
-                fprintf(fp, "\t%d\t%d\t%d\n", i, output->c2w_s[i],
-                        output->c2w_e[i]);
-            }
-        }
-
-        if (output->output_opt.hs) {
-            if(class_size > 0 && output->output_opt.class_hs) {
-                fprintf(fp, "Class codes:\n");
-                sz = class_size * max_code_len;
-                for (i = 0; i < sz; i++) {
-                    t = output->code_c[i];
-                    fprintf(fp, "\t%d\t%d\n", i / max_code_len, t);
-                }
-
-                fprintf(fp, "Class points:\n");
-                sz = class_size * max_code_len;
-                for (i = 0; i < sz; i++) {
-                    t = output->pt_c[i];
-                    fprintf(fp, "\t%d\t%d\n", i / max_code_len, t);
-                }
-
-                if (hs_input_size > 0) {
-                    fprintf(fp, "Class HS weights:\n");
-                    sz = (class_size  - 1) * hs_input_size;
-                    for (i = 0; i < sz; i++) {
-                        fprintf(fp, "\t%d\t" REAL_FMT "\n",
-                                i / hs_input_size, output->wt_hs_c[i]);
-                    }
-                }
-            }
-
-            fprintf(fp, "Word codes:\n");
-            if (class_size > 0) {
-                for (c = 0; c < class_size; c++) {
-                    s = output->c2w_s[c];
-                    e = output->c2w_e[c];
-                    sz = (e - s) * max_code_len;
-                    for (i = 0; i < sz; i++) {
-                        t = output->code_w[s * max_code_len + i];
-                        fprintf(fp, "\t%d\t%d\t%d\n", c,
-                                i / max_code_len, t);
-                    }
-                }
-            } else {
-                sz = output->output_size * max_code_len;
-                for (i = 0; i < sz; i++) {
-                    t = output->code_w[i];
-                    fprintf(fp, "\t%d\t%d\t%d\n", -1, i / max_code_len, t);
-                }
-            }
-
-            fprintf(fp, "Word points:\n");
-            if (class_size > 0) {
-                for (c = 0; c < class_size; c++) {
-                    s = output->c2w_s[c];
-                    e = output->c2w_e[c];
-                    sz = (e - s) * max_code_len;
-                    for (i = 0; i < sz; i++) {
-                        t = output->pt_w[s * max_code_len + i];
-                        fprintf(fp, "\t%d\t%d\t%d\n", c,
-                                i / max_code_len, t);
-                    }
-                }
-            } else {
-                sz = output->output_size * max_code_len;
-                for (i = 0; i < sz; i++) {
-                    t = output->pt_w[i];
-                    fprintf(fp, "\t%d\t%d\t%d\n", -1, i / max_code_len, t);
-                }
-            }
-
-            if (hs_input_size > 0) {
-                fprintf(fp, "Word HS weights:\n");
-                if (class_size > 0) {
-                    for (c = 0; c < class_size; c++) {
-                        s = output->c2w_s[c];
-                        e = output->c2w_e[c];
-                        sz = (e - s - 1) * hs_input_size;
-                        for (i = 0; i < sz; i++) {
-                            fprintf(fp, "\t%d\t%d\t" REAL_FMT "\n", c,
-                                i / hs_input_size,
-                                output->wt_hs_w[output_hs_wt_w_pos(c, s)
-                                    * hs_input_size + i]);
-                        }
-                    }
-                } else {
-                    sz = (output->output_size - 1) * hs_input_size;
-                    for (i = 0; i < sz; i++) {
-                        fprintf(fp, "\t%d\t%d\t" REAL_FMT "\n", -1,
-                            i / hs_input_size, output->wt_hs_w[i]);
-                    }
-                }
-            }
-        }
-    }
-
-    return 0;
-}
-
-/**
- * Generate binary tree for HS
- * @ingroup output
- * @param[in] cnts counts for leaf nodes. MUST be sorted descendingly.
- * @param[out] pts generated points with length at least n_node * max_code_len.
- * @param[out] codes generated codes with length at least n_node * max_code_len.
- * @param[in] n_node number of leaf nodes.
- * @param[in] max_code_len max length of code.
- * @return non-zero value if any error.
- */
-static int output_hs_generate_tree(count_t *cnts, int *pts, char *codes,
-        size_t n_node, int max_code_len)
-{
-    int *point = NULL;
-    char *code = NULL;
-    count_t *count = NULL;
-    char *binary = NULL;
-    int *parent = NULL;
-
-    size_t sz;
-    int i, j, k, min1i, min2i, pos1, pos2;
-
-    ST_CHECK_PARAM(cnts == NULL || pts == NULL || codes == NULL
-            || n_node <= 0 || max_code_len <= 0, -1);
-
-    sz = sizeof(int) * max_code_len;
-    point = (int *)malloc(sz);
-    if (point == NULL) {
-        ST_WARNING("Failed to malloc point.");
-        goto ERR;
-    }
-    memset(point, -1, sz);
-
-    sz = sizeof(char) * max_code_len;
-    code = (char *)malloc(sz);
-    if (code == NULL) {
-        ST_WARNING("Failed to malloc code.");
-        goto ERR;
-    }
-    memset(code, 0, sz);
-
-    sz = sizeof(count_t) * (n_node * 2 - 1);
-    count = (count_t *)malloc(sz);
-    if (count == NULL) {
-        ST_WARNING("Failed to malloc count.");
-        goto ERR;
-    }
-    memset(count, 0, sz);
-
-    sz = sizeof(char) * (n_node * 2 - 1);
-    binary = (char *)malloc(sz);
-    if (binary == NULL) {
-        ST_WARNING("Failed to malloc binary.");
-        goto ERR;
-    }
-    memset(binary, 0, sz);
-
-    sz = sizeof(int) * (n_node * 2 - 1);
-    parent = (int *)malloc(sz);
-    if (parent == NULL) {
-        ST_WARNING("Failed to malloc parent.");
-        goto ERR;
-    }
-    memset(parent, 0, sz);
-
-    for (i = 0; i < n_node; i++) {
-        count[i] = cnts[i];
-    }
-
-    for (i = n_node; i < n_node * 2 - 1; i++) {
-        count[i] = COUNT_MAX;
-    }
-
-    pos1 = n_node - 1;
-    pos2 = n_node;
-
-    // Construct Huffman Tree
-    for (i = 0; i < n_node - 1; i++) {
-        if (pos1 >= 0) {
-            if (count[pos1] < count[pos2]) {
-                min1i = pos1;
-                pos1--;
-            } else {
-                min1i = pos2;
-                pos2++;
-            }
-        } else {
-            min1i = pos2;
-            pos2++;
-        }
-        if (pos1 >= 0) {
-            if (count[pos1] < count[pos2]) {
-                min2i = pos1;
-                pos1--;
-            } else {
-                min2i = pos2;
-                pos2++;
-            }
-        } else {
-            min2i = pos2;
-            pos2++;
-        }
-
-        count[n_node + i] = count[min1i] + count[min2i];
-        parent[min1i] = n_node + i;
-        parent[min2i] = n_node + i;
-        binary[min2i] = 1;
-    }
-
-    // Assign binary code to each leaf node
-    for (i = 0; i < n_node; i++) {
-        j = i;
-        k = 0;
-        while (1) {
-            if (k >= max_code_len) {
-                ST_WARNING("Too deep tree.[%d/%d].", k, max_code_len);
-                goto ERR;
-            }
-            code[k] = binary[j];
-            point[k] = j;
-            k++;
-            j = parent[j];
-            if (j == n_node * 2 - 2) break;
-        }
-        pts[i * max_code_len] = n_node - 2;
-        for (j = 0; j < k; j++) {
-            codes[i * max_code_len + k - j - 1] = code[j];
-            if (j == 0 && k < max_code_len) {
-                pts[i * max_code_len + k - j] = -1;
-            } else {
-                pts[i * max_code_len + k - j] = point[j] - n_node;
-            }
-        }
-    }
-
-    safe_free(code);
-    safe_free(point);
-    safe_free(count);
-    safe_free(binary);
-    safe_free(parent);
-
-    return 0;
-
-ERR:
-    safe_free(code);
-    safe_free(point);
-    safe_free(count);
-    safe_free(binary);
-    safe_free(parent);
-
-    return -1;
-}
-
-static count_t* output_count_class(output_t *output, count_t *word_cnts)
-{
-    count_t *cls_cnts = NULL;
-
-    size_t sz;
-
-    int class_size;
-    int c;
-    int s;
-    int e;
-    int w;
-
-    ST_CHECK_PARAM(output == NULL || word_cnts == NULL, NULL);
-
-    class_size = output->output_opt.class_size;
-
-    sz = sizeof(count_t) * class_size;
-    cls_cnts = (count_t *)malloc(sz);
-    if (cls_cnts == NULL) {
-        ST_WARNING("Failed to malloc cls_cnts.");
-        goto ERR;
-    }
-    memset(cls_cnts, 0, sz);
-
-    for (c = 0; c < class_size; c++) {
-        s = output->c2w_s[c];
-        e = output->c2w_e[c];
-
-        for (w = s; w < e; w++) {
-            cls_cnts[c] += word_cnts[w];
-        }
-    }
-
-    return cls_cnts;
-
-ERR:
-    safe_free(cls_cnts);
-    return NULL;
-}
-
-static int output_generate_hs(output_t *output, count_t *word_cnts)
-{
-    count_t *cls_cnts = NULL;
-
-    size_t sz;
-
-    int class_size;
-    int max_code_len;
-
-    int c, s, e;
-
-    ST_CHECK_PARAM(output == NULL || word_cnts == NULL, -1);
-
-    safe_free(output->code_c);
-    safe_free(output->pt_c);
-    safe_free(output->code_w);
-    safe_free(output->pt_w);
-
-    class_size = output->output_opt.class_size;
-    max_code_len = output->output_opt.max_code_len;
-
-    if(class_size > 0 && output->output_opt.class_hs) {
-        sz = sizeof(char) * class_size * max_code_len;
-        output->code_c = (char *) malloc(sz);
-        if (output->code_c == NULL) {
-            ST_WARNING("Failed to malloc code_c.");
-            goto ERR;
-        }
-        memset(output->code_c, -1, sz);
-
-        sz = sizeof(int) * class_size * max_code_len;
-        output->pt_c = (int *) malloc(sz);
-        if (output->pt_c == NULL) {
-            ST_WARNING("Failed to malloc pt_c.");
-            goto ERR;
-        }
-        memset(output->pt_c, -1, sz);
-
-        cls_cnts = output_count_class(output, word_cnts);
-        if (cls_cnts == NULL) {
-            ST_WARNING("Failed to output_count_class.");
-            goto ERR;
-        }
-
-        /* cls_cnts was almost descending. */
-        if (output_hs_generate_tree(cls_cnts, output->pt_c,
-                    output->code_c, class_size, max_code_len) < 0) {
-            ST_WARNING("Failed to output_hs_generate_tree for class.");
-            goto ERR;
-        }
-
-        safe_free(cls_cnts);
-    }
-
-    sz = sizeof(char) * output->output_size * max_code_len;
-    output->code_w = (char *) malloc(sz);
-    if (output->code_w == NULL) {
-        ST_WARNING("Failed to malloc code_w.");
-        goto ERR;
-    }
-    memset(output->code_w, -1, sz);
-
-    sz = sizeof(int) * output->output_size * max_code_len;
-    output->pt_w = (int *) malloc(sz);
-    if (output->pt_w == NULL) {
-        ST_WARNING("Failed to malloc pt_w.");
-        goto ERR;
-    }
-    memset(output->pt_w, -1, sz);
-
-    if(class_size > 0) {
-        for (c = 0; c < class_size; c++) {
-            s = output->c2w_s[c];
-            e = output->c2w_e[c];
-
-            if (output_hs_generate_tree(word_cnts + s,
-                        output->pt_w + s * max_code_len,
-                        output->code_w + s * max_code_len,
-                        e - s, max_code_len) < 0) {
-                ST_WARNING("Failed to output_hs_generate_tree for word.");
-                goto ERR;
-            }
-        }
-    } else {
-        if (output_hs_generate_tree(word_cnts, output->pt_w,
-                    output->code_w, output->output_size,
-                    max_code_len) < 0) {
-            ST_WARNING("Failed to output_hs_generate_tree for word.");
-            goto ERR;
-        }
-    }
-
-    return 0;
-
-ERR:
-    safe_free(output->code_c);
-    safe_free(output->pt_c);
-    safe_free(output->code_w);
-    safe_free(output->pt_w);
-
-    safe_free(cls_cnts);
-
-    return -1;
 }
 
 static int output_gen_td_split(output_t *output, output_node_id_t node,
@@ -1544,6 +783,8 @@ static int output_gen_td_split(output_t *output, output_node_id_t node,
     int start;
     int end;
     int branches;
+
+    output_node_id_t new_node;
 
     ST_CHECK_PARAM(output == NULL || word_cnts == NULL, -1);
 
@@ -1600,15 +841,15 @@ static int output_gen_td_split(output_t *output, output_node_id_t node,
 static int output_gen_td(output_t *output, count_t *word_cnts)
 {
     output_node_id_t node;
-    output_node_id_t cap_nodes;
+    output_node_id_t cap_node;
 
     ST_CHECK_PARAM(output == NULL || word_cnts == NULL, -1);
 
-    cap_nodes = output->output_size;
-    cap_nodes += iceil(cap_nodes - 1, output->output_opt->max_branch - 1);
+    cap_node = output->output_size;
+    cap_node += iceil(cap_node - 1, output->output_opt.max_branch - 1);
 
-    output->tree = output_tree_init(cap_nodes);
-    if (tree == NULL) {
+    output->tree = output_tree_init(cap_node);
+    if (output->tree == NULL) {
         ST_WARNING("Failed to output_tree_init.");
         goto ERR;
     }
@@ -1623,21 +864,25 @@ static int output_gen_td(output_t *output, count_t *word_cnts)
     node = output_tree_add_node(output->tree);
     if (node == OUTPUT_NODE_NONE) {
         ST_WARNING("Failed to output_tree_add_node.");
-        return -1;
+        goto ERR;
     }
     s_children(output->tree, node) = 0;
     e_children(output->tree, node) = output->output_size;
 
     output->tree->root = node;
 
-    for (; node < output->tree->num_nodes; ++node) {
+    for (; node < output->tree->num_node; ++node) {
         if (output_gen_td_split(output, node, word_cnts) < 0) {
             ST_WARNING("Failed to output_gen_td_split.");
-            return -1;
+            goto ERR;
         }
     }
 
     return 0;
+
+ERR:
+    safe_tree_destroy(output->tree);
+    return -1;
 }
 
 static huffman_tree_t* output_gen_bu_huffman(output_t *output,
@@ -1645,16 +890,18 @@ static huffman_tree_t* output_gen_bu_huffman(output_t *output,
 {
     huffman_tree_t *huffman = NULL;
 
-    output_node_id_t cap_nodes;
-    size_t sz;
+    output_node_id_t cap_node;
+    output_node_id_t parent;
     int n, pos0, pos1;
+    int br;
+    int move;
 
     ST_CHECK_PARAM(output == NULL || cnts == NULL, NULL);
 
-    cap_nodes = output->output_size;
-    cap_nodes += iceil(cap_nodes - 1, output->output_opt->max_branch - 1);
+    cap_node = output->output_size;
+    cap_node += iceil(cap_node - 1, output->output_opt.max_branch - 1);
 
-    huffman = huffman_tree_init(cap_nodes);
+    huffman = huffman_tree_init(cap_node);
     if (huffman == NULL) {
         ST_WARNING("Failed to huffman_tree_init.");
         goto ERR;
@@ -1667,13 +914,13 @@ static huffman_tree_t* output_gen_bu_huffman(output_t *output,
         goto ERR;
     }
 
-    for (n = 0; n < huffman->num_nodes; ++n) {
+    for (n = 0; n < huffman->num_node; ++n) {
         n_cnt(huffman, n) = cnts[n];
     }
 
     // Construct Huffman Tree
-    pos0 = huffman->num_nodes - 1;
-    pos1 = huffman->num_nodes;
+    pos0 = huffman->num_node - 1;
+    pos1 = huffman->num_node;
     br = output->output_opt.max_branch;
 
     while (br == output->output_opt.max_branch) {
@@ -1691,7 +938,7 @@ static huffman_tree_t* output_gen_bu_huffman(output_t *output,
         br = 0;
         while (br < output->output_opt.max_branch) {
             move = -1;
-            if (pos0 >= 0 && pos1 < huffman->num_nodes - 1) { // both sides
+            if (pos0 >= 0 && pos1 < huffman->num_node - 1) { // both sides
                 if (n_cnt(huffman, pos0) <= n_cnt(huffman, pos1)) {
                     move = 0;
                 } else {
@@ -1699,7 +946,7 @@ static huffman_tree_t* output_gen_bu_huffman(output_t *output,
                 }
             } else if (pos0 >= 0) { // only leaf side
                 move = 0;
-            } else if (pos1 < huffman->num_nodes - 1) {
+            } else if (pos1 < huffman->num_node - 1) {
                 // only internal side
                 move = 1;
             } else {
@@ -1707,11 +954,11 @@ static huffman_tree_t* output_gen_bu_huffman(output_t *output,
             }
 
             if (move == 0) {
-                n_cnt(huffman, paraent) += n_cnt(huffman, pos0);
+                n_cnt(huffman, parent) += n_cnt(huffman, pos0);
                 --pos0;
                 --(s_children(huffman, parent)[0]);
             } else if (move == 1) {
-                n_cnt(huffman, paraent) += n_cnt(huffman, pos1);
+                n_cnt(huffman, parent) += n_cnt(huffman, pos1);
                 ++pos1;
                 ++(e_children(huffman, parent)[1]);
             } else {
@@ -1724,16 +971,16 @@ static huffman_tree_t* output_gen_bu_huffman(output_t *output,
     }
 
     huffman->root = parent;
-    return 0;
+    return huffman;
 
 ERR:
     safe_huffman_tree_destroy(huffman);
-    return -1;
+    return NULL;
 }
 
 typedef struct _renum_arg_t_ {
     output_node_id_t *nodemap;
-    output_node_id_t num_nodes;
+    output_node_id_t num_node;
 } renum_arg_t;
 
 static int huffman_trav_renumber(huffman_tree_t *huffman,
@@ -1746,12 +993,12 @@ static int huffman_trav_renumber(huffman_tree_t *huffman,
 
     renum = (renum_arg_t *)args;
 
-    if (renum.nodemap[node] != OUTPUT_NODE_NONE) {
+    if (renum->nodemap[node] != OUTPUT_NODE_NONE) {
         ST_WARNING("node[" OUTPUT_NODE_FMT "] visited twice.");
         return -1;
     }
 
-    renum->nodemap[node] = renum->num_nodes++;
+    renum->nodemap[node] = renum->num_node++;
 
     return 0;
 }
@@ -1767,6 +1014,7 @@ static int huffman_trav_2tree(huffman_tree_t *huffman,
     h2t_arg_t *h2t;
 
     output_node_id_t tnode;
+    output_node_id_t start, end;
 
     ST_CHECK_PARAM(huffman == NULL || args == NULL
             || node == OUTPUT_NODE_NONE, -1);
@@ -1821,11 +1069,13 @@ static int huffman_traverse(huffman_tree_t *huffman,
 {
     st_queue_t *node_queue = NULL;
 
+    void *tmp;
+    output_node_id_t node, child;
+    int sub;
+
     ST_CHECK_PARAM(huffman == NULL || visitor == NULL, -1);
 
-    void *tmp;
-
-    node_queue = st_queue_create(huffman->num_nodes);
+    node_queue = st_queue_create(huffman->num_node);
     if(node_queue == NULL) {
         ST_WARNING("Failed to create node_queue.");
         goto ERR;
@@ -1845,7 +1095,7 @@ static int huffman_traverse(huffman_tree_t *huffman,
         }
         node = (output_node_id_t)(long)tmp;
 
-        if(visitor(huffman, node, arg) < 0) {
+        if(visitor(huffman, node, args) < 0) {
             ST_WARNING("Failed to visitor.");
             goto ERR;
         }
@@ -1883,29 +1133,29 @@ static int output_gen_bu_huffman2tree(output_t *output,
 
     ST_CHECK_PARAM(output == NULL || huffman == NULL, -1);
 
-    sz = sizeof(output_node_id_t)*huffman->num_nodes;
+    sz = sizeof(output_node_id_t)*huffman->num_node;
     nodemap = (output_node_id_t *)malloc(sz);
     if (nodemap == NULL) {
         ST_WARNING("Failed to malloc nodemap.");
         goto ERR;
     }
-    for (i = 0; i < huffman->num_nodes; ++i) {
+    for (i = 0; i < huffman->num_node; ++i) {
         nodemap[i] = OUTPUT_NODE_NONE;
     }
 
     renum.nodemap = nodemap;
-    renum.num_nodes = 0;
+    renum.num_node = 0;
     if (huffman_traverse(huffman, huffman_trav_renumber, &renum) < 0) {
         ST_WARNING("Failed to huffman_traverse renumbering.");
         goto ERR;
     }
-    if (renum.num_nodes != huffman->num_nodes) {
+    if (renum.num_node != huffman->num_node) {
         ST_WARNING("some nodes are not renumbered.");
         goto ERR;
     }
 
-    output->tree = output_tree_init(huffman->num_nodes);
-    if (tree == NULL) {
+    output->tree = output_tree_init(huffman->num_node);
+    if (output->tree == NULL) {
         ST_WARNING("Failed to output_tree_init.");
         goto ERR;
     }
@@ -1952,12 +1202,31 @@ ERR:
     return -1;
 }
 
+static int output_generate_path(output_t *output)
+{
+    size_t sz;
+
+    ST_CHECK_PARAM(output == NULL || output->tree == NULL, -1);
+
+    sz = sizeof(output_path_t) * output->output_size;
+    output->paths = (output_path_t *)malloc(sz);
+    if (output->paths == NULL) {
+        ST_WARNING("Failed to malloc paths.");
+        goto ERR;
+    }
+
+    return 0;
+
+ERR:
+    safe_free(output->paths);
+    return -1;
+}
+
 output_t* output_generate(output_opt_t *output_opt, count_t *word_cnts,
        int output_size)
 {
     output_t *output = NULL;
     size_t sz;
-    output_node_id_t cap_nodes;
 
     ST_CHECK_PARAM(output_opt == NULL || word_cnts == NULL
             || output_size <= 0, NULL);
@@ -1972,8 +1241,8 @@ output_t* output_generate(output_opt_t *output_opt, count_t *word_cnts,
     output->output_opt = *output_opt;
     output->output_size = output_size;
 
-    sz = output->output_size * sizeof(output_tree_path_t);
-    output->paths = (output_tree_path_t *)malloc(sz);
+    sz = output->output_size * sizeof(output_path_t);
+    output->paths = (output_path_t *)malloc(sz);
     if (output->paths == NULL) {
         ST_WARNING("Failed to malloc paths.");
         goto ERR;
@@ -1999,6 +1268,11 @@ output_t* output_generate(output_opt_t *output_opt, count_t *word_cnts,
             break;
     }
 
+    if (output_generate_path(output) < 0) {
+        ST_WARNING("Failed to output_generate_path.");
+        goto ERR;
+    }
+
     return output;
 
   ERR:
@@ -2006,182 +1280,13 @@ output_t* output_generate(output_opt_t *output_opt, count_t *word_cnts,
     return NULL;
 }
 
-int output_hs_init(output_t *output, int hs_input_size)
-{
-    size_t i;
-    size_t sz;
-
-    int class_size;
-    int word_size;
-
-    ST_CHECK_PARAM(output == NULL || hs_input_size < 0, -1);
-
-    safe_free(output->wt_hs_c);
-    safe_free(output->wt_hs_w);
-
-    if (!output->output_opt.hs) {
-        return 0;
-    }
-
-    output->hs_input_size = hs_input_size;
-    class_size = output->output_opt.class_size;
-
-    if (class_size > 0) {
-        if (output->output_opt.class_hs) {
-            sz = (class_size - 1) * hs_input_size;
-            if (posix_memalign((void **)&output->wt_hs_c, ALIGN_SIZE,
-                        sizeof(real_t) * sz) != 0
-                    || output->wt_hs_c == NULL) {
-                ST_WARNING("Failed to malloc wt_hs_c.");
-                goto ERR;
-            }
-
-            for (i = 0; i < sz; i++) {
-                output->wt_hs_c[i] = st_random(-0.1, 0.1)
-                    + st_random(-0.1, 0.1) + st_random(-0.1, 0.1);
-            }
-        }
-
-        word_size = output->output_size - class_size;
-    } else {
-        word_size = output->output_size - 1;
-    }
-
-    sz = word_size * hs_input_size;
-    if (posix_memalign((void **)&output->wt_hs_w, ALIGN_SIZE,
-                sizeof(real_t) * sz) != 0
-            || output->wt_hs_w == NULL) {
-        ST_WARNING("Failed to malloc wt_hs_w.");
-        goto ERR;
-    }
-
-    for (i = 0; i < sz; i++) {
-        output->wt_hs_w[i] = st_random(-0.1, 0.1)
-            + st_random(-0.1, 0.1) + st_random(-0.1, 0.1);
-    }
-
-    return 0;
-
-ERR:
-    safe_free(output->wt_hs_c);
-    safe_free(output->wt_hs_w);
-
-    return -1;
-}
-
-static int output_hs_forward(real_t *p, real_t *in, real_t *wt,
-        int input_size, int *pts, char *codes, int max_code_len,
-        real_t *ac)
-{
-    double d;
-    int c;
-
-    ST_CHECK_PARAM(p == NULL || in == NULL || wt == NULL
-            || input_size <= 0 || pts == NULL || codes == NULL
-            || max_code_len <= 0 || ac == NULL, -1);
-
-    d = 1.0;
-    c = 0;
-    while (pts[c] > 0 && c < max_code_len) {
-        ac[c] = dot_product(ac, wt + pts[c] * input_size, input_size);
-
-        sigmoid(ac + c, 1);
-
-        if (codes[c] == 0) {
-            d *= ac[c];
-        } else {
-            d *= (1 - ac[c]);
-        }
-
-        c++;
-    }
-
-    *p = d;
-
-    return 0;
-}
-
-int output_activate_pre_layer(output_t *output, int cls, int tid)
-{
-    output_neuron_t *neu;
-
-    ST_CHECK_PARAM(output == NULL || tid < 0, -1);
-
-    neu = output->neurons + tid;
-    if (output->output_opt.class_size > 0) {
-        if (output->output_opt.hs && output->output_opt.class_hs) {
-            if (cls < 0) {
-                ST_WARNING("class not specified.");
-                return -1;
-            }
-            if (output_hs_forward(&neu->p_hs_c, neu->ac_o_c,
-                    output->wt_hs_c,
-                    output->hs_input_size,
-                    output->pt_c + cls * output->output_opt.max_code_len,
-                    output->code_c + cls * output->output_opt.max_code_len,
-                    output->output_opt.max_code_len,
-                    neu->ac_hs_c) < 0) {
-                ST_WARNING("Failed to output_hs_forward class");
-                return -1;
-            }
-        } else {
-            softmax(neu->ac_o_c, output->output_opt.class_size);
-        }
-    }
-
-    return 0;
-}
-
-int output_activate_last_layer(output_t *output, int word, int tid)
-{
-    output_neuron_t *neu;
-
-    int cls;
-    int s;
-    int e;
-
-    ST_CHECK_PARAM(output == NULL || word < 0 || tid < 0, -1);
-
-    neu = output->neurons + tid;
-
-    if (output->output_opt.class_size > 0) {
-        cls = output->w2c[word];
-        s = output->c2w_s[cls];
-        e = output->c2w_e[cls];
-    } else {
-        cls = -1;
-        s = 0;
-        e = output->output_size;
-    }
-
-    if (output->output_opt.hs) {
-        if (output_hs_forward(&neu->p_hs_w, neu->ac_o_w + s,
-                output->wt_hs_w + output->hs_input_size
-                               * output_hs_wt_w_pos(cls, s),
-                output->hs_input_size,
-                output->pt_w + word * output->output_opt.max_code_len,
-                output->code_w + word * output->output_opt.max_code_len,
-                output->output_opt.max_code_len,
-                neu->ac_hs_w) < 0) {
-            ST_WARNING("Failed to output_hs_forward word");
-            return -1;
-        }
-    } else {
-        softmax(neu->ac_o_w + s, e - s);
-    }
-
-    return 0;
-}
-
 int output_loss(output_t *output, int word, int tid)
 {
     output_neuron_t *neu;
+    output_path_t *path;
 
-    int c;
-    int s;
-    int e;
-
-    int o;
+    output_node_id_t parent;
+    output_node_id_t n;
 
     ST_CHECK_PARAM(output == NULL || tid < 0, -1);
 
@@ -2190,108 +1295,49 @@ int output_loss(output_t *output, int word, int tid)
     }
 
     neu = output->neurons + tid;
-    if (output->output_opt.class_size > 0) {
-        c = output->w2c[word];
-        s = output->c2w_s[c];
-        e = output->c2w_e[c];
 
-        for (o = 0; o < output->output_opt.class_size; o++) {
-            neu->er_o_c[o] = (0 - neu->ac_o_c[o]);
-        }
-        neu->er_o_c[c] = (1 - neu->ac_o_c[c]);
-    } else {
-        s = 0;
-        e = output->output_size;
+    path = output->paths + word;
+    parent = path->nodes[path->num_node - 1];
+    for (n = s_children(output->tree, parent);
+            n < e_children(output->tree, parent); n++) {
+        neu->er[n] = (0 - neu->ac[n]);
     }
-
-    for (o = s; o < e; o++) {
-        neu->er_o_w[o] = (0 - neu->ac_o_w[o]);
-    }
-    neu->er_o_w[word] = (1 - neu->ac_o_w[word]);
+    neu->er[word] = (1 - neu->ac[word]);
 
     return 0;
 }
 
-double output_get_prob(output_t *output, int word, int tid)
+double output_get_logprob(output_t *output, int word, int tid)
 {
     output_neuron_t *neu;
-    double p = 1;
+    output_path_t *path;
+
+    double logp = 0.0;
+    output_node_id_t node;
+    output_node_id_t n;
+
+    ST_CHECK_PARAM(output == NULL || tid < 0, -1);
 
     neu = output->neurons + tid;
+    path = output->paths + word;
 
-    if (output->output_opt.hs) {
-        if (output->output_opt.class_size > 0) {
-            p *= neu->p_hs_c;
-        }
-        p *= neu->p_hs_w;
-    } else {
-        if (output->output_opt.class_size > 0) {
-            p *= neu->ac_o_c[output->w2c[word]];
-        }
+    node = output->tree->root;
+    logp += log10(neu->ac[node]);
 
-        p *= neu->ac_o_w[word];
+    for (n = 0; n < path->num_node; n++) {
+        logp += log10(neu->ac[path->nodes[n]]);
     }
+    logp += log10(neu->ac[word]);
 
-    return p;
+    return logp;
 }
 
-double output_get_class_prob_for_class(output_t *output, int cls, int tid)
-{
-    output_neuron_t *neu;
-
-    neu = output->neurons + tid;
-
-    if (output->output_opt.class_size > 0) {
-        if (output->output_opt.hs) {
-            return neu->p_hs_c;
-        } else {
-            return neu->ac_o_c[cls];
-        }
-    }
-
-    return 1.0;
-}
-
-double output_get_class_prob(output_t *output, int word, int tid)
-{
-    output_neuron_t *neu;
-
-    neu = output->neurons + tid;
-
-    if (output->output_opt.class_size > 0) {
-        if (output->output_opt.hs) {
-            return neu->p_hs_c;
-        } else {
-            return neu->ac_o_c[output->w2c[word]];
-        }
-    }
-
-    return 1.0;
-}
-
-double output_get_word_prob(output_t *output, int word, int tid)
-{
-    output_neuron_t *neu;
-
-    neu = output->neurons + tid;
-
-    if (output->output_opt.hs) {
-        return neu->p_hs_w;
-    } else {
-        return neu->ac_o_w[word];
-    }
-}
-
-int output_setup_train(output_t *output, int num_thrs)
+int output_setup(output_t *output, int num_thrs, bool backprop)
 {
     output_neuron_t *neu;
     size_t sz;
 
-    int class_size;
-    int word_size;
-    int max_code_len;
-
-    int i;
+    output_node_id_t num_node;
     int t;
 
     ST_CHECK_PARAM(output == NULL || num_thrs < 0, -1);
@@ -2305,92 +1351,27 @@ int output_setup_train(output_t *output, int num_thrs)
     }
     memset(output->neurons, 0, sz);
 
-    max_code_len = output->output_opt.max_code_len;
-    class_size = output->output_opt.class_size;
-    if (class_size > 0) {
-        if (output->output_opt.class_hs) {
-            class_size = output->hs_input_size;
-        }
-
+    num_node = output->tree->num_node;
+    if (num_node > 0) {
         for (t = 0; t < num_thrs; t++) {
             neu = output->neurons + t;
-            if (posix_memalign((void **)&neu->ac_o_c, ALIGN_SIZE,
-                        sizeof(real_t) * class_size) != 0
-                    || neu->ac_o_c == NULL) {
-                ST_WARNING("Failed to malloc ac_o_c.");
+            sz = sizeof(real_t) * num_node;
+            if (posix_memalign((void **)&neu->ac, ALIGN_SIZE, sz) != 0
+                    || neu->ac == NULL) {
+                ST_WARNING("Failed to malloc ac.");
                 goto ERR;
             }
+            memset(neu->ac, 0, sz);
 
-            if (posix_memalign((void **)&neu->er_o_c, ALIGN_SIZE,
-                        sizeof(real_t) * class_size) != 0
-                    || neu->er_o_c == NULL) {
-                ST_WARNING("Failed to malloc er_o_c.");
-                goto ERR;
-            }
-
-            for (i = 0; i < class_size; i++) {
-                neu->ac_o_c[i] = 0;
-                neu->er_o_c[i] = 0;
-            }
-
-            if (output->output_opt.hs && output->output_opt.class_hs) {
-                if (posix_memalign((void **)&neu->ac_hs_c, ALIGN_SIZE,
-                            sizeof(real_t) * max_code_len) != 0
-                        || neu->ac_hs_c == NULL) {
-                    ST_WARNING("Failed to malloc ac_hs_c.");
+            if (backprop) {
+                sz = sizeof(real_t) * num_node;
+                if (posix_memalign((void **)&neu->er, ALIGN_SIZE, sz) != 0
+                        || neu->er == NULL) {
+                    ST_WARNING("Failed to malloc er.");
                     goto ERR;
                 }
-
-                for (i = 0; i < max_code_len; i++) {
-                    neu->ac_hs_c[i] = 0;
-                }
-
-                neu->p_hs_c = -1.0;
+                memset(neu->er, 0, sz);
             }
-        }
-    }
-
-    if (output->output_opt.hs) {
-        word_size = output->hs_input_size;
-    } else {
-        word_size = output->output_size;
-    }
-
-    for (t = 0; t < num_thrs; t++) {
-        neu = output->neurons + t;
-
-        if (posix_memalign((void **)&neu->ac_o_w, ALIGN_SIZE,
-                    sizeof(real_t) * word_size) != 0
-                || neu->ac_o_w == NULL) {
-            ST_WARNING("Failed to malloc ac_o_w.");
-            goto ERR;
-        }
-
-        if (posix_memalign((void **)&neu->er_o_w, ALIGN_SIZE,
-                    sizeof(real_t) * word_size) != 0
-                || neu->er_o_w == NULL) {
-            ST_WARNING("Failed to malloc er_o_w.");
-            goto ERR;
-        }
-
-        for (i = 0; i < word_size; i++) {
-            neu->ac_o_w[i] = 0;
-            neu->er_o_w[i] = 0;
-        }
-
-        if (output->output_opt.hs) {
-            if (posix_memalign((void **)&neu->ac_hs_w, ALIGN_SIZE,
-                        sizeof(real_t) * max_code_len) != 0
-                    || neu->ac_hs_w == NULL) {
-                ST_WARNING("Failed to malloc ac_hs_w.");
-                goto ERR;
-            }
-
-            for (i = 0; i < max_code_len; i++) {
-                neu->ac_hs_w[i] = 0;
-            }
-
-            neu->p_hs_w = -1.0;
         }
     }
 
@@ -2398,20 +1379,9 @@ int output_setup_train(output_t *output, int num_thrs)
 
 ERR:
     if (output->neurons != NULL) {
-        for (i = 0; i < output->num_thrs; i++) {
-            safe_free(output->neurons[i].ac_o_c);
-            safe_free(output->neurons[i].er_o_c);
-            safe_free(output->neurons[i].ac_o_w);
-            safe_free(output->neurons[i].er_o_w);
-
-            safe_free(output->neurons[i].wt_hs_c);
-            safe_free(output->neurons[i].wt_hs_w);
-
-            safe_free(output->neurons[i].ac_hs_c);
-            safe_free(output->neurons[i].ac_hs_w);
-
-            output->neurons[i].p_hs_c = -1.0;
-            output->neurons[i].p_hs_w = -1.0;
+        for (t = 0; t < output->num_thrs; t++) {
+            safe_free(output->neurons[t].ac);
+            safe_free(output->neurons[t].er);
         }
         safe_free(output->neurons);
     }
@@ -2420,7 +1390,7 @@ ERR:
     return -1;
 }
 
-int output_reset_train(output_t *output, int tid)
+int output_reset(output_t *output, int tid, bool backprop)
 {
 #if 0
     int class_size;
@@ -2446,16 +1416,13 @@ int output_reset_train(output_t *output, int tid)
     return 0;
 }
 
-int output_start_train(output_t *output, int word, int tid)
+int output_start(output_t *output, int word, int tid, bool backprop)
 {
     output_neuron_t *neu;
-    int class_size;
+    output_path_t *path;
 
-    int c;
-    int s;
-    int e;
-
-    int i;
+    output_node_id_t node;
+    output_node_id_t n;
 
     ST_CHECK_PARAM(output == NULL || tid < 0, -1);
 
@@ -2464,274 +1431,358 @@ int output_start_train(output_t *output, int word, int tid)
     }
 
     neu = output->neurons + tid;
-    class_size = output->output_opt.class_size;
-    if (class_size > 0) {
-        for (i = 0; i < class_size; i++) {
-            neu->ac_o_c[i] = 0;
-            neu->er_o_c[i] = 0;
+    path = output->paths + word;
+
+    node = output->tree->root;
+    for (n = s_children(output->tree, node);
+            n < e_children(output->tree, node); n++) {
+        neu->ac[n] = 0.0;
+        if (backprop) {
+            neu->er[n] = 0.0;
         }
-
-        c = output->w2c[word];
-        s = output->c2w_s[c];
-        e = output->c2w_e[c];
-    } else {
-        s = 0;
-        e = output->output_size;
     }
-
-    for (i = s; i < e; i++) {
-        neu->ac_o_w[i] = 0;
-        neu->er_o_w[i] = 0;
+    for (n = 0; n < path->num_node; n++) {
+        node = path->nodes[n];
+        for (n = s_children(output->tree, node);
+                n < e_children(output->tree, node); n++) {
+            neu->ac[n] = 0.0;
+            if (backprop) {
+                neu->er[n] = 0.0;
+            }
+        }
     }
-
     return 0;
 }
 
-int output_end_train(output_t *output, int word, int tid)
+int output_end(output_t *output, int word, int tid, bool backprop)
 {
     ST_CHECK_PARAM(output == NULL, -1);
 
     return 0;
 }
 
-int output_finish_train(output_t *output, int tid)
+int output_finish(output_t *output, int tid, bool backprop)
 {
     ST_CHECK_PARAM(output == NULL, -1);
 
     return 0;
-}
-
-int output_setup_test(output_t *output, int num_thrs)
-{
-    output_neuron_t *neu;
-    size_t sz;
-
-    int class_size;
-    int max_code_len;
-
-    int i;
-    int t;
-
-    ST_CHECK_PARAM(output == NULL || num_thrs < 0, -1);
-
-    output->num_thrs = num_thrs;
-    sz = sizeof(output_neuron_t) * num_thrs;
-    output->neurons = (output_neuron_t *)malloc(sz);
-    if (output->neurons == NULL) {
-        ST_WARNING("Failed to malloc output neurons.");
-        goto ERR;
-    }
-    memset(output->neurons, 0, sz);
-
-    class_size = output->output_opt.class_size;
-    max_code_len = output->output_opt.max_code_len;
-
-    for (t = 0; t < num_thrs; t++) {
-        neu = output->neurons + t;
-
-        if (class_size > 0) {
-            if (posix_memalign((void **)&neu->ac_o_c, ALIGN_SIZE,
-                        sizeof(real_t) * class_size) != 0
-                    || neu->ac_o_c == NULL) {
-                ST_WARNING("Failed to malloc ac_o_c.");
-                goto ERR;
-            }
-
-            for (i = 0; i < class_size; i++) {
-                neu->ac_o_c[i] = 0;
-            }
-
-            if (output->output_opt.hs && output->output_opt.class_hs) {
-                if (posix_memalign((void **)&neu->ac_hs_c, ALIGN_SIZE,
-                            sizeof(real_t) * max_code_len) != 0
-                        || neu->ac_hs_c == NULL) {
-                    ST_WARNING("Failed to malloc ac_hs_c.");
-                    goto ERR;
-                }
-
-                for (i = 0; i < max_code_len; i++) {
-                    neu->ac_hs_c[i] = 0;
-                }
-
-                neu->p_hs_c = -1.0;
-            }
-        }
-
-        if (posix_memalign((void **)&neu->ac_o_w, ALIGN_SIZE,
-                    sizeof(real_t) * output->output_size) != 0
-                || neu->ac_o_w == NULL) {
-            ST_WARNING("Failed to malloc ac_o_w.");
-            goto ERR;
-        }
-
-        for (i = 0; i < output->output_size; i++) {
-            neu->ac_o_w[i] = 0;
-        }
-
-        if (output->output_opt.hs) {
-            if (posix_memalign((void **)&neu->ac_hs_w, ALIGN_SIZE,
-                        sizeof(real_t) * max_code_len) != 0
-                    || neu->ac_hs_w == NULL) {
-                ST_WARNING("Failed to malloc ac_hs_w.");
-                goto ERR;
-            }
-
-            for (i = 0; i < max_code_len; i++) {
-                neu->ac_hs_w[i] = 0;
-            }
-
-            neu->p_hs_w = -1.0;
-        }
-    }
-
-    return 0;
-
-ERR:
-    if (output->neurons != NULL) {
-        for (i = 0; i < output->num_thrs; i++) {
-            safe_free(output->neurons[i].ac_o_c);
-            safe_free(output->neurons[i].er_o_c);
-            safe_free(output->neurons[i].ac_o_w);
-            safe_free(output->neurons[i].er_o_w);
-
-            safe_free(output->neurons[i].wt_hs_c);
-            safe_free(output->neurons[i].wt_hs_w);
-
-            safe_free(output->neurons[i].ac_hs_c);
-            safe_free(output->neurons[i].ac_hs_w);
-
-            output->neurons[i].p_hs_c = -1.0;
-            output->neurons[i].p_hs_w = -1.0;
-        }
-        safe_free(output->neurons);
-    }
-    output->num_thrs = 0;
-
-    return -1;
-}
-
-int output_reset_test(output_t *output, int tid)
-{
-#if 0
-    int class_size;
-
-    int i;
-
-    ST_CHECK_PARAM(output == NULL, -1);
-
-    class_size = output->output_opt.class_size;
-    if (class_size > 0) {
-        for (i = 0; i < class_size; i++) {
-            output->ac_o_c[i] = 0;
-        }
-    }
-
-    for (i = 0; i < output->output_size; i++) {
-        output->ac_o_w[i] = 0;
-    }
-#endif
-
-    return 0;
-}
-
-int output_start_test(output_t *output, int word, int tid)
-{
-    output_neuron_t *neu;
-    int class_size;
-
-    int c;
-    int s;
-    int e;
-
-    int i;
-
-    ST_CHECK_PARAM(output == NULL || tid < 0, -1);
-
-    if (word < 0) {
-        return 0;
-    }
-
-    neu = output->neurons + tid;
-    class_size = output->output_opt.class_size;
-    if (class_size > 0) {
-        for (i = 0; i < class_size; i++) {
-            neu->ac_o_c[i] = 0;
-        }
-
-        c = output->w2c[word];
-        s = output->c2w_s[c];
-        e = output->c2w_e[c];
-    } else {
-        s = 0;
-        e = output->output_size;
-    }
-
-    for (i = s; i < e; i++) {
-        neu->ac_o_w[i] = 0;
-    }
-
-    return 0;
-}
-
-int output_end_test(output_t *output, int word, int tid)
-{
-    ST_CHECK_PARAM(output == NULL, -1);
-
-    return 0;
-}
-
-int output_setup_gen(output_t *output)
-{
-    return output_setup_test(output, 1);
-}
-
-int output_reset_gen(output_t *output)
-{
-    return output_reset_test(output, 0);
-}
-
-int output_end_gen(output_t *output, int word)
-{
-    return output_end_test(output, word, 0);
 }
 
 bool output_equal(output_t *output1, output_t *output2)
 {
-    int i;
-
     ST_CHECK_PARAM(output1 == NULL || output2 == NULL, false);
 
     if (output1->output_size != output2->output_size) {
         return false;
     }
 
-    if (output1->output_opt.class_size != output2->output_opt.class_size) {
+    if (output1->in_size != output2->in_size) {
         return false;
     }
 
-    if (output1->output_opt.class_size > 0) {
-        for (i = 0; i < output1->output_size; i++) {
-            if (output1->w2c[i] != output2->w2c[i]) {
-                return false;
-            }
+    return output_tree_equal(output1->tree, output2->tree);
+}
+
+int output_load_header(output_t **output, int version,
+        FILE *fp, bool *binary, FILE *fo_info)
+{
+    char sym[MAX_LINE_LEN];
+    union {
+        char str[4];
+        int magic_num;
+    } flag;
+
+    int output_size;
+    int in_size;
+    int m;
+    int max_depth;
+    int max_branch;
+    bool b;
+
+    ST_CHECK_PARAM((output == NULL && fo_info == NULL) || fp == NULL
+            || binary == NULL, -1);
+
+    if (version < 3) {
+        ST_WARNING("Too old version of connlm file");
+        return -1;
+    }
+
+    if (fread(&flag.magic_num, sizeof(int), 1, fp) != 1) {
+        ST_WARNING("Failed to load magic num.");
+        return -1;
+    }
+
+    if (strncmp(flag.str, "    ", 4) == 0) {
+        *binary = false;
+    } else if (OUTPUT_MAGIC_NUM != flag.magic_num) {
+        ST_WARNING("magic num wrong.");
+        return -2;
+    } else {
+        *binary = true;
+    }
+
+    if (output != NULL) {
+        *output = NULL;
+    }
+
+    if (*binary) {
+        if (fread(&output_size, sizeof(int), 1, fp) != 1) {
+            ST_WARNING("Failed to read output size.");
+            return -1;
         }
 
-        for (i = 0; i < output1->output_opt.class_size; i++) {
-            if (output1->c2w_s[i] != output2->c2w_s[i]) {
-                return false;
+        if (output_size <= 0) {
+            if (fo_info != NULL) {
+                fprintf(fo_info, "\n<OUTPUT>: None\n");
             }
-            if (output1->c2w_e[i] != output2->c2w_e[i]) {
-                return false;
+            return 0;
+        }
+
+        if (fread(&in_size, sizeof(int), 1, fp) != 1) {
+            ST_WARNING("Failed to read in_size.");
+            return -1;
+        }
+
+        if (fread(&m, sizeof(int), 1, fp) != 1) {
+            ST_WARNING("Failed to read output_method.");
+            return -1;
+        }
+
+        if (fread(&max_depth, sizeof(int), 1, fp) != 1) {
+            ST_WARNING("Failed to read max_depth.");
+            return -1;
+        }
+
+        if (fread(&max_branch, sizeof(int), 1, fp) != 1) {
+            ST_WARNING("Failed to read max_branch.");
+            return -1;
+        }
+    } else {
+        if (st_readline(fp, "") != 0) {
+            ST_WARNING("tag error.");
+            goto ERR;
+        }
+        if (st_readline(fp, "<OUTPUT>") != 0) {
+            ST_WARNING("tag error.");
+            goto ERR;
+        }
+
+        if (st_readline(fp, "Output size: %d", &output_size) != 1) {
+            ST_WARNING("Failed to parse output_size.");
+            goto ERR;
+        }
+
+        if (output_size <= 0) {
+            if (fo_info != NULL) {
+                fprintf(fo_info, "\n<OUTPUT>: None\n");
             }
+            return 0;
+        }
+
+        if (st_readline(fp, "In size: %d", &in_size) != 1) {
+            ST_WARNING("Failed to parse in size.");
+            return -1;
+        }
+
+        if (st_readline(fp, "Method: %s", sym) != 1) {
+            ST_WARNING("Failed to parse hs.");
+            return -1;
+        }
+        m = (int)str2method(sym);
+
+        if (st_readline(fp, "Max Depth: %d", &max_depth) != 1) {
+            ST_WARNING("Failed to parse in max depth.");
+            return -1;
+        }
+
+        if (st_readline(fp, "Max Branch: %d", &max_branch) != 1) {
+            ST_WARNING("Failed to parse in max branch.");
+            return -1;
         }
     }
 
-    if (output1->output_opt.hs != output2->output_opt.hs) {
-        return false;
+    if (output != NULL) {
+        *output = (output_t *)malloc(sizeof(output_t));
+        if (*output == NULL) {
+            ST_WARNING("Failed to malloc output_t");
+            goto ERR;
+        }
+        memset(*output, 0, sizeof(output_t));
+
+        (*output)->output_size = output_size;
+        (*output)->in_size = in_size;
+        (*output)->output_opt.method = (output_method_t)m;
+        (*output)->output_opt.max_depth = max_depth;
+        (*output)->output_opt.max_branch = max_branch;
     }
 
-    if (output1->output_opt.hs) {
+    if (fo_info != NULL) {
+        fprintf(fo_info, "\n<OUTPUT>\n");
+        fprintf(fo_info, "Output size: %d\n", output_size);
+        fprintf(fo_info, "In size: %d\n", in_size);
+        fprintf(fo_info, "Method: %s\n", method2str((output_method_t)m));
+        fprintf(fo_info, "Max Depth: %d\n", max_depth);
+        fprintf(fo_info, "Max Branch: %d\n", max_branch);
     }
 
-    return true;
+    if (output_tree_load_header(output != NULL ? &((*output)->tree) : NULL,
+                version, fp, &b, fo_info) < 0) {
+        ST_WARNING("Failed to output_tree_load_header.");
+        goto ERR;
+    }
+
+    if (b != *binary) {
+        ST_WARNING("Tree binary not match with output binary");
+        goto ERR;
+    }
+
+    return 0;
+
+ERR:
+    if (output != NULL) {
+        safe_output_destroy(*output);
+    }
+    return -1;
+}
+
+int output_load_body(output_t *output, int version, FILE *fp, bool binary)
+{
+    int n;
+
+    ST_CHECK_PARAM(output == NULL || fp == NULL, -1);
+
+    if (version < 3) {
+        ST_WARNING("Too old version of connlm file");
+        return -1;
+    }
+
+    if (binary) {
+        if (fread(&n, sizeof(int), 1, fp) != 1) {
+            ST_WARNING("Failed to read magic num.");
+            goto ERR;
+        }
+
+        if (n != -OUTPUT_MAGIC_NUM) {
+            ST_WARNING("Magic num error.");
+            goto ERR;
+        }
+
+    } else {
+        if (st_readline(fp, "<OUTPUT-DATA>") != 0) {
+            ST_WARNING("body flag error.");
+            goto ERR;
+        }
+    }
+
+    if (output_tree_load_body(output->tree, version, fp, binary) < 0) {
+        ST_WARNING("Failed to output_tree_load_body.");
+        goto ERR;
+    }
+
+    if (output_generate_path(output) < 0) {
+        ST_WARNING("Failed to output_generate_path.");
+        goto ERR;
+    }
+
+    return 0;
+ERR:
+    safe_tree_destroy(output->tree);
+
+    return -1;
+}
+
+int output_save_header(output_t *output, FILE *fp, bool binary)
+{
+    int n;
+
+    ST_CHECK_PARAM(fp == NULL, -1);
+
+    if (binary) {
+        if (fwrite(&OUTPUT_MAGIC_NUM, sizeof(int), 1, fp) != 1) {
+            ST_WARNING("Failed to write magic num.");
+            return -1;
+        }
+        if (output == NULL) {
+            n = 0;
+            if (fwrite(&n, sizeof(int), 1, fp) != 1) {
+                ST_WARNING("Failed to write output size.");
+                return -1;
+            }
+            return 0;
+        }
+
+        if (fwrite(&output->output_size, sizeof(int), 1, fp) != 1) {
+            ST_WARNING("Failed to write output size.");
+            return -1;
+        }
+
+        if (fwrite(&output->in_size, sizeof(int), 1, fp) != 1) {
+            ST_WARNING("Failed to write in_size.");
+            return -1;
+        }
+
+        n = (int)output->output_opt.method;
+        if (fwrite(&n, sizeof(int), 1, fp) != 1) {
+            ST_WARNING("Failed to write method.");
+            return -1;
+        }
+
+        if (fwrite(&output->output_opt.max_depth, sizeof(int), 1, fp) != 1) {
+            ST_WARNING("Failed to write max_depth.");
+            return -1;
+        }
+
+        if (fwrite(&output->output_opt.max_branch, sizeof(int), 1, fp) != 1) {
+            ST_WARNING("Failed to write max_branch.");
+            return -1;
+        }
+    } else {
+        fprintf(fp, "    \n<OUTPUT>\n");
+
+        if (output == NULL) {
+            fprintf(fp, "Output size: 0\n");
+            return 0;
+        }
+
+        fprintf(fp, "Output size: %d\n", output->output_size);
+        fprintf(fp, "In size: %d\n", output->in_size);
+        fprintf(fp, "Method: %s\n", method2str(output->output_opt.method));
+        fprintf(fp, "Max Depth: %d\n", output->output_opt.max_depth);
+        fprintf(fp, "Max Branch: %d\n", output->output_opt.max_branch);
+    }
+
+    if (output_tree_save_header(output->tree, fp, binary) < 0) {
+        ST_WARNING("Failed to output_tree_save_header.");
+        return -1;
+    }
+
+    return 0;
+}
+
+int output_save_body(output_t *output, FILE *fp, bool binary)
+{
+    int n;
+
+    ST_CHECK_PARAM(fp == NULL, -1);
+
+    if (output == NULL) {
+        return 0;
+    }
+
+    if (binary) {
+        n = -OUTPUT_MAGIC_NUM;
+        if (fwrite(&n, sizeof(int), 1, fp) != 1) {
+            ST_WARNING("Failed to write magic num.");
+            return -1;
+        }
+    } else {
+        fprintf(fp, "<OUTPUT-DATA>\n");
+    }
+
+    if (output_tree_save_body(output->tree, fp, binary) < 0) {
+        ST_WARNING("Failed to output_tree_save_body.");
+        return -1;
+    }
+
+    return 0;
 }

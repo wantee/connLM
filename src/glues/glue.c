@@ -503,3 +503,24 @@ ERR:
     safe_glue_destroy(glue);
     return NULL;
 }
+
+int glue_load_header(glue_t **glue, int version,
+        FILE *fp, bool *binary, FILE *fo_info)
+{
+    return 0;
+}
+
+int glue_load_body(glue_t *glue, int version, FILE *fp, bool binary)
+{
+    return 0;
+}
+
+int glue_save_header(glue_t *glue, FILE *fp, bool binary)
+{
+    return 0;
+}
+
+int glue_save_body(glue_t *glue, FILE *fp, bool binary)
+{
+    return 0;
+}

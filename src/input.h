@@ -1,18 +1,18 @@
 /*
  * The MIT License (MIT)
- * 
+ *
  * Copyright (c) 2015 Wang Jian
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in all
  * copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -69,7 +69,7 @@ void input_destroy(input_t* input);
  * Duplicate a input layer.
  * @ingroup g_input
  * @param[in] i input layer to be duplicated.
- * @return the duplicated input layer. 
+ * @return the duplicated input layer.
  */
 input_t* input_dup(input_t *i);
 
@@ -80,6 +80,58 @@ input_t* input_dup(input_t *i);
  * @return a new input layer or NULL if error.
  */
 input_t* input_parse_topo(const char *line);
+
+/**
+ * Load input header and initialise a new input.
+ * @ingroup g_input
+ * @param[out] input input initialised.
+ * @param[in] version file version of loading file.
+ * @param[in] fp file stream loaded from.
+ * @param[out] binary whether the file stream is in binary format.
+ * @param[in] fo file stream used to print information, if it is not NULL.
+ * @see input_load_body
+ * @see input_save_header, input_save_body
+ * @return non-zero value if any error.
+ */
+int input_load_header(input_t **input, int version,
+        FILE *fp, bool *binary, FILE *fo_info);
+
+/**
+ * Load input body.
+ * @ingroup g_input
+ * @param[in] input input to be loaded.
+ * @param[in] version file version of loading file.
+ * @param[in] fp file stream loaded from.
+ * @param[in] binary whether to use binary format.
+ * @see input_load_header
+ * @see input_save_header, input_save_body
+ * @return non-zero value if any error.
+ */
+int input_load_body(input_t *input, int version, FILE *fp, bool binary);
+
+/**
+ * Save input header.
+ * @ingroup g_input
+ * @param[in] input input to be saved.
+ * @param[in] fp file stream saved to.
+ * @param[in] binary whether to use binary format.
+ * @see input_save_body
+ * @see input_load_header, input_load_body
+ * @return non-zero value if any error.
+ */
+int input_save_header(input_t *input, FILE *fp, bool binary);
+
+/**
+ * Save input body.
+ * @ingroup g_input
+ * @param[in] input input to be saved.
+ * @param[in] fp file stream saved to.
+ * @param[in] binary whether to use binary format.
+ * @see input_save_header
+ * @see input_load_header, input_load_body
+ * @return non-zero value if any error.
+ */
+int input_save_body(input_t *input, FILE *fp, bool binary);
 
 #ifdef __cplusplus
 }

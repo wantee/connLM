@@ -1,18 +1,18 @@
 /*
  * The MIT License (MIT)
- * 
+ *
  * Copyright (c) 2015 Wang Jian
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in all
  * copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -38,6 +38,7 @@ bool g_binary;
 
 st_opt_t *g_cmd_opt;
 
+connlm_opt_t g_connlm_opt;
 connlm_eval_opt_t g_eval_opt;
 
 int connlm_eval_parse_opt(int *argc, const char *argv[])
@@ -66,6 +67,10 @@ int connlm_eval_parse_opt(int *argc, const char *argv[])
         goto ST_OPT_ERR;
     }
 
+    if (connlm_load_opt(&g_connlm_opt, g_cmd_opt, NULL) < 0) {
+        ST_WARNING("Failed to connlm_load_opt");
+        goto ST_OPT_ERR;
+    }
     if (connlm_load_eval_opt(&g_eval_opt, g_cmd_opt, NULL) < 0) {
         ST_WARNING("Failed to connlm_load_eval_opt");
         goto ST_OPT_ERR;
@@ -131,8 +136,13 @@ int main(int argc, const char *argv[])
     }
     safe_st_fclose(fp);
 
-    if (connlm_setup_eval(connlm, &g_eval_opt, argv[2]) < 0) {
-        ST_WARNING("Failed to connlm_setup_eval.");
+    if (connlm_setup_read(connlm, argv[2]) < 0) {
+        ST_WARNING("Failed to connlm_setup_read.");
+        goto ERR;
+    }
+
+    if (connlm_setup(connlm, false) < 0) {
+        ST_WARNING("Failed to connlm_setup.");
         goto ERR;
     }
 

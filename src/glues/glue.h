@@ -1,18 +1,18 @@
 /*
  * The MIT License (MIT)
- * 
+ *
  * Copyright (c) 2015 Wang Jian
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in all
  * copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -32,11 +32,12 @@ extern "C" {
 #include <connlm/config.h>
 #include "layers/layer.h"
 
-/** @defgroup g_glue NNet glue. 
+/** @defgroup g_glue NNet glue.
  * Data structures and functions for NNet glue.
  */
 
 typedef int glue_id_t;
+#define GLUE_ID_FMT "%d"
 typedef int glue_offset_t;
 
 /**
@@ -84,7 +85,7 @@ void glue_destroy(glue_t* glue);
  * Duplicate a glue.
  * @ingroup g_glue
  * @param[in] g glue to be duplicated.
- * @return the duplicated glue. 
+ * @return the duplicated glue.
  */
 glue_t* glue_dup(glue_t *g);
 
@@ -97,6 +98,58 @@ glue_t* glue_dup(glue_t *g);
  * @return a new glue or NULL if error.
  */
 glue_t* glue_parse_topo(const char *line, layer_t **layers, int n_layer);
+
+/**
+ * Load glue header and initialise a new glue.
+ * @ingroup g_glue
+ * @param[out] glue glue initialised.
+ * @param[in] version file version of loading file.
+ * @param[in] fp file stream loaded from.
+ * @param[out] binary whether the file stream is in binary format.
+ * @param[in] fo file stream used to print information, if it is not NULL.
+ * @see glue_load_body
+ * @see glue_save_header, glue_save_body
+ * @return non-zero value if any error.
+ */
+int glue_load_header(glue_t **glue, int version,
+        FILE *fp, bool *binary, FILE *fo_info);
+
+/**
+ * Load glue body.
+ * @ingroup g_glue
+ * @param[in] glue glue to be loaded.
+ * @param[in] version file version of loading file.
+ * @param[in] fp file stream loaded from.
+ * @param[in] binary whether to use binary format.
+ * @see glue_load_header
+ * @see glue_save_header, glue_save_body
+ * @return non-zero value if any error.
+ */
+int glue_load_body(glue_t *glue, int version, FILE *fp, bool binary);
+
+/**
+ * Save glue header.
+ * @ingroup g_glue
+ * @param[in] glue glue to be saved.
+ * @param[in] fp file stream saved to.
+ * @param[in] binary whether to use binary format.
+ * @see glue_save_body
+ * @see glue_load_header, glue_load_body
+ * @return non-zero value if any error.
+ */
+int glue_save_header(glue_t *glue, FILE *fp, bool binary);
+
+/**
+ * Save glue body.
+ * @ingroup g_glue
+ * @param[in] glue glue to be saved.
+ * @param[in] fp file stream saved to.
+ * @param[in] binary whether to use binary format.
+ * @see glue_save_header
+ * @see glue_load_header, glue_load_body
+ * @return non-zero value if any error.
+ */
+int glue_save_body(glue_t *glue, FILE *fp, bool binary);
 
 #ifdef __cplusplus
 }

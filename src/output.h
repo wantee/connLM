@@ -1,18 +1,18 @@
 /*
  * The MIT License (MIT)
- * 
+ *
  * Copyright (c) 2015 Wang Jian
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in all
  * copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -47,7 +47,7 @@ typedef unsigned int output_node_id_t;
  * @ingroup g_output
  */
 typedef enum _output_construct_method_t_ {
-    TOP_DOWN, /**< Top-down method. */
+    TOP_DOWN = 0, /**< Top-down method. */
     BOTTOM_UP, /**< Bottom-up method. */
 } output_method_t;
 
@@ -67,19 +67,10 @@ typedef struct _output_opt_t_ {
  * @ingroup g_output
  */
 typedef struct _output_neuron_t_ {
-    real_t *ac_o_w; /**< activation of output of word part. */
-    real_t *er_o_w; /**< error of output of word part. */
-    real_t *ac_o_c; /**< activation of output of class part. */
-    real_t *er_o_c; /**< error of output of class part. */
+    real_t *ac; /**< activation of output layer. */
+    real_t *er; /**< error of output layer. */
 
-    real_t *wt_hs_c; /**< HS weights for classes. */
-    real_t *wt_hs_w; /**< HS weights for words. */
-
-    real_t *ac_hs_c; /**< HS activiation for classes. */
-    real_t *ac_hs_w; /**< HS activiation for words. */
-
-    real_t p_hs_c; /**< Probility for class of HS. */
-    real_t p_hs_w; /**< Probility for word of HS. */
+    real_t p; /**< Probility for word. */
 } output_neuron_t;
 
 /**
@@ -97,8 +88,8 @@ typedef struct _output_tree_node_t_ {
  */
 typedef struct _output_tree_t_ {
     output_tree_node_t *nodes; /**< nodes on output tree. */
-    output_node_id_t num_nodes; /**< number of nodes on output tree. */
-    output_node_id_t cap_nodes; /**< capacity of nodes array. */
+    output_node_id_t num_node; /**< number of nodes on output tree. */
+    output_node_id_t cap_node; /**< capacity of nodes array. */
 
     output_node_id_t root; /**< root node of output tree. */
 } output_tree_t;
@@ -177,7 +168,7 @@ output_t* output_dup(output_t *o);
 /**
  * Load output tree header and initialise a new output tree.
  * @ingroup g_output
- * @param[out] output tree initialised.
+ * @param[out] output output tree initialised.
  * @param[in] version file version of loading file.
  * @param[in] fp file stream loaded from.
  * @param[out] binary whether the file stream is in binary format.
@@ -226,20 +217,13 @@ int output_save_body(output_t *output, FILE *fp, bool binary);
 /**
  * Generate output tree with word counts.
  * @ingroup g_output
- * @param[in] output output tree to be generated.
+ * @param[in] output_opt options for generating output.
  * @param[in] word_cnts counts of words, descendingly sorted.
- * @return non-zero value if any error.
+ * @param[in] output_size size of output layer.
+ * @return generated output, NULL if any error.
  */
-int output_generate(output_t *output, count_t *word_cnts);
-
-/**
- * Initializing HS for output tree.
- * @ingroup g_output
- * @param[in] output output tree.
- * @param[in] hs_size input size for HS.
- * @return non-zero value if any error.
- */
-int output_hs_init(output_t *output, int hs_input_size);
+output_t* output_generate(output_opt_t *output_opt, count_t *word_cnts,
+       int output_size);
 
 /**
  * Activate neurons of pre output tree.
@@ -277,146 +261,71 @@ int output_loss(output_t *output, int word, int tid);
  * @return non-zero value if any error.
  */
 double output_get_prob(output_t *output, int word, int tid);
-/**
- * Get class probability of a class.
- * @ingroup g_output
- * @param[in] output output tree related.
- * @param[in] cls the specific class.
- * @param[in] tid thread id (neuron id).
- * @return non-zero value if any error.
- */
-double output_get_class_prob_for_class(output_t *output, int cls, int tid);
-/**
- * Get class probability of a word.
- * @ingroup g_output
- * @param[in] output output tree related.
- * @param[in] word the specific word.
- * @param[in] tid thread id (neuron id).
- * @return non-zero value if any error.
- */
-double output_get_class_prob(output_t *output, int word, int tid);
-/**
- * Get word probability of a word.
- * @ingroup g_output
- * @param[in] output output tree related.
- * @param[in] word the specific word.
- * @param[in] tid thread id (neuron id).
- * @return non-zero value if any error.
- */
-double output_get_word_prob(output_t *output, int word, int tid);
 
 /**
- * Setup training for output tree.
- * Called before training.
+ * Setup runinng for output tree.
+ * Called before runinng.
  * @ingroup g_output
  * @param[in] output output tree.
  * @param[in] num_thrs number of thread to be used.
+ * @param[in] backprop whether do backpropagating.
  * @return non-zero value if any error.
  */
-int output_setup_train(output_t *output, int num_thrs);
-/**
- * Reset training for output tree.
- * Called before every input sentence to be trained.
- * @ingroup g_output
- * @param[in] output output tree.
- * @param[in] tid thread id (neuron id).
- * @return non-zero value if any error.
- */
-int output_reset_train(output_t *output, int tid);
-/**
- * Start training for output tree.
- * Called before every input word to be trained.
- * @ingroup g_output
- * @param[in] output output tree.
- * @param[in] word current word.
- * @param[in] tid thread id (neuron id).
- * @return non-zero value if any error.
- */
-int output_start_train(output_t *output, int word, int tid);
-/**
- * End training for output tree.
- * Called after every input word trained.
- * @ingroup g_output
- * @param[in] output output tree.
- * @param[in] word current word.
- * @param[in] tid thread id (neuron id).
- * @return non-zero value if any error.
- */
-int output_end_train(output_t *output, int word, int tid);
-/**
- * Finish training for output tree.
- * Called after all words trained.
- * @ingroup g_output
- * @param[in] output output tree.
- * @param[in] tid thread id (neuron id).
- * @return non-zero value if any error.
- */
-int output_finish_train(output_t *output, int tid);
+int output_setup(output_t *output, int num_thrs, bool backprop);
 
 /**
- * Setup testing for output tree.
- * Called before testing.
- * @ingroup g_output
- * @param[in] output output tree.
- * @param[in] num_thrs number of thread to be used.
- * @return non-zero value if any error.
- */
-int output_setup_test(output_t *output, int num_thrs);
-/**
- * Reset testing for output tree.
- * Called before every input sentence to be tested.
+ * Reset runinng for output tree.
+ * Called before every input sentence to be runned.
  * @ingroup g_output
  * @param[in] output output tree.
  * @param[in] tid thread id (neuron id).
+ * @param[in] backprop whether do backpropagating.
  * @return non-zero value if any error.
  */
-int output_reset_test(output_t *output, int tid);
-/**
- * Start testing for output tree.
- * Called before every input word to be tested.
- * @ingroup g_output
- * @param[in] output output tree.
- * @param[in] word current word.
- * @param[in] tid thread id (neuron id).
- * @return non-zero value if any error.
- */
-int output_start_test(output_t *output, int word, int tid);
-/**
- * End testing for output tree.
- * Called after every input word tested.
- * @ingroup g_output
- * @param[in] output output tree.
- * @param[in] word current word.
- * @param[in] tid thread id (neuron id).
- * @return non-zero value if any error.
- */
-int output_end_test(output_t *output, int word, int tid);
+int output_reset(output_t *output, int tid, bool backprop);
 
 /**
- * Setup generating for output tree.
- * Called before generating.
+ * Start runinng for output tree.
+ * Called before every input word to be runned.
  * @ingroup g_output
  * @param[in] output output tree.
+ * @param[in] word current word.
+ * @param[in] tid thread id (neuron id).
+ * @param[in] backprop whether do backpropagating.
  * @return non-zero value if any error.
  */
-int output_setup_gen(output_t *output);
+int output_start(output_t *output, int word, int tid, bool backprop);
+
 /**
- * Reset generating for output tree.
- * Called before every sentence to be generated.
+ * End runinng for output tree.
+ * Called after every input word runned.
  * @ingroup g_output
  * @param[in] output output tree.
+ * @param[in] word current word.
+ * @param[in] tid thread id (neuron id).
+ * @param[in] backprop whether do backpropagating.
  * @return non-zero value if any error.
  */
-int output_reset_gen(output_t *output);
+int output_end(output_t *output, int word, int tid, bool backprop);
+
 /**
- * End generating for output tree.
- * Called after every word generated.
+ * Finish runinng for output tree.
+ * Called after all words runned.
  * @ingroup g_output
  * @param[in] output output tree.
- * @param[in] word current generated word.
+ * @param[in] tid thread id (neuron id).
+ * @param[in] backprop whether do backpropagating.
  * @return non-zero value if any error.
  */
-int output_end_gen(output_t *output, int word);
+int output_finish(output_t *output, int tid, bool backprop);
+
+/**
+ * Generate word from output tree.
+ * @ingroup g_output
+ * @param[in] output output tree.
+ * @return word index generated, -1 if any error.
+ */
+int output_gen_word(output_t *output);
 
 /**
  * Whether two output tree is equal.

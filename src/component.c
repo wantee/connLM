@@ -1,18 +1,18 @@
 /*
  * The MIT License (MIT)
- * 
+ *
  * Copyright (c) 2015 Wang Jian
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in all
  * copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -27,7 +27,10 @@
 #include <stutils/st_log.h>
 #include <stutils/st_utils.h>
 
+#include "param.h"
 #include "component.h"
+
+static const int COMP_MAGIC_NUM = 626140498 + 3;
 
 void comp_destroy(component_t *comp)
 {
@@ -229,7 +232,7 @@ component_t *comp_init_from_topo(const char* topo_content)
         if (*p == '\n') {
             p++;
         }
-        
+
         (void)get_next_token(line, token);
         if (strcasecmp("property", token) == 0) {
             if(comp_parse_topo(comp, line) < 0) {
@@ -342,4 +345,449 @@ int comp_construct_graph(component_t *comp)
 ERR:
     safe_graph_destroy(comp->graph);
     return -1;
+}
+
+int comp_load_train_opt(component_t *comp, st_opt_t *opt,
+        const char *sec_name)
+{
+    ST_CHECK_PARAM(comp == NULL || opt == NULL, -1);
+
+    if (param_load(&comp->train_opt.param, opt, sec_name, NULL) < 0) {
+        ST_WARNING("Failed to param_load.");
+        goto ST_OPT_ERR;
+    }
+
+    return 0;
+
+ST_OPT_ERR:
+    return -1;
+}
+
+int comp_setup(component_t *comp, output_t *output, int num_thrs,
+        bool backprop)
+{
+    return 0;
+}
+
+int comp_reset(component_t *comp, int tid, bool backprop)
+{
+    return 0;
+}
+
+int comp_start(component_t *comp, int word, int tid, bool backprop)
+{
+    return 0;
+}
+
+int comp_end(component_t *comp, int word, int tid, bool backprop)
+{
+    return 0;
+}
+
+int comp_finish(component_t *comp, int tid, bool backprop)
+{
+    return 0;
+}
+
+int comp_load_header(component_t **comp, int version,
+        FILE *fp, bool *binary, FILE *fo_info)
+{
+    union {
+        char str[4];
+        int magic_num;
+    } flag;
+
+    char name[MAX_NAME_LEN];
+    layer_id_t num_layer;
+    glue_id_t num_glue;
+    layer_id_t l;
+    glue_id_t g;
+
+    bool b;
+
+    ST_CHECK_PARAM((comp == NULL && fo_info == NULL) || fp == NULL
+            || binary == NULL, -1);
+
+    if (version < 3) {
+        ST_WARNING("Too old version of connlm file");
+        return -1;
+    }
+
+    if (fread(&flag.magic_num, sizeof(int), 1, fp) != 1) {
+        ST_WARNING("Failed to load magic num.");
+        return -1;
+    }
+
+    if (strncmp(flag.str, "    ", 4) == 0) {
+        *binary = false;
+    } else if (COMP_MAGIC_NUM != flag.magic_num) {
+        ST_WARNING("magic num wrong.");
+        return -2;
+    } else {
+        *binary = true;
+    }
+
+    if (comp != NULL) {
+        *comp = NULL;
+    }
+
+    if (*binary) {
+        if (fread(name, sizeof(char), MAX_NAME_LEN, fp) != MAX_NAME_LEN) {
+            ST_WARNING("Failed to read name.");
+            return -1;
+        }
+        name[MAX_NAME_LEN - 1] = '\0';
+
+        if (fread(&num_layer, sizeof(layer_id_t), 1, fp) != 1) {
+            ST_WARNING("Failed to read num_layer.");
+            return -1;
+        }
+
+        if (fread(&num_glue, sizeof(glue_id_t), 1, fp) != 1) {
+            ST_WARNING("Failed to read num_glue.");
+            return -1;
+        }
+    } else {
+        if (st_readline(fp, "") != 0) {
+            ST_WARNING("tag error.");
+            goto ERR;
+        }
+        if (st_readline(fp, "<COMPONENT>") != 0) {
+            ST_WARNING("tag error.");
+            goto ERR;
+        }
+
+        if (st_readline(fp, "Name: %s", name) != 1) {
+            ST_WARNING("Failed to parse name.");
+            goto ERR;
+        }
+
+        if (st_readline(fp, "Num layer: " LAYER_ID_FMT, &num_layer) != 1) {
+            ST_WARNING("Failed to parse num_layer.");
+            return -1;
+        }
+
+        if (st_readline(fp, "Num glue: " GLUE_ID_FMT, &num_glue) != 1) {
+            ST_WARNING("Failed to parse num_glue.");
+            return -1;
+        }
+    }
+
+    if (comp != NULL) {
+        *comp = (component_t *)malloc(sizeof(component_t));
+        if (*comp == NULL) {
+            ST_WARNING("Failed to malloc component_t");
+            goto ERR;
+        }
+        memset(*comp, 0, sizeof(component_t));
+
+        strncpy((*comp)->name, name, MAX_NAME_LEN);
+        (*comp)->name[MAX_NAME_LEN - 1] = '\0';
+        (*comp)->num_layer = num_layer;
+        (*comp)->num_glue = num_glue;
+    }
+
+    if (fo_info != NULL) {
+        fprintf(fo_info, "\n<COMPONENT>\n");
+        fprintf(fo_info, "Name: %s\n", name);
+        fprintf(fo_info, "Num layer: " LAYER_ID_FMT "\n", num_layer);
+        fprintf(fo_info, "Num glue: " GLUE_ID_FMT "\n", num_glue);
+    }
+
+    if (input_load_header(comp != NULL ? &((*comp)->input) : NULL,
+                version, fp, &b, fo_info) < 0) {
+        ST_WARNING("Failed to input_load_header.");
+        goto ERR;
+    }
+    if (*binary != b) {
+        ST_WARNING("Both binary and text format in one file.");
+        goto ERR;
+    }
+
+    if (emb_wt_load_header(comp != NULL ? &((*comp)->emb) : NULL,
+                version, fp, &b, fo_info) < 0) {
+        ST_WARNING("Failed to emb_wt_load_header.");
+        goto ERR;
+    }
+    if (*binary != b) {
+        ST_WARNING("Both binary and text format in one file.");
+        goto ERR;
+    }
+
+    if (comp != NULL ) {
+        (*comp)->layers = (layer_t **)malloc(sizeof(layer_t *)
+                * ((*comp)->num_layer));
+        if ((*comp)->layers == NULL) {
+            ST_WARNING("Failed to alloc layers.");
+            goto ERR;
+        }
+    }
+    for (l = 0; l < (*comp)->num_layer; l++) {
+        if (layer_load_header(comp != NULL ? &((*comp)->layers[l]) : NULL,
+                    version, fp, &b, fo_info) < 0) {
+            ST_WARNING("Failed to layer_load_header[" LAYER_ID_FMT ".", l);
+            goto ERR;
+        }
+        if (*binary != b) {
+            ST_WARNING("Both binary and text format in one file.");
+            goto ERR;
+        }
+    }
+
+    if (comp != NULL ) {
+        (*comp)->glues = (glue_t **)malloc(sizeof(glue_t *)
+                * ((*comp)->num_glue));
+        if ((*comp)->glues == NULL) {
+            ST_WARNING("Failed to alloc glues.");
+            goto ERR;
+        }
+    }
+    for (g = 0; g < (*comp)->num_glue; g++) {
+        if (glue_load_header(comp != NULL ? &((*comp)->glues[g]) : NULL,
+                    version, fp, &b, fo_info) < 0) {
+            ST_WARNING("Failed to glue_load_header[" GLUE_ID_FMT ".", g);
+            goto ERR;
+        }
+        if (*binary != b) {
+            ST_WARNING("Both binary and text format in one file.");
+            goto ERR;
+        }
+    }
+
+    if (output_wt_load_header(comp != NULL ? &((*comp)->output_wt) : NULL,
+                version, fp, &b, fo_info) < 0) {
+        ST_WARNING("Failed to output_wt_load_header.");
+        goto ERR;
+    }
+    if (*binary != b) {
+        ST_WARNING("Both binary and text format in one file.");
+        goto ERR;
+    }
+
+    return 0;
+
+ERR:
+    if (comp != NULL) {
+        safe_comp_destroy(*comp);
+    }
+    return -1;
+}
+
+int comp_load_body(component_t *comp, int version, FILE *fp, bool binary)
+{
+    int n;
+    layer_id_t l;
+    glue_id_t g;
+
+    ST_CHECK_PARAM(comp == NULL || fp == NULL, -1);
+
+    if (version < 3) {
+        ST_WARNING("Too old version of connlm file");
+        return -1;
+    }
+
+    if (binary) {
+        if (fread(&n, sizeof(int), 1, fp) != 1) {
+            ST_WARNING("Failed to read magic num.");
+            goto ERR;
+        }
+
+        if (n != -COMP_MAGIC_NUM) {
+            ST_WARNING("Magic num error.");
+            goto ERR;
+        }
+
+    } else {
+        if (st_readline(fp, "<COMPONENT-DATA>") != 0) {
+            ST_WARNING("body flag error.");
+            goto ERR;
+        }
+    }
+
+    if (input_load_body(comp->input, version, fp, binary) < 0) {
+        ST_WARNING("Failed to input_load_body.");
+        goto ERR;
+    }
+
+    if (emb_wt_load_body(comp->emb, version, fp, binary) < 0) {
+        ST_WARNING("Failed to emb_wt_load_body.");
+        goto ERR;
+    }
+
+    for (l = 0; l < comp->num_layer; l++) {
+        if (layer_load_body(comp->layers[l], version, fp, binary) < 0) {
+            ST_WARNING("Failed to layer_load_body[" LAYER_ID_FMT ".", l);
+            goto ERR;
+        }
+    }
+
+    for (g = 0; g < comp->num_glue; g++) {
+        if (glue_load_body(comp->glues[g], version, fp, binary) < 0) {
+            ST_WARNING("Failed to glue_load_body[" GLUE_ID_FMT ".", g);
+            goto ERR;
+        }
+    }
+
+    if (output_wt_load_body(comp->output_wt, version, fp, binary) < 0) {
+        ST_WARNING("Failed to output_wt_load_body.");
+        goto ERR;
+    }
+
+    if (comp_construct_graph(comp) < 0) {
+        ST_WARNING("Failed to comp_construct_graph.");
+        goto ERR;
+    }
+
+    return 0;
+
+ERR:
+    safe_input_destroy(comp->input);
+    safe_emb_wt_destroy(comp->emb);
+
+    for (l = 0; l < comp->num_layer; l++) {
+        safe_layer_destroy(comp->layers[l]);
+    }
+
+    for (g = 0; g < comp->num_glue; g++) {
+        safe_glue_destroy(comp->glues[g]);
+    }
+
+    safe_output_wt_destroy(comp->output_wt);
+
+    safe_graph_destroy(comp->graph);
+
+    return -1;
+}
+
+int comp_save_header(component_t *comp, FILE *fp, bool binary)
+{
+    int n;
+    layer_id_t l;
+    glue_id_t g;
+
+    ST_CHECK_PARAM(fp == NULL, -1);
+
+    if (binary) {
+        if (fwrite(&COMP_MAGIC_NUM, sizeof(int), 1, fp) != 1) {
+            ST_WARNING("Failed to write magic num.");
+            return -1;
+        }
+
+        if (fwrite(comp->name, sizeof(char), MAX_NAME_LEN, fp) != MAX_NAME_LEN) {
+            ST_WARNING("Failed to write name.");
+            return -1;
+        }
+
+        if (fwrite(&comp->num_layer, sizeof(layer_id_t), 1, fp) != 1) {
+            ST_WARNING("Failed to write num_layer.");
+            return -1;
+        }
+
+        if (fwrite(&comp->num_glue, sizeof(glue_id_t), 1, fp) != 1) {
+            ST_WARNING("Failed to write num_glue.");
+            return -1;
+        }
+    } else {
+        fprintf(fp, "    \n<COMPONENT>\n");
+
+        fprintf(fp, "Name: %s\n", comp->name);
+        fprintf(fp, "Num layer: " LAYER_ID_FMT, comp->num_layer);
+        fprintf(fp, "Num glue: " GLUE_ID_FMT, comp->num_glue);
+    }
+
+
+    if (input_save_header(comp->input, fp, binary) < 0) {
+        ST_WARNING("Failed to input_save_header.");
+        return -1;
+    }
+
+    if (emb_wt_save_header(comp->emb, fp, binary) < 0) {
+        ST_WARNING("Failed to emb_wt_save_header.");
+        return -1;
+    }
+
+    for (l = 0; l < comp->num_layer; l++) {
+        if (layer_save_header(comp->layers[l], fp, binary) < 0) {
+            ST_WARNING("Failed to layer_save_header[" LAYER_ID_FMT ".", l);
+            return -1;
+        }
+    }
+
+    for (g = 0; g < comp->num_glue; g++) {
+        if (glue_save_header(comp->glues[g], fp, binary) < 0) {
+            ST_WARNING("Failed to glue_save_header[" GLUE_ID_FMT ".", g);
+            return -1;
+        }
+    }
+
+    if (output_wt_save_header(comp->output_wt, fp, binary) < 0) {
+        ST_WARNING("Failed to output_wt_save_header.");
+        return -1;
+    }
+
+    return 0;
+}
+
+int comp_save_body(component_t *comp, FILE *fp, bool binary)
+{
+    int n;
+    layer_id_t l;
+    glue_id_t g;
+
+    ST_CHECK_PARAM(fp == NULL, -1);
+
+    if (comp == NULL) {
+        return 0;
+    }
+
+    if (binary) {
+        n = -COMP_MAGIC_NUM;
+        if (fwrite(&n, sizeof(int), 1, fp) != 1) {
+            ST_WARNING("Failed to write magic num.");
+            return -1;
+        }
+    } else {
+        fprintf(fp, "<COMPONENT-DATA>\n");
+    }
+
+    if (input_save_body(comp->input, fp, binary) < 0) {
+        ST_WARNING("Failed to input_save_body.");
+        return -1;
+    }
+
+    if (emb_wt_save_body(comp->emb, fp, binary) < 0) {
+        ST_WARNING("Failed to emb_wt_save_body.");
+        return -1;
+    }
+
+    for (l = 0; l < comp->num_layer; l++) {
+        if (layer_save_body(comp->layers[l], fp, binary) < 0) {
+            ST_WARNING("Failed to layer_save_body[" LAYER_ID_FMT ".", l);
+            return -1;
+        }
+    }
+
+    for (g = 0; g < comp->num_glue; g++) {
+        if (glue_save_body(comp->glues[g], fp, binary) < 0) {
+            ST_WARNING("Failed to glue_save_body[" GLUE_ID_FMT ".", g);
+            return -1;
+        }
+    }
+
+    if (output_wt_save_body(comp->output_wt, fp, binary) < 0) {
+        ST_WARNING("Failed to output_wt_save_body.");
+        return -1;
+    }
+
+    return 0;
+}
+
+int comp_fwd_bp(component_t *comp, int word, int tid)
+{
+    return 0;
+}
+
+int comp_backprop(component_t *comp, int word, int tid)
+{
+    return 0;
 }

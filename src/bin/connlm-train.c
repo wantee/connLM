@@ -1,18 +1,18 @@
 /*
  * The MIT License (MIT)
- * 
+ *
  * Copyright (c) 2015 Wang Jian
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in all
  * copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -39,7 +39,7 @@ bool g_dry_run;
 
 st_opt_t *g_cmd_opt;
 
-connlm_train_opt_t g_train_opt;
+connlm_opt_t g_connlm_opt;
 
 int connlm_train_parse_opt(int *argc, const char *argv[])
 {
@@ -67,8 +67,8 @@ int connlm_train_parse_opt(int *argc, const char *argv[])
         goto ST_OPT_ERR;
     }
 
-    if (connlm_load_train_opt(&g_train_opt, g_cmd_opt, NULL) < 0) {
-        ST_WARNING("Failed to connlm_load_train_opt");
+    if (connlm_load_opt(&g_connlm_opt, g_cmd_opt, NULL) < 0) {
+        ST_WARNING("Failed to connlm_load_opt");
         goto ST_OPT_ERR;
     }
 
@@ -128,7 +128,7 @@ int main(int argc, const char *argv[])
 
     ST_CLEAN("Command-line: %s", args);
     st_opt_show(g_cmd_opt, "connLM Train Options");
-    ST_CLEAN("Train: %s, Model-in: %s, Model-out: %s", 
+    ST_CLEAN("Train: %s, Model-in: %s, Model-out: %s",
             argv[1], argv[2], argv[3]);
 
     fp = st_fopen(argv[2], "rb");
@@ -144,8 +144,18 @@ int main(int argc, const char *argv[])
     }
     safe_st_fclose(fp);
 
-    if (connlm_setup_train(connlm, &g_train_opt, argv[1]) < 0) {
-        ST_WARNING("Failed to connlm_setup_train.");
+    if (connlm_load_train_opt(connlm, g_cmd_opt, NULL) < 0) {
+        ST_WARNING("Failed to connlm_load_train_opt");
+        goto ERR;
+    }
+
+    if (connlm_setup_read(connlm, argv[1]) < 0) {
+        ST_WARNING("Failed to connlm_setup_read.");
+        goto ERR;
+    }
+
+    if (connlm_setup(connlm, true) < 0) {
+        ST_WARNING("Failed to connlm_setup.");
         goto ERR;
     }
 

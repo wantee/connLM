@@ -1,18 +1,18 @@
 /*
  * The MIT License (MIT)
- * 
+ *
  * Copyright (c) 2015 Wang Jian
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in all
  * copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -46,7 +46,7 @@ extern "C" {
 
 #include "component.h"
 
-/** @defgroup g_connlm connLM Model 
+/** @defgroup g_connlm connLM Model
  * Data structure and functions for connLM model.
  */
 
@@ -58,24 +58,23 @@ extern "C" {
 const char* connlm_revision();
 
 /**
+ * Common parameters for running with connLM model.
+ * @ingroup g_connlm
+ */
+typedef struct _connlm_opt_t_ {
+    int num_thread;           /**< number of threads. */
+    int epoch_size;  /**< number sentences read one time per thread. */
+    unsigned int rand_seed;   /**< seed for random function. */
+    bool shuffle;             /**< whether shuffle the sentences. */
+    char debug_file[MAX_DIR_LEN]; /**< file to print out debug infos. */
+} connlm_opt_t;
+
+/**
  * Parameters for training connLM model.
  * @ingroup g_connlm
  */
 typedef struct _connlm_train_opt_t_ {
     param_t param;            /**< training parameters. */
-
-    int num_thread;           /**< number of threads. */
-    unsigned int rand_seed;   /**< seed for random function. */
- 
-    int epoch_size;  /**< number sentences read one time per thread. */
-    bool shuffle;             /**< whether shuffle the sentences. */
-
-    rnn_train_opt_t rnn_opt; /**< training options for RNN model */
-    maxent_train_opt_t maxent_opt; /**< training options for MaxEnt model */
-    lbl_train_opt_t lbl_opt; /**< training options for LBL model */
-    ffnn_train_opt_t ffnn_opt; /**< training options for FFNN model */
-
-    char debug_file[MAX_DIR_LEN]; /**< file to print out debug infos. */
 } connlm_train_opt_t;
 
 /**
@@ -83,13 +82,8 @@ typedef struct _connlm_train_opt_t_ {
  * @ingroup g_connlm
  */
 typedef struct _connlm_eval_opt_t_ {
-    int num_thread;           /**< number of threads. */
-
-    int epoch_size; /**< number sentences read one time per thread. */
     bool print_sent_prob; /**< print sentence prob only, if true. */
     real_t out_log_base; /**< log base for printing prob. */
-
-    char debug_file[MAX_DIR_LEN]; /**< file to print out debug infos. */
 } connlm_eval_opt_t;
 
 /**
@@ -117,6 +111,7 @@ typedef struct _connlm_egs_t_ {
  * @ingroup g_connlm
  */
 typedef struct _connlm_t_ {
+    connlm_opt_t opt; /**< common options */
     connlm_train_opt_t train_opt; /**< training options */
     connlm_eval_opt_t eval_opt; /**< evaluating options */
     connlm_gen_opt_t gen_opt; /**< generating options */
@@ -139,25 +134,21 @@ typedef struct _connlm_t_ {
 
     output_t *output; /**< output layer */
     vocab_t *vocab;   /**< vocab */
-    rnn_t *rnn;       /**< RNN model. May be NULL */
-    maxent_t *maxent; /**< MaxEnt model. May be NULL */
-    lbl_t *lbl;       /**< LBL model. May be NULL */
-    ffnn_t *ffnn;     /**< FFNN model. May be NULL */
 
     component_t **comps; /**< components. */
     comp_id_t num_comp; /**< number of components. */
 } connlm_t;
 
 /**
- * Load connlm train option.
+ * Load connlm option.
  * @ingroup g_connlm
- * @param[out] train_opt options loaded.
+ * @param[out] connlm_opt options loaded.
  * @param[in] opt runtime options passed by caller.
  * @param[in] sec_name section name of runtime options to be loaded.
  * @return non-zero value if any error.
  */
-int connlm_load_train_opt(connlm_train_opt_t *train_opt, 
-        st_opt_t *opt, const char *sec_name);
+int connlm_load_opt(connlm_opt_t *connlm_opt, st_opt_t *opt,
+        const char *sec_name);
 
 /**
  * Load connlm eval option.
@@ -167,7 +158,7 @@ int connlm_load_train_opt(connlm_train_opt_t *train_opt,
  * @param[in] sec_name section name of runtime options to be loaded.
  * @return non-zero value if any error.
  */
-int connlm_load_eval_opt(connlm_eval_opt_t *eval_opt, 
+int connlm_load_eval_opt(connlm_eval_opt_t *eval_opt,
         st_opt_t *opt, const char *sec_name);
 
 /**
@@ -178,8 +169,19 @@ int connlm_load_eval_opt(connlm_eval_opt_t *eval_opt,
  * @param[in] sec_name section name of runtime options to be loaded.
  * @return non-zero value if any error.
  */
-int connlm_load_gen_opt(connlm_gen_opt_t *gen_opt, 
+int connlm_load_gen_opt(connlm_gen_opt_t *gen_opt,
         st_opt_t *opt, const char *sec_name);
+
+/**
+ * Load connlm train option.
+ * @ingroup g_connlm
+ * @param[in] connlm connlm model to be loaded with.
+ * @param[in] opt runtime options passed by caller.
+ * @param[in] sec_name section name of runtime options to be loaded.
+ * @return non-zero value if any error.
+ */
+int connlm_load_train_opt(connlm_t *connlm, st_opt_t *opt,
+        const char *sec_name);
 
 /**
  * Destroy a connLM model and set the pointer to NULL.
@@ -409,25 +411,6 @@ int connlm_eval(connlm_t *connlm, FILE *fp_log);
  * @return non-zero value if any error.
  */
 int connlm_setup_gen(connlm_t *connlm, connlm_gen_opt_t *gen_opt);
-
-/**
- * Reset generating for connlm model.
- * Called before every input sentence to be generated.
- * @ingroup g_connlm
- * @param[in] connlm connlm model.
- * @return non-zero value if any error.
- */
-int connlm_reset_gen(connlm_t *connlm);
-
-/**
- * End generating for connlm model.
- * Called after every input word generated.
- * @ingroup g_connlm
- * @param[in] connlm connlm model.
- * @param[in] word current generated word.
- * @return non-zero value if any error.
- */
-int connlm_end_gen(connlm_t *connlm, int word);
 
 /**
  * Testing a connlm model.

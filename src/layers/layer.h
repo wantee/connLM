@@ -1,18 +1,18 @@
 /*
  * The MIT License (MIT)
- * 
+ *
  * Copyright (c) 2015 Wang Jian
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in all
  * copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -31,12 +31,13 @@ extern "C" {
 
 #include <connlm/config.h>
 
-/** @defgroup g_layer NNet hidden layer. 
+/** @defgroup g_layer NNet hidden layer.
  * Data structures and functions for NNet hidden layer.
  */
 
 typedef int layer_id_t;
 #define LAYER_ID_NONE -1
+#define LAYER_ID_FMT "%d"
 
 /**
  * NNet hidden layer.
@@ -76,7 +77,7 @@ void layer_destroy(layer_t* layer);
  * Duplicate a layer.
  * @ingroup g_layer
  * @param[in] l layer to be duplicated.
- * @return the duplicated layer. 
+ * @return the duplicated layer.
  */
 layer_t* layer_dup(layer_t *l);
 
@@ -87,6 +88,58 @@ layer_t* layer_dup(layer_t *l);
  * @return a new layer or NULL if error.
  */
 layer_t* layer_parse_topo(const char *line);
+
+/**
+ * Load layer header and initialise a new layer.
+ * @ingroup g_layer
+ * @param[out] layer layer initialised.
+ * @param[in] version file version of loading file.
+ * @param[in] fp file stream loaded from.
+ * @param[out] binary whether the file stream is in binary format.
+ * @param[in] fo file stream used to print information, if it is not NULL.
+ * @see layer_load_body
+ * @see layer_save_header, layer_save_body
+ * @return non-zero value if any error.
+ */
+int layer_load_header(layer_t **layer, int version,
+        FILE *fp, bool *binary, FILE *fo_info);
+
+/**
+ * Load layer body.
+ * @ingroup g_layer
+ * @param[in] layer layer to be loaded.
+ * @param[in] version file version of loading file.
+ * @param[in] fp file stream loaded from.
+ * @param[in] binary whether to use binary format.
+ * @see layer_load_header
+ * @see layer_save_header, layer_save_body
+ * @return non-zero value if any error.
+ */
+int layer_load_body(layer_t *layer, int version, FILE *fp, bool binary);
+
+/**
+ * Save layer header.
+ * @ingroup g_layer
+ * @param[in] layer layer to be saved.
+ * @param[in] fp file stream saved to.
+ * @param[in] binary whether to use binary format.
+ * @see layer_save_body
+ * @see layer_load_header, layer_load_body
+ * @return non-zero value if any error.
+ */
+int layer_save_header(layer_t *layer, FILE *fp, bool binary);
+
+/**
+ * Save layer body.
+ * @ingroup g_layer
+ * @param[in] layer layer to be saved.
+ * @param[in] fp file stream saved to.
+ * @param[in] binary whether to use binary format.
+ * @see layer_save_header
+ * @see layer_load_header, layer_load_body
+ * @return non-zero value if any error.
+ */
+int layer_save_body(layer_t *layer, FILE *fp, bool binary);
 
 #ifdef __cplusplus
 }
