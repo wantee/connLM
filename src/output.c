@@ -32,6 +32,7 @@
 #include <stutils/st_log.h>
 #include <stutils/st_utils.h>
 #include <stutils/st_queue.h>
+#include <stutils/st_stack.h>
 
 #include "utils.h"
 #include "output.h"
@@ -111,8 +112,9 @@ ST_OPT_ERR:
     return -1;
 }
 
-#define s_children(tree, node) tree->nodes[node].children_s
-#define e_children(tree, node) tree->nodes[node].children_e
+#define s_children(tree, node) (tree)->nodes[node].children_s
+#define e_children(tree, node) (tree)->nodes[node].children_e
+#define is_leaf(tree, node) (s_children(tree, node) >= e_children(tree, node))
 
 #define NUM_REALLOC 100
 
@@ -1065,7 +1067,7 @@ static int huffman_trav_2tree(huffman_tree_t *huffman,
 
 static int huffman_traverse(huffman_tree_t *huffman,
         int (*visitor)(huffman_tree_t *huffman,
-            output_node_id_t node, void* args), void *args)
+            output_node_id_t node, void *args), void *args)
 {
     st_queue_t *node_queue = NULL;
 
@@ -1202,6 +1204,137 @@ ERR:
     return -1;
 }
 
+static int output_tree_dfs(output_tree_t *tree,
+        int (*visitor)(output_tree_t *tree, output_node_id_t node,
+            st_stack_t* stack, void *args), void *args)
+{
+    st_stack_t *node_stack = NULL;
+    output_node_id_t *child_in_stack = NULL; /* current child in the stack for every node*/
+
+    void *tmp;
+    output_node_id_t node, child;
+
+    ST_CHECK_PARAM(tree == NULL || visitor == NULL, -1);
+
+    node_stack = st_stack_create(tree->num_node);
+    if(node_stack == NULL) {
+        ST_WARNING("Failed to create node_stack.");
+        goto ERR;
+    }
+
+    child_in_stack = (output_node_id_t *)malloc(
+            sizeof(output_node_id_t)*tree->num_node);
+    if(child_in_stack == NULL) {
+        ST_WARNING("Failed to malloc child_in_stack.");
+        goto ERR;
+    }
+    for (node = 0; node < tree->num_node; node++) {
+        child_in_stack[node] = OUTPUT_NODE_NONE;
+    }
+
+    st_stack_clear(node_stack);
+    if(st_stack_push(node_stack, (void *)(long)tree->root)
+            != ST_STACK_OK) {
+        ST_WARNING("Failed to st_stack_push root");
+        goto ERR;
+    }
+
+    while(!st_stack_empty(node_stack)) {
+        if(st_stack_top(node_stack, &tmp) != ST_STACK_OK) {
+            ST_WARNING("Failed to st_stack_top.");
+            goto ERR;
+        }
+        node = (output_node_id_t)(long)tmp;
+
+        if (is_leaf(tree, node)
+                || (child_in_stack[node] != OUTPUT_NODE_NONE
+                    && child_in_stack[node] >= e_children(tree, node))) {
+            if(visitor(tree, node, node_stack, args) < 0) {
+                ST_WARNING("Failed to visitor.");
+                goto ERR;
+            }
+            if(st_stack_pop(node_stack, &tmp) != ST_STACK_OK) {
+                ST_WARNING("Failed to st_stack_pop.");
+                goto ERR;
+            }
+            continue;
+        }
+
+        if (child_in_stack[node] == OUTPUT_NODE_NONE) {
+            child = s_children(tree, node);
+        } else {
+            child = ++(child_in_stack[node]);
+        }
+        if(st_stack_push(node_stack, (void *)(long)child)
+                != ST_STACK_OK) {
+            ST_WARNING("Failed to st_stack_push child");
+            goto ERR;
+        }
+    }
+
+    safe_st_stack_destroy(node_stack);
+    safe_free(child_in_stack);
+    return 0;
+
+ERR:
+    safe_st_stack_destroy(node_stack);
+    safe_free(child_in_stack);
+    return -1;
+}
+
+int output_tree_dfs_trav_gen_path(output_tree_t *tree,
+        output_node_id_t node, st_stack_t *stack, void *args)
+{
+    output_t *output;
+
+    void *tmp;
+    st_stack_id_t i, n;
+
+    ST_CHECK_PARAM(tree == NULL || stack == NULL || args == NULL, -1);
+
+    if (!is_leaf(tree, node)) {
+        return 0;
+    }
+
+    output = (output_t *)args;
+    if (node >= output->output_size) {
+        ST_WARNING("Error leaf node["OUTPUT_NODE_FMT"]", node);
+        return -1;
+    }
+
+    if (output->paths[node].num_node > 0) {
+        ST_WARNING("Duplicated leaf node["OUTPUT_NODE_FMT"] during DFS",
+                node);
+        return -1;
+    }
+
+    n = st_stack_size(stack);
+    if (n > 1) {
+        output->paths[node].nodes = (output_node_id_t *)malloc(
+                sizeof(output_node_id_t)*(n-1));
+        if (output->paths[node].nodes == NULL) {
+            ST_WARNING("Failed to malloc nodes for path");
+            goto ERR;
+        }
+        output->paths[node].num_node = n - 1;
+    }
+
+    for (i = n - 1; i > 0; i--) { /* exclude *root* and *leaf* */
+        if(st_stack_topn(stack, i, &tmp) != ST_STACK_OK) {
+            ST_WARNING("Failed to st_stack_topn[%d].", i);
+            goto ERR;
+        }
+        output->paths[node].nodes[n-1-i] = (output_node_id_t)(long)tmp;
+    }
+
+    return 0;
+ERR:
+    safe_free(output->paths[node].nodes);
+    output->paths[node].num_node = 0;
+
+    return -1;
+}
+
 static int output_generate_path(output_t *output)
 {
     size_t sz;
@@ -1212,6 +1345,13 @@ static int output_generate_path(output_t *output)
     output->paths = (output_path_t *)malloc(sz);
     if (output->paths == NULL) {
         ST_WARNING("Failed to malloc paths.");
+        goto ERR;
+    }
+    memset(output->paths, 0, sz);
+
+    if (output_tree_dfs(output->tree, output_tree_dfs_trav_gen_path,
+                output) < 0) {
+        ST_WARNING("Failed to output_tree_dfs.");
         goto ERR;
     }
 
@@ -1795,6 +1935,13 @@ int output_save_body(output_t *output, FILE *fp, bool binary)
         ST_WARNING("Failed to output_tree_save_body.");
         return -1;
     }
+
+    return 0;
+}
+
+int output_draw(output_t *output, FILE *fp)
+{
+    ST_CHECK_PARAM(output == NULL || fp == NULL, -1);
 
     return 0;
 }
