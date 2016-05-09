@@ -30,6 +30,7 @@ extern "C" {
 #endif
 
 #include <stutils/st_opt.h>
+#include <stutils/st_alphabet.h>
 
 #include <connlm/config.h>
 
@@ -335,9 +336,12 @@ bool output_equal(output_t *output1, output_t *output2);
  * @ingroup g_output
  * @param[in] output output tree.
  * @param[in] fp FILE to be writed.
+ * @param[in] word_cnts counts for words, could be NULL.
+ * @param[in] vocab vocab of words, could be NULL.
  * @return non-zero value if any error.
  */
-int output_draw(output_t *output, FILE *fp);
+int output_draw(output_t *output, FILE *fp, count_t *word_cnts,
+        st_alphabet_t *vocab);
 
 #ifdef __cplusplus
 }

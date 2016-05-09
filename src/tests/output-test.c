@@ -32,13 +32,280 @@
 #include "output.h"
 
 #define N 17
-#define MAX_LEN 16384
+#define MAX_LEN 1024
 
 static char *refs[MAX_LEN] = {
-    "REF0",
+"digraph output {\n"
+"  rankdir=TB;\n"
+"  labelloc=t;\n"
+"  label=\"Output Tree\";\n"
+"\n"
+"  subgraph cluster_param {\n"
+"    label=\"Params\";\n"
+"    node [shape=plaintext, style=solid];\n"
+"    edge [style=invis];\n"
+"    legend [label=\"# Leaf: 17\\nmax depth: 0\\nmax branch: 3\"];\n"
+"  }\n"
+"\n"
+"  subgraph cluster_tree {\n"
+"    label=\"\"\n"
+"    graph [ranksep=0];\n"
+"    node [shape=record];\n"
+"\n"
+"    0 [label=\"{{0|AAA}|{17|18,21}}\"];\n"
+"    1 [label=\"{{1|BBB}|{16|18,21}}\"];\n"
+"    2 [label=\"{{2|CCC}|{15|18,22}}\"];\n"
+"    3 [label=\"{{3|DDD}|{14|18,22}}\"];\n"
+"    4 [label=\"{{4|EEE}|{13|18,23}}\"];\n"
+"    5 [label=\"{{5|FFF}|{12|19,24}}\"];\n"
+"    6 [label=\"{{6|GGG}|{11|19,24}}\"];\n"
+"    7 [label=\"{{7|HHH}|{10|19,25}}\"];\n"
+"    8 [label=\"{{8|III}|{9|19,25}}\"];\n"
+"    9 [label=\"{{9|JJJ}|{8|19,26}}\"];\n"
+"    10 [label=\"{{10|KKK}|{7|20,27}}\"];\n"
+"    11 [label=\"{{11|LLL}|{6|20,27}}\"];\n"
+"    12 [label=\"{{12|MMM}|{5|20,28}}\"];\n"
+"    13 [label=\"{{13|NNN}|{4|20,28}}\"];\n"
+"    14 [label=\"{{14|OOO}|{3|20,29}}\"];\n"
+"    15 [label=\"{{15|PPP}|{2|20,29}}\"];\n"
+"    16 [label=\"{{16|QQQ}|{1|20,29}}\"];\n"
+"\n"
+"    21 -> 0;\n"
+"    21 -> 1;\n"
+"    18 -> 21;\n"
+"    22 -> 2;\n"
+"    22 -> 3;\n"
+"    18 -> 22;\n"
+"    23 -> 4;\n"
+"    18 -> 23;\n"
+"    17 -> 18;\n"
+"    24 -> 5;\n"
+"    24 -> 6;\n"
+"    19 -> 24;\n"
+"    25 -> 7;\n"
+"    25 -> 8;\n"
+"    19 -> 25;\n"
+"    26 -> 9;\n"
+"    19 -> 26;\n"
+"    17 -> 19;\n"
+"    27 -> 10;\n"
+"    27 -> 11;\n"
+"    20 -> 27;\n"
+"    28 -> 12;\n"
+"    28 -> 13;\n"
+"    20 -> 28;\n"
+"    29 -> 14;\n"
+"    29 -> 15;\n"
+"    29 -> 16;\n"
+"    20 -> 29;\n"
+"    17 -> 20;\n"
+"  }\n"
+"}",
+
+"digraph output {\n"
+"  rankdir=TB;\n"
+"  labelloc=t;\n"
+"  label=\"Output Tree\";\n"
+"\n"
+"  subgraph cluster_param {\n"
+"    label=\"Params\";\n"
+"    node [shape=plaintext, style=solid];\n"
+"    edge [style=invis];\n"
+"    legend [label=\"# Leaf: 17\\nmax depth: 0\\nmax branch: 3\"];\n"
+"  }\n"
+"\n"
+"  subgraph cluster_tree {\n"
+"    label=\"\"\n"
+"    graph [ranksep=0];\n"
+"    node [shape=record];\n"
+"\n"
+"    0 [label=\"{{0|AAA}|{|18,21}}\"];\n"
+"    1 [label=\"{{1|BBB}|{|18,21}}\"];\n"
+"    2 [label=\"{{2|CCC}|{|18,22}}\"];\n"
+"    3 [label=\"{{3|DDD}|{|18,22}}\"];\n"
+"    4 [label=\"{{4|EEE}|{|18,23}}\"];\n"
+"    5 [label=\"{{5|FFF}|{|19,24}}\"];\n"
+"    6 [label=\"{{6|GGG}|{|19,24}}\"];\n"
+"    7 [label=\"{{7|HHH}|{|19,25}}\"];\n"
+"    8 [label=\"{{8|III}|{|19,25}}\"];\n"
+"    9 [label=\"{{9|JJJ}|{|19,26}}\"];\n"
+"    10 [label=\"{{10|KKK}|{|20,27}}\"];\n"
+"    11 [label=\"{{11|LLL}|{|20,27}}\"];\n"
+"    12 [label=\"{{12|MMM}|{|20,28}}\"];\n"
+"    13 [label=\"{{13|NNN}|{|20,28}}\"];\n"
+"    14 [label=\"{{14|OOO}|{|20,29}}\"];\n"
+"    15 [label=\"{{15|PPP}|{|20,29}}\"];\n"
+"    16 [label=\"{{16|QQQ}|{|20,29}}\"];\n"
+"\n"
+"    21 -> 0;\n"
+"    21 -> 1;\n"
+"    18 -> 21;\n"
+"    22 -> 2;\n"
+"    22 -> 3;\n"
+"    18 -> 22;\n"
+"    23 -> 4;\n"
+"    18 -> 23;\n"
+"    17 -> 18;\n"
+"    24 -> 5;\n"
+"    24 -> 6;\n"
+"    19 -> 24;\n"
+"    25 -> 7;\n"
+"    25 -> 8;\n"
+"    19 -> 25;\n"
+"    26 -> 9;\n"
+"    19 -> 26;\n"
+"    17 -> 19;\n"
+"    27 -> 10;\n"
+"    27 -> 11;\n"
+"    20 -> 27;\n"
+"    28 -> 12;\n"
+"    28 -> 13;\n"
+"    20 -> 28;\n"
+"    29 -> 14;\n"
+"    29 -> 15;\n"
+"    29 -> 16;\n"
+"    20 -> 29;\n"
+"    17 -> 20;\n"
+"  }\n"
+"}",
+
+"digraph output {\n"
+"  rankdir=TB;\n"
+"  labelloc=t;\n"
+"  label=\"Output Tree\";\n"
+"\n"
+"  subgraph cluster_param {\n"
+"    label=\"Params\";\n"
+"    node [shape=plaintext, style=solid];\n"
+"    edge [style=invis];\n"
+"    legend [label=\"# Leaf: 17\\nmax depth: 0\\nmax branch: 3\"];\n"
+"  }\n"
+"\n"
+"  subgraph cluster_tree {\n"
+"    label=\"\"\n"
+"    graph [ranksep=0];\n"
+"    node [shape=record];\n"
+"\n"
+"    0 [label=\"{{0|}|{|18,21}}\"];\n"
+"    1 [label=\"{{1|}|{|18,21}}\"];\n"
+"    2 [label=\"{{2|}|{|18,22}}\"];\n"
+"    3 [label=\"{{3|}|{|18,22}}\"];\n"
+"    4 [label=\"{{4|}|{|18,23}}\"];\n"
+"    5 [label=\"{{5|}|{|19,24}}\"];\n"
+"    6 [label=\"{{6|}|{|19,24}}\"];\n"
+"    7 [label=\"{{7|}|{|19,25}}\"];\n"
+"    8 [label=\"{{8|}|{|19,25}}\"];\n"
+"    9 [label=\"{{9|}|{|19,26}}\"];\n"
+"    10 [label=\"{{10|}|{|20,27}}\"];\n"
+"    11 [label=\"{{11|}|{|20,27}}\"];\n"
+"    12 [label=\"{{12|}|{|20,28}}\"];\n"
+"    13 [label=\"{{13|}|{|20,28}}\"];\n"
+"    14 [label=\"{{14|}|{|20,29}}\"];\n"
+"    15 [label=\"{{15|}|{|20,29}}\"];\n"
+"    16 [label=\"{{16|}|{|20,29}}\"];\n"
+"\n"
+"    21 -> 0;\n"
+"    21 -> 1;\n"
+"    18 -> 21;\n"
+"    22 -> 2;\n"
+"    22 -> 3;\n"
+"    18 -> 22;\n"
+"    23 -> 4;\n"
+"    18 -> 23;\n"
+"    17 -> 18;\n"
+"    24 -> 5;\n"
+"    24 -> 6;\n"
+"    19 -> 24;\n"
+"    25 -> 7;\n"
+"    25 -> 8;\n"
+"    19 -> 25;\n"
+"    26 -> 9;\n"
+"    19 -> 26;\n"
+"    17 -> 19;\n"
+"    27 -> 10;\n"
+"    27 -> 11;\n"
+"    20 -> 27;\n"
+"    28 -> 12;\n"
+"    28 -> 13;\n"
+"    20 -> 28;\n"
+"    29 -> 14;\n"
+"    29 -> 15;\n"
+"    29 -> 16;\n"
+"    20 -> 29;\n"
+"    17 -> 20;\n"
+"  }\n"
+"}",
+
+"digraph output {\n"
+"  rankdir=TB;\n"
+"  labelloc=t;\n"
+"  label=\"Output Tree\";\n"
+"\n"
+"  subgraph cluster_param {\n"
+"    label=\"Params\";\n"
+"    node [shape=plaintext, style=solid];\n"
+"    edge [style=invis];\n"
+"    legend [label=\"# Leaf: 17\\nmax depth: 0\\nmax branch: 3\"];\n"
+"  }\n"
+"\n"
+"  subgraph cluster_tree {\n"
+"    label=\"\"\n"
+"    graph [ranksep=0];\n"
+"    node [shape=record];\n"
+"\n"
+"    0 [label=\"{{0|}|{17|18,21}}\"];\n"
+"    1 [label=\"{{1|}|{16|18,21}}\"];\n"
+"    2 [label=\"{{2|}|{15|18,22}}\"];\n"
+"    3 [label=\"{{3|}|{14|18,22}}\"];\n"
+"    4 [label=\"{{4|}|{13|18,23}}\"];\n"
+"    5 [label=\"{{5|}|{12|19,24}}\"];\n"
+"    6 [label=\"{{6|}|{11|19,24}}\"];\n"
+"    7 [label=\"{{7|}|{10|19,25}}\"];\n"
+"    8 [label=\"{{8|}|{9|19,25}}\"];\n"
+"    9 [label=\"{{9|}|{8|19,26}}\"];\n"
+"    10 [label=\"{{10|}|{7|20,27}}\"];\n"
+"    11 [label=\"{{11|}|{6|20,27}}\"];\n"
+"    12 [label=\"{{12|}|{5|20,28}}\"];\n"
+"    13 [label=\"{{13|}|{4|20,28}}\"];\n"
+"    14 [label=\"{{14|}|{3|20,29}}\"];\n"
+"    15 [label=\"{{15|}|{2|20,29}}\"];\n"
+"    16 [label=\"{{16|}|{1|20,29}}\"];\n"
+"\n"
+"    21 -> 0;\n"
+"    21 -> 1;\n"
+"    18 -> 21;\n"
+"    22 -> 2;\n"
+"    22 -> 3;\n"
+"    18 -> 22;\n"
+"    23 -> 4;\n"
+"    18 -> 23;\n"
+"    17 -> 18;\n"
+"    24 -> 5;\n"
+"    24 -> 6;\n"
+"    19 -> 24;\n"
+"    25 -> 7;\n"
+"    25 -> 8;\n"
+"    19 -> 25;\n"
+"    26 -> 9;\n"
+"    19 -> 26;\n"
+"    17 -> 19;\n"
+"    27 -> 10;\n"
+"    27 -> 11;\n"
+"    20 -> 27;\n"
+"    28 -> 12;\n"
+"    28 -> 13;\n"
+"    20 -> 28;\n"
+"    29 -> 14;\n"
+"    29 -> 15;\n"
+"    29 -> 16;\n"
+"    20 -> 29;\n"
+"    17 -> 20;\n"
+"  }\n"
+"}"
 };
 
-static int check_output(output_t *output, const char* ref)
+static int check_output(output_t *output, count_t *word_cnts,
+        st_alphabet_t *vocab, const char* ref)
 {
     char *buf = NULL;
     FILE *fp = NULL;
@@ -51,14 +318,14 @@ static int check_output(output_t *output, const char* ref)
         goto ERR;
     }
 
-    if (output_draw(output, fp) < 0) {
+    if (output_draw(output, fp, word_cnts, vocab) < 0) {
         ST_WARNING("Failed to output_draw.");
         goto ERR;
     }
 
     sz = ftell(fp);
 
-    buf = malloc(sz);
+    buf = malloc(sz + 1);
     if (buf == NULL) {
         ST_WARNING("Failed to malloc buf.");
         goto ERR;
@@ -70,7 +337,9 @@ static int check_output(output_t *output, const char* ref)
         ST_WARNING("Failed to read back buf.");
         goto ERR;
     }
+    buf[sz] = '\0';
 
+    fprintf(stdout, "%s\n", buf);
     ret = strcmp(ref, buf);
 
     safe_fclose(fp);
@@ -87,6 +356,8 @@ ERR:
 static int unit_test_output_generate()
 {
     count_t word_cnts[N];
+    char word[16];
+    st_alphabet_t *vocab = NULL;
     int i;
     int ncase = 0;
     output_opt_t output_opt;
@@ -95,6 +366,15 @@ static int unit_test_output_generate()
     for (i = 0; i < N; i++) {
         word_cnts[i] = N - i;
     }
+    vocab = st_alphabet_create(N);
+    for (i = 0; i < N; i++) {
+        word[0] = 'A' + i;
+        word[1] = 'A' + i;
+        word[2] = 'A' + i;
+        word[3] = '\0';
+        st_alphabet_add_label(vocab, word);
+    }
+
     fprintf(stderr, "  Testing output generate...\n");
     /***************************************************/
     /***************************************************/
@@ -107,12 +387,36 @@ static int unit_test_output_generate()
         fprintf(stderr, "Failed\n");
         goto ERR;
     }
-    if (check_output(output, refs[ncase]) != 0) {
+    if (check_output(output, word_cnts, vocab, refs[ncase - 1]) != 0) {
         fprintf(stderr, "Failed\n");
         goto ERR;
     }
-    safe_output_destroy(output);
     fprintf(stderr, "Success\n");
+    /***************************************************/
+    /***************************************************/
+    fprintf(stderr, "    Case %d...", ncase++);
+    if (check_output(output, NULL, vocab, refs[ncase - 1]) != 0) {
+        fprintf(stderr, "Failed\n");
+        goto ERR;
+    }
+    fprintf(stderr, "Success\n");
+    /***************************************************/
+    /***************************************************/
+    fprintf(stderr, "    Case %d...", ncase++);
+    if (check_output(output, NULL, NULL, refs[ncase - 1]) != 0) {
+        fprintf(stderr, "Failed\n");
+        goto ERR;
+    }
+    fprintf(stderr, "Success\n");
+    /***************************************************/
+    /***************************************************/
+    fprintf(stderr, "    Case %d...", ncase++);
+    if (check_output(output, word_cnts, NULL, refs[ncase - 1]) != 0) {
+        fprintf(stderr, "Failed\n");
+        goto ERR;
+    }
+    fprintf(stderr, "Success\n");
+    safe_output_destroy(output);
 
     /***************************************************/
     /***************************************************/
@@ -125,7 +429,7 @@ static int unit_test_output_generate()
         fprintf(stderr, "Failed\n");
         goto ERR;
     }
-    if (check_output(output, refs[ncase]) != 0) {
+    if (check_output(output, word_cnts, NULL, refs[ncase - 1]) != 0) {
         fprintf(stderr, "Failed\n");
         goto ERR;
     }
@@ -135,6 +439,7 @@ static int unit_test_output_generate()
     return 0;
 
 ERR:
+    safe_st_alphabet_destroy(vocab);
     safe_output_destroy(output);
     return -1;
 }

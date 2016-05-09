@@ -540,7 +540,7 @@ static output_node_id_t output_tree_add_node_m(output_tree_t *tree,
 
     ST_CHECK_PARAM(tree == NULL || n <= 0, OUTPUT_NODE_NONE);
 
-    if (tree->num_node >= tree->cap_node) {
+    if (tree->num_node + n - 1 >= tree->cap_node) {
         tree->cap_node += n + NUM_REALLOC;
         tree->nodes = (output_tree_node_t *)realloc(tree->nodes,
                 sizeof(output_tree_node_t) * tree->cap_node);
@@ -808,6 +808,8 @@ static int output_gen_td_split(output_t *output, output_node_id_t node,
         ST_WARNING("Failed to output_tree_add_node_m.");
         return -1;
     }
+    s_children(output->tree, node) = new_node;
+    e_children(output->tree, node) = new_node + branches;
 
     a = 0;
     b = 0;
@@ -1239,6 +1241,10 @@ static int output_tree_dfs(output_tree_t *tree,
         goto ERR;
     }
 
+#ifdef _OUTPUT_DEBUG_
+    ST_DEBUG("PUSH: " OUTPUT_NODE_FMT, tree->root);
+#endif
+
     while(!st_stack_empty(node_stack)) {
         if(st_stack_top(node_stack, &tmp) != ST_STACK_OK) {
             ST_WARNING("Failed to st_stack_top.");
@@ -1249,12 +1255,15 @@ static int output_tree_dfs(output_tree_t *tree,
         if (is_leaf(tree, node)
                 || (child_in_stack[node] != OUTPUT_NODE_NONE
                     && child_in_stack[node] >= e_children(tree, node))) {
-            if(visitor(tree, node, node_stack, args) < 0) {
-                ST_WARNING("Failed to visitor.");
-                goto ERR;
-            }
             if(st_stack_pop(node_stack, &tmp) != ST_STACK_OK) {
                 ST_WARNING("Failed to st_stack_pop.");
+                goto ERR;
+            }
+#ifdef _OUTPUT_DEBUG_
+            ST_DEBUG("POP: " OUTPUT_NODE_FMT, node);
+#endif
+            if(visitor(tree, node, node_stack, args) < 0) {
+                ST_WARNING("Failed to visitor.");
                 goto ERR;
             }
             continue;
@@ -1262,13 +1271,19 @@ static int output_tree_dfs(output_tree_t *tree,
 
         if (child_in_stack[node] == OUTPUT_NODE_NONE) {
             child = s_children(tree, node);
+            child_in_stack[node] = child;
         } else {
             child = ++(child_in_stack[node]);
         }
-        if(st_stack_push(node_stack, (void *)(long)child)
-                != ST_STACK_OK) {
-            ST_WARNING("Failed to st_stack_push child");
-            goto ERR;
+        if (child_in_stack[node] < e_children(tree, node)) {
+            if(st_stack_push(node_stack, (void *)(long)child)
+                    != ST_STACK_OK) {
+                ST_WARNING("Failed to st_stack_push child");
+                goto ERR;
+            }
+#ifdef _OUTPUT_DEBUG_
+            ST_DEBUG("PUSH: " OUTPUT_NODE_FMT, child);
+#endif
         }
     }
 
@@ -1319,7 +1334,7 @@ int output_tree_dfs_trav_gen_path(output_tree_t *tree,
         output->paths[node].num_node = n - 1;
     }
 
-    for (i = n - 1; i > 0; i--) { /* exclude *root* and *leaf* */
+    for (i = n - 1; i > 0; i--) { /* exclude *root* */
         if(st_stack_topn(stack, i, &tmp) != ST_STACK_OK) {
             ST_WARNING("Failed to st_stack_topn[%d].", i);
             goto ERR;
@@ -1366,7 +1381,6 @@ output_t* output_generate(output_opt_t *output_opt, count_t *word_cnts,
        int output_size)
 {
     output_t *output = NULL;
-    size_t sz;
 
     ST_CHECK_PARAM(output_opt == NULL || word_cnts == NULL
             || output_size <= 0, NULL);
@@ -1380,14 +1394,6 @@ output_t* output_generate(output_opt_t *output_opt, count_t *word_cnts,
 
     output->output_opt = *output_opt;
     output->output_size = output_size;
-
-    sz = output->output_size * sizeof(output_path_t);
-    output->paths = (output_path_t *)malloc(sz);
-    if (output->paths == NULL) {
-        ST_WARNING("Failed to malloc paths.");
-        goto ERR;
-    }
-    memset(output->paths, 0, sz);
 
     switch (output->output_opt.method) {
         case TOP_DOWN:
@@ -1407,6 +1413,15 @@ output_t* output_generate(output_opt_t *output_opt, count_t *word_cnts,
                     output->output_opt.method);
             break;
     }
+
+    ST_NOTICE("Built Tree. Nodes: "OUTPUT_NODE_FMT, output->tree->num_node);
+
+#ifdef _OUTPUT_DEBUG_
+    ST_DEBUG("Root: "OUTPUT_NODE_FMT, output->tree->root);
+    for (output_node_id_t n = 0; n < output->tree->num_node; n++) {
+        ST_DEBUG("Node: "OUTPUT_NODE_FMT", Child: "OUTPUT_NODE_FMT"/"OUTPUT_NODE_FMT, n, s_children(output->tree, n), e_children(output->tree, n));
+    }
+#endif
 
     if (output_generate_path(output) < 0) {
         ST_WARNING("Failed to output_generate_path.");
@@ -1939,9 +1954,85 @@ int output_save_body(output_t *output, FILE *fp, bool binary)
     return 0;
 }
 
-int output_draw(output_t *output, FILE *fp)
+int output_tree_dfs_trav_draw(output_tree_t *tree,
+        output_node_id_t node, st_stack_t *stack, void *args)
 {
+    FILE *fp;
+    void *tmp;
+    output_node_id_t parent;
+
+    ST_CHECK_PARAM(tree == NULL || stack == NULL || args == NULL, -1);
+
+    fp = (FILE *)args;
+
+    parent = OUTPUT_NODE_NONE;
+    if (st_stack_top(stack, &tmp) == ST_STACK_OK) {
+        parent = (output_node_id_t)(long)tmp;
+    }
+
+    if (parent != OUTPUT_NODE_NONE) {
+        fprintf(fp, "    "OUTPUT_NODE_FMT" -> "OUTPUT_NODE_FMT";\n",
+                parent, node);
+    }
+
+    return 0;
+}
+
+int output_draw(output_t *output, FILE *fp, count_t *word_cnts,
+        st_alphabet_t *vocab)
+{
+    output_node_id_t m, n;
+
     ST_CHECK_PARAM(output == NULL || fp == NULL, -1);
+
+    fprintf(fp, "digraph output {\n");
+    fprintf(fp, "  rankdir=TB;\n");
+    fprintf(fp, "  labelloc=t;\n");
+    fprintf(fp, "  label=\"Output Tree\";\n\n");
+
+    fprintf(fp, "  subgraph cluster_param {\n");
+    fprintf(fp, "    label=\"Params\";\n");
+    fprintf(fp, "    node [shape=plaintext, style=solid];\n");
+    fprintf(fp, "    edge [style=invis];\n");
+    fprintf(fp, "    legend [label=\"# Leaf: %d\\nmax depth: %d\\n"
+                     "max branch: %d\"];\n", output->output_size,
+                output->output_opt.max_depth, output->output_opt.max_branch);
+    fprintf(fp, "  }\n\n");
+
+    fprintf(fp, "  subgraph cluster_tree {\n");
+    fprintf(fp, "    label=\"\"\n");
+    fprintf(fp, "    graph [ranksep=0];\n");
+    fprintf(fp, "    node [shape=record];\n\n");
+
+    for (n = 0; n < output->output_size; n++) {
+        fprintf(fp, "    "OUTPUT_NODE_FMT" [label=\"{{"OUTPUT_NODE_FMT"|",
+                n, n);
+        if (vocab) {
+            fprintf(fp, "%s", st_alphabet_get_label(vocab, n));
+        }
+        fprintf(fp, "}|{");
+        if (word_cnts != NULL) {
+            fprintf(fp, COUNT_FMT, word_cnts[n]);
+        }
+        fprintf(fp, "|");
+
+        for (m = 0; m < output->paths[n].num_node - 1; m++) {
+            fprintf(fp, OUTPUT_NODE_FMT",", output->paths[n].nodes[m]);
+        }
+        if (output->paths[n].num_node > 0) {
+            fprintf(fp, OUTPUT_NODE_FMT, output->paths[n].nodes[m]);
+        }
+        fprintf(fp, "}}\"];\n");
+    }
+    fprintf(fp, "\n");
+
+    if (output_tree_dfs(output->tree, output_tree_dfs_trav_draw, fp) < 0) {
+        ST_WARNING("Failed to output_tree_dfs.");
+        return -1;
+    }
+
+    fprintf(fp, "  }\n");
+    fprintf(fp, "}");
 
     return 0;
 }
