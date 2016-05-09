@@ -330,6 +330,15 @@ int output_finish(output_t *output, int tid, bool backprop);
  */
 bool output_equal(output_t *output1, output_t *output2);
 
+/**
+ * Convert output to Graphviz dot language.
+ * @ingroup g_output
+ * @param[in] output output tree.
+ * @param[in] fp FILE to be writed.
+ * @return non-zero value if any error.
+ */
+int output_draw(output_t *output, FILE *fp);
+
 #ifdef __cplusplus
 }
 #endif

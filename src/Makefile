@@ -57,7 +57,8 @@ BINS = bin/connlm-train \
 TESTS = tests/utils-test \
         tests/param-test \
         tests/connlm-test \
-        tests/input-test
+        tests/input-test \
+        tests/output-test
 ifneq (,$(findstring _USE_BLAS_,$(CFLAGS)))
     TESTS += tests/blas-test
 endif
@@ -66,7 +67,8 @@ endif
 VAL_TESTS = tests/utils-test \
             tests/param-test \
             tests/connlm-test \
-            tests/input-test
+            tests/input-test \
+            tests/output-test
 
 define get_target
 
