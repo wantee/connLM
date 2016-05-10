@@ -1096,11 +1096,16 @@ static huffman_tree_t* output_gen_bu_huffman(output_t *output,
 {
     huffman_tree_t *huffman = NULL;
 
+    output_node_id_t *depths = NULL;
+    output_node_id_t depth;
+    size_t sz;
+
     output_node_id_t cap_node;
     output_node_id_t parent;
     int n, pos0, pos1;
     int br;
     int move;
+    bool exceed_depth;
 
     ST_CHECK_PARAM(output == NULL || cnts == NULL, NULL);
 
@@ -1120,15 +1125,43 @@ static huffman_tree_t* output_gen_bu_huffman(output_t *output,
         goto ERR;
     }
 
+    if (output->output_opt.max_depth == 1) {
+        parent = huffman_tree_add_node(huffman);
+        if (parent == OUTPUT_NODE_NONE) {
+            ST_WARNING("Failed to huffman_tree_add_node parent.");
+            goto ERR;
+        }
+        s_children(huffman, parent)[0] = 0;
+        e_children(huffman, parent)[0] = output->output_size;
+        n_cnt(huffman, parent) = 0;
+        for (n = s_children(huffman, parent)[0];
+                n < e_children(huffman, parent)[0]; ++n) {
+            n_cnt(huffman, parent) += cnts[n];
+        }
+
+        huffman->root = parent;
+        return huffman;
+    }
+
     for (n = 0; n < huffman->num_node; ++n) {
         n_cnt(huffman, n) = cnts[n];
     }
 
     // Construct Huffman Tree
+    if (output->output_opt.max_depth > 0) {
+        sz = sizeof(output_node_id_t)*cap_node;
+        depths = (output_node_id_t *)malloc(sz);
+        if (depths == NULL) {
+            ST_WARNING("Failed to malloc depths");
+            goto ERR;
+        }
+        memset(depths, 0, sz);
+    }
     pos0 = huffman->num_node - 1;
     pos1 = huffman->num_node;
     br = output->output_opt.max_branch;
 
+    exceed_depth = false;
     while (br == output->output_opt.max_branch) {
         parent = huffman_tree_add_node(huffman);
         if (parent == OUTPUT_NODE_NONE) {
@@ -1141,10 +1174,12 @@ static huffman_tree_t* output_gen_bu_huffman(output_t *output,
         e_children(huffman, parent)[1] = pos1;
         n_cnt(huffman, parent) = 0;
 
+        depth = 0;
         br = 0;
         while (br < output->output_opt.max_branch) {
             move = -1;
-            if (pos0 >= 0 && pos1 < huffman->num_node - 1) { // both sides
+            if ((pos1 < huffman->num_node - 1 && !exceed_depth)
+                    && pos0 >= 0) { // both sides
                 if (n_cnt(huffman, pos0) <= n_cnt(huffman, pos1)) {
                     move = 0;
                 } else {
@@ -1152,7 +1187,7 @@ static huffman_tree_t* output_gen_bu_huffman(output_t *output,
                 }
             } else if (pos0 >= 0) { // only leaf side
                 move = 0;
-            } else if (pos1 < huffman->num_node - 1) {
+            } else if (pos1 < huffman->num_node - 1 && !exceed_depth) {
                 // only internal side
                 move = 1;
             } else {
@@ -1161,10 +1196,22 @@ static huffman_tree_t* output_gen_bu_huffman(output_t *output,
 
             if (move == 0) {
                 n_cnt(huffman, parent) += n_cnt(huffman, pos0);
+                if (depths != NULL) {
+                    if (depths[pos0] > depth) {
+                        depth = depths[pos0];
+                    }
+                    depths[pos0]++;
+                }
                 --pos0;
                 --(s_children(huffman, parent)[0]);
             } else if (move == 1) {
                 n_cnt(huffman, parent) += n_cnt(huffman, pos1);
+                if (depths != NULL) {
+                    if (depths[pos1] > depth) {
+                        depth = depths[pos1];
+                    }
+                    depths[pos1]++;
+                }
                 ++pos1;
                 ++(e_children(huffman, parent)[1]);
             } else {
@@ -1175,16 +1222,49 @@ static huffman_tree_t* output_gen_bu_huffman(output_t *output,
             ++br;
         }
 
+        if (output->output_opt.max_depth > 0
+                && depth + 2 >= output->output_opt.max_depth) {
+            exceed_depth = true;
+        }
+
         if(pos0 < 0 && pos1 == huffman->num_node - 1) {
             /* only last one node left. */
+            ++pos1; /* avoid adding root */
             break;
+        }
+
+        if (depths != NULL) {
+            depths[parent] = depth + 1;
         }
     }
 
+    if (pos1 < huffman->num_node) {
+        parent = huffman_tree_add_node(huffman);
+        if (parent == OUTPUT_NODE_NONE) {
+            ST_WARNING("Failed to huffman_tree_add_node parent.");
+            goto ERR;
+        }
+        s_children(huffman, parent)[0] = 0;
+        e_children(huffman, parent)[0] = pos0 + 1;
+        s_children(huffman, parent)[1] = pos1;
+        e_children(huffman, parent)[1] = huffman->num_node - 1;
+        n_cnt(huffman, parent) = 0;
+        for (n = s_children(huffman, parent)[0];
+                n < e_children(huffman, parent)[0]; ++n) {
+            n_cnt(huffman, parent) += cnts[n];
+        }
+        for (n = s_children(huffman, parent)[1];
+                n < e_children(huffman, parent)[1]; ++n) {
+            n_cnt(huffman, parent) += cnts[n];
+        }
+    }
     huffman->root = parent;
+
+    safe_free(depths);
     return huffman;
 
 ERR:
+    safe_free(depths);
     safe_huffman_tree_destroy(huffman);
     return NULL;
 }
@@ -2266,8 +2346,11 @@ int output_draw(output_t *output, FILE *fp, count_t *word_cnts,
     fprintf(fp, "    label=\"Params\";\n");
     fprintf(fp, "    node [shape=plaintext, style=solid];\n");
     fprintf(fp, "    edge [style=invis];\n");
-    fprintf(fp, "    legend [label=\"# Leaf: %d\\nmax depth: %d\\n"
-                     "max branch: %d\"];\n", output->output_size,
+    fprintf(fp, "    legend [label=\"# Node: "OUTPUT_NODE_FMT"\\n"
+                     "# Leaf: %d\\nmethod: %s\\n"
+                     "max depth: %d\\nmax branch: %d\"];\n",
+                output->tree->num_node,
+                output->output_size, method2str(output->output_opt.method),
                 output->output_opt.max_depth, output->output_opt.max_branch);
     fprintf(fp, "  }\n\n");
 
@@ -2289,10 +2372,10 @@ int output_draw(output_t *output, FILE *fp, count_t *word_cnts,
         }
         fprintf(fp, "|");
 
-        for (m = 0; m < output->paths[i].num_node - 1; m++) {
-            fprintf(fp, OUTPUT_NODE_FMT",", output->paths[i].nodes[m]);
-        }
         if (output->paths[i].num_node > 0) {
+            for (m = 0; m < output->paths[i].num_node - 1; m++) {
+                fprintf(fp, OUTPUT_NODE_FMT",", output->paths[i].nodes[m]);
+            }
             fprintf(fp, OUTPUT_NODE_FMT, output->paths[i].nodes[m]);
         }
         fprintf(fp, "}}\"];\n");
@@ -2305,7 +2388,7 @@ int output_draw(output_t *output, FILE *fp, count_t *word_cnts,
     }
 
     fprintf(fp, "  }\n");
-    fprintf(fp, "}");
+    fprintf(fp, "}\n");
 
     return 0;
 }

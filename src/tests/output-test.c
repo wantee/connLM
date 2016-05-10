@@ -44,7 +44,7 @@ static char *refs[MAX_LEN] = {
 "    label=\"Params\";\n"
 "    node [shape=plaintext, style=solid];\n"
 "    edge [style=invis];\n"
-"    legend [label=\"# Leaf: 17\\nmax depth: 0\\nmax branch: 3\"];\n"
+"    legend [label=\"# Node: 30\\n# Leaf: 17\\nmethod: TopDown\\nmax depth: 0\\nmax branch: 3\"];\n"
 "  }\n"
 "\n"
 "  subgraph cluster_tree {\n"
@@ -100,7 +100,7 @@ static char *refs[MAX_LEN] = {
 "    20 -> 29;\n"
 "    17 -> 20;\n"
 "  }\n"
-"}",
+"}\n",
 
 "digraph output {\n"
 "  rankdir=TB;\n"
@@ -111,7 +111,7 @@ static char *refs[MAX_LEN] = {
 "    label=\"Params\";\n"
 "    node [shape=plaintext, style=solid];\n"
 "    edge [style=invis];\n"
-"    legend [label=\"# Leaf: 17\\nmax depth: 0\\nmax branch: 3\"];\n"
+"    legend [label=\"# Node: 30\\n# Leaf: 17\\nmethod: TopDown\\nmax depth: 0\\nmax branch: 3\"];\n"
 "  }\n"
 "\n"
 "  subgraph cluster_tree {\n"
@@ -167,7 +167,7 @@ static char *refs[MAX_LEN] = {
 "    20 -> 29;\n"
 "    17 -> 20;\n"
 "  }\n"
-"}",
+"}\n",
 
 "digraph output {\n"
 "  rankdir=TB;\n"
@@ -178,7 +178,7 @@ static char *refs[MAX_LEN] = {
 "    label=\"Params\";\n"
 "    node [shape=plaintext, style=solid];\n"
 "    edge [style=invis];\n"
-"    legend [label=\"# Leaf: 17\\nmax depth: 0\\nmax branch: 3\"];\n"
+"    legend [label=\"# Node: 30\\n# Leaf: 17\\nmethod: TopDown\\nmax depth: 0\\nmax branch: 3\"];\n"
 "  }\n"
 "\n"
 "  subgraph cluster_tree {\n"
@@ -234,7 +234,7 @@ static char *refs[MAX_LEN] = {
 "    20 -> 29;\n"
 "    17 -> 20;\n"
 "  }\n"
-"}",
+"}\n",
 
 "digraph output {\n"
 "  rankdir=TB;\n"
@@ -245,7 +245,7 @@ static char *refs[MAX_LEN] = {
 "    label=\"Params\";\n"
 "    node [shape=plaintext, style=solid];\n"
 "    edge [style=invis];\n"
-"    legend [label=\"# Leaf: 17\\nmax depth: 0\\nmax branch: 3\"];\n"
+"    legend [label=\"# Node: 30\\n# Leaf: 17\\nmethod: TopDown\\nmax depth: 0\\nmax branch: 3\"];\n"
 "  }\n"
 "\n"
 "  subgraph cluster_tree {\n"
@@ -301,7 +301,7 @@ static char *refs[MAX_LEN] = {
 "    20 -> 29;\n"
 "    17 -> 20;\n"
 "  }\n"
-"}",
+"}\n",
 
 "digraph output {\n"
 "  rankdir=TB;\n"
@@ -312,7 +312,7 @@ static char *refs[MAX_LEN] = {
 "    label=\"Params\";\n"
 "    node [shape=plaintext, style=solid];\n"
 "    edge [style=invis];\n"
-"    legend [label=\"# Leaf: 17\\nmax depth: 0\\nmax branch: 3\"];\n"
+"    legend [label=\"# Node: 25\\n# Leaf: 17\\nmethod: BottomUp\\nmax depth: 0\\nmax branch: 3\"];\n"
 "  }\n"
 "\n"
 "  subgraph cluster_tree {\n"
@@ -363,7 +363,126 @@ static char *refs[MAX_LEN] = {
 "    3 -> 12;\n"
 "    0 -> 3;\n"
 "  }\n"
-"}"
+"}\n",
+
+"digraph output {\n"
+"  rankdir=TB;\n"
+"  labelloc=t;\n"
+"  label=\"Output Tree\";\n"
+"\n"
+"  subgraph cluster_param {\n"
+"    label=\"Params\";\n"
+"    node [shape=plaintext, style=solid];\n"
+"    edge [style=invis];\n"
+"    legend [label=\"# Node: 27\\n# Leaf: 17\\nmethod: BottomUp\\nmax depth: 2\\nmax branch: 2\"];\n"
+"  }\n"
+"\n"
+"  subgraph cluster_tree {\n"
+"    label=\"\"\n"
+"    graph [ranksep=0];\n"
+"    node [shape=record];\n"
+"\n"
+"    26 [label=\"{{26|AAA}|{17|9}}\"];\n"
+"    24 [label=\"{{24|BBB}|{16|8}}\"];\n"
+"    25 [label=\"{{25|CCC}|{15|8}}\"];\n"
+"    22 [label=\"{{22|DDD}|{14|7}}\"];\n"
+"    23 [label=\"{{23|EEE}|{13|7}}\"];\n"
+"    20 [label=\"{{20|FFF}|{12|6}}\"];\n"
+"    21 [label=\"{{21|GGG}|{11|6}}\"];\n"
+"    18 [label=\"{{18|HHH}|{10|5}}\"];\n"
+"    19 [label=\"{{19|III}|{9|5}}\"];\n"
+"    16 [label=\"{{16|JJJ}|{8|4}}\"];\n"
+"    17 [label=\"{{17|KKK}|{7|4}}\"];\n"
+"    14 [label=\"{{14|LLL}|{6|3}}\"];\n"
+"    15 [label=\"{{15|MMM}|{5|3}}\"];\n"
+"    12 [label=\"{{12|NNN}|{4|2}}\"];\n"
+"    13 [label=\"{{13|OOO}|{3|2}}\"];\n"
+"    10 [label=\"{{10|PPP}|{2|1}}\"];\n"
+"    11 [label=\"{{11|QQQ}|{1|1}}\"];\n"
+"\n"
+"    1 -> 10;\n"
+"    1 -> 11;\n"
+"    0 -> 1;\n"
+"    2 -> 12;\n"
+"    2 -> 13;\n"
+"    0 -> 2;\n"
+"    3 -> 14;\n"
+"    3 -> 15;\n"
+"    0 -> 3;\n"
+"    4 -> 16;\n"
+"    4 -> 17;\n"
+"    0 -> 4;\n"
+"    5 -> 18;\n"
+"    5 -> 19;\n"
+"    0 -> 5;\n"
+"    6 -> 20;\n"
+"    6 -> 21;\n"
+"    0 -> 6;\n"
+"    7 -> 22;\n"
+"    7 -> 23;\n"
+"    0 -> 7;\n"
+"    8 -> 24;\n"
+"    8 -> 25;\n"
+"    0 -> 8;\n"
+"    9 -> 26;\n"
+"    0 -> 9;\n"
+"  }\n"
+"}\n",
+
+"digraph output {\n"
+"  rankdir=TB;\n"
+"  labelloc=t;\n"
+"  label=\"Output Tree\";\n"
+"\n"
+"  subgraph cluster_param {\n"
+"    label=\"Params\";\n"
+"    node [shape=plaintext, style=solid];\n"
+"    edge [style=invis];\n"
+"    legend [label=\"# Node: 18\\n# Leaf: 17\\nmethod: BottomUp\\nmax depth: 1\\nmax branch: 5\"];\n"
+"  }\n"
+"\n"
+"  subgraph cluster_tree {\n"
+"    label=\"\"\n"
+"    graph [ranksep=0];\n"
+"    node [shape=record];\n"
+"\n"
+"    1 [label=\"{{1|AAA}|{17|}}\"];\n"
+"    2 [label=\"{{2|BBB}|{16|}}\"];\n"
+"    3 [label=\"{{3|CCC}|{15|}}\"];\n"
+"    4 [label=\"{{4|DDD}|{14|}}\"];\n"
+"    5 [label=\"{{5|EEE}|{13|}}\"];\n"
+"    6 [label=\"{{6|FFF}|{12|}}\"];\n"
+"    7 [label=\"{{7|GGG}|{11|}}\"];\n"
+"    8 [label=\"{{8|HHH}|{10|}}\"];\n"
+"    9 [label=\"{{9|III}|{9|}}\"];\n"
+"    10 [label=\"{{10|JJJ}|{8|}}\"];\n"
+"    11 [label=\"{{11|KKK}|{7|}}\"];\n"
+"    12 [label=\"{{12|LLL}|{6|}}\"];\n"
+"    13 [label=\"{{13|MMM}|{5|}}\"];\n"
+"    14 [label=\"{{14|NNN}|{4|}}\"];\n"
+"    15 [label=\"{{15|OOO}|{3|}}\"];\n"
+"    16 [label=\"{{16|PPP}|{2|}}\"];\n"
+"    17 [label=\"{{17|QQQ}|{1|}}\"];\n"
+"\n"
+"    0 -> 1;\n"
+"    0 -> 2;\n"
+"    0 -> 3;\n"
+"    0 -> 4;\n"
+"    0 -> 5;\n"
+"    0 -> 6;\n"
+"    0 -> 7;\n"
+"    0 -> 8;\n"
+"    0 -> 9;\n"
+"    0 -> 10;\n"
+"    0 -> 11;\n"
+"    0 -> 12;\n"
+"    0 -> 13;\n"
+"    0 -> 14;\n"
+"    0 -> 15;\n"
+"    0 -> 16;\n"
+"    0 -> 17;\n"
+"  }\n"
+"}\n"
 };
 
 static int check_output(output_t *output, count_t *word_cnts,
@@ -401,7 +520,10 @@ static int check_output(output_t *output, count_t *word_cnts,
     }
     buf[sz] = '\0';
 
-//    fprintf(stdout, "%s\n", buf);
+#ifdef _OUTPUT_TEST_DEBUG_
+    fprintf(stdout, "%s", buf);
+    fprintf(stdout, "REF\n%s", ref);
+#endif
     ret = strcmp(ref, buf);
 
     safe_fclose(fp);
@@ -486,6 +608,41 @@ static int unit_test_output_generate()
     output_opt.method = BOTTOM_UP;
     output_opt.max_depth = 0;
     output_opt.max_branch = 3;
+    output = output_generate(&output_opt, word_cnts, N);
+    if (output == NULL) {
+        fprintf(stderr, "Failed\n");
+        goto ERR;
+    }
+    if (check_output(output, word_cnts, vocab, refs[ncase - 1]) != 0) {
+        fprintf(stderr, "Failed\n");
+        goto ERR;
+    }
+    safe_output_destroy(output);
+    fprintf(stderr, "Success\n");
+
+    /***************************************************/
+    /***************************************************/
+    fprintf(stderr, "    Case %d...", ncase++);
+    output_opt.method = BOTTOM_UP;
+    output_opt.max_depth = 2;
+    output_opt.max_branch = 2;
+    output = output_generate(&output_opt, word_cnts, N);
+    if (output == NULL) {
+        fprintf(stderr, "Failed\n");
+        goto ERR;
+    }
+    if (check_output(output, word_cnts, vocab, refs[ncase - 1]) != 0) {
+        fprintf(stderr, "Failed\n");
+        goto ERR;
+    }
+    safe_output_destroy(output);
+    fprintf(stderr, "Success\n");
+    /***************************************************/
+    /***************************************************/
+    fprintf(stderr, "    Case %d...", ncase++);
+    output_opt.method = BOTTOM_UP;
+    output_opt.max_depth = 1;
+    output_opt.max_branch = 5;
     output = output_generate(&output_opt, word_cnts, N);
     if (output == NULL) {
         fprintf(stderr, "Failed\n");
