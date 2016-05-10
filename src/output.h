@@ -93,6 +93,9 @@ typedef struct _output_tree_t_ {
     output_node_id_t cap_node; /**< capacity of nodes array. */
 
     output_node_id_t root; /**< root node of output tree. */
+    output_node_id_t num_leaf; /**< number of leaf nodes. */
+    int *leaf2word; /**< map leaf node id to word id. */
+    output_node_id_t *word2leaf; /**< map word id to leaf node id. */
 } output_tree_t;
 
 /**

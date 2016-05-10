@@ -137,6 +137,9 @@ static void output_tree_destroy(output_tree_t *tree)
     tree->cap_node = 0;
     tree->num_node = 0;
     tree->root = OUTPUT_NODE_NONE;
+
+    safe_free(tree->leaf2word);
+    safe_free(tree->word2leaf);
 }
 
 output_tree_t* output_tree_dup(output_tree_t *t)
@@ -171,6 +174,26 @@ output_tree_t* output_tree_dup(output_tree_t *t)
         }
     }
 
+    if (t->word2leaf != NULL) {
+        sz = sizeof(output_node_id_t)*t->num_leaf;
+        tree->word2leaf = (output_node_id_t *)malloc(sz);
+        if (tree->word2leaf == NULL) {
+            ST_WARNING("Failed to malloc word2leaf for tree.");
+            goto ERR;
+        }
+
+        memcpy(tree->word2leaf, t->word2leaf, sz);
+    }
+    if (t->leaf2word != NULL) {
+        sz = sizeof(int)*t->num_node;
+        tree->leaf2word = (int *)malloc(sz);
+        if (tree->leaf2word == NULL) {
+            ST_WARNING("Failed to malloc leaf2word for tree.");
+            goto ERR;
+        }
+
+        memcpy(tree->leaf2word, t->leaf2word, sz);
+    }
     return tree;
 
 ERR:
@@ -192,6 +215,10 @@ bool output_tree_equal(output_tree_t *tree1, output_tree_t *tree2)
         return false;
     }
 
+    if (tree1->num_leaf != tree2->num_leaf) {
+        return false;
+    }
+
     for (n = 0; n < tree1->num_node; n++) {
         if (s_children(tree1, n) != s_children(tree2, n)) {
             return false;
@@ -201,12 +228,39 @@ bool output_tree_equal(output_tree_t *tree1, output_tree_t *tree2)
         }
     }
 
+    if ((tree1->word2leaf != NULL && tree2->word2leaf == NULL)
+            || (tree1->word2leaf == NULL && tree2->word2leaf != NULL)) {
+        return false;
+    }
+
+    if (tree1->word2leaf != NULL) {
+        for (n = 0; n < tree1->num_leaf; n++) {
+            if (tree1->word2leaf[n] != tree2->word2leaf[n]) {
+                return false;
+            }
+        }
+    }
+
+    if ((tree1->leaf2word != NULL && tree2->leaf2word == NULL)
+            || (tree1->leaf2word == NULL && tree2->leaf2word != NULL)) {
+        return false;
+    }
+
+    if (tree1->leaf2word != NULL) {
+        for (n = 0; n < tree1->num_node; n++) {
+            if (tree1->leaf2word[n] != tree2->leaf2word[n]) {
+                return false;
+            }
+        }
+    }
     return true;
 }
 
 int output_tree_load_header(output_tree_t **tree, int version,
         FILE *fp, bool *binary, FILE *fo_info)
 {
+    char sym[MAX_LINE_LEN];
+    size_t sz;
     union {
         char str[4];
         int magic_num;
@@ -214,6 +268,8 @@ int output_tree_load_header(output_tree_t **tree, int version,
 
     output_node_id_t num_node;
     output_node_id_t root;
+    output_node_id_t num_leaf;
+    bool has_leafmap;
 
     ST_CHECK_PARAM((tree == NULL && fo_info == NULL) || fp == NULL
             || binary == NULL, -1);
@@ -258,6 +314,16 @@ int output_tree_load_header(output_tree_t **tree, int version,
             ST_WARNING("Failed to read root.");
             return -1;
         }
+
+        if (fread(&num_leaf, sizeof(output_node_id_t), 1, fp) != 1) {
+            ST_WARNING("Failed to read num_leaf.");
+            return -1;
+        }
+
+        if (fread(&has_leafmap, sizeof(bool), 1, fp) != 1) {
+            ST_WARNING("Failed to read has_leafmap.");
+            return -1;
+        }
     } else {
         if (st_readline(fp, "") != 0) {
             ST_WARNING("tag error.");
@@ -284,6 +350,17 @@ int output_tree_load_header(output_tree_t **tree, int version,
             ST_WARNING("Failed to parse root.");
             return -1;
         }
+
+        if (st_readline(fp, "Num leaf: " OUTPUT_NODE_FMT, &num_leaf) != 1) {
+            ST_WARNING("Failed to parse num_leaf.");
+            return -1;
+        }
+
+        if (st_readline(fp, "Has leaf map: %s", sym) != 1) {
+            ST_WARNING("Failed to parse has_leafmap.");
+            return -1;
+        }
+        has_leafmap = str2bool(sym);
     }
 
     if (tree != NULL) {
@@ -297,12 +374,32 @@ int output_tree_load_header(output_tree_t **tree, int version,
         (*tree)->num_node = num_node;
         (*tree)->cap_node = num_node;
         (*tree)->root = root;
+        (*tree)->num_leaf = num_leaf;
+        if (has_leafmap) {
+            sz = sizeof(output_node_id_t)*num_leaf;
+            (*tree)->word2leaf = (output_node_id_t *)malloc(sz);
+            if ((*tree)->word2leaf == NULL) {
+                ST_WARNING("Failed to malloc word2leaf.");
+                goto ERR;
+            }
+            sz = sizeof(int)*num_node;
+            (*tree)->leaf2word = (int *)malloc(sz);
+            if ((*tree)->leaf2word == NULL) {
+                ST_WARNING("Failed to malloc leaf2word.");
+                goto ERR;
+            }
+        } else {
+            (*tree)->word2leaf = NULL;
+            (*tree)->leaf2word = NULL;
+        }
     }
 
     if (fo_info != NULL) {
         fprintf(fo_info, "\n<OUTPUT-TREE>\n");
         fprintf(fo_info, "Num Nodes: " OUTPUT_NODE_FMT "\n", num_node);
         fprintf(fo_info, "Root: " OUTPUT_NODE_FMT "\n", root);
+        fprintf(fo_info, "Num leaf: " OUTPUT_NODE_FMT "\n", num_leaf);
+        fprintf(fo_info, "Has leaf map: %s\n", bool2str(has_leafmap));
     }
 
     return 0;
@@ -320,7 +417,7 @@ int output_tree_load_body(output_tree_t *tree, int version,
     size_t sz;
 
     int n;
-    output_node_id_t i;
+    output_node_id_t i, tmp;
 
     ST_CHECK_PARAM(tree == NULL || fp == NULL, -1);
 
@@ -359,6 +456,21 @@ int output_tree_load_body(output_tree_t *tree, int version,
                 goto ERR;
             }
         }
+
+        if (tree->word2leaf != NULL) {
+            if (fread(tree->word2leaf, sizeof(output_node_id_t),
+                        tree->num_leaf, fp) != tree->num_leaf) {
+                ST_WARNING("Failed to read word2leaf.");
+                goto ERR;
+            }
+        }
+        if (tree->leaf2word != NULL) {
+            if (fread(tree->leaf2word, sizeof(int),
+                        tree->num_node, fp) != tree->num_node) {
+                ST_WARNING("Failed to read leaf2word.");
+                goto ERR;
+            }
+        }
     } else {
         if (st_readline(fp, "<OUTPUT-TREE-DATA>") != 0) {
             ST_WARNING("body flag error.");
@@ -375,7 +487,33 @@ int output_tree_load_body(output_tree_t *tree, int version,
                             OUTPUT_NODE_FMT,
                             &(s_children(tree, i)),
                             &(e_children(tree, i))) != 2) {
-                    ST_WARNING("Failed to parse w2c.");
+                    ST_WARNING("Failed to parse nodes.");
+                    goto ERR;
+                }
+            }
+        }
+        if (tree->word2leaf != NULL) {
+            if (st_readline(fp, "Word2leaf:") != 0) {
+                ST_WARNING("word2leaf flag error.");
+                goto ERR;
+            }
+            for (i = 0; i < tree->num_leaf; i++) {
+                if (st_readline(fp, "\t"OUTPUT_NODE_FMT"\t"OUTPUT_NODE_FMT,
+                            &tmp, tree->word2leaf + i) != 2) {
+                    ST_WARNING("Failed to parse word2leaf.");
+                    goto ERR;
+                }
+            }
+        }
+        if (tree->leaf2word != NULL) {
+            if (st_readline(fp, "Leaf2word:") != 0) {
+                ST_WARNING("leaf2word flag error.");
+                goto ERR;
+            }
+            for (i = 0; i < tree->num_node; i++) {
+                if (st_readline(fp, "\t"OUTPUT_NODE_FMT"\t"OUTPUT_NODE_FMT,
+                            &tmp, tree->leaf2word + i) != 2) {
+                    ST_WARNING("Failed to parse leaf2word.");
                     goto ERR;
                 }
             }
@@ -392,8 +530,15 @@ ERR:
 int output_tree_save_header(output_tree_t *tree, FILE *fp, bool binary)
 {
     int n;
+    bool has_leafmap;
 
     ST_CHECK_PARAM(fp == NULL, -1);
+
+    if (tree->word2leaf != NULL) {
+        has_leafmap = true;
+    } else {
+        has_leafmap = false;
+    }
 
     if (binary) {
         if (fwrite(&OUTPUT_TREE_MAGIC_NUM, sizeof(int), 1, fp) != 1) {
@@ -419,6 +564,15 @@ int output_tree_save_header(output_tree_t *tree, FILE *fp, bool binary)
                 ST_WARNING("Failed to write root.");
                 return -1;
             }
+            if (fwrite(&tree->num_leaf, sizeof(output_node_id_t),
+                        1, fp) != 1) {
+                ST_WARNING("Failed to write num_leaf.");
+                return -1;
+            }
+            if (fwrite(&has_leafmap, sizeof(output_node_id_t), 1, fp) != 1) {
+                ST_WARNING("Failed to write root.");
+                return -1;
+            }
         }
     } else {
         fprintf(fp, "    \n<OUTPUT-TREE>\n");
@@ -430,6 +584,8 @@ int output_tree_save_header(output_tree_t *tree, FILE *fp, bool binary)
 
         fprintf(fp, "Num nodes: " OUTPUT_NODE_FMT "\n", tree->num_node);
         fprintf(fp, "Root: " OUTPUT_NODE_FMT "\n", tree->root);
+        fprintf(fp, "Num leaf: " OUTPUT_NODE_FMT "\n", tree->num_leaf);
+        fprintf(fp, "Has leaf map: %s\n", bool2str(has_leafmap));
     }
 
     return 0;
@@ -460,6 +616,20 @@ int output_tree_save_body(output_tree_t *tree, FILE *fp, bool binary)
                 return -1;
             }
         }
+        if (tree->word2leaf != NULL) {
+            if (fwrite(tree->word2leaf, sizeof(output_node_id_t),
+                        tree->num_leaf, fp) != tree->num_leaf) {
+                ST_WARNING("Failed to write word2leaf.");
+                return -1;
+            }
+        }
+        if (tree->leaf2word != NULL) {
+            if (fwrite(tree->leaf2word, sizeof(int),
+                        tree->num_node, fp) != tree->num_node) {
+                ST_WARNING("Failed to write leaf2word.");
+                return -1;
+            }
+        }
     } else {
         fprintf(fp, "<OUTPUT-TREE-DATA>\n");
         if (tree->num_node > 0) {
@@ -468,6 +638,20 @@ int output_tree_save_body(output_tree_t *tree, FILE *fp, bool binary)
                 fprintf(fp, "\t" OUTPUT_NODE_FMT "\t" OUTPUT_NODE_FMT "\n",
                             s_children(tree, i),
                             e_children(tree, i));
+            }
+        }
+        if (tree->word2leaf != NULL) {
+            fprintf(fp, "Word2leaf:\n");
+            for (i = 0; i < tree->num_leaf; i++) {
+                fprintf(fp, "\t"OUTPUT_NODE_FMT"\t"OUTPUT_NODE_FMT,
+                            i, tree->word2leaf[i]);
+            }
+        }
+        if (tree->leaf2word != NULL) {
+            fprintf(fp, "Leaf2word:\n");
+            for (i = 0; i < tree->num_node; i++) {
+                fprintf(fp, "\t"OUTPUT_NODE_FMT"\t"OUTPUT_NODE_FMT,
+                            i, tree->leaf2word[i]);
             }
         }
     }
@@ -560,6 +744,24 @@ static output_node_id_t output_tree_add_node_m(output_tree_t *tree,
     tree->num_node += n;
 
     return node;
+}
+
+static int output_tree_leaf2word(output_tree_t *tree, output_node_id_t node)
+{
+    if (tree->leaf2word != NULL) {
+        return tree->leaf2word[node];
+    } else {
+        return (int)node;
+    }
+}
+
+static output_node_id_t output_tree_word2leaf(output_tree_t *tree, int word)
+{
+    if (tree->word2leaf != NULL) {
+        return tree->word2leaf[word];
+    } else {
+        return (output_node_id_t)word;
+    }
 }
 
 typedef struct _huffman_tree_node_t_ { // two range of nodes for children
@@ -667,7 +869,7 @@ static output_node_id_t huffman_tree_add_node_m(huffman_tree_t *tree,
 
     ST_CHECK_PARAM(tree == NULL || n <= 0, OUTPUT_NODE_NONE);
 
-    if (tree->num_node >= tree->cap_node) {
+    if (tree->num_node + n - 1 >= tree->cap_node) {
         tree->cap_node += n + NUM_REALLOC;
         tree->nodes = (huffman_tree_node_t *)realloc(tree->nodes,
                 sizeof(huffman_tree_node_t) * tree->cap_node);
@@ -972,6 +1174,11 @@ static huffman_tree_t* output_gen_bu_huffman(output_t *output,
 
             ++br;
         }
+
+        if(pos0 < 0 && pos1 == huffman->num_node - 1) {
+            /* only last one node left. */
+            break;
+        }
     }
 
     huffman->root = parent;
@@ -1040,7 +1247,7 @@ static int huffman_trav_2tree(huffman_tree_t *huffman,
 
     if (s_children(huffman, node)[0] < e_children(huffman, node)[0]) {
         start = h2t->nodemap[s_children(huffman, node)[0]];
-        end = h2t->nodemap[e_children(huffman,node)[0]];
+        end = h2t->nodemap[e_children(huffman,node)[0] - 1] + 1;
     }
 
     if (s_children(huffman, node)[1] < e_children(huffman, node)[1]) {
@@ -1048,17 +1255,18 @@ static int huffman_trav_2tree(huffman_tree_t *huffman,
             start = h2t->nodemap[s_children(huffman,node)[1]];
         } else {
             if (end != h2t->nodemap[s_children(huffman, node)[1]]) {
-                ST_WARNING("children not continuous.");
+                ST_WARNING("children not continuous. "
+                        "node["OUTPUT_NODE_FMT"/"OUTPUT_NODE_FMT"], "
+                        "s_children["OUTPUT_NODE_FMT"/"OUTPUT_NODE_FMT"], "
+                        "end["OUTPUT_NODE_FMT"].",
+                        node, h2t->nodemap[node],
+                        s_children(huffman, node)[1],
+                        h2t->nodemap[s_children(huffman, node)[1]],
+                        end);
                 return -1;
             }
         }
-        end = h2t->nodemap[e_children(huffman,node)[1]];
-    }
-
-    if (start == OUTPUT_NODE_NONE || end == OUTPUT_NODE_NONE) {
-        ST_WARNING("Error start[" OUTPUT_NODE_FMT "] or end["
-                OUTPUT_NODE_FMT "].", start, end);
-        return -1;
+        end = h2t->nodemap[e_children(huffman,node)[1] - 1] + 1;
     }
 
     s_children(h2t->tree, tnode) = start;
@@ -1131,9 +1339,11 @@ static int output_gen_bu_huffman2tree(output_t *output,
     h2t_arg_t h2t;
 
     output_node_id_t *nodemap = NULL;
+    output_node_id_t *rnodemap = NULL;
 
     size_t sz;
-    output_node_id_t i;
+    output_node_id_t n;
+    int i;
 
     ST_CHECK_PARAM(output == NULL || huffman == NULL, -1);
 
@@ -1143,8 +1353,8 @@ static int output_gen_bu_huffman2tree(output_t *output,
         ST_WARNING("Failed to malloc nodemap.");
         goto ERR;
     }
-    for (i = 0; i < huffman->num_node; ++i) {
-        nodemap[i] = OUTPUT_NODE_NONE;
+    for (n = 0; n < huffman->num_node; ++n) {
+        nodemap[n] = OUTPUT_NODE_NONE;
     }
 
     renum.nodemap = nodemap;
@@ -1157,6 +1367,13 @@ static int output_gen_bu_huffman2tree(output_t *output,
         ST_WARNING("some nodes are not renumbered.");
         goto ERR;
     }
+#ifdef _OUTPUT_DEBUG_
+    ST_DEBUG("NodeMap: ");
+    for (output_node_id_t n = 0; n < huffman->num_node; n++) {
+        ST_DEBUG(OUTPUT_NODE_FMT" -> "OUTPUT_NODE_FMT,
+                 n, renum.nodemap[n]);
+    }
+#endif
 
     output->tree = output_tree_init(huffman->num_node);
     if (output->tree == NULL) {
@@ -1172,12 +1389,49 @@ static int output_gen_bu_huffman2tree(output_t *output,
         goto ERR;
     }
 
+    sz = sizeof(output_node_id_t) * output->output_size;
+    output->tree->word2leaf = (output_node_id_t *)malloc(sz);
+    if (output->tree->word2leaf == NULL) {
+        ST_WARNING("Failed to malloc word2leaf.");
+        goto ERR;
+    }
+
+    for (i = 0; i < output->output_size; i++) {
+        output->tree->word2leaf[i] = nodemap[i];
+    }
+
+    sz = sizeof(output_node_id_t)*huffman->num_node;
+    rnodemap = (output_node_id_t *)malloc(sz);
+    if (rnodemap == NULL) {
+        ST_WARNING("Failed to malloc rnodemap.");
+        goto ERR;
+    }
+    for (n = 0; n < huffman->num_node; n++) {
+        rnodemap[nodemap[n]] = n;
+    }
+    sz = sizeof(int) * output->tree->num_node;
+    output->tree->leaf2word = (int *)malloc(sz);
+    if (output->tree->leaf2word == NULL) {
+        ST_WARNING("Failed to malloc leaf2word.");
+        goto ERR;
+    }
+    for (n = 0; n < output->tree->num_node; n++) {
+        if (is_leaf(output->tree, n)) {
+            output->tree->leaf2word[n] = rnodemap[n];
+        } else {
+            output->tree->leaf2word[n] = -1;
+        }
+    }
+
     safe_free(nodemap);
+    safe_free(rnodemap);
 
     return 0;
 
 ERR:
     safe_free(nodemap);
+    safe_free(rnodemap);
+    safe_tree_destroy(output->tree);
     return -1;
 }
 
@@ -1192,6 +1446,17 @@ static int output_gen_bu(output_t *output, count_t *word_cnts)
         ST_WARNING("Failed to output_gen_bu_huffman.");
         goto ERR;
     }
+
+#ifdef _OUTPUT_DEBUG_
+    ST_DEBUG("Built Huffman Tree. Nodes: "OUTPUT_NODE_FMT, huffman->num_node);
+    ST_DEBUG("Root: "OUTPUT_NODE_FMT, huffman->root);
+    for (output_node_id_t n = 0; n < huffman->num_node; n++) {
+        ST_DEBUG("Node: "OUTPUT_NODE_FMT", Child: "OUTPUT_NODE_FMT
+                 "/"OUTPUT_NODE_FMT":"OUTPUT_NODE_FMT"/"OUTPUT_NODE_FMT, n,
+                 s_children(huffman, n)[0], e_children(huffman, n)[0],
+                 s_children(huffman, n)[1], e_children(huffman, n)[1]);
+    }
+#endif
 
     if (output_gen_bu_huffman2tree(output, huffman) < 0) {
         ST_WARNING("Failed to output_gen_bu_huffman2tree.");
@@ -1304,6 +1569,7 @@ int output_tree_dfs_trav_gen_path(output_tree_t *tree,
 
     void *tmp;
     st_stack_id_t i, n;
+    int word;
 
     ST_CHECK_PARAM(tree == NULL || stack == NULL || args == NULL, -1);
 
@@ -1312,12 +1578,14 @@ int output_tree_dfs_trav_gen_path(output_tree_t *tree,
     }
 
     output = (output_t *)args;
-    if (node >= output->output_size) {
-        ST_WARNING("Error leaf node["OUTPUT_NODE_FMT"]", node);
+    word = output_tree_leaf2word(tree, node);
+    if (word < 0 || word >= output->output_size) {
+        ST_WARNING("Error leaf node["OUTPUT_NODE_FMT"], word[%d]",
+                node, word);
         return -1;
     }
 
-    if (output->paths[node].num_node > 0) {
+    if (output->paths[word].num_node > 0) {
         ST_WARNING("Duplicated leaf node["OUTPUT_NODE_FMT"] during DFS",
                 node);
         return -1;
@@ -1325,13 +1593,13 @@ int output_tree_dfs_trav_gen_path(output_tree_t *tree,
 
     n = st_stack_size(stack);
     if (n > 1) {
-        output->paths[node].nodes = (output_node_id_t *)malloc(
+        output->paths[word].nodes = (output_node_id_t *)malloc(
                 sizeof(output_node_id_t)*(n-1));
-        if (output->paths[node].nodes == NULL) {
+        if (output->paths[word].nodes == NULL) {
             ST_WARNING("Failed to malloc nodes for path");
             goto ERR;
         }
-        output->paths[node].num_node = n - 1;
+        output->paths[word].num_node = n - 1;
     }
 
     for (i = n - 1; i > 0; i--) { /* exclude *root* */
@@ -1339,13 +1607,13 @@ int output_tree_dfs_trav_gen_path(output_tree_t *tree,
             ST_WARNING("Failed to st_stack_topn[%d].", i);
             goto ERR;
         }
-        output->paths[node].nodes[n-1-i] = (output_node_id_t)(long)tmp;
+        output->paths[word].nodes[n-1-i] = (output_node_id_t)(long)tmp;
     }
 
     return 0;
 ERR:
-    safe_free(output->paths[node].nodes);
-    output->paths[node].num_node = 0;
+    safe_free(output->paths[word].nodes);
+    output->paths[word].num_node = 0;
 
     return -1;
 }
@@ -1413,13 +1681,16 @@ output_t* output_generate(output_opt_t *output_opt, count_t *word_cnts,
                     output->output_opt.method);
             break;
     }
+    output->tree->num_leaf = output->output_size;
 
     ST_NOTICE("Built Tree. Nodes: "OUTPUT_NODE_FMT, output->tree->num_node);
 
 #ifdef _OUTPUT_DEBUG_
     ST_DEBUG("Root: "OUTPUT_NODE_FMT, output->tree->root);
     for (output_node_id_t n = 0; n < output->tree->num_node; n++) {
-        ST_DEBUG("Node: "OUTPUT_NODE_FMT", Child: "OUTPUT_NODE_FMT"/"OUTPUT_NODE_FMT, n, s_children(output->tree, n), e_children(output->tree, n));
+        ST_DEBUG("Node: "OUTPUT_NODE_FMT", Child: "OUTPUT_NODE_FMT
+                 "/"OUTPUT_NODE_FMT, n,
+                 s_children(output->tree, n), e_children(output->tree, n));
     }
 #endif
 
@@ -1981,6 +2252,7 @@ int output_tree_dfs_trav_draw(output_tree_t *tree,
 int output_draw(output_t *output, FILE *fp, count_t *word_cnts,
         st_alphabet_t *vocab)
 {
+    int i;
     output_node_id_t m, n;
 
     ST_CHECK_PARAM(output == NULL || fp == NULL, -1);
@@ -2004,23 +2276,24 @@ int output_draw(output_t *output, FILE *fp, count_t *word_cnts,
     fprintf(fp, "    graph [ranksep=0];\n");
     fprintf(fp, "    node [shape=record];\n\n");
 
-    for (n = 0; n < output->output_size; n++) {
+    for (i = 0; i < output->output_size; i++) {
+        n = output_tree_word2leaf(output->tree, i);
         fprintf(fp, "    "OUTPUT_NODE_FMT" [label=\"{{"OUTPUT_NODE_FMT"|",
                 n, n);
         if (vocab) {
-            fprintf(fp, "%s", st_alphabet_get_label(vocab, n));
+            fprintf(fp, "%s", st_alphabet_get_label(vocab, i));
         }
         fprintf(fp, "}|{");
         if (word_cnts != NULL) {
-            fprintf(fp, COUNT_FMT, word_cnts[n]);
+            fprintf(fp, COUNT_FMT, word_cnts[i]);
         }
         fprintf(fp, "|");
 
-        for (m = 0; m < output->paths[n].num_node - 1; m++) {
-            fprintf(fp, OUTPUT_NODE_FMT",", output->paths[n].nodes[m]);
+        for (m = 0; m < output->paths[i].num_node - 1; m++) {
+            fprintf(fp, OUTPUT_NODE_FMT",", output->paths[i].nodes[m]);
         }
-        if (output->paths[n].num_node > 0) {
-            fprintf(fp, OUTPUT_NODE_FMT, output->paths[n].nodes[m]);
+        if (output->paths[i].num_node > 0) {
+            fprintf(fp, OUTPUT_NODE_FMT, output->paths[i].nodes[m]);
         }
         fprintf(fp, "}}\"];\n");
     }

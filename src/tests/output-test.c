@@ -301,6 +301,68 @@ static char *refs[MAX_LEN] = {
 "    20 -> 29;\n"
 "    17 -> 20;\n"
 "  }\n"
+"}",
+
+"digraph output {\n"
+"  rankdir=TB;\n"
+"  labelloc=t;\n"
+"  label=\"Output Tree\";\n"
+"\n"
+"  subgraph cluster_param {\n"
+"    label=\"Params\";\n"
+"    node [shape=plaintext, style=solid];\n"
+"    edge [style=invis];\n"
+"    legend [label=\"# Leaf: 17\\nmax depth: 0\\nmax branch: 3\"];\n"
+"  }\n"
+"\n"
+"  subgraph cluster_tree {\n"
+"    label=\"\"\n"
+"    graph [ranksep=0];\n"
+"    node [shape=record];\n"
+"\n"
+"    10 [label=\"{{10|AAA}|{17|3}}\"];\n"
+"    7 [label=\"{{7|BBB}|{16|2}}\"];\n"
+"    8 [label=\"{{8|CCC}|{15|2}}\"];\n"
+"    4 [label=\"{{4|DDD}|{14|1}}\"];\n"
+"    5 [label=\"{{5|EEE}|{13|1}}\"];\n"
+"    6 [label=\"{{6|FFF}|{12|1}}\"];\n"
+"    19 [label=\"{{19|GGG}|{11|3,12}}\"];\n"
+"    20 [label=\"{{20|HHH}|{10|3,12}}\"];\n"
+"    21 [label=\"{{21|III}|{9|3,12}}\"];\n"
+"    16 [label=\"{{16|JJJ}|{8|3,11}}\"];\n"
+"    17 [label=\"{{17|KKK}|{7|3,11}}\"];\n"
+"    13 [label=\"{{13|LLL}|{6|2,9}}\"];\n"
+"    14 [label=\"{{14|MMM}|{5|2,9}}\"];\n"
+"    15 [label=\"{{15|NNN}|{4|2,9}}\"];\n"
+"    22 [label=\"{{22|OOO}|{3|3,11,18}}\"];\n"
+"    23 [label=\"{{23|PPP}|{2|3,11,18}}\"];\n"
+"    24 [label=\"{{24|QQQ}|{1|3,11,18}}\"];\n"
+"\n"
+"    1 -> 4;\n"
+"    1 -> 5;\n"
+"    1 -> 6;\n"
+"    0 -> 1;\n"
+"    2 -> 7;\n"
+"    2 -> 8;\n"
+"    9 -> 13;\n"
+"    9 -> 14;\n"
+"    9 -> 15;\n"
+"    2 -> 9;\n"
+"    0 -> 2;\n"
+"    3 -> 10;\n"
+"    11 -> 16;\n"
+"    11 -> 17;\n"
+"    18 -> 22;\n"
+"    18 -> 23;\n"
+"    18 -> 24;\n"
+"    11 -> 18;\n"
+"    3 -> 11;\n"
+"    12 -> 19;\n"
+"    12 -> 20;\n"
+"    12 -> 21;\n"
+"    3 -> 12;\n"
+"    0 -> 3;\n"
+"  }\n"
 "}"
 };
 
@@ -339,7 +401,7 @@ static int check_output(output_t *output, count_t *word_cnts,
     }
     buf[sz] = '\0';
 
-    fprintf(stdout, "%s\n", buf);
+//    fprintf(stdout, "%s\n", buf);
     ret = strcmp(ref, buf);
 
     safe_fclose(fp);
@@ -429,7 +491,7 @@ static int unit_test_output_generate()
         fprintf(stderr, "Failed\n");
         goto ERR;
     }
-    if (check_output(output, word_cnts, NULL, refs[ncase - 1]) != 0) {
+    if (check_output(output, word_cnts, vocab, refs[ncase - 1]) != 0) {
         fprintf(stderr, "Failed\n");
         goto ERR;
     }
