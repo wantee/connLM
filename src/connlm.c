@@ -449,6 +449,7 @@ static int connlm_load_header(connlm_t *connlm, FILE *fp,
     int version;
     int real_size;
     comp_id_t c;
+    comp_id_t num_comp;
 
     ST_CHECK_PARAM((connlm == NULL && fo_info == NULL) || fp == NULL
             || binary == NULL, -1);
@@ -495,7 +496,7 @@ static int connlm_load_header(connlm_t *connlm, FILE *fp,
             return -1;
         }
 
-        if (fread(&connlm->num_comp, sizeof(comp_id_t), 1, fp) != 1) {
+        if (fread(&num_comp, sizeof(comp_id_t), 1, fp) != 1) {
             ST_WARNING("Failed to read num_comp.");
             return -1;
         }
@@ -537,10 +538,14 @@ static int connlm_load_header(connlm_t *connlm, FILE *fp,
             return -1;
         }
 
-        if (st_readline(fp, "Num comp: " COMP_ID_FMT, &connlm->num_comp) != 1) {
+        if (st_readline(fp, "Num comp: " COMP_ID_FMT, &num_comp) != 1) {
             ST_WARNING("Failed to read num_comp.");
             return -1;
         }
+    }
+
+    if (connlm != NULL) {
+        connlm->num_comp = num_comp;
     }
 
     if (fo_info != NULL) {
@@ -549,12 +554,12 @@ static int connlm_load_header(connlm_t *connlm, FILE *fp,
         fprintf(fo_info, "Real type: %s\n",
                 (real_size == sizeof(double)) ? "double" : "float");
         fprintf(fo_info, "Binary: %s\n", bool2str(*binary));
-        fprintf(fo_info, "Num comp: %d\n", connlm->num_comp);
+        fprintf(fo_info, "Num comp: %d\n", num_comp);
     }
 
     b = *binary;
 
-    if (vocab_load_header((connlm == NULL) ? NULL : &connlm->vocab,
+    if (vocab_load_header((connlm == NULL) ? NULL : &(connlm->vocab),
                 version, fp, binary, fo_info) < 0) {
         ST_WARNING("Failed to vocab_load_header.");
         return -1;
@@ -582,7 +587,7 @@ static int connlm_load_header(connlm_t *connlm, FILE *fp,
             goto ERR;
         }
     }
-    for (c = 0; c < connlm->num_comp; c++) {
+    for (c = 0; c < num_comp; c++) {
         if (comp_load_header((connlm == NULL) ? NULL : &connlm->comps[c],
                     version, fp, binary, fo_info) < 0) {
             ST_WARNING("Failed to comp_load_header.");
@@ -617,9 +622,11 @@ static int connlm_load_body(connlm_t *connlm, int version,
         return -1;
     }
 
-    if (output_load_body(connlm->output, version, fp, binary) < 0) {
-        ST_WARNING("Failed to output_load_body.");
-        return -1;
+    if (connlm->output != NULL) {
+        if (output_load_body(connlm->output, version, fp, binary) < 0) {
+            ST_WARNING("Failed to output_load_body.");
+            return -1;
+        }
     }
 
     for (c = 0; c < connlm->num_comp; c++) {

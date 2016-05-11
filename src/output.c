@@ -168,10 +168,6 @@ output_tree_t* output_tree_dup(output_tree_t *t)
 
         sz = sizeof(output_tree_node_t) * tree->num_node;
         memcpy(tree->nodes, t->nodes, sz);
-        if (tree->cap_node > tree->num_node) {
-            sz = sizeof(output_tree_node_t)*(tree->cap_node-tree->num_node);
-            memset(tree->nodes, 0, sz);
-        }
     }
 
     if (t->word2leaf != NULL) {
@@ -303,13 +299,6 @@ int output_tree_load_header(output_tree_t **tree, int version,
             return -1;
         }
 
-        if (num_node <= 0) {
-            if (fo_info != NULL) {
-                fprintf(fo_info, "\n<OUTPUT-TREE>: None\n");
-            }
-            return 0;
-        }
-
         if (fread(&root, sizeof(output_node_id_t), 1, fp) != 1) {
             ST_WARNING("Failed to read root.");
             return -1;
@@ -334,16 +323,10 @@ int output_tree_load_header(output_tree_t **tree, int version,
             goto ERR;
         }
 
-        if (st_readline(fp, "Num Nodes: " OUTPUT_NODE_FMT, &num_node) != 1) {
+        if (st_readline(fp, "Num nodes: " OUTPUT_NODE_FMT,
+                    &num_node) != 1) {
             ST_WARNING("Failed to parse num_node.");
             goto ERR;
-        }
-
-        if (num_node <= 0) {
-            if (fo_info != NULL) {
-                fprintf(fo_info, "\n<OUTPUT-TREE>: None\n");
-            }
-            return 0;
         }
 
         if (st_readline(fp, "Root: " OUTPUT_NODE_FMT, &root) != 1) {
@@ -351,7 +334,8 @@ int output_tree_load_header(output_tree_t **tree, int version,
             return -1;
         }
 
-        if (st_readline(fp, "Num leaf: " OUTPUT_NODE_FMT, &num_leaf) != 1) {
+        if (st_readline(fp, "Num leaf: " OUTPUT_NODE_FMT,
+                    &num_leaf) != 1) {
             ST_WARNING("Failed to parse num_leaf.");
             return -1;
         }
@@ -396,7 +380,7 @@ int output_tree_load_header(output_tree_t **tree, int version,
 
     if (fo_info != NULL) {
         fprintf(fo_info, "\n<OUTPUT-TREE>\n");
-        fprintf(fo_info, "Num Nodes: " OUTPUT_NODE_FMT "\n", num_node);
+        fprintf(fo_info, "Num nodes: " OUTPUT_NODE_FMT "\n", num_node);
         fprintf(fo_info, "Root: " OUTPUT_NODE_FMT "\n", root);
         fprintf(fo_info, "Num leaf: " OUTPUT_NODE_FMT "\n", num_leaf);
         fprintf(fo_info, "Has leaf map: %s\n", bool2str(has_leafmap));
@@ -483,10 +467,11 @@ int output_tree_load_body(output_tree_t *tree, int version,
                 goto ERR;
             }
             for (i = 0; i < tree->num_node; i++) {
-                if (st_readline(fp, "\t" OUTPUT_NODE_FMT "\t"
-                            OUTPUT_NODE_FMT,
+                if (st_readline(fp, "\t"OUTPUT_NODE_FMT
+                            "\t"OUTPUT_NODE_FMT"\t"OUTPUT_NODE_FMT,
+                            &tmp,
                             &(s_children(tree, i)),
-                            &(e_children(tree, i))) != 2) {
+                            &(e_children(tree, i))) != 3) {
                     ST_WARNING("Failed to parse nodes.");
                     goto ERR;
                 }
@@ -498,7 +483,8 @@ int output_tree_load_body(output_tree_t *tree, int version,
                 goto ERR;
             }
             for (i = 0; i < tree->num_leaf; i++) {
-                if (st_readline(fp, "\t"OUTPUT_NODE_FMT"\t"OUTPUT_NODE_FMT,
+                if (st_readline(fp, "\t"OUTPUT_NODE_FMT
+                            "\t"OUTPUT_NODE_FMT,
                             &tmp, tree->word2leaf + i) != 2) {
                     ST_WARNING("Failed to parse word2leaf.");
                     goto ERR;
@@ -511,7 +497,8 @@ int output_tree_load_body(output_tree_t *tree, int version,
                 goto ERR;
             }
             for (i = 0; i < tree->num_node; i++) {
-                if (st_readline(fp, "\t"OUTPUT_NODE_FMT"\t"OUTPUT_NODE_FMT,
+                if (st_readline(fp, "\t"OUTPUT_NODE_FMT
+                            "\t"OUTPUT_NODE_FMT,
                             &tmp, tree->leaf2word + i) != 2) {
                     ST_WARNING("Failed to parse leaf2word.");
                     goto ERR;
@@ -554,25 +541,26 @@ int output_tree_save_header(output_tree_t *tree, FILE *fp, bool binary)
             return 0;
         }
 
-        if (fwrite(&tree->num_node, sizeof(output_node_id_t), 1, fp) != 1) {
+        if (fwrite(&tree->num_node, sizeof(output_node_id_t),
+                    1, fp) != 1) {
             ST_WARNING("Failed to write num_node.");
             return -1;
         }
 
-        if (tree->num_node > 0) {
-            if (fwrite(&tree->root, sizeof(output_node_id_t), 1, fp) != 1) {
-                ST_WARNING("Failed to write root.");
-                return -1;
-            }
-            if (fwrite(&tree->num_leaf, sizeof(output_node_id_t),
-                        1, fp) != 1) {
-                ST_WARNING("Failed to write num_leaf.");
-                return -1;
-            }
-            if (fwrite(&has_leafmap, sizeof(output_node_id_t), 1, fp) != 1) {
-                ST_WARNING("Failed to write root.");
-                return -1;
-            }
+        if (fwrite(&tree->root, sizeof(output_node_id_t), 1, fp) != 1) {
+            ST_WARNING("Failed to write root.");
+            return -1;
+        }
+
+        if (fwrite(&tree->num_leaf, sizeof(output_node_id_t),
+                    1, fp) != 1) {
+            ST_WARNING("Failed to write num_leaf.");
+            return -1;
+        }
+
+        if (fwrite(&has_leafmap, sizeof(bool), 1, fp) != 1) {
+            ST_WARNING("Failed to write root.");
+            return -1;
         }
     } else {
         fprintf(fp, "    \n<OUTPUT-TREE>\n");
@@ -635,22 +623,22 @@ int output_tree_save_body(output_tree_t *tree, FILE *fp, bool binary)
         if (tree->num_node > 0) {
             fprintf(fp, "Nodes:\n");
             for (i = 0; i < tree->num_node; i++) {
-                fprintf(fp, "\t" OUTPUT_NODE_FMT "\t" OUTPUT_NODE_FMT "\n",
-                            s_children(tree, i),
-                            e_children(tree, i));
+                fprintf(fp, "\t"OUTPUT_NODE_FMT"\t"
+                            OUTPUT_NODE_FMT"\t"OUTPUT_NODE_FMT"\n",
+                            i, s_children(tree, i), e_children(tree, i));
             }
         }
         if (tree->word2leaf != NULL) {
             fprintf(fp, "Word2leaf:\n");
             for (i = 0; i < tree->num_leaf; i++) {
-                fprintf(fp, "\t"OUTPUT_NODE_FMT"\t"OUTPUT_NODE_FMT,
+                fprintf(fp, "\t"OUTPUT_NODE_FMT"\t"OUTPUT_NODE_FMT"\n",
                             i, tree->word2leaf[i]);
             }
         }
         if (tree->leaf2word != NULL) {
             fprintf(fp, "Leaf2word:\n");
             for (i = 0; i < tree->num_node; i++) {
-                fprintf(fp, "\t"OUTPUT_NODE_FMT"\t"OUTPUT_NODE_FMT,
+                fprintf(fp, "\t"OUTPUT_NODE_FMT"\t"OUTPUT_NODE_FMT"\n",
                             i, tree->leaf2word[i]);
             }
         }
