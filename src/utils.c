@@ -403,3 +403,31 @@ const char* model_filter_help()
 {
     return "A model filter can be: 'mdl,[+-][ovc<comp1>c<comp2>]:file_name'.\nAny string not in such format will be treated as a model file name.";
 }
+
+char* escape_dot(char *out, size_t len, const char *str)
+{
+    const char *p;
+    char *q;
+    size_t i;
+
+    p = str;
+    q = out;
+    i = 0;
+    while (*p != '\0') {
+        if (*p == '<' || *p == '>' || *p == '\\') {
+            if (i >= len - 1) {
+                return NULL;
+            }
+            *(q++) = '\\';
+            ++i;
+        }
+        if (i >= len - 1) {
+            return NULL;
+        }
+        *(q++) = *(p++);
+        ++i;
+    }
+    *q = '\0';
+
+    return out;
+}

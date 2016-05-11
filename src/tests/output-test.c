@@ -52,7 +52,7 @@ static char *refs[MAX_LEN] = {
 "    graph [ranksep=0];\n"
 "    node [shape=record];\n"
 "\n"
-"    0 [label=\"{{0|AAA}|{17|18,21}}\"];\n"
+"    0 [label=\"{{0|\\</s\\>}|{17|18,21}}\"];\n"
 "    1 [label=\"{{1|BBB}|{16|18,21}}\"];\n"
 "    2 [label=\"{{2|CCC}|{15|18,22}}\"];\n"
 "    3 [label=\"{{3|DDD}|{14|18,22}}\"];\n"
@@ -119,7 +119,7 @@ static char *refs[MAX_LEN] = {
 "    graph [ranksep=0];\n"
 "    node [shape=record];\n"
 "\n"
-"    0 [label=\"{{0|AAA}|{|18,21}}\"];\n"
+"    0 [label=\"{{0|\\</s\\>}|{|18,21}}\"];\n"
 "    1 [label=\"{{1|BBB}|{|18,21}}\"];\n"
 "    2 [label=\"{{2|CCC}|{|18,22}}\"];\n"
 "    3 [label=\"{{3|DDD}|{|18,22}}\"];\n"
@@ -320,7 +320,7 @@ static char *refs[MAX_LEN] = {
 "    graph [ranksep=0];\n"
 "    node [shape=record];\n"
 "\n"
-"    10 [label=\"{{10|AAA}|{17|3}}\"];\n"
+"    10 [label=\"{{10|\\</s\\>}|{17|3}}\"];\n"
 "    7 [label=\"{{7|BBB}|{16|2}}\"];\n"
 "    8 [label=\"{{8|CCC}|{15|2}}\"];\n"
 "    4 [label=\"{{4|DDD}|{14|1}}\"];\n"
@@ -382,7 +382,7 @@ static char *refs[MAX_LEN] = {
 "    graph [ranksep=0];\n"
 "    node [shape=record];\n"
 "\n"
-"    26 [label=\"{{26|AAA}|{17|9}}\"];\n"
+"    26 [label=\"{{26|\\</s\\>}|{17|9}}\"];\n"
 "    24 [label=\"{{24|BBB}|{16|8}}\"];\n"
 "    25 [label=\"{{25|CCC}|{15|8}}\"];\n"
 "    22 [label=\"{{22|DDD}|{14|7}}\"];\n"
@@ -446,7 +446,7 @@ static char *refs[MAX_LEN] = {
 "    graph [ranksep=0];\n"
 "    node [shape=record];\n"
 "\n"
-"    1 [label=\"{{1|AAA}|{17|}}\"];\n"
+"    1 [label=\"{{1|\\</s\\>}|{17|}}\"];\n"
 "    2 [label=\"{{2|BBB}|{16|}}\"];\n"
 "    3 [label=\"{{3|CCC}|{15|}}\"];\n"
 "    4 [label=\"{{4|DDD}|{14|}}\"];\n"
@@ -501,7 +501,7 @@ static char *refs[MAX_LEN] = {
 "    graph [ranksep=0];\n"
 "    node [shape=record];\n"
 "\n"
-"    0 [label=\"{{0|AAA}|{17|18,20}}\"];\n"
+"    0 [label=\"{{0|\\</s\\>}|{17|18,20}}\"];\n"
 "    1 [label=\"{{1|BBB}|{16|18,20}}\"];\n"
 "    2 [label=\"{{2|CCC}|{15|18,20}}\"];\n"
 "    3 [label=\"{{3|DDD}|{14|18,20}}\"];\n"
@@ -562,7 +562,7 @@ static char *refs[MAX_LEN] = {
 "    graph [ranksep=0];\n"
 "    node [shape=record];\n"
 "\n"
-"    0 [label=\"{{0|AAA}|{17|}}\"];\n"
+"    0 [label=\"{{0|\\</s\\>}|{17|}}\"];\n"
 "    1 [label=\"{{1|BBB}|{16|}}\"];\n"
 "    2 [label=\"{{2|CCC}|{15|}}\"];\n"
 "    3 [label=\"{{3|DDD}|{14|}}\"];\n"
@@ -668,7 +668,9 @@ static int unit_test_output_generate()
         word_cnts[i] = N - i;
     }
     vocab = st_alphabet_create(N);
-    for (i = 0; i < N; i++) {
+    strcpy(word, "</s>");
+    st_alphabet_add_label(vocab, word);
+    for (i = 1; i < N; i++) {
         word[0] = 'A' + i;
         word[1] = 'A' + i;
         word[2] = 'A' + i;

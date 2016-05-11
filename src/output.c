@@ -80,7 +80,7 @@ int output_load_opt(output_opt_t *output_opt, st_opt_t *opt,
             || strcasecmp(method_str, "td") == 0) {
         output_opt->method = TOP_DOWN;
         /* default value for class-based output. */
-        def_depth = 1;
+        def_depth = 2;
         def_branch = 100;
     } else if (strcasecmp(method_str, "bottomup") == 0
             || strcasecmp(method_str, "b") == 0
@@ -2333,6 +2333,7 @@ int output_tree_dfs_trav_draw(output_tree_t *tree,
 int output_draw(output_t *output, FILE *fp, count_t *word_cnts,
         st_alphabet_t *vocab)
 {
+    char sym[MAX_SYM_LEN];
     int i;
     output_node_id_t m, n;
 
@@ -2365,7 +2366,8 @@ int output_draw(output_t *output, FILE *fp, count_t *word_cnts,
         fprintf(fp, "    "OUTPUT_NODE_FMT" [label=\"{{"OUTPUT_NODE_FMT"|",
                 n, n);
         if (vocab) {
-            fprintf(fp, "%s", st_alphabet_get_label(vocab, i));
+            fprintf(fp, "%s", escape_dot(sym, MAX_SYM_LEN,
+                        st_alphabet_get_label(vocab, i)));
         }
         fprintf(fp, "}|{");
         if (word_cnts != NULL) {

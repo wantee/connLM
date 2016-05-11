@@ -71,7 +71,7 @@ typedef enum _model_filter_t_ {
  * A model filter can be: mdl,[+-][ovc<comp1>c<comp2>]:file_name.
  * Any string not in such format will be treated as a model file name.
  *
- * @ingroup connlm
+ * @ingroup g_utils
  * @param[in] mdl_filter string for the model filter.
  * @param[out] mdl_file name of model file.
  * @param[in] mdl_file_len max len of model file buffer.
@@ -84,6 +84,8 @@ model_filter_t parse_model_filter(const char *mdl_filter,
         int *num_comp);
 
 const char* model_filter_help();
+
+char* escape_dot(char *out, size_t len, const char *str);
 
 #ifdef __cplusplus
 }
