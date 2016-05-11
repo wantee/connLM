@@ -242,7 +242,7 @@ void softmax(real_t *vec, int vec_size)
 }
 
 void connlm_show_usage(const char *module_name, const char *header,
-        const char *usage, st_opt_t *opt)
+        const char *usage, st_opt_t *opt, const char *trailer)
 {
     fprintf(stderr, "\nConnectionist Language Modelling Toolkit\n");
     fprintf(stderr, "    -- %s\n", header);
@@ -254,6 +254,9 @@ void connlm_show_usage(const char *module_name, const char *header,
     fprintf(stderr, "\n");
     fprintf(stderr, "Options  : \n");
     st_opt_show_usage(opt, stderr);
+    if (trailer != NULL) {
+        fprintf(stderr, "\n%s\n", trailer);
+    }
 }
 
 int int_comp(const void *elem1, const void *elem2)
@@ -392,4 +395,9 @@ ERR:
     safe_free(*comp_names);
     mdl_file[0] = '\0';
     return MF_ERR;
+}
+
+const char* model_filter_help()
+{
+    return "A model filter can be: 'mdl,[+-][ovc<comp1>c<comp2>]:file_name'.\nAny string not in such format will be treated as a model file name.";
 }

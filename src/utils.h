@@ -53,7 +53,7 @@ void sigmoid(real_t *vec, int vec_size);
 void softmax(real_t *vec, int vec_size);
 
 void connlm_show_usage(const char *module_name, const char *header,
-        const char *usage, st_opt_t *opt);
+        const char *usage, st_opt_t *opt, const char *trailer);
 
 void int_sort(int *A, size_t n);
 
@@ -82,6 +82,8 @@ typedef enum _model_filter_t_ {
 model_filter_t parse_model_filter(const char *mdl_filter,
         char *mdl_file, size_t mdl_file_len, char **comp_names,
         int *num_comp);
+
+const char* model_filter_help();
 
 #ifdef __cplusplus
 }

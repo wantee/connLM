@@ -89,7 +89,7 @@ void show_usage(const char *module_name)
     connlm_show_usage(module_name,
             "Test Model",
             "<model> <test-file> [prob-log]",
-            g_cmd_opt);
+            g_cmd_opt, NULL);
 }
 
 int main(int argc, const char *argv[])

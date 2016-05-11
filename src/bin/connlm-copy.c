@@ -75,8 +75,8 @@ void show_usage(const char *module_name)
 {
     connlm_show_usage(module_name,
             "Copy Models",
-            "<model-in> <model-out-filter>",
-            g_cmd_opt);
+            "<model-in-filter> <model-out>",
+            g_cmd_opt, model_filter_help());
 }
 
 int main(int argc, const char *argv[])
@@ -115,9 +115,16 @@ int main(int argc, const char *argv[])
     st_opt_show(g_cmd_opt, "connLM Copy Options");
     ST_CLEAN("Model-in: %s, Model-out: %s", argv[1], argv[2]);
 
-    fp = st_fopen(argv[1], "rb");
+    mf = parse_model_filter(argv[1], fname, MAX_DIR_LEN,
+            &comp_names, &num_comp);
+    if (mf == MF_NONE) {
+        ST_WARNING("Failed to parse_model_filter.");
+        goto ERR;
+    }
+
+    fp = st_fopen(fname, "rb");
     if (fp == NULL) {
-        ST_WARNING("Failed to st_fopen. [%s]", argv[1]);
+        ST_WARNING("Failed to st_fopen. [%s]", fname);
         goto ERR;
     }
 
@@ -128,14 +135,7 @@ int main(int argc, const char *argv[])
     }
     safe_st_fclose(fp);
 
-    mf = parse_model_filter(argv[2], fname, MAX_DIR_LEN,
-            &comp_names, &num_comp);
-    if (mf == MF_NONE) {
-        ST_WARNING("Failed to parse_model_filter.");
-        goto ERR;
-    }
-
-    fp = st_fopen(fname, "wb");
+    fp = st_fopen(argv[2], "wb");
     if (fp == NULL) {
         ST_WARNING("Failed to st_fopen. [%s]", fname);
         goto ERR;
