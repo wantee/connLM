@@ -51,6 +51,7 @@ BINS = bin/connlm-train \
        bin/connlm-init \
        bin/connlm-output \
        bin/connlm-gen \
+       bin/connlm-draw \
 #       bin/connlm-merge maybe rename to connlm-edit
 
 #TESTS = tests/maxent-test

@@ -786,6 +786,82 @@ int connlm_save(connlm_t *connlm, FILE *fp, bool binary)
     return 0;
 }
 
+static int connlm_draw_components(connlm_t *connlm, FILE *fp)
+{
+    ST_CHECK_PARAM(connlm == NULL || fp == NULL, -1);
+
+    return 0;
+}
+
+int connlm_draw(connlm_t *connlm, FILE *fp)
+{
+    ST_CHECK_PARAM(connlm == NULL || fp == NULL, -1);
+
+    if (connlm_draw_components(connlm, fp) < 0) {
+        ST_WARNING("Failed to connlm_draw_components.");
+        return -1;
+    }
+
+    if (connlm->output != NULL) {
+        if (output_draw(connlm->output, fp,
+            connlm->vocab != NULL ? connlm->vocab->cnts : NULL,
+            connlm->vocab != NULL ? connlm->vocab->alphabet : NULL) < 0) {
+            ST_WARNING("Failed to output_draw.");
+            return -1;
+        }
+    }
+
+    return 0;
+}
+
+int connlm_filter(connlm_t *connlm, model_filter_t mf,
+        const char *comp_names, int num_comp)
+{
+    comp_id_t c;
+    int i;
+    bool found;
+
+    ST_CHECK_PARAM(connlm == NULL, -1);
+
+    if (!(mf & MF_OUTPUT)) {
+        safe_output_destroy(connlm->output);
+    }
+    if (!(mf & MF_VOCAB)) {
+        safe_vocab_destroy(connlm->vocab);
+    }
+
+    if (mf & MF_COMP_NEG) {
+        if (num_comp == -1) {
+            for (c = 0; c < connlm->num_comp; c++) {
+                safe_comp_destroy(connlm->comps[c]);
+            }
+            safe_free(connlm->comps);
+            connlm->num_comp = 0;
+        } else {
+            for (i = 0; i < num_comp; i++) {
+                found = false;
+                for (c = 0; c < connlm->num_comp; c++) {
+                    if (strcasecmp(connlm->comps[c]->name,
+                                comp_names + MAX_NAME_LEN*i)==0) {
+                        safe_comp_destroy(connlm->comps[c]);
+                        memmove(connlm->comps + c, connlm->comps + c + 1,
+                            sizeof(component_t *) * connlm->num_comp - c - 1);
+                        connlm->num_comp--;
+                        found = true;
+                        break;
+                    }
+                }
+                if (!found) {
+                    ST_WARNING("No component named [%s]", comp_names[i]);
+                    return -1;
+                }
+            }
+        }
+    }
+
+    return 0;
+}
+
 static int connlm_get_egs(connlm_egs_t *egs, int *sent_ends,
         int epoch_size, FILE *text_fp, vocab_t *vocab, int *oovs)
 {

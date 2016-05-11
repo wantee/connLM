@@ -22,19 +22,15 @@
  * SOFTWARE.
  */
 
-#include <string.h>
-
 #include <stutils/st_log.h>
 #include <stutils/st_io.h>
 
 #include <connlm/utils.h>
 #include <connlm/connlm.h>
 
-bool g_binary;
-
 st_opt_t *g_cmd_opt;
 
-int connlm_copy_parse_opt(int *argc, const char *argv[])
+int connlm_draw_parse_opt(int *argc, const char *argv[])
 {
     st_log_opt_t log_opt;
     bool b;
@@ -60,9 +56,6 @@ int connlm_copy_parse_opt(int *argc, const char *argv[])
         goto ST_OPT_ERR;
     }
 
-    ST_OPT_GET_BOOL(g_cmd_opt, "BINARY", g_binary, true,
-            "Save file as binary format");
-
     ST_OPT_GET_BOOL(g_cmd_opt, "help", b, false, "Print help");
 
     return (b ? 1 : 0);
@@ -74,8 +67,8 @@ ST_OPT_ERR:
 void show_usage(const char *module_name)
 {
     connlm_show_usage(module_name,
-            "Copy Models",
-            "<model-in-filter> <model-out>",
+            "Convert connLM File into Graphviz Format",
+            "<model-filter> <gv.dot>",
             g_cmd_opt, model_filter_help());
 }
 
@@ -90,7 +83,7 @@ int main(int argc, const char *argv[])
     model_filter_t mf;
     int ret;
 
-    ret = connlm_copy_parse_opt(&argc, argv);
+    ret = connlm_draw_parse_opt(&argc, argv);
     if (ret < 0) {
         goto ERR;
     } if (ret == 1) {
@@ -103,13 +96,13 @@ int main(int argc, const char *argv[])
                 CONNLM_GIT_COMMIT, connlm_revision());
     }
 
-    if (argc != 3) {
+    if (argc < 3) {
         show_usage(argv[0]);
         goto ERR;
     }
 
-    st_opt_show(g_cmd_opt, "connLM Copy Options");
-    ST_CLEAN("Model-in: %s, Model-out: %s", argv[1], argv[2]);
+    st_opt_show(g_cmd_opt, "connLM Draw Options");
+    ST_CLEAN("Model-in: %s, Graphviz-out: %s", argv[1], argv[2]);
 
     mf = parse_model_filter(argv[1], fname, MAX_DIR_LEN,
             &comp_names, &num_comp);
@@ -131,19 +124,19 @@ int main(int argc, const char *argv[])
     }
     safe_st_fclose(fp);
 
+    if (connlm_filter(connlm, mf, comp_names, num_comp) < 0) {
+        ST_WARNING("Failed to connlm_filter.");
+        goto ERR;
+    }
+
     fp = st_fopen(argv[2], "wb");
     if (fp == NULL) {
         ST_WARNING("Failed to st_fopen. [%s]", fname);
         goto ERR;
     }
 
-    if (connlm_filter(connlm, mf, comp_names, num_comp) < 0) {
-        ST_WARNING("Failed to connlm_filter.");
-        goto ERR;
-    }
-
-    if (connlm_save(connlm, fp, g_binary) < 0) {
-        ST_WARNING("Failed to connlm_save. [%s]", fname);
+    if (connlm_draw(connlm, fp) < 0) {
+        ST_WARNING("Failed to connlm_draw. [%s]", argv[2]);
         goto ERR;
     }
 

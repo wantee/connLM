@@ -230,6 +230,7 @@ connlm_t *connlm_new(vocab_t *vocab, output_t *output,
  * @return a connlm model.
  */
 connlm_t* connlm_load(FILE *fp);
+
 /**
  * Save a connlm model.
  * @ingroup g_connlm
@@ -241,6 +242,15 @@ connlm_t* connlm_load(FILE *fp);
 int connlm_save(connlm_t *connlm, FILE *fp, bool binary);
 
 /**
+ * Convert a connlm model into graphviz format.
+ * @ingroup g_connlm
+ * @param[in] connlm connlm model.
+ * @param[in] fp file stream to be printed out.
+ * @return non-zero value if any error.
+ */
+int connlm_draw(connlm_t *connlm, FILE *fp);
+
+/**
  * Print info of a connlm model file stream.
  * @ingroup g_connlm
  * @param[in] model_fp file stream read from.
@@ -250,12 +260,16 @@ int connlm_save(connlm_t *connlm, FILE *fp, bool binary);
 int connlm_print_info(FILE *model_fp, FILE *fo);
 
 /**
- * Get the size for HS tree input.
+ * Filter a connlm model according to filter.
  * @ingroup g_connlm
  * @param[in] connlm connlm model.
- * @return the size, zero or negtive value if any error.
+ * @param[in] mf model filter.
+ * @param[in] comp_names component names for filter.
+ * @param[in] num_comp number of component names for filter.
+ * @return non-zero value if any error.
  */
-int connlm_get_hs_size(connlm_t *connlm);
+int connlm_filter(connlm_t *connlm, model_filter_t mf,
+        const char *comp_names, int num_comp);
 
 /**
  * Feed-forward one word for a thread of connlm model.
