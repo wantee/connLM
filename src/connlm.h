@@ -36,13 +36,10 @@ extern "C" {
 #include <stutils/st_semaphore.h>
 
 #include <connlm/config.h>
+#include "utils.h"
 #include "vocab.h"
 #include "output.h"
 #include "param.h"
-#include "rnn.h"
-#include "maxent.h"
-#include "lbl.h"
-#include "ffnn.h"
 
 #include "component.h"
 

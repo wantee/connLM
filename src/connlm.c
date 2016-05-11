@@ -33,7 +33,6 @@
 #include <stutils/st_opt.h>
 #include <stutils/st_io.h>
 
-#include "utils.h"
 #include "connlm.h"
 
 #define NUM_WORD_PER_SENT 128

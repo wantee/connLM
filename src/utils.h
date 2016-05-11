@@ -61,8 +61,8 @@ typedef enum _model_filter_t_ {
     MF_NONE       = 0x0000,
     MF_VOCAB      = 0x0001,
     MF_OUTPUT     = 0x0002,
+    MF_ALL        = 0x0003,
     MF_COMP_NEG   = 0x0004,
-    MF_ALL        = 0x0007,
     MF_ERR        = 0xFFFF,
 } model_filter_t;
 

@@ -303,16 +303,17 @@ model_filter_t parse_model_filter(const char *mdl_filter,
     *comp_names = NULL;
     *num_comp = 0;
     if (*ptr == '-') {
-        mf = MF_ALL;
-        ptr++;
+        mf = MF_ALL | MF_COMP_NEG;
         add = false;
-    } else if (*ptr == '+') {
-        mf = MF_NONE;
+
         ptr++;
-        add = true;
     } else {
         mf = MF_NONE;
         add = true;
+
+        if (*ptr == '+') {
+            ptr++;
+        }
     }
 
     while (ptr < ptr_fname) {
@@ -393,6 +394,7 @@ RET:
 
 ERR:
     safe_free(*comp_names);
+    *num_comp = 0;
     mdl_file[0] = '\0';
     return MF_ERR;
 }
