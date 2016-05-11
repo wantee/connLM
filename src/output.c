@@ -1049,6 +1049,9 @@ static int output_gen_td(output_t *output, count_t *word_cnts)
     output_node_id_t node;
     output_node_id_t cap_node;
 
+    output_node_id_t num_node;
+    int depth;
+
     ST_CHECK_PARAM(output == NULL || word_cnts == NULL, -1);
 
     cap_node = output->output_size;
@@ -1077,11 +1080,21 @@ static int output_gen_td(output_t *output, count_t *word_cnts)
 
     output->tree->root = node;
 
-    for (; node < output->tree->num_node; ++node) {
-        if (output_gen_td_split(output, node, word_cnts) < 0) {
-            ST_WARNING("Failed to output_gen_td_split.");
-            goto ERR;
+    num_node = output->tree->num_node;
+    depth = 1;
+    while (node < num_node) {
+        if (output->output_opt.max_depth > 0
+                && depth >= output->output_opt.max_depth) {
+            break;
         }
+        for (; node < num_node; ++node) {
+            if (output_gen_td_split(output, node, word_cnts) < 0) {
+                ST_WARNING("Failed to output_gen_td_split.");
+                goto ERR;
+            }
+        }
+        num_node = output->tree->num_node;
+        ++depth;
     }
 
     return 0;
