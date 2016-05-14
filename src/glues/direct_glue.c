@@ -25,23 +25,23 @@
 #include <stutils/st_log.h>
 #include <stutils/st_utils.h>
 
-#include "append_glue.h"
+#include "direct_glue.h"
 
-static int append_glue_forward(glue_t *glue)
+static int direct_glue_forward(glue_t *glue)
 {
     ST_CHECK_PARAM(glue == NULL, -1);
 
     return 0;
 }
 
-static int append_glue_backprop(glue_t *glue)
+static int direct_glue_backprop(glue_t *glue)
 {
     ST_CHECK_PARAM(glue == NULL, -1);
 
     return 0;
 }
 
-void append_glue_destroy(glue_t *glue)
+void direct_glue_destroy(glue_t *glue)
 {
     if (glue == NULL) {
         return;
@@ -52,33 +52,33 @@ void append_glue_destroy(glue_t *glue)
     glue->extra = NULL;
 }
 
-int append_glue_init(glue_t *glue)
+int direct_glue_init(glue_t *glue)
 {
     ST_CHECK_PARAM(glue == NULL, -1);
 
-    if (strcasecmp(glue->type, APPEND_GLUE_NAME) != 0) {
-        ST_WARNING("Not a append glue. [%s]", glue->type);
+    if (strcasecmp(glue->type, DIRECT_GLUE_NAME) != 0) {
+        ST_WARNING("Not a direct glue. [%s]", glue->type);
         return -1;
     }
 
-    glue->forward = append_glue_forward;
-    glue->backprop = append_glue_backprop;
+    glue->forward = direct_glue_forward;
+    glue->backprop = direct_glue_backprop;
     glue->extra = NULL;
 
     return 0;
 }
 
-int append_glue_dup(glue_t *dst, glue_t *src)
+int direct_glue_dup(glue_t *dst, glue_t *src)
 {
     ST_CHECK_PARAM(dst == NULL || src == NULL, -1);
 
-    if (strcasecmp(dst->type, APPEND_GLUE_NAME) != 0) {
-        ST_WARNING("dst is Not a append glue. [%s]", dst->type);
+    if (strcasecmp(dst->type, DIRECT_GLUE_NAME) != 0) {
+        ST_WARNING("dst is Not a direct glue. [%s]", dst->type);
         return -1;
     }
 
-    if (strcasecmp(src->type, APPEND_GLUE_NAME) != 0) {
-        ST_WARNING("src is Not a append glue. [%s]", src->type);
+    if (strcasecmp(src->type, DIRECT_GLUE_NAME) != 0) {
+        ST_WARNING("src is Not a direct glue. [%s]", src->type);
         return -1;
     }
 
@@ -89,7 +89,7 @@ int append_glue_dup(glue_t *dst, glue_t *src)
     return 0;
 }
 
-int append_glue_parse_topo(glue_t *glue, const char *line)
+int direct_glue_parse_topo(glue_t *glue, const char *line)
 {
     char *p;
 
@@ -98,7 +98,7 @@ int append_glue_parse_topo(glue_t *glue, const char *line)
     p = (char *)line;
     while(*p != '\0') {
         if (*p != ' ' || *p != '\t') {
-            ST_WARNING("append glue should be empty. [%s]", line);
+            ST_WARNING("direct glue should be empty. [%s]", line);
             return -1;
         }
     }
@@ -106,49 +106,22 @@ int append_glue_parse_topo(glue_t *glue, const char *line)
     return 0;
 }
 
-bool append_glue_check(glue_t *glue, layer_t **layers, layer_id_t n_layer)
+bool direct_glue_check(glue_t *glue, layer_t **layers, layer_id_t n_layer)
 {
-    int i;
-    int n;
-
     ST_CHECK_PARAM(glue == NULL, false);
 
-    if (strcasecmp(glue->type, APPEND_GLUE_NAME) != 0) {
-        ST_WARNING("Not a append glue. [%s]", glue->type);
+    if (strcasecmp(glue->type, DIRECT_GLUE_NAME) != 0) {
+        ST_WARNING("Not a direct glue. [%s]", glue->type);
         return false;
     }
 
-    if (!glue_check(glue)) {
-        ST_WARNING("Failed to glue_check.");
+    if (glue->num_in_layer > 0) {
+        ST_WARNING("direct glue: in_layer should not be set.");
         return false;
     }
 
-    if (glue->num_out_layer != 1) {
-        ST_WARNING("append glue: num_out_layer shoule be equal to 1.");
-        return false;
-    }
-
-    if (glue->num_in_layer < 1) {
-        ST_WARNING("append glue: num_in_layer shoule be bigger then 1.");
-        return false;
-    }
-
-    if (layers == NULL) {
-        ST_WARNING("No layers.");
-        return false;
-    }
-
-    n = 0;
-    for (i = 0; i < glue->num_in_layer; i++) {
-        n += layers[glue->in_layers[i]]->size - glue->in_offsets[i];
-    }
-    if (n != layers[glue->out_layers[0]]->size - glue->out_offsets[0]) {
-        ST_WARNING("total in_layer size([%d]) not match with "
-                "out_layer[%s]([%d/%d]).",
-                n,
-                layers[glue->out_layers[0]]->name,
-                layers[glue->out_layers[0]]->size,
-                glue->out_offsets[0]);
+    if (glue->num_out_layer > 0) {
+        ST_WARNING("direct glue: out_layer shoule not be set.");
         return false;
     }
 
