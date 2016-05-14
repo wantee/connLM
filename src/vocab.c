@@ -1,18 +1,18 @@
 /*
  * The MIT License (MIT)
- * 
+ *
  * Copyright (c) 2015 Wang Jian
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in all
  * copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -34,7 +34,7 @@
 
 #include "vocab.h"
 
-static const int VOCAB_MAGIC_NUM = 626140498 + 1;
+static const int VOCAB_MAGIC_NUM = 626140498 + 10;
 
 int vocab_load_opt(vocab_opt_t *vocab_opt, st_opt_t *opt,
         const char *sec_name)
@@ -334,14 +334,23 @@ int vocab_save_header(vocab_t *vocab, FILE *fp, bool binary)
             return -1;
         }
     } else {
-        fprintf(fp, "    \n<VOCAB>\n");
+        if (fprintf(fp, "    \n<VOCAB>\n") < 0) {
+            ST_WARNING("Failed to fprintf header.");
+            return -1;
+        }
 
         if (vocab == NULL) {
-            fprintf(fp, "Vocab size: %d\n", 0);
+            if (fprintf(fp, "Vocab size: %d\n", 0) < 0) {
+                ST_WARNING("Failed to fprintf vocab size.");
+                return -1;
+            }
             return 0;
         }
 
-        fprintf(fp, "Vocab size: %d\n", vocab->vocab_size);
+        if (fprintf(fp, "Vocab size: %d\n", vocab->vocab_size) < 0) {
+            ST_WARNING("Failed to fprintf vocab size.");
+            return -1;
+        }
     }
 
     return 0;
@@ -376,16 +385,25 @@ int vocab_save_body(vocab_t *vocab, FILE *fp, bool binary)
             return -1;
         }
     } else {
-        fprintf(fp, "<VOCAB-DATA>\n");
+        if (fprintf(fp, "<VOCAB-DATA>\n") < 0) {
+            ST_WARNING("Failed to fprintf header.");
+            return -1;
+        }
 
         if (st_alphabet_save_txt(vocab->alphabet, fp) < 0) {
             ST_WARNING("Failed to st_alphabet_save_txt.");
             return -1;
         }
 
-        fprintf(fp, "Word Counts:\n");
+        if (fprintf(fp, "Word Counts:\n") < 0) {
+            ST_WARNING("Failed to fprintf word count.");
+            return -1;
+        }
         for (i = 0; i < vocab->vocab_size; i++) {
-            fprintf(fp, "\t%d\t%lu\n", i, vocab->cnts[i]);
+            if (fprintf(fp, "\t%d\t%lu\n", i, vocab->cnts[i]) < 0) {
+                ST_WARNING("Failed to fprintf cnt[%d]", i);
+                return -1;
+            }
         }
     }
 
@@ -397,7 +415,7 @@ typedef struct _word_info_t_ {
     count_t cnt;
 } word_info_t;
 
-int word_info_comp(const void *elem1, const void *elem2, void *args) 
+int word_info_comp(const void *elem1, const void *elem2, void *args)
 {
     word_info_t *f = (word_info_t *)elem1;
     word_info_t *s = (word_info_t *)elem2;

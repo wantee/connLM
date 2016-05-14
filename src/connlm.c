@@ -345,7 +345,8 @@ int connlm_init(connlm_t *connlm, FILE *topo_fp)
 
     for (c = 0; c < connlm->num_comp - 1; c++) {
         for (d = c+1; d < connlm->num_comp; d++) {
-            if (strcmp(connlm->comps[c]->name, connlm->comps[d]->name) == 0) {
+            if (strcmp(connlm->comps[c]->name,
+                        connlm->comps[d]->name) == 0) {
                 ST_WARNING("Duplicated component name[%s]",
                         connlm->comps[c]->name);
                 goto ERR;
@@ -367,11 +368,13 @@ ERR:
     safe_free(line);
     safe_free(content);
 
-    for (c = 0; c < connlm->num_comp; c++) {
-        safe_comp_destroy(connlm->comps[c]);
+    if (connlm->comps != NULL) {
+        for (c = 0; c < connlm->num_comp; c++) {
+            safe_comp_destroy(connlm->comps[c]);
+        }
+        safe_free(connlm->comps);
+        connlm->num_comp = 0;
     }
-    safe_free(connlm->comps);
-    connlm->num_comp = 0;
 
     return -1;
 }
@@ -438,6 +441,7 @@ static int connlm_load_header(connlm_t *connlm, FILE *fp,
         bool *binary, FILE *fo_info)
 {
     char line[MAX_LINE_LEN];
+    size_t sz;
     bool b;
 
     union {
@@ -521,10 +525,12 @@ static int connlm_load_header(connlm_t *connlm, FILE *fp,
             return -1;
         }
 
-        if (st_readline(fp, "Real type: %s", line) != 1) {
+        if (st_readline(fp, "Real type: %"xSTR(MAX_LINE_LEN)"s",
+                    line) != 1) {
             ST_WARNING("Failed to read real type.");
             return -1;
         }
+        line[MAX_LINE_LEN - 1] = '\0';
 
         if (strcasecmp(line, "double") == 0) {
             real_size = sizeof(double);
@@ -579,15 +585,16 @@ static int connlm_load_header(connlm_t *connlm, FILE *fp,
     }
 
     if (connlm != NULL ) {
-        connlm->comps = (component_t **)malloc(sizeof(component_t *)
-                * (connlm->num_comp));
+        sz = sizeof(component_t *) * (connlm->num_comp);
+        connlm->comps = (component_t **)malloc(sz);
         if (connlm->comps == NULL) {
             ST_WARNING("Failed to alloc comps.");
             goto ERR;
         }
+        memset(connlm->comps, 0, sz);
     }
     for (c = 0; c < num_comp; c++) {
-        if (comp_load_header((connlm == NULL) ? NULL : &connlm->comps[c],
+        if (comp_load_header((connlm == NULL) ? NULL : connlm->comps + c,
                     version, fp, binary, fo_info) < 0) {
             ST_WARNING("Failed to comp_load_header.");
             goto ERR;
@@ -605,7 +612,10 @@ static int connlm_load_header(connlm_t *connlm, FILE *fp,
     return version;
 
 ERR:
-    safe_free(connlm->comps);
+    if (connlm != NULL) {
+        safe_free(connlm->comps);
+        connlm->num_comp = 0;
+    }
     return -1;
 }
 
@@ -630,7 +640,7 @@ static int connlm_load_body(connlm_t *connlm, int version,
 
     for (c = 0; c < connlm->num_comp; c++) {
         if (comp_load_body(connlm->comps[c], version, fp, binary) < 0) {
-            ST_WARNING("Failed to comp_load_body.");
+            ST_WARNING("Failed to comp_load_body["COMP_ID_FMT"].", c);
             return -1;
         }
     }
@@ -715,15 +725,29 @@ static int connlm_save_header(connlm_t *connlm, FILE *fp, bool binary)
             return -1;
         }
     } else {
-        fprintf(fp, "    \n<CONNLM>\n");
-        fprintf(fp, "Version: %d\n", CONNLM_FILE_VERSION);
-        fprintf(fp, "Real type: %s\n",
-                (sizeof(double) == sizeof(real_t)) ? "double" : "float");
-        fprintf(fp, "Num comp: " COMP_ID_FMT "\n", connlm->num_comp);
+        if (fprintf(fp, "    \n<CONNLM>\n") < 0) {
+            ST_WARNING("Failed to fprintf header.");
+            return -1;
+        }
+        if (fprintf(fp, "Version: %d\n", CONNLM_FILE_VERSION) < 0) {
+            ST_WARNING("Failed to fprintf version.");
+            return -1;
+        }
+        if (fprintf(fp, "Real type: %s\n",
+                (sizeof(double) == sizeof(real_t))
+                    ? "double" : "float") < 0) {
+            ST_WARNING("Failed to fprintf real type.");
+            return -1;
+        }
+        if (fprintf(fp, "Num comp: "COMP_ID_FMT"\n",
+                    connlm->num_comp) < 0) {
+            ST_WARNING("Failed to fprintf num comp.");
+            return -1;
+        }
     }
 
     if (vocab_save_header(connlm->vocab, fp, binary) < 0) {
-        ST_WARNING("Failed to vocab_saveheader.");
+        ST_WARNING("Failed to vocab_save_header.");
         return -1;
     }
 

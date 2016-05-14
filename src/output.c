@@ -37,8 +37,8 @@
 #include "utils.h"
 #include "output.h"
 
-static const int OUTPUT_MAGIC_NUM = 626140498 + 2;
-static const int OUTPUT_TREE_MAGIC_NUM = 626140498 + 3;
+static const int OUTPUT_MAGIC_NUM = 626140498 + 20;
+static const int OUTPUT_TREE_MAGIC_NUM = 626140498 + 21;
 
 static const char *method_str[] = {
     "TopDown",
@@ -340,10 +340,12 @@ int output_tree_load_header(output_tree_t **tree, int version,
             return -1;
         }
 
-        if (st_readline(fp, "Has leaf map: %s", sym) != 1) {
+        if (st_readline(fp, "Has leaf map: %"xSTR(MAX_LINE_LEN)"s",
+                    sym) != 1) {
             ST_WARNING("Failed to parse has_leafmap.");
             return -1;
         }
+        sym[MAX_LINE_LEN - 1] = '\0';
         has_leafmap = str2bool(sym);
     }
 
@@ -563,17 +565,38 @@ int output_tree_save_header(output_tree_t *tree, FILE *fp, bool binary)
             return -1;
         }
     } else {
-        fprintf(fp, "    \n<OUTPUT-TREE>\n");
+        if (fprintf(fp, "    \n<OUTPUT-TREE>\n") < 0) {
+            ST_WARNING("Failed to fprintf header.");
+            return -1;
+        }
 
         if (tree == NULL || tree->num_node <= 0) {
-            fprintf(fp, "Num nodes: 0\n");
+            if (fprintf(fp, "Num nodes: 0\n") < 0) {
+                ST_WARNING("Failed to fprintf num nodes.");
+                return -1;
+            }
             return 0;
         }
 
-        fprintf(fp, "Num nodes: " OUTPUT_NODE_FMT "\n", tree->num_node);
-        fprintf(fp, "Root: " OUTPUT_NODE_FMT "\n", tree->root);
-        fprintf(fp, "Num leaf: " OUTPUT_NODE_FMT "\n", tree->num_leaf);
-        fprintf(fp, "Has leaf map: %s\n", bool2str(has_leafmap));
+        if (fprintf(fp, "Num nodes: " OUTPUT_NODE_FMT "\n",
+                    tree->num_node) < 0) {
+            ST_WARNING("Failed to fprintf num nodes.");
+            return -1;
+        }
+        if (fprintf(fp, "Root: " OUTPUT_NODE_FMT "\n", tree->root) < 0) {
+            ST_WARNING("Failed to fprintf root.");
+            return -1;
+        }
+        if (fprintf(fp, "Num leaf: " OUTPUT_NODE_FMT "\n",
+                    tree->num_leaf) < 0) {
+            ST_WARNING("Failed to fprintf num leaf.");
+            return -1;
+        }
+        if (fprintf(fp, "Has leaf map: %s\n",
+                    bool2str(has_leafmap)) < 0) {
+            ST_WARNING("Failed to fprintf has leaf map.");
+            return -1;
+        }
     }
 
     return 0;
@@ -619,27 +642,51 @@ int output_tree_save_body(output_tree_t *tree, FILE *fp, bool binary)
             }
         }
     } else {
-        fprintf(fp, "<OUTPUT-TREE-DATA>\n");
+        if (fprintf(fp, "<OUTPUT-TREE-DATA>\n") < 0) {
+            ST_WARNING("Failed to fprintf header.");
+            return -1;
+        }
         if (tree->num_node > 0) {
-            fprintf(fp, "Nodes:\n");
+            if (fprintf(fp, "Nodes:\n") < 0) {
+                ST_WARNING("Failed to fprintf nodes.");
+                return -1;
+            }
             for (i = 0; i < tree->num_node; i++) {
-                fprintf(fp, "\t"OUTPUT_NODE_FMT"\t"
-                            OUTPUT_NODE_FMT"\t"OUTPUT_NODE_FMT"\n",
-                            i, s_children(tree, i), e_children(tree, i));
+                if (fprintf(fp, "\t"OUTPUT_NODE_FMT"\t"
+                        OUTPUT_NODE_FMT"\t"OUTPUT_NODE_FMT"\n", i,
+                        s_children(tree, i), e_children(tree, i)) < 0) {
+                    ST_WARNING("Failed to fprintf node["
+                            OUTPUT_NODE_FMT"]", i);
+                    return -1;
+                }
             }
         }
         if (tree->word2leaf != NULL) {
-            fprintf(fp, "Word2leaf:\n");
+            if (fprintf(fp, "Word2leaf:\n") < 0) {
+                ST_WARNING("Failed to fprintf word2leaf.");
+                return -1;
+            }
             for (i = 0; i < tree->num_leaf; i++) {
-                fprintf(fp, "\t"OUTPUT_NODE_FMT"\t"OUTPUT_NODE_FMT"\n",
-                            i, tree->word2leaf[i]);
+                if (fprintf(fp, "\t"OUTPUT_NODE_FMT"\t"OUTPUT_NODE_FMT"\n",
+                            i, tree->word2leaf[i]) < 0) {
+                    ST_WARNING("Failed to fprintf word2leaf["
+                            OUTPUT_NODE_FMT"]", i);
+                    return -1;
+                }
             }
         }
         if (tree->leaf2word != NULL) {
-            fprintf(fp, "Leaf2word:\n");
+            if (fprintf(fp, "Leaf2word:\n") < 0) {
+                ST_WARNING("Failed to fprintf leaf2word.");
+                return -1;
+            }
             for (i = 0; i < tree->num_node; i++) {
-                fprintf(fp, "\t"OUTPUT_NODE_FMT"\t"OUTPUT_NODE_FMT"\n",
-                            i, tree->leaf2word[i]);
+                if (fprintf(fp, "\t"OUTPUT_NODE_FMT"\t"OUTPUT_NODE_FMT"\n",
+                            i, tree->leaf2word[i]) < 0) {
+                    ST_WARNING("Failed to fprintf leaf2word["
+                            OUTPUT_NODE_FMT"]", i);
+                    return -1;
+                }
             }
         }
     }
@@ -2103,10 +2150,11 @@ int output_load_header(output_t **output, int version,
             return -1;
         }
 
-        if (st_readline(fp, "Method: %s", sym) != 1) {
-            ST_WARNING("Failed to parse hs.");
+        if (st_readline(fp, "Method: %"xSTR(MAX_LINE_LEN)"s", sym) != 1) {
+            ST_WARNING("Failed to parse method.");
             return -1;
         }
+        sym[MAX_LINE_LEN - 1] = '\0';
         m = (int)str2method(sym);
 
         if (st_readline(fp, "Max Depth: %d", &max_depth) != 1) {
@@ -2256,18 +2304,42 @@ int output_save_header(output_t *output, FILE *fp, bool binary)
             return -1;
         }
     } else {
-        fprintf(fp, "    \n<OUTPUT>\n");
+        if (fprintf(fp, "    \n<OUTPUT>\n") < 0) {
+            ST_WARNING("Failed to fprintf header.");
+            return -1;
+        }
 
         if (output == NULL) {
-            fprintf(fp, "Output size: 0\n");
+            if (fprintf(fp, "Output size: 0\n") < 0) {
+                ST_WARNING("Failed to fprintf output size.");
+                return -1;
+            }
             return 0;
         }
 
-        fprintf(fp, "Output size: %d\n", output->output_size);
-        fprintf(fp, "In size: %d\n", output->in_size);
-        fprintf(fp, "Method: %s\n", method2str(output->output_opt.method));
-        fprintf(fp, "Max Depth: %d\n", output->output_opt.max_depth);
-        fprintf(fp, "Max Branch: %d\n", output->output_opt.max_branch);
+        if (fprintf(fp, "Output size: %d\n", output->output_size) < 0) {
+            ST_WARNING("Failed to fprintf output size.");
+            return -1;
+        }
+        if (fprintf(fp, "In size: %d\n", output->in_size) < 0) {
+            ST_WARNING("Failed to fprintf in size.");
+            return -1;
+        }
+        if (fprintf(fp, "Method: %s\n",
+                    method2str(output->output_opt.method)) < 0) {
+            ST_WARNING("Failed to fprintf method.");
+            return -1;
+        }
+        if (fprintf(fp, "Max Depth: %d\n",
+                    output->output_opt.max_depth) < 0) {
+            ST_WARNING("Failed to fprintf max depth.");
+            return -1;
+        }
+        if (fprintf(fp, "Max Branch: %d\n",
+                    output->output_opt.max_branch) < 0) {
+            ST_WARNING("Failed to fprintf max branch.");
+            return -1;
+        }
     }
 
     if (output_tree_save_header(output->tree, fp, binary) < 0) {
@@ -2295,7 +2367,10 @@ int output_save_body(output_t *output, FILE *fp, bool binary)
             return -1;
         }
     } else {
-        fprintf(fp, "<OUTPUT-DATA>\n");
+        if (fprintf(fp, "<OUTPUT-DATA>\n") < 0) {
+            ST_WARNING("Failed to fprintf header.");
+            return -1;
+        }
     }
 
     if (output_tree_save_body(output->tree, fp, binary) < 0) {

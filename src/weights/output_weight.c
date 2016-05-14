@@ -29,6 +29,8 @@
 
 #include "output_weight.h"
 
+static const int OUTPUT_WT_MAGIC_NUM = 626140498 + 80;
+
 void output_wt_destroy(output_wt_t *output_wt)
 {
     if (output_wt == NULL) {
@@ -66,21 +68,143 @@ ERR:
 int output_wt_load_header(output_wt_t **output_wt, int version,
         FILE *fp, bool *binary, FILE *fo_info)
 {
+    union {
+        char str[4];
+        int magic_num;
+    } flag;
+
+    ST_CHECK_PARAM((output_wt == NULL && fo_info == NULL) || fp == NULL
+            || binary == NULL, -1);
+
+    if (version < 3) {
+        ST_WARNING("Too old version of connlm file");
+        return -1;
+    }
+
+    if (fread(&flag.magic_num, sizeof(int), 1, fp) != 1) {
+        ST_WARNING("Failed to load magic num.");
+        return -1;
+    }
+
+    if (strncmp(flag.str, "    ", 4) == 0) {
+        *binary = false;
+    } else if (OUTPUT_WT_MAGIC_NUM != flag.magic_num) {
+        ST_WARNING("magic num wrong.");
+        return -2;
+    } else {
+        *binary = true;
+    }
+
+    if (output_wt != NULL) {
+        *output_wt = NULL;
+    }
+
+    if (*binary) {
+    } else {
+        if (st_readline(fp, "") != 0) {
+            ST_WARNING("tag error.");
+            goto ERR;
+        }
+        if (st_readline(fp, "<OUTPUT_WT>") != 0) {
+            ST_WARNING("tag error.");
+            goto ERR;
+        }
+    }
+
+    if (output_wt != NULL) {
+        *output_wt = (output_wt_t *)malloc(sizeof(output_wt_t));
+        if (*output_wt == NULL) {
+            ST_WARNING("Failed to malloc output_wt_t");
+            goto ERR;
+        }
+        memset(*output_wt, 0, sizeof(output_wt_t));
+    }
+
+    if (fo_info != NULL) {
+        fprintf(fo_info, "\n<OUTPUT_WT>\n");
+    }
+
     return 0;
+
+ERR:
+    if (output_wt != NULL) {
+        safe_output_wt_destroy(*output_wt);
+    }
+    return -1;
 }
 
 int output_wt_load_body(output_wt_t *output_wt, int version, FILE *fp, bool binary)
 {
+    int n;
+
+    ST_CHECK_PARAM(output_wt == NULL || fp == NULL, -1);
+
+    if (version < 3) {
+        ST_WARNING("Too old version of connlm file");
+        return -1;
+    }
+
+    if (binary) {
+        if (fread(&n, sizeof(int), 1, fp) != 1) {
+            ST_WARNING("Failed to read magic num.");
+            goto ERR;
+        }
+
+        if (n != -OUTPUT_WT_MAGIC_NUM) {
+            ST_WARNING("Magic num error.");
+            goto ERR;
+        }
+    } else {
+        if (st_readline(fp, "<OUTPUT_WT-DATA>") != 0) {
+            ST_WARNING("body flag error.");
+            goto ERR;
+        }
+    }
+
     return 0;
+ERR:
+
+    return -1;
 }
 
 int output_wt_save_header(output_wt_t *output_wt, FILE *fp, bool binary)
 {
+    ST_CHECK_PARAM(fp == NULL, -1);
+
+    if (binary) {
+        if (fwrite(&OUTPUT_WT_MAGIC_NUM, sizeof(int), 1, fp) != 1) {
+            ST_WARNING("Failed to write magic num.");
+            return -1;
+        }
+    } else {
+        if (fprintf(fp, "    \n<OUTPUT_WT>\n") < 0) {
+            ST_WARNING("Failed to fprintf header.");
+            return -1;
+        }
+    }
+
     return 0;
 }
 
 int output_wt_save_body(output_wt_t *output_wt, FILE *fp, bool binary)
 {
+    int n;
+
+    ST_CHECK_PARAM(fp == NULL, -1);
+
+    if (binary) {
+        n = -OUTPUT_WT_MAGIC_NUM;
+        if (fwrite(&n, sizeof(int), 1, fp) != 1) {
+            ST_WARNING("Failed to write magic num.");
+            return -1;
+        }
+    } else {
+        if (fprintf(fp, "<OUTPUT_WT-DATA>\n") < 0) {
+            ST_WARNING("Failed to fprintf header.");
+            return -1;
+        }
+    }
+
     return 0;
 }
 

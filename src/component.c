@@ -29,8 +29,9 @@
 
 #include "param.h"
 #include "component.h"
+#include "glues/direct_glue.h"
 
-static const int COMP_MAGIC_NUM = 626140498 + 3;
+static const int COMP_MAGIC_NUM = 626140498 + 30;
 
 void comp_destroy(component_t *comp)
 {
@@ -333,11 +334,21 @@ int comp_construct_graph(component_t *comp)
         }
     }
 
-    comp->graph = graph_construct(comp->layers, comp->num_layer,
-            comp->glues, comp->num_glue);
-    if (comp->graph == NULL) {
-        ST_WARNING("Failed to graph_construct.");
-        goto ERR;
+    if (comp->num_layer > 0) {
+        comp->graph = graph_construct(comp->layers, comp->num_layer,
+                comp->glues, comp->num_glue);
+        if (comp->graph == NULL) {
+            ST_WARNING("Failed to graph_construct.");
+            goto ERR;
+        }
+    } else {
+        for (g = 0; g < comp->num_glue; g++) {
+            if (strcmp(comp->glues[g]->type, DIRECT_GLUE_NAME) != 0) {
+                ST_WARNING("Contain non-direct glue without layer[%s]",
+                        comp->glues[g]->name);
+                goto ERR;
+            }
+        }
     }
 
     return 0;
@@ -396,6 +407,7 @@ int comp_load_header(component_t **comp, int version,
         char str[4];
         int magic_num;
     } flag;
+    size_t sz;
 
     char name[MAX_NAME_LEN];
     layer_id_t num_layer;
@@ -457,10 +469,11 @@ int comp_load_header(component_t **comp, int version,
             goto ERR;
         }
 
-        if (st_readline(fp, "Name: %s", name) != 1) {
+        if (st_readline(fp, "Name: %"xSTR(MAX_NAME_LEN)"s", name) != 1) {
             ST_WARNING("Failed to parse name.");
             goto ERR;
         }
+        name[MAX_NAME_LEN - 1] = '\0';
 
         if (st_readline(fp, "Num layer: " LAYER_ID_FMT, &num_layer) != 1) {
             ST_WARNING("Failed to parse num_layer.");
@@ -483,7 +496,23 @@ int comp_load_header(component_t **comp, int version,
 
         strncpy((*comp)->name, name, MAX_NAME_LEN);
         (*comp)->name[MAX_NAME_LEN - 1] = '\0';
+
+        sz = sizeof(layer_t *)*num_layer;
+        (*comp)->layers = (layer_t **)malloc(sz);
+        if ((*comp)->layers == NULL) {
+            ST_WARNING("Failed to alloc layers.");
+            goto ERR;
+        }
+        memset((*comp)->layers, 0, sz);
         (*comp)->num_layer = num_layer;
+
+        sz = sizeof(glue_t *)*num_glue;
+        (*comp)->glues = (glue_t **)malloc(sz);
+        if ((*comp)->glues == NULL) {
+            ST_WARNING("Failed to alloc glues.");
+            goto ERR;
+        }
+        memset((*comp)->glues, 0, sz);
         (*comp)->num_glue = num_glue;
     }
 
@@ -514,15 +543,7 @@ int comp_load_header(component_t **comp, int version,
         goto ERR;
     }
 
-    if (comp != NULL ) {
-        (*comp)->layers = (layer_t **)malloc(sizeof(layer_t *)
-                * ((*comp)->num_layer));
-        if ((*comp)->layers == NULL) {
-            ST_WARNING("Failed to alloc layers.");
-            goto ERR;
-        }
-    }
-    for (l = 0; l < (*comp)->num_layer; l++) {
+    for (l = 0; l < num_layer; l++) {
         if (layer_load_header(comp != NULL ? &((*comp)->layers[l]) : NULL,
                     version, fp, &b, fo_info) < 0) {
             ST_WARNING("Failed to layer_load_header[" LAYER_ID_FMT ".", l);
@@ -534,18 +555,10 @@ int comp_load_header(component_t **comp, int version,
         }
     }
 
-    if (comp != NULL ) {
-        (*comp)->glues = (glue_t **)malloc(sizeof(glue_t *)
-                * ((*comp)->num_glue));
-        if ((*comp)->glues == NULL) {
-            ST_WARNING("Failed to alloc glues.");
-            goto ERR;
-        }
-    }
-    for (g = 0; g < (*comp)->num_glue; g++) {
+    for (g = 0; g < num_glue; g++) {
         if (glue_load_header(comp != NULL ? &((*comp)->glues[g]) : NULL,
                     version, fp, &b, fo_info) < 0) {
-            ST_WARNING("Failed to glue_load_header[" GLUE_ID_FMT ".", g);
+            ST_WARNING("Failed to glue_load_header["GLUE_ID_FMT"].", g);
             goto ERR;
         }
         if (*binary != b) {
@@ -672,7 +685,8 @@ int comp_save_header(component_t *comp, FILE *fp, bool binary)
             return -1;
         }
 
-        if (fwrite(comp->name, sizeof(char), MAX_NAME_LEN, fp) != MAX_NAME_LEN) {
+        if (fwrite(comp->name, sizeof(char), MAX_NAME_LEN, fp)
+                != MAX_NAME_LEN) {
             ST_WARNING("Failed to write name.");
             return -1;
         }
@@ -687,13 +701,26 @@ int comp_save_header(component_t *comp, FILE *fp, bool binary)
             return -1;
         }
     } else {
-        fprintf(fp, "    \n<COMPONENT>\n");
+        if (fprintf(fp, "    \n<COMPONENT>\n") < 0) {
+            ST_WARNING("Failed to fprintf header.");
+            return -1;
+        }
 
-        fprintf(fp, "Name: %s\n", comp->name);
-        fprintf(fp, "Num layer: " LAYER_ID_FMT, comp->num_layer);
-        fprintf(fp, "Num glue: " GLUE_ID_FMT, comp->num_glue);
+        if (fprintf(fp, "Name: %s\n", comp->name) < 0) {
+            ST_WARNING("Failed to fprintf name.");
+            return -1;
+        }
+        if (fprintf(fp, "Num layer: " LAYER_ID_FMT "\n",
+                    comp->num_layer) < 0) {
+            ST_WARNING("Failed to fprintf num layer.");
+            return -1;
+        }
+        if (fprintf(fp, "Num glue: " GLUE_ID_FMT "\n",
+                    comp->num_glue) < 0) {
+            ST_WARNING("Failed to fprintf num glue.");
+            return -1;
+        }
     }
-
 
     if (input_save_header(comp->input, fp, binary) < 0) {
         ST_WARNING("Failed to input_save_header.");
@@ -746,7 +773,10 @@ int comp_save_body(component_t *comp, FILE *fp, bool binary)
             return -1;
         }
     } else {
-        fprintf(fp, "<COMPONENT-DATA>\n");
+        if (fprintf(fp, "<COMPONENT-DATA>\n") < 0) {
+            ST_WARNING("Failed to fprintf header.");
+            return -1;
+        }
     }
 
     if (input_save_body(comp->input, fp, binary) < 0) {

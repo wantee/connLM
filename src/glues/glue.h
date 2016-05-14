@@ -39,6 +39,7 @@ extern "C" {
 typedef int glue_id_t;
 #define GLUE_ID_FMT "%d"
 typedef int glue_offset_t;
+#define GLUE_OFFSET_FMT "%d"
 
 /**
  * NNet glue.
@@ -98,6 +99,14 @@ glue_t* glue_dup(glue_t *g);
  * @return a new glue or NULL if error.
  */
 glue_t* glue_parse_topo(const char *line, layer_t **layers, int n_layer);
+
+/**
+ * Check a glue after loading from topo line.
+ * @ingroup g_glue
+ * @param[in] glue the loaded glue.
+ * @return true if OK, else false
+ */
+bool glue_check(glue_t *glue);
 
 /**
  * Load glue header and initialise a new glue.

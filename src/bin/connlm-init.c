@@ -29,7 +29,6 @@
 #include <connlm/connlm.h>
 
 bool g_binary;
-char g_topo_file[MAX_DIR_LEN];
 
 st_opt_t *g_cmd_opt;
 
@@ -80,7 +79,7 @@ void show_usage(const char *module_name)
 {
     connlm_show_usage(module_name,
             "Initialise Model",
-            "<model-in> <model-out>",
+            "<model-in> <topo-file> <model-out>",
             g_cmd_opt, NULL);
 }
 
@@ -106,14 +105,15 @@ int main(int argc, const char *argv[])
                 CONNLM_GIT_COMMIT, connlm_revision());
     }
 
-    if (argc != 3) {
+    if (argc != 4) {
         show_usage(argv[0]);
         goto ERR;
     }
 
     ST_CLEAN("Command-line: %s", args);
     st_opt_show(g_cmd_opt, "connLM Init Options");
-    ST_CLEAN("Model-in: %s, Model-out: %s", argv[1], argv[2]);
+    ST_CLEAN("Model-in: %s, Topo: %s, Model-out: %s",
+            argv[1], argv[2], argv[3]);
 
     fp = st_fopen(argv[1], "rb");
     if (fp == NULL) {
@@ -129,9 +129,9 @@ int main(int argc, const char *argv[])
     safe_st_fclose(fp);
 
     ST_NOTICE("Initialising Model...");
-    fp = st_fopen(g_topo_file, "rb");
+    fp = st_fopen(argv[2], "rb");
     if (fp == NULL) {
-        ST_WARNING("Failed to st_fopen topo file. [%s]", g_topo_file);
+        ST_WARNING("Failed to st_fopen topo file. [%s]", argv[2]);
         goto ERR;
     }
     if (connlm_init(connlm, fp) < 0) {
@@ -140,14 +140,14 @@ int main(int argc, const char *argv[])
     }
     safe_st_fclose(fp);
 
-    fp = st_fopen(argv[2], "wb");
+    fp = st_fopen(argv[3], "wb");
     if (fp == NULL) {
-        ST_WARNING("Failed to st_fopen. [%s]", argv[2]);
+        ST_WARNING("Failed to st_fopen. [%s]", argv[3]);
         goto ERR;
     }
 
     if (connlm_save(connlm, fp, g_binary) < 0) {
-        ST_WARNING("Failed to connlm_save. [%s]", argv[2]);
+        ST_WARNING("Failed to connlm_save. [%s]", argv[3]);
         goto ERR;
     }
 

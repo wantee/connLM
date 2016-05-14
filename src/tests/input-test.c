@@ -31,7 +31,7 @@
 #include "input.h"
 
 #define N_CTX 16
-typedef struct _ret_t_ {
+typedef struct _ref_t_ {
     int context[N_CTX];
     int n_ctx;
 } ref_t;
