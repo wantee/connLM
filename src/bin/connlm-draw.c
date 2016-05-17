@@ -131,7 +131,7 @@ int main(int argc, const char *argv[])
 
     fp = st_fopen(argv[2], "wb");
     if (fp == NULL) {
-        ST_WARNING("Failed to st_fopen. [%s]", fname);
+        ST_WARNING("Failed to st_fopen. [%s]", argv[2]);
         goto ERR;
     }
 

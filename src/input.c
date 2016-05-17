@@ -359,3 +359,20 @@ int input_save_body(input_t *input, FILE *fp, bool binary)
 
     return 0;
 }
+
+char* input_draw_label(input_t *input, char *label, size_t label_len)
+{
+    char buf[MAX_LINE_LEN];
+    int i;
+
+    ST_CHECK_PARAM(input == NULL || label == NULL, NULL);
+
+    snprintf(buf, MAX_LINE_LEN, "ctx={");
+    for (i = 0; i < input->num_ctx - 1; i++) {
+        snprintf(label, label_len, "%s%d,", buf, input->context[i]);
+        snprintf(buf, MAX_LINE_LEN, "%s", label);
+    }
+    snprintf(label, label_len, "%s%d}", buf, input->context[i]);
+
+    return label;
+}

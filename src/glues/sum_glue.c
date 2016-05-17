@@ -247,3 +247,16 @@ bool sum_glue_check(glue_t *glue, layer_t **layers, layer_id_t n_layer)
 
     return true;
 }
+
+char* sum_glue_draw_label(glue_t *glue, char *label, size_t label_len)
+{
+    sum_glue_data_t *data;
+
+    ST_CHECK_PARAM(glue == NULL || label == NULL, NULL);
+
+    data = (sum_glue_data_t *)glue->extra;
+
+    snprintf(label, label_len, ",avg=%s", bool2str(data->avg));
+
+    return label;
+}

@@ -343,7 +343,7 @@ int comp_construct_graph(component_t *comp)
         }
     } else {
         for (g = 0; g < comp->num_glue; g++) {
-            if (strcmp(comp->glues[g]->type, DIRECT_GLUE_NAME) != 0) {
+            if (strcasecmp(comp->glues[g]->type, DIRECT_GLUE_NAME) != 0) {
                 ST_WARNING("Contain non-direct glue without layer[%s]",
                         comp->glues[g]->name);
                 goto ERR;
@@ -825,5 +825,57 @@ int comp_forward(component_t *comp, int tid)
 
 int comp_backprop(component_t *comp, int word, int tid)
 {
+    return 0;
+}
+
+static inline char* layername2nodename(component_t *comp, layer_id_t l,
+        char *node, size_t node_len)
+{
+    snprintf(node, node_len, "layer_%s_%s", comp->name,
+            comp->layers[l]->name);
+    return node;
+}
+
+int comp_draw(component_t *comp, FILE *fp, const char *output_node)
+{
+    char label[MAX_LINE_LEN];
+    char nodename[MAX_NAME_LEN];
+    layer_id_t l, ll;
+    glue_id_t g;
+
+    ST_CHECK_PARAM(comp == NULL || fp == NULL, -1);
+
+    fprintf(fp, "    input_%s [label=\"%s/%s\"];\n", comp->name, comp->name,
+            input_draw_label(comp->input, label, MAX_LINE_LEN));
+    for (l = 0; l < comp->num_layer; l++) {
+        fprintf(fp, "    %s [label=\"%s\"];\n",
+                layername2nodename(comp, l, nodename, MAX_NAME_LEN),
+                layer_draw_label(comp->layers[l], label, MAX_NAME_LEN));
+    }
+
+    for (g = 0; g < comp->num_glue; g++) {
+        if (strcasecmp(comp->glues[g]->type, DIRECT_GLUE_NAME) == 0) {
+            fprintf(fp, "    input_%s -> output [label=\"%s\"];\n",
+                    comp->name,
+                    glue_draw_label(comp->glues[g], 0, 0,
+                        label, MAX_NAME_LEN));
+            continue;
+        }
+
+        for (l = 0; l < comp->glues[g]->num_in_layer; l++) {
+            for (ll = 0; ll < comp->glues[g]->num_out_layer; ll++) {
+                fprintf(fp, "    %s -> %s [label=\"%s\"];\n",
+                        layername2nodename(comp,
+                            comp->glues[g]->in_layers[l],
+                            nodename, MAX_NAME_LEN),
+                        layername2nodename(comp,
+                            comp->glues[g]->out_layers[ll],
+                            nodename, MAX_NAME_LEN),
+                        glue_draw_label(comp->glues[g], l, ll,
+                            label, MAX_NAME_LEN));
+            }
+        }
+    }
+
     return 0;
 }

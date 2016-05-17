@@ -39,11 +39,14 @@ typedef struct _layer_register_t_ {
     void (*destroy)(layer_t *layer);
     int (*dup)(layer_t *dst, layer_t *src);
     int (*parse_topo)(layer_t *layer, const char *line);
+    char* (*draw_label)(layer_t *layer, char *label, size_t label_len);
 } layer_reg_t;
 
 static layer_reg_t LAYER_REG[] = {
-    {SIGMOID_NAME, sigmoid_init, sigmoid_destroy, sigmoid_dup, sigmoid_parse_topo},
-    {TANH_NAME, tanh_init, tanh_destroy, tanh_dup, tanh_parse_topo},
+    {SIGMOID_NAME, sigmoid_init, sigmoid_destroy, sigmoid_dup,
+        sigmoid_parse_topo, sigmoid_draw_label},
+    {TANH_NAME, tanh_init, tanh_destroy, tanh_dup,
+        tanh_parse_topo, tanh_draw_label},
 };
 
 static layer_reg_t* layer_get_reg(const char *type)
@@ -433,4 +436,19 @@ int layer_save_body(layer_t *layer, FILE *fp, bool binary)
     }
 
     return 0;
+}
+
+char* layer_draw_label(layer_t *layer, char *label, size_t label_len)
+{
+    char buf[MAX_LINE_LEN];
+    layer_reg_t *reg;
+
+    ST_CHECK_PARAM(layer == NULL || label == NULL, NULL);
+
+    reg = layer_get_reg(layer->type);
+    snprintf(label, label_len, "%s/type=%s,size=%d%s", layer->name,
+            layer->type, layer->size,
+            reg->draw_label(layer, buf, MAX_LINE_LEN));
+
+    return label;
 }

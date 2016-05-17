@@ -40,7 +40,6 @@ extern "C" {
 #define DIRECT_GLUE_NAME "direct"
 
 typedef struct _direct_glue_data_t_ {
-    bool avg;
 } direct_glue_data_t;
 
 /**
@@ -85,6 +84,16 @@ int direct_glue_parse_topo(glue_t *glue, const char *line);
  * @return non-zero if any error
  */
 bool direct_glue_check(glue_t *glue, layer_t **layers, layer_id_t n_layer);
+
+/**
+ * Provide label string for drawing direct glue.
+ * @ingroup g_glue_direct
+ * @param[in] glue glue.
+ * @param[out] label buffer to write string.
+ * @param[in] labe_len length of label.
+ * @return label on success, NULL if any error.
+ */
+char* direct_glue_draw_label(glue_t *glue, char *label, size_t label_len);
 
 #ifdef __cplusplus
 }

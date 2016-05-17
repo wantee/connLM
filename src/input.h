@@ -133,6 +133,16 @@ int input_save_header(input_t *input, FILE *fp, bool binary);
  */
 int input_save_body(input_t *input, FILE *fp, bool binary);
 
+/**
+ * Provide label string for drawing input.
+ * @ingroup g_input
+ * @param[in] input input layer.
+ * @param[out] label buffer to write string.
+ * @param[in] labe_len length of label.
+ * @return label on success, NULL if any error.
+ */
+char* input_draw_label(input_t *input, char *label, size_t label_len);
+
 #ifdef __cplusplus
 }
 #endif

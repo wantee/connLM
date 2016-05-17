@@ -42,17 +42,22 @@ typedef struct _glue_register_t_ {
     int (*dup)(glue_t *dst, glue_t *src);
     int (*parse_topo)(glue_t *glue, const char *line);
     bool (*check)(glue_t *glue, layer_t **layers, layer_id_t n_layer);
+    char* (*draw_label)(glue_t *glue, char *label, size_t label_len);
 } glue_reg_t;
 
 static glue_reg_t GLUE_REG[] = {
     {SUM_GLUE_NAME, sum_glue_init, sum_glue_destroy,
-        sum_glue_dup, sum_glue_parse_topo, sum_glue_check},
+        sum_glue_dup, sum_glue_parse_topo, sum_glue_check,
+        sum_glue_draw_label},
     {APPEND_GLUE_NAME, append_glue_init, append_glue_destroy,
-        append_glue_dup, append_glue_parse_topo, append_glue_check},
+        append_glue_dup, append_glue_parse_topo, append_glue_check,
+        append_glue_draw_label},
     {CLONE_GLUE_NAME, clone_glue_init, clone_glue_destroy,
-        clone_glue_dup, clone_glue_parse_topo, clone_glue_check},
+        clone_glue_dup, clone_glue_parse_topo, clone_glue_check,
+        clone_glue_draw_label},
     {DIRECT_GLUE_NAME, direct_glue_init, direct_glue_destroy,
-        direct_glue_dup, direct_glue_parse_topo, direct_glue_check},
+        direct_glue_dup, direct_glue_parse_topo, direct_glue_check,
+        direct_glue_draw_label},
 };
 
 static glue_reg_t* glue_get_reg(const char *type)
@@ -1055,4 +1060,30 @@ int glue_save_body(glue_t *glue, FILE *fp, bool binary)
     }
 
     return 0;
+}
+
+char* glue_draw_label(glue_t *glue, layer_id_t in_layer,
+        layer_id_t out_layer, char *label, size_t label_len)
+{
+    char buf[MAX_LINE_LEN];
+    glue_reg_t *reg;
+
+    ST_CHECK_PARAM(glue == NULL || label == NULL, NULL);
+
+    reg = glue_get_reg(glue->type);
+    snprintf(label, label_len, "%s/type=%s", glue->name, glue->type);
+    if (glue->in_offsets != NULL && glue->in_offsets[in_layer] != 0) {
+        snprintf(buf, MAX_LINE_LEN, ",off="GLUE_OFFSET_FMT,
+                glue->in_offsets[in_layer]);
+        strncat(label, buf, label_len - strlen(label) - 1);
+    }
+    if (glue->in_offsets != NULL && glue->in_scales[in_layer] != 1.0) {
+        snprintf(buf, MAX_LINE_LEN, ",scale="REAL_FMT,
+                glue->in_scales[in_layer]);
+        strncat(label, buf, label_len - strlen(label) - 1);
+    }
+    strncat(label, reg->draw_label(glue, buf, MAX_LINE_LEN),
+            label_len - strlen(label) - 1);
+
+    return label;
 }

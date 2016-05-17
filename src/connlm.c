@@ -809,9 +809,47 @@ int connlm_save(connlm_t *connlm, FILE *fp, bool binary)
     return 0;
 }
 
-static int connlm_draw_components(connlm_t *connlm, FILE *fp)
+static int connlm_draw_network(connlm_t *connlm, FILE *fp)
 {
+    comp_id_t c;
+
     ST_CHECK_PARAM(connlm == NULL || fp == NULL, -1);
+
+    fprintf(fp, "digraph network {\n");
+    fprintf(fp, "  rankdir=LR;\n");
+    fprintf(fp, "  labelloc=t;\n");
+    fprintf(fp, "  label=\"Network\";\n\n");
+
+    fprintf(fp, "  subgraph cluster_overview {\n");
+    fprintf(fp, "    label=\"Overview\";\n");
+    fprintf(fp, "    node [shape=plaintext, style=solid];\n");
+    fprintf(fp, "    edge [style=invis];\n\n");
+    fprintf(fp, "    legend [label=\"# Compnoent: "COMP_ID_FMT"\\n"
+                     "Vocab size: %d\\n\"];\n",
+                connlm->num_comp,
+                connlm->vocab->vocab_size);
+    fprintf(fp, "  }\n\n");
+
+    fprintf(fp, "  subgraph cluster_structure {\n");
+    fprintf(fp, "    label=\"\";\n");
+    fprintf(fp, "    node[shape=box, orientation=90];\n");
+    fprintf(fp, "\n");
+    fprintf(fp, "    output [shape=triangle, orientation=90];\n");
+    for (c = 0; c < connlm->num_comp; c++) {
+        if (comp_draw(connlm->comps[c], fp, "output") < 0) {
+            ST_WARNING("Failed to comp_draw.");
+            return -1;
+        }
+    }
+    fprintf(fp, "  }\n\n");
+
+    if (connlm->num_comp > 0) {
+    // keep legend in the left
+        fprintf(fp, "  legend -> input_%s [style=invis];\n",
+                connlm->comps[0]->name);
+    }
+
+    fprintf(fp, "}\n");
 
     return 0;
 }
@@ -820,8 +858,8 @@ int connlm_draw(connlm_t *connlm, FILE *fp)
 {
     ST_CHECK_PARAM(connlm == NULL || fp == NULL, -1);
 
-    if (connlm_draw_components(connlm, fp) < 0) {
-        ST_WARNING("Failed to connlm_draw_components.");
+    if (connlm_draw_network(connlm, fp) < 0) {
+        ST_WARNING("Failed to connlm_draw_network.");
         return -1;
     }
 

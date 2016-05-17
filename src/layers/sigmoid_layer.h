@@ -1,18 +1,18 @@
 /*
  * The MIT License (MIT)
- * 
+ *
  * Copyright (c) 2015 Wang Jian
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in all
  * copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -32,7 +32,7 @@ extern "C" {
 #include <connlm/config.h>
 #include "layer.h"
 
-/** @defgroup g_layer_sigmoid sigmoid layer. 
+/** @defgroup g_layer_sigmoid sigmoid layer.
  * @ingroup g_layer
  * Data structures and functions for sigmoid layer.
  */
@@ -71,6 +71,16 @@ int sigmoid_dup(layer_t *dst, layer_t *src);
  * @return non-zero if any error
  */
 int sigmoid_parse_topo(layer_t *layer, const char *line);
+
+/**
+ * Provide label string for drawing sigmoid layer.
+ * @ingroup g_layer_sigmoid
+ * @param[in] layer layer.
+ * @param[out] label buffer to write string.
+ * @param[in] labe_len length of label.
+ * @return label on success, NULL if any error.
+ */
+char* sigmoid_draw_label(layer_t *layer, char *label, size_t label_len);
 
 #ifdef __cplusplus
 }

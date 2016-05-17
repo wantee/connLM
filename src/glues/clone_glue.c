@@ -154,3 +154,12 @@ bool clone_glue_check(glue_t *glue, layer_t **layers, layer_id_t n_layer)
 
     return true;
 }
+
+char* clone_glue_draw_label(glue_t *glue, char *label, size_t label_len)
+{
+    ST_CHECK_PARAM(glue == NULL || label == NULL, NULL);
+
+    snprintf(label, label_len, "");
+
+    return label;
+}

@@ -285,6 +285,15 @@ int comp_forward(component_t *comp, int tid);
  */
 int comp_backprop(component_t *comp, int word, int tid);
 
+/**
+ * Convert a component into graphviz format.
+ * @ingroup g_component
+ * @param[in] comp component.
+ * @param[in] fp file stream to be printed out.
+ * @return non-zero value if any error.
+ */
+int comp_draw(component_t *comp, FILE *fp, const char *output_node);
+
 #ifdef __cplusplus
 }
 #endif

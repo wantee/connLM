@@ -160,6 +160,19 @@ int glue_save_header(glue_t *glue, FILE *fp, bool binary);
  */
 int glue_save_body(glue_t *glue, FILE *fp, bool binary);
 
+/**
+ * Provide label string for drawing glue.
+ * @ingroup g_glue
+ * @param[in] glue glue.
+ * @param[in] in_layer current in layer.
+ * @param[in] out_layer current out layer.
+ * @param[out] label buffer to write string.
+ * @param[in] labe_len length of label.
+ * @return label on success, NULL if any error.
+ */
+char* glue_draw_label(glue_t *glue, layer_id_t in_layer,
+        layer_id_t out_layer, char *label, size_t label_len);
+
 #ifdef __cplusplus
 }
 #endif

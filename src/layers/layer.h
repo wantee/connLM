@@ -141,6 +141,16 @@ int layer_save_header(layer_t *layer, FILE *fp, bool binary);
  */
 int layer_save_body(layer_t *layer, FILE *fp, bool binary);
 
+/**
+ * Provide label string for drawing layer.
+ * @ingroup g_layer
+ * @param[in] layer layer.
+ * @param[out] label buffer to write string.
+ * @param[in] labe_len length of label.
+ * @return label on success, NULL if any error.
+ */
+char* layer_draw_label(layer_t *layer, char *label, size_t label_len);
+
 #ifdef __cplusplus
 }
 #endif
