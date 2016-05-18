@@ -109,9 +109,11 @@ component_t* comp_dup(component_t *c);
  * Initialize input and hidden layers for a component with topology file.
  * @ingroup g_component
  * @param[in] topo_content content for component in a topology file.
+ * @param[in] output output layer for component.
  * @return component initialised, NULL if any error.
  */
-component_t *comp_init_from_topo(const char* topo_content);
+component_t *comp_init_from_topo(const char* topo_content,
+        output_t *output);
 
 /**
  * Construct the nnet graph for a component.

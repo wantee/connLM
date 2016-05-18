@@ -193,7 +193,7 @@ static int comp_parse_topo(component_t *comp, const char *line)
     return 0;
 }
 
-component_t *comp_init_from_topo(const char* topo_content)
+component_t *comp_init_from_topo(const char* topo_content, output_t *output)
 {
     component_t *comp = NULL;
 
@@ -204,7 +204,7 @@ component_t *comp_init_from_topo(const char* topo_content)
 
     const char *p;
 
-    ST_CHECK_PARAM(topo_content == NULL, NULL);
+    ST_CHECK_PARAM(topo_content == NULL || output == NULL, NULL);
 
     comp = (component_t *)malloc(sizeof(component_t));
     if (comp == NULL) {
@@ -212,6 +212,20 @@ component_t *comp_init_from_topo(const char* topo_content)
         goto ERR;
     }
     memset(comp, 0, sizeof(component_t));
+
+    comp->layers = (layer_t **)realloc(comp->layers,
+            sizeof(layer_t *) * (comp->num_layer + 1));
+    if (comp->layers == NULL) {
+        ST_WARNING("Failed to alloc layers.");
+        goto ERR;
+    }
+
+    comp->layers[comp->num_layer] = output_get_layer(output);
+    if (comp->layers[comp->num_layer] == NULL) {
+        ST_WARNING("Failed to output_get_layer.");
+        goto ERR;
+    }
+    comp->num_layer++;
 
     p = topo_content;
     while (*p != '\0') {
@@ -250,6 +264,19 @@ component_t *comp_init_from_topo(const char* topo_content)
                 ST_WARNING("Failed to input_parse_topo.");
                 goto ERR;
             }
+            comp->layers = (layer_t **)realloc(comp->layers,
+                    sizeof(layer_t *) * (comp->num_layer + 1));
+            if (comp->layers == NULL) {
+                ST_WARNING("Failed to alloc layers.");
+                goto ERR;
+            }
+
+            comp->layers[comp->num_layer] = input_get_layer(comp->input);
+            if (comp->layers[comp->num_layer] == NULL) {
+                ST_WARNING("Failed to input_get_layer.");
+                goto ERR;
+            }
+            comp->num_layer++;
         } else if (strcasecmp("layer", token) == 0) {
             comp->layers = (layer_t **)realloc(comp->layers,
                     sizeof(layer_t *) * (comp->num_layer + 1));

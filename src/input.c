@@ -135,6 +135,28 @@ ERR:
     return NULL;
 }
 
+layer_t* input_get_layer(input_t *input)
+{
+    layer_t *layer = NULL;
+
+    ST_CHECK_PARAM(input == NULL, NULL);
+
+    layer = (layer_t *)malloc(sizeof(layer_t));
+    if (layer == NULL) {
+        ST_WARNING("Failed to malloc layer.");
+        goto ERR;
+    }
+    memset(layer, 0, sizeof(layer_t));
+
+    strncat(layer->name, "input", MAX_NAME_LEN - 1);
+    strncat(layer->type, "input", MAX_NAME_LEN - 1);
+
+    return layer;
+ERR:
+    safe_free(layer);
+    return NULL;
+}
+
 int input_load_header(input_t **input, int version,
         FILE *fp, bool *binary, FILE *fo_info)
 {

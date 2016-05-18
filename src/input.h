@@ -32,6 +32,7 @@ extern "C" {
 #include <stutils/st_opt.h>
 
 #include <connlm/config.h>
+#include <layers/layer.h>
 
 /** @defgroup g_input Input Layer
  * Data structures and functions for Input Layer.
@@ -80,6 +81,14 @@ input_t* input_dup(input_t *i);
  * @return a new input layer or NULL if error.
  */
 input_t* input_parse_topo(const char *line);
+
+/**
+ * return a layer struct for input.
+ * @ingroup g_input
+ * @param[in] i input the input layer.
+ * @return layer for the input, else NULL.
+ */
+layer_t* input_get_layer(input_t *input);
 
 /**
  * Load input header and initialise a new input.

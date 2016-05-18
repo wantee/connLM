@@ -302,7 +302,8 @@ int connlm_init(connlm_t *connlm, FILE *topo_fp)
                 ST_WARNING("Failed to alloc comps.");
                 goto ERR;
             }
-            connlm->comps[connlm->num_comp] = comp_init_from_topo(content);
+            connlm->comps[connlm->num_comp] = comp_init_from_topo(content,
+                    connlm->output);
             if (connlm->comps[connlm->num_comp] == NULL) {
                 ST_WARNING("Failed to comp_init_from_topo.");
                 goto ERR;

@@ -2470,3 +2470,25 @@ int output_draw(output_t *output, FILE *fp, count_t *word_cnts,
 
     return 0;
 }
+
+layer_t* output_get_layer(output_t *output)
+{
+    layer_t *layer = NULL;
+
+    ST_CHECK_PARAM(output == NULL, NULL);
+
+    layer = (layer_t *)malloc(sizeof(layer_t));
+    if (layer == NULL) {
+        ST_WARNING("Failed to malloc layer.");
+        goto ERR;
+    }
+    memset(layer, 0, sizeof(layer_t));
+
+    strncat(layer->name, "output", MAX_NAME_LEN - 1);
+    strncat(layer->type, "output", MAX_NAME_LEN - 1);
+
+    return layer;
+ERR:
+    safe_free(layer);
+    return NULL;
+}
