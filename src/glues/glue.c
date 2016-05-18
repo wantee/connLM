@@ -31,6 +31,9 @@
 #include "append_glue.h"
 #include "clone_glue.h"
 #include "direct_glue.h"
+#include "wt_glue.h"
+#include "emb_wt_glue.h"
+#include "out_wt_glue.h"
 #include "glue.h"
 
 static const int GLUE_MAGIC_NUM = 626140498 + 70;
@@ -58,6 +61,15 @@ static glue_reg_t GLUE_REG[] = {
     {DIRECT_GLUE_NAME, direct_glue_init, direct_glue_destroy,
         direct_glue_dup, direct_glue_parse_topo, direct_glue_check,
         direct_glue_draw_label},
+    {WT_GLUE_NAME, wt_glue_init, wt_glue_destroy,
+        wt_glue_dup, wt_glue_parse_topo, wt_glue_check,
+        wt_glue_draw_label},
+    {EMB_WT_GLUE_NAME, emb_wt_glue_init, emb_wt_glue_destroy,
+        emb_wt_glue_dup, emb_wt_glue_parse_topo, emb_wt_glue_check,
+        emb_wt_glue_draw_label},
+    {OUT_WT_GLUE_NAME, out_wt_glue_init, out_wt_glue_destroy,
+        out_wt_glue_dup, out_wt_glue_parse_topo, out_wt_glue_check,
+        out_wt_glue_draw_label},
 };
 
 static glue_reg_t* glue_get_reg(const char *type)

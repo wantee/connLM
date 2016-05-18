@@ -29,7 +29,6 @@
 
 #include "param.h"
 #include "component.h"
-#include "glues/direct_glue.h"
 
 static const int COMP_MAGIC_NUM = 626140498 + 30;
 
@@ -61,7 +60,7 @@ void comp_destroy(component_t *comp)
 
     safe_graph_destroy(comp->graph);
 
-    safe_output_wt_destroy(comp->output_wt);
+    safe_out_wt_destroy(comp->out_wt);
 }
 
 component_t* comp_dup(component_t *c)
@@ -147,9 +146,9 @@ component_t* comp_dup(component_t *c)
         comp->graph = NULL;
     }
 
-    comp->output_wt = output_wt_dup(c->output_wt);
-    if (comp->output_wt == NULL) {
-        ST_WARNING("Failed to output_wt_dup.");
+    comp->out_wt = out_wt_dup(c->out_wt);
+    if (comp->out_wt == NULL) {
+        ST_WARNING("Failed to out_wt_dup.");
         goto ERR;
     }
 
@@ -325,7 +324,7 @@ ERR:
     return NULL;
 }
 
-int comp_init_output_wt(component_t *comp, output_t *output, real_t scale)
+int comp_init_out_wt(component_t *comp, output_t *output, real_t scale)
 {
     ST_CHECK_PARAM(comp == NULL || output == NULL || scale <= 0, -1);
 
@@ -361,21 +360,11 @@ int comp_construct_graph(component_t *comp)
         }
     }
 
-    if (comp->num_layer > 0) {
-        comp->graph = graph_construct(comp->layers, comp->num_layer,
-                comp->glues, comp->num_glue);
-        if (comp->graph == NULL) {
-            ST_WARNING("Failed to graph_construct.");
-            goto ERR;
-        }
-    } else {
-        for (g = 0; g < comp->num_glue; g++) {
-            if (strcasecmp(comp->glues[g]->type, DIRECT_GLUE_NAME) != 0) {
-                ST_WARNING("Contain non-direct glue without layer[%s]",
-                        comp->glues[g]->name);
-                goto ERR;
-            }
-        }
+    comp->graph = graph_construct(comp->layers, comp->num_layer,
+            comp->glues, comp->num_glue);
+    if (comp->graph == NULL) {
+        ST_WARNING("Failed to graph_construct.");
+        goto ERR;
     }
 
     return 0;
@@ -594,9 +583,9 @@ int comp_load_header(component_t **comp, int version,
         }
     }
 
-    if (output_wt_load_header(comp != NULL ? &((*comp)->output_wt) : NULL,
+    if (out_wt_load_header(comp != NULL ? &((*comp)->out_wt) : NULL,
                 version, fp, &b, fo_info) < 0) {
-        ST_WARNING("Failed to output_wt_load_header.");
+        ST_WARNING("Failed to out_wt_load_header.");
         goto ERR;
     }
     if (*binary != b) {
@@ -668,8 +657,8 @@ int comp_load_body(component_t *comp, int version, FILE *fp, bool binary)
         }
     }
 
-    if (output_wt_load_body(comp->output_wt, version, fp, binary) < 0) {
-        ST_WARNING("Failed to output_wt_load_body.");
+    if (out_wt_load_body(comp->out_wt, version, fp, binary) < 0) {
+        ST_WARNING("Failed to out_wt_load_body.");
         goto ERR;
     }
 
@@ -692,7 +681,7 @@ ERR:
         safe_glue_destroy(comp->glues[g]);
     }
 
-    safe_output_wt_destroy(comp->output_wt);
+    safe_out_wt_destroy(comp->out_wt);
 
     safe_graph_destroy(comp->graph);
 
@@ -773,8 +762,8 @@ int comp_save_header(component_t *comp, FILE *fp, bool binary)
         }
     }
 
-    if (output_wt_save_header(comp->output_wt, fp, binary) < 0) {
-        ST_WARNING("Failed to output_wt_save_header.");
+    if (out_wt_save_header(comp->out_wt, fp, binary) < 0) {
+        ST_WARNING("Failed to out_wt_save_header.");
         return -1;
     }
 
@@ -830,8 +819,8 @@ int comp_save_body(component_t *comp, FILE *fp, bool binary)
         }
     }
 
-    if (output_wt_save_body(comp->output_wt, fp, binary) < 0) {
-        ST_WARNING("Failed to output_wt_save_body.");
+    if (out_wt_save_body(comp->out_wt, fp, binary) < 0) {
+        ST_WARNING("Failed to out_wt_save_body.");
         return -1;
     }
 
@@ -881,14 +870,6 @@ int comp_draw(component_t *comp, FILE *fp, const char *output_node)
     }
 
     for (g = 0; g < comp->num_glue; g++) {
-        if (strcasecmp(comp->glues[g]->type, DIRECT_GLUE_NAME) == 0) {
-            fprintf(fp, "    input_%s -> output [label=\"%s\"];\n",
-                    comp->name,
-                    glue_draw_label(comp->glues[g], 0, 0,
-                        label, MAX_NAME_LEN));
-            continue;
-        }
-
         for (l = 0; l < comp->glues[g]->num_in_layer; l++) {
             for (ll = 0; ll < comp->glues[g]->num_out_layer; ll++) {
                 fprintf(fp, "    %s -> %s [label=\"%s\"];\n",

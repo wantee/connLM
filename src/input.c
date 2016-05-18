@@ -148,8 +148,8 @@ layer_t* input_get_layer(input_t *input)
     }
     memset(layer, 0, sizeof(layer_t));
 
-    strncat(layer->name, "input", MAX_NAME_LEN - 1);
-    strncat(layer->type, "input", MAX_NAME_LEN - 1);
+    strncat(layer->name, INPUT_LAYER_NAME, MAX_NAME_LEN - 1);
+    strncat(layer->type, INPUT_LAYER_NAME, MAX_NAME_LEN - 1);
 
     return layer;
 ERR:

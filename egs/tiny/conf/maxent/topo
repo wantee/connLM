@@ -3,5 +3,5 @@ property name=maxent
 
 input context=-1
 
-glue name=glue type=direct
+glue name=glue type=direct in=input out=output
 </component>

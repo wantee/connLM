@@ -20,6 +20,8 @@ INCS = utils.h \
        glues/append_glue.h \
        glues/clone_glue.h \
        glues/direct_glue.h \
+       glues/emb_wt_glue.h \
+       glues/out_wt_glue.h \
        weights/weight.h \
        weights/embedding_weight.h \
        weights/output_weight.h \
@@ -40,6 +42,9 @@ SRCS = utils.c \
        glues/append_glue.c \
        glues/clone_glue.c \
        glues/direct_glue.c \
+       glues/wt_glue.c \
+       glues/emb_wt_glue.c \
+       glues/out_wt_glue.c \
        weights/weight.c \
        weights/embedding_weight.c \
        weights/output_weight.c \

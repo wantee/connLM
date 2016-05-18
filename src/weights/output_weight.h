@@ -49,16 +49,16 @@ typedef struct _output_weight_t_ {
     int (*forward)(struct _output_weight_t_ *wt);
     /** backprop function. */
     int (*backprop)(struct _output_weight_t_ *wt);
-} output_wt_t;
+} out_wt_t;
 
 /**
  * Destroy a output weight and set the pointer to NULL.
  * @ingroup g_wt_output
- * @param[in] ptr pointer to output_wt_t.
+ * @param[in] ptr pointer to out_wt_t.
  */
-#define safe_output_wt_destroy(ptr) do {\
+#define safe_out_wt_destroy(ptr) do {\
     if((ptr) != NULL) {\
-        output_wt_destroy(ptr);\
+        out_wt_destroy(ptr);\
         safe_free(ptr);\
         (ptr) = NULL;\
     }\
@@ -66,9 +66,9 @@ typedef struct _output_weight_t_ {
 /**
  * Destroy a output weight.
  * @ingroup g_wt_output
- * @param[in] output_wt output weight to be destroyed.
+ * @param[in] out_wt output weight to be destroyed.
  */
-void output_wt_destroy(output_wt_t* output_wt);
+void out_wt_destroy(out_wt_t* out_wt);
 
 /**
  * Duplicate a output weight.
@@ -76,59 +76,60 @@ void output_wt_destroy(output_wt_t* output_wt);
  * @param[in] o output weight to be duplicated.
  * @return the duplicated output weight.
  */
-output_wt_t* output_wt_dup(output_wt_t *o);
+out_wt_t* out_wt_dup(out_wt_t *o);
 
 /**
- * Load output_wt header and initialise a new output_wt.
- * @ingroup g_output_wt
- * @param[out] output_wt output_wt initialised.
+ * Load out_wt header and initialise a new out_wt.
+ * @ingroup g_out_wt
+ * @param[out] out_wt out_wt initialised.
  * @param[in] version file version of loading file.
  * @param[in] fp file stream loaded from.
  * @param[out] binary whether the file stream is in binary format.
  * @param[in] fo file stream used to print information, if it is not NULL.
- * @see output_wt_load_body
- * @see output_wt_save_header, output_wt_save_body
+ * @see out_wt_load_body
+ * @see out_wt_save_header, out_wt_save_body
  * @return non-zero value if any error.
  */
-int output_wt_load_header(output_wt_t **output_wt, int version,
+int out_wt_load_header(out_wt_t **out_wt, int version,
         FILE *fp, bool *binary, FILE *fo_info);
 
 /**
- * Load output_wt body.
- * @ingroup g_output_wt
- * @param[in] output_wt output_wt to be loaded.
+ * Load out_wt body.
+ * @ingroup g_out_wt
+ * @param[in] out_wt out_wt to be loaded.
  * @param[in] version file version of loading file.
  * @param[in] fp file stream loaded from.
  * @param[in] binary whether to use binary format.
- * @see output_wt_load_header
- * @see output_wt_save_header, output_wt_save_body
+ * @see out_wt_load_header
+ * @see out_wt_save_header, out_wt_save_body
  * @return non-zero value if any error.
  */
-int output_wt_load_body(output_wt_t *output_wt, int version, FILE *fp, bool binary);
+int out_wt_load_body(out_wt_t *out_wt, int version, FILE *fp, bool binary);
 
 /**
- * Save output_wt header.
- * @ingroup g_output_wt
- * @param[in] output_wt output_wt to be saved.
+ * Save out_wt header.
+ * @ingroup g_out_wt
+ * @param[in] out_wt out_wt to be saved.
  * @param[in] fp file stream saved to.
  * @param[in] binary whether to use binary format.
- * @see output_wt_save_body
- * @see output_wt_load_header, output_wt_load_body
+ * @see out_wt_save_body
+ * @see out_wt_load_header, out_wt_load_body
  * @return non-zero value if any error.
  */
-int output_wt_save_header(output_wt_t *output_wt, FILE *fp, bool binary);
+int out_wt_save_header(out_wt_t *out_wt, FILE *fp, bool binary);
 
 /**
- * Save output_wt body.
- * @ingroup g_output_wt
- * @param[in] output_wt output_wt to be saved.
+ * Save out_wt body.
+ * @ingroup g_out_wt
+ * @param[in] out_wt out_wt to be saved.
  * @param[in] fp file stream saved to.
  * @param[in] binary whether to use binary format.
- * @see output_wt_save_header
- * @see output_wt_load_header, output_wt_load_body
+ * @see out_wt_save_header
+ * @see out_wt_load_header, out_wt_load_body
  * @return non-zero value if any error.
  */
-int output_wt_save_body(output_wt_t *output_wt, FILE *fp, bool binary);
+int out_wt_save_body(out_wt_t *out_wt, FILE *fp, bool binary);
+
 #ifdef __cplusplus
 }
 #endif

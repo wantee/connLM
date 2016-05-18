@@ -25,6 +25,8 @@
 #include <stutils/st_log.h>
 #include <stutils/st_utils.h>
 
+#include "input.h"
+#include "output.h"
 #include "append_glue.h"
 
 static int append_glue_forward(glue_t *glue)
@@ -141,6 +143,16 @@ bool append_glue_check(glue_t *glue, layer_t **layers, layer_id_t n_layer)
     n = 0;
     for (i = 0; i < glue->num_in_layer; i++) {
         n += layers[glue->in_layers[i]]->size - glue->in_offsets[i];
+        if (strcasecmp(layers[glue->in_layers[i]]->type,
+                    INPUT_LAYER_NAME) == 0) {
+            ST_WARNING("wt glue: in layer should not be input layer.");
+            return false;
+        }
+    }
+    if (strcasecmp(layers[glue->out_layers[0]]->type,
+                OUTPUT_LAYER_NAME) == 0) {
+        ST_WARNING("wt glue: out layer should not be output layer.");
+        return false;
     }
     if (n != layers[glue->out_layers[0]]->size - glue->out_offsets[0]) {
         ST_WARNING("total in_layer size([%d]) not match with "

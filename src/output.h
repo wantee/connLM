@@ -33,7 +33,8 @@ extern "C" {
 #include <stutils/st_alphabet.h>
 
 #include <connlm/config.h>
-#include <layers/layer.h>
+
+#include "layers/layer.h"
 
 /** @defgroup g_output Output Layer
  * Data structures and functions for Output Layer.
@@ -346,6 +347,8 @@ bool output_equal(output_t *output1, output_t *output2);
  */
 int output_draw(output_t *output, FILE *fp, count_t *word_cnts,
         st_alphabet_t *vocab);
+
+#define OUTPUT_LAYER_NAME "output"
 
 /**
  * return a layer struct for output.

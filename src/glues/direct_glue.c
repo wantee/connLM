@@ -25,6 +25,8 @@
 #include <stutils/st_log.h>
 #include <stutils/st_utils.h>
 
+#include "input.h"
+#include "output.h"
 #include "direct_glue.h"
 
 static int direct_glue_forward(glue_t *glue)
@@ -115,13 +117,25 @@ bool direct_glue_check(glue_t *glue, layer_t **layers, layer_id_t n_layer)
         return false;
     }
 
-    if (glue->num_in_layer > 0) {
-        ST_WARNING("direct glue: in_layer should not be set.");
+    if (glue->num_in_layer != 1) {
+        ST_WARNING("direct glue: in_layer should be equal to 1.");
         return false;
     }
 
-    if (glue->num_out_layer > 0) {
-        ST_WARNING("direct glue: out_layer shoule not be set.");
+    if (glue->num_out_layer != 1) {
+        ST_WARNING("direct glue: out_layer shoule be equal to 1.");
+        return false;
+    }
+
+    if (strcasecmp(layers[glue->in_layers[0]]->type,
+                INPUT_LAYER_NAME) != 0) {
+        ST_WARNING("wt glue: in layer should be input layer.");
+        return false;
+    }
+
+    if (strcasecmp(layers[glue->out_layers[0]]->type,
+                OUTPUT_LAYER_NAME) != 0) {
+        ST_WARNING("wt glue: out layer should be output layer.");
         return false;
     }
 

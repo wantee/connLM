@@ -31,41 +31,41 @@
 
 static const int OUTPUT_WT_MAGIC_NUM = 626140498 + 80;
 
-void output_wt_destroy(output_wt_t *output_wt)
+void out_wt_destroy(out_wt_t *out_wt)
 {
-    if (output_wt == NULL) {
+    if (out_wt == NULL) {
         return;
     }
 
-    output_wt->output = NULL;
+    out_wt->output = NULL;
 }
 
-output_wt_t* output_wt_dup(output_wt_t *o)
+out_wt_t* out_wt_dup(out_wt_t *o)
 {
-    output_wt_t *output_wt = NULL;
+    out_wt_t *out_wt = NULL;
 
     ST_CHECK_PARAM(o == NULL, NULL);
 
-    output_wt = (output_wt_t *) malloc(sizeof(output_wt_t));
-    if (output_wt == NULL) {
-        ST_WARNING("Falied to malloc output_wt_t.");
+    out_wt = (out_wt_t *) malloc(sizeof(out_wt_t));
+    if (out_wt == NULL) {
+        ST_WARNING("Falied to malloc out_wt_t.");
         goto ERR;
     }
-    memset(output_wt, 0, sizeof(output_wt_t));
+    memset(out_wt, 0, sizeof(out_wt_t));
 
-    output_wt->output = o->output;
+    out_wt->output = o->output;
 
-    output_wt->forward = o->forward;
-    output_wt->backprop = o->backprop;
+    out_wt->forward = o->forward;
+    out_wt->backprop = o->backprop;
 
-    return output_wt;
+    return out_wt;
 
 ERR:
-    safe_output_wt_destroy(output_wt);
+    safe_out_wt_destroy(out_wt);
     return NULL;
 }
 
-int output_wt_load_header(output_wt_t **output_wt, int version,
+int out_wt_load_header(out_wt_t **out_wt, int version,
         FILE *fp, bool *binary, FILE *fo_info)
 {
     union {
@@ -73,7 +73,7 @@ int output_wt_load_header(output_wt_t **output_wt, int version,
         int magic_num;
     } flag;
 
-    ST_CHECK_PARAM((output_wt == NULL && fo_info == NULL) || fp == NULL
+    ST_CHECK_PARAM((out_wt == NULL && fo_info == NULL) || fp == NULL
             || binary == NULL, -1);
 
     if (version < 3) {
@@ -95,8 +95,8 @@ int output_wt_load_header(output_wt_t **output_wt, int version,
         *binary = true;
     }
 
-    if (output_wt != NULL) {
-        *output_wt = NULL;
+    if (out_wt != NULL) {
+        *out_wt = NULL;
     }
 
     if (*binary) {
@@ -111,13 +111,13 @@ int output_wt_load_header(output_wt_t **output_wt, int version,
         }
     }
 
-    if (output_wt != NULL) {
-        *output_wt = (output_wt_t *)malloc(sizeof(output_wt_t));
-        if (*output_wt == NULL) {
-            ST_WARNING("Failed to malloc output_wt_t");
+    if (out_wt != NULL) {
+        *out_wt = (out_wt_t *)malloc(sizeof(out_wt_t));
+        if (*out_wt == NULL) {
+            ST_WARNING("Failed to malloc out_wt_t");
             goto ERR;
         }
-        memset(*output_wt, 0, sizeof(output_wt_t));
+        memset(*out_wt, 0, sizeof(out_wt_t));
     }
 
     if (fo_info != NULL) {
@@ -127,17 +127,17 @@ int output_wt_load_header(output_wt_t **output_wt, int version,
     return 0;
 
 ERR:
-    if (output_wt != NULL) {
-        safe_output_wt_destroy(*output_wt);
+    if (out_wt != NULL) {
+        safe_out_wt_destroy(*out_wt);
     }
     return -1;
 }
 
-int output_wt_load_body(output_wt_t *output_wt, int version, FILE *fp, bool binary)
+int out_wt_load_body(out_wt_t *out_wt, int version, FILE *fp, bool binary)
 {
     int n;
 
-    ST_CHECK_PARAM(output_wt == NULL || fp == NULL, -1);
+    ST_CHECK_PARAM(out_wt == NULL || fp == NULL, -1);
 
     if (version < 3) {
         ST_WARNING("Too old version of connlm file");
@@ -167,7 +167,7 @@ ERR:
     return -1;
 }
 
-int output_wt_save_header(output_wt_t *output_wt, FILE *fp, bool binary)
+int out_wt_save_header(out_wt_t *out_wt, FILE *fp, bool binary)
 {
     ST_CHECK_PARAM(fp == NULL, -1);
 
@@ -186,7 +186,7 @@ int output_wt_save_header(output_wt_t *output_wt, FILE *fp, bool binary)
     return 0;
 }
 
-int output_wt_save_body(output_wt_t *output_wt, FILE *fp, bool binary)
+int out_wt_save_body(out_wt_t *out_wt, FILE *fp, bool binary)
 {
     int n;
 
@@ -210,20 +210,20 @@ int output_wt_save_body(output_wt_t *output_wt, FILE *fp, bool binary)
 
 #if 0
 static int output_hs_forward(real_t *p, real_t *in, real_t *wt,
-        int output_wt_size, int *pts, char *codes, int max_code_len,
+        int out_wt_size, int *pts, char *codes, int max_code_len,
         real_t *ac)
 {
     double d;
     int c;
 
     ST_CHECK_PARAM(p == NULL || in == NULL || wt == NULL
-            || output_wt_size <= 0 || pts == NULL || codes == NULL
+            || out_wt_size <= 0 || pts == NULL || codes == NULL
             || max_code_len <= 0 || ac == NULL, -1);
 
     d = 1.0;
     c = 0;
     while (pts[c] > 0 && c < max_code_len) {
-        ac[c] = dot_product(ac, wt + pts[c] * output_wt_size, output_wt_size);
+        ac[c] = dot_product(ac, wt + pts[c] * out_wt_size, out_wt_size);
 
         sigmoid(ac + c, 1);
 
@@ -256,7 +256,7 @@ int output_activate_pre_layer(output_t *output, int cls, int tid)
             }
             if (output_hs_forward(&neu->p_hs_c, neu->ac_o_c,
                     output->wt_hs_c,
-                    output->hs_output_wt_size,
+                    output->hs_out_wt_size,
                     output->pt_c + cls * output->output_opt.max_code_len,
                     output->code_c + cls * output->output_opt.max_code_len,
                     output->output_opt.max_code_len,
@@ -296,9 +296,9 @@ int output_activate_last_layer(output_t *output, int word, int tid)
 
     if (output->output_opt.hs) {
         if (output_hs_forward(&neu->p_hs_w, neu->ac_o_w + s,
-                output->wt_hs_w + output->hs_output_wt_size
+                output->wt_hs_w + output->hs_out_wt_size
                                * output_hs_wt_w_pos(cls, s),
-                output->hs_output_wt_size,
+                output->hs_out_wt_size,
                 output->pt_w + word * output->output_opt.max_code_len,
                 output->code_w + word * output->output_opt.max_code_len,
                 output->output_opt.max_code_len,

@@ -73,7 +73,7 @@ typedef struct _component_t_ {
 
     graph_t *graph; /**< nnet graph for this component. */
 
-    output_wt_t *output_wt; /**< output weights. */
+    out_wt_t *out_wt; /**< output weights. */
 
     comp_train_opt_t train_opt; /**< train options. */
 } component_t;
@@ -131,7 +131,7 @@ int comp_construct_graph(component_t *comp);
  * @param[in] scale output scale.
  * @return non-zero value if any error.
  */
-int comp_init_output_wt(component_t *comp, output_t *output, real_t scale);
+int comp_init_out_wt(component_t *comp, output_t *output, real_t scale);
 
 /**
  * Load component train option.

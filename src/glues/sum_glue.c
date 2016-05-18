@@ -27,6 +27,8 @@
 #include <stutils/st_log.h>
 #include <stutils/st_utils.h>
 
+#include "input.h"
+#include "output.h"
 #include "sum_glue.h"
 
 static int sum_glue_forward(glue_t *glue)
@@ -230,7 +232,19 @@ bool sum_glue_check(glue_t *glue, layer_t **layers, layer_id_t n_layer)
         return false;
     }
 
+    if (strcasecmp(layers[glue->out_layers[0]]->type,
+                OUTPUT_LAYER_NAME) == 0) {
+        ST_WARNING("wt glue: out layer should not be output layer.");
+        return false;
+    }
+
     for (i = 0; i < glue->num_in_layer; i++) {
+        if (strcasecmp(layers[glue->in_layers[i]]->type,
+                    INPUT_LAYER_NAME) == 0) {
+            ST_WARNING("wt glue: in layer should not be input layer.");
+            return false;
+        }
+
         if (layers[glue->in_layers[i]]->size - glue->in_offsets[i]
                 != layers[glue->out_layers[0]]->size - glue->out_offsets[0]) {
             ST_WARNING("in_layer[%s]([%d/%d]) size not match with "

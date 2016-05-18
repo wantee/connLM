@@ -2484,8 +2484,8 @@ layer_t* output_get_layer(output_t *output)
     }
     memset(layer, 0, sizeof(layer_t));
 
-    strncat(layer->name, "output", MAX_NAME_LEN - 1);
-    strncat(layer->type, "output", MAX_NAME_LEN - 1);
+    strncat(layer->name, OUTPUT_LAYER_NAME, MAX_NAME_LEN - 1);
+    strncat(layer->type, OUTPUT_LAYER_NAME, MAX_NAME_LEN - 1);
 
     return layer;
 ERR:
