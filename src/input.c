@@ -37,11 +37,12 @@ void input_destroy(input_t *input)
         return;
     }
 
+    input->input_size = 0;
     safe_free(input->context);
     input->num_ctx = 0;
 }
 
-input_t* input_parse_topo(const char *line)
+input_t* input_parse_topo(const char *line, int input_size)
 {
     input_t *input = NULL;
 
@@ -58,6 +59,8 @@ input_t* input_parse_topo(const char *line)
         goto ERR;
     }
     memset(input, 0, sizeof(input_t));
+
+    input->input_size = input_size;
 
     p = line;
 
@@ -165,6 +168,7 @@ int input_load_header(input_t **input, int version,
         int magic_num;
     } flag;
 
+    int input_size;
     int num_ctx;
 
     ST_CHECK_PARAM((input == NULL && fo_info == NULL) || fp == NULL
@@ -194,6 +198,10 @@ int input_load_header(input_t **input, int version,
     }
 
     if (*binary) {
+        if (fread(&input_size, sizeof(int), 1, fp) != 1) {
+            ST_WARNING("Failed to read input_size.");
+            return -1;
+        }
         if (fread(&num_ctx, sizeof(int), 1, fp) != 1) {
             ST_WARNING("Failed to read num_ctx.");
             return -1;
@@ -208,6 +216,10 @@ int input_load_header(input_t **input, int version,
             goto ERR;
         }
 
+        if (st_readline(fp, "Input size: %d", &input_size) != 1) {
+            ST_WARNING("Failed to parse input_size.");
+            goto ERR;
+        }
         if (st_readline(fp, "Num context: %d", &num_ctx) != 1) {
             ST_WARNING("Failed to parse num_ctx.");
             goto ERR;
@@ -222,11 +234,13 @@ int input_load_header(input_t **input, int version,
         }
         memset(*input, 0, sizeof(input_t));
 
+        (*input)->input_size = input_size;
         (*input)->num_ctx = num_ctx;
     }
 
     if (fo_info != NULL) {
         fprintf(fo_info, "\n<INPUT>\n");
+        fprintf(fo_info, "Input size: %d\n", input_size);
         fprintf(fo_info, "Num context: %d\n", num_ctx);
     }
 
@@ -323,6 +337,10 @@ int input_save_header(input_t *input, FILE *fp, bool binary)
             return 0;
         }
 
+        if (fwrite(&input->input_size, sizeof(int), 1, fp) != 1) {
+            ST_WARNING("Failed to write input_size.");
+            return -1;
+        }
         if (fwrite(&input->num_ctx, sizeof(int), 1, fp) != 1) {
             ST_WARNING("Failed to write num_ctx.");
             return -1;
@@ -333,6 +351,10 @@ int input_save_header(input_t *input, FILE *fp, bool binary)
             return -1;
         }
 
+        if (fprintf(fp, "Input size: %d\n", input->input_size) < 0) {
+            ST_WARNING("Failed to fprintf input_size.");
+            return -1;
+        }
         if (fprintf(fp, "Num context: %d\n", input->num_ctx) < 0) {
             ST_WARNING("Failed to fprintf num ctx.");
             return -1;
@@ -389,7 +411,7 @@ char* input_draw_label(input_t *input, char *label, size_t label_len)
 
     ST_CHECK_PARAM(input == NULL || label == NULL, NULL);
 
-    snprintf(buf, MAX_LINE_LEN, "ctx={");
+    snprintf(buf, MAX_LINE_LEN, "size=%d,ctx={", input->input_size);
     for (i = 0; i < input->num_ctx - 1; i++) {
         snprintf(label, label_len, "%s%d,", buf, input->context[i]);
         snprintf(buf, MAX_LINE_LEN, "%s", label);

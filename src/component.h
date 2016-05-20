@@ -109,10 +109,11 @@ component_t* comp_dup(component_t *c);
  * @ingroup g_component
  * @param[in] topo_content content for component in a topology file.
  * @param[in] output output layer for component.
+ * @param[in] input_size size of input layer.
  * @return component initialised, NULL if any error.
  */
 component_t *comp_init_from_topo(const char* topo_content,
-        output_t *output);
+        output_t *output, int input_size);
 
 /**
  * Initialize output weight for a component with specific output layer.
@@ -279,13 +280,24 @@ int comp_forward(component_t *comp, int tid);
 int comp_backprop(component_t *comp, int word, int tid);
 
 /**
+ * Get nodename in graphviz format of input layer.
+ * @ingroup g_component
+ * @param[in] comp component.
+ * @param[out] nodename buffer to write string.
+ * @param[in] name_len length of label.
+ * @return nodename on success, NULL if any error.
+ */
+char* comp_input_nodename(component_t *comp, char *nodename,
+        size_t name_len);
+
+/**
  * Convert a component into graphviz format.
  * @ingroup g_component
  * @param[in] comp component.
  * @param[in] fp file stream to be printed out.
  * @return non-zero value if any error.
  */
-int comp_draw(component_t *comp, FILE *fp, const char *output_node);
+int comp_draw(component_t *comp, FILE *fp);
 
 #ifdef __cplusplus
 }

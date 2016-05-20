@@ -303,7 +303,7 @@ int connlm_init(connlm_t *connlm, FILE *topo_fp)
                 goto ERR;
             }
             connlm->comps[connlm->num_comp] = comp_init_from_topo(content,
-                    connlm->output);
+                    connlm->output, connlm->vocab->vocab_size);
             if (connlm->comps[connlm->num_comp] == NULL) {
                 ST_WARNING("Failed to comp_init_from_topo.");
                 goto ERR;
@@ -804,15 +804,17 @@ int connlm_save(connlm_t *connlm, FILE *fp, bool binary)
 
 static int connlm_draw_network(connlm_t *connlm, FILE *fp)
 {
+    char nodename[MAX_NAME_LEN];
     comp_id_t c;
 
     ST_CHECK_PARAM(connlm == NULL || fp == NULL, -1);
 
     fprintf(fp, "digraph network {\n");
-    fprintf(fp, "  rankdir=LR;\n");
+    fprintf(fp, "  rankdir=BT;\n");
     fprintf(fp, "  labelloc=t;\n");
     fprintf(fp, "  label=\"Network\";\n\n");
 
+#if 0
     fprintf(fp, "  subgraph cluster_overview {\n");
     fprintf(fp, "    label=\"Overview\";\n");
     fprintf(fp, "    node [shape=plaintext, style=solid];\n");
@@ -822,25 +824,36 @@ static int connlm_draw_network(connlm_t *connlm, FILE *fp)
                 connlm->num_comp,
                 connlm->vocab->vocab_size);
     fprintf(fp, "  }\n\n");
+#endif
 
     fprintf(fp, "  subgraph cluster_structure {\n");
     fprintf(fp, "    label=\"\";\n");
-    fprintf(fp, "    node[shape=box, orientation=90];\n");
     fprintf(fp, "\n");
-    fprintf(fp, "    output [shape=triangle, orientation=90];\n");
+    fprintf(fp, "    %s [shape=triangle, orientation=180];\n",
+            OUTPUT_LAYER_NAME);
     for (c = 0; c < connlm->num_comp; c++) {
-        if (comp_draw(connlm->comps[c], fp, "output") < 0) {
+        if (comp_draw(connlm->comps[c], fp) < 0) {
             ST_WARNING("Failed to comp_draw.");
             return -1;
         }
     }
-    fprintf(fp, "  }\n\n");
+    fprintf(fp, "\n");
 
+    fprintf(fp, "    { rank=same; ");
+    for (c = 0; c < connlm->num_comp; c++) {
+        fprintf(fp, "%s; ", comp_input_nodename(connlm->comps[c],
+                    nodename, MAX_NAME_LEN));
+    }
+    fprintf(fp, "}\n");
+    fprintf(fp, "  }\n");
+
+#if 0
     if (connlm->num_comp > 0) {
     // keep legend in the left
         fprintf(fp, "  legend -> input_%s [style=invis];\n",
                 connlm->comps[0]->name);
     }
+#endif
 
     fprintf(fp, "}\n");
 

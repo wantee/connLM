@@ -211,7 +211,8 @@ ERR:
     return -1;
 }
 
-component_t *comp_init_from_topo(const char* topo_content, output_t *output)
+component_t *comp_init_from_topo(const char* topo_content,
+        output_t *output, int input_size)
 {
     component_t *comp = NULL;
 
@@ -280,7 +281,7 @@ component_t *comp_init_from_topo(const char* topo_content, output_t *output)
                 ST_WARNING("Too many input layers.");
                 goto ERR;
             }
-            comp->input = input_parse_topo(line);
+            comp->input = input_parse_topo(line, input_size);
             if (comp->input == NULL) {
                 ST_WARNING("Failed to input_parse_topo.");
                 goto ERR;
@@ -856,44 +857,85 @@ int comp_backprop(component_t *comp, int word, int tid)
     return 0;
 }
 
-static inline char* layername2nodename(component_t *comp, layer_id_t l,
+char* comp_input_nodename(component_t *comp, char *nodename,
+        size_t name_len)
+{
+    snprintf(nodename, name_len, "%s_%s", INPUT_LAYER_NAME, comp->name);
+    return nodename;
+}
+
+static inline char* layer2nodename(component_t *comp, layer_id_t l,
         char *node, size_t node_len)
 {
-    snprintf(node, node_len, "layer_%s_%s", comp->name,
-            comp->layers[l]->name);
+    if (strcasecmp(comp->layers[l]->type, INPUT_LAYER_NAME) == 0) {
+        (void)comp_input_nodename(comp, node, node_len);
+    } else if (strcasecmp(comp->layers[l]->type, OUTPUT_LAYER_NAME) == 0) {
+        snprintf(node, node_len, OUTPUT_LAYER_NAME);
+    } else {
+        snprintf(node, node_len, "layer_%s_%s", comp->name,
+                comp->layers[l]->name);
+    }
     return node;
 }
 
-int comp_draw(component_t *comp, FILE *fp, const char *output_node)
+static inline char* glue2nodename(component_t *comp, glue_id_t g,
+        char *node, size_t node_len)
 {
-    char label[MAX_LINE_LEN];
+    snprintf(node, node_len, "glue_%s_%s", comp->name,
+            comp->glues[g]->name);
+    return node;
+}
+
+int comp_draw(component_t *comp, FILE *fp)
+{
+    char label[MAX_NAME_LEN];
     char nodename[MAX_NAME_LEN];
-    layer_id_t l, ll;
+    char gluenodename[MAX_NAME_LEN];
+    layer_id_t l;
     glue_id_t g;
 
     ST_CHECK_PARAM(comp == NULL || fp == NULL, -1);
 
-    fprintf(fp, "    input_%s [label=\"%s/%s\"];\n", comp->name, comp->name,
-            input_draw_label(comp->input, label, MAX_LINE_LEN));
+    fprintf(fp, "    node[shape=box];\n");
     for (l = 0; l < comp->num_layer; l++) {
+        if (strcasecmp(comp->layers[l]->type, OUTPUT_LAYER_NAME) == 0) {
+            continue;
+        }
+        if (strcasecmp(comp->layers[l]->type, INPUT_LAYER_NAME) == 0) {
+            fprintf(fp, "    %s [label=\"%s/%s\"];\n",
+                    layer2nodename(comp, l, nodename, MAX_NAME_LEN),
+                    comp->name,
+                    input_draw_label(comp->input, label, MAX_NAME_LEN));
+            continue;
+        }
         fprintf(fp, "    %s [label=\"%s\"];\n",
-                layername2nodename(comp, l, nodename, MAX_NAME_LEN),
+                layer2nodename(comp, l, nodename, MAX_NAME_LEN),
                 layer_draw_label(comp->layers[l], label, MAX_NAME_LEN));
     }
+    fprintf(fp, "\n");
 
+    fprintf(fp, "    node[shape=circle];\n");//, fixedsize=true];\n");
     for (g = 0; g < comp->num_glue; g++) {
+        (void)glue2nodename(comp, g, gluenodename, MAX_NAME_LEN),
+        fprintf(fp, "    %s [label=\"%s\"];\n", gluenodename,
+                glue_draw_label(comp->glues[g], label, MAX_NAME_LEN));
         for (l = 0; l < comp->glues[g]->num_in_layer; l++) {
-            for (ll = 0; ll < comp->glues[g]->num_out_layer; ll++) {
-                fprintf(fp, "    %s -> %s [label=\"%s\"];\n",
-                        layername2nodename(comp,
-                            comp->glues[g]->in_layers[l],
-                            nodename, MAX_NAME_LEN),
-                        layername2nodename(comp,
-                            comp->glues[g]->out_layers[ll],
-                            nodename, MAX_NAME_LEN),
-                        glue_draw_label(comp->glues[g], l, ll,
-                            label, MAX_NAME_LEN));
-            }
+            fprintf(fp, "    %s -> %s [label=\"%s\"];\n",
+                    layer2nodename(comp,
+                        comp->glues[g]->in_layers[l],
+                        nodename, MAX_NAME_LEN),
+                    gluenodename,
+                    glue_draw_label_one(comp->glues[g], l,
+                        label, MAX_NAME_LEN));
+        }
+        for (l = 0; l < comp->glues[g]->num_out_layer; l++) {
+            fprintf(fp, "    %s -> %s [label=\"%s\"];\n",
+                    gluenodename,
+                    layer2nodename(comp,
+                        comp->glues[g]->out_layers[l],
+                        nodename, MAX_NAME_LEN),
+                    glue_draw_label_one(comp->glues[g], l,
+                        label, MAX_NAME_LEN));
         }
     }
 

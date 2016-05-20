@@ -44,6 +44,7 @@ extern "C" {
  * @ingroup g_input
  */
 typedef struct _input_t_ {
+    int input_size;
     int *context;
     int num_ctx;
 } input_t;
@@ -79,9 +80,10 @@ input_t* input_dup(input_t *i);
  * Parse a topo config line, and return a new input layer.
  * @ingroup g_input
  * @param[in] line topo config line.
+ * @param[in] input_size size of input layer.
  * @return a new input layer or NULL if error.
  */
-input_t* input_parse_topo(const char *line);
+input_t* input_parse_topo(const char *line, int input_size);
 
 #define INPUT_LAYER_NAME "input"
 

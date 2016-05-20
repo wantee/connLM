@@ -1080,8 +1080,7 @@ int glue_save_body(glue_t *glue, FILE *fp, bool binary)
     return 0;
 }
 
-char* glue_draw_label(glue_t *glue, layer_id_t in_layer,
-        layer_id_t out_layer, char *label, size_t label_len)
+char* glue_draw_label(glue_t *glue, char *label, size_t label_len)
 {
     char buf[MAX_LINE_LEN];
     glue_reg_t *reg;
@@ -1090,18 +1089,30 @@ char* glue_draw_label(glue_t *glue, layer_id_t in_layer,
 
     reg = glue_get_reg(glue->type);
     snprintf(label, label_len, "%s/type=%s", glue->name, glue->type);
-    if (glue->in_offsets != NULL && glue->in_offsets[in_layer] != 0) {
-        snprintf(buf, MAX_LINE_LEN, ",off="GLUE_OFFSET_FMT,
-                glue->in_offsets[in_layer]);
-        strncat(label, buf, label_len - strlen(label) - 1);
-    }
-    if (glue->in_offsets != NULL && glue->in_scales[in_layer] != 1.0) {
-        snprintf(buf, MAX_LINE_LEN, ",scale="REAL_FMT,
-                glue->in_scales[in_layer]);
-        strncat(label, buf, label_len - strlen(label) - 1);
-    }
     strncat(label, reg->draw_label(glue, buf, MAX_LINE_LEN),
             label_len - strlen(label) - 1);
+
+    return label;
+}
+
+char* glue_draw_label_one(glue_t *glue, layer_id_t lid,
+        char *label, size_t label_len)
+{
+    char buf[MAX_LINE_LEN];
+
+    ST_CHECK_PARAM(glue == NULL || label == NULL, NULL);
+
+    label[0] = '\0';
+    if (glue->in_offsets != NULL && glue->in_offsets[lid] != 0) {
+        snprintf(buf, MAX_LINE_LEN, ",off="GLUE_OFFSET_FMT,
+                glue->in_offsets[lid]);
+        strncat(label, buf, label_len - strlen(label) - 1);
+    }
+    if (glue->in_offsets != NULL && glue->in_scales[lid] != 1.0) {
+        snprintf(buf, MAX_LINE_LEN, ",scale="REAL_FMT,
+                glue->in_scales[lid]);
+        strncat(label, buf, label_len - strlen(label) - 1);
+    }
 
     return label;
 }
