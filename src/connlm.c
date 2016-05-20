@@ -355,14 +355,6 @@ int connlm_init(connlm_t *connlm, FILE *topo_fp)
         }
     }
 
-    for (c = 0; c < connlm->num_comp; c++) {
-        if (comp_construct_graph(connlm->comps[c]) < 0) {
-            ST_WARNING("Failed to construct graph for component [%s]",
-                    connlm->comps[c]->name);
-            goto ERR;
-        }
-    }
-
     return 0;
 
 ERR:

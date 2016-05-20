@@ -39,7 +39,6 @@ extern "C" {
 #include "glues/glue.h"
 #include "weights/embedding_weight.h"
 #include "weights/output_weight.h"
-#include "graph.h"
 
 /** @defgroup g_component NNet component.
  * Data structures and functions for NNet component.
@@ -71,9 +70,9 @@ typedef struct _component_t_ {
     glue_t **glues; /**< glues. */
     glue_id_t num_glue; /**< number of glues. */
 
-    graph_t *graph; /**< nnet graph for this component. */
-
     out_wt_t *out_wt; /**< output weights. */
+
+    glue_id_t* fwd_order; /**< forward order of glue. */
 
     comp_train_opt_t train_opt; /**< train options. */
 } component_t;
@@ -114,14 +113,6 @@ component_t* comp_dup(component_t *c);
  */
 component_t *comp_init_from_topo(const char* topo_content,
         output_t *output);
-
-/**
- * Construct the nnet graph for a component.
- * @ingroup g_component
- * @param[in] comp component to construct graph.
- * @return non-zero value if any error.
- */
-int comp_construct_graph(component_t *comp);
 
 /**
  * Initialize output weight for a component with specific output layer.

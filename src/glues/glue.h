@@ -37,6 +37,7 @@ extern "C" {
  */
 
 typedef int glue_id_t;
+#define GLUE_ID_NONE -1
 #define GLUE_ID_FMT "%d"
 typedef int glue_offset_t;
 #define GLUE_OFFSET_FMT "%d"

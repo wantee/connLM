@@ -38,9 +38,12 @@ extern "C" {
  * Data structures and functions for NNet graph.
  */
 
-typedef layer_id_t node_id_t;
-typedef glue_id_t link_id_t;
+typedef glue_id_t node_id_t;
+#define NODE_ID_NONE GLUE_ID_NONE
+#define NODE_ID_FMT GLUE_ID_FMT
+typedef layer_id_t link_id_t;
 #define LINK_ID_NONE LAYER_ID_NONE
+#define LINK_ID_FMT LAYER_ID_FMT
 
 /**
  * NNet graph link.
@@ -49,9 +52,7 @@ typedef glue_id_t link_id_t;
 typedef struct _link_t_ {
     node_id_t to; /**< node this link point to. */
 
-    glue_id_t glue; /**< corresponding glue. */
-    layer_id_t glue_in; /**< corresponding in layer of glue. */
-    layer_id_t glue_out; /**< corresponding out layer of glue. */
+    layer_id_t layer; /**< corresponding layer. */
 
     bool cycle;
 } link_t;
@@ -62,9 +63,9 @@ typedef struct _link_t_ {
  */
 typedef struct _node_t_ {
     link_id_t *links; /**< links from this node. */
-    int num_link; /**< number of links. */
+    link_id_t num_link; /**< number of links. */
 
-    layer_id_t layer; /**< corresponding layer. */
+    glue_id_t glue; /**< corresponding glue. */
 } node_t;
 
 /**
@@ -74,11 +75,12 @@ typedef struct _node_t_ {
 typedef struct _graph_t_ {
     node_t *nodes; /**< nodes in graph. */
     node_id_t num_node; /**< number of nodes. */
+    node_id_t cap_link; /**< capacity of links. */
 
     link_t *links; /**< links in graph. */
     link_id_t num_link; /**< number of links. */
 
-    node_id_t* fwd_order; /**< forward order of nodes. */
+    node_id_t root;
 } graph_t;
 
 /**
@@ -119,6 +121,14 @@ graph_t* graph_dup(graph_t *g);
  */
 graph_t* graph_construct(layer_t **layers, layer_id_t n_layer,
         glue_t **glues, glue_id_t n_glue);
+
+/**
+ * Topological sort nodes of a graph.
+ * @ingroup g_graph
+ * @param[in] graph the graph.
+ * @return forward order of nodes, NULL if any error.
+ */
+node_id_t* graph_sort(graph_t *graph);
 
 #ifdef __cplusplus
 }

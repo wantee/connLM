@@ -28,6 +28,7 @@
 #include <stutils/st_utils.h>
 
 #include "param.h"
+#include "graph.h"
 #include "component.h"
 
 static const int COMP_MAGIC_NUM = 626140498 + 30;
@@ -58,9 +59,9 @@ void comp_destroy(component_t *comp)
     safe_free(comp->glues);
     comp->num_glue = 0;
 
-    safe_graph_destroy(comp->graph);
-
     safe_out_wt_destroy(comp->out_wt);
+
+    safe_free(comp->fwd_order);
 }
 
 component_t* comp_dup(component_t *c)
@@ -136,16 +137,6 @@ component_t* comp_dup(component_t *c)
         comp->num_glue = 0;
     }
 
-    if (comp->graph != NULL) {
-        comp->graph = graph_dup(c->graph);
-        if (comp->graph == NULL) {
-            ST_WARNING("Failed to graph_dup.");
-            goto ERR;
-        }
-    } else {
-        comp->graph = NULL;
-    }
-
     comp->out_wt = out_wt_dup(c->out_wt);
     if (comp->out_wt == NULL) {
         ST_WARNING("Failed to out_wt_dup.");
@@ -192,6 +183,34 @@ static int comp_parse_topo(component_t *comp, const char *line)
     return 0;
 }
 
+static int comp_sort_glue(component_t *comp)
+{
+    graph_t *graph = NULL;
+
+    ST_CHECK_PARAM(comp == NULL, -1);
+
+    graph = graph_construct(comp->layers, comp->num_layer,
+            comp->glues, comp->num_glue);
+    if (graph == NULL) {
+        ST_WARNING("Failed to graph_construct.");
+        goto ERR;
+    }
+
+    comp->fwd_order = graph_sort(graph);
+    if (comp->fwd_order == NULL) {
+        ST_WARNING("Falied to graph_sort.");
+        goto ERR;
+    }
+
+    safe_graph_destroy(graph);
+
+    return 0;
+
+ERR:
+    safe_graph_destroy(graph);
+    return -1;
+}
+
 component_t *comp_init_from_topo(const char* topo_content, output_t *output)
 {
     component_t *comp = NULL;
@@ -202,6 +221,9 @@ component_t *comp_init_from_topo(const char* topo_content, output_t *output)
     size_t line_cap = 0;
 
     const char *p;
+
+    layer_id_t l, m;
+    glue_id_t g, h;
 
     ST_CHECK_PARAM(topo_content == NULL || output == NULL, NULL);
 
@@ -308,12 +330,47 @@ component_t *comp_init_from_topo(const char* topo_content, output_t *output)
         }
     }
 
+    safe_free(line);
+
     if (comp->input == NULL) {
         ST_WARNING("NO input layer.");
         goto ERR;
     }
 
-    safe_free(line);
+    if (comp->num_glue == 0) {
+        ST_WARNING("NO glues.");
+        goto ERR;
+    }
+
+    if (comp->num_layer == 0) {
+        ST_WARNING("NO layers.");
+        goto ERR;
+    }
+
+    for (l = 0; l < comp->num_layer - 1; l++) {
+        for (m = l+1; m < comp->num_layer; m++) {
+            if (strcmp(comp->layers[l]->name, comp->layers[m]->name) == 0) {
+                ST_WARNING("Duplicated layer name[%s]",
+                        comp->layers[l]->name);
+                goto ERR;
+            }
+        }
+    }
+
+    for (g = 0; g < comp->num_glue - 1; g++) {
+        for (h = g+1; h < comp->num_glue; h++) {
+            if (strcmp(comp->glues[g]->name, comp->glues[h]->name) == 0) {
+                ST_WARNING("Duplicated glue name[%s]",
+                        comp->glues[g]->name);
+                goto ERR;
+            }
+        }
+    }
+
+    if (comp_sort_glue(comp) < 0) {
+        ST_WARNING("Failed to comp_sort_glue component [%s]", comp->name);
+        goto ERR;
+    }
 
     return comp;
 
@@ -329,49 +386,6 @@ int comp_init_out_wt(component_t *comp, output_t *output, real_t scale)
     ST_CHECK_PARAM(comp == NULL || output == NULL || scale <= 0, -1);
 
     return 0;
-}
-
-int comp_construct_graph(component_t *comp)
-{
-    layer_id_t l, m;
-    glue_id_t g, h;
-
-    ST_CHECK_PARAM(comp == NULL, -1);
-
-    comp->graph = NULL;
-
-    for (l = 0; l < comp->num_layer - 1; l++) {
-        for (m = l+1; m < comp->num_layer; m++) {
-            if (strcmp(comp->layers[l]->name, comp->layers[m]->name) == 0) {
-                ST_WARNING("Duplicated layer name[%s]",
-                        comp->layers[l]->name);
-                return -1;
-            }
-        }
-    }
-
-    for (g = 0; g < comp->num_glue - 1; g++) {
-        for (h = g+1; h < comp->num_glue; h++) {
-            if (strcmp(comp->glues[g]->name, comp->glues[h]->name) == 0) {
-                ST_WARNING("Duplicated glue name[%s]",
-                        comp->glues[g]->name);
-                return -1;
-            }
-        }
-    }
-
-    comp->graph = graph_construct(comp->layers, comp->num_layer,
-            comp->glues, comp->num_glue);
-    if (comp->graph == NULL) {
-        ST_WARNING("Failed to graph_construct.");
-        goto ERR;
-    }
-
-    return 0;
-
-ERR:
-    safe_graph_destroy(comp->graph);
-    return -1;
 }
 
 int comp_load_train_opt(component_t *comp, st_opt_t *opt,
@@ -662,8 +676,8 @@ int comp_load_body(component_t *comp, int version, FILE *fp, bool binary)
         goto ERR;
     }
 
-    if (comp_construct_graph(comp) < 0) {
-        ST_WARNING("Failed to comp_construct_graph.");
+    if (comp_sort_glue(comp) < 0) {
+        ST_WARNING("Failed to comp_sort_glue component [%s]", comp->name);
         goto ERR;
     }
 
@@ -682,8 +696,6 @@ ERR:
     }
 
     safe_out_wt_destroy(comp->out_wt);
-
-    safe_graph_destroy(comp->graph);
 
     return -1;
 }
