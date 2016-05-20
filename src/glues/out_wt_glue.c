@@ -192,11 +192,6 @@ bool out_wt_glue_check(glue_t *glue, layer_t **layers, layer_id_t n_layer)
         return false;
     }
 
-    if (!glue_check(glue)) {
-        ST_WARNING("Failed to glue_check.");
-        return false;
-    }
-
     if (glue->num_out_layer != 1) {
         ST_WARNING("out_wt glue: num_out_layer shoule be equal to 1.");
         return false;

@@ -492,9 +492,15 @@ glue_t* glue_parse_topo(const char *line, layer_t **layers,
     }
 
     if (glue->name[0] == '\0') {
-        ST_WARNING("No layer name found.");
+        ST_WARNING("No glue name found.");
         goto ERR;
     }
+
+    if (!glue_check(glue)) {
+        ST_WARNING("Failed to glue_check.");
+        return false;
+    }
+
     if (reg == NULL) {
         ST_WARNING("No type found.");
         goto ERR;
