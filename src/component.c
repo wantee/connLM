@@ -893,6 +893,7 @@ int comp_draw(component_t *comp, FILE *fp, bool verbose)
     char gluenodename[MAX_NAME_LEN];
     layer_id_t l;
     glue_id_t g;
+    glue_id_t gg, order;
 
     ST_CHECK_PARAM(comp == NULL || fp == NULL, -1);
 
@@ -925,9 +926,20 @@ int comp_draw(component_t *comp, FILE *fp, bool verbose)
             fprintf(fp, "    edge[color=red];\n");
         }
         (void)glue2nodename(comp, g, gluenodename, MAX_NAME_LEN),
-        fprintf(fp, "    %s [label=\"%s\"];\n", gluenodename,
+        fprintf(fp, "    %s [label=\"%s", gluenodename,
                 glue_draw_label(comp->glues[g], label, MAX_NAME_LEN,
                     verbose));
+        if (verbose) {
+            order = GLUE_ID_NONE;
+            for (gg = 0; gg < comp->num_glue; gg++) {
+                if (comp->fwd_order[gg] == g) {
+                    order = gg;
+                    break;
+                }
+            }
+            fprintf(fp, "\\n"GLUE_ID_FMT, order);
+        }
+        fprintf(fp, "\"];\n");
         for (l = 0; l < comp->glues[g]->num_in_layer; l++) {
             fprintf(fp, "    %s -> %s [label=\"%s\"];\n",
                     layer2nodename(comp,
