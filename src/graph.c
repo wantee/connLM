@@ -38,14 +38,11 @@ static void node_destroy(node_t* node)
 
     safe_free(node->links);
     node->num_link = 0;
-    node->glue = GLUE_ID_NONE;
 }
 
 static void link_init(link_t* link)
 {
     link->to = NODE_ID_NONE;
-    link->layer = LINK_ID_NONE;
-    link->cycle = 0;
 }
 
 static void link_destroy(link_t* link)
@@ -77,6 +74,8 @@ void graph_destroy(graph_t* graph)
     }
     safe_free(graph->links);
     graph->num_link = 0;
+
+    graph->glues = NULL;
 }
 
 #define NUM_REALLOC_LINK 10
@@ -119,8 +118,8 @@ static link_id_t node_add_link(node_t *node, link_id_t lk)
 }
 
 static int graph_dfs(graph_t *graph, node_id_t start,
-        st_stack_t *node_stack, st_stack_t *link_stack,
-        bool *on_stack, bool *visited, bool *passed,
+        st_stack_t *node_stack, bool *on_stack,
+        bool *visited, bool *passed,
         node_id_t *post_order, node_id_t *post_i)
 {
     node_t *node;
@@ -150,49 +149,29 @@ static int graph_dfs(graph_t *graph, node_id_t start,
     node = graph->nodes + start;
     for (l = 0; l < node->num_link; l++) {
         lk = node->links[l];
-        if (st_stack_push(link_stack, (void *)(long)lk) != ST_STACK_OK) {
-            ST_WARNING("Failed to st_stack_push link["LINK_ID_FMT"].", lk);
-            return -1;
-        }
-#ifdef _GRAPH_DEBUG_
-        ST_DEBUG("Link push: "LINK_ID_FMT, lk);
-#endif
         passed[lk] = true;
 
         to = graph->links[lk].to;
         if(!visited[to]) {
-            if (graph_dfs(graph, to, node_stack, link_stack,
-                    on_stack, visited, passed, post_order, post_i) < 0) {
+            if (graph_dfs(graph, to, node_stack, on_stack,
+                        visited, passed, post_order, post_i) < 0) {
                 ST_WARNING("Failed to graph_dfs["NODE_ID_FMT"].", to);
                 return -1;
             }
         } else if(on_stack[to]) {
             for(s = 1; s <= node_stack->top; s++) {
-                if (st_stack_topn(link_stack, s, &tmp) != ST_STACK_OK) {
-                    ST_WARNING("Failed to st_stack_topn link.["
-                            LINK_ID_FMT"]", s);
-                    return -1;
-                }
-
-                graph->links[(link_id_t)tmp].cycle = true;
-
                 if (st_stack_topn(node_stack, s, &tmp) != ST_STACK_OK) {
                     ST_WARNING("Failed to st_stack_topn node.[%d]", s);
                     return -1;
                 }
+
+                graph->glues[(glue_id_t)tmp]->recur = true;
+
                 if ((node_id_t)tmp == to) {
                     break;
                 }
             }
         }
-
-        if (st_stack_pop(link_stack, &tmp) != ST_STACK_OK) {
-            ST_WARNING("Failed to st_stack_pop link.");
-            return -1;
-        }
-#ifdef _GRAPH_DEBUG_
-        ST_DEBUG("Link pop: "LINK_ID_FMT, (link_id_t)tmp);
-#endif
     }
 
     if (st_stack_pop(node_stack, &tmp) != ST_STACK_OK) {
@@ -215,7 +194,6 @@ static int graph_dfs(graph_t *graph, node_id_t start,
 node_id_t* graph_sort(graph_t *graph)
 {
     st_stack_t *node_stack = NULL; /* node stack. */
-    st_stack_t *link_stack = NULL; /* link stack. */
     bool *on_stack = NULL; /* node whether on current stack. */
     bool *visited = NULL; /* node whether visited. */
     bool *passed = NULL; /* link whether passed. */
@@ -257,13 +235,6 @@ node_id_t* graph_sort(graph_t *graph)
     }
     (void)st_stack_clear(node_stack);
 
-    link_stack = st_stack_create((st_stack_id_t)graph->num_link);
-    if (link_stack == NULL) {
-        ST_WARNING("Failed to st_stack_create link_stack.");
-        goto ERR;
-    }
-    (void)st_stack_clear(link_stack);
-
     on_stack = (bool *)malloc(sizeof(bool) * graph->num_node);
     if (on_stack == NULL) {
         ST_WARNING("Failed to malloc on_stack");
@@ -286,8 +257,8 @@ node_id_t* graph_sort(graph_t *graph)
     memset(passed, 0, sizeof(bool) * graph->num_link);
 
     post_i = 0;
-    if (graph_dfs(graph, 0, node_stack, link_stack,
-                on_stack, visited, passed, post_order, &post_i) < 0) {
+    if (graph_dfs(graph, 0, node_stack, on_stack,
+                visited, passed, post_order, &post_i) < 0) {
         ST_WARNING("Failed to dfs.");
         goto ERR;
     }
@@ -312,7 +283,6 @@ node_id_t* graph_sort(graph_t *graph)
     }
 
     safe_st_stack_destroy(node_stack);
-    safe_st_stack_destroy(link_stack);
     safe_free(on_stack);
     safe_free(visited);
     safe_free(passed);
@@ -340,7 +310,6 @@ node_id_t* graph_sort(graph_t *graph)
 
 ERR:
     safe_st_stack_destroy(node_stack);
-    safe_st_stack_destroy(link_stack);
     safe_free(on_stack);
     safe_free(visited);
     safe_free(passed);
@@ -399,7 +368,6 @@ graph_t* graph_construct(layer_t **layers, layer_id_t n_layer,
     for (g = 0; g < n_glue; g++) {
         graph->nodes[g].links = NULL;
         graph->nodes[g].num_link = 0;
-        graph->nodes[g].glue = g;
         for (l = 0; l < glues[g]->num_in_layer; l++) {
             if (strcasecmp(layers[glues[g]->in_layers[l]]->type,
                         INPUT_LAYER_NAME) == 0) {
@@ -461,7 +429,6 @@ graph_t* graph_construct(layer_t **layers, layer_id_t n_layer,
                         ST_WARNING("Failed to graph_add_link.");
                         goto ERR;
                     }
-                    graph->links[lk].layer = l;
                     graph->links[lk].to = out_glues[l].glues[gg];
 
                     if (node_add_link(graph->nodes + g,
@@ -494,6 +461,8 @@ graph_t* graph_construct(layer_t **layers, layer_id_t n_layer,
         }
     }
 #endif
+
+    graph->glues = glues;
 
     return graph;
 

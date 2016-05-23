@@ -51,10 +51,6 @@ typedef layer_id_t link_id_t;
  */
 typedef struct _link_t_ {
     node_id_t to; /**< node this link point to. */
-
-    layer_id_t layer; /**< corresponding layer. */
-
-    bool cycle;
 } link_t;
 
 /**
@@ -64,8 +60,6 @@ typedef struct _link_t_ {
 typedef struct _node_t_ {
     link_id_t *links; /**< links from this node. */
     link_id_t num_link; /**< number of links. */
-
-    glue_id_t glue; /**< corresponding glue. */
 } node_t;
 
 /**
@@ -80,7 +74,9 @@ typedef struct _graph_t_ {
     link_t *links; /**< links in graph. */
     link_id_t num_link; /**< number of links. */
 
-    node_id_t root;
+    node_id_t root; /**< root of graph. */
+
+    glue_t** glues; /**< glues(nodes) of graph. */
 } graph_t;
 
 /**

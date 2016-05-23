@@ -523,11 +523,12 @@ ERR:
     return NULL;
 }
 
-glue_t* glue_dup(glue_t *l)
+glue_t* glue_dup(glue_t *g)
 {
     glue_t *glue = NULL;
+    size_t sz;
 
-    ST_CHECK_PARAM(l == NULL, NULL);
+    ST_CHECK_PARAM(g == NULL, NULL);
 
     glue = (glue_t *) malloc(sizeof(glue_t));
     if (glue == NULL) {
@@ -536,11 +537,66 @@ glue_t* glue_dup(glue_t *l)
     }
     memset(glue, 0, sizeof(glue_t));
 
-    strncpy(glue->name, l->name, MAX_NAME_LEN);
+    strncpy(glue->name, g->name, MAX_NAME_LEN);
     glue->name[MAX_NAME_LEN - 1] = '\0';
+    strncpy(glue->type, g->type, MAX_NAME_LEN);
+    glue->type[MAX_NAME_LEN - 1] = '\0';
 
-    glue->forward = l->forward;
-    glue->backprop = l->backprop;
+    if (glue->num_in_layer > 0) {
+        sz = sizeof(layer_id_t)*glue->num_in_layer;
+        glue->in_layers = (layer_id_t *)malloc(sz);
+        if (glue->in_layers == NULL) {
+            ST_WARNING("Failed to malloc in_layers");
+            goto ERR;
+        }
+        memcpy(glue->in_layers, g->in_layers, sz);
+
+        sz = sizeof(glue_offset_t)*glue->num_in_layer;
+        glue->in_offsets = (glue_offset_t *)malloc(sz);
+        if (glue->in_offsets == NULL) {
+            ST_WARNING("Failed to malloc in_offsets");
+            goto ERR;
+        }
+        memcpy(glue->in_offsets, g->in_offsets, sz);
+
+        sz = sizeof(real_t)*glue->num_in_layer;
+        glue->in_scales = (real_t *)malloc(sz);
+        if (glue->in_scales == NULL) {
+            ST_WARNING("Failed to malloc in_scales");
+            goto ERR;
+        }
+        memcpy(glue->in_scales, g->in_scales, sz);
+    }
+
+    if (glue->num_out_layer > 0) {
+        sz = sizeof(layer_id_t)*glue->num_out_layer;
+        glue->out_layers = (layer_id_t *)malloc(sz);
+        if (glue->out_layers == NULL) {
+            ST_WARNING("Failed to malloc out_layers");
+            goto ERR;
+        }
+        memcpy(glue->out_layers, g->out_layers, sz);
+
+        sz = sizeof(glue_offset_t)*glue->num_out_layer;
+        glue->out_offsets = (glue_offset_t *)malloc(sz);
+        if (glue->out_offsets == NULL) {
+            ST_WARNING("Failed to malloc out_offsets");
+            goto ERR;
+        }
+        memcpy(glue->out_offsets, g->out_offsets, sz);
+
+        sz = sizeof(real_t)*glue->num_out_layer;
+        glue->out_scales = (real_t *)malloc(sz);
+        if (glue->out_scales == NULL) {
+            ST_WARNING("Failed to malloc out_scales");
+            goto ERR;
+        }
+        memcpy(glue->out_scales, g->out_scales, sz);
+    }
+    glue->recur = g->recur;
+
+    glue->forward = g->forward;
+    glue->backprop = g->backprop;
 
     return glue;
 
@@ -1080,7 +1136,8 @@ int glue_save_body(glue_t *glue, FILE *fp, bool binary)
     return 0;
 }
 
-char* glue_draw_label(glue_t *glue, char *label, size_t label_len)
+char* glue_draw_label(glue_t *glue, char *label, size_t label_len,
+        bool verbose)
 {
     char buf[MAX_LINE_LEN];
     glue_reg_t *reg;
@@ -1088,15 +1145,19 @@ char* glue_draw_label(glue_t *glue, char *label, size_t label_len)
     ST_CHECK_PARAM(glue == NULL || label == NULL, NULL);
 
     reg = glue_get_reg(glue->type);
-    snprintf(label, label_len, "%s/type=%s", glue->name, glue->type);
-    strncat(label, reg->draw_label(glue, buf, MAX_LINE_LEN),
-            label_len - strlen(label) - 1);
+    if (verbose) {
+        snprintf(label, label_len, "%s/type=%s", glue->name, glue->type);
+        strncat(label, reg->draw_label(glue, buf, MAX_LINE_LEN),
+                label_len - strlen(label) - 1);
+    } else {
+        snprintf(label, label_len, "%s", glue->name);
+    }
 
     return label;
 }
 
 char* glue_draw_label_one(glue_t *glue, layer_id_t lid,
-        char *label, size_t label_len)
+        char *label, size_t label_len, bool verbose)
 {
     char buf[MAX_LINE_LEN];
 

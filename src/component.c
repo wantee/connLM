@@ -886,7 +886,7 @@ static inline char* glue2nodename(component_t *comp, glue_id_t g,
     return node;
 }
 
-int comp_draw(component_t *comp, FILE *fp)
+int comp_draw(component_t *comp, FILE *fp, bool verbose)
 {
     char label[MAX_NAME_LEN];
     char nodename[MAX_NAME_LEN];
@@ -914,11 +914,20 @@ int comp_draw(component_t *comp, FILE *fp)
     }
     fprintf(fp, "\n");
 
-    fprintf(fp, "    node[shape=circle];\n");//, fixedsize=true];\n");
+    fprintf(fp, "    node[shape=circle");
+    if (!verbose) {
+        fprintf(fp, ",fixedsize=true");
+    }
+    fprintf(fp, "];\n");
     for (g = 0; g < comp->num_glue; g++) {
+        if (comp->glues[g]->recur) {
+            fprintf(fp, "    node[color=red,fontcolor=red];\n");
+            fprintf(fp, "    edge[color=red];\n");
+        }
         (void)glue2nodename(comp, g, gluenodename, MAX_NAME_LEN),
         fprintf(fp, "    %s [label=\"%s\"];\n", gluenodename,
-                glue_draw_label(comp->glues[g], label, MAX_NAME_LEN));
+                glue_draw_label(comp->glues[g], label, MAX_NAME_LEN,
+                    verbose));
         for (l = 0; l < comp->glues[g]->num_in_layer; l++) {
             fprintf(fp, "    %s -> %s [label=\"%s\"];\n",
                     layer2nodename(comp,
@@ -926,7 +935,7 @@ int comp_draw(component_t *comp, FILE *fp)
                         nodename, MAX_NAME_LEN),
                     gluenodename,
                     glue_draw_label_one(comp->glues[g], l,
-                        label, MAX_NAME_LEN));
+                        label, MAX_NAME_LEN, verbose));
         }
         for (l = 0; l < comp->glues[g]->num_out_layer; l++) {
             fprintf(fp, "    %s -> %s [label=\"%s\"];\n",
@@ -935,8 +944,14 @@ int comp_draw(component_t *comp, FILE *fp)
                         comp->glues[g]->out_layers[l],
                         nodename, MAX_NAME_LEN),
                     glue_draw_label_one(comp->glues[g], l,
-                        label, MAX_NAME_LEN));
+                        label, MAX_NAME_LEN, verbose));
         }
+
+        if (comp->glues[g]->recur) {
+            fprintf(fp, "    node[color=black,fontcolor=black];\n");
+            fprintf(fp, "    edge[color=black];\n");
+        }
+        fprintf(fp, "\n");
     }
 
     return 0;

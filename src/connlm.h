@@ -243,9 +243,10 @@ int connlm_save(connlm_t *connlm, FILE *fp, bool binary);
  * @ingroup g_connlm
  * @param[in] connlm connlm model.
  * @param[in] fp file stream to be printed out.
+ * @param[in] verbose verbose output.
  * @return non-zero value if any error.
  */
-int connlm_draw(connlm_t *connlm, FILE *fp);
+int connlm_draw(connlm_t *connlm, FILE *fp, bool verbose);
 
 /**
  * Print info of a connlm model file stream.

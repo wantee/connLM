@@ -802,7 +802,7 @@ int connlm_save(connlm_t *connlm, FILE *fp, bool binary)
     return 0;
 }
 
-static int connlm_draw_network(connlm_t *connlm, FILE *fp)
+static int connlm_draw_network(connlm_t *connlm, FILE *fp, bool verbose)
 {
     char nodename[MAX_NAME_LEN];
     comp_id_t c;
@@ -824,15 +824,16 @@ static int connlm_draw_network(connlm_t *connlm, FILE *fp)
                 connlm->num_comp,
                 connlm->vocab->vocab_size);
     fprintf(fp, "  }\n\n");
-#endif
 
     fprintf(fp, "  subgraph cluster_structure {\n");
+#endif
+    fprintf(fp, "  subgraph structure {\n");
     fprintf(fp, "    label=\"\";\n");
     fprintf(fp, "\n");
     fprintf(fp, "    %s [shape=triangle, orientation=180];\n",
             OUTPUT_LAYER_NAME);
     for (c = 0; c < connlm->num_comp; c++) {
-        if (comp_draw(connlm->comps[c], fp) < 0) {
+        if (comp_draw(connlm->comps[c], fp, verbose) < 0) {
             ST_WARNING("Failed to comp_draw.");
             return -1;
         }
@@ -860,11 +861,11 @@ static int connlm_draw_network(connlm_t *connlm, FILE *fp)
     return 0;
 }
 
-int connlm_draw(connlm_t *connlm, FILE *fp)
+int connlm_draw(connlm_t *connlm, FILE *fp, bool verbose)
 {
     ST_CHECK_PARAM(connlm == NULL || fp == NULL, -1);
 
-    if (connlm_draw_network(connlm, fp) < 0) {
+    if (connlm_draw_network(connlm, fp, verbose) < 0) {
         ST_WARNING("Failed to connlm_draw_network.");
         return -1;
     }

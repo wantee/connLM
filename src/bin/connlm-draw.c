@@ -29,6 +29,7 @@
 #include <connlm/connlm.h>
 
 st_opt_t *g_cmd_opt;
+bool g_verbose;
 
 int connlm_draw_parse_opt(int *argc, const char *argv[])
 {
@@ -55,6 +56,9 @@ int connlm_draw_parse_opt(int *argc, const char *argv[])
         ST_WARNING("Failed to open log");
         goto ST_OPT_ERR;
     }
+
+    ST_OPT_GET_BOOL(g_cmd_opt, "VERBOSE", g_verbose, false,
+            "Output verbose dot");
 
     ST_OPT_GET_BOOL(g_cmd_opt, "help", b, false, "Print help");
 
@@ -135,7 +139,7 @@ int main(int argc, const char *argv[])
         goto ERR;
     }
 
-    if (connlm_draw(connlm, fp) < 0) {
+    if (connlm_draw(connlm, fp, g_verbose) < 0) {
         ST_WARNING("Failed to connlm_draw. [%s]", argv[2]);
         goto ERR;
     }
