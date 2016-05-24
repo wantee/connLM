@@ -230,3 +230,76 @@ char* out_wt_glue_draw_label(glue_t *glue, char *label, size_t label_len)
 
     return label;
 }
+
+int out_wt_glue_load_header(void **extra, int version,
+        FILE *fp, bool *binary, FILE *fo_info)
+{
+    out_wt_glue_data_t *data = NULL;
+
+    if (extra != NULL) {
+        data = out_wt_glue_data_init();
+        if (data == NULL) {
+            ST_WARNING("Failed to out_wt_glue_data_init.");
+            goto ERR;
+        }
+
+        *extra = (void *)data;
+    }
+
+    if (out_wt_load_header(data != NULL ? &(data->out_wt) : NULL,
+                version, fp, binary, fo_info) < 0) {
+        ST_WARNING("Failed to out_wt_load_header.");
+        goto ERR;
+    }
+
+    return 0;
+
+ERR:
+    safe_out_wt_glue_data_destroy(data);
+    if (extra != NULL) {
+        *extra = NULL;
+    }
+    return -1;
+}
+
+int out_wt_glue_load_body(void *extra, int version, FILE *fp, bool binary)
+{
+    out_wt_glue_data_t *data = NULL;
+
+    data = (out_wt_glue_data_t *)extra;
+
+    if (out_wt_load_body(data->out_wt, version, fp, binary) < 0) {
+        ST_WARNING("Failed to out_wt_load_body.");
+        return -1;
+    }
+
+    return 0;
+}
+
+int out_wt_glue_save_header(void *extra, FILE *fp, bool binary)
+{
+    out_wt_glue_data_t *data = NULL;
+
+    data = (out_wt_glue_data_t *)extra;
+
+    if (out_wt_save_header(data->out_wt, fp, binary) < 0) {
+        ST_WARNING("Failed to out_wt_save_header.");
+        return -1;
+    }
+
+    return 0;
+}
+
+int out_wt_glue_save_body(void *extra, FILE *fp, bool binary)
+{
+    out_wt_glue_data_t *data = NULL;
+
+    data = (out_wt_glue_data_t *)extra;
+
+    if (out_wt_save_body(data->out_wt, fp, binary) < 0) {
+        ST_WARNING("Failed to out_wt_save_body.");
+        return -1;
+    }
+
+    return 0;
+}

@@ -45,7 +45,6 @@ void comp_destroy(component_t *comp)
     comp->name[0] = 0;
 
     safe_input_destroy(comp->input);
-    safe_emb_wt_destroy(comp->emb);
 
     for (l = 0; l < comp->num_layer; l++) {
         safe_layer_destroy(comp->layers[l]);
@@ -58,8 +57,6 @@ void comp_destroy(component_t *comp)
     }
     safe_free(comp->glues);
     comp->num_glue = 0;
-
-    safe_out_wt_destroy(comp->out_wt);
 
     safe_free(comp->fwd_order);
 }
@@ -86,12 +83,6 @@ component_t* comp_dup(component_t *c)
     comp->input = input_dup(c->input);
     if (comp->input == NULL) {
         ST_WARNING("Failed to input_dup.");
-        goto ERR;
-    }
-
-    comp->emb = emb_wt_dup(c->emb);
-    if (comp->emb == NULL) {
-        ST_WARNING("Failed to emb_wt_dup.");
         goto ERR;
     }
 
@@ -135,12 +126,6 @@ component_t* comp_dup(component_t *c)
     } else {
         comp->glues = NULL;
         comp->num_glue = 0;
-    }
-
-    comp->out_wt = out_wt_dup(c->out_wt);
-    if (comp->out_wt == NULL) {
-        ST_WARNING("Failed to out_wt_dup.");
-        goto ERR;
     }
 
     return comp;
@@ -564,16 +549,6 @@ int comp_load_header(component_t **comp, int version,
         goto ERR;
     }
 
-    if (emb_wt_load_header(comp != NULL ? &((*comp)->emb) : NULL,
-                version, fp, &b, fo_info) < 0) {
-        ST_WARNING("Failed to emb_wt_load_header.");
-        goto ERR;
-    }
-    if (*binary != b) {
-        ST_WARNING("Both binary and text format in one file.");
-        goto ERR;
-    }
-
     for (l = 0; l < num_layer; l++) {
         if (layer_load_header(comp != NULL ? &((*comp)->layers[l]) : NULL,
                     version, fp, &b, fo_info) < 0) {
@@ -596,16 +571,6 @@ int comp_load_header(component_t **comp, int version,
             ST_WARNING("Both binary and text format in one file.");
             goto ERR;
         }
-    }
-
-    if (out_wt_load_header(comp != NULL ? &((*comp)->out_wt) : NULL,
-                version, fp, &b, fo_info) < 0) {
-        ST_WARNING("Failed to out_wt_load_header.");
-        goto ERR;
-    }
-    if (*binary != b) {
-        ST_WARNING("Both binary and text format in one file.");
-        goto ERR;
     }
 
     return 0;
@@ -653,11 +618,6 @@ int comp_load_body(component_t *comp, int version, FILE *fp, bool binary)
         goto ERR;
     }
 
-    if (emb_wt_load_body(comp->emb, version, fp, binary) < 0) {
-        ST_WARNING("Failed to emb_wt_load_body.");
-        goto ERR;
-    }
-
     for (l = 0; l < comp->num_layer; l++) {
         if (layer_load_body(comp->layers[l], version, fp, binary) < 0) {
             ST_WARNING("Failed to layer_load_body[" LAYER_ID_FMT ".", l);
@@ -672,11 +632,6 @@ int comp_load_body(component_t *comp, int version, FILE *fp, bool binary)
         }
     }
 
-    if (out_wt_load_body(comp->out_wt, version, fp, binary) < 0) {
-        ST_WARNING("Failed to out_wt_load_body.");
-        goto ERR;
-    }
-
     if (comp_sort_glue(comp) < 0) {
         ST_WARNING("Failed to comp_sort_glue component [%s]", comp->name);
         goto ERR;
@@ -686,7 +641,6 @@ int comp_load_body(component_t *comp, int version, FILE *fp, bool binary)
 
 ERR:
     safe_input_destroy(comp->input);
-    safe_emb_wt_destroy(comp->emb);
 
     for (l = 0; l < comp->num_layer; l++) {
         safe_layer_destroy(comp->layers[l]);
@@ -695,8 +649,6 @@ ERR:
     for (g = 0; g < comp->num_glue; g++) {
         safe_glue_destroy(comp->glues[g]);
     }
-
-    safe_out_wt_destroy(comp->out_wt);
 
     return -1;
 }
@@ -756,11 +708,6 @@ int comp_save_header(component_t *comp, FILE *fp, bool binary)
         return -1;
     }
 
-    if (emb_wt_save_header(comp->emb, fp, binary) < 0) {
-        ST_WARNING("Failed to emb_wt_save_header.");
-        return -1;
-    }
-
     for (l = 0; l < comp->num_layer; l++) {
         if (layer_save_header(comp->layers[l], fp, binary) < 0) {
             ST_WARNING("Failed to layer_save_header[" LAYER_ID_FMT ".", l);
@@ -773,11 +720,6 @@ int comp_save_header(component_t *comp, FILE *fp, bool binary)
             ST_WARNING("Failed to glue_save_header[" GLUE_ID_FMT ".", g);
             return -1;
         }
-    }
-
-    if (out_wt_save_header(comp->out_wt, fp, binary) < 0) {
-        ST_WARNING("Failed to out_wt_save_header.");
-        return -1;
     }
 
     return 0;
@@ -813,11 +755,6 @@ int comp_save_body(component_t *comp, FILE *fp, bool binary)
         return -1;
     }
 
-    if (emb_wt_save_body(comp->emb, fp, binary) < 0) {
-        ST_WARNING("Failed to emb_wt_save_body.");
-        return -1;
-    }
-
     for (l = 0; l < comp->num_layer; l++) {
         if (layer_save_body(comp->layers[l], fp, binary) < 0) {
             ST_WARNING("Failed to layer_save_body[" LAYER_ID_FMT ".", l);
@@ -830,11 +767,6 @@ int comp_save_body(component_t *comp, FILE *fp, bool binary)
             ST_WARNING("Failed to glue_save_body[" GLUE_ID_FMT ".", g);
             return -1;
         }
-    }
-
-    if (out_wt_save_body(comp->out_wt, fp, binary) < 0) {
-        ST_WARNING("Failed to out_wt_save_body.");
-        return -1;
     }
 
     return 0;

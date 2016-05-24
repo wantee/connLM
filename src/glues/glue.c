@@ -46,30 +46,40 @@ typedef struct _glue_register_t_ {
     int (*parse_topo)(glue_t *glue, const char *line);
     bool (*check)(glue_t *glue, layer_t **layers, layer_id_t n_layer);
     char* (*draw_label)(glue_t *glue, char *label, size_t label_len);
+    int (*load_header)(void **extra, int version,
+            FILE *fp, bool *binary, FILE *fo_info);
+    int (*load_body)(void *extra, int version, FILE *fp, bool binary);
+    int (*save_header)(void *extra, FILE *fp, bool binary);
+    int (*save_body)(void *extra, FILE *fp, bool binary);
 } glue_reg_t;
 
 static glue_reg_t GLUE_REG[] = {
     {SUM_GLUE_NAME, sum_glue_init, sum_glue_destroy,
         sum_glue_dup, sum_glue_parse_topo, sum_glue_check,
-        sum_glue_draw_label},
+        sum_glue_draw_label, NULL, NULL, NULL, NULL},
     {APPEND_GLUE_NAME, append_glue_init, append_glue_destroy,
         append_glue_dup, append_glue_parse_topo, append_glue_check,
-        append_glue_draw_label},
+        append_glue_draw_label, NULL, NULL, NULL, NULL},
     {CLONE_GLUE_NAME, clone_glue_init, clone_glue_destroy,
         clone_glue_dup, clone_glue_parse_topo, clone_glue_check,
-        clone_glue_draw_label},
+        clone_glue_draw_label, NULL, NULL, NULL, NULL},
     {DIRECT_GLUE_NAME, direct_glue_init, direct_glue_destroy,
         direct_glue_dup, direct_glue_parse_topo, direct_glue_check,
-        direct_glue_draw_label},
+        direct_glue_draw_label, NULL, NULL, NULL, NULL},
     {WT_GLUE_NAME, wt_glue_init, wt_glue_destroy,
         wt_glue_dup, wt_glue_parse_topo, wt_glue_check,
-        wt_glue_draw_label},
+        wt_glue_draw_label, wt_glue_load_header, wt_glue_load_body,
+        wt_glue_save_header, wt_glue_save_body},
     {EMB_WT_GLUE_NAME, emb_wt_glue_init, emb_wt_glue_destroy,
         emb_wt_glue_dup, emb_wt_glue_parse_topo, emb_wt_glue_check,
-        emb_wt_glue_draw_label},
+        emb_wt_glue_draw_label, emb_wt_glue_load_header,
+        emb_wt_glue_load_body, emb_wt_glue_save_header,
+        emb_wt_glue_save_body},
     {OUT_WT_GLUE_NAME, out_wt_glue_init, out_wt_glue_destroy,
         out_wt_glue_dup, out_wt_glue_parse_topo, out_wt_glue_check,
-        out_wt_glue_draw_label},
+        out_wt_glue_draw_label, out_wt_glue_load_header,
+        out_wt_glue_load_body, out_wt_glue_save_header,
+        out_wt_glue_save_body},
 };
 
 static glue_reg_t* glue_get_reg(const char *type)
@@ -618,6 +628,9 @@ int glue_load_header(glue_t **glue, int version,
     layer_id_t num_in_layer;
     layer_id_t num_out_layer;
 
+    glue_reg_t *reg;
+    bool b;
+
     ST_CHECK_PARAM((glue == NULL && fo_info == NULL) || fp == NULL
             || binary == NULL, -1);
 
@@ -718,6 +731,20 @@ int glue_load_header(glue_t **glue, int version,
         fprintf(fo_info, "Num out layer: "LAYER_ID_FMT"\n", num_out_layer);
     }
 
+    reg = glue_get_reg(type);
+    if (reg->load_header != NULL) {
+        if (reg->load_header(glue != NULL ? &((*glue)->extra) : NULL,
+                    version, fp, &b, fo_info) < 0) {
+            ST_WARNING("Failed to reg->load_header.");
+            goto ERR;
+        }
+
+        if (b != *binary) {
+            ST_WARNING("Tree binary not match with output binary");
+            goto ERR;
+        }
+    }
+
     return 0;
 
 ERR:
@@ -733,6 +760,8 @@ int glue_load_body(glue_t *glue, int version, FILE *fp, bool binary)
     int n;
     layer_id_t l;
     layer_id_t tmp;
+
+    glue_reg_t *reg;
 
     ST_CHECK_PARAM(glue == NULL || fp == NULL, -1);
 
@@ -918,6 +947,14 @@ int glue_load_body(glue_t *glue, int version, FILE *fp, bool binary)
         }
     }
 
+    reg = glue_get_reg(glue->type);
+    if (reg->load_body != NULL) {
+        if (reg->load_body(glue->extra, version, fp, binary) < 0) {
+            ST_WARNING("Failed to reg->load_body.");
+            goto ERR;
+        }
+    }
+
     return 0;
 ERR:
 
@@ -935,6 +972,8 @@ ERR:
 int glue_save_header(glue_t *glue, FILE *fp, bool binary)
 {
     int n;
+
+    glue_reg_t *reg;
 
     ST_CHECK_PARAM(fp == NULL, -1);
 
@@ -996,6 +1035,14 @@ int glue_save_header(glue_t *glue, FILE *fp, bool binary)
         }
     }
 
+    reg = glue_get_reg(glue->type);
+    if (reg->save_header != NULL) {
+        if (reg->save_header(glue->extra, fp, binary) < 0) {
+            ST_WARNING("Failed to reg->save_header.");
+            return -1;
+        }
+    }
+
     return 0;
 }
 
@@ -1003,6 +1050,8 @@ int glue_save_body(glue_t *glue, FILE *fp, bool binary)
 {
     int n;
     layer_id_t l;
+
+    glue_reg_t *reg;
 
     ST_CHECK_PARAM(fp == NULL, -1);
 
@@ -1130,6 +1179,14 @@ int glue_save_body(glue_t *glue, FILE *fp, bool binary)
                     return -1;
                 }
             }
+        }
+    }
+
+    reg = glue_get_reg(glue->type);
+    if (reg->save_body != NULL) {
+        if (reg->save_body(glue->extra, fp, binary) < 0) {
+            ST_WARNING("Failed to reg->save_body.");
+            return -1;
         }
     }
 

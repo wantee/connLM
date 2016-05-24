@@ -97,6 +97,58 @@ bool wt_glue_check(glue_t *glue, layer_t **layers, layer_id_t n_layer);
  */
 char* wt_glue_draw_label(glue_t *glue, char *label, size_t label_len);
 
+/**
+ * Load wt_glue header and initialise a new wt_glue.
+ * @ingroup g_glue_wt
+ * @param[out] extra extra data to be initialised.
+ * @param[in] version file version of loading file.
+ * @param[in] fp file stream loaded from.
+ * @param[out] binary whether the file stream is in binary format.
+ * @param[in] fo file stream used to print information, if it is not NULL.
+ * @see wt_glue_load_body
+ * @see wt_glue_save_header, wt_glue_save_body
+ * @return non-zero value if any error.
+ */
+int wt_glue_load_header(void **extra, int version,
+        FILE *fp, bool *binary, FILE *fo_info);
+
+/**
+ * Load wt_glue body.
+ * @ingroup g_glue_wt
+ * @param[in] extra extra data to be loaded.
+ * @param[in] version file version of loading file.
+ * @param[in] fp file stream loaded from.
+ * @param[in] binary whether to use binary format.
+ * @see wt_glue_load_header
+ * @see wt_glue_save_header, wt_glue_save_body
+ * @return non-zero value if any error.
+ */
+int wt_glue_load_body(void *extra, int version, FILE *fp, bool binary);
+
+/**
+ * Save wt_glue header.
+ * @ingroup g_glue_wt
+ * @param[in] extra extra data to be saved.
+ * @param[in] fp file stream saved to.
+ * @param[in] binary whether to use binary format.
+ * @see wt_glue_save_body
+ * @see wt_glue_load_header, wt_glue_load_body
+ * @return non-zero value if any error.
+ */
+int wt_glue_save_header(void *extra, FILE *fp, bool binary);
+
+/**
+ * Save wt_glue body.
+ * @ingroup g_glue_wt
+ * @param[in] extra extra data to be saved.
+ * @param[in] fp file stream saved to.
+ * @param[in] binary whether to use binary format.
+ * @see wt_glue_save_header
+ * @see wt_glue_load_header, wt_glue_load_body
+ * @return non-zero value if any error.
+ */
+int wt_glue_save_body(void *extra, FILE *fp, bool binary);
+
 #ifdef __cplusplus
 }
 #endif

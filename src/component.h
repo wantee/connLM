@@ -63,14 +63,11 @@ typedef struct _component_t_ {
     char name[MAX_NAME_LEN]; /**< component name. */
 
     input_t *input; /**< input layer. */
-    emb_wt_t *emb; /**< embedding weight. */
 
     layer_t **layers; /**< hidden layers. */
     layer_id_t num_layer; /**< number of hidden layers. */
     glue_t **glues; /**< glues. */
     glue_id_t num_glue; /**< number of glues. */
-
-    out_wt_t *out_wt; /**< output weights. */
 
     glue_id_t* fwd_order; /**< forward order of glue. */
 

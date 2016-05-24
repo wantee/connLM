@@ -99,6 +99,58 @@ bool out_wt_glue_check(glue_t *glue, layer_t **layers,
 char* out_wt_glue_draw_label(glue_t *glue, char *label,
         size_t label_len);
 
+/**
+ * Load out_wt_glue header and initialise a new out_wt_glue.
+ * @ingroup g_glue_out_wt
+ * @param[out] extra extra data to be initialised.
+ * @param[in] version file version of loading file.
+ * @param[in] fp file stream loaded from.
+ * @param[out] binary whether the file stream is in binary format.
+ * @param[in] fo file stream used to print information, if it is not NULL.
+ * @see out_wt_glue_load_body
+ * @see out_wt_glue_save_header, out_wt_glue_save_body
+ * @return non-zero value if any error.
+ */
+int out_wt_glue_load_header(void **extra, int version,
+        FILE *fp, bool *binary, FILE *fo_info);
+
+/**
+ * Load out_wt_glue body.
+ * @ingroup g_glue_out_wt
+ * @param[in] extra extra data to be loaded.
+ * @param[in] version file version of loading file.
+ * @param[in] fp file stream loaded from.
+ * @param[in] binary whether to use binary format.
+ * @see out_wt_glue_load_header
+ * @see out_wt_glue_save_header, out_wt_glue_save_body
+ * @return non-zero value if any error.
+ */
+int out_wt_glue_load_body(void *extra, int version, FILE *fp, bool binary);
+
+/**
+ * Save out_wt_glue header.
+ * @ingroup g_glue_out_wt
+ * @param[in] extra extra data to be saved.
+ * @param[in] fp file stream saved to.
+ * @param[in] binary whether to use binary format.
+ * @see out_wt_glue_save_body
+ * @see out_wt_glue_load_header, out_wt_glue_load_body
+ * @return non-zero value if any error.
+ */
+int out_wt_glue_save_header(void *extra, FILE *fp, bool binary);
+
+/**
+ * Save out_wt_glue body.
+ * @ingroup g_glue_out_wt
+ * @param[in] extra extra data to be saved.
+ * @param[in] fp file stream saved to.
+ * @param[in] binary whether to use binary format.
+ * @see out_wt_glue_save_header
+ * @see out_wt_glue_load_header, out_wt_glue_load_body
+ * @return non-zero value if any error.
+ */
+int out_wt_glue_save_body(void *extra, FILE *fp, bool binary);
+
 #ifdef __cplusplus
 }
 #endif
