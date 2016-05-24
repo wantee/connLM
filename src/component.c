@@ -897,7 +897,7 @@ int comp_draw(component_t *comp, FILE *fp, bool verbose)
 
     ST_CHECK_PARAM(comp == NULL || fp == NULL, -1);
 
-    fprintf(fp, "    node[shape=box];\n");
+    fprintf(fp, "    node[shape=box,fixedsize=false];\n");
     for (l = 0; l < comp->num_layer; l++) {
         if (strcasecmp(comp->layers[l]->type, OUTPUT_LAYER_NAME) == 0) {
             continue;
