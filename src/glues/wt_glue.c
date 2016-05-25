@@ -175,7 +175,7 @@ int wt_glue_parse_topo(glue_t *glue, const char *line)
     p = (char *)line;
     while(*p != '\0') {
         if (*p != ' ' || *p != '\t') {
-            ST_WARNING("clone glue should be empty. [%s]", line);
+            ST_WARNING("wt glue should be empty. [%s]", line);
             return -1;
         }
     }

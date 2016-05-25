@@ -367,13 +367,6 @@ ERR:
     return NULL;
 }
 
-int comp_init_out_wt(component_t *comp, output_t *output, real_t scale)
-{
-    ST_CHECK_PARAM(comp == NULL || output == NULL || scale <= 0, -1);
-
-    return 0;
-}
-
 int comp_load_train_opt(component_t *comp, st_opt_t *opt,
         const char *sec_name)
 {

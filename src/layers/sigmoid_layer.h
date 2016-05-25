@@ -39,6 +39,10 @@ extern "C" {
 
 #define SIGMOID_NAME "sigmoid"
 
+typedef struct _sigmoid_data_t_ {
+    real_t steepness;
+} sigmoid_data_t;
+
 /**
  * Destroy a sigmoid layer.
  * @ingroup g_layer_sigmoid
@@ -81,6 +85,58 @@ int sigmoid_parse_topo(layer_t *layer, const char *line);
  * @return label on success, NULL if any error.
  */
 char* sigmoid_draw_label(layer_t *layer, char *label, size_t label_len);
+
+/**
+ * Load sigmoid layer header and initialise a new sigmoid.
+ * @ingroup g_layer_sigmoid
+ * @param[out] extra extra data to be initialised.
+ * @param[in] version file version of loading file.
+ * @param[in] fp file stream loaded from.
+ * @param[out] binary whether the file stream is in binary format.
+ * @param[in] fo file stream used to print information, if it is not NULL.
+ * @see sigmoid_load_body
+ * @see sigmoid_save_header, sigmoid_save_body
+ * @return non-zero value if any error.
+ */
+int sigmoid_load_header(void **extra, int version,
+        FILE *fp, bool *binary, FILE *fo_info);
+
+/**
+ * Load sigmoid layer body.
+ * @ingroup g_layer_sigmoid
+ * @param[in] extra extra data to be loaded.
+ * @param[in] version file version of loading file.
+ * @param[in] fp file stream loaded from.
+ * @param[in] binary whether to use binary format.
+ * @see sigmoid_load_header
+ * @see sigmoid_save_header, sigmoid_save_body
+ * @return non-zero value if any error.
+ */
+int sigmoid_load_body(void *extra, int version, FILE *fp, bool binary);
+
+/**
+ * Save sigmoid layer header.
+ * @ingroup g_layer_sigmoid
+ * @param[in] extra extra data to be saved.
+ * @param[in] fp file stream saved to.
+ * @param[in] binary whether to use binary format.
+ * @see sigmoid_save_body
+ * @see sigmoid_load_header, sigmoid_load_body
+ * @return non-zero value if any error.
+ */
+int sigmoid_save_header(void *extra, FILE *fp, bool binary);
+
+/**
+ * Save sigmoid layer body.
+ * @ingroup g_layer_sigmoid
+ * @param[in] extra extra data to be saved.
+ * @param[in] fp file stream saved to.
+ * @param[in] binary whether to use binary format.
+ * @see sigmoid_save_header
+ * @see sigmoid_load_header, sigmoid_load_body
+ * @return non-zero value if any error.
+ */
+int sigmoid_save_body(void *extra, FILE *fp, bool binary);
 
 #ifdef __cplusplus
 }

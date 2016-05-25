@@ -40,13 +40,19 @@ typedef struct _layer_register_t_ {
     int (*dup)(layer_t *dst, layer_t *src);
     int (*parse_topo)(layer_t *layer, const char *line);
     char* (*draw_label)(layer_t *layer, char *label, size_t label_len);
+    int (*load_header)(void **extra, int version,
+            FILE *fp, bool *binary, FILE *fo_info);
+    int (*load_body)(void *extra, int version, FILE *fp, bool binary);
+    int (*save_header)(void *extra, FILE *fp, bool binary);
+    int (*save_body)(void *extra, FILE *fp, bool binary);
 } layer_reg_t;
 
 static layer_reg_t LAYER_REG[] = {
     {SIGMOID_NAME, sigmoid_init, sigmoid_destroy, sigmoid_dup,
-        sigmoid_parse_topo, sigmoid_draw_label},
+        sigmoid_parse_topo, sigmoid_draw_label, sigmoid_load_header,
+        sigmoid_load_body, sigmoid_save_header, sigmoid_save_body},
     {TANH_NAME, tanh_init, tanh_destroy, tanh_dup,
-        tanh_parse_topo, tanh_draw_label},
+        tanh_parse_topo, tanh_draw_label, NULL, NULL, NULL, NULL},
 };
 
 static layer_reg_t* layer_get_reg(const char *type)
@@ -214,6 +220,8 @@ ERR:
 int layer_load_header(layer_t **layer, int version,
         FILE *fp, bool *binary, FILE *fo_info)
 {
+    layer_reg_t *reg;
+
     union {
         char str[4];
         int magic_num;
@@ -222,6 +230,7 @@ int layer_load_header(layer_t **layer, int version,
     char name[MAX_NAME_LEN];
     char type[MAX_NAME_LEN];
     int size;
+    bool b;
 
     ST_CHECK_PARAM((layer == NULL && fo_info == NULL) || fp == NULL
             || binary == NULL, -1);
@@ -311,6 +320,20 @@ int layer_load_header(layer_t **layer, int version,
         fprintf(fo_info, "Size: %d\n", size);
     }
 
+    reg = layer_get_reg(type);
+    if (reg->load_header != NULL) {
+        if (reg->load_header(layer != NULL ? &((*layer)->extra) : NULL,
+                    version, fp, &b, fo_info) < 0) {
+            ST_WARNING("Failed to reg->load_header.");
+            goto ERR;
+        }
+
+        if (b != *binary) {
+            ST_WARNING("Tree binary not match with output binary");
+            goto ERR;
+        }
+    }
+
     return 0;
 
 ERR:
@@ -322,6 +345,7 @@ ERR:
 
 int layer_load_body(layer_t *layer, int version, FILE *fp, bool binary)
 {
+    layer_reg_t *reg;
     int n;
 
     ST_CHECK_PARAM(layer == NULL || fp == NULL, -1);
@@ -348,6 +372,14 @@ int layer_load_body(layer_t *layer, int version, FILE *fp, bool binary)
         }
     }
 
+    reg = layer_get_reg(layer->type);
+    if (reg->load_body != NULL) {
+        if (reg->load_body(layer->extra, version, fp, binary) < 0) {
+            ST_WARNING("Failed to reg->load_body.");
+            goto ERR;
+        }
+    }
+
     return 0;
 ERR:
 
@@ -356,22 +388,14 @@ ERR:
 
 int layer_save_header(layer_t *layer, FILE *fp, bool binary)
 {
-    int n;
+    layer_reg_t *reg;
 
-    ST_CHECK_PARAM(fp == NULL, -1);
+    ST_CHECK_PARAM(layer == NULL || fp == NULL, -1);
 
     if (binary) {
         if (fwrite(&LAYER_MAGIC_NUM, sizeof(int), 1, fp) != 1) {
             ST_WARNING("Failed to write magic num.");
             return -1;
-        }
-        if (layer == NULL) {
-            n = 0;
-            if (fwrite(&n, sizeof(int), 1, fp) != 1) {
-                ST_WARNING("Failed to write layer size.");
-                return -1;
-            }
-            return 0;
         }
 
         if (fwrite(layer->name, sizeof(char), MAX_NAME_LEN,
@@ -408,18 +432,23 @@ int layer_save_header(layer_t *layer, FILE *fp, bool binary)
         }
     }
 
+    reg = layer_get_reg(layer->type);
+    if (reg->save_header != NULL) {
+        if (reg->save_header(layer->extra, fp, binary) < 0) {
+            ST_WARNING("Failed to reg->save_header.");
+            return -1;
+        }
+    }
+
     return 0;
 }
 
 int layer_save_body(layer_t *layer, FILE *fp, bool binary)
 {
+    layer_reg_t *reg;
     int n;
 
-    ST_CHECK_PARAM(fp == NULL, -1);
-
-    if (layer == NULL) {
-        return 0;
-    }
+    ST_CHECK_PARAM(layer == NULL || fp == NULL, -1);
 
     if (binary) {
         n = -LAYER_MAGIC_NUM;
@@ -431,6 +460,14 @@ int layer_save_body(layer_t *layer, FILE *fp, bool binary)
     } else {
         if (fprintf(fp, "<LAYER-DATA>\n") < 0) {
             ST_WARNING("Failed to fprintf header.");
+            return -1;
+        }
+    }
+
+    reg = layer_get_reg(layer->type);
+    if (reg->save_body != NULL) {
+        if (reg->save_body(layer->extra, fp, binary) < 0) {
+            ST_WARNING("Failed to reg->save_body.");
             return -1;
         }
     }

@@ -113,16 +113,6 @@ component_t *comp_init_from_topo(const char* topo_content,
         output_t *output, int input_size);
 
 /**
- * Initialize output weight for a component with specific output layer.
- * @ingroup g_component
- * @param[out] comp component to be initialised.
- * @param[in] output output layer.
- * @param[in] scale output scale.
- * @return non-zero value if any error.
- */
-int comp_init_out_wt(component_t *comp, output_t *output, real_t scale);
-
-/**
  * Load component train option.
  * @ingroup g_conmponent
  * @param[in] conmponent conmponent to be loaded with.
