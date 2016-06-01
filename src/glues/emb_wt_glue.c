@@ -58,7 +58,7 @@ void emb_wt_glue_data_destroy(emb_wt_glue_data_t *data)
     if (data == NULL) {
         return;
     }
-    safe_emb_wt_destroy(data->emb_wt);
+    safe_wt_destroy(data->emb_wt);
 }
 
 emb_wt_glue_data_t* emb_wt_glue_data_init()
@@ -90,7 +90,7 @@ emb_wt_glue_data_t* emb_wt_glue_data_dup(emb_wt_glue_data_t *src)
         goto ERR;
     }
 
-    dst->emb_wt = emb_wt_dup(src->emb_wt);
+    dst->emb_wt = wt_dup(src->emb_wt);
     if (dst->emb_wt == NULL) {
         ST_WARNING("Failed to weight_dup.");
         goto ERR;
@@ -246,9 +246,9 @@ int emb_wt_glue_load_header(void **extra, int version,
         *extra = (void *)data;
     }
 
-    if (emb_wt_load_header(data != NULL ? &(data->emb_wt) : NULL,
+    if (wt_load_header(data != NULL ? &(data->emb_wt) : NULL,
                 version, fp, binary, fo_info) < 0) {
-        ST_WARNING("Failed to emb_wt_load_header.");
+        ST_WARNING("Failed to wt_load_header.");
         goto ERR;
     }
 
@@ -268,8 +268,8 @@ int emb_wt_glue_load_body(void *extra, int version, FILE *fp, bool binary)
 
     data = (emb_wt_glue_data_t *)extra;
 
-    if (emb_wt_load_body(data->emb_wt, version, fp, binary) < 0) {
-        ST_WARNING("Failed to emb_wt_load_body.");
+    if (wt_load_body(data->emb_wt, version, fp, binary) < 0) {
+        ST_WARNING("Failed to wt_load_body.");
         return -1;
     }
 
@@ -282,8 +282,8 @@ int emb_wt_glue_save_header(void *extra, FILE *fp, bool binary)
 
     data = (emb_wt_glue_data_t *)extra;
 
-    if (emb_wt_save_header(data->emb_wt, fp, binary) < 0) {
-        ST_WARNING("Failed to emb_wt_save_header.");
+    if (wt_save_header(data->emb_wt, fp, binary) < 0) {
+        ST_WARNING("Failed to wt_save_header.");
         return -1;
     }
 
@@ -296,8 +296,31 @@ int emb_wt_glue_save_body(void *extra, FILE *fp, bool binary)
 
     data = (emb_wt_glue_data_t *)extra;
 
-    if (emb_wt_save_body(data->emb_wt, fp, binary) < 0) {
-        ST_WARNING("Failed to emb_wt_save_body.");
+    if (wt_save_body(data->emb_wt, fp, binary) < 0) {
+        ST_WARNING("Failed to wt_save_body.");
+        return -1;
+    }
+
+    return 0;
+}
+
+int emb_wt_glue_init_data(glue_t *glue, input_t *input,
+        layer_t **layers, output_t *output)
+{
+    emb_wt_glue_data_t *data;
+
+    ST_CHECK_PARAM(glue == NULL || input == NULL || layers == NULL, -1);
+
+    if (strcasecmp(glue->type, EMB_WT_GLUE_NAME) != 0) {
+        ST_WARNING("Not a emb_wt glue. [%s]", glue->type);
+        return -1;
+    }
+
+    data = (emb_wt_glue_data_t *)glue->extra;
+    data->emb_wt = wt_init(layers[glue->out_layers[0]]->size,
+                input->input_size);
+    if (data->emb_wt == NULL) {
+        ST_WARNING("Failed to wt_init.");
         return -1;
     }
 

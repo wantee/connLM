@@ -30,7 +30,7 @@ extern "C" {
 #endif
 
 #include <connlm/config.h>
-#include "weights/embedding_weight.h"
+#include "weights/weight.h"
 #include "glue.h"
 
 /** @defgroup g_glue_emb_wt embedding weight glue.
@@ -41,7 +41,7 @@ extern "C" {
 #define EMB_WT_GLUE_NAME "emb_wt"
 
 typedef struct _emb_wt_glue_data_t_ {
-    emb_wt_t *emb_wt;
+    weight_t *emb_wt;
 } emb_wt_glue_data_t;
 
 /**
@@ -148,6 +148,18 @@ int emb_wt_glue_save_header(void *extra, FILE *fp, bool binary);
  * @return non-zero value if any error.
  */
 int emb_wt_glue_save_body(void *extra, FILE *fp, bool binary);
+
+/**
+ * Initialise extra data of emb_wt glue.
+ * @ingroup g_glue_emb_wt
+ * @param[in] glue glue.
+ * @param[in] input input layer of network.
+ * @param[in] layers layers of network.
+ * @param[in] output output layer of network.
+ * @return non-zero if any error
+ */
+int emb_wt_glue_init_data(glue_t *glue, input_t *input,
+        layer_t **layers, output_t *output);
 
 #ifdef __cplusplus
 }

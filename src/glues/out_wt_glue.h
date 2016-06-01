@@ -151,6 +151,18 @@ int out_wt_glue_save_header(void *extra, FILE *fp, bool binary);
  */
 int out_wt_glue_save_body(void *extra, FILE *fp, bool binary);
 
+/**
+ * Initialise extra data of out_wt glue.
+ * @ingroup g_glue_out_wt
+ * @param[in] glue glue.
+ * @param[in] input input layer of network.
+ * @param[in] layers layers of network.
+ * @param[in] output output layer of network.
+ * @return non-zero if any error
+ */
+int out_wt_glue_init_data(glue_t *glue, input_t *input,
+        layer_t **layers, output_t *output);
+
 #ifdef __cplusplus
 }
 #endif

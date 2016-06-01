@@ -30,6 +30,10 @@ extern "C" {
 #endif
 
 #include <connlm/config.h>
+
+#include "input.h"
+#include "output.h"
+
 #include "glue.h"
 
 /** @defgroup g_glue_direct direct glue.
@@ -94,6 +98,18 @@ bool direct_glue_check(glue_t *glue, layer_t **layers, layer_id_t n_layer);
  * @return label on success, NULL if any error.
  */
 char* direct_glue_draw_label(glue_t *glue, char *label, size_t label_len);
+
+/**
+ * Initialise extra data of direct glue.
+ * @ingroup g_glue_direct
+ * @param[in] glue glue.
+ * @param[in] input input layer of network.
+ * @param[in] layers layers of network.
+ * @param[in] output output layer of network.
+ * @return non-zero if any error
+ */
+int direct_glue_init_data(glue_t *glue, input_t *input,
+        layer_t **layers, output_t *output);
 
 #ifdef __cplusplus
 }

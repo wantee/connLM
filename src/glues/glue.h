@@ -30,6 +30,9 @@ extern "C" {
 #endif
 
 #include <connlm/config.h>
+
+#include "input.h"
+#include "output.h"
 #include "layers/layer.h"
 
 /** @defgroup g_glue NNet glue.
@@ -186,6 +189,18 @@ char* glue_draw_label(glue_t *glue, char *label, size_t label_len,
  */
 char* glue_draw_label_one(glue_t *glue, layer_id_t lid,
         char *label, size_t label_len, bool verbose);
+
+/**
+ * Initialise extra data of a glue.
+ * @ingroup g_glue
+ * @param[in] glue glue.
+ * @param[in] input input layer of network.
+ * @param[in] layers layers of network.
+ * @param[in] output output layer of network.
+ * @return non-zero if any error
+ */
+int glue_init_data(glue_t *glue, input_t *input,
+        layer_t **layers, output_t *output);
 
 #ifdef __cplusplus
 }

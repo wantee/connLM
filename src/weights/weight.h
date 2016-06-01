@@ -40,8 +40,9 @@ extern "C" {
  * @ingroup g_weight
  */
 typedef struct _weight_t_ {
-    char name[MAX_NAME_LEN]; /**< weight name. */
-    int id; /**< weight ID. */
+    real_t *matrix; /**< weight matrix. */
+    int row; /**< number row of weight matrix. */
+    int col; /**< number column of weight matrix. */
 
     /** forward function. */
     int (*forward)(struct _weight_t_ *wt);
@@ -75,14 +76,6 @@ void wt_destroy(weight_t* wt);
  * @return the duplicated weight.
  */
 weight_t* wt_dup(weight_t *w);
-
-/**
- * Parse a topo config line, and return a new weight.
- * @ingroup g_weight
- * @param[in] line topo config line.
- * @return a new weight or NULL if error.
- */
-weight_t* wt_parse_topo(const char *line);
 
 /**
  * Load wt header and initialise a new wt.
@@ -135,6 +128,15 @@ int wt_save_header(weight_t *wt, FILE *fp, bool binary);
  * @return non-zero value if any error.
  */
 int wt_save_body(weight_t *wt, FILE *fp, bool binary);
+
+/**
+ * Initialise weight.
+ * @ingroup g_weight
+ * @param[in] row num of row in matrix.
+ * @param[in] col num of column in matrix.
+ * @return initialised weight if success, otherwise NULL.
+ */
+weight_t* wt_init(int row, int col);
 
 #ifdef __cplusplus
 }

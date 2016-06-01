@@ -150,3 +150,16 @@ char* direct_glue_draw_label(glue_t *glue, char *label, size_t label_len)
 
     return label;
 }
+
+int direct_glue_init_data(glue_t *glue, input_t *input,
+        layer_t **layers, output_t *output)
+{
+    ST_CHECK_PARAM(glue == NULL, -1);
+
+    if (strcasecmp(glue->type, DIRECT_GLUE_NAME) != 0) {
+        ST_WARNING("Not a direct glue. [%s]", glue->type);
+        return -1;
+    }
+
+    return 0;
+}

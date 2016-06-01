@@ -51,6 +51,8 @@ typedef struct _glue_register_t_ {
     int (*load_body)(void *extra, int version, FILE *fp, bool binary);
     int (*save_header)(void *extra, FILE *fp, bool binary);
     int (*save_body)(void *extra, FILE *fp, bool binary);
+    int (*init_data)(glue_t *glue, input_t *input,
+            layer_t **layers, output_t *output);
 } glue_reg_t;
 
 static glue_reg_t GLUE_REG[] = {
@@ -65,21 +67,25 @@ static glue_reg_t GLUE_REG[] = {
         clone_glue_draw_label, NULL, NULL, NULL, NULL},
     {DIRECT_GLUE_NAME, direct_glue_init, direct_glue_destroy,
         direct_glue_dup, direct_glue_parse_topo, direct_glue_check,
-        direct_glue_draw_label, NULL, NULL, NULL, NULL},
+        direct_glue_draw_label, NULL, NULL, NULL, NULL,
+        direct_glue_init_data},
     {WT_GLUE_NAME, wt_glue_init, wt_glue_destroy,
         wt_glue_dup, wt_glue_parse_topo, wt_glue_check,
         wt_glue_draw_label, wt_glue_load_header, wt_glue_load_body,
-        wt_glue_save_header, wt_glue_save_body},
+        wt_glue_save_header, wt_glue_save_body,
+        wt_glue_init_data},
     {EMB_WT_GLUE_NAME, emb_wt_glue_init, emb_wt_glue_destroy,
         emb_wt_glue_dup, emb_wt_glue_parse_topo, emb_wt_glue_check,
         emb_wt_glue_draw_label, emb_wt_glue_load_header,
         emb_wt_glue_load_body, emb_wt_glue_save_header,
-        emb_wt_glue_save_body},
+        emb_wt_glue_save_body,
+        emb_wt_glue_init_data},
     {OUT_WT_GLUE_NAME, out_wt_glue_init, out_wt_glue_destroy,
         out_wt_glue_dup, out_wt_glue_parse_topo, out_wt_glue_check,
         out_wt_glue_draw_label, out_wt_glue_load_header,
         out_wt_glue_load_body, out_wt_glue_save_header,
-        out_wt_glue_save_body},
+        out_wt_glue_save_body,
+        out_wt_glue_init_data},
 };
 
 static glue_reg_t* glue_get_reg(const char *type)
@@ -1233,4 +1239,24 @@ char* glue_draw_label_one(glue_t *glue, layer_id_t lid,
     }
 
     return label;
+}
+
+int glue_init_data(glue_t *glue, input_t *input,
+        layer_t **layers, output_t *output)
+{
+    glue_reg_t *reg = NULL;
+
+    reg = glue_get_reg(glue->type);
+    if (reg == NULL) {
+        ST_WARNING("Unkown type of glue [%s].", glue->type);
+        return -1;
+    }
+
+    if (reg->init_data != NULL &&
+            reg->init_data(glue, input, layers, output) < 0) {
+        ST_WARNING("Failed to init_data for reg glue.");
+        return -1;
+    }
+
+    return 0;
 }

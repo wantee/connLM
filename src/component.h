@@ -37,8 +37,6 @@ extern "C" {
 #include "output.h"
 #include "layers/layer.h"
 #include "glues/glue.h"
-#include "weights/embedding_weight.h"
-#include "weights/output_weight.h"
 
 /** @defgroup g_component NNet component.
  * Data structures and functions for NNet component.

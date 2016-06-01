@@ -358,6 +358,14 @@ component_t *comp_init_from_topo(const char* topo_content,
         goto ERR;
     }
 
+    for (g = 0; g < comp->num_glue; g++) {
+        if (glue_init_data(comp->glues[g], comp->input,
+                    comp->layers, output) < 0) {
+            ST_WARNING("Failed to glue_init_data.");
+            goto ERR;
+        }
+    }
+
     return comp;
 
 ERR:
@@ -620,7 +628,7 @@ int comp_load_body(component_t *comp, int version, FILE *fp, bool binary)
 
     for (g = 0; g < comp->num_glue; g++) {
         if (glue_load_body(comp->glues[g], version, fp, binary) < 0) {
-            ST_WARNING("Failed to glue_load_body[" GLUE_ID_FMT ".", g);
+            ST_WARNING("Failed to glue_load_body[" GLUE_ID_FMT "].", g);
             goto ERR;
         }
     }

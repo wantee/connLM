@@ -303,3 +303,26 @@ int wt_glue_save_body(void *extra, FILE *fp, bool binary)
 
     return 0;
 }
+
+int wt_glue_init_data(glue_t *glue, input_t *input,
+        layer_t **layers, output_t *output)
+{
+    wt_glue_data_t *data = NULL;
+
+    ST_CHECK_PARAM(glue == NULL || layers == NULL, -1);
+
+    if (strcasecmp(glue->type, WT_GLUE_NAME) != 0) {
+        ST_WARNING("Not a wt glue. [%s]", glue->type);
+        return -1;
+    }
+
+    data = (wt_glue_data_t *)glue->extra;
+    data->wt = wt_init(layers[glue->out_layers[0]]->size,
+                layers[glue->in_layers[0]]->size);
+    if (data->wt == NULL) {
+        ST_WARNING("Failed to wt_init.");
+        return -1;
+    }
+
+    return 0;
+}

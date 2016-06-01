@@ -303,3 +303,16 @@ int out_wt_glue_save_body(void *extra, FILE *fp, bool binary)
 
     return 0;
 }
+
+int out_wt_glue_init_data(glue_t *glue, input_t *input,
+        layer_t **layers, output_t *output)
+{
+    ST_CHECK_PARAM(glue == NULL || layers == NULL || output == NULL, -1);
+
+    if (strcasecmp(glue->type, OUT_WT_GLUE_NAME) != 0) {
+        ST_WARNING("Not a out_wt glue. [%s]", glue->type);
+        return -1;
+    }
+
+    return 0;
+}

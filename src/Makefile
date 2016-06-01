@@ -23,7 +23,6 @@ INCS = utils.h \
        glues/emb_wt_glue.h \
        glues/out_wt_glue.h \
        weights/weight.h \
-       weights/embedding_weight.h \
        weights/output_weight.h \
        graph.h
 
@@ -46,7 +45,6 @@ SRCS = utils.c \
        glues/emb_wt_glue.c \
        glues/out_wt_glue.c \
        weights/weight.c \
-       weights/embedding_weight.c \
        weights/output_weight.c \
        graph.c
 
