@@ -188,8 +188,7 @@ ERR:
 int wt_load_body(weight_t *wt, int version, FILE *fp, bool binary)
 {
     int n;
-
-    int i;
+    size_t i;
 
     ST_CHECK_PARAM(wt == NULL || fp == NULL, -1);
 
@@ -279,8 +278,7 @@ int wt_save_header(weight_t *wt, FILE *fp, bool binary)
 int wt_save_body(weight_t *wt, FILE *fp, bool binary)
 {
     int n;
-
-    int i;
+    size_t i;
 
     ST_CHECK_PARAM(fp == NULL, -1);
 

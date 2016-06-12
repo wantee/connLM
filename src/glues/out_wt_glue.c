@@ -307,10 +307,20 @@ int out_wt_glue_save_body(void *extra, FILE *fp, bool binary)
 int out_wt_glue_init_data(glue_t *glue, input_t *input,
         layer_t **layers, output_t *output)
 {
+    out_wt_glue_data_t *data;
+
     ST_CHECK_PARAM(glue == NULL || layers == NULL || output == NULL, -1);
 
     if (strcasecmp(glue->type, OUT_WT_GLUE_NAME) != 0) {
         ST_WARNING("Not a out_wt glue. [%s]", glue->type);
+        return -1;
+    }
+
+    data = (out_wt_glue_data_t *)glue->extra;
+    data->out_wt = out_wt_init(layers[glue->in_layers[0]]->size,
+            output->tree->num_node);
+    if (data->out_wt == NULL) {
+        ST_WARNING("Failed to out_wt_init.");
         return -1;
     }
 

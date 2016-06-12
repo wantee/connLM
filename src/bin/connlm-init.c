@@ -128,6 +128,11 @@ int main(int argc, const char *argv[])
     }
     safe_st_fclose(fp);
 
+    if (connlm->vocab == NULL || connlm->output == NULL) {
+        ST_WARNING("Input model must both have VOCAB and OUTPUT.");
+        goto ERR;
+    }
+
     ST_NOTICE("Initialising Model...");
     fp = st_fopen(argv[2], "rb");
     if (fp == NULL) {

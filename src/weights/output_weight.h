@@ -43,7 +43,9 @@ extern "C" {
  * @ingroup g_wt_output
  */
 typedef struct _output_weight_t_ {
-    output_t *output; /**< associating output layer. */
+    output_node_id_t output_node_num; /**< num of nodes in output tree. */
+    int in_layer_sz; /**< size of in layer. */
+    real_t *matrix; /**< weight matrix. */
 
     /** forward function. */
     int (*forward)(struct _output_weight_t_ *wt);
@@ -129,6 +131,15 @@ int out_wt_save_header(out_wt_t *out_wt, FILE *fp, bool binary);
  * @return non-zero value if any error.
  */
 int out_wt_save_body(out_wt_t *out_wt, FILE *fp, bool binary);
+
+/**
+ * Initialise output weight.
+ * @ingroup g_out_wt
+ * @param[in] in_layer_sz size of in layer.
+ * @param[in] output_node_num number of nodes in output tree.
+ * @return initialised output weight if success, otherwise NULL.
+ */
+out_wt_t* out_wt_init(int in_layer_sz, output_node_id_t output_node_num);
 
 #ifdef __cplusplus
 }
