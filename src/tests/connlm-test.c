@@ -32,15 +32,20 @@
 #include "connlm.h"
 
 #define MAX_REF_COMP_NUM 16
+#define MAX_REF_CTX_NUM 16
 #define MAX_REF_LAYER_NUM 16
 #define MAX_REF_GLUE_NUM 16
 #define MAX_REF_GLUE_IN_NUM 16
 #define MAX_REF_GLUE_OUT_NUM 16
 
+#define VOCAB_SIZE 16
+
 typedef struct _ref_t_ {
     char comp_name[MAX_NAME_LEN];
     int num_comp;
 
+    int input_ctx[MAX_REF_COMP_NUM][MAX_REF_CTX_NUM];
+    int num_input_ctx[MAX_REF_COMP_NUM];
     char layer_name[MAX_NAME_LEN];
     int num_layer[MAX_REF_COMP_NUM];
     char layer_type[MAX_REF_COMP_NUM][MAX_REF_LAYER_NUM][MAX_NAME_LEN];
@@ -64,8 +69,27 @@ typedef struct _ref_t_ {
     } sum_glue[MAX_REF_GLUE_NUM];
 } ref_t;
 
+static char* get_layer_name(char *name, int name_len,
+        const char *layer_name, int id)
+{
+    switch (id) {
+        case 0:
+            snprintf(name, name_len, "output");
+            break;
+        case 1:
+            snprintf(name, name_len, "input");
+            break;
+        default:
+            snprintf(name, name_len, "%s%d", layer_name, id);
+            break;
+    }
+
+    return name;
+}
+
 static FILE* mk_topo_file(ref_t *ref)
 {
+    char name[MAX_NAME_LEN];
     FILE *fp;
 
     int c, l, g;
@@ -83,9 +107,16 @@ static FILE* mk_topo_file(ref_t *ref)
         fprintf(fp, "property name=%s%d\n", ref->comp_name, c);
         fprintf(fp, "\n");
 
+        fprintf(fp, "input context=");
+        for (i = 0; i < ref->num_input_ctx[c] - 1; i++) {
+            fprintf(fp, "%d,", ref->input_ctx[c][i]);
+        }
+        fprintf(fp, "%d\n", ref->input_ctx[c][i]);
+        fprintf(fp, "\n");
+
         for (l = 0; l < ref->num_layer[c]; l++) {
             fprintf(fp, "layer name=%s%d type=%s size=%d \n",
-                    ref->layer_name, l, ref->layer_type[c][l],
+                    ref->layer_name, l+2, ref->layer_type[c][l],
                     ref->layer_size[c][l]);
         }
         fprintf(fp, "\n");
@@ -102,9 +133,11 @@ static FILE* mk_topo_file(ref_t *ref)
 
             fprintf(fp, " in=");
             for (i = 0; i < ref->num_glue_in[c][g] - 1; i++) {
-                fprintf(fp, "%s%d,", ref->layer_name, ref->glue_in[c][g][i]);
+                fprintf(fp, "%s,", get_layer_name(name, MAX_NAME_LEN,
+                            ref->layer_name, ref->glue_in[c][g][i]));
             }
-            fprintf(fp, "%s%d", ref->layer_name, ref->glue_in[c][g][i]);
+            fprintf(fp, "%s", get_layer_name(name, MAX_NAME_LEN,
+                        ref->layer_name, ref->glue_in[c][g][i]));
 
             for (n = ref->num_glue_in[c][g] - 1; n >= 0; n--) {
                 if (ref->glue_in_offset[c][g][n] != 0) {
@@ -137,9 +170,11 @@ static FILE* mk_topo_file(ref_t *ref)
 
             fprintf(fp, " out=");
             for (i = 0; i < ref->num_glue_out[c][g] - 1; i++) {
-                fprintf(fp, "%s%d,", ref->layer_name, ref->glue_out[c][g][i]);
+                fprintf(fp, "%s,", get_layer_name(name, MAX_NAME_LEN,
+                            ref->layer_name, ref->glue_out[c][g][i]));
             }
-            fprintf(fp, "%s%d", ref->layer_name, ref->glue_out[c][g][i]);
+            fprintf(fp, "%s", get_layer_name(name, MAX_NAME_LEN,
+                        ref->layer_name, ref->glue_out[c][g][i]));
 
             for (n = ref->num_glue_out[c][g] - 1; n >= 0; n--) {
                 if (ref->glue_out_offset[c][g][n] != 0) {
@@ -198,6 +233,31 @@ static FILE* mk_topo_file(ref_t *ref)
 #endif
 
     return fp;
+}
+
+static int check_input(input_t *input, int input_size, int *context,
+        int num_ctx)
+{
+    int i;
+
+    if (input->input_size != input_size) {
+        fprintf(stderr, "input size not match.\n");
+        return -1;
+    }
+
+    if (input->num_ctx != num_ctx) {
+        fprintf(stderr, "num_ctx not match.\n");
+        return -1;
+    }
+
+    for (i = 0; i < input->num_ctx; i++) {
+        if (input->context[i] != context[i]) {
+            fprintf(stderr, "context[%d] not match.\n", i);
+            return -1;
+        }
+    }
+
+    return 0;
 }
 
 static int check_comp(component_t *comp, char *name, int id)
@@ -272,7 +332,7 @@ static int check_glue(glue_t *glue, ref_t *ref, int c, int g, int sum_i,
         return -1;
     }
     for (i = 0; i < ref->num_glue_in[c][g]; i++) {
-        snprintf(name, MAX_NAME_LEN, "%s%d", ref->layer_name,
+        (void)get_layer_name(name, MAX_NAME_LEN, ref->layer_name,
                 ref->glue_in[c][g][i]);
         if (strcmp(name, layers[glue->in_layers[i]]->name) != 0) {
             fprintf(stderr, "glue in layer not match.[%s/%s]\n",
@@ -294,7 +354,7 @@ static int check_glue(glue_t *glue, ref_t *ref, int c, int g, int sum_i,
     }
 
     for (i = 0; i < ref->num_glue_out[c][g]; i++) {
-        snprintf(name, MAX_NAME_LEN, "%s%d", ref->layer_name,
+        (void)get_layer_name(name, MAX_NAME_LEN, ref->layer_name,
                 ref->glue_out[c][g][i]);
         if (strcmp(name, layers[glue->out_layers[i]]->name) != 0) {
             fprintf(stderr, "glue out layer not match.[%s/%s]\n",
@@ -342,14 +402,23 @@ static int check_connlm(connlm_t *connlm, ref_t *ref)
             return -1;
         }
 
-        if (connlm->comps[c]->num_layer != ref->num_layer[c]) {
+        if (check_input(connlm->comps[c]->input, VOCAB_SIZE,
+                    ref->input_ctx[c],
+                    ref->num_input_ctx[c]) != 0) {
+            fprintf(stderr, "input not match\n");
+            return -1;
+        }
+
+        if (connlm->comps[c]->num_layer != ref->num_layer[c] + 2) {
             fprintf(stderr, "num_layer not match\n");
             return -1;
         }
 
-        for (l = 0; l < connlm->comps[c]->num_layer; l++) {
-            if (check_layer(connlm->comps[c]->layers[l], ref->layer_name, l,
-                    ref->layer_type[c][l], ref->layer_size[c][l]) != 0) {
+        for (l = 2; l < connlm->comps[c]->num_layer; l++) {
+            if (check_layer(connlm->comps[c]->layers[l],
+                        ref->layer_name, l,
+                    ref->layer_type[c][l-2],
+                    ref->layer_size[c][l-2]) != 0) {
                 fprintf(stderr, "layer not match\n");
                 return -1;
             }
@@ -526,7 +595,109 @@ ERR:
 
 static int unit_test_connlm_read_topo_good()
 {
+    FILE *fp = NULL;
+    connlm_t *connlm = NULL;
+
+    vocab_opt_t vocab_opt;
+    vocab_t *vocab = NULL;
+
+    output_opt_t output_opt;
+    output_t *output = NULL;
+    char word[16];
+
+    ref_t ref;
+    int i;
+    int ncase = 0;
+    ref_t std_ref = {
+        .comp_name = "comp",
+        .num_comp = 2,
+
+        .input_ctx = {{-1}, {-1}},
+        .num_input_ctx = {1, 1},
+        .layer_name = "layer",
+        .num_layer = {0, 2},
+        .layer_type = {{}, {"sigmoid", "sigmoid"},},
+        .layer_size = {{}, {15, 15},},
+
+        .glue_name = "glue",
+        .num_glue = {1, 4},
+        .glue_type = {{"direct"},
+                      {"emb_wt", "wt", "wt", "out_wt"}},
+        .num_glue_in = {{1},
+                        {1, 1, 1, 1}},
+        .glue_in = {{{1}},
+                    {{1}, {2}, {3}, {3}}},
+        .glue_in_offset = {{{0}},
+                           {{0}, {0}, {0}, {0}}},
+        .glue_in_scale = {{{1.0}},
+                           {{1.0}, {1.0}, {1.0}, {1.0}}},
+        .num_glue_out = {{1},
+                        {1, 1, 1, 1}},
+        .glue_out = {{{0}},
+                    {{2}, {3}, {2}, {0}}},
+        .glue_out_offset = {{{0}},
+                           {{0}, {0}, {0}, {0}}},
+        .glue_out_scale = {{{1.0}},
+                           {{1.0}, {1.0}, {1.0}, {1.0}}},
+        .sum_glue = {{true, true}},
+    };
+
+    fprintf(stderr, "  Testing Reading topology file(good)...\n");
+    vocab_opt.max_alphabet_size = VOCAB_SIZE + 10;
+    vocab = vocab_create(&vocab_opt);
+    assert(vocab != NULL);
+    strcpy(word, "</s>");
+    vocab_add_word(vocab, word);
+    for (i = 1; i < VOCAB_SIZE; i++) {
+        word[0] = 'A' + i;
+        word[1] = 'A' + i;
+        word[2] = 'A' + i;
+        word[3] = '\0';
+        vocab_add_word(vocab, word);
+    }
+    vocab->vocab_size = VOCAB_SIZE;
+    vocab->cnts = (count_t *)malloc(sizeof(count_t) * vocab->vocab_size);
+    assert(vocab->cnts != NULL);
+    for (i = 0; i < VOCAB_SIZE; i++) {
+        vocab->cnts[i] = VOCAB_SIZE - i;
+    }
+
+    output_opt.method = TOP_DOWN;
+    output_opt.max_depth = 0;
+    output_opt.max_branch = 3;
+    output = output_generate(&output_opt, vocab->cnts, VOCAB_SIZE);
+    assert (output != NULL);
+
+    /***************************************************/
+    /***************************************************/
+    fprintf(stderr, "    Case %d...", ncase++);
+    ref = std_ref;
+    fp = mk_topo_file(&ref);
+    connlm = connlm_new(vocab, output, NULL, 0);
+    assert(connlm != NULL);
+    if (connlm_init(connlm, fp) < 0) {
+        fprintf(stderr, "Failed\n");
+        goto ERR;
+    }
+    if (check_connlm(connlm, &ref) != 0) {
+        fprintf(stderr, "Failed\n");
+        goto ERR;
+    }
+
+    safe_connlm_destroy(connlm);
+    safe_fclose(fp);
+    fprintf(stderr, "Success\n");
+
+    safe_vocab_destroy(vocab);
+    safe_output_destroy(output);
     return 0;
+
+ERR:
+    safe_connlm_destroy(connlm);
+    safe_vocab_destroy(vocab);
+    safe_output_destroy(output);
+    safe_fclose(fp);
+    return -1;
 }
 
 static int unit_test_connlm_read_topo()

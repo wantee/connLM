@@ -62,9 +62,9 @@ BINS = bin/connlm-train \
 #TESTS = tests/maxent-test
 TESTS = tests/utils-test \
         tests/param-test \
-        tests/connlm-test \
+        tests/output-test \
         tests/input-test \
-        tests/output-test
+        tests/connlm-test
 ifneq (,$(findstring _USE_BLAS_,$(CFLAGS)))
     TESTS += tests/blas-test
 endif
@@ -72,9 +72,9 @@ endif
 #VAL_TESTS = tests/maxent-test
 VAL_TESTS = tests/utils-test \
             tests/param-test \
-            tests/connlm-test \
             tests/input-test \
-            tests/output-test
+            tests/output-test \
+            tests/connlm-test
 
 define get_target
 
