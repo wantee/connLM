@@ -274,13 +274,15 @@ int connlm_init(connlm_t *connlm, FILE *topo_fp)
     comp_id_t c, d;
     bool err;
 
-    bool is_content;
+    int part;
+    bool has_comp;
 
     ST_CHECK_PARAM(connlm == NULL || topo_fp == NULL, -1);
 
     safe_free(connlm->comps);
     connlm->num_comp = 0;
-    is_content = false;
+    part = 0;
+    has_comp = false;
     while (st_fgets(&line, &line_sz, topo_fp, &err)) {
         trim(line);
 
@@ -288,14 +290,31 @@ int connlm_init(connlm_t *connlm, FILE *topo_fp)
             continue;
         }
 
-        if (!is_content) {
-            if (strncasecmp("<component>", line, 11) == 0) {
-                is_content = true;
+        if (part == 0) {
+            if (strcasecmp("<component>", line) == 0) {
+                has_comp = true;
+                part = 1;
+
+                /* Set default output activation. */
+                if (connlm->output->act_func == OA_UNDEFINED) {
+                    connlm->output->act_func = OA_MULTI_LOGIT;
+                }
+            } else if (strcasecmp("<output>", line) == 0) {
+                if (has_comp) {
+                    ST_WARNING("<output> must be placed before "
+                            "all <component>s");
+                    goto ERR;
+                }
+                part = 2;
             }
             continue;
         }
 
-        if (strncasecmp("</component>", line, 12) == 0) {
+        if (strcasecmp("</component>", line) == 0) {
+            if (part != 1) {
+                ST_WARNING("Miss placed </component>");
+                goto ERR;
+            }
             connlm->comps = (component_t **)realloc(connlm->comps,
                     sizeof(component_t *) * (connlm->num_comp + 1));
             if (connlm->comps == NULL) {
@@ -311,7 +330,20 @@ int connlm_init(connlm_t *connlm, FILE *topo_fp)
             connlm->num_comp++;
 
             content_sz = 0;
-            is_content = false;
+            part = 0;
+            continue;
+        } else if (strcasecmp("</output>", line) == 0) {
+            if (part != 2) {
+                ST_WARNING("Miss placed </output>.");
+                goto ERR;
+            }
+            if (output_parse_topo(connlm->output, content) < 0) {
+                ST_WARNING("Failed to output_parse_topo.");
+                goto ERR;
+            }
+
+            content_sz = 0;
+            part = 0;
             continue;
         }
 

@@ -161,7 +161,7 @@ static int comp_parse_topo(component_t *comp, const char *line)
             strncpy(comp->name, keyvalue + MAX_LINE_LEN, MAX_NAME_LEN);
             comp->name[MAX_NAME_LEN - 1] = '\0';
         } else {
-            ST_WARNING("Unkown key[%s].", keyvalue);
+            ST_WARNING("Unknown key[%s].", keyvalue);
         }
     }
 

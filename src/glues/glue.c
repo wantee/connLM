@@ -267,7 +267,7 @@ glue_t* glue_parse_topo(const char *line, layer_t **layers,
 
             reg = glue_get_reg(glue->type);
             if (reg == NULL) {
-                ST_WARNING("Unkown type of glue [%s].",
+                ST_WARNING("Unknown type of glue [%s].",
                         glue->type);
                 goto ERR;
             }
@@ -1248,7 +1248,7 @@ int glue_init_data(glue_t *glue, input_t *input,
 
     reg = glue_get_reg(glue->type);
     if (reg == NULL) {
-        ST_WARNING("Unkown type of glue [%s].", glue->type);
+        ST_WARNING("Unknown type of glue [%s].", glue->type);
         return -1;
     }
 

@@ -41,6 +41,8 @@
 #define VOCAB_SIZE 16
 
 typedef struct _ref_t_ {
+    output_act_func_t output_act;
+
     char comp_name[MAX_NAME_LEN];
     int num_comp;
 
@@ -87,6 +89,12 @@ static char* get_layer_name(char *name, int name_len,
     return name;
 }
 
+static const char *act_func_str[] = {
+    "Undefined",
+    "MultiLogit",
+    "Softmax",
+};
+
 static FILE* mk_topo_file(ref_t *ref)
 {
     char name[MAX_NAME_LEN];
@@ -101,6 +109,9 @@ static FILE* mk_topo_file(ref_t *ref)
     assert(fp != NULL);
 
     fprintf(fp, "foo foo\n");
+    fprintf(fp, "<output>\n");
+    fprintf(fp, "property activation=%s\n", act_func_str[ref->output_act]);
+    fprintf(fp, "</output>\n");
     for (c = 0; c < ref->num_comp; c++) {
         fprintf(fp, "<component>\n");
         fprintf(fp, "# comments\n");
@@ -260,6 +271,16 @@ static int check_input(input_t *input, int input_size, int *context,
     return 0;
 }
 
+static int check_output(output_t *output, output_act_func_t act_func)
+{
+    if (output->act_func != act_func) {
+        fprintf(stderr, "act_func not match.\n");
+        return -1;
+    }
+
+    return 0;
+}
+
 static int check_comp(component_t *comp, char *name, int id)
 {
     if (strncmp(comp->name, name, strlen(name)) != 0
@@ -392,6 +413,11 @@ static int check_connlm(connlm_t *connlm, ref_t *ref)
 {
     int c, l, sum_i;
 
+    if (check_output(connlm->output, ref->output_act) != 0) {
+        fprintf(stderr, "output not match\n");
+        return -1;
+    }
+
     if (connlm->num_comp != ref->num_comp) {
         fprintf(stderr, "num_comp not match\n");
         return -1;
@@ -417,8 +443,8 @@ static int check_connlm(connlm_t *connlm, ref_t *ref)
         for (l = 2; l < connlm->comps[c]->num_layer; l++) {
             if (check_layer(connlm->comps[c]->layers[l],
                         ref->layer_name, l,
-                    ref->layer_type[c][l-2],
-                    ref->layer_size[c][l-2]) != 0) {
+                        ref->layer_type[c][l-2],
+                        ref->layer_size[c][l-2]) != 0) {
                 fprintf(stderr, "layer not match\n");
                 return -1;
             }
@@ -454,6 +480,7 @@ static int unit_test_connlm_read_topo_bad()
     vocab_t *vocab = NULL;
     ref_t ref;
     ref_t std_ref = {
+        .output_act = OA_SOFTMAX,
         .comp_name = "comp",
         .num_comp = 2,
 
@@ -609,6 +636,8 @@ static int unit_test_connlm_read_topo_good()
     int i;
     int ncase = 0;
     ref_t std_ref = {
+        .output_act = OA_SOFTMAX,
+
         .comp_name = "comp",
         .num_comp = 2,
 
@@ -662,7 +691,7 @@ static int unit_test_connlm_read_topo_good()
         vocab->cnts[i] = VOCAB_SIZE - i;
     }
 
-    output_opt.method = TOP_DOWN;
+    output_opt.method = OM_TOP_DOWN;
     output_opt.max_depth = 0;
     output_opt.max_branch = 3;
     output = output_generate(&output_opt, vocab->cnts, VOCAB_SIZE);

@@ -136,7 +136,7 @@ layer_t* layer_parse_topo(const char *line)
 
             reg = layer_get_reg(layer->type);
             if (reg == NULL) {
-                ST_WARNING("Unkown type of layer [%s].",
+                ST_WARNING("Unknown type of layer [%s].",
                         layer->type);
                 goto ERR;
             }

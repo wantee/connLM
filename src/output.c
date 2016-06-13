@@ -45,22 +45,46 @@ static const char *method_str[] = {
     "BottomUp",
 };
 
-const char* method2str(output_method_t m)
+static const char* method2str(output_method_t m)
 {
     return method_str[m];
 }
 
-output_method_t str2method(const char *str)
+static output_method_t str2method(const char *str)
 {
     int i;
 
-    for (i = 0; i < sizeof(method_str); i++) {
+    for (i = 0; i < sizeof(method_str) / sizeof(method_str[0]); i++) {
         if (strcasecmp(method_str[i], str) == 0) {
             return (output_method_t)i;
         }
     }
 
     return (output_method_t)-1;
+}
+
+static const char *act_func_str[] = {
+    "Undefined",
+    "MultiLogit",
+    "Softmax",
+};
+
+static const char* act2str(output_act_func_t a)
+{
+    return act_func_str[a];
+}
+
+static output_act_func_t str2act(const char *str)
+{
+    int i;
+
+    for (i = 0; i < sizeof(act_func_str) / sizeof(act_func_str[0]); i++) {
+        if (strcasecmp(act_func_str[i], str) == 0) {
+            return (output_act_func_t)i;
+        }
+    }
+
+    return OA_UNKNOWN;
 }
 
 int output_load_opt(output_opt_t *output_opt, st_opt_t *opt,
@@ -78,14 +102,14 @@ int output_load_opt(output_opt_t *output_opt, st_opt_t *opt,
     if (strcasecmp(method_str, "topdown") == 0
             || strcasecmp(method_str, "t") == 0
             || strcasecmp(method_str, "td") == 0) {
-        output_opt->method = TOP_DOWN;
+        output_opt->method = OM_TOP_DOWN;
         /* default value for class-based output. */
         def_depth = 2;
         def_branch = 100;
     } else if (strcasecmp(method_str, "bottomup") == 0
             || strcasecmp(method_str, "b") == 0
             || strcasecmp(method_str, "bu") == 0) {
-        output_opt->method = BOTTOM_UP;
+        output_opt->method = OM_BOTTOM_UP;
         /* default value for hierarchical softmax output. */
         def_depth = 0;
         def_branch = 2;
@@ -1792,13 +1816,13 @@ output_t* output_generate(output_opt_t *output_opt, count_t *word_cnts,
     output->output_size = output_size;
 
     switch (output->output_opt.method) {
-        case TOP_DOWN:
+        case OM_TOP_DOWN:
             if (output_gen_td(output, word_cnts) < 0) {
                 ST_WARNING("Failed to output_gen_td.");
                 goto ERR;
             }
             break;
-        case BOTTOM_UP:
+        case OM_BOTTOM_UP:
             if (output_gen_bu(output, word_cnts) < 0) {
                 ST_WARNING("Failed to output_gen_bu.");
                 goto ERR;
@@ -2042,7 +2066,7 @@ bool output_equal(output_t *output1, output_t *output2)
         return false;
     }
 
-    if (output1->in_size != output2->in_size) {
+    if (output1->act_func != output2->act_func) {
         return false;
     }
 
@@ -2059,7 +2083,7 @@ int output_load_header(output_t **output, int version,
     } flag;
 
     int output_size;
-    int in_size;
+    int a;
     int m;
     int max_depth;
     int max_branch;
@@ -2094,7 +2118,7 @@ int output_load_header(output_t **output, int version,
     if (*binary) {
         if (fread(&output_size, sizeof(int), 1, fp) != 1) {
             ST_WARNING("Failed to read output size.");
-            return -1;
+            goto ERR;
         }
 
         if (output_size <= 0) {
@@ -2104,24 +2128,24 @@ int output_load_header(output_t **output, int version,
             return 0;
         }
 
-        if (fread(&in_size, sizeof(int), 1, fp) != 1) {
-            ST_WARNING("Failed to read in_size.");
-            return -1;
+        if (fread(&a, sizeof(int), 1, fp) != 1) {
+            ST_WARNING("Failed to read act_func.");
+            goto ERR;
         }
 
         if (fread(&m, sizeof(int), 1, fp) != 1) {
             ST_WARNING("Failed to read output_method.");
-            return -1;
+            goto ERR;
         }
 
         if (fread(&max_depth, sizeof(int), 1, fp) != 1) {
             ST_WARNING("Failed to read max_depth.");
-            return -1;
+            goto ERR;
         }
 
         if (fread(&max_branch, sizeof(int), 1, fp) != 1) {
             ST_WARNING("Failed to read max_branch.");
-            return -1;
+            goto ERR;
         }
     } else {
         if (st_readline(fp, "") != 0) {
@@ -2145,26 +2169,37 @@ int output_load_header(output_t **output, int version,
             return 0;
         }
 
-        if (st_readline(fp, "In size: %d", &in_size) != 1) {
-            ST_WARNING("Failed to parse in size.");
-            return -1;
+        if (st_readline(fp, "Activation: %"xSTR(MAX_LINE_LEN)"s",
+                    sym) != 1) {
+            ST_WARNING("Failed to parse act_func.");
+            goto ERR;
+        }
+        sym[MAX_LINE_LEN - 1] = '\0';
+        a = (int)str2act(sym);
+        if (a == (int)OA_UNKNOWN) {
+            ST_WARNING("Unknown activation[%s]", sym);
+            goto ERR;
         }
 
         if (st_readline(fp, "Method: %"xSTR(MAX_LINE_LEN)"s", sym) != 1) {
             ST_WARNING("Failed to parse method.");
-            return -1;
+            goto ERR;
         }
         sym[MAX_LINE_LEN - 1] = '\0';
         m = (int)str2method(sym);
+        if (m == (int)OM_UNKNOWN) {
+            ST_WARNING("Unknown method[%s]", sym);
+            goto ERR;
+        }
 
         if (st_readline(fp, "Max Depth: %d", &max_depth) != 1) {
             ST_WARNING("Failed to parse in max depth.");
-            return -1;
+            goto ERR;
         }
 
         if (st_readline(fp, "Max Branch: %d", &max_branch) != 1) {
             ST_WARNING("Failed to parse in max branch.");
-            return -1;
+            goto ERR;
         }
     }
 
@@ -2177,7 +2212,7 @@ int output_load_header(output_t **output, int version,
         memset(*output, 0, sizeof(output_t));
 
         (*output)->output_size = output_size;
-        (*output)->in_size = in_size;
+        (*output)->act_func = (output_act_func_t)a;
         (*output)->output_opt.method = (output_method_t)m;
         (*output)->output_opt.max_depth = max_depth;
         (*output)->output_opt.max_branch = max_branch;
@@ -2186,7 +2221,8 @@ int output_load_header(output_t **output, int version,
     if (fo_info != NULL) {
         fprintf(fo_info, "\n<OUTPUT>\n");
         fprintf(fo_info, "Output size: %d\n", output_size);
-        fprintf(fo_info, "In size: %d\n", in_size);
+        fprintf(fo_info, "Activation: %s\n",
+                act2str((output_act_func_t)a));
         fprintf(fo_info, "Method: %s\n", method2str((output_method_t)m));
         fprintf(fo_info, "Max Depth: %d\n", max_depth);
         fprintf(fo_info, "Max Branch: %d\n", max_branch);
@@ -2283,8 +2319,9 @@ int output_save_header(output_t *output, FILE *fp, bool binary)
             return -1;
         }
 
-        if (fwrite(&output->in_size, sizeof(int), 1, fp) != 1) {
-            ST_WARNING("Failed to write in_size.");
+        n = (int)output->act_func;
+        if (fwrite(&n, sizeof(int), 1, fp) != 1) {
+            ST_WARNING("Failed to write act_func.");
             return -1;
         }
 
@@ -2321,8 +2358,9 @@ int output_save_header(output_t *output, FILE *fp, bool binary)
             ST_WARNING("Failed to fprintf output size.");
             return -1;
         }
-        if (fprintf(fp, "In size: %d\n", output->in_size) < 0) {
-            ST_WARNING("Failed to fprintf in size.");
+        if (fprintf(fp, "Activation: %s\n",
+                    act2str(output->act_func)) < 0) {
+            ST_WARNING("Failed to fprintf act_func.");
             return -1;
         }
         if (fprintf(fp, "Method: %s\n",
@@ -2491,4 +2529,41 @@ layer_t* output_get_layer(output_t *output)
 ERR:
     safe_free(layer);
     return NULL;
+}
+
+int output_parse_topo(output_t *output, const char *topo)
+{
+    char keyvalue[2*MAX_LINE_LEN];
+    char token[MAX_LINE_LEN];
+    const char *p;
+
+    ST_CHECK_PARAM(output == NULL || topo == NULL, -1);
+
+    p = topo;
+
+    p = get_next_token(p, token);
+    if (strcasecmp("property", token) != 0) {
+        ST_WARNING("Not property line.");
+        return -1;
+    }
+
+    while (p != NULL) {
+        p = get_next_token(p, token);
+        if (split_line(token, keyvalue, 2, MAX_LINE_LEN, "=") < 0) {
+            ST_WARNING("Failed to split key/value. [%s]", token);
+            return -1;
+        }
+
+        if (strcasecmp("activation", keyvalue) == 0) {
+            output->act_func = str2act(keyvalue + MAX_LINE_LEN);
+            if (output->act_func == OA_UNKNOWN) {
+                ST_WARNING("Unknown activation.");
+                return -1;
+            }
+        } else {
+            ST_WARNING("Unknown key[%s].", keyvalue);
+        }
+    }
+
+    return 0;
 }

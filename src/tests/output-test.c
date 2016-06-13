@@ -682,7 +682,7 @@ static int unit_test_output_generate()
     /***************************************************/
     /***************************************************/
     fprintf(stderr, "    Case %d...", ncase++);
-    output_opt.method = TOP_DOWN;
+    output_opt.method = OM_TOP_DOWN;
     output_opt.max_depth = 0;
     output_opt.max_branch = 3;
     output = output_generate(&output_opt, word_cnts, N);
@@ -724,7 +724,7 @@ static int unit_test_output_generate()
     /***************************************************/
     /***************************************************/
     fprintf(stderr, "    Case %d...", ncase++);
-    output_opt.method = BOTTOM_UP;
+    output_opt.method = OM_BOTTOM_UP;
     output_opt.max_depth = 0;
     output_opt.max_branch = 3;
     output = output_generate(&output_opt, word_cnts, N);
@@ -742,7 +742,7 @@ static int unit_test_output_generate()
     /***************************************************/
     /***************************************************/
     fprintf(stderr, "    Case %d...", ncase++);
-    output_opt.method = BOTTOM_UP;
+    output_opt.method = OM_BOTTOM_UP;
     output_opt.max_depth = 2;
     output_opt.max_branch = 2;
     output = output_generate(&output_opt, word_cnts, N);
@@ -759,7 +759,7 @@ static int unit_test_output_generate()
     /***************************************************/
     /***************************************************/
     fprintf(stderr, "    Case %d...", ncase++);
-    output_opt.method = BOTTOM_UP;
+    output_opt.method = OM_BOTTOM_UP;
     output_opt.max_depth = 1;
     output_opt.max_branch = 5;
     output = output_generate(&output_opt, word_cnts, N);
@@ -777,7 +777,7 @@ static int unit_test_output_generate()
     /***************************************************/
     /***************************************************/
     fprintf(stderr, "    Case %d...", ncase++);
-    output_opt.method = TOP_DOWN;
+    output_opt.method = OM_TOP_DOWN;
     output_opt.max_depth = 3;
     output_opt.max_branch = 2;
     output = output_generate(&output_opt, word_cnts, N);
@@ -795,7 +795,7 @@ static int unit_test_output_generate()
     /***************************************************/
     /***************************************************/
     fprintf(stderr, "    Case %d...", ncase++);
-    output_opt.method = TOP_DOWN;
+    output_opt.method = OM_TOP_DOWN;
     output_opt.max_depth = 1;
     output_opt.max_branch = 2;
     output = output_generate(&output_opt, word_cnts, N);

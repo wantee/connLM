@@ -90,7 +90,7 @@ input_t* input_parse_topo(const char *line, int input_size);
 /**
  * return a layer struct for input.
  * @ingroup g_input
- * @param[in] i input the input layer.
+ * @param[in] input the input layer.
  * @return layer for the input, else NULL.
  */
 layer_t* input_get_layer(input_t *input);

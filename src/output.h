@@ -50,8 +50,9 @@ typedef unsigned int output_node_id_t;
  * @ingroup g_output
  */
 typedef enum _output_construct_method_t_ {
-    TOP_DOWN = 0, /**< Top-down method. */
-    BOTTOM_UP, /**< Bottom-up method. */
+    OM_UNKNOWN = -1, /**< Unknown method. */
+    OM_TOP_DOWN = 0, /**< Top-down method. */
+    OM_BOTTOM_UP, /**< Bottom-up method. */
 } output_method_t;
 
 /**
@@ -110,6 +111,16 @@ typedef struct _output_tree_path_t_ {
 } output_path_t;
 
 /**
+ * Type of output layer activation function.
+ * @ingroup g_output
+ */
+typedef enum _output_act_func_t_ {
+    OA_UNKNOWN = -1, /**< Unknown. */
+    OA_UNDEFINED = 0, /**< Undefined. */
+    OA_MULTI_LOGIT, /**< multinomial logistic function. */
+    OA_SOFTMAX, /**< softmax function. */
+} output_act_func_t;
+/**
  * Output Layer.
  * @ingroup g_output
  */
@@ -117,7 +128,7 @@ typedef struct _output_t_ {
     output_opt_t output_opt; /**< output tree options. */
 
     int output_size; /**< size of output tree. */
-    int in_size; /**< size of input for output tree. */
+    output_act_func_t act_func; /**< activation function. */
 
     output_neuron_t *neurons; /**< output tree neurons. */
     int num_thrs; /**< number of threads/neurons. */
@@ -353,10 +364,19 @@ int output_draw(output_t *output, FILE *fp, count_t *word_cnts,
 /**
  * return a layer struct for output.
  * @ingroup g_output
- * @param[in] i output the output layer.
+ * @param[in] output the output layer.
  * @return layer for the output, else NULL.
  */
 layer_t* output_get_layer(output_t *output);
+
+/**
+ * parse topo file for output layer.
+ * @ingroup g_output
+ * @param[in] output the output layer.
+ * @param[in] topo topo configs.
+ * @return non-zero value if any error.
+ */
+int output_parse_topo(output_t *output, const char *topo);
 
 #ifdef __cplusplus
 }
