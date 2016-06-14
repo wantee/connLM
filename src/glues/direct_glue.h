@@ -33,6 +33,7 @@ extern "C" {
 
 #include "input.h"
 #include "output.h"
+#include "weights/direct_weight.h"
 
 #include "glue.h"
 
@@ -44,6 +45,9 @@ extern "C" {
 #define DIRECT_GLUE_NAME "direct"
 
 typedef struct _direct_glue_data_t_ {
+    hash_size_t hash_sz;
+    int order;
+    direct_wt_t *direct_wt;
 } direct_glue_data_t;
 
 /**
@@ -98,6 +102,58 @@ bool direct_glue_check(glue_t *glue, layer_t **layers, layer_id_t n_layer);
  * @return label on success, NULL if any error.
  */
 char* direct_glue_draw_label(glue_t *glue, char *label, size_t label_len);
+
+/**
+ * Load direct_glue header and initialise a new direct_glue.
+ * @ingroup g_glue_direct
+ * @param[out] extra extra data to be initialised.
+ * @param[in] version file version of loading file.
+ * @param[in] fp file stream loaded from.
+ * @param[out] binary whether the file stream is in binary format.
+ * @param[in] fo file stream used to print information, if it is not NULL.
+ * @see direct_glue_load_body
+ * @see direct_glue_save_header, direct_glue_save_body
+ * @return non-zero value if any error.
+ */
+int direct_glue_load_header(void **extra, int version,
+        FILE *fp, bool *binary, FILE *fo_info);
+
+/**
+ * Load direct_glue body.
+ * @ingroup g_glue_direct
+ * @param[in] extra extra data to be loaded.
+ * @param[in] version file version of loading file.
+ * @param[in] fp file stream loaded from.
+ * @param[in] binary whether to use binary format.
+ * @see direct_glue_load_header
+ * @see direct_glue_save_header, direct_glue_save_body
+ * @return non-zero value if any error.
+ */
+int direct_glue_load_body(void *extra, int version, FILE *fp, bool binary);
+
+/**
+ * Save direct_glue header.
+ * @ingroup g_glue_direct
+ * @param[in] extra extra data to be saved.
+ * @param[in] fp file stream saved to.
+ * @param[in] binary whether to use binary format.
+ * @see direct_glue_save_body
+ * @see direct_glue_load_header, direct_glue_load_body
+ * @return non-zero value if any error.
+ */
+int direct_glue_save_header(void *extra, FILE *fp, bool binary);
+
+/**
+ * Save direct_glue body.
+ * @ingroup g_glue_direct
+ * @param[in] extra extra data to be saved.
+ * @param[in] fp file stream saved to.
+ * @param[in] binary whether to use binary format.
+ * @see direct_glue_save_header
+ * @see direct_glue_load_header, direct_glue_load_body
+ * @return non-zero value if any error.
+ */
+int direct_glue_save_body(void *extra, FILE *fp, bool binary);
 
 /**
  * Initialise extra data of direct glue.

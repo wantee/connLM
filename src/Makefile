@@ -24,6 +24,7 @@ INCS = utils.h \
        glues/out_wt_glue.h \
        weights/weight.h \
        weights/output_weight.h \
+       weights/direct_weight.h \
        graph.h
 
 SRCS = utils.c \
@@ -46,6 +47,7 @@ SRCS = utils.c \
        glues/out_wt_glue.c \
        weights/weight.c \
        weights/output_weight.c \
+       weights/direct_weight.c \
        graph.c
 
 BINS = bin/connlm-train \

@@ -234,7 +234,7 @@ int out_wt_load_body(out_wt_t *out_wt, int version, FILE *fp, bool binary)
         i = 0;
         while (i < out_wt->in_layer_sz * (out_wt->output_node_num - 1)) {
             if (st_readline(fp, REAL_FMT, out_wt->matrix + i) != 1) {
-                ST_WARNING("Failed to parse matrix[%d].", i);
+                ST_WARNING("Failed to parse matrix[%zu].", i);
                 goto ERR;
             }
             i++;
