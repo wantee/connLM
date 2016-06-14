@@ -56,7 +56,6 @@ void direct_glue_data_destroy(direct_glue_data_t *data)
     }
     safe_direct_wt_destroy(data->direct_wt);
     data->hash_sz = 0;
-    data->order = 0;
 }
 
 direct_glue_data_t* direct_glue_data_init()
@@ -194,12 +193,6 @@ int direct_glue_parse_topo(glue_t *glue, const char *line)
                 ST_WARNING("Illegal size[%s]", keyvalue + MAX_LINE_LEN);
                 goto ERR;
             }
-        } else if (strcasecmp("order", keyvalue) == 0) {
-            data->order = atoi(keyvalue + MAX_LINE_LEN);
-            if (data->order <= 1) {
-                ST_WARNING("Illegal order[%s]", keyvalue + MAX_LINE_LEN);
-                goto ERR;
-            }
         } else {
             ST_WARNING("Unknown key/value[%s]", token);
         }
@@ -207,11 +200,6 @@ int direct_glue_parse_topo(glue_t *glue, const char *line)
 
     if (data->hash_sz <= 0) {
         ST_WARNING("Hash size not set");
-        goto ERR;
-    }
-
-    if (data->order <= 0) {
-        ST_WARNING("order not set");
         goto ERR;
     }
 
@@ -351,7 +339,7 @@ int direct_glue_init_data(glue_t *glue, input_t *input,
     }
 
     data = (direct_glue_data_t *)glue->extra;
-    data->direct_wt = direct_wt_init(data->hash_sz, data->order);
+    data->direct_wt = direct_wt_init(data->hash_sz);
     if (data->direct_wt == NULL) {
         ST_WARNING("Failed to direct_wt_init.");
         return -1;

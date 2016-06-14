@@ -46,7 +46,6 @@ extern "C" {
 
 typedef struct _direct_glue_data_t_ {
     hash_size_t hash_sz;
-    int order;
     direct_wt_t *direct_wt;
 } direct_glue_data_t;
 

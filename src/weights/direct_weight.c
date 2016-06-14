@@ -40,11 +40,9 @@ void direct_wt_destroy(direct_wt_t *direct_wt)
 
     safe_free(direct_wt->hash_wt);
     direct_wt->wt_sz = 0;
-    direct_wt->hash_order = 0;
 }
 
-static int direct_wt_alloc(direct_wt_t *direct_wt, hash_size_t wt_sz,
-        int hash_order)
+static int direct_wt_alloc(direct_wt_t *direct_wt, hash_size_t wt_sz)
 {
     if (posix_memalign((void **)&(direct_wt->hash_wt), ALIGN_SIZE,
                 sizeof(real_t) * wt_sz) != 0
@@ -53,7 +51,6 @@ static int direct_wt_alloc(direct_wt_t *direct_wt, hash_size_t wt_sz,
         goto ERR;
     }
     direct_wt->wt_sz = wt_sz;
-    direct_wt->hash_order = hash_order;
 
     return 0;
 
@@ -75,7 +72,7 @@ direct_wt_t* direct_wt_dup(direct_wt_t *d)
     }
     memset(direct_wt, 0, sizeof(direct_wt_t));
 
-    if (direct_wt_alloc(direct_wt, d->wt_sz, d->hash_order) < 0) {
+    if (direct_wt_alloc(direct_wt, d->wt_sz) < 0) {
         ST_WARNING("Failed to direct_wt_alloc.");
         goto ERR;
     }
@@ -100,7 +97,6 @@ int direct_wt_load_header(direct_wt_t **direct_wt, int version,
     } flag;
 
     hash_size_t wt_sz;
-    int hash_order;
 
     ST_CHECK_PARAM((direct_wt == NULL && fo_info == NULL) || fp == NULL
             || binary == NULL, -1);
@@ -133,10 +129,6 @@ int direct_wt_load_header(direct_wt_t **direct_wt, int version,
             ST_WARNING("Failed to read wt_sz.");
             return -1;
         }
-        if (fread(&hash_order, sizeof(int), 1, fp) != 1) {
-            ST_WARNING("Failed to read hash_order.");
-            return -1;
-        }
     } else {
         if (st_readline(fp, "") != 0) {
             ST_WARNING("tag error.");
@@ -151,10 +143,6 @@ int direct_wt_load_header(direct_wt_t **direct_wt, int version,
             ST_WARNING("Failed to parse wt_sz.");
             goto ERR;
         }
-        if (st_readline(fp, "Hash order: %d", &hash_order) != 1) {
-            ST_WARNING("Failed to parse hash_order.");
-            goto ERR;
-        }
     }
 
     if (direct_wt != NULL) {
@@ -166,14 +154,12 @@ int direct_wt_load_header(direct_wt_t **direct_wt, int version,
         memset(*direct_wt, 0, sizeof(direct_wt_t));
 
         (*direct_wt)->wt_sz = wt_sz;
-        (*direct_wt)->hash_order = hash_order;
     }
 
     if (fo_info != NULL) {
         fprintf(fo_info, "\n<DIRECT_WT>\n");
         setlocale(LC_NUMERIC, "en_US.UTF-8");
         fprintf(fo_info, "Weight size: %'lld\n", (long long)wt_sz);
-        fprintf(fo_info, "Hash order: %d\n", hash_order);
     }
 
     return 0;
@@ -198,8 +184,7 @@ int direct_wt_load_body(direct_wt_t *direct_wt, int version,
         return -1;
     }
 
-    if (direct_wt_alloc(direct_wt, direct_wt->wt_sz,
-                direct_wt->hash_order) < 0) {
+    if (direct_wt_alloc(direct_wt, direct_wt->wt_sz) < 0) {
         ST_WARNING("Failed to direct_wt_alloc.");
         return -1;
     }
@@ -254,10 +239,6 @@ int direct_wt_save_header(direct_wt_t *direct_wt, FILE *fp, bool binary)
             ST_WARNING("Failed to read wt_sz.");
             return -1;
         }
-        if (fwrite(&direct_wt->hash_order, sizeof(int), 1, fp) != 1) {
-            ST_WARNING("Failed to read hash_order.");
-            return -1;
-        }
     } else {
         if (fprintf(fp, "    \n<DIRECT_WT>\n") < 0) {
             ST_WARNING("Failed to fprintf header.");
@@ -267,10 +248,6 @@ int direct_wt_save_header(direct_wt_t *direct_wt, FILE *fp, bool binary)
         if (fprintf(fp, "Weight size: "HASH_SIZE_FMT"\n",
                     direct_wt->wt_sz) < 0) {
             ST_WARNING("Failed to fprintf wt_sz.");
-            return -1;
-        }
-        if (fprintf(fp, "Hash order: %d\n", direct_wt->hash_order) < 0) {
-            ST_WARNING("Failed to fprintf hash_order.");
             return -1;
         }
     }
@@ -314,7 +291,7 @@ int direct_wt_save_body(direct_wt_t *direct_wt, FILE *fp, bool binary)
     return 0;
 }
 
-direct_wt_t* direct_wt_init(hash_size_t wt_sz, int hash_order)
+direct_wt_t* direct_wt_init(hash_size_t wt_sz)
 {
     direct_wt_t *direct_wt = NULL;
     size_t i;
@@ -328,7 +305,7 @@ direct_wt_t* direct_wt_init(hash_size_t wt_sz, int hash_order)
     }
     memset(direct_wt, 0, sizeof(direct_wt_t));
 
-    if (direct_wt_alloc(direct_wt, wt_sz, hash_order) < 0) {
+    if (direct_wt_alloc(direct_wt, wt_sz) < 0) {
         ST_WARNING("Failed to direct_wt_alloc.");
         goto ERR;
     }
