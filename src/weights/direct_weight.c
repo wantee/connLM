@@ -23,8 +23,8 @@
  */
 
 #include <string.h>
-#include <locale.h>
 
+#include <stutils/st_macro.h>
 #include <stutils/st_log.h>
 #include <stutils/st_utils.h>
 
@@ -91,6 +91,7 @@ ERR:
 int direct_wt_load_header(direct_wt_t **direct_wt, int version,
         FILE *fp, bool *binary, FILE *fo_info)
 {
+    char buf[MAX_NAME_LEN];
     union {
         char str[4];
         int magic_num;
@@ -158,8 +159,8 @@ int direct_wt_load_header(direct_wt_t **direct_wt, int version,
 
     if (fo_info != NULL) {
         fprintf(fo_info, "\n<DIRECT_WT>\n");
-        setlocale(LC_NUMERIC, "en_US.UTF-8");
-        fprintf(fo_info, "Weight size: %'lld\n", (long long)wt_sz);
+        fprintf(fo_info, "Weight size: %s\n",
+                st_ll2str(buf, MAX_NAME_LEN, (long long)wt_sz, false));
     }
 
     return 0;

@@ -22,6 +22,7 @@
  * SOFTWARE.
  */
 
+#include <stutils/st_macro.h>
 #include <stutils/st_log.h>
 #include <stutils/st_utils.h>
 
@@ -245,9 +246,15 @@ bool direct_glue_check(glue_t *glue, layer_t **layers, layer_id_t n_layer)
 
 char* direct_glue_draw_label(glue_t *glue, char *label, size_t label_len)
 {
+    char buf[MAX_NAME_LEN];
+    direct_glue_data_t *data;
+
     ST_CHECK_PARAM(glue == NULL || label == NULL, NULL);
 
-    snprintf(label, label_len, "");
+    data = (direct_glue_data_t *)glue->extra;
+
+    snprintf(label, label_len, ",size=%s",
+            st_ll2str(buf, MAX_NAME_LEN, (long long)data->hash_sz, false));
 
     return label;
 }
@@ -271,6 +278,10 @@ int direct_glue_load_header(void **extra, int version,
                 version, fp, binary, fo_info) < 0) {
         ST_WARNING("Failed to direct_wt_load_header.");
         goto ERR;
+    }
+
+    if (extra != NULL) {
+        data->hash_sz = data->direct_wt->wt_sz;
     }
 
     return 0;
