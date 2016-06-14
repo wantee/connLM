@@ -56,8 +56,8 @@ fi
 
 . ../utils/parse_options.sh || exit 1
 
-if [ $# -gt 1 ] || ! shu-valid-range $1; then 
-  print_help 1>&2 
+if [ $# -gt 1 ] || ! shu-valid-range $1; then
+  print_help 1>&2
   exit 1
 fi
 
@@ -71,8 +71,9 @@ st=1
 if shu-in-range $st $steps; then
 echo
 echo "Step $st: ${stepnames[$st]} ..."
+mkdir -p "$data"
 for part in dev-clean test-clean dev-other test-other train-clean-100 train-clean-360 train-other-500; do
-  local/download_and_untar.sh $data $data_url $part
+  local/download_and_untar.sh $data $data_url $part || exit 1
 done
 
 local/download_lm.sh $lm_url $data || exit 1
