@@ -295,9 +295,9 @@ int connlm_init(connlm_t *connlm, FILE *topo_fp)
                 has_comp = true;
                 part = 1;
 
-                /* Set default output activation. */
-                if (connlm->output->act_func == OA_UNDEFINED) {
-                    connlm->output->act_func = OA_MULTI_LOGIT;
+                /* Set default output normalization. */
+                if (connlm->output->norm == ON_UNDEFINED) {
+                    connlm->output->norm = ON_SOFTMAX;
                 }
             } else if (strcasecmp("<output>", line) == 0) {
                 if (has_comp) {

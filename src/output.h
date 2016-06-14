@@ -111,15 +111,15 @@ typedef struct _output_tree_path_t_ {
 } output_path_t;
 
 /**
- * Type of output layer activation function.
+ * Type of output layer normalization function.
  * @ingroup g_output
  */
-typedef enum _output_act_func_t_ {
-    OA_UNKNOWN = -1, /**< Unknown. */
-    OA_UNDEFINED = 0, /**< Undefined. */
-    OA_MULTI_LOGIT, /**< multinomial logistic function. */
-    OA_SOFTMAX, /**< softmax function. */
-} output_act_func_t;
+typedef enum _output_normalization_method_t_ {
+    ON_UNKNOWN = -1, /**< Unknown. */
+    ON_UNDEFINED = 0, /**< Undefined. */
+    ON_SOFTMAX, /**< Softmax. */
+    ON_NCE, /**< Noise Contrastive Estimation. */
+} output_norm_t;
 /**
  * Output Layer.
  * @ingroup g_output
@@ -128,7 +128,7 @@ typedef struct _output_t_ {
     output_opt_t output_opt; /**< output tree options. */
 
     int output_size; /**< size of output tree. */
-    output_act_func_t act_func; /**< activation function. */
+    output_norm_t norm; /**< normalization method. */
 
     output_neuron_t *neurons; /**< output tree neurons. */
     int num_thrs; /**< number of threads/neurons. */

@@ -63,28 +63,28 @@ static output_method_t str2method(const char *str)
     return (output_method_t)-1;
 }
 
-static const char *act_func_str[] = {
+static const char *norm_str[] = {
     "Undefined",
-    "MultiLogit",
     "Softmax",
+    "NCE",
 };
 
-static const char* act2str(output_act_func_t a)
+static const char* norm2str(output_norm_t n)
 {
-    return act_func_str[a];
+    return norm_str[n];
 }
 
-static output_act_func_t str2act(const char *str)
+static output_norm_t str2norm(const char *str)
 {
     int i;
 
-    for (i = 0; i < sizeof(act_func_str) / sizeof(act_func_str[0]); i++) {
-        if (strcasecmp(act_func_str[i], str) == 0) {
-            return (output_act_func_t)i;
+    for (i = 0; i < sizeof(norm_str) / sizeof(norm_str[0]); i++) {
+        if (strcasecmp(norm_str[i], str) == 0) {
+            return (output_norm_t)i;
         }
     }
 
-    return OA_UNKNOWN;
+    return ON_UNKNOWN;
 }
 
 int output_load_opt(output_opt_t *output_opt, st_opt_t *opt,
@@ -2066,7 +2066,7 @@ bool output_equal(output_t *output1, output_t *output2)
         return false;
     }
 
-    if (output1->act_func != output2->act_func) {
+    if (output1->norm != output2->norm) {
         return false;
     }
 
@@ -2083,7 +2083,7 @@ int output_load_header(output_t **output, int version,
     } flag;
 
     int output_size;
-    int a;
+    int n;
     int m;
     int max_depth;
     int max_branch;
@@ -2128,8 +2128,8 @@ int output_load_header(output_t **output, int version,
             return 0;
         }
 
-        if (fread(&a, sizeof(int), 1, fp) != 1) {
-            ST_WARNING("Failed to read act_func.");
+        if (fread(&n, sizeof(int), 1, fp) != 1) {
+            ST_WARNING("Failed to read norm.");
             goto ERR;
         }
 
@@ -2169,15 +2169,15 @@ int output_load_header(output_t **output, int version,
             return 0;
         }
 
-        if (st_readline(fp, "Activation: %"xSTR(MAX_LINE_LEN)"s",
+        if (st_readline(fp, "Normalization: %"xSTR(MAX_LINE_LEN)"s",
                     sym) != 1) {
-            ST_WARNING("Failed to parse act_func.");
+            ST_WARNING("Failed to parse norm.");
             goto ERR;
         }
         sym[MAX_LINE_LEN - 1] = '\0';
-        a = (int)str2act(sym);
-        if (a == (int)OA_UNKNOWN) {
-            ST_WARNING("Unknown activation[%s]", sym);
+        n = (int)str2norm(sym);
+        if (n == (int)ON_UNKNOWN) {
+            ST_WARNING("Unknown Normalization[%s]", sym);
             goto ERR;
         }
 
@@ -2212,7 +2212,7 @@ int output_load_header(output_t **output, int version,
         memset(*output, 0, sizeof(output_t));
 
         (*output)->output_size = output_size;
-        (*output)->act_func = (output_act_func_t)a;
+        (*output)->norm = (output_norm_t)n;
         (*output)->output_opt.method = (output_method_t)m;
         (*output)->output_opt.max_depth = max_depth;
         (*output)->output_opt.max_branch = max_branch;
@@ -2221,8 +2221,8 @@ int output_load_header(output_t **output, int version,
     if (fo_info != NULL) {
         fprintf(fo_info, "\n<OUTPUT>\n");
         fprintf(fo_info, "Output size: %d\n", output_size);
-        fprintf(fo_info, "Activation: %s\n",
-                act2str((output_act_func_t)a));
+        fprintf(fo_info, "Normalization: %s\n",
+                norm2str((output_norm_t)n));
         fprintf(fo_info, "Method: %s\n", method2str((output_method_t)m));
         fprintf(fo_info, "Max Depth: %d\n", max_depth);
         fprintf(fo_info, "Max Branch: %d\n", max_branch);
@@ -2319,9 +2319,9 @@ int output_save_header(output_t *output, FILE *fp, bool binary)
             return -1;
         }
 
-        n = (int)output->act_func;
+        n = (int)output->norm;
         if (fwrite(&n, sizeof(int), 1, fp) != 1) {
-            ST_WARNING("Failed to write act_func.");
+            ST_WARNING("Failed to write norm.");
             return -1;
         }
 
@@ -2358,9 +2358,9 @@ int output_save_header(output_t *output, FILE *fp, bool binary)
             ST_WARNING("Failed to fprintf output size.");
             return -1;
         }
-        if (fprintf(fp, "Activation: %s\n",
-                    act2str(output->act_func)) < 0) {
-            ST_WARNING("Failed to fprintf act_func.");
+        if (fprintf(fp, "Normalization: %s\n",
+                    norm2str(output->norm)) < 0) {
+            ST_WARNING("Failed to fprintf norm.");
             return -1;
         }
         if (fprintf(fp, "Method: %s\n",
@@ -2554,10 +2554,10 @@ int output_parse_topo(output_t *output, const char *topo)
             return -1;
         }
 
-        if (strcasecmp("activation", keyvalue) == 0) {
-            output->act_func = str2act(keyvalue + MAX_LINE_LEN);
-            if (output->act_func == OA_UNKNOWN) {
-                ST_WARNING("Unknown activation.");
+        if (strcasecmp("norm", keyvalue) == 0) {
+            output->norm = str2norm(keyvalue + MAX_LINE_LEN);
+            if (output->norm == ON_UNKNOWN) {
+                ST_WARNING("Unknown norm.");
                 return -1;
             }
         } else {
