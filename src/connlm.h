@@ -71,7 +71,6 @@ typedef struct _connlm_opt_t_ {
  * @ingroup g_connlm
  */
 typedef struct _connlm_train_opt_t_ {
-    param_t param;            /**< training parameters. */
 } connlm_train_opt_t;
 
 /**
@@ -170,14 +169,14 @@ int connlm_load_gen_opt(connlm_gen_opt_t *gen_opt,
         st_opt_t *opt, const char *sec_name);
 
 /**
- * Load connlm train option.
+ * Load connlm train param.
  * @ingroup g_connlm
  * @param[in] connlm connlm model to be loaded with.
  * @param[in] opt runtime options passed by caller.
  * @param[in] sec_name section name of runtime options to be loaded.
  * @return non-zero value if any error.
  */
-int connlm_load_train_opt(connlm_t *connlm, st_opt_t *opt,
+int connlm_load_param(connlm_t *connlm, st_opt_t *opt,
         const char *sec_name);
 
 /**

@@ -376,15 +376,31 @@ ERR:
 }
 
 int comp_load_train_opt(component_t *comp, st_opt_t *opt,
-        const char *sec_name)
+        const char *sec_name, param_t *parent)
 {
+    char name[MAX_ST_CONF_LEN];
+    param_t param;
+    glue_id_t g;
+
     ST_CHECK_PARAM(comp == NULL || opt == NULL, -1);
 
-    if (param_load(&comp->train_opt.param, opt, sec_name, NULL) < 0) {
+    if (sec_name == NULL || sec_name[0] == '\0') {
+        snprintf(name, MAX_ST_CONF_LEN, "%s", comp->name);
+    } else {
+        snprintf(name, MAX_ST_CONF_LEN, "%s/%s", sec_name,
+                comp->name);
+    }
+    if (param_load(&param, opt, name, parent) < 0) {
         ST_WARNING("Failed to param_load.");
         goto ST_OPT_ERR;
     }
 
+    for (g = 0; g < comp->num_glue; g++) {
+        if (glue_load_train_opt(comp->glues[g], opt, name, &param) < 0) {
+            ST_WARNING("Failed to glue_load_train_opt.");
+            goto ST_OPT_ERR;
+        }
+    }
     return 0;
 
 ST_OPT_ERR:

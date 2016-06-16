@@ -253,7 +253,7 @@ void connlm_show_usage(const char *module_name, const char *header,
     fprintf(stderr, "Usage    : %s [options] %s\n", module_name, usage);
     fprintf(stderr, "\n");
     fprintf(stderr, "Options  : \n");
-    st_opt_show_usage(opt, stderr);
+    st_opt_show_usage(opt, stderr, true);
     if (trailer != NULL) {
         fprintf(stderr, "\n%s\n", trailer);
     }

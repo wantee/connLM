@@ -31,6 +31,7 @@ extern "C" {
 
 #include <connlm/config.h>
 #include "weights/output_weight.h"
+#include "param.h"
 #include "glue.h"
 
 /** @defgroup g_glue_out_wt output weight glue.
@@ -42,6 +43,8 @@ extern "C" {
 
 typedef struct _out_wt_glue_data_t_ {
     out_wt_t *out_wt;
+
+    param_t param;
 } out_wt_glue_data_t;
 
 /**
@@ -162,6 +165,18 @@ int out_wt_glue_save_body(void *extra, FILE *fp, bool binary);
  */
 int out_wt_glue_init_data(glue_t *glue, input_t *input,
         layer_t **layers, output_t *output);
+
+/**
+ * Load out_wt_glue train option.
+ * @ingroup g_glue_out_wt
+ * @param[in] glue glue to be loaded with.
+ * @param[in] opt runtime options passed by caller.
+ * @param[in] sec_name section name of runtime options to be loaded.
+ * @param[in] parent parent param.
+ * @return non-zero value if any error.
+ */
+int out_wt_glue_load_train_opt(glue_t *glue, st_opt_t *opt,
+        const char *sec_name, param_t *parent);
 
 #ifdef __cplusplus
 }

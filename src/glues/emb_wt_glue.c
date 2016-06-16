@@ -326,3 +326,28 @@ int emb_wt_glue_init_data(glue_t *glue, input_t *input,
 
     return 0;
 }
+
+int emb_wt_glue_load_train_opt(glue_t *glue, st_opt_t *opt,
+        const char *sec_name, param_t *parent)
+{
+    emb_wt_glue_data_t *data;
+
+    ST_CHECK_PARAM(glue == NULL || opt == NULL, -1);
+
+    if (strcasecmp(glue->type, EMB_WT_GLUE_NAME) != 0) {
+        ST_WARNING("Not a emb_wt glue. [%s]", glue->type);
+        return -1;
+    }
+
+    data = (emb_wt_glue_data_t *)glue->extra;
+
+    if (param_load(&data->param, opt, sec_name, parent) < 0) {
+        ST_WARNING("Failed to param_load.");
+        goto ST_OPT_ERR;
+    }
+
+    return 0;
+
+ST_OPT_ERR:
+    return -1;
+}

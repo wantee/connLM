@@ -137,27 +137,22 @@ ST_OPT_ERR:
     return -1;
 }
 
-int connlm_load_train_opt(connlm_t *connlm, st_opt_t *opt,
+int connlm_load_param(connlm_t *connlm, st_opt_t *opt,
         const char *sec_name)
 {
-    char name[MAX_ST_CONF_LEN];
+    param_t param;
     comp_id_t c;
 
     ST_CHECK_PARAM(connlm == NULL || opt == NULL, -1);
 
-    if (param_load(&connlm->train_opt.param, opt, sec_name, NULL) < 0) {
+    if (param_load(&param, opt, sec_name, NULL) < 0) {
         ST_WARNING("Failed to param_load.");
         goto ST_OPT_ERR;
     }
 
     for (c = 0; c < connlm->num_comp; c++) {
-        if (sec_name == NULL || sec_name[0] == '\0') {
-            snprintf(name, MAX_ST_CONF_LEN, "%s", connlm->comps[c]->name);
-        } else {
-            snprintf(name, MAX_ST_CONF_LEN, "%s/%s", sec_name,
-                    connlm->comps[c]->name);
-        }
-        if (comp_load_train_opt(connlm->comps[c], opt, name) < 0) {
+        if (comp_load_train_opt(connlm->comps[c], opt, sec_name,
+                    &param) < 0) {
             ST_WARNING("Failed to comp_load_train_opt.");
             goto ST_OPT_ERR;
         }

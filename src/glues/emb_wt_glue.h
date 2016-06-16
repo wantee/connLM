@@ -30,7 +30,9 @@ extern "C" {
 #endif
 
 #include <connlm/config.h>
+
 #include "weights/weight.h"
+#include "param.h"
 #include "glue.h"
 
 /** @defgroup g_glue_emb_wt embedding weight glue.
@@ -42,6 +44,8 @@ extern "C" {
 
 typedef struct _emb_wt_glue_data_t_ {
     weight_t *emb_wt;
+
+    param_t param;
 } emb_wt_glue_data_t;
 
 /**
@@ -160,6 +164,18 @@ int emb_wt_glue_save_body(void *extra, FILE *fp, bool binary);
  */
 int emb_wt_glue_init_data(glue_t *glue, input_t *input,
         layer_t **layers, output_t *output);
+
+/**
+ * Load emb_wt_glue train option.
+ * @ingroup g_glue_emb_wt
+ * @param[in] glue glue to be loaded with.
+ * @param[in] opt runtime options passed by caller.
+ * @param[in] sec_name section name of runtime options to be loaded.
+ * @param[in] parent parent param.
+ * @return non-zero value if any error.
+ */
+int emb_wt_glue_load_train_opt(glue_t *glue, st_opt_t *opt,
+        const char *sec_name, param_t *parent);
 
 #ifdef __cplusplus
 }

@@ -34,6 +34,7 @@ extern "C" {
 #include "input.h"
 #include "output.h"
 #include "weights/direct_weight.h"
+#include "param.h"
 
 #include "glue.h"
 
@@ -47,6 +48,8 @@ extern "C" {
 typedef struct _direct_glue_data_t_ {
     hash_size_t hash_sz;
     direct_wt_t *direct_wt;
+
+    param_t param;
 } direct_glue_data_t;
 
 /**
@@ -165,6 +168,18 @@ int direct_glue_save_body(void *extra, FILE *fp, bool binary);
  */
 int direct_glue_init_data(glue_t *glue, input_t *input,
         layer_t **layers, output_t *output);
+
+/**
+ * Load direct_glue train option.
+ * @ingroup g_glue_direct
+ * @param[in] glue glue to be loaded with.
+ * @param[in] opt runtime options passed by caller.
+ * @param[in] sec_name section name of runtime options to be loaded.
+ * @param[in] parent parent param.
+ * @return non-zero value if any error.
+ */
+int direct_glue_load_train_opt(glue_t *glue, st_opt_t *opt,
+        const char *sec_name, param_t *parent);
 
 #ifdef __cplusplus
 }

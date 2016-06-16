@@ -53,40 +53,43 @@ typedef struct _glue_register_t_ {
     int (*save_body)(void *extra, FILE *fp, bool binary);
     int (*init_data)(glue_t *glue, input_t *input,
             layer_t **layers, output_t *output);
+    int (*load_train_opt)(glue_t *glue, st_opt_t *opt,
+            const char *sec_name, param_t *parent);
 } glue_reg_t;
 
 static glue_reg_t GLUE_REG[] = {
     {SUM_GLUE_NAME, sum_glue_init, sum_glue_destroy,
         sum_glue_dup, sum_glue_parse_topo, sum_glue_check,
-        sum_glue_draw_label, NULL, NULL, NULL, NULL},
+        sum_glue_draw_label, NULL, NULL, NULL, NULL, NULL},
     {APPEND_GLUE_NAME, append_glue_init, append_glue_destroy,
         append_glue_dup, append_glue_parse_topo, append_glue_check,
-        append_glue_draw_label, NULL, NULL, NULL, NULL},
+        append_glue_draw_label, NULL, NULL, NULL, NULL, NULL},
     {CLONE_GLUE_NAME, clone_glue_init, clone_glue_destroy,
         clone_glue_dup, clone_glue_parse_topo, clone_glue_check,
-        clone_glue_draw_label, NULL, NULL, NULL, NULL},
+        clone_glue_draw_label, NULL, NULL, NULL, NULL, NULL},
     {DIRECT_GLUE_NAME, direct_glue_init, direct_glue_destroy,
         direct_glue_dup, direct_glue_parse_topo, direct_glue_check,
         direct_glue_draw_label, direct_glue_load_header,
         direct_glue_load_body, direct_glue_save_header,
-        direct_glue_save_body, direct_glue_init_data},
+        direct_glue_save_body, direct_glue_init_data,
+        direct_glue_load_train_opt},
     {WT_GLUE_NAME, wt_glue_init, wt_glue_destroy,
         wt_glue_dup, wt_glue_parse_topo, wt_glue_check,
         wt_glue_draw_label, wt_glue_load_header, wt_glue_load_body,
         wt_glue_save_header, wt_glue_save_body,
-        wt_glue_init_data},
+        wt_glue_init_data, wt_glue_load_train_opt},
     {EMB_WT_GLUE_NAME, emb_wt_glue_init, emb_wt_glue_destroy,
         emb_wt_glue_dup, emb_wt_glue_parse_topo, emb_wt_glue_check,
         emb_wt_glue_draw_label, emb_wt_glue_load_header,
         emb_wt_glue_load_body, emb_wt_glue_save_header,
-        emb_wt_glue_save_body,
-        emb_wt_glue_init_data},
+        emb_wt_glue_save_body, emb_wt_glue_init_data,
+        emb_wt_glue_load_train_opt},
     {OUT_WT_GLUE_NAME, out_wt_glue_init, out_wt_glue_destroy,
         out_wt_glue_dup, out_wt_glue_parse_topo, out_wt_glue_check,
         out_wt_glue_draw_label, out_wt_glue_load_header,
         out_wt_glue_load_body, out_wt_glue_save_header,
-        out_wt_glue_save_body,
-        out_wt_glue_init_data},
+        out_wt_glue_save_body, out_wt_glue_init_data,
+        out_wt_glue_load_train_opt},
 };
 
 static glue_reg_t* glue_get_reg(const char *type)
@@ -1260,4 +1263,36 @@ int glue_init_data(glue_t *glue, input_t *input,
     }
 
     return 0;
+}
+
+int glue_load_train_opt(glue_t *glue, st_opt_t *opt,
+        const char *sec_name, param_t *parent)
+{
+    char name[MAX_ST_CONF_LEN];
+
+    glue_reg_t *reg = NULL;
+
+    ST_CHECK_PARAM(glue == NULL || opt == NULL, -1);
+
+    reg = glue_get_reg(glue->type);
+
+    if (reg->load_train_opt == NULL) {
+        return 0;
+    }
+
+    if (sec_name == NULL || sec_name[0] == '\0') {
+        snprintf(name, MAX_ST_CONF_LEN, "%s", glue->name);
+    } else {
+        snprintf(name, MAX_ST_CONF_LEN, "%s/%s", sec_name,
+                glue->name);
+    }
+    if (reg->load_train_opt(glue, opt, name, parent) < 0) {
+        ST_WARNING("Failed to reg load_train_opt.");
+        goto ST_OPT_ERR;
+    }
+
+    return 0;
+
+ST_OPT_ERR:
+    return -1;
 }

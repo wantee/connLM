@@ -50,7 +50,6 @@ typedef int comp_id_t;
  * @ingroup g_component
  */
 typedef struct _component_train_opt_t_ {
-    param_t param;            /**< training parameters. */
 } comp_train_opt_t;
 
 /**
@@ -112,14 +111,15 @@ component_t *comp_init_from_topo(const char* topo_content,
 
 /**
  * Load component train option.
- * @ingroup g_conmponent
- * @param[in] conmponent conmponent to be loaded with.
+ * @ingroup g_component
+ * @param[in] component component to be loaded with.
  * @param[in] opt runtime options passed by caller.
  * @param[in] sec_name section name of runtime options to be loaded.
+ * @param[in] parent parent param.
  * @return non-zero value if any error.
  */
 int comp_load_train_opt(component_t *comp, st_opt_t *opt,
-        const char *sec_name);
+        const char *sec_name, param_t *parent);
 
 /**
  * Load component header and initialise a new component.

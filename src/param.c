@@ -1,18 +1,18 @@
 /*
  * The MIT License (MIT)
- * 
+ *
  * Copyright (c) 2015 Wang Jian
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in all
  * copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -28,6 +28,7 @@
 
 #include <stutils/st_macro.h>
 #include <stutils/st_log.h>
+#include <stutils/st_opt.h>
 
 #include "blas.h"
 #include "param.h"
@@ -40,6 +41,29 @@ static param_t def_param = {
     .momentum = 0.0,
     .mini_batch = 0,
 };
+
+void param_show_usage()
+{
+    param_t param;
+    st_opt_t *opt = NULL;
+
+    opt = st_opt_create();
+    if (opt == NULL) {
+        ST_WARNING("Failed to st_opt_create.");
+        goto ST_OPT_ERR;
+    }
+
+    if (param_load(&param, opt, NULL, NULL) < 0) {
+        ST_WARNING("Failed to param_load");
+        goto ST_OPT_ERR;
+    }
+
+    fprintf(stderr, "\nUpdating Parameters:\n");
+    st_opt_show_usage(opt, stderr, false);
+
+ST_OPT_ERR:
+    safe_st_opt_destroy(opt);
+}
 
 int param_load(param_t *param, st_opt_t *opt, const char *sec_name,
         param_t *parent_param)
@@ -59,7 +83,7 @@ int param_load(param_t *param, st_opt_t *opt, const char *sec_name,
             "Learning rate");
     param->learn_rate = (real_t)d;
 
-    ST_OPT_SEC_GET_DOUBLE(opt, sec_name, "L1_PENALTY", d, 
+    ST_OPT_SEC_GET_DOUBLE(opt, sec_name, "L1_PENALTY", d,
             (double)param->l1_penalty,
             "L1 penalty (promote sparsity)");
     param->l1_penalty = (real_t)d;
@@ -96,13 +120,13 @@ void param_arg_clear(param_arg_t *arg)
 
 /*
  * accumulate weights
- * 
+ *
  * in is [ in_size x 1 ];
- *  
+ *
  *
  * er_size > 0 && in_size > 0: er is [ 1 x er_size ]; wt is [ er_size x in_size ]; if in == NULL: in is one-shot vector
  * er_size > 0 && in_size < 0: er is [ 1 x er_size ]; wt is hash based 1d vector; in is one-shot vector
- * er_size < 0 && in_size > 0: er is delta-weight matrix [ er_size x in_size ]; wt is [ er_size x in_size ]; 
+ * er_size < 0 && in_size > 0: er is delta-weight matrix [ er_size x in_size ]; wt is [ er_size x in_size ];
  * er_size < 0 && in_size < 0: er is delta-weight matrix [ er_size x in_size ]; wt is [ er_size x in_size ]; in is one-shot vector
  */
 void param_acc_wt(real_t *wt, real_t *er, int er_size, real_t *in, int in_size)
@@ -186,13 +210,13 @@ void param_acc_wt(real_t *wt, real_t *er, int er_size, real_t *in, int in_size)
 
 /*
  * update weight using parameters.
- * 
+ *
  * in is [ in_size x 1 ];
- *  
+ *
  *
  * er_size > 0 && in_size > 0: er is [ 1 x er_size ]; wt is [ er_size x in_size ]; if in == NULL: in is one-shot vector
  * er_size > 0 && in_size < 0: er is [ 1 x er_size ]; wt is hash based 1d vector; in is one-shot vector
- * er_size < 0 && in_size > 0: er is delta-weight matrix [ er_size x in_size ]; wt is [ er_size x in_size ]; 
+ * er_size < 0 && in_size > 0: er is delta-weight matrix [ er_size x in_size ]; wt is [ er_size x in_size ];
  * er_size < 0 && in_size < 0: er is delta-weight matrix [ er_size x in_size ]; wt is [ er_size x in_size ]; in is one-shot vector
  */
 void param_update(param_t *param, param_arg_t *arg, bool update_arg,

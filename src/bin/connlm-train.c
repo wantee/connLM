@@ -92,6 +92,13 @@ void show_usage(const char *module_name)
             "Train Model",
             "<train-file> <model-in> <model-out>",
             g_cmd_opt, NULL);
+    param_show_usage();
+    fprintf(stderr, "Individual param can be set with "
+            "component and/or glue name, e.g.:\n");
+    fprintf(stderr, "  --<comp_name>^<param> "
+            "set param for a component.\n");
+    fprintf(stderr, "  --<comp_name>^<glue_name>^<param> "
+            "set param for a glue.\n");
 }
 
 int main(int argc, const char *argv[])
@@ -127,7 +134,6 @@ int main(int argc, const char *argv[])
     }
 
     ST_CLEAN("Command-line: %s", args);
-    st_opt_show(g_cmd_opt, "connLM Train Options");
     ST_CLEAN("Train: %s, Model-in: %s, Model-out: %s",
             argv[1], argv[2], argv[3]);
 
@@ -144,10 +150,12 @@ int main(int argc, const char *argv[])
     }
     safe_st_fclose(fp);
 
-    if (connlm_load_train_opt(connlm, g_cmd_opt, NULL) < 0) {
-        ST_WARNING("Failed to connlm_load_train_opt");
+    if (connlm_load_param(connlm, g_cmd_opt, NULL) < 0) {
+        ST_WARNING("Failed to connlm_load_param");
         goto ERR;
     }
+
+    st_opt_show(g_cmd_opt, "connLM Train Options");
 
     if (connlm_setup_train(connlm, &g_connlm_opt, argv[1]) < 0) {
         ST_WARNING("Failed to connlm_setup_train.");

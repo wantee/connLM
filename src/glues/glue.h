@@ -29,11 +29,14 @@
 extern "C" {
 #endif
 
+#include <stutils/st_opt.h>
+
 #include <connlm/config.h>
 
 #include "input.h"
 #include "output.h"
 #include "layers/layer.h"
+#include "param.h"
 
 /** @defgroup g_glue NNet glue.
  * Data structures and functions for NNet glue.
@@ -201,6 +204,18 @@ char* glue_draw_label_one(glue_t *glue, layer_id_t lid,
  */
 int glue_init_data(glue_t *glue, input_t *input,
         layer_t **layers, output_t *output);
+
+/**
+ * Load glue train option.
+ * @ingroup g_glue
+ * @param[in] glue glue to be loaded with.
+ * @param[in] opt runtime options passed by caller.
+ * @param[in] sec_name section name of runtime options to be loaded.
+ * @param[in] parent parent param.
+ * @return non-zero value if any error.
+ */
+int glue_load_train_opt(glue_t *glue, st_opt_t *opt,
+        const char *sec_name, param_t *parent);
 
 #ifdef __cplusplus
 }
