@@ -2463,10 +2463,13 @@ int output_draw(output_t *output, FILE *fp, count_t *word_cnts,
     fprintf(fp, "    edge [style=invis];\n");
     fprintf(fp, "    legend [label=\"# Node: "OUTPUT_NODE_FMT"\\n"
                      "# Leaf: %d\\nmethod: %s\\n"
-                     "max depth: %d\\nmax branch: %d\"];\n",
-                output->tree->num_node,
-                output->output_size, method2str(output->output_opt.method),
-                output->output_opt.max_depth, output->output_opt.max_branch);
+                     "max depth: %d\\nmax branch: %d\\n"
+                     "Normalization: %s\"];\n",
+                output->tree->num_node, output->output_size,
+                method2str(output->output_opt.method),
+                output->output_opt.max_depth,
+                output->output_opt.max_branch,
+                norm2str(output->norm));
     fprintf(fp, "  }\n\n");
 
     fprintf(fp, "  subgraph cluster_tree {\n");
