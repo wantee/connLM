@@ -27,27 +27,22 @@
 #include <stutils/st_log.h>
 #include <stutils/st_utils.h>
 
+#include "input.h"
+#include "output.h"
 #include "sigmoid_layer.h"
 #include "tanh_layer.h"
 #include "layer.h"
 
 static const int LAYER_MAGIC_NUM = 626140498 + 60;
 
-typedef struct _layer_register_t_ {
-    char type[MAX_NAME_LEN];
-    int (*init)(layer_t *layer);
-    void (*destroy)(layer_t *layer);
-    int (*dup)(layer_t *dst, layer_t *src);
-    int (*parse_topo)(layer_t *layer, const char *line);
-    char* (*draw_label)(layer_t *layer, char *label, size_t label_len);
-    int (*load_header)(void **extra, int version,
-            FILE *fp, bool *binary, FILE *fo_info);
-    int (*load_body)(void *extra, int version, FILE *fp, bool binary);
-    int (*save_header)(void *extra, FILE *fp, bool binary);
-    int (*save_body)(void *extra, FILE *fp, bool binary);
-} layer_reg_t;
+static layer_impl_t LAYER_IMPL[] = {
+    /* pseudo-layers. */
+    {INPUT_LAYER_NAME, NULL, NULL, NULL, NULL, NULL, NULL,
+        NULL, NULL, NULL},
+    {OUTPUT_LAYER_NAME, NULL, NULL, NULL, NULL, NULL, NULL,
+        NULL, NULL, NULL},
 
-static layer_reg_t LAYER_REG[] = {
+    /* register-layers. */
     {SIGMOID_NAME, sigmoid_init, sigmoid_destroy, sigmoid_dup,
         sigmoid_parse_topo, sigmoid_draw_label, sigmoid_load_header,
         sigmoid_load_body, sigmoid_save_header, sigmoid_save_body},
@@ -55,13 +50,13 @@ static layer_reg_t LAYER_REG[] = {
         tanh_parse_topo, tanh_draw_label, NULL, NULL, NULL, NULL},
 };
 
-static layer_reg_t* layer_get_reg(const char *type)
+static layer_impl_t* layer_get_impl(const char *type)
 {
     int t;
 
-    for (t = 0; t < sizeof(LAYER_REG) / sizeof(LAYER_REG[0]); t++) {
-        if (strcasecmp(type, LAYER_REG[t].type) == 0) {
-            return LAYER_REG + t;
+    for (t = 0; t < sizeof(LAYER_IMPL) / sizeof(LAYER_IMPL[0]); t++) {
+        if (strcasecmp(type, LAYER_IMPL[t].type) == 0) {
+            return LAYER_IMPL + t;
         }
     }
 
@@ -70,17 +65,14 @@ static layer_reg_t* layer_get_reg(const char *type)
 
 void layer_destroy(layer_t *layer)
 {
-    layer_reg_t *reg;
-
     if (layer == NULL) {
         return;
     }
 
     layer->name[0] = '\0';
 
-    reg = layer_get_reg(layer->type);
-    if (reg != NULL) {
-        reg->destroy(layer);
+    if (layer->impl != NULL && layer->impl->destroy != NULL) {
+        layer->impl->destroy(layer);
     }
     layer->type[0] = '\0';
 }
@@ -88,11 +80,10 @@ void layer_destroy(layer_t *layer)
 layer_t* layer_parse_topo(const char *line)
 {
     layer_t *layer = NULL;
-    layer_reg_t *reg = NULL;
 
     char keyvalue[2*MAX_LINE_LEN];
     char token[MAX_LINE_LEN];
-    char reg_topo[MAX_LINE_LEN];
+    char impl_topo[MAX_LINE_LEN];
 
     const char *p;
 
@@ -113,7 +104,7 @@ layer_t* layer_parse_topo(const char *line)
         goto ERR;
     }
 
-    reg_topo[0] = '\0';
+    impl_topo[0] = '\0';
     while (p != NULL) {
         p = get_next_token(p, token);
         if (split_line(token, keyvalue, 2, MAX_LINE_LEN, "=") != 2) {
@@ -134,14 +125,13 @@ layer_t* layer_parse_topo(const char *line)
             strncpy(layer->type, keyvalue + MAX_LINE_LEN, MAX_NAME_LEN);
             layer->type[MAX_NAME_LEN - 1] = '\0';
 
-            reg = layer_get_reg(layer->type);
-            if (reg == NULL) {
-                ST_WARNING("Unknown type of layer [%s].",
-                        layer->type);
+            layer->impl = layer_get_impl(layer->type);
+            if (layer->impl == NULL) {
+                ST_WARNING("Unknown type of layer [%s].", layer->type);
                 goto ERR;
             }
-            if (reg->init(layer) < 0) {
-                ST_WARNING("Failed to init reg layer.");
+            if (layer->impl->init(layer) < 0) {
+                ST_WARNING("Failed to layer->impl->init.");
                 goto ERR;
             }
         } else if (strcasecmp("size", keyvalue) == 0) {
@@ -155,12 +145,12 @@ layer_t* layer_parse_topo(const char *line)
                 goto ERR;
             }
         } else {
-            strncpy(reg_topo + strlen(reg_topo), token,
-                    MAX_LINE_LEN - strlen(reg_topo));
-            if (strlen(reg_topo) < MAX_LINE_LEN) {
-                reg_topo[strlen(reg_topo)] = ' ';
+            strncpy(impl_topo + strlen(impl_topo), token,
+                    MAX_LINE_LEN - strlen(impl_topo));
+            if (strlen(impl_topo) < MAX_LINE_LEN) {
+                impl_topo[strlen(impl_topo)] = ' ';
             }
-            reg_topo[MAX_LINE_LEN - 1] = '\0';
+            impl_topo[MAX_LINE_LEN - 1] = '\0';
         }
     }
 
@@ -168,7 +158,7 @@ layer_t* layer_parse_topo(const char *line)
         ST_WARNING("No layer name found.");
         goto ERR;
     }
-    if (reg == NULL) {
+    if (layer->impl == NULL) {
         ST_WARNING("No layer type found.");
         goto ERR;
     }
@@ -176,9 +166,11 @@ layer_t* layer_parse_topo(const char *line)
         ST_WARNING("No layer size found.");
         goto ERR;
     }
-    if (reg->parse_topo(layer, reg_topo) < 0) {
-        ST_WARNING("Failed to parse_topo for reg layer.");
-        goto ERR;
+    if (layer->impl->parse_topo != NULL) {
+        if (layer->impl->parse_topo(layer, impl_topo) < 0) {
+            ST_WARNING("Failed to parse_topo for layer->impl layer.");
+            goto ERR;
+        }
     }
 
     return layer;
@@ -220,7 +212,7 @@ ERR:
 int layer_load_header(layer_t **layer, int version,
         FILE *fp, bool *binary, FILE *fo_info)
 {
-    layer_reg_t *reg;
+    layer_impl_t *impl;
 
     union {
         char str[4];
@@ -300,6 +292,12 @@ int layer_load_header(layer_t **layer, int version,
         }
     }
 
+    impl = layer_get_impl(type);
+    if (impl == NULL) {
+        ST_WARNING("Unknown layer type[%s].", type);
+        goto ERR;
+    }
+
     if (layer != NULL) {
         *layer = (layer_t *)malloc(sizeof(layer_t));
         if (*layer == NULL) {
@@ -311,6 +309,7 @@ int layer_load_header(layer_t **layer, int version,
         strcpy((*layer)->name, name);
         strcpy((*layer)->type, type);
         (*layer)->size = size;
+        (*layer)->impl = impl;
     }
 
     if (fo_info != NULL) {
@@ -320,11 +319,10 @@ int layer_load_header(layer_t **layer, int version,
         fprintf(fo_info, "Size: %d\n", size);
     }
 
-    reg = layer_get_reg(type);
-    if (reg->load_header != NULL) {
-        if (reg->load_header(layer != NULL ? &((*layer)->extra) : NULL,
+    if (impl->load_header != NULL) {
+        if (impl->load_header(layer != NULL ? &((*layer)->extra) : NULL,
                     version, fp, &b, fo_info) < 0) {
-            ST_WARNING("Failed to reg->load_header.");
+            ST_WARNING("Failed to impl->load_header.");
             goto ERR;
         }
 
@@ -345,7 +343,6 @@ ERR:
 
 int layer_load_body(layer_t *layer, int version, FILE *fp, bool binary)
 {
-    layer_reg_t *reg;
     int n;
 
     ST_CHECK_PARAM(layer == NULL || fp == NULL, -1);
@@ -372,10 +369,9 @@ int layer_load_body(layer_t *layer, int version, FILE *fp, bool binary)
         }
     }
 
-    reg = layer_get_reg(layer->type);
-    if (reg->load_body != NULL) {
-        if (reg->load_body(layer->extra, version, fp, binary) < 0) {
-            ST_WARNING("Failed to reg->load_body.");
+    if (layer->impl->load_body != NULL) {
+        if (layer->impl->load_body(layer->extra, version, fp, binary) < 0) {
+            ST_WARNING("Failed to glue->impl->load_body.");
             goto ERR;
         }
     }
@@ -388,8 +384,6 @@ ERR:
 
 int layer_save_header(layer_t *layer, FILE *fp, bool binary)
 {
-    layer_reg_t *reg;
-
     ST_CHECK_PARAM(layer == NULL || fp == NULL, -1);
 
     if (binary) {
@@ -432,10 +426,9 @@ int layer_save_header(layer_t *layer, FILE *fp, bool binary)
         }
     }
 
-    reg = layer_get_reg(layer->type);
-    if (reg->save_header != NULL) {
-        if (reg->save_header(layer->extra, fp, binary) < 0) {
-            ST_WARNING("Failed to reg->save_header.");
+    if (layer->impl != NULL && layer->impl->save_header != NULL) {
+        if (layer->impl->save_header(layer->extra, fp, binary) < 0) {
+            ST_WARNING("Failed to glue->impl->save_header.");
             return -1;
         }
     }
@@ -445,7 +438,6 @@ int layer_save_header(layer_t *layer, FILE *fp, bool binary)
 
 int layer_save_body(layer_t *layer, FILE *fp, bool binary)
 {
-    layer_reg_t *reg;
     int n;
 
     ST_CHECK_PARAM(layer == NULL || fp == NULL, -1);
@@ -464,10 +456,9 @@ int layer_save_body(layer_t *layer, FILE *fp, bool binary)
         }
     }
 
-    reg = layer_get_reg(layer->type);
-    if (reg->save_body != NULL) {
-        if (reg->save_body(layer->extra, fp, binary) < 0) {
-            ST_WARNING("Failed to reg->save_body.");
+    if (layer->impl != NULL && layer->impl->save_body != NULL) {
+        if (layer->impl->save_body(layer->extra, fp, binary) < 0) {
+            ST_WARNING("Failed to layer->impl->save_body.");
             return -1;
         }
     }
@@ -478,14 +469,14 @@ int layer_save_body(layer_t *layer, FILE *fp, bool binary)
 char* layer_draw_label(layer_t *layer, char *label, size_t label_len)
 {
     char buf[MAX_LINE_LEN];
-    layer_reg_t *reg;
 
     ST_CHECK_PARAM(layer == NULL || label == NULL, NULL);
 
-    reg = layer_get_reg(layer->type);
     snprintf(label, label_len, "%s/type=%s,size=%d%s", layer->name,
             layer->type, layer->size,
-            reg->draw_label(layer, buf, MAX_LINE_LEN));
+            layer->impl != NULL && layer->impl->draw_label != NULL
+                ? layer->impl->draw_label(layer, buf, MAX_LINE_LEN)
+                : "");
 
     return label;
 }

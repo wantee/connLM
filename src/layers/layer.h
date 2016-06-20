@@ -39,6 +39,39 @@ typedef int layer_id_t;
 #define LAYER_ID_NONE -1
 #define LAYER_ID_FMT "%d"
 
+typedef struct _layer_t_ layer_t;
+/**
+ * NNet hidden layer implementaion.
+ * @ingroup g_layer
+ */
+typedef struct _layer_implementation_t_ {
+    char type[MAX_NAME_LEN]; /**< type of implementaion. */
+
+    int (*init)(layer_t *layer); /**< init layer. */
+
+    void (*destroy)(layer_t *layer); /**< destroy layer. */
+
+    int (*dup)(layer_t *dst, layer_t *src); /**< duplicate layer. */
+
+    int (*parse_topo)(layer_t *layer,
+            const char *line); /**< parse topo of layer. */
+
+    char* (*draw_label)(layer_t *layer, char *label,
+            size_t label_len); /**< label for drawing layer. */
+
+    int (*load_header)(void **extra, int version, FILE *fp,
+            bool *binary, FILE *fo_info); /**< load header of layer. */
+
+    int (*load_body)(void *extra, int version, FILE *fp,
+            bool binary); /**< load body of layer. */
+
+    int (*save_header)(void *extra, FILE *fp,
+            bool binary); /**< save header of layer. */
+
+    int (*save_body)(void *extra, FILE *fp,
+            bool binary); /**< save body layer. */
+} layer_impl_t;
+
 /**
  * NNet hidden layer.
  * @ingroup g_layer
@@ -51,6 +84,7 @@ typedef struct _layer_t_ {
     int (*forward)(struct _layer_t_ *layer); /**< forward function. */
     int (*backprop)(struct _layer_t_ *layer); /**< backprop function. */
 
+    layer_impl_t *impl; /**, implementaion of the layer. */
     void *extra; /**< hook to store extra data. */
 } layer_t;
 

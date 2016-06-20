@@ -108,7 +108,7 @@ void glue_destroy(glue_t *glue)
 
     glue->name[0] = '\0';
 
-    if (glue->impl != NULL) {
+    if (glue->impl != NULL && glue->impl->destroy != NULL) {
         glue->impl->destroy(glue);
     }
     glue->type[0] = '\0';
@@ -198,7 +198,6 @@ glue_t* glue_parse_topo(const char *line, layer_t **layers,
         layer_id_t n_layer)
 {
     glue_t *glue = NULL;
-    glue_impl_t *impl = NULL;
 
     char keyvalue[2*MAX_LINE_LEN];
     char token[MAX_LINE_LEN];
@@ -248,13 +247,11 @@ glue_t* glue_parse_topo(const char *line, layer_t **layers,
             strncpy(glue->type, keyvalue + MAX_LINE_LEN, MAX_NAME_LEN);
             glue->type[MAX_NAME_LEN - 1] = '\0';
 
-            impl = glue_get_impl(glue->type);
-            if (impl == NULL) {
-                ST_WARNING("Unknown type of glue [%s].",
-                        glue->type);
+            glue->impl = glue_get_impl(glue->type);
+            if (glue->impl == NULL) {
+                ST_WARNING("Unknown type of glue [%s].", glue->type);
                 goto ERR;
             }
-            glue->impl = impl;
             if (glue->impl->init(glue) < 0) {
                 ST_WARNING("Failed to init impl glue.");
                 goto ERR;
@@ -505,13 +502,17 @@ glue_t* glue_parse_topo(const char *line, layer_t **layers,
         ST_WARNING("No type found.");
         goto ERR;
     }
-    if (!glue->impl->check(glue, layers, n_layer)) {
-        ST_WARNING("check glue failed.");
-        goto ERR;
+    if (glue->impl->check != NULL) {
+        if (!glue->impl->check(glue, layers, n_layer)) {
+            ST_WARNING("check glue failed.");
+            goto ERR;
+        }
     }
-    if (glue->impl->parse_topo(glue, impl_topo) < 0) {
-        ST_WARNING("Failed to parse_topo for impl glue.");
-        goto ERR;
+    if (glue->impl->parse_topo != NULL) {
+        if (glue->impl->parse_topo(glue, impl_topo) < 0) {
+            ST_WARNING("Failed to parse_topo for impl glue.");
+            goto ERR;
+        }
     }
 
     safe_free(names);
@@ -698,7 +699,7 @@ int glue_load_header(glue_t **glue, int version,
 
     impl = glue_get_impl(type);
     if (impl == NULL) {
-        ST_WARNING("Unknown type[%s].", type);
+        ST_WARNING("Unknown glue type[%s].", type);
         goto ERR;
     }
 
@@ -963,8 +964,6 @@ int glue_save_header(glue_t *glue, FILE *fp, bool binary)
 {
     int n;
 
-    glue_impl_t *impl;
-
     ST_CHECK_PARAM(fp == NULL, -1);
 
     if (binary) {
@@ -1025,7 +1024,7 @@ int glue_save_header(glue_t *glue, FILE *fp, bool binary)
         }
     }
 
-    if (glue->impl->save_header != NULL) {
+    if (glue->impl != NULL && glue->impl->save_header != NULL) {
         if (glue->impl->save_header(glue->extra, fp, binary) < 0) {
             ST_WARNING("Failed to glue->impl->save_header.");
             return -1;
@@ -1039,8 +1038,6 @@ int glue_save_body(glue_t *glue, FILE *fp, bool binary)
 {
     int n;
     layer_id_t l;
-
-    glue_impl_t *impl;
 
     ST_CHECK_PARAM(fp == NULL, -1);
 
@@ -1171,7 +1168,7 @@ int glue_save_body(glue_t *glue, FILE *fp, bool binary)
         }
     }
 
-    if (glue->impl->save_body != NULL) {
+    if (glue->impl != NULL && glue->impl->save_body != NULL) {
         if (glue->impl->save_body(glue->extra, fp, binary) < 0) {
             ST_WARNING("Failed to glue->impl->save_body.");
             return -1;
@@ -1190,7 +1187,7 @@ char* glue_draw_label(glue_t *glue, char *label, size_t label_len,
 
     if (verbose) {
         snprintf(label, label_len, "%s/type=%s", glue->name, glue->type);
-        if (glue->impl->draw_label != NULL) {
+        if (glue->impl != NULL && glue->impl->draw_label != NULL) {
             strncat(label, glue->impl->draw_label(glue, buf, MAX_LINE_LEN),
                     label_len - strlen(label) - 1);
         }
@@ -1228,10 +1225,11 @@ int glue_init_data(glue_t *glue, input_t *input,
 {
     ST_CHECK_PARAM(glue == NULL, -1);
 
-    if (glue->impl->init_data != NULL &&
-            glue->impl->init_data(glue, input, layers, output) < 0) {
-        ST_WARNING("Failed to init_data for glue impl.");
-        return -1;
+    if (glue->impl != NULL && glue->impl->init_data != NULL) {
+        if (glue->impl->init_data(glue, input, layers, output) < 0) {
+            ST_WARNING("Failed to init_data for glue impl.");
+            return -1;
+        }
     }
 
     return 0;
@@ -1244,7 +1242,7 @@ int glue_load_train_opt(glue_t *glue, st_opt_t *opt,
 
     ST_CHECK_PARAM(glue == NULL || opt == NULL, -1);
 
-    if (glue->impl->load_train_opt == NULL) {
+    if (glue->impl == NULL || glue->impl->load_train_opt == NULL) {
         return 0;
     }
 
