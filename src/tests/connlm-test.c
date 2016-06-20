@@ -29,6 +29,7 @@
 #include <stutils/st_utils.h>
 
 #include "glues/sum_glue.h"
+#include "glues/direct_glue.h"
 #include "connlm.h"
 
 #define MAX_REF_COMP_NUM 16
@@ -41,7 +42,7 @@
 #define VOCAB_SIZE 16
 
 typedef struct _ref_t_ {
-    output_act_func_t output_act;
+    output_norm_t norm;
 
     char comp_name[MAX_NAME_LEN];
     int num_comp;
@@ -69,6 +70,10 @@ typedef struct _ref_t_ {
         bool avg;
         bool set;
     } sum_glue[MAX_REF_GLUE_NUM];
+
+    struct direct_glue_ref {
+        long long sz;
+    } direct_glue[MAX_REF_GLUE_NUM];
 } ref_t;
 
 static char* get_layer_name(char *name, int name_len,
@@ -89,10 +94,10 @@ static char* get_layer_name(char *name, int name_len,
     return name;
 }
 
-static const char *act_func_str[] = {
+static const char *norm_str[] = {
     "Undefined",
-    "MultiLogit",
     "Softmax",
+    "NCE",
 };
 
 static FILE* mk_topo_file(ref_t *ref)
@@ -104,13 +109,14 @@ static FILE* mk_topo_file(ref_t *ref)
     int i, n;
 
     int sum_i = 0;
+    int direct_i = 0;
 
     fp = tmpfile();
     assert(fp != NULL);
 
     fprintf(fp, "foo foo\n");
     fprintf(fp, "<output>\n");
-    fprintf(fp, "property activation=%s\n", act_func_str[ref->output_act]);
+    fprintf(fp, "property norm=%s\n", norm_str[ref->norm]);
     fprintf(fp, "</output>\n");
     for (c = 0; c < ref->num_comp; c++) {
         fprintf(fp, "<component>\n");
@@ -224,6 +230,10 @@ static FILE* mk_topo_file(ref_t *ref)
                     }
                 }
                 sum_i++;
+            } else if (strcasecmp(ref->glue_type[c][g], "direct") == 0) {
+                fprintf(fp, " size=%s", st_ll2str(name, MAX_NAME_LEN,
+                            ref->direct_glue[direct_i].sz, false));
+                direct_i++;
             }
 
             fprintf(fp, "\n");
@@ -271,10 +281,10 @@ static int check_input(input_t *input, int input_size, int *context,
     return 0;
 }
 
-static int check_output(output_t *output, output_act_func_t act_func)
+static int check_output(output_t *output, output_norm_t norm)
 {
-    if (output->act_func != act_func) {
-        fprintf(stderr, "act_func not match.\n");
+    if (output->norm != norm) {
+        fprintf(stderr, "norm not match.\n");
         return -1;
     }
 
@@ -317,7 +327,7 @@ static int check_layer(layer_t *layer, char *name, int id,
 }
 
 static int check_glue(glue_t *glue, ref_t *ref, int c, int g, int sum_i,
-        layer_t **layers, layer_id_t n_layer)
+        int direct_i, layer_t **layers, int n_layer)
 {
     char name[MAX_NAME_LEN];
     char tmp[MAX_NAME_LEN];
@@ -404,6 +414,14 @@ static int check_glue(glue_t *glue, ref_t *ref, int c, int g, int sum_i,
                     bool2str(((sum_glue_data_t *)glue->extra)->avg));
             return -1;
         }
+    } else if (strcasecmp(ref->glue_type[c][g], "direct") == 0) {
+        if (((direct_glue_data_t *)(glue->extra))->hash_sz
+                != ref->direct_glue[direct_i].sz) {
+            fprintf(stderr, "direct glue size not match.[%lld/%lld]\n",
+                ref->direct_glue[direct_i].sz,
+                (long long)(((direct_glue_data_t *)glue->extra)->hash_sz));
+            return -1;
+        }
     }
 
     return 0;
@@ -411,9 +429,9 @@ static int check_glue(glue_t *glue, ref_t *ref, int c, int g, int sum_i,
 
 static int check_connlm(connlm_t *connlm, ref_t *ref)
 {
-    int c, l, sum_i;
+    int c, l, sum_i, direct_i;
 
-    if (check_output(connlm->output, ref->output_act) != 0) {
+    if (check_output(connlm->output, ref->norm) != 0) {
         fprintf(stderr, "output not match\n");
         return -1;
     }
@@ -456,15 +474,19 @@ static int check_connlm(connlm_t *connlm, ref_t *ref)
         }
 
         sum_i = 0;
+        direct_i = 0;
         for (l = 0; l < connlm->comps[c]->num_glue; l++) {
             if (check_glue(connlm->comps[c]->glues[l], ref,
-                        c, l, sum_i, connlm->comps[c]->layers,
+                        c, l, sum_i, direct_i,
+                        connlm->comps[c]->layers,
                         connlm->comps[c]->num_layer) != 0) {
                 fprintf(stderr, "glue not match\n");
                 return -1;
             }
             if (strcasecmp(ref->glue_type[c][l], "sum") == 0) {
                 sum_i++;
+            } else if (strcasecmp(ref->glue_type[c][l], "direct") == 0) {
+                direct_i++;
             }
         }
     }
@@ -480,7 +502,7 @@ static int unit_test_connlm_read_topo_bad()
     vocab_t *vocab = NULL;
     ref_t ref;
     ref_t std_ref = {
-        .output_act = OA_SOFTMAX,
+        .norm = ON_SOFTMAX,
         .comp_name = "comp",
         .num_comp = 2,
 
@@ -636,7 +658,7 @@ static int unit_test_connlm_read_topo_good()
     int i;
     int ncase = 0;
     ref_t std_ref = {
-        .output_act = OA_SOFTMAX,
+        .norm = ON_SOFTMAX,
 
         .comp_name = "comp",
         .num_comp = 2,
@@ -669,6 +691,7 @@ static int unit_test_connlm_read_topo_good()
         .glue_out_scale = {{{1.0}},
                            {{1.0}, {1.0}, {1.0}, {1.0}}},
         .sum_glue = {{true, true}},
+        .direct_glue = {{2000000}},
     };
 
     fprintf(stderr, "  Testing Reading topology file(good)...\n");
