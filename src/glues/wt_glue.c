@@ -31,14 +31,14 @@
 #include "output.h"
 #include "wt_glue.h"
 
-static int wt_glue_forward(glue_t *glue)
+int wt_glue_forward(glue_t *glue)
 {
     ST_CHECK_PARAM(glue == NULL, -1);
 
     return 0;
 }
 
-static int wt_glue_backprop(glue_t *glue)
+int wt_glue_backprop(glue_t *glue)
 {
     ST_CHECK_PARAM(glue == NULL, -1);
 
@@ -108,8 +108,6 @@ void wt_glue_destroy(glue_t *glue)
         return;
     }
 
-    glue->forward = NULL;
-    glue->backprop = NULL;
     safe_wt_glue_data_destroy(glue->extra);
 }
 
@@ -122,8 +120,6 @@ int wt_glue_init(glue_t *glue)
         return -1;
     }
 
-    glue->forward = wt_glue_forward;
-    glue->backprop = wt_glue_backprop;
     glue->extra = (void *)wt_glue_data_init();
     if (glue->extra == NULL) {
         ST_WARNING("Failed to wt_glue_data_init.");
@@ -150,9 +146,6 @@ int wt_glue_dup(glue_t *dst, glue_t *src)
         ST_WARNING("src is Not a wt glue. [%s]", src->type);
         return -1;
     }
-
-    dst->forward = src->forward;
-    dst->backprop = src->forward;
 
     dst->extra = (void *)wt_glue_data_dup((wt_glue_data_t *)src->extra);
     if (dst->extra == NULL) {

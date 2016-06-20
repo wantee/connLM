@@ -31,14 +31,14 @@
 #include "output.h"
 #include "sum_glue.h"
 
-static int sum_glue_forward(glue_t *glue)
+int sum_glue_forward(glue_t *glue)
 {
     ST_CHECK_PARAM(glue == NULL, -1);
 
     return 0;
 }
 
-static int sum_glue_backprop(glue_t *glue)
+int sum_glue_backprop(glue_t *glue)
 {
     ST_CHECK_PARAM(glue == NULL, -1);
 
@@ -105,8 +105,6 @@ void sum_glue_destroy(glue_t *glue)
         return;
     }
 
-    glue->forward = NULL;
-    glue->backprop = NULL;
     safe_sum_glue_data_destroy(glue->extra);
 }
 
@@ -119,8 +117,6 @@ int sum_glue_init(glue_t *glue)
         return -1;
     }
 
-    glue->forward = sum_glue_forward;
-    glue->backprop = sum_glue_backprop;
     glue->extra = (void *)sum_glue_data_init();
     if (glue->extra == NULL) {
         ST_WARNING("Failed to sum_glue_data_init.");
@@ -147,9 +143,6 @@ int sum_glue_dup(glue_t *dst, glue_t *src)
         ST_WARNING("src is Not a sum glue. [%s]", src->type);
         return -1;
     }
-
-    dst->forward = src->forward;
-    dst->backprop = src->forward;
 
     dst->extra = (void *)sum_glue_data_dup((sum_glue_data_t *)src->extra);
     if (dst->extra == NULL) {

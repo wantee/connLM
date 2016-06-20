@@ -29,14 +29,14 @@
 #include "output.h"
 #include "append_glue.h"
 
-static int append_glue_forward(glue_t *glue)
+int append_glue_forward(glue_t *glue)
 {
     ST_CHECK_PARAM(glue == NULL, -1);
 
     return 0;
 }
 
-static int append_glue_backprop(glue_t *glue)
+int append_glue_backprop(glue_t *glue)
 {
     ST_CHECK_PARAM(glue == NULL, -1);
 
@@ -49,8 +49,6 @@ void append_glue_destroy(glue_t *glue)
         return;
     }
 
-    glue->forward = NULL;
-    glue->backprop = NULL;
     glue->extra = NULL;
 }
 
@@ -63,8 +61,6 @@ int append_glue_init(glue_t *glue)
         return -1;
     }
 
-    glue->forward = append_glue_forward;
-    glue->backprop = append_glue_backprop;
     glue->extra = NULL;
 
     return 0;
@@ -83,10 +79,6 @@ int append_glue_dup(glue_t *dst, glue_t *src)
         ST_WARNING("src is Not a append glue. [%s]", src->type);
         return -1;
     }
-
-    dst->forward = src->forward;
-    dst->backprop = src->forward;
-    dst->extra = src->extra;
 
     return 0;
 }

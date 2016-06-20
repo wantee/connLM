@@ -48,6 +48,49 @@ typedef int glue_id_t;
 typedef int glue_offset_t;
 #define GLUE_OFFSET_FMT "%d"
 
+typedef struct _glue_t_ glue_t;
+/**
+ * Implementation of a NNet glue.
+ * @ingroup g_glue
+ */
+typedef struct _glue_implementation_t_ {
+    char type[MAX_NAME_LEN]; /**< type of glue. */
+
+    int (*init)(glue_t *glue); /**< init glue. */
+
+    void (*destroy)(glue_t *glue); /**< destroy glue. */
+
+    int (*dup)(glue_t *dst, glue_t *src); /**< duplicate glue. */
+
+    int (*parse_topo)(glue_t *glue,
+            const char *line); /**< parse topo for glue. */
+
+    bool (*check)(glue_t *glue, layer_t **layers,
+            layer_id_t n_layer); /**< check glue's definition. */
+
+    char* (*draw_label)(glue_t *glue, char *label,
+            size_t label_len); /**< label for drawing a glue. */
+
+    int (*load_header)(void **extra, int version, FILE *fp,
+            bool *binary, FILE *fo_info); /**< load header of glue. */
+
+    int (*load_body)(void *extra, int version, FILE *fp,
+            bool binary); /**< load body of glue. */
+
+    int (*save_header)(void *extra, FILE *fp,
+            bool binary); /**< save header of glue. */
+
+    int (*save_body)(void *extra, FILE *fp,
+            bool binary); /**< save body of glue. */
+
+    int (*init_data)(glue_t *glue, input_t *input,
+            layer_t **layers, output_t *output); /**< init data of glue. */
+
+    int (*load_train_opt)(glue_t *glue, st_opt_t *opt,
+            const char *sec_name,
+            param_t *parent); /**< load train opt for  glue. */
+} glue_impl_t;
+
 /**
  * NNet glue.
  * @ingroup g_glue
@@ -65,9 +108,7 @@ typedef struct _glue_t_ {
     layer_id_t num_out_layer; /**< number of output layers. */
     bool recur; /**< whether this glue is recurrent. */
 
-    int (*forward)(struct _glue_t_ *glue); /**< forward function. */
-    int (*backprop)(struct _glue_t_ *glue); /**< backprop function. */
-
+    glue_impl_t *impl; /**< implementation for glue. */
     void *extra; /**< hook to store extra data. */
 } glue_t;
 

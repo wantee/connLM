@@ -28,14 +28,14 @@
 
 #include "direct_glue.h"
 
-static int direct_glue_forward(glue_t *glue)
+int direct_glue_forward(glue_t *glue)
 {
     ST_CHECK_PARAM(glue == NULL, -1);
 
     return 0;
 }
 
-static int direct_glue_backprop(glue_t *glue)
+int direct_glue_backprop(glue_t *glue)
 {
     ST_CHECK_PARAM(glue == NULL, -1);
 
@@ -106,8 +106,6 @@ void direct_glue_destroy(glue_t *glue)
         return;
     }
 
-    glue->forward = NULL;
-    glue->backprop = NULL;
     safe_direct_glue_data_destroy(glue->extra);
 }
 
@@ -120,8 +118,6 @@ int direct_glue_init(glue_t *glue)
         return -1;
     }
 
-    glue->forward = direct_glue_forward;
-    glue->backprop = direct_glue_backprop;
     glue->extra = (void *)direct_glue_data_init();
     if (glue->extra == NULL) {
         ST_WARNING("Failed to direct_glue_data_init.");
@@ -149,8 +145,6 @@ int direct_glue_dup(glue_t *dst, glue_t *src)
         return -1;
     }
 
-    dst->forward = src->forward;
-    dst->backprop = src->forward;
     dst->extra = (void *)direct_glue_data_dup((direct_glue_data_t *)src->extra);
     if (dst->extra == NULL) {
         ST_WARNING("Failed to direct_glue_data_dup.");

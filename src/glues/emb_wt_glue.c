@@ -31,14 +31,14 @@
 #include "output.h"
 #include "emb_wt_glue.h"
 
-static int emb_wt_glue_forward(glue_t *glue)
+int emb_wt_glue_forward(glue_t *glue)
 {
     ST_CHECK_PARAM(glue == NULL, -1);
 
     return 0;
 }
 
-static int emb_wt_glue_backprop(glue_t *glue)
+int emb_wt_glue_backprop(glue_t *glue)
 {
     ST_CHECK_PARAM(glue == NULL, -1);
 
@@ -108,8 +108,6 @@ void emb_wt_glue_destroy(glue_t *glue)
         return;
     }
 
-    glue->forward = NULL;
-    glue->backprop = NULL;
     safe_emb_wt_glue_data_destroy(glue->extra);
 }
 
@@ -122,8 +120,6 @@ int emb_wt_glue_init(glue_t *glue)
         return -1;
     }
 
-    glue->forward = emb_wt_glue_forward;
-    glue->backprop = emb_wt_glue_backprop;
     glue->extra = (void *)emb_wt_glue_data_init();
     if (glue->extra == NULL) {
         ST_WARNING("Failed to emb_wt_glue_data_init.");
@@ -150,9 +146,6 @@ int emb_wt_glue_dup(glue_t *dst, glue_t *src)
         ST_WARNING("src is Not a emb_wt glue. [%s]", src->type);
         return -1;
     }
-
-    dst->forward = src->forward;
-    dst->backprop = src->forward;
 
     dst->extra = (void *)emb_wt_glue_data_dup((emb_wt_glue_data_t *)src->extra);
     if (dst->extra == NULL) {
