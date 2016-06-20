@@ -87,6 +87,7 @@ void show_usage(const char *module_name)
     connlm_show_usage(module_name,
             "Learn Vocabulary",
             "<train-file> <model-out>",
+            "data/train exp/vocab.clm",
             g_cmd_opt, NULL);
 }
 

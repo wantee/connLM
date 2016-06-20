@@ -242,7 +242,8 @@ void softmax(real_t *vec, int vec_size)
 }
 
 void connlm_show_usage(const char *module_name, const char *header,
-        const char *usage, st_opt_t *opt, const char *trailer)
+        const char *usage, const char *eg,
+        st_opt_t *opt, const char *trailer)
 {
     fprintf(stderr, "\nConnectionist Language Modelling Toolkit\n");
     fprintf(stderr, "    -- %s\n", header);
@@ -251,6 +252,10 @@ void connlm_show_usage(const char *module_name, const char *header,
     fprintf(stderr, "Real type: %s\n",
             (sizeof(real_t) == sizeof(double)) ? "double" : "float");
     fprintf(stderr, "Usage    : %s [options] %s\n", module_name, usage);
+    if (eg != NULL) {
+        fprintf(stderr, "e.g.: \n");
+        fprintf(stderr, "  %s %s\n", module_name, eg);
+    }
     fprintf(stderr, "\n");
     fprintf(stderr, "Options  : \n");
     st_opt_show_usage(opt, stderr, true);

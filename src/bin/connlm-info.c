@@ -69,6 +69,7 @@ void show_usage(const char *module_name)
     connlm_show_usage(module_name,
             "Print Information",
             "<model0> [<model1> <model2> ...]",
+            NULL,
             g_cmd_opt, NULL);
 }
 

@@ -81,6 +81,7 @@ void show_usage(const char *module_name)
     connlm_show_usage(module_name,
             "Initialise output layer",
             "<model-in> <model-out>",
+            "exp/vocab.clm exp/output.clm",
             g_cmd_opt, NULL);
 }
 

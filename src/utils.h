@@ -53,7 +53,8 @@ void sigmoid(real_t *vec, int vec_size);
 void softmax(real_t *vec, int vec_size);
 
 void connlm_show_usage(const char *module_name, const char *header,
-        const char *usage, st_opt_t *opt, const char *trailer);
+        const char *usage, const char *eg,
+        st_opt_t *opt, const char *trailer);
 
 void int_sort(int *A, size_t n);
 

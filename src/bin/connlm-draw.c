@@ -73,6 +73,7 @@ void show_usage(const char *module_name)
     connlm_show_usage(module_name,
             "Convert connLM File into Graphviz Format",
             "<model-filter> <gv.dot>",
+            "mdl,-o:exp/init.clm",
             g_cmd_opt, model_filter_help());
 }
 

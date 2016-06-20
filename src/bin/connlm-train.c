@@ -91,6 +91,7 @@ void show_usage(const char *module_name)
     connlm_show_usage(module_name,
             "Train Model",
             "<train-file> <model-in> <model-out>",
+            "data/train exp/init.clm ext/01.clm",
             g_cmd_opt, NULL);
     param_show_usage();
     fprintf(stderr, "Individual param can be set with "

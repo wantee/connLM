@@ -80,6 +80,7 @@ void show_usage(const char *module_name)
     connlm_show_usage(module_name,
             "Initialise Model",
             "<model-in> <topo-file> <model-out>",
+            "exp/output.clm conf/topo exp/init.clm",
             g_cmd_opt, NULL);
 }
 

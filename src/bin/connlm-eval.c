@@ -89,6 +89,7 @@ void show_usage(const char *module_name)
     connlm_show_usage(module_name,
             "Test Model",
             "<model> <test-file> [prob-log]",
+            "exp/final.clm data/test",
             g_cmd_opt, NULL);
 }
 

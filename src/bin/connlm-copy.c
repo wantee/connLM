@@ -76,6 +76,7 @@ void show_usage(const char *module_name)
     connlm_show_usage(module_name,
             "Copy Models",
             "<model-in-filter> <model-out>",
+            "--binary=false exp/final.clm exp/final.txt",
             g_cmd_opt, model_filter_help());
 }
 

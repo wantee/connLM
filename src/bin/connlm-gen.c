@@ -84,6 +84,7 @@ void show_usage(const char *module_name)
     connlm_show_usage(module_name,
             "Generate text based on a model",
             "<model> [#words]",
+            NULL,
             g_cmd_opt, NULL);
 }
 
