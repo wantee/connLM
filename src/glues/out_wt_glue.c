@@ -31,14 +31,14 @@
 #include "output.h"
 #include "out_wt_glue.h"
 
-int out_wt_glue_forward(glue_t *glue)
+int out_wt_glue_forward(glue_t *glue, int tid)
 {
     ST_CHECK_PARAM(glue == NULL, -1);
 
     return 0;
 }
 
-int out_wt_glue_backprop(glue_t *glue)
+int out_wt_glue_backprop(glue_t *glue, int tid)
 {
     ST_CHECK_PARAM(glue == NULL, -1);
 

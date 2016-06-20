@@ -248,7 +248,6 @@ int comp_fwd_bp(component_t *comp, int word, int tid);
  * @ingroup g_component
  * @param[in] comp component.
  * @param[in] tid thread id (neuron id).
- * @see rnn_forward
  * @return non-zero value if any error.
  */
 int comp_forward(component_t *comp, int tid);
@@ -257,12 +256,10 @@ int comp_forward(component_t *comp, int tid);
  * Back-propagate one word for a thread of component.
  * @ingroup g_component
  * @param[in] comp component.
- * @param[in] word current word.
  * @param[in] tid thread id (neuron id).
- * @see rnn_forward
  * @return non-zero value if any error.
  */
-int comp_backprop(component_t *comp, int word, int tid);
+int comp_backprop(component_t *comp, int tid);
 
 /**
  * Get nodename in graphviz format of input layer.

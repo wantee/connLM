@@ -89,6 +89,9 @@ typedef struct _glue_implementation_t_ {
     int (*load_train_opt)(glue_t *glue, st_opt_t *opt,
             const char *sec_name,
             param_t *parent); /**< load train opt for  glue. */
+
+    int (*forward)(glue_t *glue, layer_t **layers,
+            layer_id_t num_layer, int tid); /**< feed-forward glue. */
 } glue_impl_t;
 
 /**
@@ -257,6 +260,27 @@ int glue_init_data(glue_t *glue, input_t *input,
  */
 int glue_load_train_opt(glue_t *glue, st_opt_t *opt,
         const char *sec_name, param_t *parent);
+
+/**
+ * Feed-forward one word for a thread of glue.
+ * @ingroup g_glue
+ * @param[in] glue glue.
+ * @param[in] layers component layers.
+ * @param[in] num_layer number of layers.
+ * @param[in] tid thread id (neuron id).
+ * @return non-zero value if any error.
+ */
+int glue_forward(glue_t *glue, layer_t **layers,
+        layer_id_t num_layer, int tid);
+
+/**
+ * Back-propagate one word for a thread of component.
+ * @ingroup g_glue
+ * @param[in] glue glue.
+ * @param[in] tid thread id (neuron id).
+ * @return non-zero value if any error.
+ */
+int glue_backprop(glue_t *glue, int tid);
 
 #ifdef __cplusplus
 }

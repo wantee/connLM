@@ -84,6 +84,9 @@ typedef struct _layer_t_ {
     int (*forward)(struct _layer_t_ *layer); /**< forward function. */
     int (*backprop)(struct _layer_t_ *layer); /**< backprop function. */
 
+    bool activated;
+    bool cleared;;
+
     layer_impl_t *impl; /**, implementaion of the layer. */
     void *extra; /**< hook to store extra data. */
 } layer_t;
@@ -184,6 +187,26 @@ int layer_save_body(layer_t *layer, FILE *fp, bool binary);
  * @return label on success, NULL if any error.
  */
 char* layer_draw_label(layer_t *layer, char *label, size_t label_len);
+
+/**
+ * Activate a layer.
+ * @ingroup g_layer
+ * @param[in] layer layer.
+ * @param[in] offset offset of layer.
+ * @param[in] tid thread id.
+ * @return non-zero value if any error.
+ */
+int layer_activate(layer_t *layer, int offset, int tid);
+
+/**
+ * Clear a layer.
+ * @ingroup g_layer
+ * @param[in] layer layer.
+ * @param[in] offset offset of layer.
+ * @param[in] tid thread id.
+ * @return non-zero value if any error.
+ */
+int layer_clear(layer_t *layer, int offset, int tid);
 
 #ifdef __cplusplus
 }

@@ -1262,3 +1262,58 @@ int glue_load_train_opt(glue_t *glue, st_opt_t *opt,
 ST_OPT_ERR:
     return -1;
 }
+
+int glue_forward(glue_t *glue, layer_t **layers,
+        layer_id_t num_layer, int tid)
+{
+    layer_id_t l;
+    layer_id_t lid;
+    glue_offset_t off;
+
+    ST_CHECK_PARAM(glue == NULL || layers == NULL, -1);
+
+    for (l = 0; l < glue->num_in_layer; l++) {
+        lid = glue->in_layers[l];
+        off = glue->in_offsets[l];
+        if (!layers[lid]->activated) {
+            if (layer_activate(layers[lid], off, tid) < 0) {
+                ST_WARNING("Failed to layer_activate.[%s]",
+                        layers[lid]->name);
+                return -1;
+            }
+
+            layers[lid]->activated = true;
+        }
+    }
+
+    for (l = 0; l < glue->num_out_layer; l++) {
+        lid = glue->out_layers[l];
+        off = glue->out_offsets[l];
+        if (!layers[lid]->cleared) {
+            if (layer_clear(layers[lid], off, tid) < 0) {
+                ST_WARNING("Failed to layer_clear.[%s]",
+                        layers[lid]->name);
+                return -1;
+            }
+
+            layers[lid]->cleared = true;
+        }
+    }
+
+    if (glue->impl != NULL && glue->impl->forward != NULL) {
+        if (glue->impl->forward(glue, layers, num_layer, tid) < 0) {
+            ST_WARNING("Failed to glue->impl->forward.[%s]",
+                    glue->name);
+            return -1;
+        }
+    }
+
+    return 0;
+}
+
+int glue_backprop(glue_t *glue, int tid)
+{
+    ST_CHECK_PARAM(glue == NULL, -1);
+
+    return 0;
+}

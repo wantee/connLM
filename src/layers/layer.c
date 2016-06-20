@@ -480,3 +480,17 @@ char* layer_draw_label(layer_t *layer, char *label, size_t label_len)
 
     return label;
 }
+
+int layer_activate(layer_t *layer, int offset, int tid)
+{
+    ST_CHECK_PARAM(layer == NULL || offset < 0, -1);
+
+    return 0;
+}
+
+int layer_clear(layer_t *layer, int offset, int tid)
+{
+    ST_CHECK_PARAM(layer == NULL || offset < 0, -1);
+
+    return 0;
+}

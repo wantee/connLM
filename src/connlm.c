@@ -1341,7 +1341,7 @@ int connlm_backprop(connlm_t *connlm, int word, int tid)
     }
 
     for (c = 0; c < connlm->num_comp; c++) {
-        if (comp_backprop(connlm->comps[c], word, tid) < 0) {
+        if (comp_backprop(connlm->comps[c], tid) < 0) {
             ST_WARNING("Failed to comp_backprop[%s].",
                     connlm->comps[c]->name);
             return -1;

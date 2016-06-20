@@ -31,14 +31,14 @@
 #include "output.h"
 #include "emb_wt_glue.h"
 
-int emb_wt_glue_forward(glue_t *glue)
+int emb_wt_glue_forward(glue_t *glue, int tid)
 {
     ST_CHECK_PARAM(glue == NULL, -1);
 
     return 0;
 }
 
-int emb_wt_glue_backprop(glue_t *glue)
+int emb_wt_glue_backprop(glue_t *glue, int tid)
 {
     ST_CHECK_PARAM(glue == NULL, -1);
 
