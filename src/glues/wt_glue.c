@@ -176,7 +176,7 @@ int wt_glue_parse_topo(glue_t *glue, const char *line)
     return 0;
 }
 
-bool wt_glue_check(glue_t *glue, layer_t **layers, layer_id_t n_layer)
+bool wt_glue_check(glue_t *glue, layer_t **layers, int n_layer)
 {
     ST_CHECK_PARAM(glue == NULL, false);
 

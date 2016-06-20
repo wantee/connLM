@@ -93,7 +93,7 @@ int direct_glue_parse_topo(glue_t *glue, const char *line);
  * @param[in] n_layer number of layers.
  * @return non-zero if any error
  */
-bool direct_glue_check(glue_t *glue, layer_t **layers, layer_id_t n_layer);
+bool direct_glue_check(glue_t *glue, layer_t **layers, int n_layer);
 
 /**
  * Provide label string for drawing direct glue.

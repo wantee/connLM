@@ -100,7 +100,7 @@ int append_glue_parse_topo(glue_t *glue, const char *line)
     return 0;
 }
 
-bool append_glue_check(glue_t *glue, layer_t **layers, layer_id_t n_layer)
+bool append_glue_check(glue_t *glue, layer_t **layers, int n_layer)
 {
     int i;
     int n;

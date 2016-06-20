@@ -132,7 +132,7 @@ typedef struct _connlm_t_ {
     vocab_t *vocab;   /**< vocab */
 
     component_t **comps; /**< components. */
-    comp_id_t num_comp; /**< number of components. */
+    int num_comp; /**< number of components. */
 } connlm_t;
 
 /**

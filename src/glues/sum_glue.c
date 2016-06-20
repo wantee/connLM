@@ -194,7 +194,7 @@ ERR:
     return -1;
 }
 
-bool sum_glue_check(glue_t *glue, layer_t **layers, layer_id_t n_layer)
+bool sum_glue_check(glue_t *glue, layer_t **layers, int n_layer)
 {
     int i;
 

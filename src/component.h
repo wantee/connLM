@@ -42,9 +42,6 @@ extern "C" {
  * Data structures and functions for NNet component.
  */
 
-typedef int comp_id_t;
-#define COMP_ID_FMT "%d"
-
 /**
  * Parameters for training component.
  * @ingroup g_component
@@ -62,11 +59,11 @@ typedef struct _component_t_ {
     input_t *input; /**< input layer. */
 
     layer_t **layers; /**< hidden layers. */
-    layer_id_t num_layer; /**< number of hidden layers. */
+    int num_layer; /**< number of hidden layers. */
     glue_t **glues; /**< glues. */
-    glue_id_t num_glue; /**< number of glues. */
+    int num_glue; /**< number of glues. */
 
-    glue_id_t* fwd_order; /**< forward order of glue. */
+    int* fwd_order; /**< forward order of glue. */
 
     comp_train_opt_t train_opt; /**< train options. */
 } component_t;

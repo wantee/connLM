@@ -204,7 +204,7 @@ ERR:
     return -1;
 }
 
-bool direct_glue_check(glue_t *glue, layer_t **layers, layer_id_t n_layer)
+bool direct_glue_check(glue_t *glue, layer_t **layers, int n_layer)
 {
     ST_CHECK_PARAM(glue == NULL, false);
 

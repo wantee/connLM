@@ -86,10 +86,10 @@ static glue_impl_t* glue_get_impl(const char *type)
     return NULL;
 }
 
-static layer_id_t glue_get_layer(layer_t **layers, layer_id_t n_layer,
+static int glue_get_layer(layer_t **layers, int n_layer,
         const char *name)
 {
-    layer_id_t t;
+    int t;
 
     for (t = 0; t < n_layer; t++) {
         if (strcmp(layers[t]->name, name) == 0) {
@@ -97,7 +97,7 @@ static layer_id_t glue_get_layer(layer_t **layers, layer_id_t n_layer,
         }
     }
 
-    return LAYER_ID_NONE;
+    return -1;
 }
 
 void glue_destroy(glue_t *glue)
@@ -126,7 +126,7 @@ void glue_destroy(glue_t *glue)
 
 bool glue_check(glue_t *glue)
 {
-    layer_id_t l;
+    int l;
 
     ST_CHECK_PARAM(glue == NULL, false);
 
@@ -135,7 +135,7 @@ bool glue_check(glue_t *glue)
         goto ERR;
     }
     if (glue->in_offsets == NULL) {
-        glue->in_offsets = (glue_offset_t *)malloc(sizeof(glue_offset_t)
+        glue->in_offsets = (int *)malloc(sizeof(int)
                 * glue->num_in_layer);
         if (glue->in_offsets == NULL) {
             ST_WARNING("Failed to malloc in_offsets.");
@@ -161,7 +161,7 @@ bool glue_check(glue_t *glue)
         goto ERR;
     }
     if (glue->out_offsets == NULL) {
-        glue->out_offsets = (glue_offset_t *)malloc(sizeof(glue_offset_t)
+        glue->out_offsets = (int *)malloc(sizeof(int)
                 * glue->num_out_layer);
         if (glue->out_offsets == NULL) {
             ST_WARNING("Failed to malloc out_offsets.");
@@ -195,7 +195,7 @@ ERR:
 }
 
 glue_t* glue_parse_topo(const char *line, layer_t **layers,
-        layer_id_t n_layer)
+        int n_layer)
 {
     glue_t *glue = NULL;
 
@@ -206,7 +206,7 @@ glue_t* glue_parse_topo(const char *line, layer_t **layers,
     size_t name_cap = 16;
 
     const char *p;
-    layer_id_t l;
+    int l;
     int n;
 
     ST_CHECK_PARAM(line == NULL, NULL);
@@ -273,7 +273,7 @@ glue_t* glue_parse_topo(const char *line, layer_t **layers,
                 glue->num_in_layer = split_line(keyvalue + MAX_LINE_LEN,
                         names, name_cap, MAX_LINE_LEN, ",");
             }
-            glue->in_layers = (layer_id_t *)malloc(sizeof(layer_id_t)
+            glue->in_layers = (int *)malloc(sizeof(int)
                     * glue->num_in_layer);
             if (glue->in_layers == NULL) {
                 ST_WARNING("Failed to malloc in_layers.");
@@ -282,7 +282,7 @@ glue_t* glue_parse_topo(const char *line, layer_t **layers,
             for (l = 0; l < glue->num_in_layer; l++) {
                 glue->in_layers[l] = glue_get_layer(layers, n_layer,
                         names + l*MAX_LINE_LEN);
-                if (glue->in_layers[l] == LAYER_ID_NONE) {
+                if (glue->in_layers[l] < 0) {
                     ST_WARNING("No layer named [%s] is found.",
                             names + l*MAX_LINE_LEN);
                     goto ERR;
@@ -313,7 +313,7 @@ glue_t* glue_parse_topo(const char *line, layer_t **layers,
                 ST_WARNING("Too many in-offset [%s]", token);
                 goto ERR;
             }
-            glue->in_offsets = (glue_offset_t *)malloc(sizeof(glue_offset_t)
+            glue->in_offsets = (int *)malloc(sizeof(int)
                     * glue->num_in_layer);
             if (glue->in_offsets == NULL) {
                 ST_WARNING("Failed to malloc in_offsets.");
@@ -384,7 +384,7 @@ glue_t* glue_parse_topo(const char *line, layer_t **layers,
                 glue->num_out_layer = split_line(keyvalue + MAX_LINE_LEN,
                         names, name_cap, MAX_LINE_LEN, ",");
             }
-            glue->out_layers = (layer_id_t *)malloc(sizeof(layer_id_t)
+            glue->out_layers = (int *)malloc(sizeof(int)
                     * glue->num_out_layer);
             if (glue->out_layers == NULL) {
                 ST_WARNING("Failed to malloc out_layers.");
@@ -393,7 +393,7 @@ glue_t* glue_parse_topo(const char *line, layer_t **layers,
             for (l = 0; l < glue->num_out_layer; l++) {
                 glue->out_layers[l] = glue_get_layer(layers, n_layer,
                         names + l*MAX_LINE_LEN);
-                if (glue->out_layers[l] == LAYER_ID_NONE) {
+                if (glue->out_layers[l] < 0) {
                     ST_WARNING("No layer named [%s] is found.",
                             names + l*MAX_LINE_LEN);
                     goto ERR;
@@ -424,7 +424,7 @@ glue_t* glue_parse_topo(const char *line, layer_t **layers,
                 ST_WARNING("Too many out-offset [%s]", token);
                 goto ERR;
             }
-            glue->out_offsets = (glue_offset_t *)malloc(sizeof(glue_offset_t)
+            glue->out_offsets = (int *)malloc(sizeof(int)
                     * glue->num_out_layer);
             if (glue->out_offsets == NULL) {
                 ST_WARNING("Failed to malloc out_offsets.");
@@ -544,16 +544,16 @@ glue_t* glue_dup(glue_t *g)
     glue->type[MAX_NAME_LEN - 1] = '\0';
 
     if (glue->num_in_layer > 0) {
-        sz = sizeof(layer_id_t)*glue->num_in_layer;
-        glue->in_layers = (layer_id_t *)malloc(sz);
+        sz = sizeof(int)*glue->num_in_layer;
+        glue->in_layers = (int *)malloc(sz);
         if (glue->in_layers == NULL) {
             ST_WARNING("Failed to malloc in_layers");
             goto ERR;
         }
         memcpy(glue->in_layers, g->in_layers, sz);
 
-        sz = sizeof(glue_offset_t)*glue->num_in_layer;
-        glue->in_offsets = (glue_offset_t *)malloc(sz);
+        sz = sizeof(int)*glue->num_in_layer;
+        glue->in_offsets = (int *)malloc(sz);
         if (glue->in_offsets == NULL) {
             ST_WARNING("Failed to malloc in_offsets");
             goto ERR;
@@ -570,16 +570,16 @@ glue_t* glue_dup(glue_t *g)
     }
 
     if (glue->num_out_layer > 0) {
-        sz = sizeof(layer_id_t)*glue->num_out_layer;
-        glue->out_layers = (layer_id_t *)malloc(sz);
+        sz = sizeof(int)*glue->num_out_layer;
+        glue->out_layers = (int *)malloc(sz);
         if (glue->out_layers == NULL) {
             ST_WARNING("Failed to malloc out_layers");
             goto ERR;
         }
         memcpy(glue->out_layers, g->out_layers, sz);
 
-        sz = sizeof(glue_offset_t)*glue->num_out_layer;
-        glue->out_offsets = (glue_offset_t *)malloc(sz);
+        sz = sizeof(int)*glue->num_out_layer;
+        glue->out_offsets = (int *)malloc(sz);
         if (glue->out_offsets == NULL) {
             ST_WARNING("Failed to malloc out_offsets");
             goto ERR;
@@ -613,8 +613,8 @@ int glue_load_header(glue_t **glue, int version,
 
     char name[MAX_NAME_LEN];
     char type[MAX_NAME_LEN];
-    layer_id_t num_in_layer;
-    layer_id_t num_out_layer;
+    int num_in_layer;
+    int num_out_layer;
 
     glue_impl_t *impl;
     bool b;
@@ -656,11 +656,11 @@ int glue_load_header(glue_t **glue, int version,
             return -1;
         }
         type[MAX_NAME_LEN - 1] = '\0';
-        if (fread(&num_in_layer, sizeof(layer_id_t), 1, fp) != 1) {
+        if (fread(&num_in_layer, sizeof(int), 1, fp) != 1) {
             ST_WARNING("Failed to read num_in_layer.");
             return -1;
         }
-        if (fread(&num_out_layer, sizeof(layer_id_t), 1, fp) != 1) {
+        if (fread(&num_out_layer, sizeof(int), 1, fp) != 1) {
             ST_WARNING("Failed to read num_out_layer.");
             return -1;
         }
@@ -685,12 +685,12 @@ int glue_load_header(glue_t **glue, int version,
         }
         type[MAX_NAME_LEN - 1] = '\0';
 
-        if (st_readline(fp, "Num in layer: "LAYER_ID_FMT,
+        if (st_readline(fp, "Num in layer: %d",
                     &num_in_layer) != 1) {
             ST_WARNING("Failed to parse num_in_layer.");
             goto ERR;
         }
-        if (st_readline(fp, "Num out layer: "LAYER_ID_FMT,
+        if (st_readline(fp, "Num out layer: %d",
                     &num_out_layer) != 1) {
             ST_WARNING("Failed to parse num_out_layer.");
             goto ERR;
@@ -722,8 +722,8 @@ int glue_load_header(glue_t **glue, int version,
         fprintf(fo_info, "\n<GLUE>\n");
         fprintf(fo_info, "Name: %s\n", name);
         fprintf(fo_info, "Type: %s\n", type);
-        fprintf(fo_info, "Num in layer: "LAYER_ID_FMT"\n", num_in_layer);
-        fprintf(fo_info, "Num out layer: "LAYER_ID_FMT"\n", num_out_layer);
+        fprintf(fo_info, "Num in layer: %d\n", num_in_layer);
+        fprintf(fo_info, "Num out layer: %d\n", num_out_layer);
     }
 
     if (impl->load_header != NULL) {
@@ -752,8 +752,8 @@ int glue_load_body(glue_t *glue, int version, FILE *fp, bool binary)
 {
     size_t sz;
     int n;
-    layer_id_t l;
-    layer_id_t tmp;
+    int l;
+    int tmp;
 
     ST_CHECK_PARAM(glue == NULL || fp == NULL, -1);
 
@@ -766,15 +766,15 @@ int glue_load_body(glue_t *glue, int version, FILE *fp, bool binary)
     safe_free(glue->in_offsets);
     safe_free(glue->in_scales);
     if (glue->num_in_layer > 0) {
-        sz = sizeof(layer_id_t)*glue->num_in_layer;
-        glue->in_layers = (layer_id_t *)malloc(sz);
+        sz = sizeof(int)*glue->num_in_layer;
+        glue->in_layers = (int *)malloc(sz);
         if (glue->in_layers == NULL) {
             ST_WARNING("Failed to malloc in_layers");
             goto ERR;
         }
 
-        sz = sizeof(glue_offset_t)*glue->num_in_layer;
-        glue->in_offsets = (glue_offset_t *)malloc(sz);
+        sz = sizeof(int)*glue->num_in_layer;
+        glue->in_offsets = (int *)malloc(sz);
         if (glue->in_offsets == NULL) {
             ST_WARNING("Failed to malloc in_offsets");
             goto ERR;
@@ -792,15 +792,15 @@ int glue_load_body(glue_t *glue, int version, FILE *fp, bool binary)
     safe_free(glue->out_offsets);
     safe_free(glue->out_scales);
     if (glue->num_out_layer > 0) {
-        sz = sizeof(layer_id_t)*glue->num_out_layer;
-        glue->out_layers = (layer_id_t *)malloc(sz);
+        sz = sizeof(int)*glue->num_out_layer;
+        glue->out_layers = (int *)malloc(sz);
         if (glue->out_layers == NULL) {
             ST_WARNING("Failed to malloc out_layers");
             goto ERR;
         }
 
-        sz = sizeof(glue_offset_t)*glue->num_out_layer;
-        glue->out_offsets = (glue_offset_t *)malloc(sz);
+        sz = sizeof(int)*glue->num_out_layer;
+        glue->out_offsets = (int *)malloc(sz);
         if (glue->out_offsets == NULL) {
             ST_WARNING("Failed to malloc out_offsets");
             goto ERR;
@@ -826,12 +826,12 @@ int glue_load_body(glue_t *glue, int version, FILE *fp, bool binary)
         }
 
         if (glue->num_in_layer > 0){
-            if (fread(glue->in_layers, sizeof(layer_id_t),
+            if (fread(glue->in_layers, sizeof(int),
                         glue->num_in_layer, fp) != glue->num_in_layer) {
                 ST_WARNING("Failed to read in_layers.");
                 goto ERR;
             }
-            if (fread(glue->in_offsets, sizeof(glue_offset_t),
+            if (fread(glue->in_offsets, sizeof(int),
                         glue->num_in_layer, fp) != glue->num_in_layer) {
                 ST_WARNING("Failed to read in_offsets.");
                 goto ERR;
@@ -844,12 +844,12 @@ int glue_load_body(glue_t *glue, int version, FILE *fp, bool binary)
         }
 
         if (glue->num_out_layer > 0){
-            if (fread(glue->out_layers, sizeof(layer_id_t),
+            if (fread(glue->out_layers, sizeof(int),
                         glue->num_out_layer, fp) != glue->num_out_layer) {
                 ST_WARNING("Failed to read out_layers.");
                 goto ERR;
             }
-            if (fread(glue->out_offsets, sizeof(glue_offset_t),
+            if (fread(glue->out_offsets, sizeof(int),
                         glue->num_out_layer, fp) != glue->num_out_layer) {
                 ST_WARNING("Failed to read out_offsets.");
                 goto ERR;
@@ -872,7 +872,7 @@ int glue_load_body(glue_t *glue, int version, FILE *fp, bool binary)
                 goto ERR;
             }
             for (l = 0; l < glue->num_in_layer; l++) {
-                if (st_readline(fp, "\t"LAYER_ID_FMT"\t"LAYER_ID_FMT,
+                if (st_readline(fp, "\t%d\t%d",
                             &tmp, glue->in_layers + l) != 2) {
                     ST_WARNING("Failed to parse in_layers.");
                     goto ERR;
@@ -883,7 +883,7 @@ int glue_load_body(glue_t *glue, int version, FILE *fp, bool binary)
                 goto ERR;
             }
             for (l = 0; l < glue->num_in_layer; l++) {
-                if (st_readline(fp, "\t"LAYER_ID_FMT"\t"GLUE_OFFSET_FMT,
+                if (st_readline(fp, "\t%d\t%d",
                             &tmp, glue->in_offsets + l) != 2) {
                     ST_WARNING("Failed to parse in_offsets.");
                     goto ERR;
@@ -894,7 +894,7 @@ int glue_load_body(glue_t *glue, int version, FILE *fp, bool binary)
                 goto ERR;
             }
             for (l = 0; l < glue->num_in_layer; l++) {
-                if (st_readline(fp, "\t"LAYER_ID_FMT"\t"REAL_FMT,
+                if (st_readline(fp, "\t%d\t"REAL_FMT,
                             &tmp, glue->in_scales + l) != 2) {
                     ST_WARNING("Failed to parse in_scales.");
                     goto ERR;
@@ -908,7 +908,7 @@ int glue_load_body(glue_t *glue, int version, FILE *fp, bool binary)
                 goto ERR;
             }
             for (l = 0; l < glue->num_out_layer; l++) {
-                if (st_readline(fp, "\t"LAYER_ID_FMT"\t"LAYER_ID_FMT,
+                if (st_readline(fp, "\t%d\t%d",
                             &tmp, glue->out_layers + l) != 2) {
                     ST_WARNING("Failed to parse out_layers.");
                     goto ERR;
@@ -919,7 +919,7 @@ int glue_load_body(glue_t *glue, int version, FILE *fp, bool binary)
                 goto ERR;
             }
             for (l = 0; l < glue->num_out_layer; l++) {
-                if (st_readline(fp, "\t"LAYER_ID_FMT"\t"GLUE_OFFSET_FMT,
+                if (st_readline(fp, "\t%d\t%d",
                             &tmp, glue->out_offsets + l) != 2) {
                     ST_WARNING("Failed to parse out_offsets.");
                     goto ERR;
@@ -930,7 +930,7 @@ int glue_load_body(glue_t *glue, int version, FILE *fp, bool binary)
                 goto ERR;
             }
             for (l = 0; l < glue->num_out_layer; l++) {
-                if (st_readline(fp, "\t"LAYER_ID_FMT"\t"REAL_FMT,
+                if (st_readline(fp, "\t%d\t"REAL_FMT,
                             &tmp, glue->out_scales + l) != 2) {
                     ST_WARNING("Failed to parse out_scales.");
                     goto ERR;
@@ -990,11 +990,11 @@ int glue_save_header(glue_t *glue, FILE *fp, bool binary)
             ST_WARNING("Failed to write type.");
             return -1;
         }
-        if (fwrite(&glue->num_in_layer, sizeof(layer_id_t), 1, fp) != 1) {
+        if (fwrite(&glue->num_in_layer, sizeof(int), 1, fp) != 1) {
             ST_WARNING("Failed to write num_in_layer.");
             return -1;
         }
-        if (fwrite(&glue->num_out_layer, sizeof(layer_id_t), 1, fp) != 1) {
+        if (fwrite(&glue->num_out_layer, sizeof(int), 1, fp) != 1) {
             ST_WARNING("Failed to write num_out_layer.");
             return -1;
         }
@@ -1012,12 +1012,12 @@ int glue_save_header(glue_t *glue, FILE *fp, bool binary)
             ST_WARNING("Failed to fprintf type.");
             return -1;
         }
-        if (fprintf(fp, "Num in layer: "LAYER_ID_FMT"\n",
+        if (fprintf(fp, "Num in layer: %d\n",
                     glue->num_in_layer) < 0) {
             ST_WARNING("Failed to fprintf num_in_layer.");
             return -1;
         }
-        if (fprintf(fp, "Num out layer: "LAYER_ID_FMT"\n",
+        if (fprintf(fp, "Num out layer: %d\n",
                     glue->num_out_layer) < 0) {
             ST_WARNING("Failed to fprintf num_out_layer.");
             return -1;
@@ -1037,7 +1037,7 @@ int glue_save_header(glue_t *glue, FILE *fp, bool binary)
 int glue_save_body(glue_t *glue, FILE *fp, bool binary)
 {
     int n;
-    layer_id_t l;
+    int l;
 
     ST_CHECK_PARAM(fp == NULL, -1);
 
@@ -1049,12 +1049,12 @@ int glue_save_body(glue_t *glue, FILE *fp, bool binary)
         }
 
         if (glue->num_in_layer > 0){
-            if (fwrite(glue->in_layers, sizeof(layer_id_t),
+            if (fwrite(glue->in_layers, sizeof(int),
                         glue->num_in_layer, fp) != glue->num_in_layer) {
                 ST_WARNING("Failed to write in_layers.");
                 return -1;
             }
-            if (fwrite(glue->in_offsets, sizeof(glue_offset_t),
+            if (fwrite(glue->in_offsets, sizeof(int),
                         glue->num_in_layer, fp) != glue->num_in_layer) {
                 ST_WARNING("Failed to write in_offsets.");
                 return -1;
@@ -1067,12 +1067,12 @@ int glue_save_body(glue_t *glue, FILE *fp, bool binary)
         }
 
         if (glue->num_out_layer > 0){
-            if (fwrite(glue->out_layers, sizeof(layer_id_t),
+            if (fwrite(glue->out_layers, sizeof(int),
                         glue->num_out_layer, fp) != glue->num_out_layer) {
                 ST_WARNING("Failed to write out_layers.");
                 return -1;
             }
-            if (fwrite(glue->out_offsets, sizeof(glue_offset_t),
+            if (fwrite(glue->out_offsets, sizeof(int),
                         glue->num_out_layer, fp) != glue->num_out_layer) {
                 ST_WARNING("Failed to write out_offsets.");
                 return -1;
@@ -1095,10 +1095,9 @@ int glue_save_body(glue_t *glue, FILE *fp, bool binary)
                 return -1;
             }
             for (l = 0; l < glue->num_in_layer; l++) {
-                if (fprintf(fp, "\t"LAYER_ID_FMT"\t"LAYER_ID_FMT"\n",
+                if (fprintf(fp, "\t%d\t%d\n",
                             l, glue->in_layers[l]) < 0) {
-                    ST_WARNING("Failed to fprintf in_layers["
-                            LAYER_ID_FMT"].", l);
+                    ST_WARNING("Failed to fprintf in_layers[%d].", l);
                     return -1;
                 }
             }
@@ -1107,10 +1106,9 @@ int glue_save_body(glue_t *glue, FILE *fp, bool binary)
                 return -1;
             }
             for (l = 0; l < glue->num_in_layer; l++) {
-                if (fprintf(fp, "\t"LAYER_ID_FMT"\t"GLUE_OFFSET_FMT"\n",
+                if (fprintf(fp, "\t%d\t%d\n",
                             l, glue->in_offsets[l]) < 0) {
-                    ST_WARNING("Failed to fprintf in_offsets["
-                            LAYER_ID_FMT"].", l);
+                    ST_WARNING("Failed to fprintf in_offsets[%d].", l);
                     return -1;
                 }
             }
@@ -1119,10 +1117,9 @@ int glue_save_body(glue_t *glue, FILE *fp, bool binary)
                 return -1;
             }
             for (l = 0; l < glue->num_in_layer; l++) {
-                if (fprintf(fp, "\t"LAYER_ID_FMT"\t"REAL_FMT"\n",
+                if (fprintf(fp, "\t%d\t"REAL_FMT"\n",
                             l, glue->in_scales[l]) < 0) {
-                    ST_WARNING("Failed to fprintf in_scales["
-                            LAYER_ID_FMT"].", l);
+                    ST_WARNING("Failed to fprintf in_scales[%d].", l);
                     return -1;
                 }
             }
@@ -1134,10 +1131,9 @@ int glue_save_body(glue_t *glue, FILE *fp, bool binary)
                 return -1;
             }
             for (l = 0; l < glue->num_out_layer; l++) {
-                if (fprintf(fp, "\t"LAYER_ID_FMT"\t"LAYER_ID_FMT"\n",
+                if (fprintf(fp, "\t%d\t%d\n",
                             l, glue->out_layers[l]) < 0) {
-                    ST_WARNING("Failed to fprintf out_layers["
-                            LAYER_ID_FMT"].", l);
+                    ST_WARNING("Failed to fprintf out_layers[%d].", l);
                     return -1;
                 }
             }
@@ -1146,10 +1142,9 @@ int glue_save_body(glue_t *glue, FILE *fp, bool binary)
                 return -1;
             }
             for (l = 0; l < glue->num_out_layer; l++) {
-                if (fprintf(fp, "\t"LAYER_ID_FMT"\t"GLUE_OFFSET_FMT"\n",
+                if (fprintf(fp, "\t%d\t%d\n",
                             l, glue->out_offsets[l]) < 0) {
-                    ST_WARNING("Failed to fprintf out_offsets["
-                            LAYER_ID_FMT"].", l);
+                    ST_WARNING("Failed to fprintf out_offsets[%d].", l);
                     return -1;
                 }
             }
@@ -1158,10 +1153,9 @@ int glue_save_body(glue_t *glue, FILE *fp, bool binary)
                 return -1;
             }
             for (l = 0; l < glue->num_out_layer; l++) {
-                if (fprintf(fp, "\t"LAYER_ID_FMT"\t"REAL_FMT"\n",
+                if (fprintf(fp, "\t%d\t"REAL_FMT"\n",
                             l, glue->out_scales[l]) < 0) {
-                    ST_WARNING("Failed to fprintf out_scales["
-                            LAYER_ID_FMT"].", l);
+                    ST_WARNING("Failed to fprintf out_scales[%d].", l);
                     return -1;
                 }
             }
@@ -1198,7 +1192,7 @@ char* glue_draw_label(glue_t *glue, char *label, size_t label_len,
     return label;
 }
 
-char* glue_draw_label_one(glue_t *glue, layer_id_t lid,
+char* glue_draw_label_one(glue_t *glue, int lid,
         char *label, size_t label_len, bool verbose)
 {
     char buf[MAX_LINE_LEN];
@@ -1207,7 +1201,7 @@ char* glue_draw_label_one(glue_t *glue, layer_id_t lid,
 
     label[0] = '\0';
     if (glue->in_offsets != NULL && glue->in_offsets[lid] != 0) {
-        snprintf(buf, MAX_LINE_LEN, ",off="GLUE_OFFSET_FMT,
+        snprintf(buf, MAX_LINE_LEN, ",off=%d",
                 glue->in_offsets[lid]);
         strncat(label, buf, label_len - strlen(label) - 1);
     }
@@ -1263,12 +1257,11 @@ ST_OPT_ERR:
     return -1;
 }
 
-int glue_forward(glue_t *glue, layer_t **layers,
-        layer_id_t num_layer, int tid)
+int glue_forward(glue_t *glue, layer_t **layers, int n_layer, int tid)
 {
-    layer_id_t l;
-    layer_id_t lid;
-    glue_offset_t off;
+    int l;
+    int lid;
+    int off;
 
     ST_CHECK_PARAM(glue == NULL || layers == NULL, -1);
 
@@ -1301,7 +1294,7 @@ int glue_forward(glue_t *glue, layer_t **layers,
     }
 
     if (glue->impl != NULL && glue->impl->forward != NULL) {
-        if (glue->impl->forward(glue, layers, num_layer, tid) < 0) {
+        if (glue->impl->forward(glue, layers, n_layer, tid) < 0) {
             ST_WARNING("Failed to glue->impl->forward.[%s]",
                     glue->name);
             return -1;

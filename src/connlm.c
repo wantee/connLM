@@ -141,7 +141,7 @@ int connlm_load_param(connlm_t *connlm, st_opt_t *opt,
         const char *sec_name)
 {
     param_t param;
-    comp_id_t c;
+    int c;
 
     ST_CHECK_PARAM(connlm == NULL || opt == NULL, -1);
 
@@ -214,7 +214,7 @@ void connlm_destroy(connlm_t *connlm)
     connlm_egs_t *p;
     connlm_egs_t *q;
 
-    comp_id_t c;
+    int c;
 
     if (connlm == NULL) {
         return;
@@ -266,7 +266,7 @@ int connlm_init(connlm_t *connlm, FILE *topo_fp)
     char *line = NULL;
     size_t line_sz = 0;
 
-    comp_id_t c, d;
+    int c, d;
     bool err;
 
     int part;
@@ -404,7 +404,7 @@ connlm_t *connlm_new(vocab_t *vocab, output_t *output,
 {
     connlm_t *connlm = NULL;
 
-    comp_id_t c;
+    int c;
 
     ST_CHECK_PARAM(vocab == NULL && output == NULL
             && comps == NULL, NULL);
@@ -471,8 +471,8 @@ static int connlm_load_header(connlm_t *connlm, FILE *fp,
 
     int version;
     int real_size;
-    comp_id_t c;
-    comp_id_t num_comp;
+    int c;
+    int num_comp;
 
     ST_CHECK_PARAM((connlm == NULL && fo_info == NULL) || fp == NULL
             || binary == NULL, -1);
@@ -519,7 +519,7 @@ static int connlm_load_header(connlm_t *connlm, FILE *fp,
             return -1;
         }
 
-        if (fread(&num_comp, sizeof(comp_id_t), 1, fp) != 1) {
+        if (fread(&num_comp, sizeof(int), 1, fp) != 1) {
             ST_WARNING("Failed to read num_comp.");
             return -1;
         }
@@ -563,7 +563,7 @@ static int connlm_load_header(connlm_t *connlm, FILE *fp,
             return -1;
         }
 
-        if (st_readline(fp, "Num comp: " COMP_ID_FMT, &num_comp) != 1) {
+        if (st_readline(fp, "Num comp: %d", &num_comp) != 1) {
             ST_WARNING("Failed to read num_comp.");
             return -1;
         }
@@ -642,7 +642,7 @@ ERR:
 static int connlm_load_body(connlm_t *connlm, int version,
         FILE *fp, bool binary)
 {
-    comp_id_t c;
+    int c;
 
     ST_CHECK_PARAM(connlm == NULL || fp == NULL, -1);
 
@@ -660,7 +660,7 @@ static int connlm_load_body(connlm_t *connlm, int version,
 
     for (c = 0; c < connlm->num_comp; c++) {
         if (comp_load_body(connlm->comps[c], version, fp, binary) < 0) {
-            ST_WARNING("Failed to comp_load_body["COMP_ID_FMT"].", c);
+            ST_WARNING("Failed to comp_load_body[%d].", c);
             return -1;
         }
     }
@@ -718,7 +718,7 @@ int connlm_print_info(FILE *fp, FILE *fo_info)
 static int connlm_save_header(connlm_t *connlm, FILE *fp, bool binary)
 {
     int n;
-    comp_id_t c;
+    int c;
 
     ST_CHECK_PARAM(connlm == NULL || fp == NULL, -1);
 
@@ -740,7 +740,7 @@ static int connlm_save_header(connlm_t *connlm, FILE *fp, bool binary)
             return -1;
         }
 
-        if (fwrite(&connlm->num_comp, sizeof(comp_id_t), 1, fp) != 1) {
+        if (fwrite(&connlm->num_comp, sizeof(int), 1, fp) != 1) {
             ST_WARNING("Failed to write num_comp.");
             return -1;
         }
@@ -759,7 +759,7 @@ static int connlm_save_header(connlm_t *connlm, FILE *fp, bool binary)
             ST_WARNING("Failed to fprintf real type.");
             return -1;
         }
-        if (fprintf(fp, "Num comp: "COMP_ID_FMT"\n",
+        if (fprintf(fp, "Num comp: %d\n",
                     connlm->num_comp) < 0) {
             ST_WARNING("Failed to fprintf num comp.");
             return -1;
@@ -788,7 +788,7 @@ static int connlm_save_header(connlm_t *connlm, FILE *fp, bool binary)
 
 static int connlm_save_body(connlm_t *connlm, FILE *fp, bool binary)
 {
-    comp_id_t c;
+    int c;
 
     ST_CHECK_PARAM(connlm == NULL || fp == NULL, -1);
 
@@ -832,7 +832,7 @@ int connlm_save(connlm_t *connlm, FILE *fp, bool binary)
 static int connlm_draw_network(connlm_t *connlm, FILE *fp, bool verbose)
 {
     char nodename[MAX_NAME_LEN];
-    comp_id_t c;
+    int c;
 
     ST_CHECK_PARAM(connlm == NULL || fp == NULL, -1);
 
@@ -846,7 +846,7 @@ static int connlm_draw_network(connlm_t *connlm, FILE *fp, bool verbose)
     fprintf(fp, "    label=\"Overview\";\n");
     fprintf(fp, "    node [shape=plaintext, style=solid];\n");
     fprintf(fp, "    edge [style=invis];\n\n");
-    fprintf(fp, "    legend [label=\"# Compnoent: "COMP_ID_FMT"\\n"
+    fprintf(fp, "    legend [label=\"# Compnoent: %d\\n"
                      "Vocab size: %d\\n\"];\n",
                 connlm->num_comp,
                 connlm->vocab->vocab_size);
@@ -912,7 +912,7 @@ int connlm_draw(connlm_t *connlm, FILE *fp, bool verbose)
 int connlm_filter(connlm_t *connlm, model_filter_t mf,
         const char *comp_names, int num_comp)
 {
-    comp_id_t c;
+    int c;
     int i;
     bool found;
 
@@ -1176,7 +1176,7 @@ ERR:
 
 int connlm_setup(connlm_t *connlm, bool backprop)
 {
-    comp_id_t c;
+    int c;
 
     ST_CHECK_PARAM(connlm == NULL, -1);
 
@@ -1198,7 +1198,7 @@ int connlm_setup(connlm_t *connlm, bool backprop)
 
 int connlm_reset(connlm_t *connlm, int tid, bool backprop)
 {
-    comp_id_t c;
+    int c;
 
     ST_CHECK_PARAM(connlm == NULL, -1);
 
@@ -1219,7 +1219,7 @@ int connlm_reset(connlm_t *connlm, int tid, bool backprop)
 
 int connlm_start(connlm_t *connlm, int word, int tid, bool backprop)
 {
-    comp_id_t c;
+    int c;
 
     ST_CHECK_PARAM(connlm == NULL, -1);
 
@@ -1240,7 +1240,7 @@ int connlm_start(connlm_t *connlm, int word, int tid, bool backprop)
 
 int connlm_end(connlm_t *connlm, int word, int tid, bool backprop)
 {
-    comp_id_t c;
+    int c;
 
     ST_CHECK_PARAM(connlm == NULL, -1);
 
@@ -1261,7 +1261,7 @@ int connlm_end(connlm_t *connlm, int word, int tid, bool backprop)
 
 int connlm_finish(connlm_t *connlm, int tid, bool backprop)
 {
-    comp_id_t c;
+    int c;
 
     ST_CHECK_PARAM(connlm == NULL, -1);
 
@@ -1282,7 +1282,7 @@ int connlm_finish(connlm_t *connlm, int tid, bool backprop)
 
 static int connlm_forward_hidden(connlm_t *connlm, int tid)
 {
-    comp_id_t c;
+    int c;
 
     ST_CHECK_PARAM(connlm == NULL, -1);
 
@@ -1315,7 +1315,7 @@ int connlm_forward(connlm_t *connlm, int word, int tid)
 
 int connlm_fwd_bp(connlm_t *connlm, int word, int tid)
 {
-    comp_id_t c;
+    int c;
 
     ST_CHECK_PARAM(connlm == NULL, -1);
 
@@ -1331,7 +1331,7 @@ int connlm_fwd_bp(connlm_t *connlm, int word, int tid)
 
 int connlm_backprop(connlm_t *connlm, int word, int tid)
 {
-    comp_id_t c;
+    int c;
 
     ST_CHECK_PARAM(connlm == NULL, -1);
 

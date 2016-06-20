@@ -35,10 +35,6 @@ extern "C" {
  * Data structures and functions for NNet hidden layer.
  */
 
-typedef int layer_id_t;
-#define LAYER_ID_NONE -1
-#define LAYER_ID_FMT "%d"
-
 typedef struct _layer_t_ layer_t;
 /**
  * NNet hidden layer implementaion.

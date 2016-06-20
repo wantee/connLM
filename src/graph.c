@@ -42,7 +42,7 @@ static void node_destroy(node_t* node)
 
 static void link_init(link_t* link)
 {
-    link->to = NODE_ID_NONE;
+    link->to = -1;
 }
 
 static void link_destroy(link_t* link)
@@ -56,8 +56,8 @@ static void link_destroy(link_t* link)
 
 void graph_destroy(graph_t* graph)
 {
-    node_id_t n;
-    link_id_t l;
+    int n;
+    int l;
 
     if (graph == NULL) {
         return;
@@ -79,18 +79,18 @@ void graph_destroy(graph_t* graph)
 }
 
 #define NUM_REALLOC_LINK 10
-static link_id_t graph_add_link(graph_t *graph)
+static int graph_add_link(graph_t *graph)
 {
-    link_id_t lk;
+    int lk;
 
-    ST_CHECK_PARAM(graph == NULL, LINK_ID_NONE);
+    ST_CHECK_PARAM(graph == NULL, -1);
 
     if (graph->num_link >= graph->cap_link) {
         graph->links = (link_t *)realloc(graph->links, sizeof(link_t)
                 * (graph->cap_link + NUM_REALLOC_LINK));
         if (graph->links == NULL) {
             ST_WARNING("Failed to realloc graph links.");
-            return LINK_ID_NONE;
+            return -1;
         }
         graph->cap_link += NUM_REALLOC_LINK;
 
@@ -102,30 +102,30 @@ static link_id_t graph_add_link(graph_t *graph)
     return graph->num_link++;
 }
 
-static link_id_t node_add_link(node_t *node, link_id_t lk)
+static int node_add_link(node_t *node, int lk)
 {
-    ST_CHECK_PARAM(node == NULL || lk == LINK_ID_NONE, LINK_ID_NONE);
+    ST_CHECK_PARAM(node == NULL || lk == -1, -1);
 
-    node->links = (link_id_t *)realloc(node->links, sizeof(link_id_t)
+    node->links = (int *)realloc(node->links, sizeof(int)
             * (node->num_link + 1));
     if (node->links == NULL) {
         ST_WARNING("Failed to realloc node links.");
-        return LINK_ID_NONE;
+        return -1;
     }
     node->links[node->num_link] = lk;
 
     return node->num_link++;
 }
 
-static int graph_dfs(graph_t *graph, node_id_t start,
+static int graph_dfs(graph_t *graph, int start,
         st_stack_t *node_stack, bool *on_stack,
         bool *visited, bool *passed,
-        node_id_t *post_order, node_id_t *post_i)
+        int *post_order, int *post_i)
 {
     node_t *node;
 
-    link_id_t l, lk;
-    node_id_t to;
+    int l, lk;
+    int to;
     st_stack_id_t s;
 
     void *tmp;
@@ -133,17 +133,17 @@ static int graph_dfs(graph_t *graph, node_id_t start,
     ST_CHECK_PARAM(graph == NULL, -1);
 
     if (st_stack_push(node_stack, (void *)(long)start) != ST_STACK_OK) {
-        ST_WARNING("Failed to st_stack_push node["NODE_ID_FMT"].", start);
+        ST_WARNING("Failed to st_stack_push node[%d].", start);
         return -1;
     }
 #ifdef _GRAPH_DEBUG_
-    ST_DEBUG("Node push: "NODE_ID_FMT, start);
+    ST_DEBUG("Node push: %d", start);
 #endif
     visited[start] = true;
     on_stack[start] = true;
 
 #ifdef _GRAPH_DEBUG_
-    ST_DEBUG("DFS: "NODE_ID_FMT, start);
+    ST_DEBUG("DFS: %d", start);
 #endif
 
     node = graph->nodes + start;
@@ -155,7 +155,7 @@ static int graph_dfs(graph_t *graph, node_id_t start,
         if(!visited[to]) {
             if (graph_dfs(graph, to, node_stack, on_stack,
                         visited, passed, post_order, post_i) < 0) {
-                ST_WARNING("Failed to graph_dfs["NODE_ID_FMT"].", to);
+                ST_WARNING("Failed to graph_dfs[%d].", to);
                 return -1;
             }
         } else if(on_stack[to]) {
@@ -165,9 +165,9 @@ static int graph_dfs(graph_t *graph, node_id_t start,
                     return -1;
                 }
 
-                graph->glues[(glue_id_t)tmp]->recur = true;
+                graph->glues[(int)tmp]->recur = true;
 
-                if ((node_id_t)tmp == to) {
+                if ((int)tmp == to) {
                     break;
                 }
             }
@@ -179,7 +179,7 @@ static int graph_dfs(graph_t *graph, node_id_t start,
         return -1;
     }
 #ifdef _GRAPH_DEBUG_
-    ST_DEBUG("Node pop: "NODE_ID_FMT, (node_id_t)tmp);
+    ST_DEBUG("Node pop: %d", (int)tmp);
 #endif
     on_stack[start] = false;
     post_order[*post_i] = start;
@@ -191,27 +191,27 @@ static int graph_dfs(graph_t *graph, node_id_t start,
 /*
  * Get the forward order of nodes in a graph.
  */
-node_id_t* graph_sort(graph_t *graph)
+int* graph_sort(graph_t *graph)
 {
     st_stack_t *node_stack = NULL; /* node stack. */
     bool *on_stack = NULL; /* node whether on current stack. */
     bool *visited = NULL; /* node whether visited. */
     bool *passed = NULL; /* link whether passed. */
-    node_id_t *post_order = NULL; /* sequence for post-order traverse. */
-    node_id_t post_i;
+    int *post_order = NULL; /* sequence for post-order traverse. */
+    int post_i;
 
-    node_id_t n, t;
-    link_id_t l;
+    int n, t;
+    int l;
 
     ST_CHECK_PARAM(graph == NULL, NULL);
 
-    post_order = (node_id_t *)malloc(sizeof(node_id_t) * graph->num_node);
+    post_order = (int *)malloc(sizeof(int) * graph->num_node);
     if (post_order == NULL) {
         ST_WARNING("Failed to malloc post_order");
         goto ERR;
     }
     for (n = 0; n < graph->num_node; n++) {
-        post_order[n] = NODE_ID_NONE;
+        post_order[n] = -1;
     }
 
     if (graph->num_link <= 0) {
@@ -219,7 +219,7 @@ node_id_t* graph_sort(graph_t *graph)
             post_order[0] = graph->root;
 #ifdef _GRAPH_DEBUG_
             ST_DEBUG("Forward order:");
-            ST_DEBUG(NODE_ID_FMT, post_order[0]);
+            ST_DEBUG("%d", post_order[0]);
 #endif
             return post_order;
         }
@@ -265,14 +265,14 @@ node_id_t* graph_sort(graph_t *graph)
 
     for (n = 0; n < graph->num_node; n++) {
         if (!visited[n]) {
-            ST_WARNING("Node["NODE_ID_FMT"] not visited.", n);
+            ST_WARNING("Node[%d] not visited.", n);
             goto ERR;
         }
     }
 
     for (l = 0; l < graph->num_link; l++) {
         if (!passed[l]) {
-            ST_WARNING("link["LINK_ID_FMT"] not visited.", l);
+            ST_WARNING("link[%d] not visited.", l);
             goto ERR;
         }
     }
@@ -290,7 +290,7 @@ node_id_t* graph_sort(graph_t *graph)
 #ifdef _GRAPH_DEBUG_
     ST_DEBUG("Post order:");
     for (n = 0; n < graph->num_node; n++) {
-        ST_DEBUG(NODE_ID_FMT, post_order[n]);
+        ST_DEBUG("%d", post_order[n]);
     }
 #endif
     /* reverse to get forward order. */
@@ -302,7 +302,7 @@ node_id_t* graph_sort(graph_t *graph)
 #ifdef _GRAPH_DEBUG_
     ST_DEBUG("Forward order:");
     for (n = 0; n < graph->num_node; n++) {
-        ST_DEBUG(NODE_ID_FMT, post_order[n]);
+        ST_DEBUG("%d", post_order[n]);
     }
 #endif
 
@@ -319,36 +319,36 @@ ERR:
 }
 
 typedef struct _out_glues_t_ {
-    glue_id_t *glues;
-    glue_id_t num_glue;
+    int *glues;
+    int num_glue;
 } glue_set_t;
 
-static int glue_set_add(glue_set_t *glue_set, glue_id_t g)
+static int glue_set_add(glue_set_t *glue_set, int g)
 {
-    ST_CHECK_PARAM(glue_set == NULL || g == GLUE_ID_NONE, -1);
+    ST_CHECK_PARAM(glue_set == NULL || g < 0, -1);
 
-    glue_set->glues = (glue_id_t *)realloc(glue_set->glues,
-            sizeof(glue_id_t) * (glue_set->num_glue + 1));
+    glue_set->glues = (int *)realloc(glue_set->glues,
+            sizeof(int) * (glue_set->num_glue + 1));
     if (glue_set->glues == NULL) {
         ST_WARNING("Failed to realloc glue_set glues.");
-        return LINK_ID_NONE;
+        return -1;
     }
     glue_set->glues[glue_set->num_glue] = g;
 
     return glue_set->num_glue++;
 }
 
-graph_t* graph_construct(layer_t **layers, layer_id_t n_layer,
-        glue_t **glues, glue_id_t n_glue)
+graph_t* graph_construct(layer_t **layers, int n_layer,
+        glue_t **glues, int n_glue)
 {
     graph_t *graph = NULL;
     glue_set_t *out_glues = NULL;
 
     size_t sz;
-    layer_id_t l;
-    layer_id_t m;
-    glue_id_t g, gg;
-    link_id_t lk;
+    int l;
+    int m;
+    int g, gg;
+    int lk;
 
     ST_CHECK_PARAM(layers == NULL || n_layer <= 0, NULL);
 
@@ -364,14 +364,14 @@ graph_t* graph_construct(layer_t **layers, layer_id_t n_layer,
         ST_WARNING("Falied to malloc nodes.");
         goto ERR;
     }
-    graph->root = NODE_ID_NONE;
+    graph->root = -1;
     for (g = 0; g < n_glue; g++) {
         graph->nodes[g].links = NULL;
         graph->nodes[g].num_link = 0;
         for (l = 0; l < glues[g]->num_in_layer; l++) {
             if (strcasecmp(layers[glues[g]->in_layers[l]]->type,
                         INPUT_LAYER_NAME) == 0) {
-                if (graph->root != NODE_ID_NONE) {
+                if (graph->root != -1) {
                     ST_WARNING("Too many weights out from input layer");
                 }
                 graph->root = g;
@@ -409,7 +409,7 @@ graph_t* graph_construct(layer_t **layers, layer_id_t n_layer,
     }
 #ifdef _GRAPH_DEBUG_
     for (l = 0; l < n_layer; l++) {
-        ST_DEBUG("Layer["LAYER_ID_FMT"/%s]:"LAYER_ID_FMT, l,
+        ST_DEBUG("Layer[%d/%s]:%d", l,
                 layers[l]->name, out_glues[l].num_glue);
         for (g = 0; g < out_glues[l].num_glue; g++) {
             ST_DEBUG("    -> "GLUE_ID_FMT"/%s",
@@ -425,14 +425,13 @@ graph_t* graph_construct(layer_t **layers, layer_id_t n_layer,
             if (out_glues[l].glues != NULL) {
                 for (gg = 0; gg < out_glues[l].num_glue; gg++) {
                     lk = graph_add_link(graph);
-                    if (lk == LINK_ID_NONE) {
+                    if (lk == -1) {
                         ST_WARNING("Failed to graph_add_link.");
                         goto ERR;
                     }
                     graph->links[lk].to = out_glues[l].glues[gg];
 
-                    if (node_add_link(graph->nodes + g,
-                                lk) == LINK_ID_NONE) {
+                    if (node_add_link(graph->nodes + g, lk) == -1) {
                         ST_WARNING("Failed to node_add_link.");
                         goto ERR;
                     }
@@ -447,14 +446,14 @@ graph_t* graph_construct(layer_t **layers, layer_id_t n_layer,
     safe_free(out_glues);
 
 #ifdef _GRAPH_DEBUG_
-    ST_DEBUG("Graph: node: "NODE_ID_FMT", link: "LAYER_ID_FMT,
+    ST_DEBUG("Graph: node: %d, link: %d",
             graph->num_node, graph->num_link);
     for (g = 0; g < graph->num_node; g++) {
-        ST_DEBUG("Node["NODE_ID_FMT"/%s]:"NODE_ID_FMT, g,
+        ST_DEBUG("Node[%d/%s]: %d", g,
                 glues[graph->nodes[g].glue]->name,
                 graph->nodes[g].num_link);
         for (lk = 0; lk < graph->nodes[g].num_link; lk++) {
-            ST_DEBUG(" "LINK_ID_FMT" -> "NODE_ID_FMT"/%s",
+            ST_DEBUG(" %d -> %d/%s",
                     graph->nodes[g].links[lk],
                     graph->links[graph->nodes[g].links[lk]].to,
                     glues[graph->links[graph->nodes[g].links[lk]].to]->name);

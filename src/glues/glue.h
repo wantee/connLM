@@ -42,12 +42,6 @@ extern "C" {
  * Data structures and functions for NNet glue.
  */
 
-typedef int glue_id_t;
-#define GLUE_ID_NONE -1
-#define GLUE_ID_FMT "%d"
-typedef int glue_offset_t;
-#define GLUE_OFFSET_FMT "%d"
-
 typedef struct _glue_t_ glue_t;
 /**
  * Implementation of a NNet glue.
@@ -66,7 +60,7 @@ typedef struct _glue_implementation_t_ {
             const char *line); /**< parse topo for glue. */
 
     bool (*check)(glue_t *glue, layer_t **layers,
-            layer_id_t n_layer); /**< check glue's definition. */
+            int n_layer); /**< check glue's definition. */
 
     char* (*draw_label)(glue_t *glue, char *label,
             size_t label_len); /**< label for drawing a glue. */
@@ -91,7 +85,7 @@ typedef struct _glue_implementation_t_ {
             param_t *parent); /**< load train opt for  glue. */
 
     int (*forward)(glue_t *glue, layer_t **layers,
-            layer_id_t num_layer, int tid); /**< feed-forward glue. */
+            int num_layer, int tid); /**< feed-forward glue. */
 } glue_impl_t;
 
 /**
@@ -101,14 +95,14 @@ typedef struct _glue_implementation_t_ {
 typedef struct _glue_t_ {
     char name[MAX_NAME_LEN]; /**< glue name. */
     char type[MAX_NAME_LEN]; /**< glue type. */
-    layer_id_t* in_layers; /**< input layers. */
-    glue_offset_t* in_offsets; /**< offset for input layers. */
+    int* in_layers; /**< input layers. */
+    int* in_offsets; /**< offset for input layers. */
     real_t* in_scales; /**< scale for input layers. */
-    layer_id_t num_in_layer; /**< number of input layers. */
-    layer_id_t* out_layers; /**< output layers. */
-    glue_offset_t* out_offsets; /**< offset for output layers. */
+    int num_in_layer; /**< number of input layers. */
+    int* out_layers; /**< output layers. */
+    int* out_offsets; /**< offset for output layers. */
     real_t* out_scales; /**< scale for output layers. */
-    layer_id_t num_out_layer; /**< number of output layers. */
+    int num_out_layer; /**< number of output layers. */
     bool recur; /**< whether this glue is recurrent. */
 
     glue_impl_t *impl; /**< implementation for glue. */
@@ -234,7 +228,7 @@ char* glue_draw_label(glue_t *glue, char *label, size_t label_len,
  * @param[in] verbose verbose output.
  * @return label on success, NULL if any error.
  */
-char* glue_draw_label_one(glue_t *glue, layer_id_t lid,
+char* glue_draw_label_one(glue_t *glue, int lid,
         char *label, size_t label_len, bool verbose);
 
 /**
@@ -266,12 +260,11 @@ int glue_load_train_opt(glue_t *glue, st_opt_t *opt,
  * @ingroup g_glue
  * @param[in] glue glue.
  * @param[in] layers component layers.
- * @param[in] num_layer number of layers.
+ * @param[in] n_layer number of layers.
  * @param[in] tid thread id (neuron id).
  * @return non-zero value if any error.
  */
-int glue_forward(glue_t *glue, layer_t **layers,
-        layer_id_t num_layer, int tid);
+int glue_forward(glue_t *glue, layer_t **layers, int n_layer, int tid);
 
 /**
  * Back-propagate one word for a thread of component.

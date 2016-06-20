@@ -38,19 +38,12 @@ extern "C" {
  * Data structures and functions for NNet graph.
  */
 
-typedef glue_id_t node_id_t;
-#define NODE_ID_NONE GLUE_ID_NONE
-#define NODE_ID_FMT GLUE_ID_FMT
-typedef layer_id_t link_id_t;
-#define LINK_ID_NONE LAYER_ID_NONE
-#define LINK_ID_FMT LAYER_ID_FMT
-
 /**
  * NNet graph link.
  * @ingroup g_graph
  */
 typedef struct _link_t_ {
-    node_id_t to; /**< node this link point to. */
+    int to; /**< node this link point to. */
 } link_t;
 
 /**
@@ -58,8 +51,8 @@ typedef struct _link_t_ {
  * @ingroup g_graph
  */
 typedef struct _node_t_ {
-    link_id_t *links; /**< links from this node. */
-    link_id_t num_link; /**< number of links. */
+    int *links; /**< links from this node. */
+    int num_link; /**< number of links. */
 } node_t;
 
 /**
@@ -68,13 +61,13 @@ typedef struct _node_t_ {
  */
 typedef struct _graph_t_ {
     node_t *nodes; /**< nodes in graph. */
-    node_id_t num_node; /**< number of nodes. */
-    node_id_t cap_link; /**< capacity of links. */
+    int num_node; /**< number of nodes. */
+    int cap_link; /**< capacity of links. */
 
     link_t *links; /**< links in graph. */
-    link_id_t num_link; /**< number of links. */
+    int num_link; /**< number of links. */
 
-    node_id_t root; /**< root of graph. */
+    int root; /**< root of graph. */
 
     glue_t** glues; /**< glues(nodes) of graph. */
 } graph_t;
@@ -115,8 +108,8 @@ graph_t* graph_dup(graph_t *g);
  * @param[in] n_glue number of glues.
  * @return the constructed graph.
  */
-graph_t* graph_construct(layer_t **layers, layer_id_t n_layer,
-        glue_t **glues, glue_id_t n_glue);
+graph_t* graph_construct(layer_t **layers, int n_layer,
+        glue_t **glues, int n_glue);
 
 /**
  * Topological sort nodes of a graph.
@@ -124,7 +117,7 @@ graph_t* graph_construct(layer_t **layers, layer_id_t n_layer,
  * @param[in] graph the graph.
  * @return forward order of nodes, NULL if any error.
  */
-node_id_t* graph_sort(graph_t *graph);
+int* graph_sort(graph_t *graph);
 
 #ifdef __cplusplus
 }
