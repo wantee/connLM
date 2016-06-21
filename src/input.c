@@ -39,7 +39,7 @@ void input_destroy(input_t *input)
 
     input->input_size = 0;
     safe_free(input->context);
-    input->num_ctx = 0;
+    input->n_ctx = 0;
 }
 
 input_t* input_parse_topo(const char *line, int input_size)
@@ -71,7 +71,7 @@ input_t* input_parse_topo(const char *line, int input_size)
     }
 
     safe_free(input->context);
-    input->num_ctx = 0;
+    input->n_ctx = 0;
     while (p != NULL) {
         p = get_next_token(p, token);
         if (split_line(token, keyvalue, 2, MAX_LINE_LEN, "=") != 2) {
@@ -80,11 +80,11 @@ input_t* input_parse_topo(const char *line, int input_size)
         }
 
         if (strcasecmp("context", keyvalue) == 0) {
-            if (input->num_ctx != 0) {
+            if (input->n_ctx != 0) {
                 ST_WARNING("Duplicated context.");
             }
-            if (st_parse_int_array(keyvalue + MAX_LINE_LEN, &input->context,
-                        &input->num_ctx) < 0) {
+            if (st_parse_int_array(keyvalue + MAX_LINE_LEN,
+                        &input->context, &input->n_ctx) < 0) {
                 ST_WARNING("Failed to parse context string.[%s]",
                         keyvalue + MAX_LINE_LEN);
                 goto ERR;
@@ -94,10 +94,19 @@ input_t* input_parse_topo(const char *line, int input_size)
         }
     }
 
-    if (input->num_ctx == 0) {
+    if (input->n_ctx == 0) {
         ST_WARNING("No context found.");
         goto ERR;
     }
+
+    for (i = 0; i < input->n_ctx; i++) {
+        if (input->context[i] == 0) {
+            ST_WARNING("Context should not contain 0.");
+            goto ERR;
+        }
+    }
+
+    int_sort(input->context, input->n_ctx);
 
     return input;
 
@@ -121,15 +130,15 @@ input_t* input_dup(input_t *in)
     }
     memset(input, 0, sizeof(input_t));
 
-    input->context = (int *)malloc(sizeof(int)*in->num_ctx);
+    input->context = (int *)malloc(sizeof(int)*in->n_ctx);
     if (input->context == NULL) {
         ST_WARNING("Failed to malloc context.");
         goto ERR;
     }
-    for (i = 0; i < in->num_ctx; i++) {
+    for (i = 0; i < in->n_ctx; i++) {
         input->context[i] = in->context[i];
     }
-    input->num_ctx = in->num_ctx;
+    input->n_ctx = in->n_ctx;
 
     return input;
 
@@ -169,7 +178,7 @@ int input_load_header(input_t **input, int version,
     } flag;
 
     int input_size;
-    int num_ctx;
+    int n_ctx;
 
     ST_CHECK_PARAM((input == NULL && fo_info == NULL) || fp == NULL
             || binary == NULL, -1);
@@ -202,8 +211,8 @@ int input_load_header(input_t **input, int version,
             ST_WARNING("Failed to read input_size.");
             return -1;
         }
-        if (fread(&num_ctx, sizeof(int), 1, fp) != 1) {
-            ST_WARNING("Failed to read num_ctx.");
+        if (fread(&n_ctx, sizeof(int), 1, fp) != 1) {
+            ST_WARNING("Failed to read n_ctx.");
             return -1;
         }
     } else {
@@ -220,8 +229,8 @@ int input_load_header(input_t **input, int version,
             ST_WARNING("Failed to parse input_size.");
             goto ERR;
         }
-        if (st_readline(fp, "Num context: %d", &num_ctx) != 1) {
-            ST_WARNING("Failed to parse num_ctx.");
+        if (st_readline(fp, "Num context: %d", &n_ctx) != 1) {
+            ST_WARNING("Failed to parse n_ctx.");
             goto ERR;
         }
     }
@@ -235,13 +244,13 @@ int input_load_header(input_t **input, int version,
         memset(*input, 0, sizeof(input_t));
 
         (*input)->input_size = input_size;
-        (*input)->num_ctx = num_ctx;
+        (*input)->n_ctx = n_ctx;
     }
 
     if (fo_info != NULL) {
         fprintf(fo_info, "\n<INPUT>\n");
         fprintf(fo_info, "Input size: %d\n", input_size);
-        fprintf(fo_info, "Num context: %d\n", num_ctx);
+        fprintf(fo_info, "Num context: %d\n", n_ctx);
     }
 
     return 0;
@@ -268,7 +277,7 @@ int input_load_body(input_t *input, int version, FILE *fp, bool binary)
 
     safe_free(input->context);
 
-    sz = sizeof(int) * input->num_ctx;
+    sz = sizeof(int) * input->n_ctx;
     input->context = (int *) malloc(sz);
     if (input->context == NULL) {
         ST_WARNING("Failed to malloc context.");
@@ -287,8 +296,8 @@ int input_load_body(input_t *input, int version, FILE *fp, bool binary)
             goto ERR;
         }
 
-        if (fread(input->context, sizeof(int), input->num_ctx, fp)
-                != input->num_ctx) {
+        if (fread(input->context, sizeof(int), input->n_ctx, fp)
+                != input->n_ctx) {
             ST_WARNING("Failed to read context.");
             goto ERR;
         }
@@ -302,7 +311,7 @@ int input_load_body(input_t *input, int version, FILE *fp, bool binary)
             ST_WARNING("context flag error.");
             goto ERR;
         }
-        for (i = 0; i < input->num_ctx; i++) {
+        for (i = 0; i < input->n_ctx; i++) {
             if (st_readline(fp, "\t%*d\t%d", input->context + i) != 1) {
                 ST_WARNING("Failed to parse context.");
                 goto ERR;
@@ -341,8 +350,8 @@ int input_save_header(input_t *input, FILE *fp, bool binary)
             ST_WARNING("Failed to write input_size.");
             return -1;
         }
-        if (fwrite(&input->num_ctx, sizeof(int), 1, fp) != 1) {
-            ST_WARNING("Failed to write num_ctx.");
+        if (fwrite(&input->n_ctx, sizeof(int), 1, fp) != 1) {
+            ST_WARNING("Failed to write n_ctx.");
             return -1;
         }
     } else {
@@ -355,7 +364,7 @@ int input_save_header(input_t *input, FILE *fp, bool binary)
             ST_WARNING("Failed to fprintf input_size.");
             return -1;
         }
-        if (fprintf(fp, "Num context: %d\n", input->num_ctx) < 0) {
+        if (fprintf(fp, "Num context: %d\n", input->n_ctx) < 0) {
             ST_WARNING("Failed to fprintf num ctx.");
             return -1;
         }
@@ -378,8 +387,8 @@ int input_save_body(input_t *input, FILE *fp, bool binary)
             return -1;
         }
 
-        if (fwrite(input->context, sizeof(int), input->num_ctx, fp)
-                != input->num_ctx) {
+        if (fwrite(input->context, sizeof(int), input->n_ctx, fp)
+                != input->n_ctx) {
             ST_WARNING("Failed to write context.");
             return -1;
         }
@@ -393,7 +402,7 @@ int input_save_body(input_t *input, FILE *fp, bool binary)
             ST_WARNING("Failed to fprintf context.");
             return -1;
         }
-        for (i = 0; i < input->num_ctx; i++) {
+        for (i = 0; i < input->n_ctx; i++) {
             if (fprintf(fp, "\t%d\t%d\n", i, input->context[i]) < 0) {
                 ST_WARNING("Failed to fprintf context[%d].", i);
                 return -1;
@@ -412,11 +421,104 @@ char* input_draw_label(input_t *input, char *label, size_t label_len)
     ST_CHECK_PARAM(input == NULL || label == NULL, NULL);
 
     snprintf(buf, MAX_LINE_LEN, "size=%d,ctx={", input->input_size);
-    for (i = 0; i < input->num_ctx - 1; i++) {
+    for (i = 0; i < input->n_ctx - 1; i++) {
         snprintf(label, label_len, "%s%d,", buf, input->context[i]);
         snprintf(buf, MAX_LINE_LEN, "%s", label);
     }
     snprintf(label, label_len, "%s%d}", buf, input->context[i]);
 
     return label;
+}
+
+int input_setup(input_t *input, int num_thrs)
+{
+    input_neuron_t *neu;
+    size_t sz;
+
+    int t;
+
+    ST_CHECK_PARAM(input == NULL || num_thrs < 0, -1);
+
+    input->n_neu = num_thrs;
+    sz = sizeof(input_neuron_t) * num_thrs;
+    input->neurons = (input_neuron_t *)malloc(sz);
+    if (input->neurons == NULL) {
+        ST_WARNING("Failed to malloc neurons.");
+        goto ERR;
+    }
+    memset(input->neurons, 0, sz);
+
+    if (input->context[0] < 0) {
+        input->n_buf = -input->context[0];
+        if (input->context[input->n_ctx - 1] > 0) {
+            input->n_buf += input->context[input->n_ctx - 1];
+        }
+    } else {
+        input->n_buf = input->context[input->n_ctx - 1];
+    }
+    ++input->n_buf;
+
+    for (t = 0; t < input->n_neu; t++) {
+        neu = input->neurons + t;
+        sz = sizeof(int) * input->n_ctx;
+        neu->frag = (int *)malloc(sz);
+        if (neu->frag == NULL) {
+            ST_WARNING("Failed to malloc frag.");
+            goto ERR;
+        }
+        memset(neu->frag, 0, sz);
+
+        sz = sizeof(int) * input->n_buf;
+        neu->buf = (int *)malloc(sz);
+        if (neu->buf == NULL) {
+            ST_WARNING("Failed to malloc buf.");
+            goto ERR;
+        }
+    }
+
+    return 0;
+
+ERR:
+    if (input->neurons != NULL) {
+        for (t = 0; t < input->n_neu; t++) {
+            safe_free(input->neurons[t].frag);
+        }
+        safe_free(input->neurons);
+    }
+    input->n_neu = 0;
+
+    return -1;
+}
+
+int input_reset(input_t *input, int tid)
+{
+    input_neuron_t *neu;
+
+    ST_CHECK_PARAM(input == NULL || tid < 0, -1);
+
+    neu = input->neurons + tid;
+    for (i = 0; i < input->n_buf; i++) {
+        neu->buf[i] = -1;
+    }
+    neu->i_buf = 0;
+
+    return 0;
+}
+
+int input_feed(input_t *input, int word, int tid)
+{
+    ST_CHECK_PARAM(input == NULL || tid < 0, -1);
+
+    if (neu->i_buf < input->n_buf) {
+        neu->buf[neu->i_buf] = word;
+        neu->i_buf++;
+    } else {
+        // assert(neu-.i_buf == input->n_buf);
+        memmove(neu->buf, neu->buf + 1, neu->i_buf - 1);
+        neu->buf[neu->i_buf - 1] = word;
+    }
+
+    for (i = 0; i < input->n_ctx; i++) {
+        neu->frag[i] = neu->buf[];
+    }
 }

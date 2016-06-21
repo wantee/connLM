@@ -32,6 +32,17 @@
 
 static const int DIRECT_WT_MAGIC_NUM = 626140498 + 100;
 
+const unsigned int PRIMES[] = {
+    108641969, 116049371, 125925907, 133333309, 145678979, 175308587,
+    197530793, 234567803, 251851741, 264197411, 330864029, 399999781,
+    407407183, 459258997, 479012069, 545678687, 560493491, 607407037,
+    629629243, 656789717, 716048933, 718518067, 725925469, 733332871,
+    753085943, 755555077, 782715551, 790122953, 812345159, 814814293,
+    893826581, 923456189, 940740127, 953085797, 985184539, 990122807
+};
+
+const unsigned int PRIMES_SIZE = sizeof(PRIMES) / sizeof(PRIMES[0]);
+
 void direct_wt_destroy(direct_wt_t *direct_wt)
 {
     if (direct_wt == NULL) {
@@ -320,4 +331,129 @@ direct_wt_t* direct_wt_init(hash_size_t wt_sz)
 ERR:
     safe_direct_wt_destroy(direct_wt);
     return NULL;
+}
+
+static int direct_wt_get_hash(hash_t *hash, hash_t init_val,
+        int *frag, int order, bool reverse)
+{
+    int a;
+    int b;
+
+    hash[0] = PRIMES[0] * PRIMES[1] * init_val;
+    if (reverse) {
+        for (a = 1; a < order; a++) {
+            if (frag[order - a] < 0 || frag[order - a] == UNK_ID) {
+                // if OOV was in future, do not use
+                // this N-gram feature and higher orders
+                return a;
+            }
+
+            hash[a] = hash[0];
+            for (b = 1; b <= a; b++) {
+                hash[a] += PRIMES[(a*PRIMES[b] + b) % PRIMES_SIZE]
+                    * (hash_t)(frag[order - b] + 1);
+            }
+        }
+    } else {
+        for (a = 1; a < order; a++) {
+            if (frag[a - 1] < 0 || frag[a - 1] == UNK_ID) {
+                // if OOV was in history, do not use
+                // this N-gram feature and higher orders
+                return a;
+            }
+
+            hash[a] = hash[0];
+            for (b = 1; b <= a; b++) {
+                hash[a] += PRIMES[(a*PRIMES[b] + b) % PRIMES_SIZE]
+                    * (hash_t)(frag[b-1] + 1);
+            }
+        }
+    }
+
+    return order;
+}
+
+int direct_wt_forward(direct_wt_t *direct_wt, real_t scale,
+        input_t *input, output_t *output, int tid)
+{
+    hash_t hash[MAX_HASH_ORDER];
+    input_neuron_t *in_neu;
+    output_neuron_t *out_neu;
+
+    hash_t h;
+    int future_order;
+    int order;
+
+    output_path_t *path;
+    output_node_id_t node;
+    output_node_id_t n;
+    output_node_id_t ch;
+
+    int a;
+
+    ST_CHECK_PARAM(direct_wt == NULL || input == NULL
+            || output == NULL, -1);
+
+    in_neu = input->neurons + tid;
+    out_neu = output->neurons + tid;
+
+    if (in_neu->n_frag - 1 > MAX_HASH_ORDER) {
+        ST_WARNING("Too large order for hash. please enlarge "
+                "MAX_HASH_ORDER and recompile.");
+        return -1;
+    }
+
+    /* history ngrams. */
+    order = direct_wt_get_hash(hash, (hash_t)1, in_neu->frag,
+            in_neu->target, true);
+    if (order < 0) {
+        ST_WARNING("Failed to direct_wt_get_hash history.");
+        return -1;
+    }
+
+    /* future ngrams. */
+    if (in_neu->n_frag - in_neu->target - 1 > 0) {
+        future_order = direct_wt_get_hash(hash + order, (hash_t)1,
+                in_neu->frag + in_neu->target + 1,
+                in_neu->n_frag - in_neu->target - 1,
+                false);
+        if (future_order < 0) {
+            ST_WARNING("Failed to direct_wt_get_hash future.");
+            return -1;
+        }
+
+        order += future_order;
+    }
+
+    for (a = 0; a < order; a++) {
+        hash[a] = hash[a] % direct_wt->wt_sz;
+    }
+
+    path = output->paths + in_neu->frag[in_neu->target];
+    for (a = 0; a < order; a++) {
+        node = output->tree->root;
+        ch = s_children(output->tree, node);
+        h = hash[a] + ch;
+        for (; ch < e_children(output->tree, node); ch++) {
+            if (h >= direct_wt->wt_sz) {
+                h = 0;
+            }
+            out_neu->ac[ch] += scale * direct_wt->hash_wt[h];
+            h++;
+        }
+        for (n = 0; n < path->num_node; n++) {
+            node = path->nodes[n];
+            ch = s_children(output->tree, node);
+            h = hash[a] + ch;
+            for (; ch < e_children(output->tree, node); ch++) {
+                if (h >= direct_wt->wt_sz) {
+                    h = 0;
+                }
+                out_neu->ac[ch] += scale * direct_wt->hash_wt[h];
+                h++;
+            }
+        }
+    }
+
+    return 0;
 }

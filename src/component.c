@@ -407,32 +407,6 @@ ST_OPT_ERR:
     return -1;
 }
 
-int comp_setup(component_t *comp, output_t *output, int num_thrs,
-        bool backprop)
-{
-    return 0;
-}
-
-int comp_reset(component_t *comp, int tid, bool backprop)
-{
-    return 0;
-}
-
-int comp_start(component_t *comp, int word, int tid, bool backprop)
-{
-    return 0;
-}
-
-int comp_end(component_t *comp, int word, int tid, bool backprop)
-{
-    return 0;
-}
-
-int comp_finish(component_t *comp, int tid, bool backprop)
-{
-    return 0;
-}
-
 int comp_load_header(component_t **comp, int version,
         FILE *fp, bool *binary, FILE *fo_info)
 {
@@ -789,47 +763,6 @@ int comp_save_body(component_t *comp, FILE *fp, bool binary)
     return 0;
 }
 
-int comp_fwd_bp(component_t *comp, int word, int tid)
-{
-    return 0;
-}
-
-int comp_forward(component_t *comp, int tid)
-{
-    glue_t *glue;
-    int g;
-
-    ST_CHECK_PARAM(comp == NULL, -1);
-
-    for (g = 0; g < comp->num_glue; g++) {
-        glue = comp->glues[comp->fwd_order[g]];
-        if (glue_forward(glue, comp->layers, comp->num_layer, tid) < 0) {
-            ST_WARNING("Failed to forward glue[%s].", glue->name);
-            return -1;
-        }
-    }
-
-    return 0;
-}
-
-int comp_backprop(component_t *comp, int tid)
-{
-    glue_t *glue;
-    int g;
-
-    ST_CHECK_PARAM(comp == NULL, -1);
-
-    for (g = comp->num_glue - 1; g >= 0; g--) {
-        glue = comp->glues[comp->fwd_order[g]];
-        if (glue_backprop(glue, tid) < 0) {
-            ST_WARNING("Failed to backprop glue[%s].", glue->name);
-            return -1;
-        }
-    }
-
-    return 0;
-}
-
 char* comp_input_nodename(component_t *comp, char *nodename,
         size_t name_len)
 {
@@ -939,5 +872,90 @@ int comp_draw(component_t *comp, FILE *fp, bool verbose)
         fprintf(fp, "\n");
     }
 
+    return 0;
+}
+
+int comp_fwd_bp(component_t *comp, int word, int tid)
+{
+    return 0;
+}
+
+int comp_forward(component_t *comp, output_t *output, int tid)
+{
+    glue_t *glue;
+    int g;
+
+    ST_CHECK_PARAM(comp == NULL || output == NULL, -1);
+
+    for (g = 0; g < comp->num_glue; g++) {
+        glue = comp->glues[comp->fwd_order[g]];
+        if (glue_forward(glue, comp->input, output,
+                    comp->layers, comp->num_layer, tid) < 0) {
+            ST_WARNING("Failed to forward glue[%s].", glue->name);
+            return -1;
+        }
+    }
+
+    return 0;
+}
+
+int comp_backprop(component_t *comp, int tid)
+{
+    glue_t *glue;
+    int g;
+
+    ST_CHECK_PARAM(comp == NULL, -1);
+
+    for (g = comp->num_glue - 1; g >= 0; g--) {
+        glue = comp->glues[comp->fwd_order[g]];
+        if (glue_backprop(glue, tid) < 0) {
+            ST_WARNING("Failed to backprop glue[%s].", glue->name);
+            return -1;
+        }
+    }
+
+    return 0;
+}
+
+int comp_setup(component_t *comp, int num_thrs, bool backprop)
+{
+    layer_t *layer;
+    int l;
+
+    ST_CHECK_PARAM(comp == NULL, -1);
+
+    if (input_setup(comp->input, num_thrs) < 0) {
+        ST_WARNING("Failed to input_setup[%s].", comp->name);
+        return -1;
+    }
+
+    for (l = 0; l < comp->num_layer; l++) {
+        layer = comp->layers[l];
+        if (layer_setup(layer, num_thrs, backprop) < 0) {
+            ST_WARNING("Failed to layer_setup[%s].", layer->name);
+            return -1;
+        }
+    }
+
+    return 0;
+}
+
+int comp_reset(component_t *comp, int tid, bool backprop)
+{
+    return 0;
+}
+
+int comp_start(component_t *comp, int word, int tid, bool backprop)
+{
+    return 0;
+}
+
+int comp_end(component_t *comp, int word, int tid, bool backprop)
+{
+    return 0;
+}
+
+int comp_finish(component_t *comp, int tid, bool backprop)
+{
     return 0;
 }

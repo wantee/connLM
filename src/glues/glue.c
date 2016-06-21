@@ -53,7 +53,7 @@ static glue_impl_t GLUE_IMPL[] = {
         direct_glue_draw_label, direct_glue_load_header,
         direct_glue_load_body, direct_glue_save_header,
         direct_glue_save_body, direct_glue_init_data,
-        direct_glue_load_train_opt},
+        direct_glue_load_train_opt, direct_glue_forward},
     {WT_GLUE_NAME, wt_glue_init, wt_glue_destroy,
         wt_glue_dup, wt_glue_parse_topo, wt_glue_check,
         wt_glue_draw_label, wt_glue_load_header, wt_glue_load_body,
@@ -1257,7 +1257,8 @@ ST_OPT_ERR:
     return -1;
 }
 
-int glue_forward(glue_t *glue, layer_t **layers, int n_layer, int tid)
+int glue_forward(glue_t *glue, input_t *input, output_t *output,
+        layer_t **layers, int n_layer, int tid)
 {
     int l;
     int lid;
@@ -1294,7 +1295,8 @@ int glue_forward(glue_t *glue, layer_t **layers, int n_layer, int tid)
     }
 
     if (glue->impl != NULL && glue->impl->forward != NULL) {
-        if (glue->impl->forward(glue, layers, n_layer, tid) < 0) {
+        if (glue->impl->forward(glue, input, output,
+                    layers, n_layer, tid) < 0) {
             ST_WARNING("Failed to glue->impl->forward.[%s]",
                     glue->name);
             return -1;

@@ -180,8 +180,7 @@ int comp_save_body(component_t *comp, FILE *fp, bool binary);
  * @param[in] backprop whether do backpropagating.
  * @return non-zero value if any error.
  */
-int comp_setup(component_t *comp, output_t *output, int num_thrs,
-        bool backprop);
+int comp_setup(component_t *comp, int num_thrs, bool backprop);
 
 /**
  * Reset runinng for component.
@@ -244,10 +243,11 @@ int comp_fwd_bp(component_t *comp, int word, int tid);
  * Feed-forward one word for a thread of component.
  * @ingroup g_component
  * @param[in] comp component.
+ * @param[in] output output layer.
  * @param[in] tid thread id (neuron id).
  * @return non-zero value if any error.
  */
-int comp_forward(component_t *comp, int tid);
+int comp_forward(component_t *comp, output_t *output, int tid);
 
 /**
  * Back-propagate one word for a thread of component.

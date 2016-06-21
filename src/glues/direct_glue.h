@@ -181,6 +181,20 @@ int direct_glue_init_data(glue_t *glue, input_t *input,
 int direct_glue_load_train_opt(glue_t *glue, st_opt_t *opt,
         const char *sec_name, param_t *parent);
 
+/**
+ * Feed-forward one word for a thread of direct_glue.
+ * @ingroup g_glue_direct
+ * @param[in] glue glue.
+ * @param[in] input input layer.
+ * @param[in] output output layer.
+ * @param[in] layers component layers.
+ * @param[in] n_layer number of layers.
+ * @param[in] tid thread id (neuron id).
+ * @return non-zero value if any error.
+ */
+int direct_glue_forward(glue_t *glue, input_t *input, output_t *output,
+        layer_t **layers, int n_layer, int tid);
+
 #ifdef __cplusplus
 }
 #endif

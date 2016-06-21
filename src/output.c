@@ -136,10 +136,6 @@ ST_OPT_ERR:
     return -1;
 }
 
-#define s_children(tree, node) (tree)->nodes[node].children_s
-#define e_children(tree, node) (tree)->nodes[node].children_e
-#define is_leaf(tree, node) (s_children(tree, node) >= e_children(tree, node))
-
 #define NUM_REALLOC 100
 
 #define safe_tree_destroy(ptr) do {\
@@ -965,7 +961,7 @@ void output_destroy(output_t *output)
     safe_free(output->paths);
 
     if (output->neurons != NULL) {
-        for (i = 0; i < output->num_thrs; i++) {
+        for (i = 0; i < output->n_neu; i++) {
             safe_free(output->neurons[i].ac);
             safe_free(output->neurons[i].er);
 
@@ -973,7 +969,7 @@ void output_destroy(output_t *output)
         }
         safe_free(output->neurons);
     }
-    output->num_thrs = 0;
+    output->n_neu = 0;
 }
 
 output_t* output_dup(output_t *o)
@@ -1932,7 +1928,7 @@ int output_setup(output_t *output, int num_thrs, bool backprop)
 
     ST_CHECK_PARAM(output == NULL || num_thrs < 0, -1);
 
-    output->num_thrs = num_thrs;
+    output->n_neu = num_thrs;
     sz = sizeof(output_neuron_t) * num_thrs;
     output->neurons = (output_neuron_t *)malloc(sz);
     if (output->neurons == NULL) {
@@ -1969,13 +1965,13 @@ int output_setup(output_t *output, int num_thrs, bool backprop)
 
 ERR:
     if (output->neurons != NULL) {
-        for (t = 0; t < output->num_thrs; t++) {
+        for (t = 0; t < output->n_neu; t++) {
             safe_free(output->neurons[t].ac);
             safe_free(output->neurons[t].er);
         }
         safe_free(output->neurons);
     }
-    output->num_thrs = 0;
+    output->n_neu = 0;
 
     return -1;
 }
@@ -2013,6 +2009,7 @@ int output_start(output_t *output, int word, int tid, bool backprop)
 
     output_node_id_t node;
     output_node_id_t n;
+    output_node_id_t ch;
 
     ST_CHECK_PARAM(output == NULL || tid < 0, -1);
 
@@ -2024,20 +2021,20 @@ int output_start(output_t *output, int word, int tid, bool backprop)
     path = output->paths + word;
 
     node = output->tree->root;
-    for (n = s_children(output->tree, node);
-            n < e_children(output->tree, node); n++) {
-        neu->ac[n] = 0.0;
+    for (ch = s_children(output->tree, node);
+            ch < e_children(output->tree, node); ch++) {
+        neu->ac[ch] = 0.0;
         if (backprop) {
-            neu->er[n] = 0.0;
+            neu->er[ch] = 0.0;
         }
     }
     for (n = 0; n < path->num_node; n++) {
         node = path->nodes[n];
-        for (n = s_children(output->tree, node);
-                n < e_children(output->tree, node); n++) {
-            neu->ac[n] = 0.0;
+        for (ch = s_children(output->tree, node);
+                ch < e_children(output->tree, node); ch++) {
+            neu->ac[ch] = 0.0;
             if (backprop) {
-                neu->er[n] = 0.0;
+                neu->er[ch] = 0.0;
             }
         }
     }

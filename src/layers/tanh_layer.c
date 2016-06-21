@@ -27,28 +27,12 @@
 
 #include "tanh_layer.h"
 
-static int tanh_forward(layer_t *layer)
-{
-    ST_CHECK_PARAM(layer == NULL, -1);
-
-    return 0;
-}
-
-static int tanh_backprop(layer_t *layer)
-{
-    ST_CHECK_PARAM(layer == NULL, -1);
-
-    return 0;
-}
-
 void tanh_destroy(layer_t *layer)
 {
     if (layer == NULL) {
         return;
     }
 
-    layer->forward = NULL;
-    layer->backprop = NULL;
     layer->extra = NULL;
 }
 
@@ -61,8 +45,6 @@ int tanh_init(layer_t *layer)
         return -1;
     }
 
-    layer->forward = tanh_forward;
-    layer->backprop = tanh_backprop;
     layer->extra = NULL;
 
     return 0;
@@ -82,8 +64,6 @@ int tanh_dup(layer_t *dst, layer_t *src)
         return -1;
     }
 
-    dst->forward = src->forward;
-    dst->backprop = src->forward;
     dst->extra = src->extra;
 
     return 0;

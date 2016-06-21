@@ -1180,15 +1180,17 @@ int connlm_setup(connlm_t *connlm, bool backprop)
 
     ST_CHECK_PARAM(connlm == NULL, -1);
 
-    if (output_setup(connlm->output, connlm->opt.num_thread, backprop) < 0) {
+    if (output_setup(connlm->output, connlm->opt.num_thread,
+                backprop) < 0) {
         ST_WARNING("Failed to output_setup.");
         return -1;
     }
 
     for (c = 0; c < connlm->num_comp; c++) {
-        if (comp_setup(connlm->comps[c], connlm->output,
-                    connlm->opt.num_thread, backprop) < 0) {
-            ST_WARNING("Failed to comp_setup[%s].", connlm->comps[c]->name);
+        if (comp_setup(connlm->comps[c], connlm->opt.num_thread,
+                    backprop) < 0) {
+            ST_WARNING("Failed to comp_setup[%s].",
+                    connlm->comps[c]->name);
             return -1;
         }
     }
@@ -1225,6 +1227,11 @@ int connlm_start(connlm_t *connlm, int word, int tid, bool backprop)
 
     if (output_start(connlm->output, word, tid, backprop) < 0) {
         ST_WARNING("Failed to output_start.");
+        return -1;
+    }
+
+    if (input_feed(connlm->input, word, tid) < 0) {
+        ST_WARNING("Failed to input_feed.");
         return -1;
     }
 
@@ -1287,7 +1294,7 @@ static int connlm_forward_hidden(connlm_t *connlm, int tid)
     ST_CHECK_PARAM(connlm == NULL, -1);
 
     for (c = 0; c < connlm->num_comp; c++) {
-        if (comp_forward(connlm->comps[c], tid) < 0) {
+        if (comp_forward(connlm->comps[c], connlm->output, tid) < 0) {
             ST_WARNING("Failed to comp_forward.");
             return -1;
         }

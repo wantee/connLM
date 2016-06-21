@@ -31,11 +31,15 @@ extern "C" {
 
 #include <connlm/config.h>
 
+#include "input.h"
+#include "output.h"
+
 /** @defgroup g_wt_direct NNet direct weight.
  * @ingroup g_weight
  * Data structures and functions for NNet direct weight.
  */
 
+#define MAX_HASH_ORDER 16
 /**
  * Direct weight.
  * @ingroup g_wt_direct
@@ -79,7 +83,7 @@ direct_wt_t* direct_wt_dup(direct_wt_t *d);
 
 /**
  * Load direct_wt header and initialise a new direct_wt.
- * @ingroup g_direct_wt
+ * @ingroup g_wt_direct
  * @param[out] direct_wt direct_wt initialised.
  * @param[in] version file version of loading file.
  * @param[in] fp file stream loaded from.
@@ -94,7 +98,7 @@ int direct_wt_load_header(direct_wt_t **direct_wt, int version,
 
 /**
  * Load direct_wt body.
- * @ingroup g_direct_wt
+ * @ingroup g_wt_direct
  * @param[in] direct_wt direct_wt to be loaded.
  * @param[in] version file version of loading file.
  * @param[in] fp file stream loaded from.
@@ -107,7 +111,7 @@ int direct_wt_load_body(direct_wt_t *direct_wt, int version, FILE *fp, bool bina
 
 /**
  * Save direct_wt header.
- * @ingroup g_direct_wt
+ * @ingroup g_wt_direct
  * @param[in] direct_wt direct_wt to be saved.
  * @param[in] fp file stream saved to.
  * @param[in] binary whether to use binary format.
@@ -119,7 +123,7 @@ int direct_wt_save_header(direct_wt_t *direct_wt, FILE *fp, bool binary);
 
 /**
  * Save direct_wt body.
- * @ingroup g_direct_wt
+ * @ingroup g_wt_direct
  * @param[in] direct_wt direct_wt to be saved.
  * @param[in] fp file stream saved to.
  * @param[in] binary whether to use binary format.
@@ -131,11 +135,24 @@ int direct_wt_save_body(direct_wt_t *direct_wt, FILE *fp, bool binary);
 
 /**
  * Initialise direct weight.
- * @ingroup g_direct_wt
+ * @ingroup g_wt_direct
  * @param[in] hash_sz size of hash.
  * @return initialised direct weight if success, otherwise NULL.
  */
 direct_wt_t* direct_wt_init(hash_size_t hash_sz);
+
+/**
+ * Feed-forward one word for a thread of direct_wt.
+ * @ingroup g_wt_direct
+ * @param[in] direct_wt direct_wt.
+ * @param[in] scale out activation scale.
+ * @param[in] input input layer.
+ * @param[in] output output layer.
+ * @param[in] tid thread id (neuron id).
+ * @return non-zero value if any error.
+ */
+int direct_wt_forward(direct_wt_t *direct_wt, real_t scale, input_t *input,
+        output_t *output, int tid);
 
 #ifdef __cplusplus
 }

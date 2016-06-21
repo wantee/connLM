@@ -40,13 +40,28 @@ extern "C" {
  */
 
 /**
+ * Neuron of input layer.
+ * Each neuron used in one single thread.
+ * @ingroup g_input
+ */
+typedef struct _input_neuron_t_ {
+    int *frag; /**< fragment of input sequnece. */
+    int target; /**< position of target word. */
+    int *buf; /**< word buf. */
+} input_neuron_t;
+
+/**
  * Input Layer.
  * @ingroup g_input
  */
 typedef struct _input_t_ {
     int input_size;
     int *context;
-    int num_ctx;
+    int n_ctx;
+
+    input_neuron_t *neurons; /**< neurons of the model. */
+    int n_neu; /**< number of threads/neurons. */
+    int n_buf; /**< length of word buffer. */
 } input_t;
 
 /**
@@ -156,6 +171,37 @@ int input_save_body(input_t *input, FILE *fp, bool binary);
  * @return label on success, NULL if any error.
  */
 char* input_draw_label(input_t *input, char *label, size_t label_len);
+
+/**
+ * Setup runinng for input layer.
+ * Called before runinng.
+ * @ingroup g_input
+ * @param[in] input input layer.
+ * @param[in] num_thrs number of thread to be used.
+ * @return non-zero value if any error.
+ */
+int input_setup(input_t *input, int num_thrs);
+
+/**
+ * Reset runinng for input layer.
+ * Called before every input sentence to be runned.
+ * @ingroup g_input
+ * @param[in] input input layer.
+ * @param[in] tid thread id (neuron id).
+ * @return non-zero value if any error.
+ */
+int input_reset(input_t *input, int tid);
+
+/**
+ * Feed a word into input layer.
+ * Called before every input word to be runned.
+ * @ingroup g_input
+ * @param[in] input input layer.
+ * @param[in] word current word.
+ * @param[in] tid thread id (neuron id).
+ * @return non-zero value if any error.
+ */
+int input_feed(input_t *input, int word, int tid);
 
 #ifdef __cplusplus
 }

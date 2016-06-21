@@ -84,28 +84,12 @@ ERR:
     return NULL;
 }
 
-static int sigmoid_forward(layer_t *layer)
-{
-    ST_CHECK_PARAM(layer == NULL, -1);
-
-    return 0;
-}
-
-static int sigmoid_backprop(layer_t *layer)
-{
-    ST_CHECK_PARAM(layer == NULL, -1);
-
-    return 0;
-}
-
 void sigmoid_destroy(layer_t *layer)
 {
     if (layer == NULL) {
         return;
     }
 
-    layer->forward = NULL;
-    layer->backprop = NULL;
     safe_sigmoid_data_destroy(layer->extra);
 }
 
@@ -118,8 +102,6 @@ int sigmoid_init(layer_t *layer)
         return -1;
     }
 
-    layer->forward = sigmoid_forward;
-    layer->backprop = sigmoid_backprop;
     layer->extra = (void *)sigmoid_data_init();
     if (layer->extra == NULL) {
         ST_WARNING("Failed to sigmoid_data_init.");
@@ -147,8 +129,6 @@ int sigmoid_dup(layer_t *dst, layer_t *src)
         return -1;
     }
 
-    dst->forward = src->forward;
-    dst->backprop = src->forward;
     dst->extra = (void *)sigmoid_data_dup((sigmoid_data_t *)src->extra);
     if (dst->extra == NULL) {
         ST_WARNING("Failed to sigmoid_data_dup.");

@@ -199,9 +199,6 @@ layer_t* layer_dup(layer_t *l)
     layer->type[MAX_NAME_LEN - 1] = '\0';
     layer->size = l->size;
 
-    layer->forward = l->forward;
-    layer->backprop = l->backprop;
-
     return layer;
 
 ERR:
@@ -485,12 +482,29 @@ int layer_activate(layer_t *layer, int offset, int tid)
 {
     ST_CHECK_PARAM(layer == NULL || offset < 0, -1);
 
+    if (strcmp(layer->name, INPUT_LAYER_NAME) == 0
+            || strcmp(layer->name, OUTPUT_LAYER_NAME) == 0) {
+        return 0;
+    }
+
     return 0;
 }
 
 int layer_clear(layer_t *layer, int offset, int tid)
 {
     ST_CHECK_PARAM(layer == NULL || offset < 0, -1);
+
+    if (strcmp(layer->name, INPUT_LAYER_NAME) == 0
+            || strcmp(layer->name, OUTPUT_LAYER_NAME) == 0) {
+        return 0;
+    }
+
+    return 0;
+}
+
+int layer_setup(layer_t *layer, int num_thrs, bool backprop)
+{
+    ST_CHECK_PARAM(layer == NULL || num_thrs <= 0, -1);
 
     return 0;
 }

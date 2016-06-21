@@ -77,9 +77,6 @@ typedef struct _layer_t_ {
     char type[MAX_NAME_LEN]; /**< layer type. */
     int size; /**< layer size. */
 
-    int (*forward)(struct _layer_t_ *layer); /**< forward function. */
-    int (*backprop)(struct _layer_t_ *layer); /**< backprop function. */
-
     bool activated;
     bool cleared;;
 
@@ -203,6 +200,17 @@ int layer_activate(layer_t *layer, int offset, int tid);
  * @return non-zero value if any error.
  */
 int layer_clear(layer_t *layer, int offset, int tid);
+
+/**
+ * Setup runinng for hidden layer.
+ * Called before runinng.
+ * @ingroup g_layer
+ * @param[in] layer hidden layer.
+ * @param[in] num_thrs number of thread to be used.
+ * @param[in] backprop whether do backpropagating.
+ * @return non-zero value if any error.
+ */
+int layer_setup(layer_t *layer, int num_thrs, bool backprop);
 
 #ifdef __cplusplus
 }

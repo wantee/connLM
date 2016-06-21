@@ -77,6 +77,10 @@ typedef struct _output_neuron_t_ {
     real_t p; /**< Probility for word. */
 } output_neuron_t;
 
+#define s_children(tree, node) (tree)->nodes[node].children_s
+#define e_children(tree, node) (tree)->nodes[node].children_e
+#define is_leaf(tree, node) (s_children(tree, node) >= e_children(tree, node))
+
 /**
  * Output tree Node.
  * @ingroup g_output
@@ -131,7 +135,7 @@ typedef struct _output_t_ {
     output_norm_t norm; /**< normalization method. */
 
     output_neuron_t *neurons; /**< output tree neurons. */
-    int num_thrs; /**< number of threads/neurons. */
+    int n_neu; /**< number of threads/neurons. */
 
     output_tree_t *tree; /**< output tree. */
     output_path_t *paths; /**< Store a path for every leaf(word) node. */
