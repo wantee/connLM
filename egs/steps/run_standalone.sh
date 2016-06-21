@@ -16,8 +16,8 @@ function print_help()
   echo "usage: $0 <model-type> <conf-dir> <exp-dir> <train-file> <valid-file> [test-file]"
   echo "e.g.: $0 rnn conf exp data/train data/valid data/test"
   echo "options: "
-  echo "     --train-thr <threads>    # default: 1."         
-  echo "     --eval-thr <threads>     # default: 1."         
+  echo "     --train-thr <threads>    # default: 1."
+  echo "     --eval-thr <threads>     # default: 1."
   echo "     --class-size <xx;xx;xx>  # default: \"\". Class sizes to be tried."
   echo "     --hs <true|false>        # default: \"\", up to config file. Whether to use HS"
 }
@@ -29,8 +29,8 @@ help_message=`print_help`
 
 . ../utils/parse_options.sh || exit 1
 
-if [ $# -lt 5 ]; then 
-  print_help 1>&2 
+if [ $# -lt 5 ]; then
+  print_help 1>&2
   exit 1;
 fi
 
@@ -52,32 +52,28 @@ mkdir -p $dir
 st=1
 if shu-in-range $st $stage; then
 echo "$0: Stage $st --- Initialising model..."
-../steps/init_model.sh --init-config-file $conf/init.conf \
-        --output-config-file $conf/output.conf \
-        --class-size "$class_size" --hs "$hs" \
-          --train-file $train_file \
-          --train-config $conf/train.conf \
-          --train-threads $train_thr \
-        $exp_dir/vocab.clm $dir || exit 1;
+../steps/init_model.sh --init-config-file "$conf/init.conf" \
+        --output-config-file "$conf/output.conf" \
+        "$exp_dir/vocab.clm" "$conf/topo" "$dir" || exit 1;
 fi
 ((st++))
 
 if shu-in-range $st $stage; then
 echo "$0: Stage $st --- Training model..."
-../steps/train_model.sh --train-config $conf/train.conf \
-        --eval-config $conf_dir/eval.conf \
-        --train-threads $train_thr \
-        --eval-threads $eval_thr \
-        $train_file $valid_file $dir || exit 1;
+../steps/train_model.sh --train-config "$conf/train.conf" \
+        --eval-config "$conf_dir/eval.conf" \
+        --train-threads "$train_thr" \
+        --eval-threads "$eval_thr" \
+        "$train_file" "$valid_file" "$dir" || exit 1;
 fi
 ((st++))
 
 if shu-in-range $st $stage; then
 if [ ! -z "$test_file" ]; then
 echo "$0: Stage $st --- Testing model..."
-../steps/eval_model.sh --config-file $conf_dir/eval.conf \
-        --eval-threads $eval_thr \
-        $dir $test_file || exit 1;
+../steps/eval_model.sh --config-file "$conf_dir/eval.conf" \
+        --eval-threads "$eval_thr" \
+        "$dir" "$test_file" || exit 1;
 fi
 fi
 ((st++))
