@@ -20,8 +20,8 @@ help_message=`print_help`
 
 . ../utils/parse_options.sh || exit 1
 
-if [ $# -ne 4 ]; then 
-  print_help 1>&2 
+if [ $# -ne 4 ]; then
+  print_help 1>&2
   exit 1;
 fi
 
@@ -53,7 +53,7 @@ function score_corpus() {
         > "$score_dir/log/score_sh.$i.log" 2>&1 &
     pids[$(expr $i + 0)]=$!
   done
-  
+
   failed=0
   for i in `seq $score_job`; do
     wait ${pids[$i]}
@@ -63,7 +63,7 @@ function score_corpus() {
       ((failed += 1))
     fi
   done
-  
+
   for i in `seq -w $score_job`; do
     echo "$0: Score job $i log: "
     cat "$score_dir/log/score_sh.$i.log"
@@ -100,8 +100,8 @@ fi
 if [ "$in_lines" -le 0 ] || [ "$in_lines" -ne "$gen_lines" ]; then
   echo "$0: (Re)Computing lines..."
   lines=`cat $corpus | wc -l | sed 's/ //g'`
-  echo $lines > "$in_dir/score/.lines" 
-  echo $lines > "$gen_dir/score/.lines" 
+  echo $lines > "$in_dir/score/.lines"
+  echo $lines > "$gen_dir/score/.lines"
 else
   lines=$in_lines
 fi

@@ -26,8 +26,8 @@ help_message=`print_help`
 
 . ../utils/parse_options.sh || exit 1
 
-if [ $# -ne 1 ]; then 
-  print_help 1>&2 
+if [ $# -ne 1 ]; then
+  print_help 1>&2
   exit 1;
 fi
 

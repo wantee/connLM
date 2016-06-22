@@ -19,8 +19,8 @@ help_message=`print_help`
 
 . ../utils/parse_options.sh || exit 1
 
-if [ $# -ne 5 ]; then 
-  print_help 1>&2 
+if [ $# -ne 5 ]; then
+  print_help 1>&2
   exit 1;
 fi
 
@@ -70,7 +70,7 @@ if $parallel; then
 
   in_lines=`cat "$in_dir/.lines"`
   gen_lines=`cat "$gen_dir/.lines"`
-  
+
   if [ "$in_lines" -le 0 ] || [ "$in_lines" -ne "$gen_lines" ]; then
     echo "$0: lines not match."
     exit 1
@@ -93,7 +93,7 @@ if $parallel; then
 
     pids[$(expr $i + 0)]=$!
   done
-  
+
   failed=0
   for i in `seq $score_job`; do
     wait ${pids[$i]}
@@ -103,14 +103,14 @@ if $parallel; then
       ((failed += 1))
     fi
   done
-  
+
   if [ $failed -ne 0 ]; then
     exit 1
   fi
 
-  cat "$log_dir"/select.*.log | awk -F: ' \
-           {if(NR%2){sp = $1; s += $2}else{tp = $1; t += $2}}\
-           END{print sp":", s; print tp":", t;}' 
+  cat "$log_dir"/select.*.log | awk -F, ' \
+           {if(NR%2){sp = $(NF-1); s += $NF}else{tp = $(NF - 1); t += $NF}}\
+           END{print sp":", s; print tp":", t;}'
 
   if $merge_out; then
     cat $out-* > $out

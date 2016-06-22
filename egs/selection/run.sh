@@ -13,6 +13,9 @@ class_size=""
 tr_thr=1
 eval_thr=1
 score_job=4
+hdfs_corpus=""
+hdfs_output=""
+hdfs_to_local=false
 
 realtype="float"
 
@@ -41,6 +44,9 @@ function print_help()
   echo "     --model_type <model_type>     # model type."
   echo "     --conf-dir <conf-dir>         # config directory."
   echo "     --exp-dir <exp-dir>           # exp directory."
+  echo "     --hdfs-corpus <hdfs://path/to/corpus> # hdfs path of corpus."
+  echo "     --hdfs-output <hdfs://path/to/output-dir> # hdfs path of output dir."
+  echo "     --hdfs-to-local <true|false>  # whether get result to local."
 }
 
 help_message=`print_help`
@@ -53,8 +59,8 @@ fi
 
 . ../utils/parse_options.sh || exit 1
 
-if [ $# -gt 1 ] || ! shu-valid-range $1; then 
-  print_help 1>&2 
+if [ $# -gt 1 ] || ! shu-valid-range $1; then
+  print_help 1>&2
   exit 1
 fi
 
@@ -122,19 +128,43 @@ fi
 if shu-in-range $st $steps; then
 echo
 echo "Step $st: ${stepnames[$st]} ..."
-./local/score.sh --eval-conf "$conf_dir/eval.conf" \
-    "$data_dir/general.corpus" \
-    "$exp_dir/indomain/$model_type/" "$exp_dir/general/$model_type/" \
-    $score_job  || exit 1
+if [ -n "$hdfs_corpus" ]; then
+  if [ -z "$hdfs_output" ]; then
+    shu-err "--hdfs-output must be specified"
+    exit 1
+  fi
+  ./local/mr_score.sh "$hdfs_corpus" "$hdfs_output/score" "$exp_dir" \
+         "$exp_dir/indomain/$model_type" "$exp_dir/general/$model_type" \
+         || exit 1
+else
+  ./local/score.sh --eval-conf "$conf_dir/eval.conf" \
+      "$data_dir/general.corpus" \
+      "$exp_dir/indomain/$model_type/" "$exp_dir/general/$model_type/" \
+      $score_job  || exit 1
+fi
 fi
 ((st++))
 
 if shu-in-range $st $steps; then
 echo
 echo "Step $st: ${stepnames[$st]} ..."
-./local/select.sh "$data_dir/general.corpus" \
+if [ -n "$hdfs_corpus" ]; then
+  if [ -z "$hdfs_output" ]; then
+    shu-err "--hdfs-output must be specified"
+    exit 1
+  fi
+  ./local/mr_select.sh "$hdfs_output/score" "$thresh" \
+         "$exp_dir" "$hdfs_output/selected.$model_type.$thresh" \
+         || exit 1
+  if $hdfs_to_local; then
+    hadoop fs -cat "$hdfs_output/selected.$model_type.$thresh/part-*" \
+         > $exp_dir/selected.$model_type.$thresh || exit 1
+  fi
+else
+  ./local/select.sh "$data_dir/general.corpus" \
          "$exp_dir/indomain/$model_type/score" \
          "$exp_dir/general/$model_type/score" $thresh \
          "$exp_dir/selected.$model_type.$thresh" || exit 1
+fi
 fi
 ((st++))
