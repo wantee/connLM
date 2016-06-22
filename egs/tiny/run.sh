@@ -49,8 +49,8 @@ fi
 
 . ../utils/parse_options.sh || exit 1
 
-if [ $# -gt 1 ] || ! shu-valid-range $1; then 
-  print_help 1>&2 
+if [ $# -gt 1 ] || ! shu-valid-range $1; then
+  print_help 1>&2
   exit 1
 fi
 
@@ -106,14 +106,3 @@ echo "Step $st: ${stepnames[$st]} ..."
   || exit 1;
 fi
 ((st++))
-
-if shu-in-range $st $steps; then
-echo
-echo "Step $st: ${stepnames[$st]} ..."
-../steps/run_standalone.sh --class-size "$class_size" \
-      --train-thr $tr_thr --test-thr $test_thr \
-    rnn-hs $conf_dir $exp_dir $train_file $valid_file $test_file \
-  || exit 1;
-fi
-((st++))
-

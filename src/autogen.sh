@@ -1,7 +1,7 @@
 #!/bin/bash
 
-ATLASINC=""
-ATLASLIB=""
+BLASINC=""
+BLASLIB=""
 
 if [ "`basename $PWD`" != "src" ]; then
   echo 'You must run "autogen.sh" from the src/ directory.'
@@ -23,21 +23,45 @@ if [ "`uname`" == "Linux" ]; then
     echo "CFLAGS += -D_HAVE_MKL_" >> $mkfile
     echo "LDFLAGS += -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lmkl_sequential -lmkl_core" >> $mkfile
   else
-    ATLASLIB=$(dirname "`ldconfig -p | grep 'libatlas.so$' | cut -d'>' -f2`" 2>/dev/null)
-    if [ -n "$ATLASLIB" ]; then
-      FLAG="-L $ATLASLIB -lcblas -latlas -llapack"
-      if [ -n "$ATLASINC" ]; then
-        FLAG=" -I $ATLASINC"
+    if [ -z "$BLASLIB" ]; then
+      lib=`ldconfig -p | grep 'libopenblas.so' | head -n 1 | cut -d'>' -f2`
+      if [ -n "$lib" ]; then
+        libdir=$(dirname "$lib" 2>/dev/null)
+        BLASINC="-I /usr/include/openblas/"
+        BLASLIB="-L $libdir -lopenblas"
+        if echo -e '#include <stdio.h>\n#include <cblas.h>\nint main(){printf("%s\\n", openblas_get_config()); return 0;}' | gcc $BLASINC $BLASLIB -xc - -o /dev/null; then
+          BLASNAME=OpenBLAS
+        fi
+      else
+        # atlas
+        lib=`ldconfig -p | grep 'libatlas.so' | head -n 1 | cut -d'>' -f2`
+        if [ -n "$lib" ]; then
+          libdir=$(dirname "$lib" 2>/dev/null)
+          BLASLIB="-L $libdir -lcblas -latlas -llapack"
+        else
+          lib=`ldconfig -p | grep 'libsatlas.so' | head -n 1 | cut -d'>' -f2`
+          if [ -n "$lib" ]; then
+            libdir=$(dirname "$lib" 2>/dev/null)
+            BLASLIB="-L $libdir -lsatlas"
+          fi
+        fi
+        if [ -n "$BLASLIB" ]; then
+          if echo -e '#include <cblas.h>\nvoid ATL_buildinfo(void);\nint main(){ATL_buildinfo(); return 0;}' | gcc $BLASINC $BLASLIB -xc - -o /dev/null; then
+            BLASNAME=ATLAS
+          fi
+        fi
       fi
-      if echo -e '#include <cblas.h>\nint main(){ATL_buildinfo(); return 0;}' | gcc $FLAG -xc - -o /dev/null > /dev/null 2>&1; then
-        echo "Using ATLAS for blas"
+    else
+      BLASNAME=CUSTOM
+    fi
+    if [ -n "$BLASNAME" ]; then
+        echo "Using $BLASNAME for blas"
         echo "CFLAGS += -D_USE_BLAS_" >> $mkfile
         echo "CFLAGS += -D_HAVE_ATLAS_" >> $mkfile
-        echo "LDFLAGS += $FLAG" >> $mkfile
-      fi
+        echo "CFLAGS += $BLASINC" >> $mkfile
+        echo "LDFLAGS += $BLASLIB" >> $mkfile
     fi
   fi
-
 elif [ "`uname`" == "Darwin" ]; then
   if [ -e /System/Library/Frameworks/Accelerate.framework ]; then
     echo "Using Accelerate framework for blas"
@@ -49,4 +73,3 @@ fi
 
 echo "Finish autogen"
 exit 0
-
