@@ -27,6 +27,7 @@
 #include <stutils/st_log.h>
 #include <stutils/st_utils.h>
 
+#include "utils.h"
 #include "input.h"
 
 static const int INPUT_MAGIC_NUM = 626140498 + 40;
@@ -50,6 +51,7 @@ input_t* input_parse_topo(const char *line, int input_size)
     char token[MAX_LINE_LEN];
 
     const char *p;
+    int i;
 
     ST_CHECK_PARAM(line == NULL, NULL);
 
@@ -492,7 +494,9 @@ ERR:
 
 int input_reset(input_t *input, int tid)
 {
+#if 0
     input_neuron_t *neu;
+    int i;
 
     ST_CHECK_PARAM(input == NULL || tid < 0, -1);
 
@@ -501,6 +505,7 @@ int input_reset(input_t *input, int tid)
         neu->buf[i] = -1;
     }
     neu->i_buf = 0;
+#endif
 
     return 0;
 }
@@ -509,6 +514,7 @@ int input_feed(input_t *input, int word, int tid)
 {
     ST_CHECK_PARAM(input == NULL || tid < 0, -1);
 
+#if 0
     if (neu->i_buf < input->n_buf) {
         neu->buf[neu->i_buf] = word;
         neu->i_buf++;
@@ -521,4 +527,7 @@ int input_feed(input_t *input, int word, int tid)
     for (i = 0; i < input->n_ctx; i++) {
         neu->frag[i] = neu->buf[];
     }
+#endif
+
+    return 0;
 }

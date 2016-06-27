@@ -46,6 +46,7 @@ extern "C" {
  */
 typedef struct _input_neuron_t_ {
     int *frag; /**< fragment of input sequnece. */
+    int n_frag;
     int target; /**< position of target word. */
     int *buf; /**< word buf. */
 } input_neuron_t;

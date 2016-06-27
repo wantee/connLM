@@ -7,6 +7,8 @@ GIT_COMMIT_MACRO = CONNLM_GIT_COMMIT
 
 INCS = utils.h \
        param.h \
+       reader.h \
+       driver.h \
        connlm.h \
        vocab.h \
        output.h \
@@ -25,10 +27,13 @@ INCS = utils.h \
        weights/weight.h \
        weights/output_weight.h \
        weights/direct_weight.h \
-       graph.h
+       graph.h \
+       updater.h
 
 SRCS = utils.c \
        param.c \
+       reader.c \
+       driver.c \
        connlm.c \
        vocab.c \
        output.c \
@@ -48,7 +53,8 @@ SRCS = utils.c \
        weights/weight.c \
        weights/output_weight.c \
        weights/direct_weight.c \
-       graph.c
+       graph.c \
+       updater.c
 
 BINS = bin/connlm-train \
        bin/connlm-eval \

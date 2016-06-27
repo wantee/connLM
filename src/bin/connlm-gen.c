@@ -33,12 +33,13 @@
 
 #include <connlm/utils.h>
 #include <connlm/connlm.h>
+#include <connlm/driver.h>
 
 bool g_binary;
 
 st_opt_t *g_cmd_opt;
 
-connlm_gen_opt_t g_gen_opt;
+driver_gen_opt_t g_gen_opt;
 
 int connlm_gen_parse_opt(int *argc, const char *argv[])
 {
@@ -66,8 +67,8 @@ int connlm_gen_parse_opt(int *argc, const char *argv[])
         goto ST_OPT_ERR;
     }
 
-    if (connlm_load_gen_opt(&g_gen_opt, g_cmd_opt, NULL) < 0) {
-        ST_WARNING("Failed to connlm_load_gen_opt");
+    if (driver_load_gen_opt(&g_gen_opt, g_cmd_opt, NULL) < 0) {
+        ST_WARNING("Failed to driver_load_gen_opt");
         goto ST_OPT_ERR;
     }
 
@@ -93,6 +94,7 @@ int main(int argc, const char *argv[])
     char args[1024] = "";
     FILE *fp = NULL;
     connlm_t *connlm = NULL;
+    driver_t *driver = NULL;
     int num_sents = 1;
     int ret;
 
@@ -142,18 +144,30 @@ int main(int argc, const char *argv[])
     }
     safe_st_fclose(fp);
 
-    if (connlm_setup_gen(connlm, &g_gen_opt) < 0) {
-        ST_WARNING("Failed to connlm_setup_gen.");
+    driver = driver_create(connlm, NULL, 1);
+    if (driver == NULL) {
+        ST_WARNING("Failed to driver_create.");
         goto ERR;
     }
 
-    if (connlm_gen(connlm, num_sents) < 0) {
-        ST_WARNING("Failed to connlm_gen.");
+    if (driver_setup(driver, DRIVER_GEN) < 0) {
+        ST_WARNING("Failed to driver_setup.");
+        goto ERR;
+    }
+
+    if (driver_set_gen(driver, &g_gen_opt, num_sents) < 0) {
+        ST_WARNING("Failed to driver_set_gen.");
+        goto ERR;
+    }
+
+    if (driver_run(driver) < 0) {
+        ST_WARNING("Failed to driver_run.");
         goto ERR;
     }
 
     safe_st_opt_destroy(g_cmd_opt);
     safe_connlm_destroy(connlm);
+    safe_driver_destroy(driver);
 
     st_log_close(0);
     return 0;
@@ -162,6 +176,7 @@ ERR:
     safe_st_fclose(fp);
     safe_st_opt_destroy(g_cmd_opt);
     safe_connlm_destroy(connlm);
+    safe_driver_destroy(driver);
 
     st_log_close(1);
     return -1;

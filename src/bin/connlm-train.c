@@ -33,13 +33,16 @@
 
 #include <connlm/utils.h>
 #include <connlm/connlm.h>
+#include <connlm/reader.h>
+#include <connlm/driver.h>
 
 bool g_binary;
 bool g_dry_run;
+int g_num_thr;
 
 st_opt_t *g_cmd_opt;
 
-connlm_opt_t g_connlm_opt;
+reader_opt_t g_reader_opt;
 
 int connlm_train_parse_opt(int *argc, const char *argv[])
 {
@@ -67,10 +70,13 @@ int connlm_train_parse_opt(int *argc, const char *argv[])
         goto ST_OPT_ERR;
     }
 
-    if (connlm_load_opt(&g_connlm_opt, g_cmd_opt, NULL) < 0) {
-        ST_WARNING("Failed to connlm_load_opt");
+    if (reader_load_opt(&g_reader_opt, g_cmd_opt, NULL) < 0) {
+        ST_WARNING("Failed to reader_load_opt");
         goto ST_OPT_ERR;
     }
+
+    ST_OPT_GET_INT(g_cmd_opt, "NUM_THREAD", g_num_thr, 1,
+            "Number of working threads");
 
     ST_OPT_GET_BOOL(g_cmd_opt, "BINARY", g_binary, true,
             "Save file as binary format");
@@ -107,6 +113,8 @@ int main(int argc, const char *argv[])
     char args[1024] = "";
     FILE *fp = NULL;
     connlm_t *connlm = NULL;
+    reader_t *reader = NULL;
+    driver_t *driver = NULL;
     int ret;
 
     (void)st_escape_args(argc, argv, args, 1024);
@@ -122,11 +130,6 @@ int main(int argc, const char *argv[])
     if (strcmp(connlm_revision(), CONNLM_GIT_COMMIT) != 0) {
         ST_WARNING("Binary revision[%s] not match with library[%s].",
                 CONNLM_GIT_COMMIT, connlm_revision());
-    }
-
-    if (g_dry_run) {
-        st_opt_show(g_cmd_opt, "connLM Train Options");
-        return 0;
     }
 
     if (argc != 4) {
@@ -158,15 +161,35 @@ int main(int argc, const char *argv[])
 
     st_opt_show(g_cmd_opt, "connLM Train Options");
 
-    if (connlm_setup_train(connlm, &g_connlm_opt, argv[1]) < 0) {
-        ST_WARNING("Failed to connlm_setup_train.");
+    if (g_dry_run) {
+        return 0;
+    }
+
+    reader = reader_create(&g_reader_opt, g_num_thr, connlm->vocab,
+            argv[1]);
+    if (reader == NULL) {
+        ST_WARNING("Failed to reader_create.");
         goto ERR;
     }
 
-    if (connlm_train(connlm) < 0) {
-        ST_WARNING("Failed to connlm_train.");
+    driver = driver_create(connlm, reader, g_num_thr);
+    if (driver == NULL) {
+        ST_WARNING("Failed to driver_create.");
         goto ERR;
     }
+
+    if (driver_setup(driver, DRIVER_TRAIN) < 0) {
+        ST_WARNING("Failed to driver_setup.");
+        goto ERR;
+    }
+
+    if (driver_run(driver) < 0) {
+        ST_WARNING("Failed to driver_run.");
+        goto ERR;
+    }
+
+    safe_driver_destroy(driver);
+    safe_reader_destroy(reader);
 
     fp = st_fopen(argv[3], "wb");
     if (fp == NULL) {
@@ -187,8 +210,10 @@ int main(int argc, const char *argv[])
     return 0;
 
 ERR:
-    safe_st_fclose(fp);
     safe_st_opt_destroy(g_cmd_opt);
+    safe_st_fclose(fp);
+    safe_driver_destroy(driver);
+    safe_reader_destroy(reader);
     safe_connlm_destroy(connlm);
 
     st_log_close(1);
