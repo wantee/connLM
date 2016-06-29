@@ -31,42 +31,45 @@
 #include <stutils/st_macro.h>
 #include <stutils/st_log.h>
 
-#include "updater.h"
+#include "layer_updater.h"
 
-void updater_destroy(updater_t *updater)
+void layer_updater_destroy(layer_updater_t *layer_updater)
 {
-    if (updater == NULL) {
+    if (layer_updater == NULL) {
         return;
     }
 
-    updater->connlm = NULL;
+    safe_free(layer_updater->ac);
+    safe_free(layer_updater->er);
+
+    layer_updater->layer = NULL;
 }
 
-updater_t* updater_create(connlm_t *connlm)
+layer_updater_t* layer_updater_create(layer_t *layer)
 {
-    updater_t *updater = NULL;
+    layer_updater_t *layer_updater = NULL;
 
-    ST_CHECK_PARAM(connlm == NULL, NULL);
+    ST_CHECK_PARAM(layer == NULL, NULL);
 
-    updater = (updater_t *)malloc(sizeof(updater_t));
-    if (updater == NULL) {
-        ST_WARNING("Failed to malloc updater.");
+    layer_updater = (layer_updater_t *)malloc(sizeof(layer_updater_t));
+    if (layer_updater == NULL) {
+        ST_WARNING("Failed to malloc layer_updater.");
         goto ERR;
     }
-    memset(updater, 0, sizeof(updater_t));
+    memset(layer_updater, 0, sizeof(layer_updater_t));
 
-    updater->connlm = connlm;
+    layer_updater->layer = layer;
 
-    return updater;
+    return layer_updater;
 
 ERR:
-    safe_updater_destroy(updater);
+    safe_layer_updater_destroy(layer_updater);
     return NULL;
 }
 
-int updater_setup(updater_t *updater, bool backprob)
+int layer_updater_setup(layer_updater_t *layer_updater, bool backprob)
 {
-    ST_CHECK_PARAM(updater == NULL, -1);
+    ST_CHECK_PARAM(layer_updater == NULL, -1);
 
     return 0;
 }

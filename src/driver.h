@@ -37,7 +37,7 @@ extern "C" {
 
 #include "connlm.h"
 #include "reader.h"
-#include "updater.h"
+#include "updaters/updater.h"
 
 /** @defgroup g_driver Driver to run on connlm model.
  * Data structure and functions for diver.

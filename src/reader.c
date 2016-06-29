@@ -267,10 +267,10 @@ int reader_load_opt(reader_opt_t *reader_opt,
                 "READER");
     }
 
-    ST_OPT_SEC_GET_UINT(opt, sec_name, "RANDOM_SEED",
+    ST_OPT_SEC_GET_UINT(opt, name, "RANDOM_SEED",
             reader_opt->rand_seed, 1, "Random seed");
 
-    ST_OPT_SEC_GET_INT(opt, sec_name, "EPOCH_SIZE",
+    ST_OPT_SEC_GET_INT(opt, name, "EPOCH_SIZE",
             reader_opt->epoch_size, 10,
             "Number of sentences read in one epoch per thread (in kilos)");
     if (reader_opt->epoch_size > 0) {
@@ -279,10 +279,10 @@ int reader_load_opt(reader_opt_t *reader_opt,
         reader_opt->epoch_size = 1;
     }
 
-    ST_OPT_SEC_GET_BOOL(opt, sec_name, "SHUFFLE",
+    ST_OPT_SEC_GET_BOOL(opt, name, "SHUFFLE",
             reader_opt->shuffle, true, "Shuffle after reading");
 
-    ST_OPT_SEC_GET_STR(opt, sec_name, "DEBUG_FILE",
+    ST_OPT_SEC_GET_STR(opt, name, "DEBUG_FILE",
             reader_opt->debug_file, MAX_DIR_LEN, "",
             "file to print out debug infos.");
 

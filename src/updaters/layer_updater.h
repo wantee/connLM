@@ -22,68 +22,68 @@
  * SOFTWARE.
  */
 
-#ifndef  _CONNLM_UPDATER_H_
-#define  _CONNLM_UPDATER_H_
+#ifndef  _CONNLM_LAYER_UPDATER_H_
+#define  _CONNLM_LAYER_UPDATER_H_
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#include <pthread.h>
-
-#include <stutils/st_semaphore.h>
-
 #include <connlm/config.h>
 
-#include "connlm.h"
+#include "layers/layer.h"
 
-/** @defgroup g_updater Updater to update connlm parameter.
- * Data structure and functions for updater.
+/** @defgroup g_updater_layer Updater for layer.
+ * @ingroup g_updater
+ * Data structures and functions for layer updater.
  */
 
 /**
- * Updater.
- * @ingroup g_updater
+ * Layer updater.
+ * @ingroup g_updater_layer
  */
-typedef struct _updater_t_ {
-    connlm_t *connlm; /**< the model. */
-} updater_t;
+typedef struct _layer_updater_t_ {
+    layer_t *layer; /**< the layer. */
+
+    real_t *ac; /**< activation of layer. */
+    real_t *er; /**< error of layer. */
+} layer_updater_t;
 
 /**
- * Destroy a updater and set the pointer to NULL.
- * @ingroup g_updater
+ * Destroy a layer_updater and set the pointer to NULL.
+ * @ingroup g_updater_layer
  * @param[in] ptr pointer to updater_t.
  */
-#define safe_updater_destroy(ptr) do {\
+#define safe_layer_updater_destroy(ptr) do {\
     if((ptr) != NULL) {\
-        updater_destroy(ptr);\
+        layer_updater_destroy(ptr);\
         safe_free(ptr);\
         (ptr) = NULL;\
     }\
     } while(0)
 /**
- * Destroy a updater.
- * @ingroup g_updater
- * @param[in] updater updater to be destroyed.
+ * Destroy a layer_updater.
+ * @ingroup g_updater_layer
+ * @param[in] layer_updater layer_updater to be destroyed.
  */
-void updater_destroy(updater_t *updater);
+void layer_updater_destroy(layer_updater_t *layer_updater);
 
 /**
- * Create a updater.
- * @ingroup g_updater
+ * Create a layer_updater.
+ * @ingroup g_updater_layer
  * @param[in] connlm the connlm model.
- * @return updater on success, otherwise NULL.
+ * @return layer_updater on success, otherwise NULL.
  */
-updater_t* updater_create(connlm_t *connlm);
+layer_updater_t* layer_updater_create(layer_t *layer);
 
 /**
- * Setup updater for running.
- * @ingroup g_updater
- * @param[in] updater updater.
+ * Setup layer_updater for running.
+ * @ingroup g_updater_layer
+ * @param[in] layer_updater layer_updater.
  * @param[in] backprob whether do backprob.
  * @return non-zero value if any error.
  */
-int updater_setup(updater_t *updater, bool backprob);
+int layer_updater_setup(layer_updater_t *layer_updater, bool backprob);
 
 #ifdef __cplusplus
 }

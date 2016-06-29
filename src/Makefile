@@ -28,7 +28,10 @@ INCS = utils.h \
        weights/output_weight.h \
        weights/direct_weight.h \
        graph.h \
-       updater.h
+       updaters/updater.h \
+       updaters/output_updater.h \
+       updaters/layer_updater.h \
+       updaters/component_updater.h
 
 SRCS = utils.c \
        param.c \
@@ -54,7 +57,10 @@ SRCS = utils.c \
        weights/output_weight.c \
        weights/direct_weight.c \
        graph.c \
-       updater.c
+       updaters/updater.c \
+       updaters/output_updater.c \
+       updaters/layer_updater.c \
+       updaters/component_updater.c
 
 BINS = bin/connlm-train \
        bin/connlm-eval \
