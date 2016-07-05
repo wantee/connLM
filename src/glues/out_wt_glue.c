@@ -217,9 +217,9 @@ bool out_wt_glue_check(glue_t *glue, layer_t **layers, int n_layer)
 
 char* out_wt_glue_draw_label(glue_t *glue, char *label, size_t label_len)
 {
-    ST_CHECK_PARAM(glue == NULL || label == NULL, NULL);
+    ST_CHECK_PARAM(glue == NULL || label == NULL || label_len <= 0, NULL);
 
-    snprintf(label, label_len, "");
+    label[0] = '\0';
 
     return label;
 }

@@ -165,9 +165,9 @@ static int graph_dfs(graph_t *graph, int start,
                     return -1;
                 }
 
-                graph->glues[(int)tmp]->recur = true;
+                graph->glues[(int)(long)tmp]->recur = true;
 
-                if ((int)tmp == to) {
+                if ((int)(long)tmp == to) {
                     break;
                 }
             }
@@ -179,7 +179,7 @@ static int graph_dfs(graph_t *graph, int start,
         return -1;
     }
 #ifdef _GRAPH_DEBUG_
-    ST_DEBUG("Node pop: %d", (int)tmp);
+    ST_DEBUG("Node pop: %d", (int)(long)tmp);
 #endif
     on_stack[start] = false;
     post_order[*post_i] = start;
