@@ -121,3 +121,181 @@ int updater_setup(updater_t *updater, bool backprob)
 
     return 0;
 }
+
+int updater_feed(updater_t *updater, connlm_egs_t *egs)
+{
+    ST_CHECK_PARAM(updater == NULL || egs == NULL, -1);
+
+    return 0;
+}
+
+int updater_get_step(updater_t *updater)
+{
+    ST_CHECK_PARAM(updater == NULL, -1);
+
+    return 0;
+}
+
+int updater_step(updater_t *updater, double *logp)
+{
+    ST_CHECK_PARAM(updater == NULL, -1);
+
+    return 0;
+}
+
+#if 0
+int updater_reset(updater_t *updater)
+{
+    int c;
+
+    ST_CHECK_PARAM(updater == NULL, -1);
+
+    if (output_reset(updater->output) < 0) {
+        ST_WARNING("Failed to output_reset.");
+        return -1;
+    }
+
+    for (c = 0; c < updater->num_comp; c++) {
+        if (comp_reset(updater->comps[c], tid, backprop) < 0) {
+            ST_WARNING("Failed to comp_reset[%s].", updater->comps[c]->name);
+            return -1;
+        }
+    }
+
+    return 0;
+}
+
+int updater_start(updater_t *updater, int word, int tid, bool backprop)
+{
+    int c;
+
+    ST_CHECK_PARAM(updater == NULL, -1);
+
+    if (output_start(updater->output, word, tid, backprop) < 0) {
+        ST_WARNING("Failed to output_start.");
+        return -1;
+    }
+
+    for (c = 0; c < updater->num_comp; c++) {
+        if (comp_start(updater->comps[c], word, tid, backprop) < 0) {
+            ST_WARNING("Failed to comp_start[%s].", updater->comps[c]->name);
+            return -1;
+        }
+    }
+
+    return 0;
+}
+
+int updater_end(updater_t *updater, int word, int tid, bool backprop)
+{
+    int c;
+
+    ST_CHECK_PARAM(updater == NULL, -1);
+
+    if (output_end(updater->output, word, tid, backprop) < 0) {
+        ST_WARNING("Failed to output_end.");
+        return -1;
+    }
+
+    for (c = 0; c < updater->num_comp; c++) {
+        if (comp_end(updater->comps[c], word, tid, backprop) < 0) {
+            ST_WARNING("Failed to comp_end[%s].", updater->comps[c]->name);
+            return -1;
+        }
+    }
+
+    return 0;
+}
+
+int updater_finish(updater_t *updater, int tid, bool backprop)
+{
+    int c;
+
+    ST_CHECK_PARAM(updater == NULL, -1);
+
+    if (output_finish(updater->output, tid, backprop) < 0) {
+        ST_WARNING("Failed to output_finish.");
+        return -1;
+    }
+
+    for (c = 0; c < updater->num_comp; c++) {
+        if (comp_finish(updater->comps[c], tid, backprop) < 0) {
+            ST_WARNING("Failed to comp_finish[%s].", updater->comps[c]->name);
+            return -1;
+        }
+    }
+
+    return 0;
+}
+
+static int updater_forward_hidden(updater_t *updater, int tid)
+{
+    int c;
+
+    ST_CHECK_PARAM(updater == NULL, -1);
+
+    for (c = 0; c < updater->num_comp; c++) {
+        if (comp_forward(updater->comps[c], updater->output, tid) < 0) {
+            ST_WARNING("Failed to comp_forward.");
+            return -1;
+        }
+    }
+
+    return 0;
+}
+
+int updater_forward(updater_t *updater, int word, int tid)
+{
+    ST_CHECK_PARAM(updater == NULL, -1);
+
+    if (updater_forward_hidden(updater, tid) < 0) {
+        ST_WARNING("Failed to updater_forward_hidden.");
+        return -1;
+    }
+
+    if (output_forward(updater->output, word, tid) < 0) {
+        ST_WARNING("Failed to output_forward.");
+        return -1;
+    }
+
+    return 0;
+}
+
+int updater_fwd_bp(updater_t *updater, int word, int tid)
+{
+    int c;
+
+    ST_CHECK_PARAM(updater == NULL, -1);
+
+    for (c = 0; c < updater->num_comp; c++) {
+        if (comp_fwd_bp(updater->comps[c], word, tid) < 0) {
+            ST_WARNING("Failed to comp_fwd_bp[%s].", updater->comps[c]->name);
+            return -1;
+        }
+    }
+
+    return 0;
+}
+
+int updater_backprop(updater_t *updater, int word, int tid)
+{
+    int c;
+
+    ST_CHECK_PARAM(updater == NULL, -1);
+
+    if (output_loss(updater->output, word, tid) < 0) {
+        ST_WARNING("Failed to output_loss.");
+        return -1;
+    }
+
+    for (c = 0; c < updater->num_comp; c++) {
+        if (comp_backprop(updater->comps[c], tid) < 0) {
+            ST_WARNING("Failed to comp_backprop[%s].",
+                    updater->comps[c]->name);
+            return -1;
+        }
+    }
+
+    return 0;
+}
+#endif

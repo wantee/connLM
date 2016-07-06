@@ -86,6 +86,67 @@ updater_t* updater_create(connlm_t *connlm);
  */
 int updater_setup(updater_t *updater, bool backprob);
 
+/**
+ * Feed input words to a updater.
+ * @ingroup g_updater
+ * @param[in] updater updater.
+ * @param[in] egs input egs.
+ * @return non-zero value if any error.
+ */
+int updater_feed(updater_t *updater, connlm_egs_t *egs);
+
+/**
+ * Get how many steps could be performed for a updater.
+ * @ingroup g_updater
+ * @param[in] updater updater.
+ * @return current steps, -1 if any error.
+ */
+int updater_get_step(updater_t *updater);
+
+/**
+ * Step one word for a updater.
+ * @ingroup g_updater
+ * @param[in] updater updater.
+ * @param[out] logp log probability for this word.
+ * @return word for this step, -1 if any error.
+ */
+int updater_step(updater_t *updater, double *logp);
+
+#if 0
+/**
+ * Feed-forward one word for a thread of connlm model.
+ * @ingroup g_connlm
+ * @param[in] connlm connlm model.
+ * @param[in] word current word.
+ * @param[in] tid thread id.
+ * @see connlm_backprop
+ * @return non-zero value if any error.
+ */
+int connlm_forward(connlm_t *connlm, int word, int tid);
+
+/**
+ * Back-propagate one word for a thread of connlm model.
+ * @ingroup g_connlm
+ * @param[in] connlm connlm model.
+ * @param[in] word current word.
+ * @param[in] tid thread id.
+ * @see connlm_forward
+ * @return non-zero value if any error.
+ */
+int connlm_backprop(connlm_t *connlm, int word, int tid);
+
+/**
+ * Training between feed-forward and back-propagate for connlm model.
+ * Called between forward and backprop during training a word.
+ * @ingroup g_connlm
+ * @param[in] connlm connlm model.
+ * @param[in] word current word.
+ * @param[in] tid thread id.
+ * @return non-zero value if any error.
+ */
+int connlm_fwd_bp(connlm_t *connlm, int word, int tid);
+#endif
+
 #ifdef __cplusplus
 }
 #endif

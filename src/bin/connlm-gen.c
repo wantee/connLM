@@ -150,13 +150,13 @@ int main(int argc, const char *argv[])
         goto ERR;
     }
 
-    if (driver_setup(driver, DRIVER_GEN) < 0) {
-        ST_WARNING("Failed to driver_setup.");
+    if (driver_set_gen(driver, &g_gen_opt, num_sents) < 0) {
+        ST_WARNING("Failed to driver_set_gen.");
         goto ERR;
     }
 
-    if (driver_set_gen(driver, &g_gen_opt, num_sents) < 0) {
-        ST_WARNING("Failed to driver_set_gen.");
+    if (driver_setup(driver, DRIVER_GEN) < 0) {
+        ST_WARNING("Failed to driver_setup.");
         goto ERR;
     }
 

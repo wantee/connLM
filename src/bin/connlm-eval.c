@@ -146,8 +146,9 @@ int main(int argc, const char *argv[])
     }
     safe_st_fclose(fp);
 
-    reader = reader_create(&g_reader_opt, g_num_thr, connlm->vocab,
-            argv[2]);
+    g_reader_opt.shuffle = false;
+    g_reader_opt.rand_seed = 0;
+    reader = reader_create(&g_reader_opt, g_num_thr, connlm->vocab, argv[2]);
     if (reader == NULL) {
         ST_WARNING("Failed to reader_create.");
         goto ERR;

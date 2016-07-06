@@ -690,7 +690,7 @@ int reader_wait(reader_t *reader)
     return 0;
 }
 
-connlm_egs_t* reader_hold_egs(reader_t *reader)
+connlm_egs_t* reader_hold_egs(reader_t *reader, bool fifo)
 {
     connlm_egs_t *egs;
 
@@ -708,8 +708,23 @@ connlm_egs_t* reader_hold_egs(reader_t *reader)
     if (reader->full_egs == NULL) {
         egs = NULL;
     } else {
-        egs = reader->full_egs;
-        reader->full_egs = reader->full_egs->next;
+        if (fifo) {
+            connlm_egs_t *prev_egs = NULL;
+            egs = reader->full_egs;
+            while (egs->next != NULL) {
+                prev_egs = egs;
+                egs = egs->next;
+            }
+
+            if (prev_egs == NULL) {
+                reader->full_egs = NULL;
+            } else {
+                prev_egs->next = NULL;
+            }
+        } else {
+            egs = reader->full_egs;
+            reader->full_egs = reader->full_egs->next;
+        }
     }
 
     if (pthread_mutex_unlock(&reader->full_egs_lock) != 0) {
@@ -743,6 +758,7 @@ int reader_release_egs(reader_t *reader, connlm_egs_t *egs)
         return -1;
     }
     if (st_sem_post(&reader->sem_empty) != 0) {
+        (void) pthread_mutex_unlock(&reader->empty_egs_lock);
         ST_WARNING("Failed to st_sem_post sem_empty.");
         return -1;
     }

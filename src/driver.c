@@ -137,24 +137,29 @@ ERR:
     return NULL;
 }
 
-#if 0
-int connlm_setup(connlm_t *connlm, bool backprop)
+int driver_setup(driver_t *driver, driver_mode_t mode)
 {
-    int c;
+    int i;
+    bool backprop;
 
-    ST_CHECK_PARAM(connlm == NULL, -1);
+    ST_CHECK_PARAM(driver == NULL, -1);
 
-    if (output_setup(connlm->output, connlm->opt.num_thread,
-                backprop) < 0) {
-        ST_WARNING("Failed to output_setup.");
-        return -1;
+    if (mode == DRIVER_TRAIN) {
+        backprop = true;
+    } else {
+        backprop = false;
+        if (mode == DRIVER_GEN) {
+            if (driver->gen_opt != NULL) {
+                st_srand(driver->gen_opt->rand_seed);
+            }
+        }
     }
 
-    for (c = 0; c < connlm->num_comp; c++) {
-        if (comp_setup(connlm->comps[c], connlm->opt.num_thread,
-                    backprop) < 0) {
-            ST_WARNING("Failed to comp_setup[%s].",
-                    connlm->comps[c]->name);
+    driver->mode = mode;
+
+    for (i = 0; i < driver->n_thr; i++) {
+        if (updater_setup(driver->updaters[i], backprop) < 0) {
+            ST_WARNING("Failed to updater_setup.");
             return -1;
         }
     }
@@ -162,18 +167,40 @@ int connlm_setup(connlm_t *connlm, bool backprop)
     return 0;
 }
 
-typedef struct _connlm_thread_t_ {
-    connlm_t *connlm; /**< connlm model. */
-    int tid; /**< thread id. */
-
-    reader_t *reader;
-    thr_stat_t *stat;
-} connlm_thr_t;
-
-static void* connlm_train_thread(void *args)
+int driver_set_eval(driver_t *driver, driver_eval_opt_t *eval_opt,
+        FILE *fp_log)
 {
-    connlm_t *connlm;
-    connlm_thr_t *thr;
+    ST_CHECK_PARAM(driver == NULL || eval_opt == NULL, -1);
+
+    driver->eval_opt = eval_opt;
+    driver->fp_log = fp_log;
+
+    return 0;
+}
+
+int driver_set_gen(driver_t *driver, driver_gen_opt_t *gen_opt,
+        int num_sents)
+{
+    ST_CHECK_PARAM(driver == NULL || gen_opt == NULL, -1);
+
+    driver->gen_opt = gen_opt;
+    driver->gen_num_sents = num_sents;
+
+    return 0;
+}
+
+typedef struct _driver_thread_t_ {
+    driver_t *driver;
+    int tid;
+    thr_stat_t *stat;
+} driver_thr_t;
+
+static void* driver_thread(void *args)
+{
+    driver_thr_t *thr;
+    driver_t *driver;
+    updater_t *updater;
+    reader_t *reader;
     int tid;
 
     connlm_egs_t *egs = NULL;
@@ -181,10 +208,14 @@ static void* connlm_train_thread(void *args)
     count_t words;
     count_t sents;
     double logp;
-    bool finish;
+    bool fifo;
+
+    double logp_sent;
+    double logp_word;
 
     int word;
-    int i;
+    int step;
+    int n_step;
 
     struct timeval tts, tte;
     long ms;
@@ -194,80 +225,157 @@ static void* connlm_train_thread(void *args)
 
     ST_CHECK_PARAM(args == NULL, NULL);
 
-    thr = (connlm_thr_t *)args;
-    connlm = thr->connlm;
+    thr = (driver_thr_t *)args;
     tid = thr->tid;
+    driver = thr->driver;
+    updater = driver->updaters[tid];
+    reader = driver->reader;
 
     gettimeofday(&tts, NULL);
 
-    finish = false;
+    if (driver->mode == DRIVER_EVAL && driver->n_thr == 1){
+        fifo = true;
+    } else {
+        fifo = false;
+    }
     words = 0;
     sents = 0;
     logp = 0.0;
+    logp_sent = 0.0;
     while (true) {
-        if (connlm->err != 0) {
+        if (driver->err != 0) {
             break;
         }
 
         gettimeofday(&tts_wait, NULL);
-        egs = reader_hold_egs(thr->reader);
+        egs = reader_hold_egs(reader, fifo);
         gettimeofday(&tte_wait, NULL);
 
         if (egs == NULL) { // finish
             break;
         }
 
-        if (connlm_reset(connlm, tid, true) < 0) {
-            ST_WARNING("Failed to connlm_reset.");
+        if (updater_feed(updater, egs) < 0) {
+            ST_WARNING("Failed to updater_feed.");
+            goto ERR;
+        }
+        n_step = updater_get_step(updater);
+        if (n_step < 0) {
+            ST_WARNING("Failed to updater_get_step.");
             goto ERR;
         }
 
+        step = 0;
+        while (step < n_step) {
+            word = updater_step(updater, &logp_word);
+            if (word < 0) {
+                ST_WARNING("Failed to updater_step.");
+                goto ERR;
+            }
+
+            logp += logp_word;
+            if (driver->eval_opt != NULL) {
+                logp_sent += logn10(logp_word, driver->eval_opt->out_log_base);
+            }
+
+            if ((logp != logp) || (isinf(logp))) {
+                ST_WARNING("Numerical error. tid[%d], log(p_word(%d)) = %g",
+                        tid, word, logp_word);
+                goto ERR;
+            }
+
+            if (driver->fp_log != NULL
+                    && (! driver->eval_opt->print_sent_prob)) {
+                fprintf(driver->fp_log, "%d\t%.6f\t%s", word,
+                        logn10(logp_word, driver->eval_opt->out_log_base),
+                        vocab_get_word(updater->connlm->vocab, word));
+
+                fprintf(driver->fp_log, "\n");
+            }
+
+            if (word == SENT_END_ID) {
+                if (driver->fp_log != NULL
+                        && driver->eval_opt->print_sent_prob) {
+                    fprintf(driver->fp_log, "%.6f\n", logp_sent);
+                }
+                ++sents;
+                logp_sent = 0.0;
+            }
+            ++words;
+            ++step;
+        }
+#if 0
+        if (updater_reset(updater) < 0) {
+            ST_WARNING("Failed to updater_reset.");
+            goto ERR;
+        }
+
+        logp_sent = 0.0;
         for (i = 0; i < egs->size; i++) {
             word = egs->words[i];
 
-            if (connlm_start(connlm, word, tid, true) < 0) {
-                ST_WARNING("connlm_start.");
+            if (updater_start(updater, word) < 0) {
+                ST_WARNING("updater_start.");
                 goto ERR;
             }
 
-            if (connlm_forward(connlm, word, tid) < 0) {
-                ST_WARNING("Failed to connlm_forward.");
+            if (updater_forward(updater, word) < 0) {
+                ST_WARNING("Failed to updater_forward.");
                 goto ERR;
             }
 
-            logp += output_get_logprob(connlm->output, word, tid);
+            logp_word = output_get_logprob(updater->output, word, tid);
+            logp += logp_word;
+            if (driver->eval_opt != NULL) {
+                logp_sent += logn10(logp_word, driver->eval_opt.out_log_base);
+            }
 
             if ((logp != logp) || (isinf(logp))) {
                 ST_WARNING("Numerical error. tid[%d], log(p_word(%d)) = %g",
                         tid, word,
-                        output_get_logprob(connlm->output, word, tid));
+                        output_get_logprob(updater->output, word, tid));
                 goto ERR;
             }
 
-            if (connlm_fwd_bp(connlm, word, tid) < 0) {
-                ST_WARNING("Failed to connlm_fwd_bp.");
+            if (updater_fwd_bp(updater, word) < 0) {
+                ST_WARNING("Failed to updater_fwd_bp.");
                 goto ERR;
             }
 
-            if (connlm_backprop(connlm, word, tid) < 0) {
-                ST_WARNING("Failed to connlm_backprop.");
+            if (updater_backprop(updater, word) < 0) {
+                ST_WARNING("Failed to updater_backprop.");
                 goto ERR;
             }
 
-            if (connlm_end(connlm, word, tid, true) < 0) {
-                ST_WARNING("connlm_end.");
+            if (updater_end(updater, word) < 0) {
+                ST_WARNING("updater_end.");
                 goto ERR;
             }
 
+            if (driver->fp_log != NULL
+                    && (! driver->eval_opt->print_sent_prob)) {
+                fprintf(driver->fp_log, "%d\t%.6f\t%s", word,
+                        logn10(logp_word, driver->eval_opt->out_log_base),
+                        vocab_get_word(updater->vocab, word));
+
+                fprintf(driver->fp_log, "\n");
+            }
             if (word == SENT_END_ID) {
-                if (connlm_reset(connlm, tid, true) < 0) {
-                    ST_WARNING("Failed to connlm_reset.");
+                if (updater_reset(updater) < 0) {
+                    ST_WARNING("Failed to updater_reset.");
                     goto ERR;
                 }
                 sents++;
+
+                if (driver->fp_log != NULL
+                        && driver->eval_opt->print_sent_prob) {
+                    fprintf(driver->fp_log, "%.6f\n", logp_sent);
+                }
+                logp_sent = 0.0;
             }
             words++;
         }
+#endif
 
         thr->stat->words = words;
         thr->stat->sents = sents;
@@ -288,7 +396,7 @@ static void* connlm_train_thread(void *args)
                 ms_wait / 1000.0, ms_wait / (ms / 100.0),
                 TIMEDIFF(tts_wait, tte_wait) / 1000.0);
 
-        if (reader_release_egs(thr->reader, egs) < 0) {
+        if (reader_release_egs(reader, egs) < 0) {
             ST_WARNING("Failed to reader_release_egs.");
             goto ERR;
         }
@@ -296,483 +404,186 @@ static void* connlm_train_thread(void *args)
 
     return NULL;
 ERR:
-    connlm->err = -1;
+    driver->err = -1;
 
-    /* TODO: unlock mutex and post semaphore */
     return NULL;
 }
 
-int connlm_setup_train(connlm_t *connlm, connlm_opt_t *connlm_opt,
-        const char *train_file)
+int driver_run(driver_t *driver)
 {
-    if (connlm_setup(connlm, true) < 0) {
-        ST_WARNING("Failed to connlm_setup.");
-        return -1;
-    }
-
-    return 0;
-}
-
-int connlm_train(connlm_t *connlm, reader_t *reader)
-{
-    connlm_thr_t *thrs = NULL;
+    driver_thr_t *thrs = NULL;
     pthread_t *pts = NULL;
     thr_stat_t *stats = NULL;
-
-    int n_thr;
 
     count_t words;
     count_t sents;
     double logp;
-    struct timeval tts_train, tte_train;
+    struct timeval tts, tte;
     long ms;
 
+    int n_thr;
     int i;
 
-    ST_CHECK_PARAM(connlm == NULL, -1);
+    ST_CHECK_PARAM(driver == NULL, -1);
 
-    gettimeofday(&tts_train, NULL);
+    if (driver->mode == DRIVER_EVAL) {
+        if (driver->eval_opt == NULL) {
+            ST_WARNING("Eval opt not set.");
+            return -1;
+        }
+        if (driver->fp_log != NULL) {
+            if (driver->fp_log != NULL
+                    && (! driver->eval_opt->print_sent_prob)) {
+                fprintf(driver->fp_log, "Index   logP(NET)          Word\n");
+                fprintf(driver->fp_log, "----------------------------------\n");
+            }
+            ST_NOTICE("Printing Probs, setting num_thread to 1.");
+            driver->n_thr = 1;
+        }
+    } else if (driver->mode == DRIVER_GEN) {
+        if (driver->gen_opt == NULL) {
+            ST_WARNING("Gen opt not set.");
+            return -1;
+        }
+    }
 
-    n_thr = connlm->opt.num_thread;
+    gettimeofday(&tts, NULL);
+
+    n_thr = driver->n_thr;
     pts = (pthread_t *)malloc(n_thr * sizeof(pthread_t));
     if (pts == NULL) {
         ST_WARNING("Failed to malloc pts");
         goto ERR;
     }
 
-    thrs = (connlm_thr_t *)malloc(sizeof(connlm_thr_t) * n_thr);
+    thrs = (driver_thr_t *)malloc(sizeof(driver_thr_t) * n_thr);
     if (thrs == NULL) {
         ST_WARNING("Failed to malloc thrs");
         goto ERR;
     }
-    memset(thrs, 0, sizeof(connlm_thr_t) * n_thr);
+    memset(thrs, 0, sizeof(driver_thr_t) * n_thr);
 
-    stats = (thr_stat_t *)malloc(sizeof(thr_stat_t) * n_thr);
-    if (stats == NULL) {
-        ST_WARNING("Failed to malloc stats");
-        goto ERR;
-    }
-    memset(stats, 0, sizeof(thr_stat_t) * n_thr);
+    driver->err = 0;
 
-    connlm->err = 0;
+    if (driver->reader != NULL) {
+        stats = (thr_stat_t *)malloc(sizeof(thr_stat_t) * n_thr);
+        if (stats == NULL) {
+            ST_WARNING("Failed to malloc stats");
+            goto ERR;
+        }
+        memset(stats, 0, sizeof(thr_stat_t) * n_thr);
 
-    if (reader_read(reader, stats, &connlm->err) < 0) {
-        ST_WARNING("Failed to reader_read.");
-        goto ERR;
-    }
 
-    for (i = 0; i < n_thr; i++) {
-        thrs[i].connlm = connlm;
-        thrs[i].tid = i;
-        thrs[i].reader = reader;
-        thrs[i].stat = stats + i;
-        if (pthread_create(pts + i, NULL, connlm_train_thread,
-                (void *)(thrs + i)) != 0) {
-            ST_WARNING("Falied to pthread_create.");
+        if (reader_read(driver->reader, stats, &driver->err) < 0) {
+            ST_WARNING("Failed to reader_read.");
             goto ERR;
         }
     }
 
-    for (i = 0; i < n_thr; i++) {
-        if (pthread_join(pts[i], NULL) != 0) {
-            ST_WARNING("Falied to pthread_join.");
+    if (driver->mode == DRIVER_TRAIN || driver->mode == DRIVER_EVAL) {
+        for (i = 0; i < n_thr; i++) {
+            thrs[i].driver = driver;
+            thrs[i].tid = i;
+            thrs[i].stat = stats + i;
+            if (pthread_create(pts + i, NULL, driver_thread,
+                        (void *)(thrs + i)) != 0) {
+                ST_WARNING("Falied to pthread_create driver_thread.");
+                goto ERR;
+            }
+        }
+
+        for (i = 0; i < n_thr; i++) {
+            if (pthread_join(pts[i], NULL) != 0) {
+                ST_WARNING("Falied to pthread_join.");
+                goto ERR;
+            }
+        }
+    }
+
+    if (driver->reader != NULL) {
+        if(reader_wait(driver->reader) != 0) {
+            ST_WARNING("Failed to reader_wait.");
             goto ERR;
         }
     }
-    if (reader_wait(reader) != 0) {
-        ST_WARNING("Falied to reader_wait.");
+
+    if (driver->err != 0) {
         goto ERR;
     }
 
-    if (connlm->err != 0) {
-        goto ERR;
-    }
-
+#if 0
     for (i = 0; i < n_thr; i++) {
         if (connlm_finish(connlm, i, true) < 0) {
             ST_WARNING("Failed to connlm_finish.");
             goto ERR;
         }
     }
+#endif
 
-    gettimeofday(&tte_train, NULL);
-    ms = TIMEDIFF(tts_train, tte_train);
+    gettimeofday(&tte, NULL);
+    ms = TIMEDIFF(tts, tte);
 
     words = 0;
     sents = 0;
     logp = 0.0;
     for (i = 0; i < n_thr; i++) {
-        words += thrs[i].words;
-        sents += thrs[i].sents;
-        logp += thrs[i].logp;
+        words += stats[i].words;
+        sents += stats[i].sents;
+        logp += stats[i].logp;
     }
 
-    if (words != read_thr.words || sents != read_thr.sents) {
+    if (words != driver->reader->words || sents != driver->reader->sents) {
         ST_WARNING("words[" COUNT_FMT "] != read_words[" COUNT_FMT "] "
                 "or sents[" COUNT_FMT "] != read_sents[" COUNT_FMT "] ",
-                words, read_thr.words, sents, read_thr.sents);
+                words, driver->reader->words,
+                sents, driver->reader->sents);
     }
 
-    ST_NOTICE("Finish train in %ldms.", ms);
-    ST_NOTICE("Words: " COUNT_FMT ", Sentences: " COUNT_FMT
-            ", OOVs: " COUNT_FMT ", words/sec: %.1f", words, sents,
-            read_thr.oovs, words / ((double) ms / 1000.0));
-    ST_NOTICE("LogP: %f", logp);
-    ST_NOTICE("Entropy: %f", -logp / log10(2) / words);
-    ST_NOTICE("PPL: %f", exp10(-logp / (double) words));
+    if (driver->mode == DRIVER_TRAIN || driver->mode == DRIVER_EVAL) {
+        ST_NOTICE("Finish %s in %ldms.", driver->mode == DRIVER_TRAIN
+                ? "training" : "evaluating", ms);
+        ST_NOTICE("Words: " COUNT_FMT ", Sentences: " COUNT_FMT
+                ", OOVs: " COUNT_FMT ", words/sec: %.1f", words, sents,
+                driver->reader->oovs, words / ((double) ms / 1000.0));
+        ST_NOTICE("LogP: %f", logp);
+        ST_NOTICE("Entropy: %f", -logp / log10(2) / words);
+        ST_NOTICE("PPL: %f", exp10(-logp / (double) words));
+    } else {
+        ST_NOTICE("Finish generating in %ldms.", ms);
+        ST_NOTICE("Words: " COUNT_FMT "    Sentences: " COUNT_FMT
+                ", words/sec: %.1f", words, sents,
+                words / ((double) ms / 1000));
+    }
+
+    if (driver->mode == DRIVER_EVAL) {
+        if (driver->fp_log != NULL && (!driver->eval_opt->print_sent_prob)) {
+            fprintf(driver->fp_log, "\nSummary:\n");
+            fprintf(driver->fp_log, "Words: " COUNT_FMT
+                    "    OOVs: " COUNT_FMT "\n",
+                    words, driver->reader->oovs);
+            fprintf(driver->fp_log, "LogP: %f\n", logp);
+            fprintf(driver->fp_log, "Entropy: %f\n",
+                    -logp / log10(2) / words);
+            fprintf(driver->fp_log, "PPL: %f\n",
+                    exp10(-logp / (double) words));
+        }
+    }
 
     safe_free(pts);
     safe_free(thrs);
+    safe_free(stats);
 
     return 0;
 
 ERR:
+
     safe_free(pts);
     safe_free(thrs);
-
+    safe_free(stats);
     return -1;
 }
 
-static void* connlm_eval_thread(void *args)
-{
-    connlm_t *connlm;
-    connlm_thr_t *thr;
-    int tid;
-
-    connlm_egs_t *egs = NULL;
-
-    count_t words;
-    count_t sents;
-    double logp;
-    double logp_sent;
-    bool finish;
-
-    int word;
-    double logp_word;
-
-    int i;
-
-    ST_CHECK_PARAM(args == NULL, NULL);
-
-    thr = (connlm_thr_t *)args;
-    connlm = thr->connlm;
-    tid = thr->tid;
-
-    finish = false;
-    words = 0;
-    sents = 0;
-    logp = 0.0;
-    while (true) {
-        if (connlm->err != 0) {
-            break;
-        }
-
-        if (st_sem_wait(&connlm->sem_full) != 0) {
-            ST_WARNING("Failed to st_sem_wait sem_full.");
-            goto ERR;
-        }
-        if (pthread_mutex_lock(&connlm->full_egs_lock) != 0) {
-            ST_WARNING("Failed to pthread_mutex_lock full_egs_lock.");
-            goto ERR;
-        }
-
-        if (connlm->full_egs == NULL) {
-            finish = true;
-        } else {
-            if (connlm->opt.num_thread == 1) {
-                /* ensure FIFO */
-                connlm_egs_t *prev_egs = NULL;
-                egs = connlm->full_egs;
-                while (egs->next != NULL) {
-                    /* full_egs list will not be too long */
-                    prev_egs = egs;
-                    egs = egs->next;
-                }
-
-                if (prev_egs == NULL) {
-                    connlm->full_egs = NULL;
-                } else {
-                    prev_egs->next = NULL;
-                }
-            } else {
-                egs = connlm->full_egs;
-                connlm->full_egs = connlm->full_egs->next;
-            }
-        }
-
-        if (pthread_mutex_unlock(&connlm->full_egs_lock) != 0) {
-            ST_WARNING("Failed to pthread_mutex_unlock full_egs_lock.");
-            goto ERR;
-        }
-        //ST_DEBUG("OUT: %s, %p, %d", bool2str(finish), egs, egs->size);
-        if (finish) {
-            break;
-        }
-
-        if (connlm->fp_debug != NULL) {
-            if (connlm_egs_print(connlm->fp_debug, &connlm->fp_debug_lock,
-                        egs, connlm->vocab) < 0) {
-                ST_WARNING("Failed to connlm_egs_print.");
-                goto ERR;
-            }
-        }
-
-        if (connlm_reset(connlm, tid, false) < 0) {
-            ST_WARNING("Failed to connlm_reset.");
-            goto ERR;
-        }
-        logp_sent = 0.0;
-        for (i = 0; i < egs->size; i++) {
-            word = egs->words[i];
-
-            if (connlm_start(connlm, word, tid, false) < 0) {
-                ST_WARNING("connlm_start.");
-                goto ERR;
-            }
-
-            if (connlm_forward(connlm, word, tid) < 0) {
-                ST_WARNING("Failed to connlm_forward.");
-                goto ERR;
-            }
-
-            logp_word = output_get_logprob(connlm->output, word, tid);
-            logp += logp_word;
-            logp_sent += logn10(logp_word, connlm->eval_opt.out_log_base);
-
-            if ((logp != logp) || (isinf(logp))) {
-                ST_WARNING("Numerical error. tid[%d], log(p_word(%d)) = %g",
-                        tid, word,
-                        output_get_logprob(connlm->output, word, tid));
-                goto ERR;
-            }
-
-            if (connlm_end(connlm, word, tid, false) < 0) {
-                ST_WARNING("connlm_end.");
-                goto ERR;
-            }
-
-            if (connlm->fp_log != NULL
-                    && (! connlm->eval_opt.print_sent_prob)) {
-                (void)pthread_mutex_lock(&connlm->fp_lock);
-                fprintf(connlm->fp_log, "%d\t%.6f\t%s", word,
-                        logn10(logp_word, connlm->eval_opt.out_log_base),
-                        vocab_get_word(connlm->vocab, word));
-
-                fprintf(connlm->fp_log, "\n");
-                (void)pthread_mutex_unlock(&connlm->fp_lock);
-            }
-
-            if (word == SENT_END_ID) {
-                if (connlm_reset(connlm, tid, false) < 0) {
-                    ST_WARNING("Failed to connlm_reset.");
-                    goto ERR;
-                }
-                sents++;
-
-                if (connlm->fp_log != NULL
-                        && connlm->eval_opt.print_sent_prob) {
-                    (void)pthread_mutex_lock(&connlm->fp_lock);
-                    fprintf(connlm->fp_log, "%.6f\n", logp_sent);
-                    (void)pthread_mutex_unlock(&connlm->fp_lock);
-                }
-                logp_sent = 0;
-            }
-
-            words++;
-        }
-
-        if (pthread_mutex_lock(&connlm->empty_egs_lock) != 0) {
-            ST_WARNING("Failed to pthread_mutex_lock empty_egs_lock.");
-            goto ERR;
-        }
-        egs->next = connlm->empty_egs;
-        connlm->empty_egs = egs;
-        if (pthread_mutex_unlock(&connlm->empty_egs_lock) != 0) {
-            ST_WARNING("Failed to pthread_mutex_unlock empty_egs_lock.");
-            goto ERR;
-        }
-        if (st_sem_post(&connlm->sem_empty) != 0) {
-            ST_WARNING("Failed to st_sem_post sem_empty.");
-            goto ERR;
-        }
-    }
-
-    thr->words = words;
-    thr->sents = sents;
-    thr->logp = logp;
-
-    return NULL;
-ERR:
-    connlm->err = -1;
-
-    /* TODO: unlock mutex and post semaphore */
-    return NULL;
-}
-
-int connlm_setup_eval(connlm_t *connlm, connlm_opt_t *connlm_opt,
-        const char *eval_file)
-{
-    if (connlm_setup_read(connlm, connlm_opt, eval_file) < 0) {
-        ST_WARNING("Failed to connlm_setup_read.");
-        return -1;
-    }
-
-    if (connlm_setup(connlm, false) < 0) {
-        ST_WARNING("Failed to connlm_setup.");
-        return -1;
-    }
-
-    return 0;
-}
-
-int connlm_eval(connlm_t *connlm, FILE *fp_log)
-{
-    connlm_thr_t *thrs = NULL;
-    pthread_t *pts = NULL;
-
-    connlm_read_thr_t read_thr;
-    int n_thr;
-
-    count_t words;
-    count_t sents;
-    double logp;
-
-    int i;
-
-    struct timeval tts_eval, tte_eval;
-    long ms;
-
-    ST_CHECK_PARAM(connlm == NULL, -1);
-
-    if (fp_log != NULL) {
-        connlm->fp_log = fp_log;
-        pthread_mutex_init(&connlm->fp_lock, NULL);
-        if (connlm->fp_log != NULL
-                && (! connlm->eval_opt.print_sent_prob)) {
-            fprintf(fp_log, "Index   logP(NET)          Word\n");
-            fprintf(fp_log, "----------------------------------\n");
-        }
-        ST_NOTICE("Printing Probs, setting num_thread to 1.")
-            connlm->opt.num_thread = 1;
-    }
-
-    gettimeofday(&tts_eval, NULL);
-
-    n_thr = connlm->opt.num_thread;
-    pts = (pthread_t *)malloc((n_thr + 1) * sizeof(pthread_t));
-    if (pts == NULL) {
-        ST_WARNING("Failed to malloc pts");
-        goto ERR;
-    }
-
-    thrs = (connlm_thr_t *)malloc(sizeof(connlm_thr_t) * n_thr);
-    if (thrs == NULL) {
-        ST_WARNING("Failed to malloc thrs");
-        goto ERR;
-    }
-    memset(thrs, 0, sizeof(connlm_thr_t) * n_thr);
-
-    connlm->err = 0;
-
-    read_thr.connlm = connlm;
-    read_thr.thrs = thrs;
-    read_thr.n_thr = connlm->opt.num_thread;
-    read_thr.epoch_size = connlm->opt.epoch_size;
-    read_thr.shuffle = false;
-    read_thr.random = 0;
-
-    pthread_create(pts + n_thr, NULL,
-            connlm_read_thread, (void *)&read_thr);
-
-    for (i = 0; i < n_thr; i++) {
-        thrs[i].connlm = connlm;
-        thrs[i].tid = i;
-        pthread_create(pts + i, NULL, connlm_eval_thread,
-                (void *)(thrs + i));
-    }
-
-    for (i = 0; i < n_thr; i++) {
-        pthread_join(pts[i], NULL);
-    }
-
-    if (connlm->err != 0) {
-        ST_WARNING("Testing error.");
-        goto ERR;
-    }
-
-    words = 0;
-    sents = 0;
-    logp = 0;
-
-    for (i = 0; i < n_thr; i++) {
-        words += thrs[i].words;
-        sents += thrs[i].sents;
-        logp += thrs[i].logp;
-    }
-
-    if (words != read_thr.words || sents != read_thr.sents) {
-        ST_WARNING("words[" COUNT_FMT "] != read_words[" COUNT_FMT "] "
-                "or sents[" COUNT_FMT "] != read_sents[" COUNT_FMT "] ",
-                words, read_thr.words, sents, read_thr.sents);
-    }
-
-    gettimeofday(&tte_eval, NULL);
-    ms = TIMEDIFF(tts_eval, tte_eval);
-
-    ST_NOTICE("Finish eval in %ldms.", ms);
-
-    ST_NOTICE("Words: " COUNT_FMT "    OOVs: " COUNT_FMT
-            "    Sentences: " COUNT_FMT
-            ", words/sec: %.1f", words, read_thr.oovs, sents,
-             words / ((double) ms / 1000));
-    ST_NOTICE("LogP: %f", logp);
-    ST_NOTICE("Entropy: %f", -logp / log10(2) / words);
-    ST_NOTICE("PPL: %f", exp10(-logp / (double) words));
-
-    if (fp_log != NULL
-            && (! connlm->eval_opt.print_sent_prob)) {
-        fprintf(fp_log, "\nSummary:\n");
-        fprintf(fp_log, "Words: " COUNT_FMT "    OOVs: " COUNT_FMT "\n",
-                words, read_thr.oovs);
-        fprintf(fp_log, "LogP: %f\n", logp);
-        fprintf(fp_log, "Entropy: %f\n", -logp / log10(2) / words);
-        fprintf(fp_log, "PPL: %f\n", exp10(-logp / (double) words));
-
-        pthread_mutex_destroy(&connlm->fp_lock);
-    }
-
-    safe_free(pts);
-    safe_free(thrs);
-
-    return 0;
-
-ERR:
-
-    if (fp_log != NULL) {
-        pthread_mutex_destroy(&connlm->fp_lock);
-    }
-    safe_free(pts);
-    safe_free(thrs);
-
-    return -1;
-}
-
-int connlm_setup_gen(connlm_t *connlm, connlm_gen_opt_t *gen_opt)
-{
-    ST_CHECK_PARAM(connlm == NULL || gen_opt == NULL, -1);
-
-    connlm->gen_opt = *gen_opt;
-
-    st_srand(gen_opt->rand_seed);
-
-    if (connlm_setup(connlm, 1) < 0) {
-        ST_WARNING("Failed to connlm_setup.");
-        return -1;
-    }
-
-    return 0;
-}
-
+#if 0
 static int connlm_gen_word(connlm_t *connlm)
 {
     int word;
@@ -918,102 +729,3 @@ ERR:
     return -1;
 }
 #endif
-
-int driver_setup(driver_t *driver, driver_mode_t mode)
-{
-    int i;
-    bool backprop;
-
-    ST_CHECK_PARAM(driver == NULL, -1);
-
-    if (mode == DRIVER_TRAIN) {
-        backprop = true;
-    } else {
-        backprop = false;
-    }
-
-    driver->mode = mode;
-
-    for (i = 0; i < driver->n_thr; i++) {
-        if (updater_setup(driver->updaters[i], backprop) < 0) {
-            ST_WARNING("Failed to updater_setup.");
-            return -1;
-        }
-    }
-
-    return 0;
-}
-
-int driver_run(driver_t *driver)
-{
-    thr_stat_t *stats = NULL;
-
-    ST_CHECK_PARAM(driver == NULL, -1);
-
-    if (driver->mode == DRIVER_EVAL) {
-        if (driver->eval_opt == NULL) {
-            ST_WARNING("Eval opt not set.");
-            return -1;
-        }
-    } else if (driver->mode == DRIVER_GEN) {
-        if (driver->gen_opt == NULL) {
-            ST_WARNING("Gen opt not set.");
-            return -1;
-        }
-    }
-
-    driver->err = 0;
-
-    if (driver->reader != NULL) {
-        stats = (thr_stat_t *)malloc(sizeof(thr_stat_t) * driver->n_thr);
-        if (stats == NULL) {
-            ST_WARNING("Failed to malloc stats");
-            goto ERR;
-        }
-        memset(stats, 0, sizeof(thr_stat_t) * driver->n_thr);
-
-
-        if (reader_read(driver->reader, stats, &driver->err) < 0) {
-            ST_WARNING("Failed to reader_read.");
-            goto ERR;
-        }
-    }
-
-    if (driver->reader != NULL) {
-        if(reader_wait(driver->reader) != 0) {
-            ST_WARNING("Failed to reader_wait.");
-            goto ERR;
-        }
-    }
-
-    safe_free(stats);
-
-    return 0;
-
-ERR:
-
-    safe_free(stats);
-    return -1;
-}
-
-int driver_set_eval(driver_t *driver, driver_eval_opt_t *eval_opt,
-        FILE *fp_log)
-{
-    ST_CHECK_PARAM(driver == NULL || eval_opt == NULL, -1);
-
-    driver->eval_opt = eval_opt;
-    driver->fp_log = fp_log;
-
-    return 0;
-}
-
-int driver_set_gen(driver_t *driver, driver_gen_opt_t *gen_opt,
-        int num_sents)
-{
-    ST_CHECK_PARAM(driver == NULL || gen_opt == NULL, -1);
-
-    driver->gen_opt = gen_opt;
-    driver->gen_num_sents = num_sents;
-
-    return 0;
-}

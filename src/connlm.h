@@ -167,39 +167,6 @@ int connlm_print_info(FILE *model_fp, FILE *fo);
 int connlm_filter(connlm_t *connlm, model_filter_t mf,
         const char *comp_names, int num_comp);
 
-/**
- * Feed-forward one word for a thread of connlm model.
- * @ingroup g_connlm
- * @param[in] connlm connlm model.
- * @param[in] word current word.
- * @param[in] tid thread id.
- * @see connlm_backprop
- * @return non-zero value if any error.
- */
-int connlm_forward(connlm_t *connlm, int word, int tid);
-
-/**
- * Back-propagate one word for a thread of connlm model.
- * @ingroup g_connlm
- * @param[in] connlm connlm model.
- * @param[in] word current word.
- * @param[in] tid thread id.
- * @see connlm_forward
- * @return non-zero value if any error.
- */
-int connlm_backprop(connlm_t *connlm, int word, int tid);
-
-/**
- * Training between feed-forward and back-propagate for connlm model.
- * Called between forward and backprop during training a word.
- * @ingroup g_connlm
- * @param[in] connlm connlm model.
- * @param[in] word current word.
- * @param[in] tid thread id.
- * @return non-zero value if any error.
- */
-int connlm_fwd_bp(connlm_t *connlm, int word, int tid);
-
 #ifdef __cplusplus
 }
 #endif

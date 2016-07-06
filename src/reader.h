@@ -159,9 +159,10 @@ int reader_wait(reader_t *reader);
  * Get and hold a egs in reading pool.
  * @ingroup g_reader
  * @param[in] reader reader.
+ * @param[in] fifo hold egs in FIFO order.
  * @return NULL if there is no more data or any error.
  */
-connlm_egs_t* reader_hold_egs(reader_t *reader);
+connlm_egs_t* reader_hold_egs(reader_t *reader, bool fifo);
 
 /**
  * Relase a egs to reading pool.
