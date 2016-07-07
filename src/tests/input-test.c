@@ -66,9 +66,9 @@ static int check_input(input_t *input, ref_t *ref)
 
     assert(input != NULL && ref != NULL);
 
-    if (input->num_ctx != ref->n_ctx) {
+    if (input->n_ctx != ref->n_ctx) {
         fprintf(stderr, "n_ctx not match[%d/%d]\n",
-                input->num_ctx, ref->n_ctx);
+                input->n_ctx, ref->n_ctx);
         return -1;
     }
 
@@ -91,8 +91,8 @@ static int unit_test_input_read_topo()
     int input_sz = 15;
     ref_t ref;
     ref_t std_ref = {
-        .n_ctx = 3,
-        .context = {-1,0,1},
+        .n_ctx = 2,
+        .context = {-1,1},
     };
 
     fprintf(stderr, "  Testing Reading topology line...\n");

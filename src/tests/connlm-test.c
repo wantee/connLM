@@ -257,7 +257,7 @@ static FILE* mk_topo_file(ref_t *ref)
 }
 
 static int check_input(input_t *input, int input_size, int *context,
-        int num_ctx)
+        int n_ctx)
 {
     int i;
 
@@ -266,12 +266,12 @@ static int check_input(input_t *input, int input_size, int *context,
         return -1;
     }
 
-    if (input->num_ctx != num_ctx) {
-        fprintf(stderr, "num_ctx not match.\n");
+    if (input->n_ctx != n_ctx) {
+        fprintf(stderr, "n_ctx not match.\n");
         return -1;
     }
 
-    for (i = 0; i < input->num_ctx; i++) {
+    for (i = 0; i < input->n_ctx; i++) {
         if (input->context[i] != context[i]) {
             fprintf(stderr, "context[%d] not match.\n", i);
             return -1;
