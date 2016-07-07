@@ -70,7 +70,42 @@ int out_updater_setup(out_updater_t *out_updater, bool backprob)
     return 0;
 }
 
-int out_updater_step(out_updater_t *out_updater)
+int out_updater_reset(out_updater_t *out_updater)
+{
+    ST_CHECK_PARAM(out_updater == NULL, -1);
+
+    return 0;
+}
+
+int out_updater_start(out_updater_t *out_updater, int word)
+{
+    ST_CHECK_PARAM(out_updater == NULL, -1);
+
+    return 0;
+}
+
+int out_updater_forward(out_updater_t *out_updater, int word)
+{
+    ST_CHECK_PARAM(out_updater == NULL || word < 0, -1);
+
+    return 0;
+}
+
+int out_updater_backprop(out_updater_t *out_updater, int word)
+{
+    ST_CHECK_PARAM(out_updater == NULL || word < 0, -1);
+
+    return 0;
+}
+
+int out_updater_end(out_updater_t *out_updater, int word)
+{
+    ST_CHECK_PARAM(out_updater == NULL || word < 0, -1);
+
+    return 0;
+}
+
+int out_updater_finish(out_updater_t *out_updater)
 {
     ST_CHECK_PARAM(out_updater == NULL, -1);
 

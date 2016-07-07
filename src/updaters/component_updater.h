@@ -71,7 +71,7 @@ void comp_updater_destroy(comp_updater_t *comp_updater);
 /**
  * Create a comp_updater.
  * @ingroup g_updater_comp
- * @param[in] connlm the connlm model.
+ * @param[in] comp the component.
  * @return comp_updater on success, otherwise NULL.
  */
 comp_updater_t* comp_updater_create(component_t *comp);
@@ -86,12 +86,59 @@ comp_updater_t* comp_updater_create(component_t *comp);
 int comp_updater_setup(comp_updater_t *comp_updater, bool backprob);
 
 /**
- * Step one word for a comp_updater.
+ * Reset running for comp_updater.
+ * Called before every input sentence to be performed.
  * @ingroup g_updater_comp
  * @param[in] comp_updater comp_updater.
  * @return non-zero value if any error.
  */
-int comp_updater_step(comp_updater_t *comp_updater);
+int comp_updater_reset(comp_updater_t *comp_updater);
+
+/**
+ * Start running for comp_updater.
+ * Called before every input word to be performed.
+ * @ingroup g_updater_comp
+ * @param[in] comp_updater comp_updater.
+ * @return non-zero value if any error.
+ */
+int comp_updater_start(comp_updater_t *comp_updater);
+
+/**
+ * Feed-forward one word for a comp_updater.
+ * @ingroup g_updater_comp
+ * @param[in] comp_updater comp_updater.
+ * @param[in] word current word.
+ * @see comp_updater_backprop
+ * @return non-zero value if any error.
+ */
+int comp_updater_forward(comp_updater_t *comp_updater);
+
+/**
+ * Back-propagate one word for a comp_updater.
+ * @ingroup g_updater_comp
+ * @param[in] comp_updater comp_updater.
+ * @see comp_updater_forward
+ * @return non-zero value if any error.
+ */
+int comp_updater_backprop(comp_updater_t *comp_updater);
+
+/**
+ * End running for comp_updater.
+ * Called after every input word performed.
+ * @ingroup g_updater_comp
+ * @param[in] comp_updater comp_updater.
+ * @return non-zero value if any error.
+ */
+int comp_updater_end(comp_updater_t *comp_updater);
+
+/**
+ * Finish running for comp_updater.
+ * Called after all words performed.
+ * @ingroup g_updater_comp
+ * @param[in] comp_updater comp_updater.
+ * @return non-zero value if any error.
+ */
+int comp_updater_finish(comp_updater_t *comp_updater);
 
 #ifdef __cplusplus
 }

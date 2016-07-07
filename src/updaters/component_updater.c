@@ -107,7 +107,42 @@ int comp_updater_setup(comp_updater_t *comp_updater, bool backprob)
     return 0;
 }
 
-int comp_updater_step(comp_updater_t *comp_updater)
+int comp_updater_reset(comp_updater_t *comp_updater)
+{
+    ST_CHECK_PARAM(comp_updater == NULL, -1);
+
+    return 0;
+}
+
+int comp_updater_start(comp_updater_t *comp_updater)
+{
+    ST_CHECK_PARAM(comp_updater == NULL, -1);
+
+    return 0;
+}
+
+int comp_updater_forward(comp_updater_t *comp_updater)
+{
+    ST_CHECK_PARAM(comp_updater == NULL, -1);
+
+    return 0;
+}
+
+int comp_updater_backprop(comp_updater_t *comp_updater)
+{
+    ST_CHECK_PARAM(comp_updater == NULL, -1);
+
+    return 0;
+}
+
+int comp_updater_end(comp_updater_t *comp_updater)
+{
+    ST_CHECK_PARAM(comp_updater == NULL, -1);
+
+    return 0;
+}
+
+int comp_updater_finish(comp_updater_t *comp_updater)
 {
     ST_CHECK_PARAM(comp_updater == NULL, -1);
 

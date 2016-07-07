@@ -29,6 +29,138 @@
 
 #include "updater.h"
 
+static int updater_reset(updater_t *updater)
+{
+    int c;
+
+    ST_CHECK_PARAM(updater == NULL, -1);
+
+    for (c = 0; c < updater->connlm->num_comp; c++) {
+        if (comp_updater_reset(updater->comp_updaters[c]) < 0) {
+            ST_WARNING("Failed to comp_updater_reset[%s].",
+                    updater->connlm->comps[c]->name);
+            return -1;
+        }
+    }
+
+    if (out_updater_reset(updater->out_updater) < 0) {
+        ST_WARNING("Failed to out_updater_reset.");
+        return -1;
+    }
+
+    return 0;
+}
+
+static int updater_start(updater_t *updater, int word)
+{
+    int c;
+
+    ST_CHECK_PARAM(updater == NULL, -1);
+
+    for (c = 0; c < updater->connlm->num_comp; c++) {
+        if (comp_updater_start(updater->comp_updaters[c]) < 0) {
+            ST_WARNING("Failed to comp_updater_start[%s].",
+                    updater->connlm->comps[c]->name);
+            return -1;
+        }
+    }
+
+    if (out_updater_start(updater->out_updater, word) < 0) {
+        ST_WARNING("Failed to out_updater_start.");
+        return -1;
+    }
+
+    return 0;
+}
+
+static int updater_forward(updater_t *updater, int word)
+{
+    int c;
+
+    ST_CHECK_PARAM(updater == NULL, -1);
+
+    for (c = 0; c < updater->connlm->num_comp; c++) {
+        if (comp_updater_forward(updater->comp_updaters[c]) < 0) {
+            ST_WARNING("Failed to comp_updater_forward[%s].",
+                    updater->connlm->comps[c]->name);
+            return -1;
+        }
+    }
+
+    if (out_updater_forward(updater->out_updater, word) < 0) {
+        ST_WARNING("Failed to out_updater_forward.");
+        return -1;
+    }
+
+    return 0;
+}
+
+static int updater_backprop(updater_t *updater, int word)
+{
+    int c;
+
+    ST_CHECK_PARAM(updater == NULL, -1);
+
+    if (out_updater_backprop(updater->out_updater, word) < 0) {
+        ST_WARNING("Failed to out_updater_backprop.");
+        return -1;
+    }
+
+    for (c = 0; c < updater->connlm->num_comp; c++) {
+        if (comp_updater_backprop(updater->comp_updaters[c]) < 0) {
+            ST_WARNING("Failed to comp_updater_backprop[%s].",
+                    updater->connlm->comps[c]->name);
+            return -1;
+        }
+    }
+
+    return 0;
+}
+
+static int updater_end(updater_t *updater, int word)
+{
+    int c;
+
+    ST_CHECK_PARAM(updater == NULL, -1);
+
+    for (c = 0; c < updater->connlm->num_comp; c++) {
+        if (comp_updater_end(updater->comp_updaters[c]) < 0) {
+            ST_WARNING("Failed to comp_updater_end[%s].",
+                    updater->connlm->comps[c]->name);
+            return -1;
+        }
+    }
+
+    if (out_updater_end(updater->out_updater, word) < 0) {
+        ST_WARNING("Failed to out_updater_end.");
+        return -1;
+    }
+
+    return 0;
+}
+
+static int updater_finish(updater_t *updater)
+{
+    int c;
+
+    ST_CHECK_PARAM(updater == NULL, -1);
+
+    for (c = 0; c < updater->connlm->num_comp; c++) {
+        if (comp_updater_finish(updater->comp_updaters[c]) < 0) {
+            ST_WARNING("Failed to comp_updater_finish[%s].",
+                    updater->connlm->comps[c]->name);
+            return -1;
+        }
+    }
+
+    if (out_updater_finish(updater->out_updater) < 0) {
+        ST_WARNING("Failed to out_updater_finish.");
+        return -1;
+    }
+
+    return 0;
+}
+
 void updater_destroy(updater_t *updater)
 {
     int c;
@@ -96,7 +228,7 @@ ERR:
     return NULL;
 }
 
-int updater_setup(updater_t *updater, bool backprob)
+int updater_setup(updater_t *updater, bool backprop)
 {
     input_t *input;
 
@@ -105,7 +237,9 @@ int updater_setup(updater_t *updater, bool backprob)
 
     ST_CHECK_PARAM(updater == NULL, -1);
 
-    if (out_updater_setup(updater->out_updater, backprob) < 0) {
+    updater->backprop = backprop;
+
+    if (out_updater_setup(updater->out_updater, backprop) < 0) {
         ST_WARNING("Failed to out_updater_setup.");
         goto ERR;
     }
@@ -113,7 +247,7 @@ int updater_setup(updater_t *updater, bool backprob)
     updater->ctx_leftmost = 0;
     updater->ctx_rightmost = 0;
     for (c = 0; c < updater->connlm->num_comp; c++) {
-        if (comp_updater_setup(updater->comp_updaters[c], backprob) < 0) {
+        if (comp_updater_setup(updater->comp_updaters[c], backprop) < 0) {
             ST_WARNING("Failed to comp_updater_setup[%s].",
                     updater->connlm->comps[c]->name);
             goto ERR;
@@ -145,6 +279,11 @@ int updater_setup(updater_t *updater, bool backprob)
     updater->cur_pos = 0;
 
     updater->finalized = false;
+
+    if (updater_reset(updater) < 0) {
+        ST_WARNING("Failed to updater_reset.");
+        goto ERR;
+    }
 
     return 0;
 
@@ -217,27 +356,46 @@ int updater_step(updater_t *updater)
 {
     int word;
 
-    int c;
-
     ST_CHECK_PARAM(updater == NULL, -1);
 
-    for (c = 0; c < updater->connlm->num_comp; c++) {
-        if (comp_updater_step(updater->comp_updaters[c]) < 0) {
-            ST_WARNING("Failed to comp_updater_step[%s].",
-                    updater->connlm->comps[c]->name);
-            return -1;
-        }
-    }
-    if (out_updater_step(updater->out_updater) < 0) {
-        ST_WARNING("Failed to out_updater_step.");
+    word = updater->words[updater->cur_pos];
+
+    if (updater_start(updater, word) < 0) {
+        ST_WARNING("updater_start.");
         return -1;
     }
 
-    word = updater->words[updater->cur_pos];
+    if (updater_forward(updater, word) < 0) {
+        ST_WARNING("Failed to updater_forward.");
+        return -1;
+    }
+
+    if (updater->backprop) {
+        if (updater_backprop(updater, word) < 0) {
+            ST_WARNING("Failed to updater_backprop.");
+            return -1;
+        }
+    }
+
+    if (updater_end(updater, word) < 0) {
+        ST_WARNING("updater_end.");
+        return -1;
+    }
+
+    if (word == SENT_END_ID) {
+        if (updater_reset(updater) < 0) {
+            ST_WARNING("Failed to updater_reset.");
+            return -1;
+        }
+    }
+
     updater->cur_pos++;
 
     if (updater->finalized) {
-        // update_minibatch
+        if (updater_finish(updater) < 0) {
+            ST_WARNING("Failed to updater_finish.");
+            return -1;
+        }
     }
 
     return word;
@@ -258,160 +416,3 @@ int updater_get_logp(updater_t *updater, int word, double *logp)
 
     return 0;
 }
-
-#if 0
-int updater_reset(updater_t *updater)
-{
-    int c;
-
-    ST_CHECK_PARAM(updater == NULL, -1);
-
-    if (output_reset(updater->output) < 0) {
-        ST_WARNING("Failed to output_reset.");
-        return -1;
-    }
-
-    for (c = 0; c < updater->num_comp; c++) {
-        if (comp_reset(updater->comps[c], tid, backprop) < 0) {
-            ST_WARNING("Failed to comp_reset[%s].", updater->comps[c]->name);
-            return -1;
-        }
-    }
-
-    return 0;
-}
-
-int updater_start(updater_t *updater, int word, int tid, bool backprop)
-{
-    int c;
-
-    ST_CHECK_PARAM(updater == NULL, -1);
-
-    if (output_start(updater->output, word, tid, backprop) < 0) {
-        ST_WARNING("Failed to output_start.");
-        return -1;
-    }
-
-    for (c = 0; c < updater->num_comp; c++) {
-        if (comp_start(updater->comps[c], word, tid, backprop) < 0) {
-            ST_WARNING("Failed to comp_start[%s].", updater->comps[c]->name);
-            return -1;
-        }
-    }
-
-    return 0;
-}
-
-int updater_end(updater_t *updater, int word, int tid, bool backprop)
-{
-    int c;
-
-    ST_CHECK_PARAM(updater == NULL, -1);
-
-    if (output_end(updater->output, word, tid, backprop) < 0) {
-        ST_WARNING("Failed to output_end.");
-        return -1;
-    }
-
-    for (c = 0; c < updater->num_comp; c++) {
-        if (comp_end(updater->comps[c], word, tid, backprop) < 0) {
-            ST_WARNING("Failed to comp_end[%s].", updater->comps[c]->name);
-            return -1;
-        }
-    }
-
-    return 0;
-}
-
-int updater_finish(updater_t *updater, int tid, bool backprop)
-{
-    int c;
-
-    ST_CHECK_PARAM(updater == NULL, -1);
-
-    if (output_finish(updater->output, tid, backprop) < 0) {
-        ST_WARNING("Failed to output_finish.");
-        return -1;
-    }
-
-    for (c = 0; c < updater->num_comp; c++) {
-        if (comp_finish(updater->comps[c], tid, backprop) < 0) {
-            ST_WARNING("Failed to comp_finish[%s].", updater->comps[c]->name);
-            return -1;
-        }
-    }
-
-    return 0;
-}
-
-static int updater_forward_hidden(updater_t *updater, int tid)
-{
-    int c;
-
-    ST_CHECK_PARAM(updater == NULL, -1);
-
-    for (c = 0; c < updater->num_comp; c++) {
-        if (comp_forward(updater->comps[c], updater->output, tid) < 0) {
-            ST_WARNING("Failed to comp_forward.");
-            return -1;
-        }
-    }
-
-    return 0;
-}
-
-int updater_forward(updater_t *updater, int word, int tid)
-{
-    ST_CHECK_PARAM(updater == NULL, -1);
-
-    if (updater_forward_hidden(updater, tid) < 0) {
-        ST_WARNING("Failed to updater_forward_hidden.");
-        return -1;
-    }
-
-    if (output_forward(updater->output, word, tid) < 0) {
-        ST_WARNING("Failed to output_forward.");
-        return -1;
-    }
-
-    return 0;
-}
-
-int updater_fwd_bp(updater_t *updater, int word, int tid)
-{
-    int c;
-
-    ST_CHECK_PARAM(updater == NULL, -1);
-
-    for (c = 0; c < updater->num_comp; c++) {
-        if (comp_fwd_bp(updater->comps[c], word, tid) < 0) {
-            ST_WARNING("Failed to comp_fwd_bp[%s].", updater->comps[c]->name);
-            return -1;
-        }
-    }
-
-    return 0;
-}
-
-int updater_backprop(updater_t *updater, int word, int tid)
-{
-    int c;
-
-    ST_CHECK_PARAM(updater == NULL, -1);
-
-    if (output_loss(updater->output, word, tid) < 0) {
-        ST_WARNING("Failed to output_loss.");
-        return -1;
-    }
-
-    for (c = 0; c < updater->num_comp; c++) {
-        if (comp_backprop(updater->comps[c], tid) < 0) {
-            ST_WARNING("Failed to comp_backprop[%s].",
-                    updater->comps[c]->name);
-            return -1;
-        }
-    }
-
-    return 0;
-}
-#endif

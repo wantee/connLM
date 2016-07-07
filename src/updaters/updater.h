@@ -57,6 +57,7 @@ typedef struct _updater_t_ {
     int ctx_rightmost; /**< rightmost for all input contexts. */
 
     bool finalized; /**< whether finalized by caller. */
+    bool backprop; /**< whether do backpropagation. */
 } updater_t;
 
 /**
@@ -138,41 +139,6 @@ int updater_finalize(updater_t *updater);
  * @return non-zero value if any error.
  */
 int updater_get_logp(updater_t *updater, int word, double *logp);
-
-#if 0
-/**
- * Feed-forward one word for a thread of connlm model.
- * @ingroup g_connlm
- * @param[in] connlm connlm model.
- * @param[in] word current word.
- * @param[in] tid thread id.
- * @see connlm_backprop
- * @return non-zero value if any error.
- */
-int connlm_forward(connlm_t *connlm, int word, int tid);
-
-/**
- * Back-propagate one word for a thread of connlm model.
- * @ingroup g_connlm
- * @param[in] connlm connlm model.
- * @param[in] word current word.
- * @param[in] tid thread id.
- * @see connlm_forward
- * @return non-zero value if any error.
- */
-int connlm_backprop(connlm_t *connlm, int word, int tid);
-
-/**
- * Training between feed-forward and back-propagate for connlm model.
- * Called between forward and backprop during training a word.
- * @ingroup g_connlm
- * @param[in] connlm connlm model.
- * @param[in] word current word.
- * @param[in] tid thread id.
- * @return non-zero value if any error.
- */
-int connlm_fwd_bp(connlm_t *connlm, int word, int tid);
-#endif
 
 #ifdef __cplusplus
 }

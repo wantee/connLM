@@ -86,12 +86,94 @@ out_updater_t* out_updater_create(output_t *output);
 int out_updater_setup(out_updater_t *out_updater, bool backprob);
 
 /**
- * Step one word for a out_updater.
+ * Reset running for out_updater.
+ * Called before every input sentence to be performed.
+ * @ingroup g_updater_out
+ * @param[in] out_updater out_updater.
+ * @param[in] word current predicted word.
+ * @return non-zero value if any error.
+ */
+int out_updater_reset(out_updater_t *out_updater);
+
+/**
+ * Start running for out_updater.
+ * Called before every input word to be performed.
+ * @ingroup g_updater_out
+ * @param[in] out_updater out_updater.
+ * @param[in] word current predicted word.
+ * @return non-zero value if any error.
+ */
+int out_updater_start(out_updater_t *out_updater, int word);
+
+/**
+ * Feed-forward one word for a out_updater.
+ * @ingroup g_updater_out
+ * @param[in] out_updater out_updater.
+ * @param[in] word current predicted word.
+ * @see out_updater_backprop
+ * @return non-zero value if any error.
+ */
+int out_updater_forward(out_updater_t *out_updater, int word);
+
+/**
+ * Back-propagate one word for a out_updater.
+ * @ingroup g_updater_out
+ * @param[in] out_updater out_updater.
+ * @param[in] word current predicted word.
+ * @see out_updater_forward
+ * @return non-zero value if any error.
+ */
+int out_updater_backprop(out_updater_t *out_updater, int word);
+
+/**
+ * End running for out_updater.
+ * Called after every input word performed.
+ * @ingroup g_updater_out
+ * @param[in] out_updater out_updater.
+ * @param[in] word current predicted word.
+ * @return non-zero value if any error.
+ */
+int out_updater_end(out_updater_t *out_updater, int word);
+
+/**
+ * Finish running for out_updater.
+ * Called after all words performed.
  * @ingroup g_updater_out
  * @param[in] out_updater out_updater.
  * @return non-zero value if any error.
  */
-int out_updater_step(out_updater_t *out_updater);
+int out_updater_finish(out_updater_t *out_updater);
+
+#if 0
+/**
+ * Compute loss of neurons of output tree.
+ * @ingroup g_output
+ * @param[in] output output tree related.
+ * @param[in] word current word.
+ * @param[in] tid thread id (neuron id).
+ * @return non-zero value if any error.
+ */
+int output_loss(output_t *output, int word, int tid);
+
+/**
+ * Generate a word from output tree.
+ * @ingroup g_output
+ * @param[in] output output tree related.
+ * @param[in] tid thread id (neuron id).
+ * @return non-zero value if any error.
+ */
+int output_gen_word(output_t *output, int tid);
+
+/**
+ * Get log probability of a word.
+ * @ingroup g_output
+ * @param[in] output output tree related.
+ * @param[in] word current word.
+ * @param[in] tid thread id (neuron id).
+ * @return non-zero value if any error.
+ */
+double output_get_logprob(output_t *output, int word, int tid);
+#endif
 
 #ifdef __cplusplus
 }
