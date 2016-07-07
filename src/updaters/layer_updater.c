@@ -22,11 +22,7 @@
  * SOFTWARE.
  */
 
-#include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
-#include <math.h>
 
 #include <stutils/st_macro.h>
 #include <stutils/st_log.h>

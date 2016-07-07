@@ -85,6 +85,14 @@ out_updater_t* out_updater_create(output_t *output);
  */
 int out_updater_setup(out_updater_t *out_updater, bool backprob);
 
+/**
+ * Step one word for a out_updater.
+ * @ingroup g_updater_out
+ * @param[in] out_updater out_updater.
+ * @return non-zero value if any error.
+ */
+int out_updater_step(out_updater_t *out_updater);
+
 #ifdef __cplusplus
 }
 #endif

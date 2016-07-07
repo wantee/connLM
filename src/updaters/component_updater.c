@@ -22,11 +22,7 @@
  * SOFTWARE.
  */
 
-#include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
-#include <math.h>
 
 #include <stutils/st_macro.h>
 #include <stutils/st_log.h>
@@ -107,6 +103,13 @@ int comp_updater_setup(comp_updater_t *comp_updater, bool backprob)
             return -1;
         }
     }
+
+    return 0;
+}
+
+int comp_updater_step(comp_updater_t *comp_updater)
+{
+    ST_CHECK_PARAM(comp_updater == NULL, -1);
 
     return 0;
 }

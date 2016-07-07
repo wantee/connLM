@@ -85,6 +85,14 @@ comp_updater_t* comp_updater_create(component_t *comp);
  */
 int comp_updater_setup(comp_updater_t *comp_updater, bool backprob);
 
+/**
+ * Step one word for a comp_updater.
+ * @ingroup g_updater_comp
+ * @param[in] comp_updater comp_updater.
+ * @return non-zero value if any error.
+ */
+int comp_updater_step(comp_updater_t *comp_updater);
+
 #ifdef __cplusplus
 }
 #endif

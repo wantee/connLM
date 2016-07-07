@@ -189,6 +189,64 @@ int driver_set_gen(driver_t *driver, driver_gen_opt_t *gen_opt,
     return 0;
 }
 
+static int driver_steps(driver_t *driver, int tid, double *logp,
+        double *logp_sent, count_t *sents, count_t *words)
+{
+    updater_t *updater;
+
+    int word;
+    double logp_word;
+
+    ST_CHECK_PARAM(driver == NULL || tid < 0 || logp == NULL
+            || logp_sent == NULL || sents == NULL || words == NULL, -1);
+
+    updater = driver->updaters[tid];
+
+    while (updater_steppable(updater)) {
+        word = updater_step(updater);
+        if (word < 0) {
+            ST_WARNING("Failed to updater_step.");
+            return -1;
+        }
+
+        if (updater_get_logp(updater, word, &logp_word) < 0) {
+            ST_WARNING("Failed to updater_get_logp for word[%d].", word);
+        }
+
+        *logp += logp_word;
+        if (driver->eval_opt != NULL) {
+            *logp_sent += logn10(logp_word, driver->eval_opt->out_log_base);
+        }
+
+        if ((*logp != *logp) || (isinf(*logp))) {
+            ST_WARNING("Numerical error. tid[%d], log(p_word(%d)) = %g",
+                    tid, word, logp_word);
+            return -1;
+        }
+
+        if (driver->fp_log != NULL
+                && (! driver->eval_opt->print_sent_prob)) {
+            fprintf(driver->fp_log, "%d\t%.6f\t%s", word,
+                    logn10(logp_word, driver->eval_opt->out_log_base),
+                    vocab_get_word(updater->connlm->vocab, word));
+
+            fprintf(driver->fp_log, "\n");
+        }
+
+        if (word == SENT_END_ID) {
+            if (driver->fp_log != NULL
+                    && driver->eval_opt->print_sent_prob) {
+                fprintf(driver->fp_log, "%.6f\n", *logp_sent);
+            }
+            ++(*sents);
+            *logp_sent = 0.0;
+        }
+        ++(*words);
+    }
+
+    return 0;
+}
+
 typedef struct _driver_thread_t_ {
     driver_t *driver;
     int tid;
@@ -208,14 +266,9 @@ static void* driver_thread(void *args)
     count_t words;
     count_t sents;
     double logp;
-    bool fifo;
-
     double logp_sent;
-    double logp_word;
 
-    int word;
-    int step;
-    int n_step;
+    bool fifo;
 
     struct timeval tts, tte;
     long ms;
@@ -252,57 +305,27 @@ static void* driver_thread(void *args)
         gettimeofday(&tte_wait, NULL);
 
         if (egs == NULL) { // finish
+            if (updater_finalize(updater) < 0) {
+                ST_WARNING("Failed to updater_finalize.");
+                goto ERR;
+            }
+
+            if (driver_steps(driver, tid, &logp, &logp_sent,
+                        &sents, &words) < 0) {
+                ST_WARNING("Failed to driver_steps.");
+                goto ERR;
+            }
             break;
         }
 
-        if (updater_feed(updater, egs) < 0) {
+        if (updater_feed(updater, egs->words, egs->size) < 0) {
             ST_WARNING("Failed to updater_feed.");
             goto ERR;
         }
-        n_step = updater_get_step(updater);
-        if (n_step < 0) {
-            ST_WARNING("Failed to updater_get_step.");
+
+        if (driver_steps(driver, tid, &logp, &logp_sent, &sents, &words) < 0) {
+            ST_WARNING("Failed to driver_steps.");
             goto ERR;
-        }
-
-        step = 0;
-        while (step < n_step) {
-            word = updater_step(updater, &logp_word);
-            if (word < 0) {
-                ST_WARNING("Failed to updater_step.");
-                goto ERR;
-            }
-
-            logp += logp_word;
-            if (driver->eval_opt != NULL) {
-                logp_sent += logn10(logp_word, driver->eval_opt->out_log_base);
-            }
-
-            if ((logp != logp) || (isinf(logp))) {
-                ST_WARNING("Numerical error. tid[%d], log(p_word(%d)) = %g",
-                        tid, word, logp_word);
-                goto ERR;
-            }
-
-            if (driver->fp_log != NULL
-                    && (! driver->eval_opt->print_sent_prob)) {
-                fprintf(driver->fp_log, "%d\t%.6f\t%s", word,
-                        logn10(logp_word, driver->eval_opt->out_log_base),
-                        vocab_get_word(updater->connlm->vocab, word));
-
-                fprintf(driver->fp_log, "\n");
-            }
-
-            if (word == SENT_END_ID) {
-                if (driver->fp_log != NULL
-                        && driver->eval_opt->print_sent_prob) {
-                    fprintf(driver->fp_log, "%.6f\n", logp_sent);
-                }
-                ++sents;
-                logp_sent = 0.0;
-            }
-            ++words;
-            ++step;
         }
 #if 0
         if (updater_reset(updater) < 0) {
@@ -510,15 +533,6 @@ int driver_run(driver_t *driver)
     if (driver->err != 0) {
         goto ERR;
     }
-
-#if 0
-    for (i = 0; i < n_thr; i++) {
-        if (connlm_finish(connlm, i, true) < 0) {
-            ST_WARNING("Failed to connlm_finish.");
-            goto ERR;
-        }
-    }
-#endif
 
     gettimeofday(&tte, NULL);
     ms = TIMEDIFF(tts, tte);

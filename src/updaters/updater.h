@@ -48,6 +48,15 @@ typedef struct _updater_t_ {
 
     out_updater_t *out_updater; /**< output layer updater. */
     comp_updater_t **comp_updaters; /**< component updaters. */
+
+    int *words; /**< buffer for input words. */
+    int n_word; /**< number of input words. */
+    int cap_word; /**< capacity of input words buffer. */
+    int cur_pos; /**< position of current predicted word in word buffer. */
+    int ctx_leftmost; /**< leftmost for all input contexts. */
+    int ctx_rightmost; /**< rightmost for all input contexts. */
+
+    bool finalized; /**< whether finalized by caller. */
 } updater_t;
 
 /**
@@ -90,27 +99,45 @@ int updater_setup(updater_t *updater, bool backprob);
  * Feed input words to a updater.
  * @ingroup g_updater
  * @param[in] updater updater.
- * @param[in] egs input egs.
+ * @param[in] words input words buffer.
+ * @param[in] n_word number of input words.
  * @return non-zero value if any error.
  */
-int updater_feed(updater_t *updater, connlm_egs_t *egs);
+int updater_feed(updater_t *updater, int *words, int n_word);
 
 /**
- * Get how many steps could be performed for a updater.
+ * Determine whethre can perform a step for a updater.
  * @ingroup g_updater
  * @param[in] updater updater.
- * @return current steps, -1 if any error.
+ * @return true if steppabel, otherwise false.
  */
-int updater_get_step(updater_t *updater);
+bool updater_steppable(updater_t *updater);
 
 /**
  * Step one word for a updater.
  * @ingroup g_updater
  * @param[in] updater updater.
- * @param[out] logp log probability for this word.
  * @return word for this step, -1 if any error.
  */
-int updater_step(updater_t *updater, double *logp);
+int updater_step(updater_t *updater);
+
+/**
+ * Finalize a updater for running.
+ * @ingroup g_updater
+ * @param[in] updater updater.
+ * @return non-zero value if any error.
+ */
+int updater_finalize(updater_t *updater);
+
+/**
+ * Get log probablity for word from a updater.
+ * @ingroup g_updater
+ * @param[in] updater updater.
+ * @param[in] word predicted word.
+ * @param[out] logp log probablity.
+ * @return non-zero value if any error.
+ */
+int updater_get_logp(updater_t *updater, int word, double *logp);
 
 #if 0
 /**

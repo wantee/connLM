@@ -22,11 +22,7 @@
  * SOFTWARE.
  */
 
-#include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
-#include <math.h>
 
 #include <stutils/st_macro.h>
 #include <stutils/st_log.h>
@@ -68,6 +64,13 @@ ERR:
 }
 
 int out_updater_setup(out_updater_t *out_updater, bool backprob)
+{
+    ST_CHECK_PARAM(out_updater == NULL, -1);
+
+    return 0;
+}
+
+int out_updater_step(out_updater_t *out_updater)
 {
     ST_CHECK_PARAM(out_updater == NULL, -1);
 
