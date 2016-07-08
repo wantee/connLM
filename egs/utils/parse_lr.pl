@@ -4,30 +4,45 @@ use strict;
 use warnings;
 use Getopt::Long qw(GetOptions);
 
-my $seed = 1;
 my $help;
 GetOptions(
   'help' => \$help,
-) or die "Usage: $0 < log > lr\n";
+) or die "Usage: $0 wt.names < log > lr\n";
 
 if ($help) {
-  die "Usage: $0 < log > lr\n";
+  die "Usage: $0 wt.names < log > lr\n";
 }
 
-my $sec;
+my ($fwt_names) = @ARGV;
+
+open(my $FWT_NAMES, '<', $fwt_names)
+  or die "Could not open file '$fwt_names' $!";
+
+my %wt_names;
+while(my $line = <$FWT_NAMES>) {
+  chomp $line;
+
+  $wt_names{$line} = 1;
+}
+
+my $sec = undef;
 my %lrs;
 while(my $line = <STDIN>) {
   chomp $line;
 
   if ($line =~ m/\[(.*)\]/) {
-      $sec = $1;
+    $sec = lc($1);
   }
 
-  if ($line =~ m/LEARN_RATE : ([0-9\.]+)/) {
-      $lrs{$sec} = $1;
+  if ($line =~ m/LEARN_RATE\s*:\s*([0-9\.]+)/i) {
+    $lrs{$sec} = $1;
   }
 }
 
-for my $sec (sort keys(%lrs)) {
-  print "$sec:$lrs{$sec}\n";
+for my $sec (keys(%lrs)) {
+  if ($wt_names{$sec}) {
+    my $lr = $lrs{$sec};
+    $sec =~ s!/!^!g;
+    print "--$sec^learn-rate=$lr\n";
+  }
 }

@@ -3,5 +3,5 @@ property name=maxent
 
 input context=-2,-1
 
-glue name=direct type=direct size=2M in=input out=output
+glue name=direct type=direct_wt size=2M in=input out=output
 </component>

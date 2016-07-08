@@ -97,7 +97,7 @@ void show_usage(const char *module_name)
     connlm_show_usage(module_name,
             "Train Model",
             "<train-file> <model-in> <model-out>",
-            "data/train exp/init.clm ext/01.clm",
+            "exp/init.clm data/train ext/01.clm",
             g_cmd_opt, NULL);
     param_show_usage();
     fprintf(stderr, "Individual param can be set with "
@@ -132,24 +132,35 @@ int main(int argc, const char *argv[])
                 CONNLM_GIT_COMMIT, connlm_revision());
     }
 
-    if (argc != 4) {
-        show_usage(argv[0]);
-        goto ERR;
+    if (g_dry_run) {
+        if (argc != 2) {
+            show_usage(argv[0]);
+            goto ERR;
+        }
+    } else {
+        if (argc != 4) {
+            show_usage(argv[0]);
+            goto ERR;
+        }
     }
 
     ST_CLEAN("Command-line: %s", args);
-    ST_CLEAN("Train: %s, Model-in: %s, Model-out: %s",
-            argv[1], argv[2], argv[3]);
+    if (g_dry_run) {
+        ST_CLEAN("Model-in: %s", argv[1]);
+    } else {
+        ST_CLEAN("Model-in: %s, Train: %s, Model-out: %s",
+                argv[1], argv[2], argv[3]);
+    }
 
-    fp = st_fopen(argv[2], "rb");
+    fp = st_fopen(argv[1], "rb");
     if (fp == NULL) {
-        ST_WARNING("Failed to st_fopen. [%s]", argv[2]);
+        ST_WARNING("Failed to st_fopen. [%s]", argv[1]);
         goto ERR;
     }
 
     connlm = connlm_load(fp);
     if (connlm == NULL) {
-        ST_WARNING("Failed to connlm_load. [%s]", argv[2]);
+        ST_WARNING("Failed to connlm_load. [%s]", argv[1]);
         goto ERR;
     }
     safe_st_fclose(fp);
@@ -165,8 +176,7 @@ int main(int argc, const char *argv[])
         return 0;
     }
 
-    reader = reader_create(&g_reader_opt, g_num_thr, connlm->vocab,
-            argv[1]);
+    reader = reader_create(&g_reader_opt, g_num_thr, connlm->vocab, argv[2]);
     if (reader == NULL) {
         ST_WARNING("Failed to reader_create.");
         goto ERR;

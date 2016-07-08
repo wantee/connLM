@@ -43,7 +43,7 @@ extern "C" {
  * Data structures and functions for direct glue.
  */
 
-#define DIRECT_GLUE_NAME "direct"
+#define DIRECT_GLUE_NAME "direct_wt"
 
 typedef struct _direct_glue_data_t_ {
     hash_size_t hash_sz;

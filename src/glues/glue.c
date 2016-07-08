@@ -719,8 +719,7 @@ int glue_load_header(glue_t **glue, int version,
     }
 
     if (fo_info != NULL) {
-        fprintf(fo_info, "\n<GLUE>\n");
-        fprintf(fo_info, "Name: %s\n", name);
+        fprintf(fo_info, "\n<GLUE>:%s\n", name);
         fprintf(fo_info, "Type: %s\n", type);
         fprintf(fo_info, "Num in layer: %d\n", num_in_layer);
         fprintf(fo_info, "Num out layer: %d\n", num_out_layer);

@@ -532,8 +532,7 @@ int comp_load_header(component_t **comp, int version,
     }
 
     if (fo_info != NULL) {
-        fprintf(fo_info, "\n<COMPONENT>\n");
-        fprintf(fo_info, "Name: %s\n", name);
+        fprintf(fo_info, "\n<COMPONENT>:%s\n", name);
         fprintf(fo_info, "Num layer: %d\n", num_layer);
         fprintf(fo_info, "Num glue: %d\n", num_glue);
     }

@@ -310,8 +310,7 @@ int layer_load_header(layer_t **layer, int version,
     }
 
     if (fo_info != NULL) {
-        fprintf(fo_info, "\n<LAYER>\n");
-        fprintf(fo_info, "Name: %s\n", name);
+        fprintf(fo_info, "\n<LAYER>:%s\n", name);
         fprintf(fo_info, "Type: %s\n", type);
         fprintf(fo_info, "Size: %d\n", size);
     }
