@@ -39,4 +39,6 @@ fi
 
 if [ `uname` == "Darwin" ]; then
   open $o.pdf
+elif which xdg-open &>/dev/null; then
+  xdg-open $o.pdf
 fi

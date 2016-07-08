@@ -254,14 +254,14 @@ int updater_setup(updater_t *updater, bool backprop)
         }
 
         input = updater->connlm->comps[c]->input;
-        if (input->context[0] < 0) {
-            if (-input->context[0] > updater->ctx_leftmost) {
-                updater->ctx_leftmost = -input->context[0];
+        if (input->context[0].i < 0) {
+            if (-input->context[0].i > updater->ctx_leftmost) {
+                updater->ctx_leftmost = -input->context[0].i;
             }
         }
-        if (input->context[input->n_ctx - 1] > 0) {
-            if (input->context[input->n_ctx - 1] > updater->ctx_rightmost) {
-                updater->ctx_rightmost = input->context[input->n_ctx - 1];
+        if (input->context[input->n_ctx - 1].i > 0) {
+            if (input->context[input->n_ctx - 1].i > updater->ctx_rightmost) {
+                updater->ctx_rightmost = input->context[input->n_ctx - 1].i;
             }
         }
     }

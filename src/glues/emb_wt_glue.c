@@ -309,6 +309,11 @@ int emb_wt_glue_init_data(glue_t *glue, input_t *input,
         return -1;
     }
 
+    if (input->combine == IC_UNDEFINED) {
+        ST_WARNING("No combine specified in input.");
+        return -1;
+    }
+
     data = (emb_wt_glue_data_t *)glue->extra;
     data->emb_wt = wt_init(layers[glue->out_layers[0]]->size,
                 input->input_size);

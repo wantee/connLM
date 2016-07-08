@@ -32,8 +32,9 @@
 #include "glues/direct_glue.h"
 #include "connlm.h"
 
+#include "input-test.h"
+
 #define MAX_REF_COMP_NUM 16
-#define MAX_REF_CTX_NUM 16
 #define MAX_REF_LAYER_NUM 16
 #define MAX_REF_GLUE_NUM 16
 #define MAX_REF_GLUE_IN_NUM 16
@@ -41,14 +42,13 @@
 
 #define VOCAB_SIZE 16
 
-typedef struct _ref_t_ {
+typedef struct _connlm_ref_t_ {
     output_norm_t norm;
 
     char comp_name[MAX_NAME_LEN];
     int num_comp;
 
-    int input_ctx[MAX_REF_COMP_NUM][MAX_REF_CTX_NUM];
-    int num_input_ctx[MAX_REF_COMP_NUM];
+    input_ref_t input_refs[MAX_REF_COMP_NUM];
     char layer_name[MAX_NAME_LEN];
     int num_layer[MAX_REF_COMP_NUM];
     char layer_type[MAX_REF_COMP_NUM][MAX_REF_LAYER_NUM][MAX_NAME_LEN];
@@ -74,7 +74,7 @@ typedef struct _ref_t_ {
     struct direct_glue_ref {
         long long sz;
     } direct_glue[MAX_REF_GLUE_NUM];
-} ref_t;
+} connlm_ref_t;
 
 static char* get_layer_name(char *name, int name_len,
         const char *layer_name, int id)
@@ -100,8 +100,9 @@ static const char *norm_str[] = {
     "NCE",
 };
 
-static FILE* mk_topo_file(ref_t *ref)
+static FILE* connlm_mk_topo_file(connlm_ref_t *ref)
 {
+    char line[MAX_LINE_LEN];
     char name[MAX_NAME_LEN];
     FILE *fp;
 
@@ -124,12 +125,9 @@ static FILE* mk_topo_file(ref_t *ref)
         fprintf(fp, "property name=%s%d\n", ref->comp_name, c);
         fprintf(fp, "\n");
 
-        fprintf(fp, "input context=");
-        for (i = 0; i < ref->num_input_ctx[c] - 1; i++) {
-            fprintf(fp, "%d,", ref->input_ctx[c][i]);
-        }
-        fprintf(fp, "%d\n", ref->input_ctx[c][i]);
-        fprintf(fp, "\n");
+
+        input_test_mk_topo_line(line, ref->input_refs + c);
+        fprintf(fp, "%s\n", line);
 
         for (l = 0; l < ref->num_layer[c]; l++) {
             fprintf(fp, "layer name=%s%d type=%s size=%d \n",
@@ -256,26 +254,16 @@ static FILE* mk_topo_file(ref_t *ref)
     return fp;
 }
 
-static int check_input(input_t *input, int input_size, int *context,
-        int n_ctx)
+static int check_input(input_t *input, int input_size, input_ref_t *input_ref)
 {
-    int i;
-
     if (input->input_size != input_size) {
         fprintf(stderr, "input size not match.\n");
         return -1;
     }
 
-    if (input->n_ctx != n_ctx) {
-        fprintf(stderr, "n_ctx not match.\n");
+    if (input_test_check_input(input, input_ref) < 0) {
+        fprintf(stderr, "input not match.\n");
         return -1;
-    }
-
-    for (i = 0; i < input->n_ctx; i++) {
-        if (input->context[i] != context[i]) {
-            fprintf(stderr, "context[%d] not match.\n", i);
-            return -1;
-        }
     }
 
     return 0;
@@ -326,7 +314,7 @@ static int check_layer(layer_t *layer, char *name, int id,
     return 0;
 }
 
-static int check_glue(glue_t *glue, ref_t *ref, int c, int g, int sum_i,
+static int check_glue(glue_t *glue, connlm_ref_t *ref, int c, int g, int sum_i,
         int direct_i, layer_t **layers, int n_layer)
 {
     char name[MAX_NAME_LEN];
@@ -427,7 +415,7 @@ static int check_glue(glue_t *glue, ref_t *ref, int c, int g, int sum_i,
     return 0;
 }
 
-static int check_connlm(connlm_t *connlm, ref_t *ref)
+static int check_connlm(connlm_t *connlm, connlm_ref_t *ref)
 {
     int c, l, sum_i, direct_i;
 
@@ -447,8 +435,7 @@ static int check_connlm(connlm_t *connlm, ref_t *ref)
         }
 
         if (check_input(connlm->comps[c]->input, VOCAB_SIZE,
-                    ref->input_ctx[c],
-                    ref->num_input_ctx[c]) != 0) {
+                    ref->input_refs + c) != 0) {
             fprintf(stderr, "input not match\n");
             return -1;
         }
@@ -500,8 +487,8 @@ static int unit_test_connlm_read_topo_bad()
     int ncase = 0;
     connlm_t *connlm = NULL;
     vocab_t *vocab = NULL;
-    ref_t ref;
-    ref_t std_ref = {
+    connlm_ref_t ref;
+    connlm_ref_t std_ref = {
         .norm = ON_SOFTMAX,
         .comp_name = "comp",
         .num_comp = 2,
@@ -545,7 +532,7 @@ static int unit_test_connlm_read_topo_bad()
     fprintf(stderr, "    Case %d...", ncase++);
     ref = std_ref;
     ref.num_comp = 0;
-    fp = mk_topo_file(&ref);
+    fp = connlm_mk_topo_file(&ref);
     connlm = connlm_new(vocab, NULL, NULL, 0);
     if (connlm_init(connlm, fp) >= 0) {
         fprintf(stderr, "Failed\n");
@@ -562,7 +549,7 @@ static int unit_test_connlm_read_topo_bad()
     ref.num_comp = 1;
     ref.num_layer[0] = 0;
     ref.num_glue[0] = 0;
-    fp = mk_topo_file(&ref);
+    fp = connlm_mk_topo_file(&ref);
 
     connlm = connlm_new(vocab, NULL, NULL, 0);
     if (connlm_init(connlm, fp) >= 0) {
@@ -582,7 +569,7 @@ static int unit_test_connlm_read_topo_bad()
     ref.num_layer[1] = 0;
     ref.num_glue[0] = 0;
     ref.num_glue[1] = 0;
-    fp = mk_topo_file(&ref);
+    fp = connlm_mk_topo_file(&ref);
 
     connlm = connlm_new(vocab, NULL, NULL, 0);
     if (connlm_init(connlm, fp) >= 0) {
@@ -602,7 +589,7 @@ static int unit_test_connlm_read_topo_bad()
     ref.num_layer[1] = 2;
     ref.num_glue[0] = 0;
     ref.num_glue[1] = 0;
-    fp = mk_topo_file(&ref);
+    fp = connlm_mk_topo_file(&ref);
 
     connlm = connlm_new(vocab, NULL, NULL, 0);
     if (connlm_init(connlm, fp) >= 0) {
@@ -622,7 +609,7 @@ static int unit_test_connlm_read_topo_bad()
     ref.num_layer[1] = 3;
     ref.num_glue[0] = 2;
     ref.num_glue[1] = 1;
-    fp = mk_topo_file(&ref);
+    fp = connlm_mk_topo_file(&ref);
 
     connlm = connlm_new(vocab, NULL, NULL, 0);
     if (connlm_init(connlm, fp) >= 0) {
@@ -654,17 +641,27 @@ static int unit_test_connlm_read_topo_good()
     output_t *output = NULL;
     char word[16];
 
-    ref_t ref;
+    connlm_ref_t ref;
     int i;
     int ncase = 0;
-    ref_t std_ref = {
+    connlm_ref_t std_ref = {
         .norm = ON_SOFTMAX,
 
         .comp_name = "comp",
         .num_comp = 2,
 
-        .input_ctx = {{-1}, {-1}},
-        .num_input_ctx = {1, 1},
+        .input_refs = {
+            {
+                .n_ctx = 2,
+                .context = {{-1,1.0}, {1, 0.5}},
+                .combine = IC_SUM,
+            },
+            {
+                .n_ctx = 1,
+                .context = {{-1,1.0}},
+                .combine = IC_AVG,
+            },
+        },
         .layer_name = "layer",
         .num_layer = {0, 2},
         .layer_type = {{}, {"sigmoid", "sigmoid"},},
@@ -724,7 +721,7 @@ static int unit_test_connlm_read_topo_good()
     /***************************************************/
     fprintf(stderr, "    Case %d...", ncase++);
     ref = std_ref;
-    fp = mk_topo_file(&ref);
+    fp = connlm_mk_topo_file(&ref);
     connlm = connlm_new(vocab, output, NULL, 0);
     assert(connlm != NULL);
     if (connlm_init(connlm, fp) < 0) {

@@ -148,3 +148,42 @@ int comp_updater_finish(comp_updater_t *comp_updater)
 
     return 0;
 }
+
+#if 0
+int comp_forward(component_t *comp, output_t *output, int tid)
+{
+    glue_t *glue;
+    int g;
+
+    ST_CHECK_PARAM(comp == NULL || output == NULL, -1);
+
+    for (g = 0; g < comp->num_glue; g++) {
+        glue = comp->glues[comp->fwd_order[g]];
+        if (glue_forward(glue, comp->input, output,
+                    comp->layers, comp->num_layer, tid) < 0) {
+            ST_WARNING("Failed to forward glue[%s].", glue->name);
+            return -1;
+        }
+    }
+
+    return 0;
+}
+
+int comp_backprop(component_t *comp, int tid)
+{
+    glue_t *glue;
+    int g;
+
+    ST_CHECK_PARAM(comp == NULL, -1);
+
+    for (g = comp->num_glue - 1; g >= 0; g--) {
+        glue = comp->glues[comp->fwd_order[g]];
+        if (glue_backprop(glue, tid) < 0) {
+            ST_WARNING("Failed to backprop glue[%s].", glue->name);
+            return -1;
+        }
+    }
+
+    return 0;
+}
+#endif

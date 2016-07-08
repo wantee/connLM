@@ -356,6 +356,10 @@ int direct_glue_init_data(glue_t *glue, input_t *input,
         return -1;
     }
 
+    if (input->combine != IC_UNDEFINED) {
+        ST_WARNING("combine will be ignored.");
+    }
+
     data = (direct_glue_data_t *)glue->extra;
     data->direct_wt = direct_wt_init(data->hash_sz);
     if (data->direct_wt == NULL) {

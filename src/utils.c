@@ -264,20 +264,6 @@ void connlm_show_usage(const char *module_name, const char *header,
     }
 }
 
-int int_comp(const void *elem1, const void *elem2)
-{
-    int f = *((int*)elem1);
-    int s = *((int*)elem2);
-    if (f > s) return  1;
-    if (f < s) return -1;
-    return 0;
-}
-
-void int_sort(int *A, size_t n)
-{
-    qsort(A, n, sizeof(int), int_comp);
-}
-
 model_filter_t parse_model_filter(const char *mdl_filter,
         char *mdl_file, size_t mdl_file_len, char **comp_names,
         int *num_comp)

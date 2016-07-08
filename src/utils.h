@@ -56,8 +56,6 @@ void connlm_show_usage(const char *module_name, const char *header,
         const char *usage, const char *eg,
         st_opt_t *opt, const char *trailer);
 
-void int_sort(int *A, size_t n);
-
 typedef enum _model_filter_t_ {
     MF_NONE       = 0x0000,
     MF_VOCAB      = 0x0001,

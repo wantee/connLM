@@ -376,6 +376,7 @@ static int direct_wt_get_hash(hash_t *hash, hash_t init_val,
 int direct_wt_forward(direct_wt_t *direct_wt, real_t scale,
         input_t *input, output_t *output, int tid)
 {
+#if 0
     hash_t hash[MAX_HASH_ORDER];
     input_neuron_t *in_neu;
     output_neuron_t *out_neu;
@@ -454,6 +455,7 @@ int direct_wt_forward(direct_wt_t *direct_wt, real_t scale,
             }
         }
     }
+#endif
 
     return 0;
 }

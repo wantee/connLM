@@ -26,62 +26,7 @@
 #include <assert.h>
 #include <string.h>
 
-#include <stutils/st_utils.h>
-
-#include "input.h"
-
-#define N_CTX 16
-typedef struct _ref_t_ {
-    int context[N_CTX];
-    int n_ctx;
-} ref_t;
-
-static void mk_topo_line(char *line, ref_t *ref)
-{
-    char array[1024];
-    char buf[20];
-    int i;
-
-    assert(line != NULL && ref != NULL);
-
-    array[0] = '\0';
-    for (i = 0; i < ref->n_ctx - 1; i++) {
-        snprintf(buf, 20, "%d,", ref->context[i]);
-        strcat(array, buf);
-    }
-    snprintf(buf, 20, "%d", ref->context[i]);
-    strcat(array, buf);
-
-    sprintf(line, "input context=%s", array);
-#ifdef _CONNLM_TEST_PRINT_TOPO_
-    {
-        fprintf(stderr, "%s", line);
-    }
-#endif
-}
-
-static int check_input(input_t *input, ref_t *ref)
-{
-    int i;
-
-    assert(input != NULL && ref != NULL);
-
-    if (input->n_ctx != ref->n_ctx) {
-        fprintf(stderr, "n_ctx not match[%d/%d]\n",
-                input->n_ctx, ref->n_ctx);
-        return -1;
-    }
-
-    for (i = 0; i < ref->n_ctx; i++) {
-        if (input->context[i] != ref->context[i]) {
-            fprintf(stderr, "context not match[%d:%d/%d]\n",
-                    i, input->context[i], ref->context[i]);
-            return -1;
-        }
-    }
-
-    return 0;
-}
+#include "input-test.h"
 
 static int unit_test_input_read_topo()
 {
@@ -89,10 +34,11 @@ static int unit_test_input_read_topo()
     int ncase = 0;
     input_t *input = NULL;
     int input_sz = 15;
-    ref_t ref;
-    ref_t std_ref = {
+    input_ref_t ref;
+    input_ref_t std_ref = {
         .n_ctx = 2,
-        .context = {-1,1},
+        .context = {{-1,1.0}, {1, 0.5}},
+        .combine = IC_SUM,
     };
 
     fprintf(stderr, "  Testing Reading topology line...\n");
@@ -101,13 +47,13 @@ static int unit_test_input_read_topo()
     fprintf(stderr, "    Case %d...", ncase++);
     ref = std_ref;
     line[0] = '\0';
-    mk_topo_line(line, &ref);
+    input_test_mk_topo_line(line, &ref);
     input = input_parse_topo(line, input_sz);
     if (input == NULL) {
         fprintf(stderr, "Failed\n");
         goto ERR;
     }
-    if (check_input(input, &ref) != 0) {
+    if (input_test_check_input(input, &ref) != 0) {
         fprintf(stderr, "Failed\n");
         goto ERR;
     }
