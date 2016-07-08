@@ -176,9 +176,10 @@ int emb_wt_glue_parse_topo(glue_t *glue, const char *line)
     return 0;
 }
 
-bool emb_wt_glue_check(glue_t *glue, layer_t **layers, int n_layer)
+bool emb_wt_glue_check(glue_t *glue, layer_t **layers, int n_layer,
+        input_t *input, output_t *output)
 {
-    ST_CHECK_PARAM(glue == NULL, false);
+    ST_CHECK_PARAM(glue == NULL || input == NULL, false);
 
     if (strcasecmp(glue->type, EMB_WT_GLUE_NAME) != 0) {
         ST_WARNING("Not a emb_wt glue. [%s]", glue->type);
@@ -210,6 +211,25 @@ bool emb_wt_glue_check(glue_t *glue, layer_t **layers, int n_layer)
                 OUTPUT_LAYER_NAME) == 0) {
         ST_WARNING("emb_wt glue: out layer should not be output layer.");
         return false;
+    }
+
+    if (input->n_ctx > 1) {
+        if (input->combine == IC_UNDEFINED) {
+            ST_WARNING("emb_wt glue: No combine specified in input.");
+            return false;
+        }
+    } else {
+        if (input->combine == IC_UNDEFINED) {
+            input->combine = IC_CONCAT;
+        }
+    }
+
+    if (input->combine == IC_CONCAT) {
+        if (layers[glue->out_layers[0]]->size % input->n_ctx != 0) {
+            ST_WARNING("emb_wt glue: can not apply CONCAT combination. "
+                    "hidden layer size can not divided by context number.");
+            return false;
+        }
     }
 
     return true;
@@ -301,6 +321,7 @@ int emb_wt_glue_init_data(glue_t *glue, input_t *input,
         layer_t **layers, output_t *output)
 {
     emb_wt_glue_data_t *data;
+    int size;
 
     ST_CHECK_PARAM(glue == NULL || input == NULL || layers == NULL, -1);
 
@@ -309,14 +330,13 @@ int emb_wt_glue_init_data(glue_t *glue, input_t *input,
         return -1;
     }
 
-    if (input->combine == IC_UNDEFINED) {
-        ST_WARNING("No combine specified in input.");
-        return -1;
-    }
-
     data = (emb_wt_glue_data_t *)glue->extra;
-    data->emb_wt = wt_init(layers[glue->out_layers[0]]->size,
-                input->input_size);
+
+    size = layers[glue->out_layers[0]]->size;
+    if (input->combine == IC_CONCAT) {
+        size /= input->n_ctx;
+    }
+    data->emb_wt = wt_init(size, input->input_size);
     if (data->emb_wt == NULL) {
         ST_WARNING("Failed to wt_init.");
         return -1;

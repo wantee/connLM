@@ -78,9 +78,12 @@ int clone_glue_parse_topo(glue_t *glue, const char *line);
  * @param[in] glue specific glue.
  * @param[in] layers layers in the component.
  * @param[in] n_layer number of layers.
+ * @param[in] input input layer.
+ * @param[in] output output layer.
  * @return non-zero if any error
  */
-bool clone_glue_check(glue_t *glue, layer_t **layers, int n_layer);
+bool clone_glue_check(glue_t *glue, layer_t **layers, int n_layer,
+        input_t *input, output_t *output);
 
 /**
  * Provide label string for drawing clone glue.

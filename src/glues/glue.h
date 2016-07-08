@@ -59,8 +59,8 @@ typedef struct _glue_implementation_t_ {
     int (*parse_topo)(glue_t *glue,
             const char *line); /**< parse topo for glue. */
 
-    bool (*check)(glue_t *glue, layer_t **layers,
-            int n_layer); /**< check glue's definition. */
+    bool (*check)(glue_t *glue, layer_t **layers, int n_layer, input_t *input,
+            output_t *output); /**< check glue's definition. */
 
     char* (*draw_label)(glue_t *glue, char *label,
             size_t label_len); /**< label for drawing a glue. */
@@ -142,9 +142,12 @@ glue_t* glue_dup(glue_t *g);
  * @param[in] line topo config line.
  * @param[in] layers named layers.
  * @param[in] n_layer number of named layers.
+ * @param[in] input input layer.
+ * @param[in] output output layer.
  * @return a new glue or NULL if error.
  */
-glue_t* glue_parse_topo(const char *line, layer_t **layers, int n_layer);
+glue_t* glue_parse_topo(const char *line, layer_t **layers,
+        int n_layer, input_t *input, output_t *output);
 
 /**
  * Check a glue after loading from topo line.

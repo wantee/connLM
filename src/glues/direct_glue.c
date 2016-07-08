@@ -217,9 +217,10 @@ ERR:
     return -1;
 }
 
-bool direct_glue_check(glue_t *glue, layer_t **layers, int n_layer)
+bool direct_glue_check(glue_t *glue, layer_t **layers, int n_layer,
+        input_t *input, output_t *output)
 {
-    ST_CHECK_PARAM(glue == NULL, false);
+    ST_CHECK_PARAM(glue == NULL || input == NULL, false);
 
     if (strcasecmp(glue->type, DIRECT_GLUE_NAME) != 0) {
         ST_WARNING("Not a direct glue. [%s]", glue->type);
@@ -246,6 +247,10 @@ bool direct_glue_check(glue_t *glue, layer_t **layers, int n_layer)
                 OUTPUT_LAYER_NAME) != 0) {
         ST_WARNING("direct_wt glue: out layer should be output layer.");
         return false;
+    }
+
+    if (input->combine != IC_UNDEFINED) {
+        ST_WARNING("combine will be ignored.");
     }
 
     return true;
@@ -354,10 +359,6 @@ int direct_glue_init_data(glue_t *glue, input_t *input,
     if (strcasecmp(glue->type, DIRECT_GLUE_NAME) != 0) {
         ST_WARNING("Not a direct glue. [%s]", glue->type);
         return -1;
-    }
-
-    if (input->combine != IC_UNDEFINED) {
-        ST_WARNING("combine will be ignored.");
     }
 
     data = (direct_glue_data_t *)glue->extra;

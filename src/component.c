@@ -285,6 +285,10 @@ component_t *comp_init_from_topo(const char* topo_content,
             }
             comp->num_layer++;
         } else if (strcasecmp("layer", token) == 0) {
+            if (comp->input == NULL) {
+                ST_WARNING("input definition should place before layer.");
+                goto ERR;
+            }
             comp->layers = (layer_t **)realloc(comp->layers,
                     sizeof(layer_t *) * (comp->num_layer + 1));
             if (comp->layers == NULL) {
@@ -299,6 +303,10 @@ component_t *comp_init_from_topo(const char* topo_content,
             }
             comp->num_layer++;
         } else if (strcasecmp("glue", token) == 0) {
+            if (comp->input == NULL) {
+                ST_WARNING("input definition should place before glue.");
+                goto ERR;
+            }
             comp->glues = (glue_t **)realloc(comp->glues,
                     sizeof(glue_t *) * (comp->num_glue + 1));
             if (comp->glues == NULL) {
@@ -307,7 +315,7 @@ component_t *comp_init_from_topo(const char* topo_content,
             }
 
             comp->glues[comp->num_glue] = glue_parse_topo(line,
-                    comp->layers, comp->num_layer);
+                    comp->layers, comp->num_layer, comp->input, output);
             if (comp->glues[comp->num_glue] == NULL) {
                 ST_WARNING("Failed to glue_parse_topo.");
                 goto ERR;

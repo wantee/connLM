@@ -199,6 +199,7 @@ layer_t* input_get_layer(input_t *input)
 
     strncat(layer->name, INPUT_LAYER_NAME, MAX_NAME_LEN - 1);
     strncat(layer->type, INPUT_LAYER_NAME, MAX_NAME_LEN - 1);
+    layer->size = input->input_size;
 
     return layer;
 ERR:

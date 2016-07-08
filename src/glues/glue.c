@@ -195,7 +195,7 @@ ERR:
 }
 
 glue_t* glue_parse_topo(const char *line, layer_t **layers,
-        int n_layer)
+        int n_layer, input_t *input, output_t *output)
 {
     glue_t *glue = NULL;
 
@@ -503,7 +503,7 @@ glue_t* glue_parse_topo(const char *line, layer_t **layers,
         goto ERR;
     }
     if (glue->impl->check != NULL) {
-        if (!glue->impl->check(glue, layers, n_layer)) {
+        if (!glue->impl->check(glue, layers, n_layer, input, output)) {
             ST_WARNING("check glue failed.");
             goto ERR;
         }
