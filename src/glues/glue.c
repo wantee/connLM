@@ -27,6 +27,9 @@
 #include <stutils/st_log.h>
 #include <stutils/st_utils.h>
 
+#include "updaters/component_updater.h"
+#include "updaters/output_updater.h"
+
 #include "sum_glue.h"
 #include "append_glue.h"
 #include "clone_glue.h"
@@ -1256,48 +1259,53 @@ ST_OPT_ERR:
     return -1;
 }
 
-int glue_forward(glue_t *glue, input_t *input, output_t *output,
-        layer_t **layers, int n_layer, int tid)
+int glue_forward(glue_t *glue, comp_updater_t *comp_updater,
+        out_updater_t *out_updater)
 {
+    layer_updater_t **layer_updaters;
     int l;
     int lid;
     int off;
 
-    ST_CHECK_PARAM(glue == NULL || layers == NULL, -1);
+    ST_CHECK_PARAM(glue == NULL || comp_updater == NULL, -1);
+
+#if _CONNLM_TRACE_PROCEDURE_
+    ST_TRACE("Forward: glue[%s]", glue->name);
+#endif
+
+    layer_updaters = comp_updater->layer_updaters;
 
     for (l = 0; l < glue->num_in_layer; l++) {
         lid = glue->in_layers[l];
         off = glue->in_offsets[l];
-        if (!layers[lid]->activated) {
-            if (layer_activate(layers[lid], off, tid) < 0) {
+        if (!layer_updaters[lid]->activated) {
+            if (layer_updater_activate(layer_updaters[lid], off) < 0) {
                 ST_WARNING("Failed to layer_activate.[%s]",
-                        layers[lid]->name);
+                        comp_updater->comp->layers[lid]->name);
                 return -1;
             }
 
-            layers[lid]->activated = true;
+            layer_updaters[lid]->activated = true;
         }
     }
 
     for (l = 0; l < glue->num_out_layer; l++) {
         lid = glue->out_layers[l];
         off = glue->out_offsets[l];
-        if (!layers[lid]->cleared) {
-            if (layer_clear(layers[lid], off, tid) < 0) {
+        if (!layer_updaters[lid]->cleared) {
+            if (layer_updater_clear(layer_updaters[lid], off) < 0) {
                 ST_WARNING("Failed to layer_clear.[%s]",
-                        layers[lid]->name);
+                        comp_updater->comp->layers[lid]->name);
                 return -1;
             }
 
-            layers[lid]->cleared = true;
+            layer_updaters[lid]->cleared = true;
         }
     }
 
     if (glue->impl != NULL && glue->impl->forward != NULL) {
-        if (glue->impl->forward(glue, input, output,
-                    layers, n_layer, tid) < 0) {
-            ST_WARNING("Failed to glue->impl->forward.[%s]",
-                    glue->name);
+        if (glue->impl->forward(glue, comp_updater, out_updater) < 0) {
+            ST_WARNING("Failed to glue->impl->forward.[%s]", glue->name);
             return -1;
         }
     }
@@ -1305,9 +1313,14 @@ int glue_forward(glue_t *glue, input_t *input, output_t *output,
     return 0;
 }
 
-int glue_backprop(glue_t *glue, int tid)
+int glue_backprop(glue_t *glue, comp_updater_t *comp_updater,
+        out_updater_t *out_updater)
 {
     ST_CHECK_PARAM(glue == NULL, -1);
+
+#if _CONNLM_TRACE_PROCEDURE_
+    ST_TRACE("Backprop: glue[%s]", glue->name);
+#endif
 
     return 0;
 }

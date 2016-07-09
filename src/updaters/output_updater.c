@@ -88,12 +88,20 @@ int out_updater_forward(out_updater_t *out_updater, int word)
 {
     ST_CHECK_PARAM(out_updater == NULL || word < 0, -1);
 
+#if _CONNLM_TRACE_PROCEDURE_
+    ST_TRACE("Forward:output: word[%d]", word);
+#endif
+
     return 0;
 }
 
 int out_updater_backprop(out_updater_t *out_updater, int word)
 {
     ST_CHECK_PARAM(out_updater == NULL || word < 0, -1);
+
+#if _CONNLM_TRACE_PROCEDURE_
+    ST_TRACE("Backprop:output: word[%d]", word);
+#endif
 
     return 0;
 }

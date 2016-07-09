@@ -106,21 +106,24 @@ int comp_updater_start(comp_updater_t *comp_updater);
 /**
  * Feed-forward one word for a comp_updater.
  * @ingroup g_updater_comp
- * @param[in] comp_updater comp_updater.
- * @param[in] word current word.
+ * @param[in] comp_updater the comp_updater.
+ * @param[in] out_updater the out_updater.
  * @see comp_updater_backprop
  * @return non-zero value if any error.
  */
-int comp_updater_forward(comp_updater_t *comp_updater);
+int comp_updater_forward(comp_updater_t *comp_updater,
+        out_updater_t *out_updater);
 
 /**
  * Back-propagate one word for a comp_updater.
  * @ingroup g_updater_comp
- * @param[in] comp_updater comp_updater.
+ * @param[in] comp_updater the comp_updater.
+ * @param[in] out_updater the out_updater.
  * @see comp_updater_forward
  * @return non-zero value if any error.
  */
-int comp_updater_backprop(comp_updater_t *comp_updater);
+int comp_updater_backprop(comp_updater_t *comp_updater,
+        out_updater_t *out_updater);
 
 /**
  * End running for comp_updater.

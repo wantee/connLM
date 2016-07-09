@@ -36,11 +36,15 @@ extern "C" {
 #include "input.h"
 #include "output.h"
 #include "layers/layer.h"
+
 #include "param.h"
 
 /** @defgroup g_glue NNet glue.
  * Data structures and functions for NNet glue.
  */
+
+typedef struct _component_updater_t_ comp_updater_t;
+typedef struct _output_updater_t_ out_updater_t;
 
 typedef struct _glue_t_ glue_t;
 /**
@@ -84,8 +88,8 @@ typedef struct _glue_implementation_t_ {
             const char *sec_name,
             param_t *parent); /**< load train opt for  glue. */
 
-    int (*forward)(glue_t *glue, input_t *input, output_t *output,
-            layer_t **layers, int num_layer, int tid); /**< forward glue.*/
+    int (*forward)(glue_t *glue, comp_updater_t *comp_updater,
+            out_updater_t *out_updater); /**< forward glue.*/
 } glue_impl_t;
 
 /**
@@ -261,25 +265,24 @@ int glue_load_train_opt(glue_t *glue, st_opt_t *opt,
 /**
  * Feed-forward one word for a thread of glue.
  * @ingroup g_glue
- * @param[in] glue glue.
- * @param[in] input input layer.
- * @param[in] output output layer.
- * @param[in] layers component layers.
- * @param[in] n_layer number of layers.
- * @param[in] tid thread id (neuron id).
+ * @param[in] glue the glue.
+ * @param[in] comp_updater the comp_updater.
+ * @param[in] out_updater the out_updater.
  * @return non-zero value if any error.
  */
-int glue_forward(glue_t *glue, input_t *input, output_t *output,
-        layer_t **layers, int n_layer, int tid);
+int glue_forward(glue_t *glue, comp_updater_t *comp_updater,
+        out_updater_t *out_updater);
 
 /**
  * Back-propagate one word for a thread of component.
  * @ingroup g_glue
  * @param[in] glue glue.
- * @param[in] tid thread id (neuron id).
+ * @param[in] comp_updater the comp_updater.
+ * @param[in] out_updater the out_updater.
  * @return non-zero value if any error.
  */
-int glue_backprop(glue_t *glue, int tid);
+int glue_backprop(glue_t *glue, comp_updater_t *comp_updater,
+        out_updater_t *out_updater);
 
 #ifdef __cplusplus
 }

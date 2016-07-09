@@ -97,7 +97,8 @@ int comp_updater_setup(comp_updater_t *comp_updater, bool backprob)
     ST_CHECK_PARAM(comp_updater == NULL, -1);
 
     for (l = 0; l < comp_updater->comp->num_layer; l++) {
-        if (layer_updater_setup(comp_updater->layer_updaters[l], backprob) < 0) {
+        if (layer_updater_setup(comp_updater->layer_updaters[l],
+                    backprob) < 0) {
             ST_WARNING("Failed to layer_updater_setup[%s].",
                     comp_updater->comp->layers[l]->name);
             return -1;
@@ -121,16 +122,54 @@ int comp_updater_start(comp_updater_t *comp_updater)
     return 0;
 }
 
-int comp_updater_forward(comp_updater_t *comp_updater)
+int comp_updater_forward(comp_updater_t *comp_updater,
+        out_updater_t *out_updater)
 {
+    component_t *comp;
+    glue_t *glue;
+    int g;
+
     ST_CHECK_PARAM(comp_updater == NULL, -1);
+
+    comp = comp_updater->comp;
+
+#if _CONNLM_TRACE_PROCEDURE_
+    ST_TRACE("Forward: comp[%s]", comp->name);
+#endif
+
+    for (g = 0; g < comp->num_glue; g++) {
+        glue = comp->glues[comp->fwd_order[g]];
+        if (glue_forward(glue, comp_updater, out_updater) < 0) {
+            ST_WARNING("Failed to forward glue[%s].", glue->name);
+            return -1;
+        }
+    }
 
     return 0;
 }
 
-int comp_updater_backprop(comp_updater_t *comp_updater)
+int comp_updater_backprop(comp_updater_t *comp_updater,
+        out_updater_t *out_updater)
 {
+    component_t *comp;
+    glue_t *glue;
+    int g;
+
     ST_CHECK_PARAM(comp_updater == NULL, -1);
+
+    comp = comp_updater->comp;
+
+#if _CONNLM_TRACE_PROCEDURE_
+    ST_TRACE("Backprop: comp[%s]", comp->name);
+#endif
+
+    for (g = comp->num_glue - 1; g >= 0; g--) {
+        glue = comp->glues[comp->fwd_order[g]];
+        if (glue_backprop(glue, comp_updater, out_updater) < 0) {
+            ST_WARNING("Failed to backprop glue[%s].", glue->name);
+            return -1;
+        }
+    }
 
     return 0;
 }
@@ -148,42 +187,3 @@ int comp_updater_finish(comp_updater_t *comp_updater)
 
     return 0;
 }
-
-#if 0
-int comp_forward(component_t *comp, output_t *output, int tid)
-{
-    glue_t *glue;
-    int g;
-
-    ST_CHECK_PARAM(comp == NULL || output == NULL, -1);
-
-    for (g = 0; g < comp->num_glue; g++) {
-        glue = comp->glues[comp->fwd_order[g]];
-        if (glue_forward(glue, comp->input, output,
-                    comp->layers, comp->num_layer, tid) < 0) {
-            ST_WARNING("Failed to forward glue[%s].", glue->name);
-            return -1;
-        }
-    }
-
-    return 0;
-}
-
-int comp_backprop(component_t *comp, int tid)
-{
-    glue_t *glue;
-    int g;
-
-    ST_CHECK_PARAM(comp == NULL, -1);
-
-    for (g = comp->num_glue - 1; g >= 0; g--) {
-        glue = comp->glues[comp->fwd_order[g]];
-        if (glue_backprop(glue, tid) < 0) {
-            ST_WARNING("Failed to backprop glue[%s].", glue->name);
-            return -1;
-        }
-    }
-
-    return 0;
-}
-#endif

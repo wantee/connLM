@@ -188,15 +188,12 @@ int direct_glue_load_train_opt(glue_t *glue, st_opt_t *opt,
  * Feed-forward one word for a thread of direct_glue.
  * @ingroup g_glue_direct
  * @param[in] glue glue.
- * @param[in] input input layer.
- * @param[in] output output layer.
- * @param[in] layers component layers.
- * @param[in] n_layer number of layers.
- * @param[in] tid thread id (neuron id).
+ * @param[in] comp_updater the comp_updater.
+ * @param[in] out_updater the out_updater.
  * @return non-zero value if any error.
  */
-int direct_glue_forward(glue_t *glue, input_t *input, output_t *output,
-        layer_t **layers, int n_layer, int tid);
+int direct_glue_forward(glue_t *glue, comp_updater_t *comp_updater,
+        out_updater_t *out_updater);
 
 #ifdef __cplusplus
 }

@@ -30,8 +30,8 @@
 
 #include "direct_glue.h"
 
-int direct_glue_forward(glue_t *glue, input_t *input, output_t *output,
-        layer_t **layers, int n_layer, int tid)
+int direct_glue_forward(glue_t *glue, comp_updater_t *comp_updater,
+        out_updater_t *out_updater)
 {
     direct_glue_data_t *data = NULL;
 
@@ -40,7 +40,7 @@ int direct_glue_forward(glue_t *glue, input_t *input, output_t *output,
     data = (direct_glue_data_t *)glue->extra;
 
     if (direct_wt_forward(data->direct_wt, glue->out_scales[0],
-                input, output, tid) < 0) {
+                comp_updater, out_updater) < 0) {
         ST_WARNING("Failed to direct_wt_forward.");
         return -1;
     }

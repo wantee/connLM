@@ -31,8 +31,8 @@ extern "C" {
 
 #include <connlm/config.h>
 
-#include "input.h"
-#include "output.h"
+#include "updaters/component_updater.h"
+#include "updaters/output_updater.h"
 
 /** @defgroup g_wt_direct NNet direct weight.
  * @ingroup g_weight
@@ -146,13 +146,12 @@ direct_wt_t* direct_wt_init(hash_size_t hash_sz);
  * @ingroup g_wt_direct
  * @param[in] direct_wt direct_wt.
  * @param[in] scale out activation scale.
- * @param[in] input input layer.
- * @param[in] output output layer.
- * @param[in] tid thread id (neuron id).
+ * @param[in] comp_updater the comp_updater.
+ * @param[in] out_updater the out_updater.
  * @return non-zero value if any error.
  */
-int direct_wt_forward(direct_wt_t *direct_wt, real_t scale, input_t *input,
-        output_t *output, int tid);
+int direct_wt_forward(direct_wt_t *direct_wt, real_t scale,
+        comp_updater_t *comp_updater, out_updater_t *out_updater);
 
 #ifdef __cplusplus
 }

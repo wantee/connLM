@@ -374,9 +374,11 @@ static int direct_wt_get_hash(hash_t *hash, hash_t init_val,
 }
 
 int direct_wt_forward(direct_wt_t *direct_wt, real_t scale,
-        input_t *input, output_t *output, int tid)
+        comp_updater_t *comp_updater, out_updater_t *out_updater)
 {
 #if 0
+    ST_CHECK_PARAM(direct_wt == NULL || comp_updater == NULL
+            || out_updater == NULL, -1);
     hash_t hash[MAX_HASH_ORDER];
     input_neuron_t *in_neu;
     output_neuron_t *out_neu;

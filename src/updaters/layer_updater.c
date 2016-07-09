@@ -69,3 +69,31 @@ int layer_updater_setup(layer_updater_t *layer_updater, bool backprob)
 
     return 0;
 }
+
+int layer_updater_activate(layer_updater_t *layer_updater, int offset)
+{
+    ST_CHECK_PARAM(layer_updater == NULL || offset < 0, -1);
+
+#if 0
+    if (strcmp(layer->name, INPUT_LAYER_NAME) == 0
+            || strcmp(layer->name, OUTPUT_LAYER_NAME) == 0) {
+        return 0;
+    }
+#endif
+
+    return 0;
+}
+
+int layer_updater_clear(layer_updater_t *layer_updater, int offset)
+{
+    ST_CHECK_PARAM(layer_updater == NULL || offset < 0, -1);
+
+#if 0
+    if (strcmp(layer->name, INPUT_LAYER_NAME) == 0
+            || strcmp(layer->name, OUTPUT_LAYER_NAME) == 0) {
+        return 0;
+    }
+#endif
+
+    return 0;
+}

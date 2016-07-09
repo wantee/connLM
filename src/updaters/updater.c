@@ -79,8 +79,13 @@ static int updater_forward(updater_t *updater, int word)
 
     ST_CHECK_PARAM(updater == NULL, -1);
 
+#if _CONNLM_TRACE_PROCEDURE_
+    ST_TRACE("Forward: word[%d]", word);
+#endif
+
     for (c = 0; c < updater->connlm->num_comp; c++) {
-        if (comp_updater_forward(updater->comp_updaters[c]) < 0) {
+        if (comp_updater_forward(updater->comp_updaters[c],
+                    updater->out_updater) < 0) {
             ST_WARNING("Failed to comp_updater_forward[%s].",
                     updater->connlm->comps[c]->name);
             return -1;
@@ -101,13 +106,18 @@ static int updater_backprop(updater_t *updater, int word)
 
     ST_CHECK_PARAM(updater == NULL, -1);
 
+#if _CONNLM_TRACE_PROCEDURE_
+    ST_TRACE("Backprop: word[%d]", word);
+#endif
+
     if (out_updater_backprop(updater->out_updater, word) < 0) {
         ST_WARNING("Failed to out_updater_backprop.");
         return -1;
     }
 
     for (c = 0; c < updater->connlm->num_comp; c++) {
-        if (comp_updater_backprop(updater->comp_updaters[c]) < 0) {
+        if (comp_updater_backprop(updater->comp_updaters[c],
+                    updater->out_updater) < 0) {
             ST_WARNING("Failed to comp_updater_backprop[%s].",
                     updater->connlm->comps[c]->name);
             return -1;
@@ -314,14 +324,14 @@ int updater_feed(updater_t *updater, int *words, int n_word)
         updater->cap_word = updater->n_word + n_word;
         updater->words = (int *)realloc(updater->words,
                 sizeof(int) * updater->cap_word);
-        if (updater->words) {
+        if (updater->words == NULL) {
             ST_WARNING("Failed to realloc words.");
             return -1;
         }
         //memset(updater->words + updater->n_word, 0,
         //         sizeof(int) * (updater->cap_word - updater->n_word));
     }
-    memcpy(updater->words + updater->n_word, words, n_word);
+    memcpy(updater->words + updater->n_word, words, sizeof(int)*n_word);
     updater->n_word += n_word;
 
     return 0;
@@ -359,6 +369,10 @@ int updater_step(updater_t *updater)
     ST_CHECK_PARAM(updater == NULL, -1);
 
     word = updater->words[updater->cur_pos];
+
+#if _CONNLM_TRACE_PROCEDURE_
+    ST_TRACE("Step: word[%d]", word);
+#endif
 
     if (updater_start(updater, word) < 0) {
         ST_WARNING("updater_start.");
