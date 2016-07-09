@@ -371,16 +371,9 @@ ERR:
     return NULL;
 }
 
-typedef struct _reader_thread_t_ {
-    reader_t *reader;
-    thr_stat_t *stats;
-    unsigned random;
-    int *err;
-} reader_thr_t;
-
 static void* reader_read_thread(void *args)
 {
-    reader_thr_t *thr;
+    reader_t *reader;
     thr_stat_t *stats;
 
     FILE *text_fp = NULL;
@@ -422,17 +415,17 @@ static void* reader_read_thread(void *args)
 
     ST_CHECK_PARAM(args == NULL, NULL);
 
-    thr = (reader_thr_t *)args;
-    stats = thr->stats;
-    num_thrs = thr->reader->num_thrs;
-    epoch_size = thr->reader->opt.epoch_size;
+    reader = (reader_t *)args;
+    stats = reader->stats;
+    num_thrs = reader->num_thrs;
+    epoch_size = reader->opt.epoch_size;
 
     if (connlm_egs_ensure(&egs, NUM_WORD_PER_SENT) < 0) {
         ST_WARNING("Failed to connlm_egs_ensure.");
         goto ERR;
     }
 
-    if (thr->reader->opt.shuffle) {
+    if (reader->opt.shuffle) {
         shuffle_buf = (int *)malloc(sizeof(int) * epoch_size);
         if (shuffle_buf == NULL) {
             ST_WARNING("Failed to malloc shuffle_buf");
@@ -446,21 +439,21 @@ static void* reader_read_thread(void *args)
         }
     }
 
-    fsize = st_fsize(thr->reader->text_file);
+    fsize = st_fsize(reader->text_file);
 
-    text_fp = st_fopen(thr->reader->text_file, "rb");
+    text_fp = st_fopen(reader->text_file, "rb");
     if (text_fp == NULL) {
-        ST_WARNING("Failed to open text file[%s]", thr->reader->text_file);
+        ST_WARNING("Failed to open text file[%s]", reader->text_file);
         goto ERR;
     }
 
     num_reads = 0;
-    thr->reader->oovs = 0;
-    thr->reader->sents = 0;
-    thr->reader->words = 0;
+    reader->oovs = 0;
+    reader->sents = 0;
+    reader->words = 0;
     gettimeofday(&tts, NULL);
     while (!feof(text_fp)) {
-        if (*(thr->err) != 0) {
+        if (*(reader->err) != 0) {
             break;
         }
 
@@ -468,7 +461,7 @@ static void* reader_read_thread(void *args)
         gettimeofday(&tts_io, NULL);
 #endif
         num_sents = reader_read_egs(&egs, sent_ends,
-                epoch_size, text_fp, thr->reader->vocab, &oovs);
+                epoch_size, text_fp, reader->vocab, &oovs);
         if (num_sents < 0) {
             ST_WARNING("Failed to reader_read_egs.");
             goto ERR;
@@ -480,9 +473,9 @@ static void* reader_read_thread(void *args)
             continue;
         }
 
-        thr->reader->oovs += oovs;
-        thr->reader->sents += num_sents;
-        thr->reader->words += egs.size;
+        reader->oovs += oovs;
+        reader->sents += num_sents;
+        reader->words += egs.size;
 
 #ifdef _TIME_PROF_
         gettimeofday(&tts_shuf, NULL);
@@ -492,7 +485,7 @@ static void* reader_read_thread(void *args)
                 shuffle_buf[i] = i;
             }
 
-            st_shuffle_r(shuffle_buf, num_sents, &thr->random);
+            st_shuffle_r(shuffle_buf, num_sents, &reader->random);
         }
 #ifdef _TIME_PROF_
         gettimeofday(&tte_shuf, NULL);
@@ -501,18 +494,18 @@ static void* reader_read_thread(void *args)
 #ifdef _TIME_PROF_
         gettimeofday(&tts_lock, NULL);
 #endif
-        if (st_sem_wait(&thr->reader->sem_empty) != 0) {
+        if (st_sem_wait(&reader->sem_empty) != 0) {
             ST_WARNING("Failed to st_sem_wait sem_empty.");
             goto ERR;
         }
 
-        if (pthread_mutex_lock(&thr->reader->empty_egs_lock) != 0) {
+        if (pthread_mutex_lock(&reader->empty_egs_lock) != 0) {
             ST_WARNING("Failed to pthread_mutex_lock empty_egs_lock.");
             goto ERR;
         }
-        egs_in_pool = thr->reader->empty_egs;
-        thr->reader->empty_egs = thr->reader->empty_egs->next;
-        if (pthread_mutex_unlock(&thr->reader->empty_egs_lock) != 0) {
+        egs_in_pool = reader->empty_egs;
+        reader->empty_egs = reader->empty_egs->next;
+        if (pthread_mutex_unlock(&reader->empty_egs_lock) != 0) {
             ST_WARNING("Failed to pthread_mutex_unlock empty_egs_lock.");
             goto ERR;
         }
@@ -551,18 +544,18 @@ static void* reader_read_thread(void *args)
         gettimeofday(&tte_fill, NULL);
 #endif
 
-        if (pthread_mutex_lock(&thr->reader->full_egs_lock) != 0) {
+        if (pthread_mutex_lock(&reader->full_egs_lock) != 0) {
             ST_WARNING("Failed to pthread_mutex_lock full_egs_lock.");
             goto ERR;
         }
-        egs_in_pool->next = thr->reader->full_egs;
-        thr->reader->full_egs = egs_in_pool;
+        egs_in_pool->next = reader->full_egs;
+        reader->full_egs = egs_in_pool;
         //ST_DEBUG("IN: %p, %d", egs_in_pool, egs_in_pool->size);
-        if (pthread_mutex_unlock(&thr->reader->full_egs_lock) != 0) {
+        if (pthread_mutex_unlock(&reader->full_egs_lock) != 0) {
             ST_WARNING("Failed to pthread_mutex_unlock full_egs_lock.");
             goto ERR;
         }
-        if (st_sem_post(&thr->reader->sem_full) != 0) {
+        if (st_sem_post(&reader->sem_full) != 0) {
             ST_WARNING("Failed to st_sem_post sem_full.");
             goto ERR;
         }
@@ -604,7 +597,7 @@ static void* reader_read_thread(void *args)
                             ", OOVs: " COUNT_FMT ", words/sec: %.1f, "
                             "LogP: %f, Entropy: %f, PPL: %f, Time: %.3fs",
                             ftell(text_fp) / (fsize / 100.0),
-                            total_words, total_sents, thr->reader->oovs,
+                            total_words, total_sents, reader->oovs,
                             total_words / ((double) ms / 1000.0),
                             logp, -logp / log10(2) / total_words,
                             exp10(-logp / (double) total_words),
@@ -613,7 +606,7 @@ static void* reader_read_thread(void *args)
                     ST_TRACE("Words: " COUNT_FMT ", Sentences: " COUNT_FMT
                             ", OOVs: " COUNT_FMT ", words/sec: %.1f, "
                             "LogP: %f, Entropy: %f, PPL: %f, Time: %.3fs",
-                            total_words, total_sents, thr->reader->oovs,
+                            total_words, total_sents, reader->oovs,
                             total_words / ((double) ms / 1000.0),
                             logp, -logp / log10(2) / total_words,
                             exp10(-logp / (double) total_words),
@@ -625,7 +618,7 @@ static void* reader_read_thread(void *args)
 
     for (i = 0; i < num_thrs; i++) {
         /* posting semaphore without adding data indicates finish. */
-        if (st_sem_post(&thr->reader->sem_full) != 0) {
+        if (st_sem_post(&reader->sem_full) != 0) {
             ST_WARNING("Failed to st_sem_post sem_full.");
             goto ERR;
         }
@@ -639,7 +632,7 @@ static void* reader_read_thread(void *args)
     return NULL;
 
 ERR:
-    *(thr->err) = -1;
+    *(reader->err) = -1;
 
     connlm_egs_destroy(&egs);
     safe_fclose(text_fp);
@@ -648,7 +641,7 @@ ERR:
 
     for (i = 0; i < num_thrs; i++) {
         /* posting semaphore without adding data indicates finish. */
-        if (st_sem_post(&thr->reader->sem_full) != 0) {
+        if (st_sem_post(&reader->sem_full) != 0) {
             ST_WARNING("Failed to st_sem_post sem_full.");
             goto ERR;
         }
@@ -659,18 +652,15 @@ ERR:
 
 int reader_read(reader_t *reader, thr_stat_t *stats, int *err)
 {
-    reader_thr_t thr;
-
     ST_CHECK_PARAM(reader == NULL || stats == NULL
             || err == NULL, -1);
 
-    thr.reader = reader;
-    thr.random = reader->opt.rand_seed;
-    thr.stats = stats;
-    thr.err = err;
+    reader->random = reader->opt.rand_seed;
+    reader->stats = stats;
+    reader->err = err;
 
     if (pthread_create(&reader->tid, NULL, reader_read_thread,
-                (void *)&thr) != 0) {
+                (void *)reader) != 0) {
         ST_WARNING("Failed to pthread_create.");
         return -1;
     }

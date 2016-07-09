@@ -99,10 +99,14 @@ typedef struct _reader_t_ {
     FILE *fp_debug; /**< file pointer to print out debug info. */
     pthread_mutex_t fp_debug_lock; /**< lock for fp_debug_log. */
 
-    pthread_t tid; /**< thread id for read thread. */
     count_t words; /**< total words readed. */
     count_t sents; /**< total sentences readed. */
     count_t oovs; /**< total OOVs readed. */
+
+    pthread_t tid; /**< thread id for read thread. */
+    unsigned int random; /**< random seed. */
+    thr_stat_t *stats; /**< random seed. */
+    int *err; /**< error indicator. */
 } reader_t;
 
 /**

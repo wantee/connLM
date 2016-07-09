@@ -55,10 +55,10 @@ log_dir="$dir/log"
 if [ ! -e "$dir/.learn_rate" ]; then
   shu-run connlm-train --dry-run=true --log-file="$log_dir/conf.log" \
              --config="$train_config" "$dir/$mdl_init" || exit 1
-  shu-run connlm-info --log-file=/dev/null "$dir/$mdl_init" \
-          | ../utils/get_wt_names.pl > "$dir/.wt.names" || exit 1
-  shu-run ../utils/parse_lr.pl "$dir/.wt.names" < "$log_dir/conf.log" \
-          > "$dir/.learn_rate" || exit 1
+  shu-run "connlm-info --log-file=/dev/null $dir/$mdl_init \
+          | ../utils/get_wt_names.pl > $dir/.wt.names" || exit 1
+  shu-run "../utils/parse_lr.pl $dir/.wt.names < $log_dir/conf.log \
+          > $dir/.learn_rate" || exit 1
 fi
 
 mdl_best="$mdl_init"
