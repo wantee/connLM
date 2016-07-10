@@ -195,7 +195,7 @@ static int driver_steps(driver_t *driver, int tid, double *logp,
     updater_t *updater;
 
     int word;
-    double logp_word;
+    double logp_word = 0.0;
 
     ST_CHECK_PARAM(driver == NULL || tid < 0 || logp == NULL
             || logp_sent == NULL || sents == NULL || words == NULL, -1);

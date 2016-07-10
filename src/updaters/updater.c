@@ -315,8 +315,10 @@ int updater_feed(updater_t *updater, int *words, int n_word)
     // drop words already done
     drop = updater->cur_pos - updater->ctx_leftmost;
     if (drop > 0) {
-        memmove(updater->words, updater->words + drop, updater->n_word - drop);
+        memmove(updater->words, updater->words + drop,
+                sizeof(int) * (updater->n_word - drop));
         updater->n_word -= drop;
+        updater->cur_pos -= drop;
     }
 
     // append new words
