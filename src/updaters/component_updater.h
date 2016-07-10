@@ -33,6 +33,7 @@ extern "C" {
 
 #include "component.h"
 #include "updaters/layer_updater.h"
+#include "updaters/glue_updaters/glue_updater.h"
 
 /** @defgroup g_updater_comp Updater for component.
  * @ingroup g_updater
@@ -47,6 +48,7 @@ typedef struct _component_updater_t_ {
     component_t *comp; /**< the component. */
 
     layer_updater_t **layer_updaters; /**< layer updaters. */
+    glue_updater_t **glue_updaters; /**< glue updaters. */
 } comp_updater_t;
 
 /**

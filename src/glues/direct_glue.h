@@ -185,7 +185,7 @@ int direct_glue_load_train_opt(glue_t *glue, st_opt_t *opt,
         const char *sec_name, param_t *parent);
 
 /**
- * Feed-forward one word for a thread of direct_glue.
+ * Feed-forward one word for a direct_glue.
  * @ingroup g_glue_direct
  * @param[in] glue glue.
  * @param[in] comp_updater the comp_updater.

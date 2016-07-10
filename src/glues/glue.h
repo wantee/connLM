@@ -87,9 +87,6 @@ typedef struct _glue_implementation_t_ {
     int (*load_train_opt)(glue_t *glue, st_opt_t *opt,
             const char *sec_name,
             param_t *parent); /**< load train opt for  glue. */
-
-    int (*forward)(glue_t *glue, comp_updater_t *comp_updater,
-            out_updater_t *out_updater); /**< forward glue.*/
 } glue_impl_t;
 
 /**

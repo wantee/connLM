@@ -31,20 +31,6 @@
 #include "output.h"
 #include "wt_glue.h"
 
-int wt_glue_forward(glue_t *glue, int tid)
-{
-    ST_CHECK_PARAM(glue == NULL, -1);
-
-    return 0;
-}
-
-int wt_glue_backprop(glue_t *glue, int tid)
-{
-    ST_CHECK_PARAM(glue == NULL, -1);
-
-    return 0;
-}
-
 #define safe_wt_glue_data_destroy(ptr) do {\
     if((ptr) != NULL) {\
         wt_glue_data_destroy((wt_glue_data_t *)ptr);\

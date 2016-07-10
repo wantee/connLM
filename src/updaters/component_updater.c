@@ -83,6 +83,23 @@ comp_updater_t* comp_updater_create(component_t *comp)
         }
     }
 
+    if (comp->num_glue > 0) {
+        sz = sizeof(glue_updater_t*)*comp->num_glue;
+        comp_updater->glue_updaters = (glue_updater_t **)malloc(sz);
+        if (comp_updater->glue_updaters == NULL) {
+            ST_WARNING("Failed to malloc glue_updaters.");
+            goto ERR;
+        }
+
+        for (l = 0; l < comp->num_glue; l++) {
+            comp_updater->glue_updaters[l] = glue_updater_create(comp->glues[l]);
+            if (comp_updater->glue_updaters[l] == NULL) {
+                ST_WARNING("Failed to glue_updater_create[%s].",
+                        comp->glues[l]->name);
+                goto ERR;
+            }
+        }
+    }
     return comp_updater;
 
 ERR:
@@ -126,7 +143,7 @@ int comp_updater_forward(comp_updater_t *comp_updater,
         out_updater_t *out_updater)
 {
     component_t *comp;
-    glue_t *glue;
+    glue_updater_t *glue_updater;
     int g;
 
     ST_CHECK_PARAM(comp_updater == NULL, -1);
@@ -138,9 +155,11 @@ int comp_updater_forward(comp_updater_t *comp_updater,
 #endif
 
     for (g = 0; g < comp->num_glue; g++) {
-        glue = comp->glues[comp->fwd_order[g]];
-        if (glue_forward(glue, comp_updater, out_updater) < 0) {
-            ST_WARNING("Failed to forward glue[%s].", glue->name);
+        glue_updater = comp_updater->glue_updaters[comp->fwd_order[g]];
+        if (glue_updater_forward(glue_updater, comp_updater,
+                    out_updater) < 0) {
+            ST_WARNING("Failed to forward glue[%s].",
+                    glue_updater->glue->name);
             return -1;
         }
     }
@@ -152,7 +171,7 @@ int comp_updater_backprop(comp_updater_t *comp_updater,
         out_updater_t *out_updater)
 {
     component_t *comp;
-    glue_t *glue;
+    glue_updater_t *glue_updater;
     int g;
 
     ST_CHECK_PARAM(comp_updater == NULL, -1);
@@ -164,9 +183,11 @@ int comp_updater_backprop(comp_updater_t *comp_updater,
 #endif
 
     for (g = comp->num_glue - 1; g >= 0; g--) {
-        glue = comp->glues[comp->fwd_order[g]];
-        if (glue_backprop(glue, comp_updater, out_updater) < 0) {
-            ST_WARNING("Failed to backprop glue[%s].", glue->name);
+        glue_updater = comp_updater->glue_updaters[comp->fwd_order[g]];
+        if (glue_updater_backprop(glue_updater, comp_updater,
+                    out_updater) < 0) {
+            ST_WARNING("Failed to backprop glue[%s].",
+                    glue_updater->glue->name);
             return -1;
         }
     }

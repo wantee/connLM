@@ -39,7 +39,6 @@ extern "C" {
  * Data structures and functions for NNet direct weight.
  */
 
-#define MAX_HASH_ORDER 16
 /**
  * Direct weight.
  * @ingroup g_wt_direct
@@ -140,18 +139,6 @@ int direct_wt_save_body(direct_wt_t *direct_wt, FILE *fp, bool binary);
  * @return initialised direct weight if success, otherwise NULL.
  */
 direct_wt_t* direct_wt_init(hash_size_t hash_sz);
-
-/**
- * Feed-forward one word for a thread of direct_wt.
- * @ingroup g_wt_direct
- * @param[in] direct_wt direct_wt.
- * @param[in] scale out activation scale.
- * @param[in] comp_updater the comp_updater.
- * @param[in] out_updater the out_updater.
- * @return non-zero value if any error.
- */
-int direct_wt_forward(direct_wt_t *direct_wt, real_t scale,
-        comp_updater_t *comp_updater, out_updater_t *out_updater);
 
 #ifdef __cplusplus
 }

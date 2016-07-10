@@ -30,31 +30,6 @@
 
 #include "direct_glue.h"
 
-int direct_glue_forward(glue_t *glue, comp_updater_t *comp_updater,
-        out_updater_t *out_updater)
-{
-    direct_glue_data_t *data = NULL;
-
-    ST_CHECK_PARAM(glue == NULL, -1);
-
-    data = (direct_glue_data_t *)glue->extra;
-
-    if (direct_wt_forward(data->direct_wt, glue->out_scales[0],
-                comp_updater, out_updater) < 0) {
-        ST_WARNING("Failed to direct_wt_forward.");
-        return -1;
-    }
-
-    return 0;
-}
-
-int direct_glue_backprop(glue_t *glue, int tid)
-{
-    ST_CHECK_PARAM(glue == NULL, -1);
-
-    return 0;
-}
-
 #define safe_direct_glue_data_destroy(ptr) do {\
     if((ptr) != NULL) {\
         direct_glue_data_destroy((direct_glue_data_t *)ptr);\

@@ -56,7 +56,7 @@ static glue_impl_t GLUE_IMPL[] = {
         direct_glue_draw_label, direct_glue_load_header,
         direct_glue_load_body, direct_glue_save_header,
         direct_glue_save_body, direct_glue_init_data,
-        direct_glue_load_train_opt, direct_glue_forward},
+        direct_glue_load_train_opt},
     {WT_GLUE_NAME, wt_glue_init, wt_glue_destroy,
         wt_glue_dup, wt_glue_parse_topo, wt_glue_check,
         wt_glue_draw_label, wt_glue_load_header, wt_glue_load_body,
@@ -1257,70 +1257,4 @@ int glue_load_train_opt(glue_t *glue, st_opt_t *opt,
 
 ST_OPT_ERR:
     return -1;
-}
-
-int glue_forward(glue_t *glue, comp_updater_t *comp_updater,
-        out_updater_t *out_updater)
-{
-    layer_updater_t **layer_updaters;
-    int l;
-    int lid;
-    int off;
-
-    ST_CHECK_PARAM(glue == NULL || comp_updater == NULL, -1);
-
-#if _CONNLM_TRACE_PROCEDURE_
-    ST_TRACE("Forward: glue[%s]", glue->name);
-#endif
-
-    layer_updaters = comp_updater->layer_updaters;
-
-    for (l = 0; l < glue->num_in_layer; l++) {
-        lid = glue->in_layers[l];
-        off = glue->in_offsets[l];
-        if (!layer_updaters[lid]->activated) {
-            if (layer_updater_activate(layer_updaters[lid], off) < 0) {
-                ST_WARNING("Failed to layer_activate.[%s]",
-                        comp_updater->comp->layers[lid]->name);
-                return -1;
-            }
-
-            layer_updaters[lid]->activated = true;
-        }
-    }
-
-    for (l = 0; l < glue->num_out_layer; l++) {
-        lid = glue->out_layers[l];
-        off = glue->out_offsets[l];
-        if (!layer_updaters[lid]->cleared) {
-            if (layer_updater_clear(layer_updaters[lid], off) < 0) {
-                ST_WARNING("Failed to layer_clear.[%s]",
-                        comp_updater->comp->layers[lid]->name);
-                return -1;
-            }
-
-            layer_updaters[lid]->cleared = true;
-        }
-    }
-
-    if (glue->impl != NULL && glue->impl->forward != NULL) {
-        if (glue->impl->forward(glue, comp_updater, out_updater) < 0) {
-            ST_WARNING("Failed to glue->impl->forward.[%s]", glue->name);
-            return -1;
-        }
-    }
-
-    return 0;
-}
-
-int glue_backprop(glue_t *glue, comp_updater_t *comp_updater,
-        out_updater_t *out_updater)
-{
-    ST_CHECK_PARAM(glue == NULL, -1);
-
-#if _CONNLM_TRACE_PROCEDURE_
-    ST_TRACE("Backprop: glue[%s]", glue->name);
-#endif
-
-    return 0;
 }
