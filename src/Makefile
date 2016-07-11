@@ -88,6 +88,9 @@ TESTS = tests/utils-test \
         tests/param-test \
         tests/output-test \
         tests/input-test \
+        tests/layer-test \
+        tests/glue-test \
+        tests/comp-test \
         tests/connlm-test
 ifneq (,$(findstring _USE_BLAS_,$(CFLAGS)))
     TESTS += tests/blas-test
@@ -98,6 +101,9 @@ VAL_TESTS = tests/utils-test \
             tests/param-test \
             tests/input-test \
             tests/output-test \
+            tests/layer-test \
+            tests/glue-test \
+            tests/comp-test \
             tests/connlm-test
 
 define get_target

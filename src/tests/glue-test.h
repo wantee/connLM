@@ -37,6 +37,8 @@ extern "C" {
 #include "layer-test.h"
 
 #include "glues/glue.h"
+#include "glues/sum_glue.h"
+#include "glues/direct_glue.h"
 
 #define GLUE_TEST_NAME "glue"
 

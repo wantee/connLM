@@ -28,43 +28,42 @@
 
 #include <stutils/st_macro.h>
 
-#include "input-test.h"
+#include "layer-test.h"
 
-static int unit_test_input_read_topo()
+static int unit_test_layer_read_topo()
 {
     char line[MAX_LINE_LEN];
     int ncase = 0;
-    input_t *input = NULL;
-    int input_sz = 15;
-    input_ref_t ref;
-    input_ref_t std_ref = {
-        .n_ctx = 2,
-        .context = {{-1,1.0}, {1, 0.5}},
-        .combine = IC_SUM,
+    layer_t *layer = NULL;
+    layer_ref_t ref;
+    layer_ref_t std_ref = {
+        .type = "sigmoid",
+        .size = 15,
     };
+    int id = 0;
 
     fprintf(stderr, "  Testing Reading topology line...\n");
     /***************************************************/
     /***************************************************/
     fprintf(stderr, "    Case %d...", ncase++);
     ref = std_ref;
-    input_test_mk_topo_line(line, MAX_LINE_LEN, &ref);
-    input = input_parse_topo(line, input_sz);
-    if (input == NULL) {
+    layer_test_mk_topo_line(line, MAX_LINE_LEN, &ref, id);
+    layer = layer_parse_topo(line);
+    if (layer == NULL) {
         fprintf(stderr, "Failed\n");
         goto ERR;
     }
-    if (input_test_check_input(input, input_sz, &ref) != 0) {
+    if (layer_test_check_layer(layer, &ref, id+2) != 0) {
         fprintf(stderr, "Failed\n");
         goto ERR;
     }
-    safe_input_destroy(input);
+    safe_layer_destroy(layer);
     fprintf(stderr, "Success\n");
 
     return 0;
 
 ERR:
-    safe_input_destroy(input);
+    safe_layer_destroy(layer);
     return -1;
 }
 
@@ -72,7 +71,7 @@ static int run_all_tests()
 {
     int ret = 0;
 
-    if (unit_test_input_read_topo() != 0) {
+    if (unit_test_layer_read_topo() != 0) {
         ret = -1;
     }
 

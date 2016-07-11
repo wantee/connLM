@@ -64,7 +64,7 @@ void layer_test_mk_topo_line(char *line, size_t len, layer_ref_t *ref, int id)
 {
     assert(line != NULL && ref != NULL);
 
-    snprintf(line, len, "layer name=%s%d type=%s size=%d ",
+    snprintf(line, len, "layer name=%s%d type=%s size=%d",
             LAYER_TEST_NAME, id+2, ref->type, ref->size);
 
 #ifdef _LAYER_TEST_PRINT_TOPO_
@@ -78,10 +78,9 @@ int layer_test_check_layer(layer_t *layer, layer_ref_t *ref, int id)
 
     assert(layer != NULL && ref != NULL);
 
-
     if (strcmp(layer_test_get_name(name, MAX_NAME_LEN, id),
                 layer->name) != 0) {
-        fprintf(stderr, "layer name not match.\n");
+        fprintf(stderr, "layer name not match.[%s/%s]\n", layer->name, name);
         return -1;
     }
 

@@ -43,7 +43,6 @@ typedef struct _input_ref_t_ {
     input_combine_t combine;
 } input_ref_t;
 
-
 static const char *combine_str[] = {
     "UnDefined",
     "Sum",
@@ -69,11 +68,16 @@ void input_test_mk_topo_line(char *line, size_t len, input_ref_t *ref)
 #endif
 }
 
-int input_test_check_input(input_t *input, input_ref_t *ref)
+int input_test_check_input(input_t *input, int input_size, input_ref_t *ref)
 {
     int i;
 
     assert(input != NULL && ref != NULL);
+
+    if (input->input_size != input_size) {
+        fprintf(stderr, "input size not match.\n");
+        return -1;
+    }
 
     if (input->combine != ref->combine) {
         fprintf(stderr, "combine not match[%d/%d]\n",
@@ -101,6 +105,20 @@ int input_test_check_input(input_t *input, input_ref_t *ref)
     }
 
     return 0;
+}
+
+input_t* input_test_new(int input_size)
+{
+    input_t *input = NULL;
+
+    input = (input_t *)malloc(sizeof(input_t));
+    assert (input != NULL);
+
+    memset(input, 0, sizeof(input_t));
+
+    input->input_size = input_size;
+
+    return input;
 }
 
 #ifdef __cplusplus

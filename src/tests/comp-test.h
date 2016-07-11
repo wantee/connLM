@@ -90,21 +90,6 @@ void comp_test_mk_topo_lines(char *lines, size_t len, comp_ref_t *ref, int id)
 #endif
 }
 
-static int check_input(input_t *input, int input_size, input_ref_t *input_ref)
-{
-    if (input->input_size != input_size) {
-        fprintf(stderr, "input size not match.\n");
-        return -1;
-    }
-
-    if (input_test_check_input(input, input_ref) < 0) {
-        fprintf(stderr, "input not match.\n");
-        return -1;
-    }
-
-    return 0;
-}
-
 int comp_test_check_comp(component_t *comp, int input_size,
         comp_ref_t *ref, int id)
 {
@@ -119,7 +104,8 @@ int comp_test_check_comp(component_t *comp, int input_size,
     }
 
 
-    if (check_input(comp->input, input_size, &(ref->input_ref)) != 0) {
+    if (input_test_check_input(comp->input, input_size,
+                &(ref->input_ref)) != 0) {
         fprintf(stderr, "input not match\n");
         return -1;
     }

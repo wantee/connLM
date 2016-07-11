@@ -28,43 +28,82 @@
 
 #include <stutils/st_macro.h>
 
-#include "input-test.h"
+#include "vocab-test.h"
+#include "output-test.h"
+#include "comp-test.h"
 
-static int unit_test_input_read_topo()
+static int unit_test_comp_read_topo()
 {
-    char line[MAX_LINE_LEN];
-    int ncase = 0;
-    input_t *input = NULL;
-    int input_sz = 15;
-    input_ref_t ref;
-    input_ref_t std_ref = {
-        .n_ctx = 2,
-        .context = {{-1,1.0}, {1, 0.5}},
-        .combine = IC_SUM,
-    };
+    vocab_t *vocab = NULL;
+    output_t *output = NULL;
+    int input_size = 15;
 
-    fprintf(stderr, "  Testing Reading topology line...\n");
+    char lines[MAX_LINE_LEN * 5];
+    int ncase = 0;
+    component_t *comp = NULL;
+    comp_ref_t ref;
+    comp_ref_t std_ref = {
+        .input_ref = {
+            .n_ctx = 1,
+            .context = {{-1,1.0}},
+            .combine = IC_AVG,
+        },
+
+        .num_layer = 0,
+
+        .num_glue = 1,
+        .glue_refs = {
+            {
+                .type = "direct_wt",
+                .num_in_layer = 1,
+                .in_layers = {1},
+                .in_offsets = {0},
+                .in_scales = {1.0},
+                .num_out_layer = 1,
+                .out_layers = {0},
+                .out_offsets = {0},
+                .out_scales = {1.0},
+                .sum_glue = {true, true},
+                .direct_glue = {2000000},
+            },
+        },
+    };
+    int id = 0;
+
+    fprintf(stderr, "  Testing Reading topology lines...\n");
+    vocab = vocab_test_new();
+    assert(vocab != NULL);
+    output = output_test_new(vocab);
+    assert(output != NULL);
+
     /***************************************************/
     /***************************************************/
     fprintf(stderr, "    Case %d...", ncase++);
     ref = std_ref;
-    input_test_mk_topo_line(line, MAX_LINE_LEN, &ref);
-    input = input_parse_topo(line, input_sz);
-    if (input == NULL) {
+    comp_test_mk_topo_lines(lines, MAX_LINE_LEN * 5, &ref, id);
+    comp = comp_init_from_topo(lines, output, input_size);
+    if (comp == NULL) {
         fprintf(stderr, "Failed\n");
         goto ERR;
     }
-    if (input_test_check_input(input, input_sz, &ref) != 0) {
+    if (comp_test_check_comp(comp, input_size, &ref, id) != 0) {
         fprintf(stderr, "Failed\n");
         goto ERR;
     }
-    safe_input_destroy(input);
+    safe_comp_destroy(comp);
     fprintf(stderr, "Success\n");
+
+    safe_vocab_destroy(vocab);
+    safe_output_destroy(output);
 
     return 0;
 
 ERR:
-    safe_input_destroy(input);
+    safe_comp_destroy(comp);
+
+    safe_vocab_destroy(vocab);
+    safe_output_destroy(output);
+
     return -1;
 }
 
@@ -72,7 +111,7 @@ static int run_all_tests()
 {
     int ret = 0;
 
-    if (unit_test_input_read_topo() != 0) {
+    if (unit_test_comp_read_topo() != 0) {
         ret = -1;
     }
 
