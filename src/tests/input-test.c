@@ -28,9 +28,10 @@
 
 #include "input-test.h"
 
+#define STR_LEN 1024
 static int unit_test_input_read_topo()
 {
-    char line[1024];
+    char line[STR_LEN];
     int ncase = 0;
     input_t *input = NULL;
     int input_sz = 15;
@@ -47,7 +48,7 @@ static int unit_test_input_read_topo()
     fprintf(stderr, "    Case %d...", ncase++);
     ref = std_ref;
     line[0] = '\0';
-    input_test_mk_topo_line(line, &ref);
+    input_test_mk_topo_line(line, STR_LEN, &ref);
     input = input_parse_topo(line, input_sz);
     if (input == NULL) {
         fprintf(stderr, "Failed\n");

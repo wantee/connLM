@@ -36,12 +36,13 @@ extern "C" {
 
 #include "input.h"
 
-#define N_CTX 16
+#define INPUT_TEST_N 16
 typedef struct _input_ref_t_ {
-    st_wt_int_t context[N_CTX];
+    st_wt_int_t context[INPUT_TEST_N];
     int n_ctx;
     input_combine_t combine;
 } input_ref_t;
+
 
 static const char *combine_str[] = {
     "UnDefined",
@@ -50,28 +51,21 @@ static const char *combine_str[] = {
     "Concat",
 };
 
-void input_test_mk_topo_line(char *line, input_ref_t *ref)
+void input_test_mk_topo_line(char *line, size_t len, input_ref_t *ref)
 {
-    char array[1024];
-    char buf[20];
     int i;
 
     assert(line != NULL && ref != NULL);
 
-    array[0] = '\0';
+    snprintf(line, len, "input context=");
     for (i = 0; i < ref->n_ctx - 1; i++) {
-        snprintf(buf, 20, "%d:%g,", ref->context[i].i, ref->context[i].w);
-        strcat(array, buf);
+        st_strncatf(line, len, "%d:%g,", ref->context[i].i, ref->context[i].w);
     }
-    snprintf(buf, 20, "%d:%g", ref->context[i].i, ref->context[i].w);
-    strcat(array, buf);
+    st_strncatf(line, len, "%d:%g", ref->context[i].i, ref->context[i].w);
+    st_strncatf(line, len, " combine=%s", combine_str[ref->combine]);
 
-    sprintf(line, "input context=%s combine=%s", array,
-            combine_str[ref->combine]);
-#ifdef _CONNLM_TEST_PRINT_TOPO_
-    {
-        fprintf(stderr, "%s", line);
-    }
+#ifdef _INPUT_TEST_PRINT_TOPO_
+    fprintf(stderr, "%s", line);
 #endif
 }
 
