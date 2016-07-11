@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef  _CONNLM_OUTPUT_TEST_H_
-#define  _CONNLM_OUTPUT_TEST_H_
+#ifndef  _CONNLM_VOCAB_TEST_H_
+#define  _CONNLM_VOCAB_TEST_H_
 
 #ifdef __cplusplus
 extern "C" {
@@ -33,56 +33,36 @@ extern "C" {
 
 #include <connlm/config.h>
 
-#include "output.h"
+#include "vocab.h"
 
-#define OUTPUT_TEST_N 16
-typedef struct _output_ref_t_ {
-    output_norm_t norm;
-} output_ref_t;
+#define VOCAB_TEST_SIZE 17
 
-static const char *norm_str[] = {
-    "Undefined",
-    "Softmax",
-    "NCE",
-};
-
-void output_test_mk_topo_line(char *line, size_t len, output_ref_t *ref)
+vocab_t* vocab_test_new()
 {
-    assert(line != NULL && ref != NULL);
+    vocab_opt_t vocab_opt;
+    vocab_t *vocab = NULL;
 
-    snprintf(line, len, "property norm=%s", norm_str[ref->norm]);
+    char word[16];
+    int i;
 
-#ifdef _OUTPUT_TEST_PRINT_TOPO_
-    fprintf(stderr, "%s\n", line);
-#endif
-}
-
-output_t* output_test_new(vocab_t *vocab)
-{
-    output_opt_t output_opt;
-    output_t *output = NULL;
-
+    vocab_opt.max_alphabet_size = VOCAB_TEST_SIZE + 10;
+    vocab = vocab_create(&vocab_opt);
     assert(vocab != NULL);
-
-    output_opt.method = OM_TOP_DOWN;
-    output_opt.max_depth = 0;
-    output_opt.max_branch = 3;
-    output = output_generate(&output_opt, vocab->cnts, vocab->vocab_size);
-    assert (output != NULL);
-
-    return output;
-}
-
-int output_test_check_output(output_t *output, output_ref_t *ref)
-{
-    assert(output != NULL && ref != NULL);
-
-    if (output->norm != ref->norm) {
-        fprintf(stderr, "norm not match[%d/%d]\n", output->norm, ref->norm);
-        return -1;
+    for (i = 2; i < VOCAB_TEST_SIZE; i++) {
+        word[0] = 'A' + i;
+        word[1] = 'A' + i;
+        word[2] = 'A' + i;
+        word[3] = '\0';
+        vocab_add_word(vocab, word);
+    }
+    vocab->vocab_size = VOCAB_TEST_SIZE;
+    vocab->cnts = (count_t *)malloc(sizeof(count_t) * vocab->vocab_size);
+    assert(vocab->cnts != NULL);
+    for (i = 0; i < vocab->vocab_size; i++) {
+        vocab->cnts[i] = vocab->vocab_size - i;
     }
 
-    return 0;
+    return vocab;
 }
 
 #ifdef __cplusplus

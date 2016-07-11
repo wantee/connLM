@@ -31,7 +31,9 @@
 
 #include "output.h"
 
-#define N 17
+#include "vocab-test.h"
+#include "output-test.h"
+
 #define MAX_LEN 1024
 
 static char *refs[MAX_LEN] = {
@@ -53,7 +55,7 @@ static char *refs[MAX_LEN] = {
 "    node [shape=record];\n"
 "\n"
 "    0 [label=\"{{0|\\</s\\>}|{17|18,21}}\"];\n"
-"    1 [label=\"{{1|BBB}|{16|18,21}}\"];\n"
+"    1 [label=\"{{1|\\<unk\\>}|{16|18,21}}\"];\n"
 "    2 [label=\"{{2|CCC}|{15|18,22}}\"];\n"
 "    3 [label=\"{{3|DDD}|{14|18,22}}\"];\n"
 "    4 [label=\"{{4|EEE}|{13|18,23}}\"];\n"
@@ -120,7 +122,7 @@ static char *refs[MAX_LEN] = {
 "    node [shape=record];\n"
 "\n"
 "    0 [label=\"{{0|\\</s\\>}|{|18,21}}\"];\n"
-"    1 [label=\"{{1|BBB}|{|18,21}}\"];\n"
+"    1 [label=\"{{1|\\<unk\\>}|{|18,21}}\"];\n"
 "    2 [label=\"{{2|CCC}|{|18,22}}\"];\n"
 "    3 [label=\"{{3|DDD}|{|18,22}}\"];\n"
 "    4 [label=\"{{4|EEE}|{|18,23}}\"];\n"
@@ -321,7 +323,7 @@ static char *refs[MAX_LEN] = {
 "    node [shape=record];\n"
 "\n"
 "    10 [label=\"{{10|\\</s\\>}|{17|3}}\"];\n"
-"    7 [label=\"{{7|BBB}|{16|2}}\"];\n"
+"    7 [label=\"{{7|\\<unk\\>}|{16|2}}\"];\n"
 "    8 [label=\"{{8|CCC}|{15|2}}\"];\n"
 "    4 [label=\"{{4|DDD}|{14|1}}\"];\n"
 "    5 [label=\"{{5|EEE}|{13|1}}\"];\n"
@@ -383,7 +385,7 @@ static char *refs[MAX_LEN] = {
 "    node [shape=record];\n"
 "\n"
 "    26 [label=\"{{26|\\</s\\>}|{17|9}}\"];\n"
-"    24 [label=\"{{24|BBB}|{16|8}}\"];\n"
+"    24 [label=\"{{24|\\<unk\\>}|{16|8}}\"];\n"
 "    25 [label=\"{{25|CCC}|{15|8}}\"];\n"
 "    22 [label=\"{{22|DDD}|{14|7}}\"];\n"
 "    23 [label=\"{{23|EEE}|{13|7}}\"];\n"
@@ -447,7 +449,7 @@ static char *refs[MAX_LEN] = {
 "    node [shape=record];\n"
 "\n"
 "    1 [label=\"{{1|\\</s\\>}|{17|}}\"];\n"
-"    2 [label=\"{{2|BBB}|{16|}}\"];\n"
+"    2 [label=\"{{2|\\<unk\\>}|{16|}}\"];\n"
 "    3 [label=\"{{3|CCC}|{15|}}\"];\n"
 "    4 [label=\"{{4|DDD}|{14|}}\"];\n"
 "    5 [label=\"{{5|EEE}|{13|}}\"];\n"
@@ -502,7 +504,7 @@ static char *refs[MAX_LEN] = {
 "    node [shape=record];\n"
 "\n"
 "    0 [label=\"{{0|\\</s\\>}|{17|18,20}}\"];\n"
-"    1 [label=\"{{1|BBB}|{16|18,20}}\"];\n"
+"    1 [label=\"{{1|\\<unk\\>}|{16|18,20}}\"];\n"
 "    2 [label=\"{{2|CCC}|{15|18,20}}\"];\n"
 "    3 [label=\"{{3|DDD}|{14|18,20}}\"];\n"
 "    4 [label=\"{{4|EEE}|{13|18,21}}\"];\n"
@@ -563,7 +565,7 @@ static char *refs[MAX_LEN] = {
 "    node [shape=record];\n"
 "\n"
 "    0 [label=\"{{0|\\</s\\>}|{17|}}\"];\n"
-"    1 [label=\"{{1|BBB}|{16|}}\"];\n"
+"    1 [label=\"{{1|\\<unk\\>}|{16|}}\"];\n"
 "    2 [label=\"{{2|CCC}|{15|}}\"];\n"
 "    3 [label=\"{{3|DDD}|{14|}}\"];\n"
 "    4 [label=\"{{4|EEE}|{13|}}\"];\n"
@@ -601,7 +603,7 @@ static char *refs[MAX_LEN] = {
 "}\n"
 };
 
-static int check_output(output_t *output, count_t *word_cnts,
+static int check_output(output_t *output, count_t *cnts,
         st_alphabet_t *vocab, int ncase)
 {
     char *buf = NULL;
@@ -615,7 +617,7 @@ static int check_output(output_t *output, count_t *word_cnts,
         goto ERR;
     }
 
-    if (output_draw(output, fp, word_cnts, vocab) < 0) {
+    if (output_draw(output, fp, cnts, vocab) < 0) {
         ST_WARNING("Failed to output_draw.");
         goto ERR;
     }
@@ -656,27 +658,13 @@ ERR:
 
 static int unit_test_output_generate()
 {
-    count_t word_cnts[N];
-    char word[16];
-    st_alphabet_t *vocab = NULL;
-    int i;
+    vocab_t *vocab = NULL;
     int ncase = 0;
     output_opt_t output_opt;
     output_t *output = NULL;
 
-    for (i = 0; i < N; i++) {
-        word_cnts[i] = N - i;
-    }
-    vocab = st_alphabet_create(N);
-    strcpy(word, "</s>");
-    st_alphabet_add_label(vocab, word);
-    for (i = 1; i < N; i++) {
-        word[0] = 'A' + i;
-        word[1] = 'A' + i;
-        word[2] = 'A' + i;
-        word[3] = '\0';
-        st_alphabet_add_label(vocab, word);
-    }
+    vocab = vocab_test_new();
+    assert(vocab != NULL);
 
     fprintf(stderr, "  Testing output generate...\n");
     /***************************************************/
@@ -685,12 +673,12 @@ static int unit_test_output_generate()
     output_opt.method = OM_TOP_DOWN;
     output_opt.max_depth = 0;
     output_opt.max_branch = 3;
-    output = output_generate(&output_opt, word_cnts, N);
+    output = output_generate(&output_opt, vocab->cnts, vocab->vocab_size);
     if (output == NULL) {
         fprintf(stderr, "Failed\n");
         goto ERR;
     }
-    if (check_output(output, word_cnts, vocab, ncase) != 0) {
+    if (check_output(output, vocab->cnts, vocab->alphabet, ncase) != 0) {
         fprintf(stderr, "Failed\n");
         goto ERR;
     }
@@ -698,7 +686,7 @@ static int unit_test_output_generate()
     /***************************************************/
     /***************************************************/
     fprintf(stderr, "    Case %d...", ncase++);
-    if (check_output(output, NULL, vocab, ncase) != 0) {
+    if (check_output(output, NULL, vocab->alphabet, ncase) != 0) {
         fprintf(stderr, "Failed\n");
         goto ERR;
     }
@@ -714,7 +702,7 @@ static int unit_test_output_generate()
     /***************************************************/
     /***************************************************/
     fprintf(stderr, "    Case %d...", ncase++);
-    if (check_output(output, word_cnts, NULL, ncase) != 0) {
+    if (check_output(output, vocab->cnts, NULL, ncase) != 0) {
         fprintf(stderr, "Failed\n");
         goto ERR;
     }
@@ -727,12 +715,12 @@ static int unit_test_output_generate()
     output_opt.method = OM_BOTTOM_UP;
     output_opt.max_depth = 0;
     output_opt.max_branch = 3;
-    output = output_generate(&output_opt, word_cnts, N);
+    output = output_generate(&output_opt, vocab->cnts, vocab->vocab_size);
     if (output == NULL) {
         fprintf(stderr, "Failed\n");
         goto ERR;
     }
-    if (check_output(output, word_cnts, vocab, ncase) != 0) {
+    if (check_output(output, vocab->cnts, vocab->alphabet, ncase) != 0) {
         fprintf(stderr, "Failed\n");
         goto ERR;
     }
@@ -745,12 +733,12 @@ static int unit_test_output_generate()
     output_opt.method = OM_BOTTOM_UP;
     output_opt.max_depth = 2;
     output_opt.max_branch = 2;
-    output = output_generate(&output_opt, word_cnts, N);
+    output = output_generate(&output_opt, vocab->cnts, vocab->vocab_size);
     if (output == NULL) {
         fprintf(stderr, "Failed\n");
         goto ERR;
     }
-    if (check_output(output, word_cnts, vocab, ncase) != 0) {
+    if (check_output(output, vocab->cnts, vocab->alphabet, ncase) != 0) {
         fprintf(stderr, "Failed\n");
         goto ERR;
     }
@@ -762,12 +750,12 @@ static int unit_test_output_generate()
     output_opt.method = OM_BOTTOM_UP;
     output_opt.max_depth = 1;
     output_opt.max_branch = 5;
-    output = output_generate(&output_opt, word_cnts, N);
+    output = output_generate(&output_opt, vocab->cnts, vocab->vocab_size);
     if (output == NULL) {
         fprintf(stderr, "Failed\n");
         goto ERR;
     }
-    if (check_output(output, word_cnts, vocab, ncase) != 0) {
+    if (check_output(output, vocab->cnts, vocab->alphabet, ncase) != 0) {
         fprintf(stderr, "Failed\n");
         goto ERR;
     }
@@ -780,12 +768,12 @@ static int unit_test_output_generate()
     output_opt.method = OM_TOP_DOWN;
     output_opt.max_depth = 3;
     output_opt.max_branch = 2;
-    output = output_generate(&output_opt, word_cnts, N);
+    output = output_generate(&output_opt, vocab->cnts, vocab->vocab_size);
     if (output == NULL) {
         fprintf(stderr, "Failed\n");
         goto ERR;
     }
-    if (check_output(output, word_cnts, vocab, ncase) != 0) {
+    if (check_output(output, vocab->cnts, vocab->alphabet, ncase) != 0) {
         fprintf(stderr, "Failed\n");
         goto ERR;
     }
@@ -798,12 +786,12 @@ static int unit_test_output_generate()
     output_opt.method = OM_TOP_DOWN;
     output_opt.max_depth = 1;
     output_opt.max_branch = 2;
-    output = output_generate(&output_opt, word_cnts, N);
+    output = output_generate(&output_opt, vocab->cnts, vocab->vocab_size);
     if (output == NULL) {
         fprintf(stderr, "Failed\n");
         goto ERR;
     }
-    if (check_output(output, word_cnts, vocab, ncase) != 0) {
+    if (check_output(output, vocab->cnts, vocab->alphabet, ncase) != 0) {
         fprintf(stderr, "Failed\n");
         goto ERR;
     }
@@ -813,7 +801,52 @@ static int unit_test_output_generate()
     return 0;
 
 ERR:
-    safe_st_alphabet_destroy(vocab);
+    safe_vocab_destroy(vocab);
+    safe_output_destroy(output);
+    return -1;
+}
+
+static int unit_test_output_read_topo()
+{
+    char line[MAX_LINE_LEN];
+
+    vocab_t *vocab = NULL;
+    output_t *output = NULL;
+
+    output_ref_t ref;
+    int ncase = 0;
+    output_ref_t std_ref = {
+        .norm = ON_SOFTMAX,
+    };
+
+    fprintf(stderr, "  Testing Reading topology file...\n");
+    vocab = vocab_test_new();
+    assert(vocab != NULL);
+    output = output_test_new(vocab);
+    assert(output != NULL);
+
+    /***************************************************/
+    /***************************************************/
+    fprintf(stderr, "    Case %d...", ncase++);
+    ref = std_ref;
+    output_test_mk_topo_line(line, MAX_LINE_LEN, &ref);
+    if (output_parse_topo(output, line) < 0) {
+        fprintf(stderr, "Failed\n");
+        goto ERR;
+    }
+    if (output_test_check_output(output, &ref) != 0) {
+        fprintf(stderr, "Failed\n");
+        goto ERR;
+    }
+    fprintf(stderr, "Success\n");
+
+    safe_vocab_destroy(vocab);
+    safe_output_destroy(output);
+
+    return 0;
+
+ERR:
+    safe_vocab_destroy(vocab);
     safe_output_destroy(output);
     return -1;
 }
@@ -823,6 +856,10 @@ static int run_all_tests()
     int ret = 0;
 
     if (unit_test_output_generate() != 0) {
+        ret = -1;
+    }
+
+    if (unit_test_output_read_topo() != 0) {
         ret = -1;
     }
 

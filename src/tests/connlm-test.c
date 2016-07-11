@@ -32,12 +32,11 @@
 #include "glues/direct_glue.h"
 #include "connlm.h"
 
+#include "vocab-test.h"
 #include "output-test.h"
 #include "comp-test.h"
 
 #define CONNLM_TEST_N 16
-
-#define VOCAB_SIZE 16
 
 typedef struct _connlm_ref_t_ {
     output_ref_t output_ref;
@@ -98,7 +97,8 @@ static int check_connlm(connlm_t *connlm, connlm_ref_t *ref)
         return -1;
     }
     for (c = 0; c < connlm->num_comp; c++) {
-        if (comp_test_check_comp(connlm->comps[c], VOCAB_SIZE,
+        if (comp_test_check_comp(connlm->comps[c],
+                    connlm->comps[c]->input->input_size,
                     ref->comp_refs + c, c) != 0) {
             fprintf(stderr, "component not match\n");
             return -1;
@@ -113,15 +113,10 @@ static int unit_test_connlm_read_topo()
     FILE *fp = NULL;
     connlm_t *connlm = NULL;
 
-    vocab_opt_t vocab_opt;
     vocab_t *vocab = NULL;
-
-    output_opt_t output_opt;
     output_t *output = NULL;
-    char word[16];
 
     connlm_ref_t ref;
-    int i;
     int ncase = 0;
     connlm_ref_t std_ref = {
         .output_ref = {
@@ -159,31 +154,11 @@ static int unit_test_connlm_read_topo()
         },
     };
 
-    fprintf(stderr, "  Testing Reading topology file(good)...\n");
-    vocab_opt.max_alphabet_size = VOCAB_SIZE + 10;
-    vocab = vocab_create(&vocab_opt);
+    fprintf(stderr, "  Testing Reading topology file...\n");
+    vocab = vocab_test_new();
     assert(vocab != NULL);
-    strcpy(word, "</s>");
-    vocab_add_word(vocab, word);
-    for (i = 1; i < VOCAB_SIZE; i++) {
-        word[0] = 'A' + i;
-        word[1] = 'A' + i;
-        word[2] = 'A' + i;
-        word[3] = '\0';
-        vocab_add_word(vocab, word);
-    }
-    vocab->vocab_size = VOCAB_SIZE;
-    vocab->cnts = (count_t *)malloc(sizeof(count_t) * vocab->vocab_size);
-    assert(vocab->cnts != NULL);
-    for (i = 0; i < VOCAB_SIZE; i++) {
-        vocab->cnts[i] = VOCAB_SIZE - i;
-    }
-
-    output_opt.method = OM_TOP_DOWN;
-    output_opt.max_depth = 0;
-    output_opt.max_branch = 3;
-    output = output_generate(&output_opt, vocab->cnts, VOCAB_SIZE);
-    assert (output != NULL);
+    output = output_test_new(vocab);
+    assert(output != NULL);
 
     /***************************************************/
     /***************************************************/
