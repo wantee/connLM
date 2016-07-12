@@ -106,9 +106,9 @@ int out_updater_backprop(out_updater_t *out_updater, int word)
     return 0;
 }
 
-int out_updater_end(out_updater_t *out_updater, int word)
+int out_updater_end(out_updater_t *out_updater)
 {
-    ST_CHECK_PARAM(out_updater == NULL || word < 0, -1);
+    ST_CHECK_PARAM(out_updater == NULL, -1);
 
     return 0;
 }

@@ -89,8 +89,7 @@ static glue_impl_t* glue_get_impl(const char *type)
     return NULL;
 }
 
-static int glue_get_layer(layer_t **layers, int n_layer,
-        const char *name)
+static int glue_get_layer(layer_t **layers, int n_layer, const char *name)
 {
     int t;
 

@@ -50,8 +50,14 @@ typedef struct _glue_updater_implementation_t_ {
 
     void (*destroy)(glue_updater_t *glue_updater); /**< destroy glue updater.*/
 
+    int (*setup)(glue_updater_t *glue_updater, comp_updater_t *comp_updater,
+            bool backprop); /**< setup glue updater.*/
+
     int (*forward)(glue_updater_t *glue_updater, comp_updater_t *comp_updater,
-            out_updater_t *out_updater); /**< forward glue updater.*/
+            int *words, int n_word, int tgt_pos); /**< forward glue updater.*/
+
+    int (*backprob)(glue_updater_t *glue_updater, comp_updater_t *comp_updater,
+            int *words, int n_word, int tgt_pos); /**< backprob glue updater.*/
 } glue_updater_impl_t;
 
 /**
@@ -96,34 +102,40 @@ glue_updater_t* glue_updater_create(glue_t *glue);
  * Setup glue_updater for running.
  * @ingroup g_updater_glue
  * @param[in] glue_updater glue_updater.
+ * @param[in] comp_updater the comp_updater.
  * @param[in] backprob whether do backprob.
  * @return non-zero value if any error.
  */
-int glue_updater_setup(glue_updater_t *glue_updater, bool backprob);
+int glue_updater_setup(glue_updater_t *glue_updater,
+        comp_updater_t *comp_updater, bool backprob);
 
 /**
  * Feed-forward one word for a glue_updater.
  * @ingroup g_updater_glue
  * @param[in] glue_updater the glue_updater.
  * @param[in] comp_updater the comp_updater.
- * @param[in] out_updater the out_updater.
+ * @param[in] words input words buffer.
+ * @param[in] n_word length of words.
+ * @param[in] tgt_pos position of target word in words buffer.
  * @see glue_updater_backprop
  * @return non-zero value if any error.
  */
 int glue_updater_forward(glue_updater_t *glue_updater,
-        comp_updater_t *comp_updater, out_updater_t *out_updater);
+        comp_updater_t *comp_updater, int *words, int n_word, int tgt_pos);
 
 /**
  * Back-propagate one word for a glue_updater.
  * @ingroup g_updater_glue
  * @param[in] glue_updater the glue_updater.
  * @param[in] comp_updater the comp_updater.
- * @param[in] out_updater the out_updater.
+ * @param[in] words input words buffer.
+ * @param[in] n_word length of words.
+ * @param[in] tgt_pos position of target word in words buffer.
  * @see glue_updater_forward
  * @return non-zero value if any error.
  */
 int glue_updater_backprop(glue_updater_t *glue_updater,
-        comp_updater_t *comp_updater, out_updater_t *out_updater);
+        comp_updater_t *comp_updater, int *words, int n_word, int tgt_pos);
 
 #ifdef __cplusplus
 }

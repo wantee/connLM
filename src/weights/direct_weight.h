@@ -46,11 +46,6 @@ extern "C" {
 typedef struct _direct_weight_t_ {
     real_t *hash_wt; /**< weight vector. */
     hash_size_t wt_sz;  /**< size of weight vector. */
-
-    /** forward function. */
-    int (*forward)(struct _direct_weight_t_ *wt);
-    /** backprop function. */
-    int (*backprop)(struct _direct_weight_t_ *wt);
 } direct_wt_t;
 
 /**

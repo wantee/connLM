@@ -90,7 +90,6 @@ int out_updater_setup(out_updater_t *out_updater, bool backprob);
  * Called before every input sentence to be performed.
  * @ingroup g_updater_out
  * @param[in] out_updater out_updater.
- * @param[in] word current predicted word.
  * @return non-zero value if any error.
  */
 int out_updater_reset(out_updater_t *out_updater);
@@ -130,10 +129,9 @@ int out_updater_backprop(out_updater_t *out_updater, int word);
  * Called after every input word performed.
  * @ingroup g_updater_out
  * @param[in] out_updater out_updater.
- * @param[in] word current predicted word.
  * @return non-zero value if any error.
  */
-int out_updater_end(out_updater_t *out_updater, int word);
+int out_updater_end(out_updater_t *out_updater);
 
 /**
  * Finish running for out_updater.
@@ -149,7 +147,7 @@ int out_updater_finish(out_updater_t *out_updater);
  * Compute loss of neurons of output tree.
  * @ingroup g_output
  * @param[in] output output tree related.
- * @param[in] word current word.
+ * @param[in] word target word.
  * @param[in] tid thread id (neuron id).
  * @return non-zero value if any error.
  */
@@ -168,7 +166,7 @@ int output_gen_word(output_t *output, int tid);
  * Get log probability of a word.
  * @ingroup g_output
  * @param[in] output output tree related.
- * @param[in] word current word.
+ * @param[in] word target word.
  * @param[in] tid thread id (neuron id).
  * @return non-zero value if any error.
  */

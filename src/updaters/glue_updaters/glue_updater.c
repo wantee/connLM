@@ -41,16 +41,24 @@
 static glue_updater_impl_t GLUE_UPDATER_IMPL[] = {
     {DIRECT_GLUE_NAME, direct_glue_updater_init,
         direct_glue_updater_destroy,
-        direct_glue_updater_forward},
+        direct_glue_updater_setup,
+        direct_glue_updater_forward,
+        NULL},
     {WT_GLUE_NAME, wt_glue_updater_init,
         wt_glue_updater_destroy,
-        wt_glue_updater_forward},
+        NULL,
+        NULL,
+        NULL},
     {EMB_WT_GLUE_NAME, emb_wt_glue_updater_init,
         emb_wt_glue_updater_destroy,
-        emb_wt_glue_updater_forward},
+        NULL,
+        NULL,
+        NULL},
     {OUT_WT_GLUE_NAME, out_wt_glue_updater_init,
         out_wt_glue_updater_destroy,
-        out_wt_glue_updater_forward},
+        NULL,
+        NULL,
+        NULL},
 };
 
 static glue_updater_impl_t* glue_updater_get_impl(const char *type)
@@ -115,15 +123,25 @@ ERR:
     return NULL;
 }
 
-int glue_updater_setup(glue_updater_t *glue_updater, bool backprob)
+int glue_updater_setup(glue_updater_t *glue_updater,
+        comp_updater_t *comp_updater, bool backprob)
 {
     ST_CHECK_PARAM(glue_updater == NULL, -1);
+
+    if (glue_updater->impl != NULL && glue_updater->impl->setup != NULL) {
+        if (glue_updater->impl->setup(glue_updater,
+                    comp_updater, backprob) < 0) {
+            ST_WARNING("Failed to glue_updater->impl->forward.[%s]",
+                    glue_updater->glue->name);
+            return -1;
+        }
+    }
 
     return 0;
 }
 
 int glue_updater_forward(glue_updater_t *glue_updater,
-        comp_updater_t *comp_updater, out_updater_t *out_updater)
+        comp_updater_t *comp_updater, int *words, int n_word, int tgt_pos)
 {
     glue_t *glue;
     layer_updater_t **layer_updaters;
@@ -170,8 +188,8 @@ int glue_updater_forward(glue_updater_t *glue_updater,
     }
 
     if (glue_updater->impl != NULL && glue_updater->impl->forward != NULL) {
-        if (glue_updater->impl->forward(glue_updater,
-                    comp_updater, out_updater) < 0) {
+        if (glue_updater->impl->forward(glue_updater, comp_updater,
+                    words, n_word, tgt_pos) < 0) {
             ST_WARNING("Failed to glue_updater->impl->forward.[%s]",
                     glue->name);
             return -1;
@@ -182,7 +200,7 @@ int glue_updater_forward(glue_updater_t *glue_updater,
 }
 
 int glue_updater_backprop(glue_updater_t *glue_updater,
-        comp_updater_t *comp_updater, out_updater_t *out_updater)
+        comp_updater_t *comp_updater, int *words, int n_word, int tgt_pos)
 {
     glue_t *glue;
 
@@ -193,6 +211,15 @@ int glue_updater_backprop(glue_updater_t *glue_updater,
 #if _CONNLM_TRACE_PROCEDURE_
     ST_TRACE("Backprop: glue[%s]", glue->name);
 #endif
+
+    if (glue_updater->impl != NULL && glue_updater->impl->backprob != NULL) {
+        if (glue_updater->impl->backprob(glue_updater, comp_updater,
+                    words, n_word, tgt_pos) < 0) {
+            ST_WARNING("Failed to glue_updater->impl->backprob.[%s]",
+                    glue->name);
+            return -1;
+        }
+    }
 
     return 0;
 }

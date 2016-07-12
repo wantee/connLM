@@ -43,11 +43,6 @@ typedef struct _weight_t_ {
     real_t *matrix; /**< weight matrix. */
     int row; /**< number row of weight matrix. */
     int col; /**< number column of weight matrix. */
-
-    /** forward function. */
-    int (*forward)(struct _weight_t_ *wt);
-    /** backprop function. */
-    int (*backprop)(struct _weight_t_ *wt);
 } weight_t;
 
 /**

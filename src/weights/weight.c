@@ -82,9 +82,6 @@ weight_t* wt_dup(weight_t *w)
     }
     memcpy(wt->matrix, w->matrix, sizeof(real_t) * w->row * w->col);
 
-    wt->forward = w->forward;
-    wt->backprop = w->backprop;
-
     return wt;
 
 ERR:

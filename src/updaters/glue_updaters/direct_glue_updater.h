@@ -55,15 +55,28 @@ void direct_glue_updater_destroy(glue_updater_t* glue_updater);
 int direct_glue_updater_init(glue_updater_t *glue_updater);
 
 /**
+ * Setup direct_glue_updater for running.
+ * @ingroup g_glue_updater_direct
+ * @param[in] glue_updater glue_updater.
+ * @param[in] comp_updater the comp_updater.
+ * @param[in] backprob whether do backprob.
+ * @return non-zero value if any error.
+ */
+int direct_glue_updater_setup(glue_updater_t *glue_updater,
+        comp_updater_t *comp_updater, bool backprob);
+
+/**
  * Feed-forward one word for a direct_glue_updater.
  * @ingroup g_glue_updater_direct
  * @param[in] glue_updater glue_updater.
  * @param[in] comp_updater the comp_updater.
- * @param[in] out_updater the out_updater.
+ * @param[in] words input words buffer.
+ * @param[in] n_word length of words.
+ * @param[in] tgt_pos position of target word in words buffer.
  * @return non-zero value if any error.
  */
 int direct_glue_updater_forward(glue_updater_t *glue_updater,
-        comp_updater_t *comp_updater, out_updater_t *out_updater);
+        comp_updater_t *comp_updater, int *words, int n_word, int tgt_pos);
 
 #ifdef __cplusplus
 }

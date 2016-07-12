@@ -46,11 +46,6 @@ typedef struct _output_weight_t_ {
     output_node_id_t output_node_num; /**< num of nodes in output tree. */
     int in_layer_sz; /**< size of in layer. */
     real_t *matrix; /**< weight matrix. */
-
-    /** forward function. */
-    int (*forward)(struct _output_weight_t_ *wt);
-    /** backprop function. */
-    int (*backprop)(struct _output_weight_t_ *wt);
 } out_wt_t;
 
 /**

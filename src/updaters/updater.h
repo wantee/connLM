@@ -52,7 +52,7 @@ typedef struct _updater_t_ {
     int *words; /**< buffer for input words. */
     int n_word; /**< number of input words. */
     int cap_word; /**< capacity of input words buffer. */
-    int cur_pos; /**< position of current predicted word in word buffer. */
+    int tgt_pos; /**< position of target predicted word in word buffer. */
     int ctx_leftmost; /**< leftmost for all input contexts. */
     int ctx_rightmost; /**< rightmost for all input contexts. */
 

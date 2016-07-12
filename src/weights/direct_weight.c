@@ -78,9 +78,6 @@ direct_wt_t* direct_wt_dup(direct_wt_t *d)
     }
     memcpy(direct_wt->hash_wt, d->hash_wt, sizeof(real_t) * d->wt_sz);
 
-    direct_wt->forward = d->forward;
-    direct_wt->backprop = d->backprop;
-
     return direct_wt;
 
 ERR:

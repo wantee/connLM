@@ -98,14 +98,13 @@ ERR:
 }
 
 int emb_wt_glue_updater_forward(glue_updater_t *glue_updater,
-        comp_updater_t *comp_updater, out_updater_t *out_updater)
+        comp_updater_t *comp_updater)
 {
-    emb_wt_glue_data_t *data = NULL;
+//    emb_wt_glue_data_t *data = NULL;
 
-    ST_CHECK_PARAM(glue_updater == NULL || comp_updater == NULL
-            || out_updater == NULL, -1);
+    ST_CHECK_PARAM(glue_updater == NULL || comp_updater == NULL, -1);
 
-    data = (emb_wt_glue_data_t *)glue_updater->glue->extra;
+//    data = (emb_wt_glue_data_t *)glue_updater->glue->extra;
 
     return 0;
 }

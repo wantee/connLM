@@ -84,9 +84,6 @@ out_wt_t* out_wt_dup(out_wt_t *o)
     memcpy(out_wt->matrix, o->matrix,
             sizeof(real_t) * o->in_layer_sz * (o->output_node_num - 1));
 
-    out_wt->forward = o->forward;
-    out_wt->backprop = o->backprop;
-
     return out_wt;
 
 ERR:

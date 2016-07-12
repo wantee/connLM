@@ -25,6 +25,7 @@
 #include <string.h>
 
 #include <stutils/st_macro.h>
+#include <stutils/st_utils.h>
 #include <stutils/st_log.h>
 
 #include "../../glues/direct_glue.h"
@@ -41,41 +42,130 @@ const unsigned int PRIMES[] = {
 
 const unsigned int PRIMES_SIZE = sizeof(PRIMES) / sizeof(PRIMES[0]);
 
-typedef struct _direct_glue_updater_data_t_ {
+typedef struct _dgu_data_t_ {
     hash_t *hash;
-} direct_glue_updater_data_t;
+    unsigned int **P; /* coefficients of hash function. */
+    int n_ctx;
+    int positive; /* beginning positon of positive context. */
+} dgu_data_t;
 
-#define safe_direct_glue_updater_data_destroy(ptr) do {\
+#define safe_dgu_data_destroy(ptr) do {\
     if((ptr) != NULL) {\
-        direct_glue_updater_data_destroy((direct_glue_updater_data_t *)ptr);\
+        dgu_data_destroy((dgu_data_t *)ptr);\
         safe_free(ptr);\
         (ptr) = NULL;\
     }\
     } while(0)
 
-void direct_glue_updater_data_destroy(direct_glue_updater_data_t *data)
+void dgu_data_destroy(dgu_data_t *data)
 {
+    int i;
+
     if (data == NULL) {
         return;
     }
     safe_free(data->hash);
+    for (i = 0; i < data->n_ctx; i++) {
+        safe_free(data->P[i]);
+    }
+    safe_free(data->P);
+    data->n_ctx = 0;
+    data->positive = 0;
 }
 
-direct_glue_updater_data_t* direct_glue_updater_data_init()
+dgu_data_t* dgu_data_init()
 {
-    direct_glue_updater_data_t *data = NULL;
+    dgu_data_t *data = NULL;
 
-    data = (direct_glue_updater_data_t *)malloc(sizeof(direct_glue_updater_data_t));
+    data = (dgu_data_t *)malloc(sizeof(dgu_data_t));
     if (data == NULL) {
-        ST_WARNING("Failed to malloc direct_glue_updater_data.");
+        ST_WARNING("Failed to malloc dgu_data.");
         goto ERR;
     }
-    memset(data, 0, sizeof(direct_glue_updater_data_t));
+    memset(data, 0, sizeof(dgu_data_t));
 
     return data;
 ERR:
-    safe_direct_glue_updater_data_destroy(data);
+    safe_dgu_data_destroy(data);
     return NULL;
+}
+
+int dgu_data_setup(dgu_data_t *data, st_wt_int_t *context, int n_ctx)
+{
+    int a;
+    int b;
+    unsigned idx;
+
+    ST_CHECK_PARAM(data == NULL, -1);
+
+    data->n_ctx = n_ctx;
+
+    data->hash = (hash_t *)malloc(sizeof(hash_t)*(n_ctx + 1));
+    if (data->hash == NULL) {
+        ST_WARNING("Failed to malloc hash.");
+        goto ERR;
+    }
+
+    data->hash[0] = PRIMES[0] * PRIMES[1] * 1;
+
+    data->P = (unsigned int **)malloc(sizeof(unsigned *)*n_ctx);
+    if (data->P == NULL) {
+        ST_WARNING("Failed to malloc P.");
+        goto ERR;
+    }
+
+    data->positive = n_ctx;
+    for (a = 0; a < n_ctx; a++) {
+        if (context[a].i > 0) {
+            data->positive = a;
+        }
+    }
+
+    // negtive context coefficients
+    for (a = 0; a < data->positive; a++) {
+        data->P[a] = (unsigned int *)malloc(sizeof(unsigned)*(a + 1));
+        if (data->P[a] == NULL) {
+            ST_WARNING("Failed to malloc P[%d].", a);
+            goto ERR;
+        }
+
+        for (b = 0; b <= a; b++) {
+            idx = (-context[a].i) * PRIMES[(-context[b].i) % PRIMES_SIZE];
+            idx += (-context[b].i);
+            data->P[a][b] = PRIMES[idx % PRIMES_SIZE];
+            if (b > 0) {
+                data->P[a][b] *= data->P[a][b - 1];
+            } else {
+                data->P[a][b] *= data->hash[0];
+            }
+        }
+    }
+
+    // negtive context coefficients
+    for (a = data->positive; a < n_ctx; a++) {
+        data->P[a] = (unsigned int *)malloc(sizeof(unsigned)
+                * (a - data->positive + 1));
+        if (data->P[a] == NULL) {
+            ST_WARNING("Failed to malloc P[%d].", a);
+            goto ERR;
+        }
+
+        for (b = data->positive; b <= a; b++) {
+            idx = context[a].i * PRIMES[context[b].i % PRIMES_SIZE];
+            idx += context[b].i;
+            data->P[a][b] = PRIMES[idx % PRIMES_SIZE];
+            if (b > data->positive) {
+                data->P[a][b] *= data->P[a][b - data->positive - 1];
+            } else {
+                data->P[a][b] *= data->hash[0];
+            }
+        }
+    }
+
+    return 0;
+ERR:
+    dgu_data_destroy(data);
+    return -1;
 }
 
 void direct_glue_updater_destroy(glue_updater_t *glue_updater)
@@ -84,7 +174,7 @@ void direct_glue_updater_destroy(glue_updater_t *glue_updater)
         return;
     }
 
-    safe_direct_glue_updater_data_destroy(glue_updater->extra);
+    safe_dgu_data_destroy(glue_updater->extra);
 }
 
 int direct_glue_updater_init(glue_updater_t *glue_updater)
@@ -97,80 +187,101 @@ int direct_glue_updater_init(glue_updater_t *glue_updater)
         return -1;
     }
 
-    glue_updater->extra = (void *)direct_glue_updater_data_init();
+    glue_updater->extra = (void *)dgu_data_init();
     if (glue_updater->extra == NULL) {
-        ST_WARNING("Failed to direct_glue_updater_data_init.");
+        ST_WARNING("Failed to dgu_data_init.");
         goto ERR;
     }
 
     return 0;
 
 ERR:
-    safe_direct_glue_updater_data_destroy(glue_updater->extra);
+    safe_dgu_data_destroy(glue_updater->extra);
     return -1;
 }
 
-static int direct_wt_get_hash(hash_t *hash, hash_t init_val,
-        int *frag, int order, bool reverse)
+static int direct_wt_get_hash_pos(hash_t *hash, hash_t init_val,
+        unsigned int **P, st_wt_int_t *context, int n_ctx, int *words,
+        int n_word, int tgt_pos)
 {
     int a;
     int b;
 
-    hash[0] = PRIMES[0] * PRIMES[1] * init_val;
-    if (reverse) {
-        for (a = 1; a < order; a++) {
-            if (frag[order - a] < 0 || frag[order - a] == UNK_ID) {
-                // if OOV was in future, do not use
-                // this N-gram feature and higher orders
-                return a;
-            }
-
-            hash[a] = hash[0];
-            for (b = 1; b <= a; b++) {
-                hash[a] += PRIMES[(a*PRIMES[b] + b) % PRIMES_SIZE]
-                    * (hash_t)(frag[order - b] + 1);
-            }
+    // assert all context[i].i > 0
+    for (a = 0; a < n_ctx; a++) {
+        if (tgt_pos + context[a].i >= n_word) {
+            return a;
         }
-    } else {
-        for (a = 1; a < order; a++) {
-            if (frag[a - 1] < 0 || frag[a - 1] == UNK_ID) {
-                // if OOV was in history, do not use
-                // this N-gram feature and higher orders
-                return a;
-            }
+        if (words[tgt_pos + context[a].i] < 0
+                || words[tgt_pos + context[a].i] == UNK_ID) {
+            // if OOV was in future, do not use
+            // this N-gram feature and higher orders
+            return a;
+        }
 
-            hash[a] = hash[0];
-            for (b = 1; b <= a; b++) {
-                hash[a] += PRIMES[(a*PRIMES[b] + b) % PRIMES_SIZE]
-                    * (hash_t)(frag[b-1] + 1);
-            }
+        hash[a] = init_val;
+        for (b = 0; b <= a; b++) {
+            hash[a] += P[a][b] * (hash_t)(words[tgt_pos+context[b].i] + 1);
         }
     }
 
-    return order;
+    return n_ctx;
 }
 
-int direct_glue_updater_forward(glue_updater_t *glue_updater,
-        comp_updater_t *comp_updater, out_updater_t *out_updater)
+static int direct_wt_get_hash_neg(hash_t *hash, hash_t init_val,
+        unsigned int **P, st_wt_int_t *context, int n_ctx, int *words,
+        int n_word, int tgt_pos)
 {
-    direct_glue_data_t *data = NULL;
+    int a;
+    int b;
 
-    ST_CHECK_PARAM(glue_updater == NULL || comp_updater == NULL
-            || out_updater == NULL, -1);
+    // assert all context[i].i < 0
+    for (a = n_ctx - 1; a >= 0; a--) {
+        if (tgt_pos + context[a].i < 0) {
+            return n_ctx - a - 1;
+        }
+        if (words[tgt_pos + context[a].i] < 0
+                || words[tgt_pos + context[a].i] == UNK_ID) {
+            // if OOV was in history, do not use
+            // this N-gram feature and higher orders
+            return n_ctx - a - 1;
+        }
 
-    data = (direct_glue_data_t *)glue_updater->glue->extra;
+        hash[n_ctx - a - 1] = init_val;
+        for (b = n_ctx - 1; b >= a; b--) {
+            hash[n_ctx - a - 1] += P[n_ctx - a - 1][b - a]
+                * (hash_t)(words[tgt_pos + context[b].i] + 1);
+        }
+    }
 
-#if 0
-    if (direct_wt_forward(data->direct_wt,
-                (direct_wt_data_t *)glue_updater->extra,
-                glue_updater->out_scales[0],
-                comp_updater, out_updater) < 0) {
-        ST_WARNING("Failed to direct_wt_forward.");
+    return n_ctx;
+}
+
+int direct_glue_updater_setup(glue_updater_t *glue_updater,
+        comp_updater_t *comp_updater, bool backprob)
+{
+    ST_CHECK_PARAM(glue_updater == NULL || comp_updater == NULL, -1);
+
+    if (dgu_data_setup((dgu_data_t *)glue_updater->extra,
+                comp_updater->comp->input->context,
+                comp_updater->comp->input->n_ctx) < 0) {
+        ST_WARNING("Failed to dgu_data_setup");
         return -1;
     }
 
-    input_neuron_t *in_neu;
-    output_neuron_t *out_neu;
+    return 0;
+}
+
+int direct_glue_updater_forward(glue_updater_t *glue_updater,
+        comp_updater_t *comp_updater, int *words, int n_word, int tgt_pos)
+{
+    dgu_data_t *data;
+    direct_glue_data_t *glue_data;
+    out_updater_t *out_updater;
+    input_t *input;
+
+    real_t *hash_wt;
+    real_t scale;
 
     hash_t h;
     int future_order;
@@ -183,77 +294,70 @@ int direct_glue_updater_forward(glue_updater_t *glue_updater,
 
     int a;
 
-    ST_CHECK_PARAM(direct_wt == NULL || input == NULL
-            || output == NULL, -1);
+    ST_CHECK_PARAM(glue_updater == NULL || comp_updater == NULL
+            || words == NULL, -1);
 
-    in_neu = input->neurons + tid;
-    out_neu = output->neurons + tid;
+    data = (dgu_data_t *)glue_updater->extra;
+    glue_data = (direct_glue_data_t *)glue_updater->glue->extra;
+    out_updater = comp_updater->out_updater;
+    input = comp_updater->comp->input;
 
-    if (in_neu->n_frag - 1 > MAX_HASH_ORDER) {
-        ST_WARNING("Too large order for hash. please enlarge "
-                "MAX_HASH_ORDER and recompile.");
-        return -1;
-    }
+    hash_wt = glue_data->direct_wt->hash_wt;
+    scale = glue_updater->glue->out_scales[0];
 
     /* history ngrams. */
-    order = direct_wt_get_hash(hash, (hash_t)1, in_neu->frag,
-            in_neu->target, true);
+    order = direct_wt_get_hash_neg(data->hash + 1, data->hash[0],
+            data->P, input->context, data->positive,
+            words, n_word, tgt_pos);
     if (order < 0) {
         ST_WARNING("Failed to direct_wt_get_hash history.");
         return -1;
     }
 
-    /* future ngrams. */
-    if (in_neu->n_frag - in_neu->target - 1 > 0) {
-        future_order = direct_wt_get_hash(hash + order, (hash_t)1,
-                in_neu->frag + in_neu->target + 1,
-                in_neu->n_frag - in_neu->target - 1,
-                false);
+    if (input->n_ctx - data->positive > 0) {
+        /* future ngrams. */
+        future_order = direct_wt_get_hash_pos(data->hash + 1 + order,
+                data->hash[0], data->P + data->positive,
+                input->context + data->positive,
+                input->n_ctx - data->positive, words, n_word, tgt_pos);
         if (future_order < 0) {
             ST_WARNING("Failed to direct_wt_get_hash future.");
             return -1;
         }
-
         order += future_order;
     }
 
+    order += 1/* for hash[0]. */;
+
     for (a = 0; a < order; a++) {
-        hash[a] = hash[a] % direct_wt->wt_sz;
+        data->hash[a] = data->hash[a] % glue_data->hash_sz;
     }
 
-    path = output->paths + in_neu->frag[in_neu->target];
+    path = out_updater->output->paths + words[tgt_pos];
     for (a = 0; a < order; a++) {
-        node = output->tree->root;
-        ch = s_children(output->tree, node);
-        h = hash[a] + ch;
-        for (; ch < e_children(output->tree, node); ch++) {
-            if (h >= direct_wt->wt_sz) {
+        node = out_updater->output->tree->root;
+        ch = s_children(out_updater->output->tree, node);
+        h = data->hash[a] + ch;
+        for (; ch < e_children(out_updater->output->tree, node); ch++) {
+            if (h >= glue_data->hash_sz) {
                 h = 0;
             }
-            out_neu->ac[ch] += scale * direct_wt->hash_wt[h];
+            out_updater->ac[ch] += scale * hash_wt[h];
             h++;
         }
         for (n = 0; n < path->num_node; n++) {
             node = path->nodes[n];
-            ch = s_children(output->tree, node);
-            h = hash[a] + ch;
-            for (; ch < e_children(output->tree, node); ch++) {
-                if (h >= direct_wt->wt_sz) {
+            ch = s_children(out_updater->output->tree, node);
+            h = data->hash[a] + ch;
+            for (; ch < e_children(out_updater->output->tree, node); ch++) {
+                if (h >= glue_data->hash_sz) {
                     h = 0;
                 }
-                out_neu->ac[ch] += scale * direct_wt->hash_wt[h];
+                out_updater->ac[ch] += scale * hash_wt[h];
                 h++;
             }
         }
     }
-
-#endif
-    return 0;
-}
-
-int direct_glue_updater_backprop(glue_updater_t *glue_updater, int tid)
-{
-    ST_CHECK_PARAM(glue_updater == NULL, -1);
 
     return 0;
 }

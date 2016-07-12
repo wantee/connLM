@@ -59,12 +59,10 @@ int emb_wt_glue_updater_init(glue_updater_t *glue_updater);
  * @ingroup g_glue_updater_emb_wt
  * @param[in] glue_updater glue_updater.
  * @param[in] comp_updater the comp_updater.
- * @param[in] out_updater the out_updater.
  * @return non-zero value if any error.
  */
 int emb_wt_glue_updater_forward(glue_updater_t *glue_updater,
-        comp_updater_t *comp_updater,
-        out_updater_t *out_updater);
+        comp_updater_t *comp_updater);
 
 #ifdef __cplusplus
 }
