@@ -43,7 +43,7 @@ static glue_updater_impl_t GLUE_UPDATER_IMPL[] = {
         direct_glue_updater_destroy,
         direct_glue_updater_setup,
         direct_glue_updater_forward,
-        NULL},
+        direct_glue_updater_backprop},
     {WT_GLUE_NAME, wt_glue_updater_init,
         wt_glue_updater_destroy,
         NULL,

@@ -78,6 +78,19 @@ int direct_glue_updater_setup(glue_updater_t *glue_updater,
 int direct_glue_updater_forward(glue_updater_t *glue_updater,
         comp_updater_t *comp_updater, int *words, int n_word, int tgt_pos);
 
+/**
+ * Back-prop one word for a direct_glue_updater.
+ * @ingroup g_glue_updater_direct
+ * @param[in] glue_updater glue_updater.
+ * @param[in] comp_updater the comp_updater.
+ * @param[in] words input words buffer.
+ * @param[in] n_word length of words.
+ * @param[in] tgt_pos position of target word in words buffer.
+ * @return non-zero value if any error.
+ */
+int direct_glue_updater_backprop(glue_updater_t *glue_updater,
+        comp_updater_t *comp_updater, int *words, int n_word, int tgt_pos);
+
 #ifdef __cplusplus
 }
 #endif
