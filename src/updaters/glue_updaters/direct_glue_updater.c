@@ -288,18 +288,17 @@ static int direct_forward_walker(output_t *output, output_node_id_t node,
         output_node_id_t child_s, output_node_id_t child_e, void *args)
 {
     direct_walker_args_t *dw_args;
-    output_node_id_t ch, idx;
+    output_node_id_t ch;
     hash_t h;
 
     dw_args = (direct_walker_args_t *) args;
 
-    for (ch = child_s, h = dw_args->h + ch; ch < child_e; ch++, h++) {
-        if (h >= dw_args->hash_sz) {
-            h = 0;
-        }
-        idx = output_param_idx(output, ch);
-        if (idx != OUTPUT_NODE_NONE) {
-            dw_args->out_updater->ac[idx] += dw_args->scale * dw_args->hash_wt[h];
+    if (output->norm == ON_SOFTMAX) {
+        for (ch = child_s, h = dw_args->h + ch; ch < child_e - 1; ch++, h++) {
+            if (h >= dw_args->hash_sz) {
+                h = 0;
+            }
+            dw_args->out_updater->ac[ch] += dw_args->scale*dw_args->hash_wt[h];
         }
     }
 
