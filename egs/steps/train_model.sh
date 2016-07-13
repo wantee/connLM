@@ -85,7 +85,8 @@ for iter in $(seq -w $max_iters); do
 
   lrs=$(cat "$dir/.learn_rate")
 
-  echo -n "LR(`sed -e 's/^--//;s/\^learn-rate=/=/' $dir/.learn_rate`), "
+  plrs=$(echo `sed -e 's/^--//;s/\^learn-rate=/=/' $dir/.learn_rate`)
+  echo -n "LR($plrs), "
 
   shu-run connlm-train --log-file="$log_dir/train.${iter}.log" \
              --config="$train_config" \
