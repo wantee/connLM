@@ -270,7 +270,7 @@ int output_draw(output_t *output, FILE *fp, count_t *word_cnts,
 #define OUTPUT_LAYER_NAME "output"
 
 /**
- * return a layer struct for output.
+ * Return a layer struct for output.
  * @ingroup g_output
  * @param[in] output the output layer.
  * @return layer for the output, else NULL.
@@ -278,13 +278,27 @@ int output_draw(output_t *output, FILE *fp, count_t *word_cnts,
 layer_t* output_get_layer(output_t *output);
 
 /**
- * parse topo file for output layer.
+ * Parse topo file for output layer.
  * @ingroup g_output
  * @param[in] output the output layer.
  * @param[in] topo topo configs.
  * @return non-zero value if any error.
  */
 int output_parse_topo(output_t *output, const char *topo);
+
+/**
+ * Walk through a path from root to word(not including) in output tree.
+ * @ingroup g_output
+ * @param[in] output the output layer.
+ * @param[in] word the leaf word.
+ * @param[in] walker walker callback called on every node in path.
+ * @param[in] args args passed to walker.
+ * @return non-zero value if any error.
+ */
+int output_walk_through_path(output_t *output, int word,
+        int (*walker)(output_t *output, output_node_id_t node,
+            output_node_id_t child_s, output_node_id_t child_e, void *args),
+        void *args);
 
 #ifdef __cplusplus
 }

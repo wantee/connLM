@@ -2567,3 +2567,34 @@ int output_parse_topo(output_t *output, const char *topo)
 
     return 0;
 }
+
+int output_walk_through_path(output_t *output, int word,
+        int (*walker)(output_t *output, output_node_id_t node,
+            output_node_id_t child_s, output_node_id_t child_e, void *args),
+        void *args)
+{
+    output_path_t *path;
+    output_node_id_t node;
+    output_node_id_t n;
+
+    ST_CHECK_PARAM(output == NULL || word < 0, -1);
+
+    path = output->paths + word;
+
+    node = output->tree->root;
+    if (walker(output, node, s_children(output->tree, node),
+                e_children(output->tree, node), args) < 0) {
+        ST_WARNING("Failed to walker. node["OUTPUT_NODE_FMT"]", node);
+        return -1;
+    }
+    for (n = 0; n < path->num_node; n++) {
+        node = path->nodes[n];
+        if (walker(output, node, s_children(output->tree, node),
+                    e_children(output->tree, node), args) < 0) {
+            ST_WARNING("Failed to walker. node["OUTPUT_NODE_FMT"]", node);
+            return -1;
+        }
+    }
+
+    return 0;
+}

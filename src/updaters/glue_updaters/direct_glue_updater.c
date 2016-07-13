@@ -28,7 +28,9 @@
 #include <stutils/st_utils.h>
 #include <stutils/st_log.h>
 
+#include "output.h"
 #include "../../glues/direct_glue.h"
+
 #include "direct_glue_updater.h"
 
 const unsigned int PRIMES[] = {
@@ -44,7 +46,8 @@ const unsigned int PRIMES_SIZE = sizeof(PRIMES) / sizeof(PRIMES[0]);
 
 typedef struct _dgu_data_t_ {
     hash_t *hash;
-    unsigned int **P; /* coefficients of hash function. */
+    unsigned int **P; /* coefficients of hash function.  the function is
+                         P0 + P0 * P1 * w1 + P0 * P1 * P2 * w2 + ... */
     int n_ctx;
     int positive; /* beginning positon of positive context. */
 } dgu_data_t;
@@ -200,7 +203,7 @@ ERR:
     return -1;
 }
 
-static int direct_wt_get_hash_pos(hash_t *hash, hash_t init_val,
+static int direct_get_hash_pos(hash_t *hash, hash_t init_val,
         unsigned int **P, st_wt_int_t *context, int n_ctx, int *words,
         int n_word, int tgt_pos)
 {
@@ -228,7 +231,7 @@ static int direct_wt_get_hash_pos(hash_t *hash, hash_t init_val,
     return n_ctx;
 }
 
-static int direct_wt_get_hash_neg(hash_t *hash, hash_t init_val,
+static int direct_get_hash_neg(hash_t *hash, hash_t init_val,
         unsigned int **P, st_wt_int_t *context, int n_ctx, int *words,
         int n_word, int tgt_pos)
 {
@@ -272,6 +275,33 @@ int direct_glue_updater_setup(glue_updater_t *glue_updater,
     return 0;
 }
 
+typedef struct _direct_walker_args_t_ {
+    out_updater_t *out_updater;
+    real_t *hash_wt;
+    real_t scale;
+    hash_t h;
+    hash_t hash_sz;
+} direct_walker_args_t;
+
+int direct_forward_walker(output_t *output, output_node_id_t node,
+        output_node_id_t child_s, output_node_id_t child_e, void *args)
+{
+    direct_walker_args_t *dw_args;
+    output_node_id_t ch;
+    hash_t h;
+
+    dw_args = (direct_walker_args_t *) args;
+
+    for (ch = child_s, h = dw_args->h + ch; ch < child_e; ch++, h++) {
+        if (h >= dw_args->hash_sz) {
+            h = 0;
+        }
+        dw_args->out_updater->ac[ch] += dw_args->scale * dw_args->hash_wt[h];
+    }
+
+    return 0;
+}
+
 int direct_glue_updater_forward(glue_updater_t *glue_updater,
         comp_updater_t *comp_updater, int *words, int n_word, int tgt_pos)
 {
@@ -280,18 +310,10 @@ int direct_glue_updater_forward(glue_updater_t *glue_updater,
     out_updater_t *out_updater;
     input_t *input;
 
-    real_t *hash_wt;
-    real_t scale;
-
-    hash_t h;
     int future_order;
     int order;
 
-    output_path_t *path;
-    output_node_id_t node;
-    output_node_id_t n;
-    output_node_id_t ch;
-
+    direct_walker_args_t dw_args;
     int a;
 
     ST_CHECK_PARAM(glue_updater == NULL || comp_updater == NULL
@@ -302,11 +324,8 @@ int direct_glue_updater_forward(glue_updater_t *glue_updater,
     out_updater = comp_updater->out_updater;
     input = comp_updater->comp->input;
 
-    hash_wt = glue_data->direct_wt->hash_wt;
-    scale = glue_updater->glue->out_scales[0];
-
     /* history ngrams. */
-    order = direct_wt_get_hash_neg(data->hash + 1, data->hash[0],
+    order = direct_get_hash_neg(data->hash + 1, data->hash[0],
             data->P, input->context, data->positive,
             words, n_word, tgt_pos);
     if (order < 0) {
@@ -316,7 +335,7 @@ int direct_glue_updater_forward(glue_updater_t *glue_updater,
 
     if (input->n_ctx - data->positive > 0) {
         /* future ngrams. */
-        future_order = direct_wt_get_hash_pos(data->hash + 1 + order,
+        future_order = direct_get_hash_pos(data->hash + 1 + order,
                 data->hash[0], data->P + data->positive,
                 input->context + data->positive,
                 input->n_ctx - data->positive, words, n_word, tgt_pos);
@@ -329,33 +348,17 @@ int direct_glue_updater_forward(glue_updater_t *glue_updater,
 
     order += 1/* for hash[0]. */;
 
+    dw_args.out_updater = out_updater;
+    dw_args.hash_wt = glue_data->direct_wt->hash_wt;
+    dw_args.scale = glue_updater->glue->out_scales[0];
+    dw_args.hash_sz = glue_data->hash_sz;
     for (a = 0; a < order; a++) {
         data->hash[a] = data->hash[a] % glue_data->hash_sz;
-    }
-
-    path = out_updater->output->paths + words[tgt_pos];
-    for (a = 0; a < order; a++) {
-        node = out_updater->output->tree->root;
-        ch = s_children(out_updater->output->tree, node);
-        h = data->hash[a] + ch;
-        for (; ch < e_children(out_updater->output->tree, node); ch++) {
-            if (h >= glue_data->hash_sz) {
-                h = 0;
-            }
-            out_updater->ac[ch] += scale * hash_wt[h];
-            h++;
-        }
-        for (n = 0; n < path->num_node; n++) {
-            node = path->nodes[n];
-            ch = s_children(out_updater->output->tree, node);
-            h = data->hash[a] + ch;
-            for (; ch < e_children(out_updater->output->tree, node); ch++) {
-                if (h >= glue_data->hash_sz) {
-                    h = 0;
-                }
-                out_updater->ac[ch] += scale * hash_wt[h];
-                h++;
-            }
+        dw_args.h = data->hash[a];
+        if (output_walk_through_path(out_updater->output, words[tgt_pos],
+                    direct_forward_walker, &dw_args) < 0) {
+            ST_WARNING("Failed to output_walk_through.");
+            return -1;
         }
     }
 
