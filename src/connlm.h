@@ -167,6 +167,14 @@ int connlm_print_info(FILE *model_fp, FILE *fo);
 int connlm_filter(connlm_t *connlm, model_filter_t mf,
         const char *comp_names, int num_comp);
 
+/**
+ * Setup a connlm model for running.
+ * @ingroup g_connlm
+ * @param[in] connlm connlm model.
+ * @return non-zero value if any error.
+ */
+int connlm_setup(connlm_t *connlm);
+
 #ifdef __cplusplus
 }
 #endif

@@ -69,6 +69,64 @@ int out_updater_setup(out_updater_t *out_updater, bool backprob)
 
     return 0;
 }
+#if 0
+{
+    output_neuron_t *neu;
+    size_t sz;
+
+    output_node_id_t num_node;
+    int t;
+
+    ST_CHECK_PARAM(output == NULL || num_thrs < 0, -1);
+
+    output->n_neu = num_thrs;
+    sz = sizeof(output_neuron_t) * num_thrs;
+    output->neurons = (output_neuron_t *)malloc(sz);
+    if (output->neurons == NULL) {
+        ST_WARNING("Failed to malloc neurons.");
+        goto ERR;
+    }
+    memset(output->neurons, 0, sz);
+
+    num_node = output->tree->num_node;
+    if (num_node > 0) {
+        for (t = 0; t < num_thrs; t++) {
+            neu = output->neurons + t;
+            sz = sizeof(real_t) * num_node;
+            if (posix_memalign((void **)&neu->ac, ALIGN_SIZE, sz) != 0
+                    || neu->ac == NULL) {
+                ST_WARNING("Failed to malloc ac.");
+                goto ERR;
+            }
+            memset(neu->ac, 0, sz);
+
+            if (backprop) {
+                sz = sizeof(real_t) * num_node;
+                if (posix_memalign((void **)&neu->er, ALIGN_SIZE, sz) != 0
+                        || neu->er == NULL) {
+                    ST_WARNING("Failed to malloc er.");
+                    goto ERR;
+                }
+                memset(neu->er, 0, sz);
+            }
+        }
+    }
+
+    return 0;
+
+ERR:
+    if (output->neurons != NULL) {
+        for (t = 0; t < output->n_neu; t++) {
+            safe_free(output->neurons[t].ac);
+            safe_free(output->neurons[t].er);
+        }
+        safe_free(output->neurons);
+    }
+    output->n_neu = 0;
+
+    return -1;
+}
+#endif
 
 int out_updater_reset(out_updater_t *out_updater)
 {

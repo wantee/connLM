@@ -120,7 +120,7 @@ driver_t* driver_create(connlm_t *connlm, reader_t *reader, int n_thr)
         ST_WARNING("Failed to malloc updaters.");
         goto ERR;
     }
-    memset(driver, 0, sizeof(updater_t*) * n_thr);
+    memset(driver->updaters, 0, sizeof(updater_t*) * n_thr);
 
     for (i = 0; i < driver->n_thr; i++) {
         driver->updaters[i] = updater_create(connlm);
@@ -156,6 +156,11 @@ int driver_setup(driver_t *driver, driver_mode_t mode)
     }
 
     driver->mode = mode;
+
+    if (connlm_setup(driver->connlm) < 0) {
+        ST_WARNING("Failed to connlm_setup.");
+        return -1;
+    }
 
     for (i = 0; i < driver->n_thr; i++) {
         if (updater_setup(driver->updaters[i], backprop) < 0) {

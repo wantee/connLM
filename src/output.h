@@ -139,6 +139,8 @@ typedef struct _output_t_ {
 
     output_tree_t *tree; /**< output tree. */
     output_path_t *paths; /**< Store a path for every leaf(word) node. */
+
+    output_node_id_t *param_map; /**< map a node to index in param weight(used by Softmax). */
 } output_t;
 
 /**
@@ -245,6 +247,14 @@ int output_save_body(output_t *output, FILE *fp, bool binary);
  */
 output_t* output_generate(output_opt_t *output_opt, count_t *word_cnts,
        int output_size);
+
+/**
+ * Setup a output layer for running.
+ * @ingroup g_output
+ * @param[in] output output layer.
+ * @return non-zero value if any error.
+ */
+int output_setup(output_t *output);
 
 /**
  * Whether two output tree is equal.

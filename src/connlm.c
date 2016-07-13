@@ -786,3 +786,17 @@ int connlm_filter(connlm_t *connlm, model_filter_t mf,
 
     return 0;
 }
+
+int connlm_setup(connlm_t *connlm)
+{
+    ST_CHECK_PARAM(connlm == NULL, -1);
+
+    if (connlm->output != NULL) {
+        if (output_setup(connlm->output) < 0) {
+            ST_WARNING("Failed to output_setup.");
+            return -1;
+        }
+    }
+
+    return 0;
+}

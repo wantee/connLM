@@ -959,6 +959,7 @@ void output_destroy(output_t *output)
 
     safe_tree_destroy(output->tree);
     safe_free(output->paths);
+    safe_free(output->param_map);
 
     if (output->neurons != NULL) {
         for (i = 0; i < output->n_neu; i++) {
@@ -1710,7 +1711,59 @@ ERR:
     return -1;
 }
 
-int output_tree_dfs_trav_gen_path(output_tree_t *tree,
+static int output_tree_bfs(output_tree_t *tree,
+        int (*visitor)(output_tree_t *tree,
+            output_node_id_t node, void *args), void *args)
+{
+    st_queue_t *node_queue = NULL;
+
+    void *tmp;
+    output_node_id_t node, child;
+
+    ST_CHECK_PARAM(tree == NULL || visitor == NULL, -1);
+
+    node_queue = st_queue_create(tree->num_node);
+    if(node_queue == NULL) {
+        ST_WARNING("Failed to create node_queue.");
+        goto ERR;
+    }
+
+    st_queue_clear(node_queue);
+    if(st_enqueue(node_queue, (void *)(long)tree->root) != ST_QUEUE_OK) {
+        ST_WARNING("Failed to st_enqueue root");
+        goto ERR;
+    }
+
+    while(!st_queue_empty(node_queue)) {
+        if(st_dequeue(node_queue, &tmp) != ST_QUEUE_OK) {
+            ST_WARNING("Failed to st_dequeue.");
+            goto ERR;
+        }
+        node = (output_node_id_t)(long)tmp;
+
+        if(visitor(tree, node, args) < 0) {
+            ST_WARNING("Failed to visitor.");
+            goto ERR;
+        }
+
+        for (child = s_children(tree, node);
+                child < e_children(tree, node); ++child) {
+            if(st_enqueue(node_queue, (void *)(long)child) != ST_QUEUE_OK) {
+                ST_WARNING("Failed to st_enqueue child");
+                goto ERR;
+            }
+        }
+    }
+
+    safe_st_queue_destroy(node_queue);
+    return 0;
+
+ERR:
+    safe_st_queue_destroy(node_queue);
+    return -1;
+}
+
+static int output_tree_dfs_trav_gen_path(output_tree_t *tree,
         output_node_id_t node, st_stack_t *stack, void *args)
 {
     output_t *output;
@@ -1793,6 +1846,84 @@ ERR:
     return -1;
 }
 
+typedef struct _output_gen_param_map_args_t_ {
+    output_node_id_t acc;
+    output_node_id_t *param_map;
+} output_gen_param_map_args_t;
+
+static int output_tree_bfs_trav_gen_param_map(output_tree_t *tree,
+        output_node_id_t node, void *args)
+{
+    output_gen_param_map_args_t *ogpm_args;
+
+    output_node_id_t s_child;
+    output_node_id_t e_child;
+
+    ST_CHECK_PARAM(tree == NULL || args == NULL, -1);
+
+    ogpm_args = (output_gen_param_map_args_t *)args;
+
+    if (ogpm_args->param_map[node] != OUTPUT_NODE_NONE) {
+        ogpm_args->param_map[node] = ogpm_args->acc;
+        ogpm_args->acc += 1;
+    }
+
+    s_child = s_children(tree, node);
+    e_child = e_children(tree, node);
+
+    if (e_child > s_child && e_child != OUTPUT_NODE_NONE) {
+        ogpm_args->param_map[e_child - 1] = OUTPUT_NODE_NONE;
+    }
+
+    return 0;
+}
+
+static int output_generate_param_map(output_t *output)
+{
+    output_gen_param_map_args_t ogpm_args;
+    size_t sz;
+
+    ST_CHECK_PARAM(output == NULL || output->tree == NULL, -1);
+
+    safe_free(output->param_map);
+
+    if (output->norm != ON_SOFTMAX) {
+        return 0;
+    }
+
+    sz = sizeof(output_node_id_t) * (output->tree->num_node);
+    output->param_map = (output_node_id_t *)malloc(sz);
+    if (output->param_map == NULL) {
+        ST_WARNING("Failed to malloc param_map.");
+        goto ERR;
+    }
+    memset(output->param_map, 0, sz);
+
+    ogpm_args.param_map = output->param_map;
+    ogpm_args.acc = 0;
+    if (output_tree_bfs(output->tree, output_tree_bfs_trav_gen_param_map,
+                &ogpm_args) < 0) {
+        ST_WARNING("Failed to output_tree_bfs.");
+        goto ERR;
+    }
+
+#ifdef _OUTPUT_DEBUG_
+    {
+        output_node_id_t i;
+        for (i = 0; i < output->tree->num_node; i++) {
+            ST_DEBUG("param map["OUTPUT_NODE_FMT"] = "OUTPUT_NODE_FMT,
+                    i, output->param_map[i]);
+        }
+    }
+#endif
+
+    return 0;
+
+ERR:
+    safe_free(output->param_map);
+    return -1;
+}
+
 output_t* output_generate(output_opt_t *output_opt, count_t *word_cnts,
        int output_size)
 {
@@ -1841,11 +1972,6 @@ output_t* output_generate(output_opt_t *output_opt, count_t *word_cnts,
                  s_children(output->tree, n), e_children(output->tree, n));
     }
 #endif
-
-    if (output_generate_path(output) < 0) {
-        ST_WARNING("Failed to output_generate_path.");
-        goto ERR;
-    }
 
     return output;
 
@@ -1918,62 +2044,21 @@ double output_get_logprob(output_t *output, int word, int tid)
     return logp;
 }
 
-int output_setup(output_t *output, int num_thrs, bool backprop)
+int output_setup(output_t *output)
 {
-    output_neuron_t *neu;
-    size_t sz;
+    ST_CHECK_PARAM(output == NULL, -1);
 
-    output_node_id_t num_node;
-    int t;
-
-    ST_CHECK_PARAM(output == NULL || num_thrs < 0, -1);
-
-    output->n_neu = num_thrs;
-    sz = sizeof(output_neuron_t) * num_thrs;
-    output->neurons = (output_neuron_t *)malloc(sz);
-    if (output->neurons == NULL) {
-        ST_WARNING("Failed to malloc neurons.");
-        goto ERR;
+    if (output_generate_path(output) < 0) {
+        ST_WARNING("Failed to output_generate_path.");
+        return -1;
     }
-    memset(output->neurons, 0, sz);
 
-    num_node = output->tree->num_node;
-    if (num_node > 0) {
-        for (t = 0; t < num_thrs; t++) {
-            neu = output->neurons + t;
-            sz = sizeof(real_t) * num_node;
-            if (posix_memalign((void **)&neu->ac, ALIGN_SIZE, sz) != 0
-                    || neu->ac == NULL) {
-                ST_WARNING("Failed to malloc ac.");
-                goto ERR;
-            }
-            memset(neu->ac, 0, sz);
-
-            if (backprop) {
-                sz = sizeof(real_t) * num_node;
-                if (posix_memalign((void **)&neu->er, ALIGN_SIZE, sz) != 0
-                        || neu->er == NULL) {
-                    ST_WARNING("Failed to malloc er.");
-                    goto ERR;
-                }
-                memset(neu->er, 0, sz);
-            }
-        }
+    if (output_generate_param_map(output) < 0) {
+        ST_WARNING("Failed to output_generate_param_map.");
+        return -1;
     }
 
     return 0;
-
-ERR:
-    if (output->neurons != NULL) {
-        for (t = 0; t < output->n_neu; t++) {
-            safe_free(output->neurons[t].ac);
-            safe_free(output->neurons[t].er);
-        }
-        safe_free(output->neurons);
-    }
-    output->n_neu = 0;
-
-    return -1;
 }
 
 int output_reset(output_t *output, int tid, bool backprop)
@@ -2279,11 +2364,6 @@ int output_load_body(output_t *output, int version, FILE *fp, bool binary)
         goto ERR;
     }
 
-    if (output_generate_path(output) < 0) {
-        ST_WARNING("Failed to output_generate_path.");
-        goto ERR;
-    }
-
     return 0;
 ERR:
     safe_tree_destroy(output->tree);
@@ -2449,6 +2529,13 @@ int output_draw(output_t *output, FILE *fp, count_t *word_cnts,
 
     ST_CHECK_PARAM(output == NULL || fp == NULL, -1);
 
+    if (output->paths == NULL) {
+        if (output_generate_path(output) < 0) {
+            ST_WARNING("Failed to output_generate_path.");
+            return -1;
+        }
+    }
+
     fprintf(fp, "digraph output {\n");
     fprintf(fp, "  rankdir=TB;\n");
     fprintf(fp, "  labelloc=t;\n");
@@ -2488,11 +2575,13 @@ int output_draw(output_t *output, FILE *fp, count_t *word_cnts,
         }
         fprintf(fp, "|");
 
-        if (output->paths[i].num_node > 0) {
-            for (m = 0; m < output->paths[i].num_node - 1; m++) {
-                fprintf(fp, OUTPUT_NODE_FMT",", output->paths[i].nodes[m]);
+        if (output->paths != NULL) {
+            if (output->paths[i].num_node > 0) {
+                for (m = 0; m < output->paths[i].num_node - 1; m++) {
+                    fprintf(fp, OUTPUT_NODE_FMT",", output->paths[i].nodes[m]);
+                }
+                fprintf(fp, OUTPUT_NODE_FMT, output->paths[i].nodes[m]);
             }
-            fprintf(fp, OUTPUT_NODE_FMT, output->paths[i].nodes[m]);
         }
         fprintf(fp, "}}\"];\n");
     }

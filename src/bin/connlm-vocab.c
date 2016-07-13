@@ -127,7 +127,7 @@ int main(int argc, const char *argv[])
     st_opt_show(g_cmd_opt, "connLM Vocab Options");
     ST_CLEAN("Train: %s, Model: %s", argv[1], argv[2]);
 
-    ST_NOTICE("Learning Vocab..");
+    ST_NOTICE("Learning Vocab...");
     vocab = vocab_create(&g_vocab_opt);
     if (vocab == NULL) {
         ST_WARNING("Failed to vocab_create.");
