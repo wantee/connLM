@@ -117,7 +117,7 @@ ERR:
     return NULL;
 }
 
-int comp_updater_setup(comp_updater_t *comp_updater, bool backprob)
+int comp_updater_setup(comp_updater_t *comp_updater, bool backprop)
 {
     int i;
 
@@ -125,7 +125,7 @@ int comp_updater_setup(comp_updater_t *comp_updater, bool backprob)
 
     for (i = 0; i < comp_updater->comp->num_layer; i++) {
         if (layer_updater_setup(comp_updater->layer_updaters[i],
-                    backprob) < 0) {
+                    backprop) < 0) {
             ST_WARNING("Failed to layer_updater_setup[%s].",
                     comp_updater->comp->layers[i]->name);
             return -1;
@@ -134,7 +134,7 @@ int comp_updater_setup(comp_updater_t *comp_updater, bool backprob)
 
     for (i = 0; i < comp_updater->comp->num_glue; i++) {
         if (glue_updater_setup(comp_updater->glue_updaters[i],
-                    comp_updater, backprob) < 0) {
+                    comp_updater, backprop) < 0) {
             ST_WARNING("Failed to glue_updater_setup[%s].",
                     comp_updater->comp->glues[i]->name);
             return -1;

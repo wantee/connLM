@@ -83,10 +83,10 @@ layer_updater_t* layer_updater_create(layer_t *layer);
  * Setup layer_updater for running.
  * @ingroup g_updater_layer
  * @param[in] layer_updater layer_updater.
- * @param[in] backprob whether do backprob.
+ * @param[in] backprop whether do backprop.
  * @return non-zero value if any error.
  */
-int layer_updater_setup(layer_updater_t *layer_updater, bool backprob);
+int layer_updater_setup(layer_updater_t *layer_updater, bool backprop);
 
 /**
  * Activate a layer_updater.

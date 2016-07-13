@@ -125,7 +125,7 @@ for iter in $(seq -w $max_iters); do
 
   # create .done file as a mark that iteration is over
   touch $dir/.done_iter$iter
-  cp "$dir/.learn_rate" "$dir.learn_rate.$iter" || exit 1
+  cp "$dir/.learn_rate" "$dir/.learn_rate.$iter" || exit 1
 
   # no learn-rate halving yet, if keep_lr_iters set accordingly
   [ $iter -le $keep_lr_iters ] && continue

@@ -105,12 +105,30 @@ typedef struct _output_tree_t_ {
     output_node_id_t *word2leaf; /**< map word id to leaf node id. */
 } output_tree_t;
 
+inline int output_tree_leaf2word(output_tree_t *tree, output_node_id_t node)
+{
+    if (tree->leaf2word != NULL) {
+        return tree->leaf2word[node];
+    } else {
+        return (int)node;
+    }
+}
+
+inline output_node_id_t output_tree_word2leaf(output_tree_t *tree, int word)
+{
+    if (tree->word2leaf != NULL) {
+        return tree->word2leaf[word];
+    } else {
+        return (output_node_id_t)word;
+    }
+}
+
 /**
- * Output tree Path.
+ * Output tree path.
  * @ingroup g_output
  */
 typedef struct _output_tree_path_t_ {
-    output_node_id_t *nodes; /**< nodes on the path. */ // may exclude root
+    output_node_id_t *nodes; /**< nodes on the path. *EXCLUDE* root & leaf. */
     output_node_id_t num_node; /**< number of nodes in the path. */
 } output_path_t;
 
@@ -141,6 +159,7 @@ typedef struct _output_t_ {
     output_path_t *paths; /**< Store a path for every leaf(word) node. */
 
     output_node_id_t *param_map; /**< map a node to index in param weight(used by Softmax). */
+    output_node_id_t num_param_map; /**< number of param maps. */
 } output_t;
 
 /**
@@ -307,8 +326,40 @@ int output_parse_topo(output_t *output, const char *topo);
  */
 int output_walk_through_path(output_t *output, int word,
         int (*walker)(output_t *output, output_node_id_t node,
+            output_node_id_t next_node,
             output_node_id_t child_s, output_node_id_t child_e, void *args),
         void *args);
+
+/**
+ * Map node id to param idx
+ * @ingroup g_output
+ * @param[in] output the output layer.
+ * @param[in] n node id.
+ * @return the (mapped) param idx.
+ */
+inline output_node_id_t output_param_idx(output_t *output, output_node_id_t n)
+{
+    if (output->param_map != NULL) {
+        return output->param_map[n];
+    }
+
+    return n;
+}
+
+/**
+ * Get output param size.
+ * @ingroup g_output
+ * @param[in] output the output layer.
+ * @return the param size.
+ */
+inline output_node_id_t output_param_size(output_t *output)
+{
+    if (output->param_map != NULL) {
+        return output->num_param_map;
+    }
+
+    return output->tree->num_node;
+}
 
 #ifdef __cplusplus
 }

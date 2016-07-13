@@ -56,8 +56,8 @@ typedef struct _glue_updater_implementation_t_ {
     int (*forward)(glue_updater_t *glue_updater, comp_updater_t *comp_updater,
             int *words, int n_word, int tgt_pos); /**< forward glue updater.*/
 
-    int (*backprob)(glue_updater_t *glue_updater, comp_updater_t *comp_updater,
-            int *words, int n_word, int tgt_pos); /**< backprob glue updater.*/
+    int (*backprop)(glue_updater_t *glue_updater, comp_updater_t *comp_updater,
+            int *words, int n_word, int tgt_pos); /**< backprop glue updater.*/
 } glue_updater_impl_t;
 
 /**
@@ -103,11 +103,11 @@ glue_updater_t* glue_updater_create(glue_t *glue);
  * @ingroup g_updater_glue
  * @param[in] glue_updater glue_updater.
  * @param[in] comp_updater the comp_updater.
- * @param[in] backprob whether do backprob.
+ * @param[in] backprop whether do backprop.
  * @return non-zero value if any error.
  */
 int glue_updater_setup(glue_updater_t *glue_updater,
-        comp_updater_t *comp_updater, bool backprob);
+        comp_updater_t *comp_updater, bool backprop);
 
 /**
  * Feed-forward one word for a glue_updater.

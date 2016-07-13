@@ -261,7 +261,7 @@ static int direct_get_hash_neg(hash_t *hash, hash_t init_val,
 }
 
 int direct_glue_updater_setup(glue_updater_t *glue_updater,
-        comp_updater_t *comp_updater, bool backprob)
+        comp_updater_t *comp_updater, bool backprop)
 {
     ST_CHECK_PARAM(glue_updater == NULL || comp_updater == NULL, -1);
 
@@ -283,11 +283,12 @@ typedef struct _direct_walker_args_t_ {
     hash_t hash_sz;
 } direct_walker_args_t;
 
-int direct_forward_walker(output_t *output, output_node_id_t node,
+static int direct_forward_walker(output_t *output, output_node_id_t node,
+        output_node_id_t next_node,
         output_node_id_t child_s, output_node_id_t child_e, void *args)
 {
     direct_walker_args_t *dw_args;
-    output_node_id_t ch;
+    output_node_id_t ch, idx;
     hash_t h;
 
     dw_args = (direct_walker_args_t *) args;
@@ -296,7 +297,10 @@ int direct_forward_walker(output_t *output, output_node_id_t node,
         if (h >= dw_args->hash_sz) {
             h = 0;
         }
-        dw_args->out_updater->ac[ch] += dw_args->scale * dw_args->hash_wt[h];
+        idx = output_param_idx(output, ch);
+        if (idx != OUTPUT_NODE_NONE) {
+            dw_args->out_updater->ac[idx] += dw_args->scale * dw_args->hash_wt[h];
+        }
     }
 
     return 0;
@@ -356,8 +360,8 @@ int direct_glue_updater_forward(glue_updater_t *glue_updater,
         data->hash[a] = data->hash[a] % glue_data->hash_sz;
         dw_args.h = data->hash[a];
         if (output_walk_through_path(out_updater->output, words[tgt_pos],
-                    direct_forward_walker, &dw_args) < 0) {
-            ST_WARNING("Failed to output_walk_through.");
+                    direct_forward_walker, (void *)&dw_args) < 0) {
+            ST_WARNING("Failed to output_walk_through_path.");
             return -1;
         }
     }

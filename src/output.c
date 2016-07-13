@@ -801,24 +801,6 @@ static output_node_id_t output_tree_add_node_m(output_tree_t *tree,
     return node;
 }
 
-static int output_tree_leaf2word(output_tree_t *tree, output_node_id_t node)
-{
-    if (tree->leaf2word != NULL) {
-        return tree->leaf2word[node];
-    } else {
-        return (int)node;
-    }
-}
-
-static output_node_id_t output_tree_word2leaf(output_tree_t *tree, int word)
-{
-    if (tree->word2leaf != NULL) {
-        return tree->word2leaf[word];
-    } else {
-        return (output_node_id_t)word;
-    }
-}
-
 typedef struct _huffman_tree_node_t_ { // two range of nodes for children
     output_node_id_t children_s[2];
     output_node_id_t children_e[2];
@@ -960,6 +942,7 @@ void output_destroy(output_t *output)
     safe_tree_destroy(output->tree);
     safe_free(output->paths);
     safe_free(output->param_map);
+    output->num_param_map = 0;
 
     if (output->neurons != NULL) {
         for (i = 0; i < output->n_neu; i++) {
@@ -1906,6 +1889,7 @@ static int output_generate_param_map(output_t *output)
         ST_WARNING("Failed to output_tree_bfs.");
         goto ERR;
     }
+    output->num_param_map = ogpm_args.acc;
 
 #ifdef _OUTPUT_DEBUG_
     {
@@ -1980,70 +1964,6 @@ output_t* output_generate(output_opt_t *output_opt, count_t *word_cnts,
     return NULL;
 }
 
-int output_forward(output_t *output, int word, int tid)
-{
-    return 0;
-}
-
-int output_loss(output_t *output, int word, int tid)
-{
-    output_neuron_t *neu;
-    output_path_t *path;
-
-    output_node_id_t parent;
-    output_node_id_t n;
-
-    ST_CHECK_PARAM(output == NULL || tid < 0, -1);
-
-    if (word < 0) {
-        return 0;
-    }
-
-    neu = output->neurons + tid;
-
-    path = output->paths + word;
-    parent = path->nodes[path->num_node - 1];
-    for (n = s_children(output->tree, parent);
-            n < e_children(output->tree, parent); n++) {
-        neu->er[n] = (0 - neu->ac[n]);
-    }
-    neu->er[word] = (1 - neu->ac[word]);
-
-    return 0;
-}
-
-int output_gen_word(output_t *output, int tid)
-{
-    ST_CHECK_PARAM(output == NULL, -1);
-
-    return 0;
-}
-
-double output_get_logprob(output_t *output, int word, int tid)
-{
-    output_neuron_t *neu;
-    output_path_t *path;
-
-    double logp = 0.0;
-    output_node_id_t node;
-    output_node_id_t n;
-
-    ST_CHECK_PARAM(output == NULL || tid < 0, -1);
-
-    neu = output->neurons + tid;
-    path = output->paths + word;
-
-    node = output->tree->root;
-    logp += log10(neu->ac[node]);
-
-    for (n = 0; n < path->num_node; n++) {
-        logp += log10(neu->ac[path->nodes[n]]);
-    }
-    logp += log10(neu->ac[word]);
-
-    return logp;
-}
-
 int output_setup(output_t *output)
 {
     ST_CHECK_PARAM(output == NULL, -1);
@@ -2057,85 +1977,6 @@ int output_setup(output_t *output)
         ST_WARNING("Failed to output_generate_param_map.");
         return -1;
     }
-
-    return 0;
-}
-
-int output_reset(output_t *output, int tid, bool backprop)
-{
-#if 0
-    int class_size;
-
-    int i;
-
-    ST_CHECK_PARAM(output == NULL, -1);
-
-    class_size = output->output_opt.class_size;
-    if (class_size > 0) {
-        for (i = 0; i < class_size; i++) {
-            output->ac_o_c[i] = 0;
-            output->er_o_c[i] = 0;
-        }
-    }
-
-    for (i = 0; i < output->output_size; i++) {
-        output->ac_o_w[i] = 0;
-        output->er_o_w[i] = 0;
-    }
-#endif
-
-    return 0;
-}
-
-int output_start(output_t *output, int word, int tid, bool backprop)
-{
-    output_neuron_t *neu;
-    output_path_t *path;
-
-    output_node_id_t node;
-    output_node_id_t n;
-    output_node_id_t ch;
-
-    ST_CHECK_PARAM(output == NULL || tid < 0, -1);
-
-    if (word < 0) {
-        return 0;
-    }
-
-    neu = output->neurons + tid;
-    path = output->paths + word;
-
-    node = output->tree->root;
-    for (ch = s_children(output->tree, node);
-            ch < e_children(output->tree, node); ch++) {
-        neu->ac[ch] = 0.0;
-        if (backprop) {
-            neu->er[ch] = 0.0;
-        }
-    }
-    for (n = 0; n < path->num_node; n++) {
-        node = path->nodes[n];
-        for (ch = s_children(output->tree, node);
-                ch < e_children(output->tree, node); ch++) {
-            neu->ac[ch] = 0.0;
-            if (backprop) {
-                neu->er[ch] = 0.0;
-            }
-        }
-    }
-    return 0;
-}
-
-int output_end(output_t *output, int word, int tid, bool backprop)
-{
-    ST_CHECK_PARAM(output == NULL, -1);
-
-    return 0;
-}
-
-int output_finish(output_t *output, int tid, bool backprop)
-{
-    ST_CHECK_PARAM(output == NULL, -1);
 
     return 0;
 }
@@ -2659,11 +2500,13 @@ int output_parse_topo(output_t *output, const char *topo)
 
 int output_walk_through_path(output_t *output, int word,
         int (*walker)(output_t *output, output_node_id_t node,
+            output_node_id_t next_node,
             output_node_id_t child_s, output_node_id_t child_e, void *args),
         void *args)
 {
     output_path_t *path;
     output_node_id_t node;
+    output_node_id_t next_node;
     output_node_id_t n;
 
     ST_CHECK_PARAM(output == NULL || word < 0, -1);
@@ -2671,14 +2514,24 @@ int output_walk_through_path(output_t *output, int word,
     path = output->paths + word;
 
     node = output->tree->root;
-    if (walker(output, node, s_children(output->tree, node),
+    if (path->num_node > 0) {
+        next_node = path->nodes[0];
+    } else {
+        next_node = output_tree_word2leaf(output->tree, word);
+    }
+    if (walker(output, node, next_node, s_children(output->tree, node),
                 e_children(output->tree, node), args) < 0) {
         ST_WARNING("Failed to walker. node["OUTPUT_NODE_FMT"]", node);
         return -1;
     }
     for (n = 0; n < path->num_node; n++) {
         node = path->nodes[n];
-        if (walker(output, node, s_children(output->tree, node),
+        if (n < path->num_node - 1) {
+            next_node = path->nodes[n + 1];
+        } else {
+            next_node = output_tree_word2leaf(output->tree, word);
+        }
+        if (walker(output, node, next_node, s_children(output->tree, node),
                     e_children(output->tree, node), args) < 0) {
             ST_WARNING("Failed to walker. node["OUTPUT_NODE_FMT"]", node);
             return -1;

@@ -85,10 +85,10 @@ comp_updater_t* comp_updater_create(component_t *comp,
  * Setup comp_updater for running.
  * @ingroup g_updater_comp
  * @param[in] comp_updater comp_updater.
- * @param[in] backprob whether do backprob.
+ * @param[in] backprop whether do backprop.
  * @return non-zero value if any error.
  */
-int comp_updater_setup(comp_updater_t *comp_updater, bool backprob);
+int comp_updater_setup(comp_updater_t *comp_updater, bool backprop);
 
 /**
  * Reset running for comp_updater.

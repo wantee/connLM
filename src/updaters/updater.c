@@ -93,7 +93,7 @@ static int updater_forward(updater_t *updater)
         }
     }
 
-    if (out_updater_forward(updater->out_updater,
+    if (out_updater_activate(updater->out_updater,
                 updater->words[updater->tgt_pos]) < 0) {
         ST_WARNING("Failed to out_updater_forward.");
         return -1;
@@ -112,7 +112,7 @@ static int updater_backprop(updater_t *updater)
     ST_TRACE("Backprop: word[%d]", updater->words[updater->tgt_pos]);
 #endif
 
-    if (out_updater_backprop(updater->out_updater,
+    if (out_updater_loss(updater->out_updater,
                 updater->words[updater->tgt_pos]) < 0) {
         ST_WARNING("Failed to out_updater_backprop.");
         return -1;
@@ -432,7 +432,12 @@ int updater_finalize(updater_t *updater)
 
 int updater_get_logp(updater_t *updater, int word, double *logp)
 {
-    ST_CHECK_PARAM(updater == NULL || word < 0 || logp == NULL, -1);
+    ST_CHECK_PARAM(updater == NULL, -1);
+
+    if (out_updater_get_logp(updater->out_updater, word, logp) < 0) {
+        ST_WARNING("Failed to out_updater_get_logp.");
+        return -1;
+    }
 
     return 0;
 }

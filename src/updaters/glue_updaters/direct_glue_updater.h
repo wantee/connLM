@@ -59,11 +59,11 @@ int direct_glue_updater_init(glue_updater_t *glue_updater);
  * @ingroup g_glue_updater_direct
  * @param[in] glue_updater glue_updater.
  * @param[in] comp_updater the comp_updater.
- * @param[in] backprob whether do backprob.
+ * @param[in] backprop whether do backprop.
  * @return non-zero value if any error.
  */
 int direct_glue_updater_setup(glue_updater_t *glue_updater,
-        comp_updater_t *comp_updater, bool backprob);
+        comp_updater_t *comp_updater, bool backprop);
 
 /**
  * Feed-forward one word for a direct_glue_updater.

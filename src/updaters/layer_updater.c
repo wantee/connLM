@@ -63,7 +63,7 @@ ERR:
     return NULL;
 }
 
-int layer_updater_setup(layer_updater_t *layer_updater, bool backprob)
+int layer_updater_setup(layer_updater_t *layer_updater, bool backprop)
 {
     ST_CHECK_PARAM(layer_updater == NULL, -1);
 

@@ -91,10 +91,10 @@ updater_t* updater_create(connlm_t *connlm);
  * Setup updater for running.
  * @ingroup g_updater
  * @param[in] updater updater.
- * @param[in] backprob whether do backprob.
+ * @param[in] backprop whether do backprop.
  * @return non-zero value if any error.
  */
-int updater_setup(updater_t *updater, bool backprob);
+int updater_setup(updater_t *updater, bool backprop);
 
 /**
  * Feed input words to a updater.
