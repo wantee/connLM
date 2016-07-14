@@ -65,18 +65,6 @@ typedef struct _output_opt_t_ {
     int max_branch; /**< maximum number of branches. */
 } output_opt_t;
 
-/**
- * Neuron of Output Layer.
- * Each neuron used in one single thread.
- * @ingroup g_output
- */
-typedef struct _output_neuron_t_ {
-    real_t *ac; /**< activation of output layer. */
-    real_t *er; /**< error of output layer. */
-
-    real_t p; /**< Probility for word. */
-} output_neuron_t;
-
 #define s_children(tree, node) (tree)->nodes[node].children_s
 #define e_children(tree, node) (tree)->nodes[node].children_e
 #define is_leaf(tree, node) (s_children(tree, node) >= e_children(tree, node))
@@ -151,9 +139,6 @@ typedef struct _output_t_ {
 
     int output_size; /**< size of output tree. */
     output_norm_t norm; /**< normalization method. */
-
-    output_neuron_t *neurons; /**< output tree neurons. */
-    int n_neu; /**< number of threads/neurons. */
 
     output_tree_t *tree; /**< output tree. */
     output_path_t *paths; /**< Store a path for every leaf(word) node. */

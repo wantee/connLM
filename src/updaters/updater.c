@@ -190,6 +190,10 @@ void updater_destroy(updater_t *updater)
         safe_free(updater->comp_updaters);
     }
     updater->connlm = NULL;
+    safe_free(updater->words);
+    updater->n_word = 0;
+    updater->cap_word = 0;
+    updater->tgt_pos = 0;
 }
 
 updater_t* updater_create(connlm_t *connlm)

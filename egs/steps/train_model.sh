@@ -92,7 +92,7 @@ for iter in $(seq -w $max_iters); do
              --config="$train_config" \
              --num-thread=$train_threads \
              $lrs \
-             --random-seed=$rand_seed \
+             --reader^random-seed=$rand_seed \
              "$dir/$mdl_best" "$train_file" "$dir/$mdl_next" \
   || exit 1;
 
@@ -151,7 +151,7 @@ for iter in $(seq -w $max_iters); do
   # do annealing
   if [ 1 == $halving ]; then
     ../utils/scale_lr.pl $halving_factor < "$dir/.learn_rate.$iter" \
-        > "$dir.learn_rate" || exit 1
+        > "$dir/.learn_rate" || exit 1
   fi
 done
 

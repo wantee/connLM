@@ -940,20 +940,17 @@ void output_destroy(output_t *output)
     }
 
     safe_tree_destroy(output->tree);
-    safe_free(output->paths);
+
+    if (output->paths != NULL) {
+        for (i = 0; i < output->output_size; i++) {
+            safe_free(output->paths[i].nodes);
+        }
+        safe_free(output->paths);
+    }
     safe_free(output->param_map);
     output->num_param_map = 0;
 
-    if (output->neurons != NULL) {
-        for (i = 0; i < output->n_neu; i++) {
-            safe_free(output->neurons[i].ac);
-            safe_free(output->neurons[i].er);
-
-            output->neurons[i].p = -1.0;
-        }
-        safe_free(output->neurons);
-    }
-    output->n_neu = 0;
+    output->output_size = 0;
 }
 
 output_t* output_dup(output_t *o)

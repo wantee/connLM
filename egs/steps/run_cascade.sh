@@ -2,8 +2,6 @@
 
 # run a standalone model using standard layout config
 # Begin configuration section.
-class_size="" # if not empty, choose a optimal size among candidate sizes,
-              # which are seperated by semicolon
 train_thr=1
 eval_thr=1
 stage=""
@@ -15,8 +13,8 @@ function print_help()
   echo "usage: $0 <model-type> <conf-dir> <exp-dir> <train-file> <valid-file> [test-file]"
   echo "e.g.: $0 maxent~rnn conf exp data/train data/valid data/test"
   echo "options: "
-  echo "     --train-thr <threads>    # default: 1."         
-  echo "     --eval-thr <threads>     # default: 1."         
+  echo "     --train-thr <threads>    # default: 1."
+  echo "     --eval-thr <threads>     # default: 1."
   echo "     --class-size <xx:xx:xx>  # default: \"\". Class sizes to be tried."
 }
 
@@ -27,8 +25,8 @@ help_message=`print_help`
 
 . ../utils/parse_options.sh || exit 1
 
-if [ $# -lt 5 ]; then 
-  print_help 1>&2 
+if [ $# -lt 5 ]; then
+  print_help 1>&2
   exit 1;
 fi
 
@@ -66,7 +64,7 @@ done
 
 conf="$conf_dir/$model_type"
 exp="$exp_dir/$model_type"
-mkdir -p $exp 
+mkdir -p $exp
 
 # for run_standalone to get standard layout
 ln -sf "`pwd`/$exp_dir/vocab.clm" $exp/vocab.clm || exit 1
@@ -77,8 +75,7 @@ model="${models[0]}"
 st=1
 if shu-in-range $st $stage; then
 echo "$0: Stage $st --- Training $model..."
-../steps/run_standalone.sh --class-size "$class_size" \
-      --train-thr $train_thr --eval-thr $eval_thr \
+../steps/run_standalone.sh --train-thr $train_thr --eval-thr $eval_thr \
     $model $conf $exp $train_file $valid_file $test_file || exit 1
 fi
 ((st++))
@@ -91,7 +88,7 @@ for i in `seq ${#models[@]}`; do
   m=${models[$((i - 1))]}
   cls=`connlm-info $exp/$model/final.clm 2>/dev/null | ../utils/get_value.sh "Class size"`
   hs=`connlm-info $exp/$model/final.clm 2>/dev/null | ../utils/get_value.sh "HS"`
-  
+
   # for run_standalone to get standard layout
   ln -sf "`pwd`/$conf/$model/output.conf" "$conf/$m/output.conf" || exit 1
 

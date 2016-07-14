@@ -2,9 +2,6 @@
 
 # run a standalone model using standard layout config
 # Begin configuration section.
-class_size="" # if not empty, choose a optimal size among candidate sizes,
-              # which are seperated by semicolon
-hs=""         # whether to use HS
 train_thr=1
 eval_thr=1
 stage=""
