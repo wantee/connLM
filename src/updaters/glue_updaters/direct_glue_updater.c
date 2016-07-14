@@ -51,6 +51,8 @@ typedef struct _dgu_data_t_ {
                          P0 + P0 * P1 * w1 + P0 * P1 * P2 * w2 + ... */
     int n_ctx;
     int positive; /* beginning positon of positive context. */
+
+    param_arg_t param_arg;
 } dgu_data_t;
 
 #define safe_dgu_data_destroy(ptr) do {\
@@ -76,6 +78,8 @@ void dgu_data_destroy(dgu_data_t *data)
     safe_free(data->P);
     data->n_ctx = 0;
     data->positive = 0;
+
+    param_arg_clear(&data->param_arg);
 }
 
 dgu_data_t* dgu_data_init()
@@ -166,6 +170,8 @@ int dgu_data_setup(dgu_data_t *data, st_wt_int_t *context, int n_ctx)
             }
         }
     }
+
+    param_arg_clear(&data->param_arg);
 
     return 0;
 ERR:
@@ -280,6 +286,7 @@ int direct_glue_updater_setup(glue_updater_t *glue_updater,
 typedef struct _direct_walker_args_t_ {
     out_updater_t *out_updater;
     param_t *param;
+    param_arg_t *param_arg;
     real_t *hash_wt;
     real_t scale;
     hash_t h;
@@ -297,11 +304,22 @@ static int direct_forward_walker(output_t *output, output_node_id_t node,
     dw_args = (direct_walker_args_t *) args;
 
     if (output->norm == ON_SOFTMAX) {
-        for (ch = child_s, h = dw_args->h + ch; ch < child_e - 1; ch++, h++) {
-            if (h >= dw_args->hash_sz) {
-                h = 0;
+        h = dw_args->h + child_s;
+        if (h > dw_args->hash_sz) {
+            h -= dw_args->hash_sz;
+        }
+
+        if (h + child_e - child_s - 1 > dw_args->hash_sz) {
+            for (ch = child_s; h < dw_args->hash_sz; ch++, h++) {
+                dw_args->out_updater->ac[ch] += dw_args->scale*dw_args->hash_wt[h];
             }
-            dw_args->out_updater->ac[ch] += dw_args->scale*dw_args->hash_wt[h];
+            for (; ch < child_e - 1; ch++, h++) {
+                dw_args->out_updater->ac[ch] += dw_args->scale*dw_args->hash_wt[h];
+            }
+        } else {
+            for (ch = child_s; ch < child_e - 1; ch++, h++) {
+                dw_args->out_updater->ac[ch] += dw_args->scale*dw_args->hash_wt[h];
+            }
         }
     }
 
@@ -358,6 +376,7 @@ int direct_glue_updater_forward(glue_updater_t *glue_updater,
     dw_args.scale = glue_updater->glue->out_scales[0];
     dw_args.hash_sz = glue_data->hash_sz;
     dw_args.param = NULL;
+    dw_args.param_arg = NULL;
     for (a = 0; a < data->hash_order; a++) {
         data->hash[a] = data->hash[a] % glue_data->hash_sz;
         dw_args.h = data->hash[a];
@@ -376,17 +395,44 @@ static int direct_backprop_walker(output_t *output, output_node_id_t node,
         output_node_id_t child_s, output_node_id_t child_e, void *args)
 {
     direct_walker_args_t *dw_args;
-    output_node_id_t ch;
+    hash_size_t sz;
     hash_t h;
 
     dw_args = (direct_walker_args_t *) args;
 
     if (output->norm == ON_SOFTMAX) {
-        for (ch = child_s, h = dw_args->h + ch; ch < child_e - 1; ch++, h++) {
-            if (h >= dw_args->hash_sz) {
-                h = 0;
-            }
-            dw_args->hash_wt[h] += dw_args->scale*dw_args->param->learn_rate*dw_args->out_updater->er[ch];
+        h = dw_args->h + child_s;
+        if (h > dw_args->hash_sz) {
+            h -= dw_args->hash_sz;
+        }
+
+        if (h + child_e - child_s - 1 > dw_args->hash_sz) {
+            sz = dw_args->hash_sz - h;
+            param_update(dw_args->param,
+                    dw_args->param_arg, false,
+                    dw_args->hash_wt + h,
+                    dw_args->out_updater->er + child_s,
+                    dw_args->scale,
+                    sz,
+                    NULL,
+                    -1);
+            param_update(dw_args->param,
+                    dw_args->param_arg, true,
+                    dw_args->hash_wt,
+                    dw_args->out_updater->er + child_s + sz,
+                    dw_args->scale,
+                    child_e - child_s - 1 - sz,
+                    NULL,
+                    -1);
+        } else {
+            param_update(dw_args->param,
+                    dw_args->param_arg, true,
+                    dw_args->hash_wt + h,
+                    dw_args->out_updater->er + child_s,
+                    dw_args->scale,
+                    child_e - child_s - 1,
+                    NULL,
+                    -1);
         }
     }
 
@@ -415,6 +461,7 @@ int direct_glue_updater_backprop(glue_updater_t *glue_updater,
     dw_args.scale = glue_updater->glue->out_scales[0];
     dw_args.hash_sz = glue_data->hash_sz;
     dw_args.param = &glue_data->param;
+    dw_args.param_arg = &data->param_arg;
     for (a = 0; a < data->hash_order; a++) {
         dw_args.h = data->hash[a];
         if (output_walk_through_path(out_updater->output, words[tgt_pos],

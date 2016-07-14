@@ -504,15 +504,16 @@ glue_t* glue_parse_topo(const char *line, layer_t **layers,
         ST_WARNING("No type found.");
         goto ERR;
     }
-    if (glue->impl->check != NULL) {
-        if (!glue->impl->check(glue, layers, n_layer, input, output)) {
-            ST_WARNING("check glue failed.");
-            goto ERR;
-        }
-    }
     if (glue->impl->parse_topo != NULL) {
         if (glue->impl->parse_topo(glue, impl_topo) < 0) {
             ST_WARNING("Failed to parse_topo for impl glue.");
+            goto ERR;
+        }
+    }
+
+    if (glue->impl->check != NULL) {
+        if (!glue->impl->check(glue, layers, n_layer, input, output)) {
+            ST_WARNING("check glue failed.");
             goto ERR;
         }
     }

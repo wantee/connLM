@@ -195,7 +195,11 @@ ERR:
 bool direct_glue_check(glue_t *glue, layer_t **layers, int n_layer,
         input_t *input, output_t *output)
 {
+    direct_glue_data_t *data;
+
     ST_CHECK_PARAM(glue == NULL || input == NULL, false);
+
+    data = (direct_glue_data_t *)glue->extra;
 
     if (strcasecmp(glue->type, DIRECT_GLUE_NAME) != 0) {
         ST_WARNING("Not a direct glue. [%s]", glue->type);
@@ -226,6 +230,11 @@ bool direct_glue_check(glue_t *glue, layer_t **layers, int n_layer,
 
     if (input->combine != IC_UNDEFINED) {
         ST_WARNING("combine will be ignored.");
+    }
+
+    if (data->hash_sz <= output->tree->num_node) {
+        ST_WARNING("Hash size should NOT less than output tree nodes.");
+        return false;
     }
 
     return true;
