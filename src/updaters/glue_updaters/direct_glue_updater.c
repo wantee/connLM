@@ -97,7 +97,8 @@ dgu_data_t* dgu_data_init(glue_updater_t *glue_updater)
     }
     memset(data, 0, sizeof(dgu_data_t));
 
-    data->param_updater = param_updater_create(&glue_data->param);
+    data->param_updater = param_updater_create(&glue_data->param,
+            glue_data->direct_wt->hash_wt, glue_data->hash_sz, -1);
     if (data->param_updater == NULL) {
         ST_WARNING("Failed to param_updater_create.");
         goto ERR;

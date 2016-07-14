@@ -45,7 +45,13 @@ extern "C" {
 typedef struct _param_updater_t_ {
     param_t param; /**< the param. */
 
-    int l2_step; /**< step for L2 penalty */
+    real_t *shared_wt; /**< shared weight maxtrix for all updaters. */
+    real_t *wt; /**< local weight maxtrix of this updater. */
+    real_t *delta_wt; /**< delta weight maxtrix for mini-batch. */
+    int row; /**< row of weight maxtrix. */
+    int col; /**< col of weight maxtrix. */
+
+    count_t num_step; /**< update steps. */
 } param_updater_t;
 
 /**
@@ -69,11 +75,19 @@ void param_updater_destroy(param_updater_t *param_updater);
 
 /**
  * Create a param_updater.
+ *
+ * row > 0 && col > 0: wt is [ row x col ];
+ * row > 0 && col < 0: wt is hash based 1d vector [ row ];
+ *
  * @ingroup g_updater_param
- * @param[in] connlm the connlm model.
+ * @param[in] param the param.
+ * @param[in] wt the weight maxtrix.
+ * @param[in] row row of weight maxtrix.
+ * @param[in] col col of weight maxtrix.
  * @return param_updater on success, otherwise NULL.
  */
-param_updater_t* param_updater_create(param_t *param);
+param_updater_t* param_updater_create(param_t *param,
+        real_t *wt, int row, int col);
 
 /**
  * Clear parameter argument
@@ -118,7 +132,7 @@ void param_acc_wt(real_t *wt, real_t *er, int er_size, real_t *in,
  *
  * @see param_acc_wt
  */
-void param_update(param_updater_t *param_updater, bool update_arg,
+void param_update(param_updater_t *param_updater,
         real_t *wt, real_t *er, real_t er_scale,
         int er_size, real_t *in, int in_size);
 

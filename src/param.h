@@ -45,9 +45,10 @@ typedef struct _param_t_ {
     real_t learn_rate; /**< value of learning rate */
     real_t l1_penalty; /**< value of L1 penalty */
     real_t l2_penalty; /**< value of L2 penalty */
-    int l2_gap; /**< applying L2 penalty every l2_gap words */
+    int l2_gap; /**< if biggen than 0, applying L2 penalty every l2_gap steps */
     real_t momentum; /**< value of momentum */
     int mini_batch; /**< size of mini-batch */
+    int sync_size; /**< if bigger than 0, sync weight for threads every sync_size steps. */
 } param_t;
 
 /**

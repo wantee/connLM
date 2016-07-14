@@ -39,6 +39,7 @@ static param_t def_param = {
     .l2_gap = 1,
     .momentum = 0.0,
     .mini_batch = 0,
+    .sync_size = 0,
 };
 
 void param_show_usage()
@@ -94,7 +95,7 @@ int param_load(param_t *param, st_opt_t *opt, const char *sec_name,
 
     ST_OPT_SEC_GET_INT(opt, sec_name, "L2_GAP", param->l2_gap,
             param->l2_gap,
-            "Number of words between two consecutive L2 regularization");
+            "if biggen than 0, applying L2 penalty every l2_gap steps");
 
     ST_OPT_SEC_GET_DOUBLE(opt, sec_name, "MOMENTUM", d,
             (double)param->momentum,
@@ -104,6 +105,10 @@ int param_load(param_t *param, st_opt_t *opt, const char *sec_name,
     ST_OPT_SEC_GET_INT(opt, sec_name, "MINI_BATCH", param->mini_batch,
             param->mini_batch,
             "Mini-batch size");
+
+    ST_OPT_SEC_GET_INT(opt, sec_name, "SYNC_SIZE", param->sync_size,
+            param->sync_size,
+            "if bigger than 0, sync weight for threads every sync_size steps.");
 
     return 0;
 ST_OPT_ERR:

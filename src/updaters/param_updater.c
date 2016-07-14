@@ -37,14 +37,31 @@ void param_updater_destroy(param_updater_t *param_updater)
         return;
     }
 
+    if (param_updater->wt != param_updater->shared_wt) {
+        safe_free(param_updater->wt);
+    } else {
+        param_updater->wt = NULL;
+    }
+    param_updater->shared_wt = NULL;
+    safe_free(param_updater->delta_wt);
+    param_updater->row = -1;
+    param_updater->col = -1;
+
     param_updater_clear(param_updater);
 }
 
-param_updater_t* param_updater_create(param_t *param)
+/*
+ * row > 0 && col > 0: wt is [ row x col ];
+ * row > 0 && col < 0: wt is hash based 1d vector [ row ];
+ */
+param_updater_t* param_updater_create(param_t *param,
+        real_t *wt, int row, int col)
 {
     param_updater_t *param_updater = NULL;
 
-    ST_CHECK_PARAM(param == NULL, NULL);
+    size_t sz;
+
+    ST_CHECK_PARAM(param == NULL || wt == NULL || row <= 0, NULL);
 
     param_updater = (param_updater_t *)malloc(sizeof(param_updater_t));
     if (param_updater == NULL) {
@@ -54,6 +71,38 @@ param_updater_t* param_updater_create(param_t *param)
     memset(param_updater, 0, sizeof(param_updater_t));
 
     param_updater->param = *param;
+    param_updater->row = row;
+    param_updater->col = col;
+    param_updater->shared_wt = wt;
+
+    if (param_updater->col > 0) {
+        sz =  param_updater->row * param_updater->col;
+    } else {
+        sz = param_updater->row;
+    }
+    sz *= sizeof(real_t);
+
+    if (param_updater->param.sync_size > 0) {
+        param_updater->wt = (real_t *)malloc(sz);
+        if (posix_memalign((void **)&param_updater->wt, ALIGN_SIZE, sz) != 0
+                || param_updater->wt == NULL) {
+            ST_WARNING("Failed to malloc wt.");
+            goto ERR;
+        }
+        memcpy(param_updater->wt, wt, sz);
+    } else {
+        param_updater->wt = wt;
+    }
+
+    if (param_updater->param.mini_batch > 0) {
+        param_updater->delta_wt = (real_t *)malloc(sz);
+        if (posix_memalign((void **)&param_updater->delta_wt, ALIGN_SIZE, sz) != 0
+                || param_updater->delta_wt == NULL) {
+            ST_WARNING("Failed to malloc delta_wt.");
+            goto ERR;
+        }
+        memset(param_updater->delta_wt, 0, sz);
+    }
 
     return param_updater;
 
@@ -64,7 +113,7 @@ ERR:
 
 void param_updater_clear(param_updater_t *param_updater)
 {
-    param_updater->l2_step = 0;
+    param_updater->num_step = 0;
 }
 
 #define N 8
@@ -170,9 +219,9 @@ void param_acc_wt(real_t *wt, real_t *er, int er_size, real_t *in, int in_size)
  * er_size < 0 && in_size > 0: er is delta-weight matrix [ er_size x in_size ]; wt is [ er_size x in_size ];
  * er_size < 0 && in_size < 0: er is delta-weight matrix [ er_size x in_size ]; wt is [ er_size x in_size ]; in is one-shot vector
  */
-void param_update(param_updater_t *param_updater, bool update_arg,
+void param_update(param_updater_t *param_updater,
         real_t *wt, real_t *er, real_t er_scale,
-        int er_size, real_t *in, int in_size)
+        int er_s, int er_e, real_t *in, int in_size)
 {
     real_t *w;
     real_t *delta_w;
@@ -184,19 +233,13 @@ void param_update(param_updater_t *param_updater, bool update_arg,
     int j;
 
     lr = param_updater->param.learn_rate;
-    l2 = param_updater->param.l2_penalty;
+    l2 = 0.0;
 
-    if (param_updater->param.l2_gap > 1) {
-        if (param_updater->l2_step != 0) {
-            l2 = 0.0;
-        }
+    param_updater->num_step++;
 
-        if (update_arg) {
-            param_updater->l2_step++;
-            if (param_updater->l2_step >= param_updater->param.l2_gap) {
-                param_updater->l2_step = 0;
-            }
-        }
+    if (param_updater->param.l2_gap > 0
+        && param_updater->num_step % param_updater->param.l2_gap == 0) {
+        l2 = param_updater->param.l2_penalty;
     }
 
     if (er_size > 0 && in_size > 0) {
@@ -304,6 +347,16 @@ void param_update(param_updater_t *param_updater, bool update_arg,
                 - l2 * w[i];
             i += in_size;
         }
+    }
+
+    if (param_updater->param.mini_batch > 0
+        && param_updater->num_step % param_updater->param.mini_batch == 0) {
+        // update mini-batch
+    }
+
+    if (param_updater->param.sync_size > 0
+        && param_updater->num_step % param_updater->param.sync_size == 0) {
+        // sync weight
     }
 }
 
