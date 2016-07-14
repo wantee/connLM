@@ -30,6 +30,7 @@
 
 #include "output.h"
 #include "../../glues/direct_glue.h"
+#include "updaters/param_updater.h"
 
 #include "direct_glue_updater.h"
 
@@ -52,7 +53,7 @@ typedef struct _dgu_data_t_ {
     int n_ctx;
     int positive; /* beginning positon of positive context. */
 
-    param_arg_t param_arg;
+    param_updater_t *param_updater;
 } dgu_data_t;
 
 #define safe_dgu_data_destroy(ptr) do {\
@@ -79,12 +80,15 @@ void dgu_data_destroy(dgu_data_t *data)
     data->n_ctx = 0;
     data->positive = 0;
 
-    param_arg_clear(&data->param_arg);
+    safe_param_updater_destroy(data->param_updater);
 }
 
-dgu_data_t* dgu_data_init()
+dgu_data_t* dgu_data_init(glue_updater_t *glue_updater)
 {
     dgu_data_t *data = NULL;
+    direct_glue_data_t *glue_data;
+
+    glue_data = (direct_glue_data_t *)glue_updater->glue->extra;
 
     data = (dgu_data_t *)malloc(sizeof(dgu_data_t));
     if (data == NULL) {
@@ -92,6 +96,12 @@ dgu_data_t* dgu_data_init()
         goto ERR;
     }
     memset(data, 0, sizeof(dgu_data_t));
+
+    data->param_updater = param_updater_create(&glue_data->param);
+    if (data->param_updater == NULL) {
+        ST_WARNING("Failed to param_updater_create.");
+        goto ERR;
+    }
 
     return data;
 ERR:
@@ -171,7 +181,7 @@ int dgu_data_setup(dgu_data_t *data, st_wt_int_t *context, int n_ctx)
         }
     }
 
-    param_arg_clear(&data->param_arg);
+    param_updater_clear(data->param_updater);
 
     return 0;
 ERR:
@@ -198,7 +208,7 @@ int direct_glue_updater_init(glue_updater_t *glue_updater)
         return -1;
     }
 
-    glue_updater->extra = (void *)dgu_data_init();
+    glue_updater->extra = (void *)dgu_data_init(glue_updater);
     if (glue_updater->extra == NULL) {
         ST_WARNING("Failed to dgu_data_init.");
         goto ERR;
@@ -285,8 +295,7 @@ int direct_glue_updater_setup(glue_updater_t *glue_updater,
 
 typedef struct _direct_walker_args_t_ {
     out_updater_t *out_updater;
-    param_t *param;
-    param_arg_t *param_arg;
+    param_updater_t *param_updater;
     real_t *hash_wt;
     real_t scale;
     hash_t h;
@@ -375,8 +384,7 @@ int direct_glue_updater_forward(glue_updater_t *glue_updater,
     dw_args.hash_wt = glue_data->direct_wt->hash_wt;
     dw_args.scale = glue_updater->glue->out_scales[0];
     dw_args.hash_sz = glue_data->hash_sz;
-    dw_args.param = NULL;
-    dw_args.param_arg = NULL;
+    dw_args.param_updater = NULL;
     for (a = 0; a < data->hash_order; a++) {
         data->hash[a] = data->hash[a] % glue_data->hash_sz;
         dw_args.h = data->hash[a];
@@ -408,16 +416,14 @@ static int direct_backprop_walker(output_t *output, output_node_id_t node,
 
         if (h + child_e - child_s - 1 > dw_args->hash_sz) {
             sz = dw_args->hash_sz - h;
-            param_update(dw_args->param,
-                    dw_args->param_arg, false,
+            param_update(dw_args->param_updater, false,
                     dw_args->hash_wt + h,
                     dw_args->out_updater->er + child_s,
                     dw_args->scale,
                     sz,
                     NULL,
                     -1);
-            param_update(dw_args->param,
-                    dw_args->param_arg, true,
+            param_update(dw_args->param_updater, true,
                     dw_args->hash_wt,
                     dw_args->out_updater->er + child_s + sz,
                     dw_args->scale,
@@ -425,8 +431,7 @@ static int direct_backprop_walker(output_t *output, output_node_id_t node,
                     NULL,
                     -1);
         } else {
-            param_update(dw_args->param,
-                    dw_args->param_arg, true,
+            param_update(dw_args->param_updater, true,
                     dw_args->hash_wt + h,
                     dw_args->out_updater->er + child_s,
                     dw_args->scale,
@@ -460,8 +465,7 @@ int direct_glue_updater_backprop(glue_updater_t *glue_updater,
     dw_args.hash_wt = glue_data->direct_wt->hash_wt;
     dw_args.scale = glue_updater->glue->out_scales[0];
     dw_args.hash_sz = glue_data->hash_sz;
-    dw_args.param = &glue_data->param;
-    dw_args.param_arg = &data->param_arg;
+    dw_args.param_updater = data->param_updater;
     for (a = 0; a < data->hash_order; a++) {
         dw_args.h = data->hash[a];
         if (output_walk_through_path(out_updater->output, words[tgt_pos],

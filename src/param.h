@@ -51,21 +51,6 @@ typedef struct _param_t_ {
 } param_t;
 
 /**
- * Arguments updated for one parameter.
- * @ingroup g_param
- */
-typedef struct _param_arg_t_ {
-    int l2_step; /**< step for L2 penalty */
-} param_arg_t;
-
-/**
- * Clear parameter argument
- * @ingroup g_param
- * @param[in] arg argument to be cleared.
- */
-void param_arg_clear(param_arg_t *arg);
-
-/**
  * Load param option.
  * @ingroup g_param
  * @param[out] param loaded.
@@ -82,73 +67,6 @@ int param_load(param_t *param, st_opt_t *opt, const char *sec_name,
  * @ingroup g_param
  */
 void param_show_usage();
-
-/**
- * Accumulate weights.
- * @ingroup g_param
- *
- * in is [ in_size x 1];
- *
- * er_size > 0 && in_size > 0: er is [ 1 x er_size ]; wt is [ er_size x in_size ]; if in == NULL: in is one-shot vector
- *
- * er_size > 0 && in_size < 0: er is [ 1 x er_size ]; wt is hash based 1d vector; in is one-shot vector
- *
- * er_size < 0 && in_size > 0: er is delta-weight matrix [ er_size x in_size ]; wt is [ er_size x in_size ];
- *
- * er_size < 0 && in_size < 0: er is delta-weight matrix [ er_size x in_size ]; wt is [ er_size x in_size ]; in is one-shot vector
- *
- * @see param_update
- */
-void param_acc_wt(real_t *wt, real_t *er, int er_size, real_t *in,
-        int in_size);
-
-/**
- * Update weight using parameters.
- * @ingroup g_param
- *
- * in is [ in_size x 1 ];
- *
- *
- * er_size > 0 && in_size > 0: er is [ 1 x er_size ]; wt is [ er_size x in_size ]; if in == NULL: in is one-shot vector
- *
- * er_size > 0 && in_size < 0: er is [ 1 x er_size ]; wt is hash based 1d vector; in is one-shot vector
- *
- * er_size < 0 && in_size > 0: er is delta-weight matrix [ er_size x in_size ]; wt is [ er_size x in_size ];
- *
- * er_size < 0 && in_size < 0: er is delta-weight matrix [ er_size x in_size ]; wt is [ er_size x in_size ]; in is one-shot vector
- *
- * @see param_acc_wt
- */
-void param_update(param_t *param, param_arg_t *arg, bool update_arg,
-        real_t *wt, real_t *er, real_t er_scale,
-        int er_size, real_t *in, int in_size);
-
-#ifdef _MINI_UPDATE_
-/**
- * Accumulate weights with mini-batch.
- * @ingroup g_param
- *
- * batch is the mini-batch size,
- * other arguments are the same as param_acc_wt.
- *
- * @see param_acc_wt
- */
-void param_acc_wt_minibatch(int batch, real_t *wt, real_t *er, int er_size,
-        real_t *in, int in_size);
-
-/**
- * Update weight with mini-batch
- * @ingroup g_param
- *
- * batch is the mini-batch size,
- * other arguments are the same as param_update.
- *
- * @see param_update
- */
-void param_update_minibatch(param_t *param, param_arg_t *arg,
-        bool update_arg, int batch, real_t *wt, real_t *er, real_t er_scale,
-        int er_size, real_t *in, int in_size);
-#endif
 
 #ifdef __cplusplus
 }

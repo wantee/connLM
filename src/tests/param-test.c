@@ -23,8 +23,9 @@
  */
 
 #include <stdio.h>
+#include <assert.h>
 
-#include "param.h"
+#include "updaters/param_updater.h"
 
 #define M 23
 #define N 17
@@ -155,7 +156,7 @@ static int unit_test_param_acc_wt()
 static int unit_test_param_update()
 {
     param_t param;
-    param_arg_t param_arg;
+    param_updater_t *param_updater;
 
     real_t wt[N*M];
     real_t in[M];
@@ -198,8 +199,10 @@ static int unit_test_param_update()
     for (i = 0; i < N*M; i++) {
         wt[i] = (i + 1);
     }
-    param_arg_clear(&param_arg);
-    param_update(&param, &param_arg, true, wt, er, 1.0, N, in, M);
+    param_updater = param_updater_create(&param);
+    assert(param_updater != NULL);
+    param_updater_clear(param_updater);
+    param_update(param_updater, true, wt, er, 1.0, N, in, M);
     PRINT("{");
     for (i = 0; i < N*M; i++) {
         PRINT("%g, ", wt[i]);
@@ -210,14 +213,17 @@ static int unit_test_param_update()
         }
     }
     PRINT("},\n");
+    safe_param_updater_destroy(param_updater);
     fprintf(stderr, "Passed\n");
 
     fprintf(stderr, "   Case: %d...", ++ncase);
     for (i = 0; i < N*M; i++) {
         wt[i] = (i + 1);
     }
-    param_arg_clear(&param_arg);
-    param_update(&param, &param_arg, true, wt, er, 2.0, N, NULL, M);
+    param_updater = param_updater_create(&param);
+    assert(param_updater != NULL);
+    param_updater_clear(param_updater);
+    param_update(param_updater, true, wt, er, 2.0, N, NULL, M);
     PRINT("{");
     for (i = 0; i < N*M; i++) {
         PRINT("%g, ", wt[i]);
@@ -228,14 +234,17 @@ static int unit_test_param_update()
         }
     }
     PRINT("},\n");
+    safe_param_updater_destroy(param_updater);
     fprintf(stderr, "Passed\n");
 
     fprintf(stderr, "   Case: %d...", ++ncase);
     for (i = 0; i < N*M; i++) {
         wt[i] = (i + 1);
     }
-    param_arg_clear(&param_arg);
-    param_update(&param, &param_arg, true, wt, er, 1.0, N, NULL, -1);
+    param_updater = param_updater_create(&param);
+    assert(param_updater != NULL);
+    param_updater_clear(param_updater);
+    param_update(param_updater, true, wt, er, 1.0, N, NULL, -1);
     PRINT("{");
     for (i = 0; i < N*M; i++) {
         PRINT("%g, ", wt[i]);
@@ -246,14 +255,17 @@ static int unit_test_param_update()
         }
     }
     PRINT("},\n");
+    safe_param_updater_destroy(param_updater);
     fprintf(stderr, "Passed\n");
 
     fprintf(stderr, "   Case: %d...", ++ncase);
     for (i = 0; i < N*M; i++) {
         wt[i] = (i + 1);
     }
-    param_arg_clear(&param_arg);
-    param_update(&param, &param_arg, true, wt, delta_wt, 3.0, -N, in, M);
+    param_updater = param_updater_create(&param);
+    assert(param_updater != NULL);
+    param_updater_clear(param_updater);
+    param_update(param_updater, true, wt, delta_wt, 3.0, -N, in, M);
     PRINT("{");
     for (i = 0; i < N*M; i++) {
         PRINT("%g, ", wt[i]);
@@ -264,14 +276,17 @@ static int unit_test_param_update()
         }
     }
     PRINT("},\n");
+    safe_param_updater_destroy(param_updater);
     fprintf(stderr, "Passed\n");
 
     fprintf(stderr, "   Case: %d...", ++ncase);
     for (i = 0; i < N*M; i++) {
         wt[i] = (i + 1);
     }
-    param_arg_clear(&param_arg);
-    param_update(&param, &param_arg, true, wt, delta_wt, 1.0, -N, NULL, -M);
+    param_updater = param_updater_create(&param);
+    assert(param_updater != NULL);
+    param_updater_clear(param_updater);
+    param_update(param_updater, true, wt, delta_wt, 1.0, -N, NULL, -M);
     PRINT("{");
     for (i = 0; i < N*M; i++) {
         PRINT("%g, ", wt[i]);
@@ -282,6 +297,7 @@ static int unit_test_param_update()
         }
     }
     PRINT("},\n");
+    safe_param_updater_destroy(param_updater);
     fprintf(stderr, "Passed\n");
 
     return 0;
