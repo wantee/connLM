@@ -39,6 +39,17 @@ extern "C" {
  */
 
 /**
+ * Type of weight.
+ * @ingroup g_updater_param
+ */
+typedef enum _weight_update_type_t_ {
+    WT_UT_UNKNOWN = -1, /**< Unknown weight. */
+    WT_UT_FULL = 0, /**< fully updated weight. */
+    WT_UT_PART, /**< partly updated weight. */
+    WT_UT_ONE_SHOT, /**< one-shot updated weight. */
+} wt_update_type_t;
+
+/**
  * Output updater.
  * @ingroup g_updater_param
  */
@@ -50,6 +61,7 @@ typedef struct _param_updater_t_ {
     real_t *delta_wt; /**< delta weight maxtrix for mini-batch. */
     int row; /**< row of weight maxtrix. */
     int col; /**< col of weight maxtrix. */
+    wt_update_type_t type; /**< updating type. */
 
     count_t num_step; /**< update steps. */
 } param_updater_t;
@@ -84,10 +96,11 @@ void param_updater_destroy(param_updater_t *param_updater);
  * @param[in] wt the weight maxtrix.
  * @param[in] row row of weight maxtrix.
  * @param[in] col col of weight maxtrix.
+ * @param[in] type updating type of weight maxtrix.
  * @return param_updater on success, otherwise NULL.
  */
 param_updater_t* param_updater_create(param_t *param,
-        real_t *wt, int row, int col);
+        real_t *wt, int row, int col, wt_update_type_t type);
 
 /**
  * Clear parameter argument
