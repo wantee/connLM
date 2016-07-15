@@ -142,23 +142,19 @@ void param_acc_wt(real_t *wt, real_t *er, int er_size, real_t *in,
  * For WT_UT_ONE_SHOT: in is NULL; er is [ 1 x row ]; updating cols in in_idx of wt;
  *
  * @param[in] param_updater the param_updater.
+ * @param[in] row_s start row of wt to be updated.
  * @param[in] er the error vector.
  * @param[in] er_scale scale of error vector.
- * @param[in] er_seg segmen of error vector.
- * @param[in] num_er_seg number of segment of error vector.
+ * @param[in] er_seg segment of error vector.
  * @param[in] seg_id id of segment.
  * @param[in] in the input vector.
  * @param[in] in_scale scale of input vector.
- * @param[in] in_idx input indexes (with scales) of input one-shot vector.
- * @param[in] num_in_idx number of input indexes of input one-shot vector.
+ * @param[in] in_idx input indexe (with scale) of input one-shot vector.
  * @return non-zero value if any error.
  */
-#if 0
-int param_update(param_updater_t *param_updater,
-        real_t *er, real_t er_scale, st_int_seg_t *er_seg, int num_er_seg, int seg_id,
-        real_t *in, real_t in_scale,
-        st_wt_int_t *in_idx, int num_in_idx);
-#endif
+int param_update(param_updater_t *param_updater, int row_s,
+        real_t *er, real_t er_scale, st_int_seg_t *er_seg, int seg_id,
+        real_t *in, real_t in_scale, st_wt_int_t *in_idx);
 
 #ifdef _MINI_UPDATE_
 /**

@@ -200,27 +200,25 @@ static int param_updater_update_wt(param_updater_t *param_updater,
     return 0;
 }
 
-#if 0
-static int param_updater_acc_wt(param_updater_t *param_updater, real_t *wt,
-        real_t *er, real_t er_scale, st_int_seg_t *er_seg, int num_er_seg, int seg_id,
-        real_t *in, real_t in_scale,
-        st_wt_int_t *in_idx, int num_in_idx)
+static int param_updater_acc_wt(param_updater_t *param_updater,
+        real_t *wt, int row_s,
+        real_t *er, real_t er_scale, st_int_seg_t *er_seg, int seg_id,
+        real_t *in, real_t in_scale, st_wt_int_t *in_idx)
 {
-#if 0
-    real_t *w;
+//    real_t *w;
 
     real_t lr;
     real_t l2;
 
-    int row, col;
+    int row;//, col;
 
-    int i, j, start, end;
+    int i, j;
 
     lr = param_updater->param.learn_rate;
-    lr *= er_scale;
+    lr *= er_scale * in_scale;
     l2 = 0.0;
     row = param_updater->row;
-    col = param_updater->col;
+//    col = param_updater->col;
 
     if (param_updater->param.l2_gap > 0
             && param_updater->num_step % param_updater->param.l2_gap == 0) {
@@ -230,12 +228,27 @@ static int param_updater_acc_wt(param_updater_t *param_updater, real_t *wt,
     switch (param_updater->type) {
         case WT_UT_PART:
             // Hash-based weight
-            lr *= in_scale;
-            for (j = er_s; j < end; j++) {
-                wt[j] += lr * er[j] /* * 1.0 */ - l2 * wt[j];
+            if (er_seg == NULL) {
+                ST_WARNING("no er_seg for WT_UT_PART");
+                return -1;
+            }
+
+            if (row_s + er_seg->n > row) {
+                for (j = er_seg->s, i = row_s; i < row; j++, i++) {
+                    wt[i] += lr * er[j] - l2 * wt[i];
+                }
+                for (i = 0; j < er_seg->n + er_seg->s; j++, i++) {
+                    wt[i] += lr * er[j] - l2 * wt[i];
+                }
+            } else {
+                for (j = er_seg->s, i = row_s;
+                        j < er_seg->n + er_seg->s; j++, i++) {
+                    wt[i] += lr * er[j] - l2 * wt[i];
+                }
             }
             break;
 
+#if 0
         case WT_UT_ONE_SHOT:
             // ignore er_s & er_e
             i = in_idx;
@@ -295,8 +308,11 @@ static int param_updater_acc_wt(param_updater_t *param_updater, real_t *wt,
                 w += col;
             }
 #endif
-    }
 #endif
+        default:
+            ST_WARNING("Unknown updating type[%d].", param_updater->type);
+            return -1;
+    }
 
     return 0;
 }
@@ -316,10 +332,9 @@ static int param_updater_record(param_updater_t *param_updater)
  * er_size < 0 && in_size > 0: er is delta-weight matrix [ er_size x in_size ]; wt is [ er_size x in_size ];
  * er_size < 0 && in_size < 0: er is delta-weight matrix [ er_size x in_size ]; wt is [ er_size x in_size ]; in is one-shot vector
  */
-int param_update(param_updater_t *param_updater,
-        real_t *er, real_t er_scale, st_int_seg_t *er_seg, int num_er_seg, int seg_id,
-        real_t *in, real_t in_scale,
-        st_wt_int_t *in_idx, int num_in_idx)
+int param_update(param_updater_t *param_updater, int row_s,
+        real_t *er, real_t er_scale, st_int_seg_t *er_seg, int seg_id,
+        real_t *in, real_t in_scale, st_wt_int_t *in_idx)
 {
     real_t *wt;
 
@@ -331,9 +346,9 @@ int param_update(param_updater_t *param_updater,
         wt = param_updater->wt;
     }
 
-    if (param_updater_acc_wt(param_updater, wt,
-                er, er_scale, er_seg, num_er_seg, seg_id,
-                in, in_scale, in_idx, num_in_idx) < 0) {
+    if (param_updater_acc_wt(param_updater, wt, row_s,
+                er, er_scale, er_seg, seg_id,
+                in, in_scale, in_idx) < 0) {
         ST_WARNING("Failed to param_updater_acc_wt.");
         return -1;
     }
@@ -370,7 +385,6 @@ int param_update(param_updater_t *param_updater,
 
     return 0;
 }
-#endif
 
 #if 0
 #ifdef _MINI_UPDATE_
