@@ -93,7 +93,8 @@ typedef struct _output_tree_t_ {
     output_node_id_t *word2leaf; /**< map word id to leaf node id. */
 } output_tree_t;
 
-inline int output_tree_leaf2word(output_tree_t *tree, output_node_id_t node)
+static inline int output_tree_leaf2word(output_tree_t *tree,
+        output_node_id_t node)
 {
     if (tree->leaf2word != NULL) {
         return tree->leaf2word[node];
@@ -102,7 +103,8 @@ inline int output_tree_leaf2word(output_tree_t *tree, output_node_id_t node)
     }
 }
 
-inline output_node_id_t output_tree_word2leaf(output_tree_t *tree, int word)
+static inline output_node_id_t output_tree_word2leaf(output_tree_t *tree,
+        int word)
 {
     if (tree->word2leaf != NULL) {
         return tree->word2leaf[word];
@@ -322,7 +324,8 @@ int output_walk_through_path(output_t *output, int word,
  * @param[in] n node id.
  * @return the (mapped) param idx.
  */
-inline output_node_id_t output_param_idx(output_t *output, output_node_id_t n)
+static inline output_node_id_t output_param_idx(output_t *output,
+        output_node_id_t n)
 {
     if (output->param_map != NULL) {
         return output->param_map[n];
@@ -337,7 +340,7 @@ inline output_node_id_t output_param_idx(output_t *output, output_node_id_t n)
  * @param[in] output the output layer.
  * @return the param size.
  */
-inline output_node_id_t output_param_size(output_t *output)
+static inline output_node_id_t output_param_size(output_t *output)
 {
     if (output->param_map != NULL) {
         return output->num_param_map;

@@ -1,8 +1,5 @@
-name="Basic models with default config" 
+name="Reading thread"
 
-before="rm -rf test/tmp/case-01; mkdir -p test/tmp/case-01; mkdir -p test/output/; cp -r conf test/tmp/case-01"
+before="rm -rf test/tmp/case-$SHU_CASE; mkdir -p test/tmp/case-$SHU_CASE; cp -r conf test/tmp/case-$SHU_CASE; ./run.sh --conf-dir test/tmp/case-$SHU_CASE/conf --exp-dir test/tmp/case-$SHU_CASE/exp 1,2 > /dev/null"
 
-script="./run.sh --conf-dir test/tmp/case-01/conf --exp-dir test/tmp/case-01/exp 1-5 > test/output/case-01.out"
-
-normalize="./test/normalize_log.sh"
-compare_normalize=("expected/case-01.out:test/output/case-01.out")
+script="./test/test_read.sh test/tmp/case-$SHU_CASE/exp/maxent test/tmp/case-$SHU_CASE > /dev/null"

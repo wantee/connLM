@@ -1,5 +1,8 @@
-name="Reading thread" 
+name="MaxEnt"
 
-before="rm -rf test/tmp/case-04; mkdir -p test/tmp/case-04; cp -r conf test/tmp/case-04; ./run.sh --conf-dir test/tmp/case-04/conf --exp-dir test/tmp/case-04/exp 1,2 > /dev/null"
+before="rm -rf test/tmp/case-$SHU_CASE; mkdir -p test/tmp/case-$SHU_CASE; mkdir -p test/output/; cp -r conf test/tmp/case-$SHU_CASE"
 
-script="./test/test_read.sh test/tmp/case-04/exp/maxent test/tmp/case-04 > /dev/null"
+script="./run.sh --conf-dir test/tmp/case-$SHU_CASE/conf --exp-dir test/tmp/case-$SHU_CASE/exp 1-2 > test/output/case-$SHU_CASE.out"
+
+normalize="./test/normalize_log.sh"
+compare_normalize=("expected/case-$SHU_CASE.out:test/output/case-$SHU_CASE.out")
