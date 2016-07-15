@@ -50,10 +50,6 @@ void param_updater_destroy(param_updater_t *param_updater)
     param_updater_clear(param_updater);
 }
 
-/*
- * row > 0 && col > 0: wt is [ row x col ];
- * row > 0 && col < 0: wt is hash based 1d vector [ row ];
- */
 param_updater_t* param_updater_create(param_t *param,
         real_t *wt, int row, int col, wt_update_type_t type)
 {
@@ -145,7 +141,6 @@ ERR:
 
 void param_updater_clear(param_updater_t *param_updater)
 {
-    param_updater->num_step = 0;
 //    param_updater->num_hist = 0;
 }
 
@@ -200,7 +195,7 @@ static int param_updater_update_wt(param_updater_t *param_updater,
     return 0;
 }
 
-static int param_updater_acc_wt(param_updater_t *param_updater,
+static int param_updater_acc_wt(param_updater_t *param_updater, count_t n_step,
         real_t *wt, int row_s,
         real_t *er, real_t er_scale, st_int_seg_t *er_seg, int seg_id,
         real_t *in, real_t in_scale, st_wt_int_t *in_idx)
@@ -221,7 +216,7 @@ static int param_updater_acc_wt(param_updater_t *param_updater,
 //    col = param_updater->col;
 
     if (param_updater->param.l2_gap > 0
-            && param_updater->num_step % param_updater->param.l2_gap == 0) {
+            && n_step % param_updater->param.l2_gap == 0) {
         l2 = param_updater->param.l2_penalty;
     }
 
@@ -322,23 +317,11 @@ static int param_updater_record(param_updater_t *param_updater)
     return 0;
 }
 
-/*
- * update weight using parameters.
- *
- * in is [ in_size x 1 ];
- *
- *
- * er_size > 0 && in_size > 0: er is [ 1 x er_size ]; wt is [ er_size x in_size ]; if in == NULL: in is one-shot vector
- * er_size < 0 && in_size > 0: er is delta-weight matrix [ er_size x in_size ]; wt is [ er_size x in_size ];
- * er_size < 0 && in_size < 0: er is delta-weight matrix [ er_size x in_size ]; wt is [ er_size x in_size ]; in is one-shot vector
- */
-int param_update(param_updater_t *param_updater, int row_s,
+int param_update(param_updater_t *param_updater, count_t n_step, int row_s,
         real_t *er, real_t er_scale, st_int_seg_t *er_seg, int seg_id,
         real_t *in, real_t in_scale, st_wt_int_t *in_idx)
 {
     real_t *wt;
-
-    param_updater->num_step++;
 
     if (param_updater->param.mini_batch > 0) {
         wt = param_updater->delta_wt;
@@ -346,7 +329,7 @@ int param_update(param_updater_t *param_updater, int row_s,
         wt = param_updater->wt;
     }
 
-    if (param_updater_acc_wt(param_updater, wt, row_s,
+    if (param_updater_acc_wt(param_updater, n_step, wt, row_s,
                 er, er_scale, er_seg, seg_id,
                 in, in_scale, in_idx) < 0) {
         ST_WARNING("Failed to param_updater_acc_wt.");
@@ -359,7 +342,7 @@ int param_update(param_updater_t *param_updater, int row_s,
             return -1;
         }
 
-        if (param_updater->num_step % param_updater->param.mini_batch == 0) {
+        if (n_step % param_updater->param.mini_batch == 0) {
             if (param_updater_update_wt(param_updater, param_updater->wt,
                         param_updater->delta_wt, true) < 0) {
                 ST_WARNING("Failed to param_updater_update_wt for minibatch.");
@@ -374,7 +357,7 @@ int param_update(param_updater_t *param_updater, int row_s,
             return -1;
         }
 
-        if (param_updater->num_step % param_updater->param.sync_size == 0) {
+        if (n_step % param_updater->param.sync_size == 0) {
             if (param_updater_update_wt(param_updater, param_updater->shared_wt,
                         param_updater->wt, false) < 0) {
                 ST_WARNING("Failed to param_updater_update_wt for sync.");

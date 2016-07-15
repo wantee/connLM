@@ -65,8 +65,6 @@ typedef struct _param_updater_t_ {
     int row; /**< row of weight maxtrix. */
     int col; /**< col of weight maxtrix. */
     wt_update_type_t type; /**< updating type. */
-
-    count_t num_step; /**< update steps. */
 } param_updater_t;
 
 /**
@@ -142,6 +140,7 @@ void param_acc_wt(real_t *wt, real_t *er, int er_size, real_t *in,
  * For WT_UT_ONE_SHOT: in is NULL; er is [ 1 x row ]; updating cols in in_idx of wt;
  *
  * @param[in] param_updater the param_updater.
+ * @param[in] n_step updating step for param_updater.
  * @param[in] row_s start row of wt to be updated.
  * @param[in] er the error vector.
  * @param[in] er_scale scale of error vector.
@@ -152,7 +151,7 @@ void param_acc_wt(real_t *wt, real_t *er, int er_size, real_t *in,
  * @param[in] in_idx input indexe (with scale) of input one-shot vector.
  * @return non-zero value if any error.
  */
-int param_update(param_updater_t *param_updater, int row_s,
+int param_update(param_updater_t *param_updater, count_t n_step, int row_s,
         real_t *er, real_t er_scale, st_int_seg_t *er_seg, int seg_id,
         real_t *in, real_t in_scale, st_wt_int_t *in_idx);
 

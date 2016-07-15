@@ -199,7 +199,7 @@ int glue_updater_forward(glue_updater_t *glue_updater,
     return 0;
 }
 
-int glue_updater_backprop(glue_updater_t *glue_updater,
+int glue_updater_backprop(glue_updater_t *glue_updater, count_t n_step,
         comp_updater_t *comp_updater, int *words, int n_word, int tgt_pos)
 {
     glue_t *glue;
@@ -213,7 +213,7 @@ int glue_updater_backprop(glue_updater_t *glue_updater,
 #endif
 
     if (glue_updater->impl != NULL && glue_updater->impl->backprop != NULL) {
-        if (glue_updater->impl->backprop(glue_updater, comp_updater,
+        if (glue_updater->impl->backprop(glue_updater, n_step, comp_updater,
                     words, n_word, tgt_pos) < 0) {
             ST_WARNING("Failed to glue_updater->impl->backprop.[%s]",
                     glue->name);

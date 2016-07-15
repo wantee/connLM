@@ -185,8 +185,8 @@ int comp_updater_forward(comp_updater_t *comp_updater, int *words,
     return 0;
 }
 
-int comp_updater_backprop(comp_updater_t *comp_updater, int *words,
-        int n_word, int tgt_pos)
+int comp_updater_backprop(comp_updater_t *comp_updater, count_t n_step,
+        int *words, int n_word, int tgt_pos)
 {
     component_t *comp;
     glue_updater_t *glue_updater;
@@ -202,7 +202,7 @@ int comp_updater_backprop(comp_updater_t *comp_updater, int *words,
 
     for (g = comp->num_glue - 1; g >= 0; g--) {
         glue_updater = comp_updater->glue_updaters[comp->fwd_order[g]];
-        if (glue_updater_backprop(glue_updater, comp_updater,
+        if (glue_updater_backprop(glue_updater, n_step, comp_updater,
                     words, n_word, tgt_pos) < 0) {
             ST_WARNING("Failed to backprop glue[%s].",
                     glue_updater->glue->name);
