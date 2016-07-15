@@ -29,6 +29,8 @@
 extern "C" {
 #endif
 
+#include <stutils/st_int.h>
+
 #include <connlm/config.h>
 
 #include "param.h"
@@ -45,8 +47,9 @@ extern "C" {
 typedef enum _weight_update_type_t_ {
     WT_UT_UNKNOWN = -1, /**< Unknown weight. */
     WT_UT_FULL = 0, /**< fully updated weight. */
-    WT_UT_PART, /**< partly updated weight. */
-    WT_UT_ONE_SHOT, /**< one-shot updated weight. */
+    WT_UT_PART, /**< partly updated weight. e.g. hashed wt. */
+    WT_UT_SEG, /**< segmently updated weight. e.g. output wt. */
+    WT_UT_ONE_SHOT, /**< one-shot updated weight. e.g. embedding wt. */
 } wt_update_type_t;
 
 /**
@@ -123,31 +126,39 @@ void param_updater_clear(param_updater_t *param_updater);
  *
  * er_size < 0 && in_size < 0: er is delta-weight matrix [ er_size x in_size ]; wt is [ er_size x in_size ]; in is one-shot vector
  *
+ * @return non-zero value if any error.
  * @see param_update
  */
 void param_acc_wt(real_t *wt, real_t *er, int er_size, real_t *in,
         int in_size);
 
 /**
- * Update weight using parameters.
+ * Update weights.
  * @ingroup g_param
  *
- * in is [ in_size x 1 ];
+ * For WT_UT_FULL: in is [ col x 1 ]; er is [ 1 x row ];
+ * For WT_UT_PART: in is [ col x 1 ]; er is [ 1 x (segs[0].e - sges[0].s) ];
+ * For WT_UT_SEG: in is [ col x 1 ]; er is [ 1 x (segs[seg_idx].e - sges[seg_idx].s) ];
+ * For WT_UT_ONE_SHOT: in is NULL; er is [ 1 x row ]; updating cols in in_idx of wt;
  *
- *
- * er_size > 0 && in_size > 0: er is [ 1 x er_size ]; wt is [ er_size x in_size ]; if in == NULL: in is one-shot vector
- *
- * er_size > 0 && in_size < 0: er is [ 1 x er_size ]; wt is hash based 1d vector; in is one-shot vector
- *
- * er_size < 0 && in_size > 0: er is delta-weight matrix [ er_size x in_size ]; wt is [ er_size x in_size ];
- *
- * er_size < 0 && in_size < 0: er is delta-weight matrix [ er_size x in_size ]; wt is [ er_size x in_size ]; in is one-shot vector
- *
- * @see param_acc_wt
+ * @param[in] param_updater the param_updater.
+ * @param[in] er the error vector.
+ * @param[in] er_scale scale of error vector.
+ * @param[in] er_seg segmen of error vector.
+ * @param[in] num_er_seg number of segment of error vector.
+ * @param[in] seg_id id of segment.
+ * @param[in] in the input vector.
+ * @param[in] in_scale scale of input vector.
+ * @param[in] in_idx input indexes (with scales) of input one-shot vector.
+ * @param[in] num_in_idx number of input indexes of input one-shot vector.
+ * @return non-zero value if any error.
  */
-void param_update(param_updater_t *param_updater,
-        real_t *wt, real_t *er, real_t er_scale,
-        int er_size, real_t *in, int in_size);
+#if 0
+int param_update(param_updater_t *param_updater,
+        real_t *er, real_t er_scale, st_int_seg_t *er_seg, int num_er_seg, int seg_id,
+        real_t *in, real_t in_scale,
+        st_wt_int_t *in_idx, int num_in_idx);
+#endif
 
 #ifdef _MINI_UPDATE_
 /**
@@ -157,9 +168,10 @@ void param_update(param_updater_t *param_updater,
  * batch is the mini-batch size,
  * other arguments are the same as param_acc_wt.
  *
+ * @return non-zero value if any error.
  * @see param_acc_wt
  */
-void param_acc_wt_minibatch(int batch, real_t *wt, real_t *er, int er_size,
+int param_acc_wt_minibatch(int batch, real_t *wt, real_t *er, int er_size,
         real_t *in, int in_size);
 
 /**
@@ -169,9 +181,10 @@ void param_acc_wt_minibatch(int batch, real_t *wt, real_t *er, int er_size,
  * batch is the mini-batch size,
  * other arguments are the same as param_update.
  *
+ * @return non-zero value if any error.
  * @see param_update
  */
-void param_update_minibatch(param_updater_t *param_updater, bool update_arg,
+int param_update_minibatch(param_updater_t *param_updater, bool update_arg,
         int batch, real_t *wt, real_t *er, real_t er_scale,
         int er_size, real_t *in, int in_size);
 #endif

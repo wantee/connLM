@@ -27,7 +27,7 @@
 #include <assert.h>
 #include <time.h>
 
-#include <stutils/st_utils.h>
+#include <stutils/st_rand.h>
 
 #include "utils.h"
 #include "blas.h"

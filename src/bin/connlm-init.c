@@ -26,6 +26,8 @@
 
 #include <stutils/st_log.h>
 #include <stutils/st_io.h>
+#include <stutils/st_rand.h>
+#include <stutils/st_string.h>
 
 #include <connlm/utils.h>
 #include <connlm/connlm.h>

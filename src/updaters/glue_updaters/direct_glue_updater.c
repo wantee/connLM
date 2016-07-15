@@ -98,7 +98,8 @@ dgu_data_t* dgu_data_init(glue_updater_t *glue_updater)
     memset(data, 0, sizeof(dgu_data_t));
 
     data->param_updater = param_updater_create(&glue_data->param,
-            glue_data->direct_wt->hash_wt, glue_data->hash_sz, -1);
+            glue_data->direct_wt->hash_wt, glue_data->hash_sz, -1,
+            WT_UT_PART);
     if (data->param_updater == NULL) {
         ST_WARNING("Failed to param_updater_create.");
         goto ERR;
@@ -404,7 +405,6 @@ static int direct_backprop_walker(output_t *output, output_node_id_t node,
         output_node_id_t child_s, output_node_id_t child_e, void *args)
 {
     direct_walker_args_t *dw_args;
-    hash_size_t sz;
     hash_t h;
 
     dw_args = (direct_walker_args_t *) args;
@@ -416,6 +416,7 @@ static int direct_backprop_walker(output_t *output, output_node_id_t node,
         }
 
         if (h + child_e - child_s - 1 > dw_args->hash_sz) {
+#if 0
             sz = dw_args->hash_sz - h;
             param_update(dw_args->param_updater, false,
                     dw_args->hash_wt + h,
@@ -439,6 +440,7 @@ static int direct_backprop_walker(output_t *output, output_node_id_t node,
                     child_e - child_s - 1,
                     NULL,
                     -1);
+#endif
         }
     }
 

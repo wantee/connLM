@@ -25,7 +25,7 @@
 #include <string.h>
 
 #include <stutils/st_log.h>
-#include <stutils/st_utils.h>
+#include <stutils/st_string.h>
 
 #include "input.h"
 #include "output.h"

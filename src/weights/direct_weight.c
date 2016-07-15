@@ -26,7 +26,8 @@
 
 #include <stutils/st_macro.h>
 #include <stutils/st_log.h>
-#include <stutils/st_utils.h>
+#include <stutils/st_io.h>
+#include <stutils/st_string.h>
 
 #include "direct_weight.h"
 
@@ -42,7 +43,7 @@ void direct_wt_destroy(direct_wt_t *direct_wt)
     direct_wt->wt_sz = 0;
 }
 
-static int direct_wt_alloc(direct_wt_t *direct_wt, hash_size_t wt_sz)
+static int direct_wt_alloc(direct_wt_t *direct_wt, int wt_sz)
 {
     if (posix_memalign((void **)&(direct_wt->hash_wt), ALIGN_SIZE,
                 sizeof(real_t) * wt_sz) != 0
@@ -94,7 +95,7 @@ int direct_wt_load_header(direct_wt_t **direct_wt, int version,
         int magic_num;
     } flag;
 
-    hash_size_t wt_sz;
+    int wt_sz;
 
     ST_CHECK_PARAM((direct_wt == NULL && fo_info == NULL) || fp == NULL
             || binary == NULL, -1);
@@ -123,7 +124,7 @@ int direct_wt_load_header(direct_wt_t **direct_wt, int version,
     }
 
     if (*binary) {
-        if (fread(&wt_sz, sizeof(hash_size_t), 1, fp) != 1) {
+        if (fread(&wt_sz, sizeof(int), 1, fp) != 1) {
             ST_WARNING("Failed to read wt_sz.");
             return -1;
         }
@@ -137,7 +138,7 @@ int direct_wt_load_header(direct_wt_t **direct_wt, int version,
             goto ERR;
         }
 
-        if (st_readline(fp, "Weight size: "HASH_SIZE_FMT, &wt_sz) != 1) {
+        if (st_readline(fp, "Weight size: %d", &wt_sz) != 1) {
             ST_WARNING("Failed to parse wt_sz.");
             goto ERR;
         }
@@ -233,7 +234,7 @@ int direct_wt_save_header(direct_wt_t *direct_wt, FILE *fp, bool binary)
             return -1;
         }
 
-        if (fwrite(&direct_wt->wt_sz, sizeof(hash_size_t), 1, fp) != 1) {
+        if (fwrite(&direct_wt->wt_sz, sizeof(int), 1, fp) != 1) {
             ST_WARNING("Failed to read wt_sz.");
             return -1;
         }
@@ -243,8 +244,7 @@ int direct_wt_save_header(direct_wt_t *direct_wt, FILE *fp, bool binary)
             return -1;
         }
 
-        if (fprintf(fp, "Weight size: "HASH_SIZE_FMT"\n",
-                    direct_wt->wt_sz) < 0) {
+        if (fprintf(fp, "Weight size: %d\n", direct_wt->wt_sz) < 0) {
             ST_WARNING("Failed to fprintf wt_sz.");
             return -1;
         }
@@ -289,7 +289,7 @@ int direct_wt_save_body(direct_wt_t *direct_wt, FILE *fp, bool binary)
     return 0;
 }
 
-direct_wt_t* direct_wt_init(hash_size_t wt_sz)
+direct_wt_t* direct_wt_init(int wt_sz)
 {
     direct_wt_t *direct_wt = NULL;
     size_t i;

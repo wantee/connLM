@@ -45,7 +45,7 @@ extern "C" {
  */
 typedef struct _direct_weight_t_ {
     real_t *hash_wt; /**< weight vector. */
-    hash_size_t wt_sz;  /**< size of weight vector. */
+    int wt_sz;  /**< size of weight vector. */
 } direct_wt_t;
 
 /**
@@ -133,7 +133,7 @@ int direct_wt_save_body(direct_wt_t *direct_wt, FILE *fp, bool binary);
  * @param[in] hash_sz size of hash.
  * @return initialised direct weight if success, otherwise NULL.
  */
-direct_wt_t* direct_wt_init(hash_size_t hash_sz);
+direct_wt_t* direct_wt_init(int hash_sz);
 
 #ifdef __cplusplus
 }

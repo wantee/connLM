@@ -30,7 +30,8 @@
 
 #include <stutils/st_macro.h>
 #include <stutils/st_log.h>
-#include <stutils/st_utils.h>
+#include <stutils/st_string.h>
+#include <stutils/st_rand.h>
 #include <stutils/st_io.h>
 
 #include "utils.h"

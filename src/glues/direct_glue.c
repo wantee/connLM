@@ -26,7 +26,7 @@
 
 #include <stutils/st_macro.h>
 #include <stutils/st_log.h>
-#include <stutils/st_utils.h>
+#include <stutils/st_string.h>
 
 #include "direct_glue.h"
 

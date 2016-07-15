@@ -30,7 +30,7 @@ extern "C" {
 #endif
 
 #include <stutils/st_opt.h>
-#include <stutils/st_utils.h>
+#include <stutils/st_int.h>
 
 #include <connlm/config.h>
 

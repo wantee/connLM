@@ -46,7 +46,7 @@ extern "C" {
 #define DIRECT_GLUE_NAME "direct_wt"
 
 typedef struct _direct_glue_data_t_ {
-    hash_size_t hash_sz;
+    int hash_sz;
     direct_wt_t *direct_wt;
 
     param_t param;

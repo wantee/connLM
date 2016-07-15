@@ -87,7 +87,6 @@ BINS = bin/connlm-train \
 
 #TESTS = tests/maxent-test
 TESTS = tests/utils-test \
-        tests/param-test \
         tests/output-test \
         tests/input-test \
         tests/layer-test \
@@ -100,7 +99,6 @@ endif
 
 #VAL_TESTS = tests/maxent-test
 VAL_TESTS = tests/utils-test \
-            tests/param-test \
             tests/input-test \
             tests/output-test \
             tests/layer-test \

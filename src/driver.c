@@ -30,6 +30,7 @@
 
 #include <stutils/st_macro.h>
 #include <stutils/st_log.h>
+#include <stutils/st_rand.h>
 
 #include "driver.h"
 

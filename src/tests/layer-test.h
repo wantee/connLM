@@ -30,7 +30,6 @@ extern "C" {
 #endif
 
 #include <stutils/st_macro.h>
-#include <stutils/st_utils.h>
 
 #include <connlm/config.h>
 
