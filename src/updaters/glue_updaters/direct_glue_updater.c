@@ -30,7 +30,7 @@
 
 #include "output.h"
 #include "../../glues/direct_glue.h"
-#include "updaters/param_updater.h"
+#include "updaters/wt_updater.h"
 
 #include "direct_glue_updater.h"
 
@@ -53,7 +53,7 @@ typedef struct _dgu_data_t_ {
     int n_ctx;
     int positive; /* beginning positon of positive context. */
 
-    param_updater_t *param_updater;
+    wt_updater_t *wt_updater;
 } dgu_data_t;
 
 #define safe_dgu_data_destroy(ptr) do {\
@@ -80,7 +80,7 @@ void dgu_data_destroy(dgu_data_t *data)
     data->n_ctx = 0;
     data->positive = 0;
 
-    safe_param_updater_destroy(data->param_updater);
+    safe_wt_updater_destroy(data->wt_updater);
 }
 
 dgu_data_t* dgu_data_init(glue_updater_t *glue_updater)
@@ -97,11 +97,11 @@ dgu_data_t* dgu_data_init(glue_updater_t *glue_updater)
     }
     memset(data, 0, sizeof(dgu_data_t));
 
-    data->param_updater = param_updater_create(&glue_data->param,
+    data->wt_updater = wt_updater_create(&glue_data->param,
             glue_data->direct_wt->hash_wt, glue_data->hash_sz, -1,
             WT_UT_PART);
-    if (data->param_updater == NULL) {
-        ST_WARNING("Failed to param_updater_create.");
+    if (data->wt_updater == NULL) {
+        ST_WARNING("Failed to wt_updater_create.");
         goto ERR;
     }
 
@@ -183,7 +183,7 @@ int dgu_data_setup(dgu_data_t *data, st_wt_int_t *context, int n_ctx)
         }
     }
 
-    param_updater_clear(data->param_updater);
+    wt_updater_clear(data->wt_updater);
 
     return 0;
 ERR:
@@ -303,7 +303,7 @@ typedef struct _direct_walker_args_t_ {
     hash_t h;
     hash_t hash_sz;
 
-    param_updater_t *param_updater;
+    wt_updater_t *wt_updater;
     count_t n_step;
 } direct_walker_args_t;
 
@@ -393,7 +393,7 @@ int direct_glue_updater_forward(glue_updater_t *glue_updater,
     dw_args.in_scale = glue_updater->glue->in_scales[0];
     dw_args.out_scale = glue_updater->glue->out_scales[0];
     dw_args.hash_sz = glue_data->hash_sz;
-    dw_args.param_updater = NULL;
+    dw_args.wt_updater = NULL;
     dw_args.n_step = -1;
     for (a = 0; a < data->hash_order; a++) {
         data->hash[a] = data->hash[a] % glue_data->hash_sz;
@@ -419,17 +419,21 @@ static int direct_backprop_walker(output_t *output, output_node_id_t node,
     dw_args = (direct_walker_args_t *) args;
 
     if (output->norm == ON_SOFTMAX) {
+        if (child_e <= child_s + 1) {
+            return 0;
+        }
+
         h = dw_args->h + child_s;
-        if (h > dw_args->hash_sz) {
+        if (h >= dw_args->hash_sz) {
             h -= dw_args->hash_sz;
         }
 
         seg.s = child_s;
         seg.n = child_e - child_s - 1;
-        if (param_update(dw_args->param_updater, dw_args->n_step, (int)h,
-                    dw_args->out_updater->er, dw_args->out_scale, &seg, -1,
+        if (wt_update(dw_args->wt_updater, dw_args->n_step, (int)h,
+                    dw_args->out_updater->er, dw_args->out_scale, &seg,
                     NULL, dw_args->in_scale, NULL) < 0) {
-            ST_WARNING("Failed to param_update.");
+            ST_WARNING("Failed to wt_update.");
             return -1;
         }
     }
@@ -459,7 +463,7 @@ int direct_glue_updater_backprop(glue_updater_t *glue_updater, count_t n_step,
     dw_args.in_scale = glue_updater->glue->in_scales[0];
     dw_args.out_scale = glue_updater->glue->out_scales[0];
     dw_args.hash_sz = glue_data->hash_sz;
-    dw_args.param_updater = data->param_updater;
+    dw_args.wt_updater = data->wt_updater;
     dw_args.n_step = n_step;
     for (a = 0; a < data->hash_order; a++) {
         dw_args.h = data->hash[a];
@@ -468,6 +472,11 @@ int direct_glue_updater_backprop(glue_updater_t *glue_updater, count_t n_step,
             ST_WARNING("Failed to output_walk_through_path.");
             return -1;
         }
+    }
+
+    if (wt_flush(data->wt_updater, n_step) < 0) {
+        ST_WARNING("Failed to wt_flush.");
+        return -1;
     }
 
     return 0;

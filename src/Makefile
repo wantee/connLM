@@ -37,7 +37,7 @@ INCS = utils.h \
        updaters/glue_updaters/wt_glue_updater.h \
        updaters/glue_updaters/emb_wt_glue_updater.h \
        updaters/glue_updaters/out_wt_glue_updater.h \
-       updaters/param_updater.h
+       updaters/wt_updater.h
 
 SRCS = utils.c \
        param.c \
@@ -72,7 +72,7 @@ SRCS = utils.c \
        updaters/glue_updaters/wt_glue_updater.c \
        updaters/glue_updaters/emb_wt_glue_updater.c \
        updaters/glue_updaters/out_wt_glue_updater.c \
-       updaters/param_updater.c
+       updaters/wt_updater.c
 
 BINS = bin/connlm-train \
        bin/connlm-eval \

@@ -29,134 +29,110 @@
 
 #include "blas.h"
 #include "utils.h"
-#include "param_updater.h"
+#include "wt_updater.h"
 
-void param_updater_destroy(param_updater_t *param_updater)
+void wt_updater_destroy(wt_updater_t *wt_updater)
 {
-    if (param_updater == NULL) {
+    if (wt_updater == NULL) {
         return;
     }
 
-    if (param_updater->wt != param_updater->shared_wt) {
-        safe_free(param_updater->wt);
+    if (wt_updater->wt != wt_updater->shared_wt) {
+        safe_free(wt_updater->wt);
     } else {
-        param_updater->wt = NULL;
+        wt_updater->wt = NULL;
     }
-    param_updater->shared_wt = NULL;
-    safe_free(param_updater->delta_wt);
-    param_updater->row = -1;
-    param_updater->col = -1;
+    wt_updater->shared_wt = NULL;
+    safe_free(wt_updater->delta_wt);
+    wt_updater->row = -1;
+    wt_updater->col = -1;
 
-    param_updater_clear(param_updater);
+    wt_updater_clear(wt_updater);
 }
 
-param_updater_t* param_updater_create(param_t *param,
+wt_updater_t* wt_updater_create(param_t *param,
         real_t *wt, int row, int col, wt_update_type_t type)
 {
-    param_updater_t *param_updater = NULL;
+    wt_updater_t *wt_updater = NULL;
 
     size_t sz;
 
     ST_CHECK_PARAM(param == NULL || wt == NULL || row <= 0, NULL);
 
-    param_updater = (param_updater_t *)malloc(sizeof(param_updater_t));
-    if (param_updater == NULL) {
-        ST_WARNING("Failed to malloc param_updater.");
+    wt_updater = (wt_updater_t *)malloc(sizeof(wt_updater_t));
+    if (wt_updater == NULL) {
+        ST_WARNING("Failed to malloc wt_updater.");
         goto ERR;
     }
-    memset(param_updater, 0, sizeof(param_updater_t));
+    memset(wt_updater, 0, sizeof(wt_updater_t));
 
-    param_updater->param = *param;
-    param_updater->row = row;
-    param_updater->col = col;
-    param_updater->shared_wt = wt;
-    param_updater->type = type;
+    wt_updater->param = *param;
+    wt_updater->row = row;
+    wt_updater->col = col;
+    wt_updater->shared_wt = wt;
+    wt_updater->type = type;
 
-    if (param_updater->col > 0) {
-        sz =  param_updater->row * param_updater->col;
+    if (wt_updater->col > 0) {
+        sz =  wt_updater->row * wt_updater->col;
     } else {
-        sz = param_updater->row;
+        sz = wt_updater->row;
     }
     sz *= sizeof(real_t);
 
-    if (param_updater->param.sync_size > 0) {
-        param_updater->wt = (real_t *)malloc(sz);
-        if (posix_memalign((void **)&param_updater->wt, ALIGN_SIZE, sz) != 0
-                || param_updater->wt == NULL) {
+    if (wt_updater->param.sync_size > 0) {
+        wt_updater->wt = (real_t *)malloc(sz);
+        if (posix_memalign((void **)&wt_updater->wt, ALIGN_SIZE, sz) != 0
+                || wt_updater->wt == NULL) {
             ST_WARNING("Failed to malloc wt.");
             goto ERR;
         }
-        memcpy(param_updater->wt, wt, sz);
+        memcpy(wt_updater->wt, wt, sz);
     } else {
-        param_updater->wt = wt;
+        wt_updater->wt = wt;
     }
 
-    if (param_updater->param.mini_batch > 0) {
-        param_updater->delta_wt = (real_t *)malloc(sz);
-        if (posix_memalign((void **)&param_updater->delta_wt,
+    if (wt_updater->param.mini_batch > 0) {
+        wt_updater->delta_wt = (real_t *)malloc(sz);
+        if (posix_memalign((void **)&wt_updater->delta_wt,
                     ALIGN_SIZE, sz) != 0
-                || param_updater->delta_wt == NULL) {
+                || wt_updater->delta_wt == NULL) {
             ST_WARNING("Failed to malloc delta_wt.");
             goto ERR;
         }
-        memset(param_updater->delta_wt, 0, sz);
+        memset(wt_updater->delta_wt, 0, sz);
     }
 
-    switch (type) {
-        case WT_UT_FULL:
-            break;
-        case WT_UT_PART:
-#if 0
-            if (param_updater->param.mini_batch > 0) {
-                sz = param_updater->param.mini_batch;
-                param_updater->hist = (int *)malloc(sizeof(int) * sz);
-                if (param_updater->hist == NULL) {
-                    ST_WARNING("Failed to malloc hist");
-                    goto ERR;
-                }
-            }
-            break;
-        case WT_UT_ONE_SHOT:
-            if (param_updater->param.mini_batch > 0) {
-                sz = param_updater->param.mini_batch;
-                param_updater->hist = (int *)malloc(sizeof(int) * sz);
-                if (param_updater->hist == NULL) {
-                    ST_WARNING("Failed to malloc hist");
-                    goto ERR;
-                }
-            }
-#endif
-            break;
-        default:
-            ST_WARNING("Unknown updating type[%d].", type);
-            goto ERR;
-    }
-
-    return param_updater;
+    return wt_updater;
 
 ERR:
-    safe_param_updater_destroy(param_updater);
+    safe_wt_updater_destroy(wt_updater);
     return NULL;
 }
 
-void param_updater_clear(param_updater_t *param_updater)
+void wt_dirty_clear(wt_dirty_buf_t *dirty)
 {
-//    param_updater->num_hist = 0;
+    dirty->n_seg = 0;
+    dirty->n_in_idx = 0;
+}
+
+void wt_updater_clear(wt_updater_t *wt_updater)
+{
+    wt_dirty_clear(&wt_updater->mini_dirty);
+    wt_dirty_clear(&wt_updater->sync_dirty);
 }
 
 #define N 8
 
-static int param_updater_update_wt(param_updater_t *param_updater,
-        real_t* dst_wt, real_t *src_wt, bool delta)
+static int wt_updater_flush(wt_updater_t *wt_updater,
+        real_t* dst_wt, real_t *src_wt, wt_dirty_buf_t *dirty, bool delta)
 {
-#if 0
     int row, col;
-    int sz, i, j, a;
+    int sz, i, a;
 
-    row = param_updater->row;
-    col = param_updater->col;
+    row = wt_updater->row;
+    col = wt_updater->col;
 
-    switch (param_updater->type) {
+    switch (wt_updater->type) {
         case WT_UT_FULL:
             if (col > 0) {
                 sz = row * col;
@@ -173,31 +149,38 @@ static int param_updater_update_wt(param_updater_t *param_updater,
             }
             break;
 
-        case WT_UT_ONE_SHOT:
-            // assert(col > 0);
+        case WT_UT_PART:
             if (delta) {
-                for (a = 0; a < num_idx; a++) {
-                    i = idx_buf[a];
-                    for (j = 0; j < row; j++) {
+                for (a = 0; a < dirty->n_seg; a++) {
+                    for (i = dirty->segs[a].s; i < dirty->segs[a].e; i++) {
                         dst_wt[i] += src_wt[i];
-                        i += col;
                     }
                 }
             } else {
+                for (a = 0; a < dirty->n_seg; a++) {
+                    memcpy(dst_wt + dirty->segs[a].s,
+                            src_wt + dirty->segs[a].s, sizeof(real_t)
+                            * (dirty->segs[a].e - dirty->segs[a].s));
+                }
             }
+            dirty->n_seg = 0;
+
+            break;
+
+        case WT_UT_ONE_SHOT:
+            // assert(col > 0);
             break;
         default:
-            ST_WARNING("Unknown updating type[%d].", param_updater->type);
+            ST_WARNING("Unknown updating type[%d].", wt_updater->type);
             return -1;
     }
-#endif
 
     return 0;
 }
 
-static int param_updater_acc_wt(param_updater_t *param_updater, count_t n_step,
+static int wt_updater_acc_wt(wt_updater_t *wt_updater, count_t n_step,
         real_t *wt, int row_s,
-        real_t *er, real_t er_scale, st_int_seg_t *er_seg, int seg_id,
+        real_t *er, real_t er_scale, st_int_seg_t *er_seg,
         real_t *in, real_t in_scale, st_wt_int_t *in_idx)
 {
 //    real_t *w;
@@ -209,18 +192,20 @@ static int param_updater_acc_wt(param_updater_t *param_updater, count_t n_step,
 
     int i, j;
 
-    lr = param_updater->param.learn_rate;
+    lr = wt_updater->param.learn_rate;
     lr *= er_scale * in_scale;
     l2 = 0.0;
-    row = param_updater->row;
-//    col = param_updater->col;
+    row = wt_updater->row;
+//    col = wt_updater->col;
 
-    if (param_updater->param.l2_gap > 0
-            && n_step % param_updater->param.l2_gap == 0) {
-        l2 = param_updater->param.l2_penalty;
+    if (wt_updater->param.l2_gap > 0
+            && n_step % wt_updater->param.l2_gap == 0) {
+        l2 = wt_updater->param.l2_penalty;
     }
 
-    switch (param_updater->type) {
+    switch (wt_updater->type) {
+        case WT_UT_FULL:
+            break;
         case WT_UT_PART:
             // Hash-based weight
             if (er_seg == NULL) {
@@ -255,7 +240,7 @@ static int param_updater_acc_wt(param_updater_t *param_updater, count_t n_step,
         case WT_UT_ONE_SEG:
             /* FALL THROUGH */
         case WT_UT_ONE_FULL:
-            if (param_updater->type == WT_UT_ONE_FULL) {
+            if (wt_updater->type == WT_UT_ONE_FULL) {
                 start = 0;
                 end = row;
             } else {
@@ -305,62 +290,163 @@ static int param_updater_acc_wt(param_updater_t *param_updater, count_t n_step,
 #endif
 #endif
         default:
-            ST_WARNING("Unknown updating type[%d].", param_updater->type);
+            ST_WARNING("Unknown updating type[%d].", wt_updater->type);
             return -1;
     }
 
     return 0;
 }
 
-static int param_updater_record(param_updater_t *param_updater)
+static int wt_updater_dirty(wt_updater_t *wt_updater, wt_dirty_buf_t *dirty,
+        int row_s, st_int_seg_t *er_seg, int in_idx)
 {
+    st_int_seg_t row_seg;
+    size_t sz;
+
+    switch (wt_updater->type) {
+        case WT_UT_FULL:
+            break;
+        case WT_UT_PART:
+            if (dirty->n_seg >= dirty->cap_seg) {
+                dirty->cap_seg += 100;
+                sz = dirty->cap_seg * sizeof(st_int_seg_t);
+                dirty->segs = (st_int_seg_t *)realloc(dirty->segs, sz);
+                if (dirty->segs == NULL) {
+                    ST_WARNING("Failed to realloc segs");
+                    return -1;
+                }
+            }
+            row_seg.s = row_s;
+            row_seg.n = er_seg->n;
+            if (st_int_seg_union(dirty->segs, &dirty->n_seg,
+                        &row_seg, 1, wt_updater->row) < 0) {
+                ST_WARNING("Failed to st_int_seg_union.");
+                return -1;
+            }
+            break;
+        case WT_UT_ONE_SHOT:
+            break;
+        default:
+            ST_WARNING("Unknown updating type[%d].", wt_updater->type);
+            return -1;
+    }
+
     return 0;
 }
 
-int param_update(param_updater_t *param_updater, count_t n_step, int row_s,
-        real_t *er, real_t er_scale, st_int_seg_t *er_seg, int seg_id,
+static int wt_updater_dirty_buf(wt_updater_t *wt_updater,
+        wt_dirty_buf_t *dst_dirty, wt_dirty_buf_t *src_dirty)
+{
+    size_t sz;
+
+    switch (wt_updater->type) {
+        case WT_UT_FULL:
+            break;
+        case WT_UT_PART:
+            if (dst_dirty->n_seg + src_dirty->n_seg > dst_dirty->cap_seg) {
+                dst_dirty->cap_seg += src_dirty->n_seg;
+                sz = dst_dirty->cap_seg * sizeof(st_int_seg_t);
+                dst_dirty->segs = (st_int_seg_t *)realloc(dst_dirty->segs, sz);
+                if (dst_dirty->segs == NULL) {
+                    ST_WARNING("Failed to realloc segs");
+                    return -1;
+                }
+            }
+            if (st_int_seg_union(dst_dirty->segs, &dst_dirty->n_seg,
+                        src_dirty->segs, src_dirty->n_seg,
+                        wt_updater->row) < 0) {
+                ST_WARNING("Failed to st_int_seg_union.");
+                return -1;
+            }
+            break;
+        case WT_UT_ONE_SHOT:
+            break;
+        default:
+            ST_WARNING("Unknown updating type[%d].", wt_updater->type);
+            return -1;
+    }
+
+    return 0;
+}
+
+int wt_update(wt_updater_t *wt_updater, count_t n_step, int row_s,
+        real_t *er, real_t er_scale, st_int_seg_t *er_seg,
         real_t *in, real_t in_scale, st_wt_int_t *in_idx)
 {
     real_t *wt;
 
-    if (param_updater->param.mini_batch > 0) {
-        wt = param_updater->delta_wt;
+    ST_CHECK_PARAM(wt_updater == NULL, -1);
+
+#if _CONNLM_TRACE_PROCEDURE_
+    ST_TRACE("Update weight[%s]", wt_updater->glue->name);
+#endif
+
+    if (wt_updater->param.mini_batch > 0) {
+        wt = wt_updater->delta_wt;
     } else {
-        wt = param_updater->wt;
+        wt = wt_updater->wt;
     }
 
-    if (param_updater_acc_wt(param_updater, n_step, wt, row_s,
-                er, er_scale, er_seg, seg_id,
+    if (wt_updater_acc_wt(wt_updater, n_step, wt, row_s,
+                er, er_scale, er_seg,
                 in, in_scale, in_idx) < 0) {
-        ST_WARNING("Failed to param_updater_acc_wt.");
+        ST_WARNING("Failed to wt_updater_acc_wt.");
         return -1;
     }
 
-    if (param_updater->param.mini_batch > 0) {
-        if (param_updater_record(param_updater) < 0) {
-            ST_WARNING("Failed to param_updater_record for minibatch.");
+    if (wt_updater->param.mini_batch > 0) {
+        if (wt_updater_dirty(wt_updater, &wt_updater->mini_dirty, row_s,
+                    er_seg, in_idx != NULL ? in_idx->i : -1) < 0) {
+            ST_WARNING("Failed to wt_updater_dirty for minibatch.");
             return -1;
         }
+    }
 
-        if (n_step % param_updater->param.mini_batch == 0) {
-            if (param_updater_update_wt(param_updater, param_updater->wt,
-                        param_updater->delta_wt, true) < 0) {
-                ST_WARNING("Failed to param_updater_update_wt for minibatch.");
+    if (wt_updater->param.sync_size > 0) {
+        if (wt_updater->param.mini_batch <= 0) {
+            if (wt_updater_dirty(wt_updater, &wt_updater->sync_dirty, row_s,
+                        er_seg, in_idx != NULL ? in_idx->i : -1) < 0) {
+                ST_WARNING("Failed to wt_updater_dirty for sync.");
                 return -1;
             }
         }
     }
 
-    if (param_updater->param.sync_size > 0) {
-        if (param_updater_record(param_updater) < 0) {
-            ST_WARNING("Failed to param_updater_record for sync.");
-            return -1;
-        }
+    return 0;
+}
 
-        if (n_step % param_updater->param.sync_size == 0) {
-            if (param_updater_update_wt(param_updater, param_updater->shared_wt,
-                        param_updater->wt, false) < 0) {
-                ST_WARNING("Failed to param_updater_update_wt for sync.");
+int wt_flush(wt_updater_t *wt_updater, count_t n_step)
+{
+    ST_CHECK_PARAM(wt_updater == NULL, -1);
+
+#if _CONNLM_TRACE_PROCEDURE_
+    ST_TRACE("Flush weight[%s]", wt_updater->glue->name);
+#endif
+
+    if (wt_updater->param.mini_batch > 0) {
+        if (n_step % wt_updater->param.mini_batch == 0) {
+            if (wt_updater_flush(wt_updater, wt_updater->wt,
+                        wt_updater->delta_wt, &wt_updater->mini_dirty,
+                        true) < 0) {
+                ST_WARNING("Failed to wt_updater_flush for minibatch.");
+                return -1;
+            }
+
+            if (wt_updater->param.sync_size > 0) {
+                if (wt_updater_dirty_buf(wt_updater,
+                        &wt_updater->sync_dirty, &wt_updater->mini_dirty) < 0) {
+                    ST_WARNING("Failed to wt_updater_dirty_buf.");
+                    return -1;
+                }
+            }
+        }
+    }
+
+    if (wt_updater->param.sync_size > 0) {
+        if (n_step % wt_updater->param.sync_size == 0) {
+            if (wt_updater_flush(wt_updater, wt_updater->shared_wt,
+                        wt_updater->wt, &wt_updater->sync_dirty, false) < 0) {
+                ST_WARNING("Failed to wt_updater_flush for sync.");
                 return -1;
             }
         }
@@ -385,25 +471,25 @@ int param_acc_wt_minibatch(int batch, real_t *wt, real_t *er, int er_size,
             1.0, wt, in_size);
 }
 
-int param_update_minibatch(param_updater_t *param_updater, bool update_arg,
+int param_update_minibatch(wt_updater_t *wt_updater, bool update_arg,
         int batch, real_t *wt, real_t *er, real_t er_scale,
         int er_size, real_t *in, int in_size)
 {
     real_t lr;
     real_t l2;
 
-    lr = param_updater->param.learn_rate;
-    l2 = param_updater->param.l2_penalty;
+    lr = wt_updater->param.learn_rate;
+    l2 = wt_updater->param.l2_penalty;
 
-    if (param_updater->param.l2_gap > 1) {
-        if (param_updater->l2_step != 0) {
+    if (wt_updater->param.l2_gap > 1) {
+        if (wt_updater->l2_step != 0) {
             l2 = 0.0;
         }
 
         if (update_arg) {
-            param_updater->l2_step++;
-            if (param_updater->l2_step >= param_updater->param.l2_gap) {
-                param_updater->l2_step = 0;
+            wt_updater->l2_step++;
+            if (wt_updater->l2_step >= wt_updater->param.l2_gap) {
+                wt_updater->l2_step = 0;
             }
         }
     }
@@ -512,7 +598,7 @@ void param_acc_wt(real_t *wt, real_t *er, int er_size, real_t *in, int in_size)
     }
 }
 
-static void param_updater_minibatch(param_updater_t *param_updater)
+static void wt_updater_minibatch(wt_updater_t *wt_updater)
 {
     if (er_size < 0 && in_size > 0) {
         er_size = - er_size;
