@@ -31,6 +31,23 @@
 #include "utils.h"
 #include "wt_updater.h"
 
+#define N 8
+
+void wt_dirty_destroy(wt_dirty_buf_t *dirty)
+{
+    if (dirty == NULL) {
+        return;
+    }
+
+    safe_free(dirty->segs);
+    dirty->cap_seg = 0;
+    dirty->n_seg = 0;
+
+    safe_free(dirty->in_idxs);
+    dirty->cap_in_idx = 0;
+    dirty->n_in_idx = 0;
+}
+
 void wt_updater_destroy(wt_updater_t *wt_updater)
 {
     if (wt_updater == NULL) {
@@ -46,6 +63,9 @@ void wt_updater_destroy(wt_updater_t *wt_updater)
     safe_free(wt_updater->delta_wt);
     wt_updater->row = -1;
     wt_updater->col = -1;
+
+    wt_dirty_destroy(&wt_updater->mini_dirty);
+    wt_dirty_destroy(&wt_updater->sync_dirty);
 
     wt_updater_clear(wt_updater);
 }
@@ -80,7 +100,6 @@ wt_updater_t* wt_updater_create(param_t *param,
     sz *= sizeof(real_t);
 
     if (wt_updater->param.sync_size > 0) {
-        wt_updater->wt = (real_t *)malloc(sz);
         if (posix_memalign((void **)&wt_updater->wt, ALIGN_SIZE, sz) != 0
                 || wt_updater->wt == NULL) {
             ST_WARNING("Failed to malloc wt.");
@@ -92,7 +111,6 @@ wt_updater_t* wt_updater_create(param_t *param,
     }
 
     if (wt_updater->param.mini_batch > 0) {
-        wt_updater->delta_wt = (real_t *)malloc(sz);
         if (posix_memalign((void **)&wt_updater->delta_wt,
                     ALIGN_SIZE, sz) != 0
                 || wt_updater->delta_wt == NULL) {
@@ -120,8 +138,6 @@ void wt_updater_clear(wt_updater_t *wt_updater)
     wt_dirty_clear(&wt_updater->mini_dirty);
     wt_dirty_clear(&wt_updater->sync_dirty);
 }
-
-#define N 8
 
 static int wt_updater_flush(wt_updater_t *wt_updater,
         real_t* dst_wt, real_t *src_wt, wt_dirty_buf_t *dirty, bool delta)
@@ -154,6 +170,7 @@ static int wt_updater_flush(wt_updater_t *wt_updater,
                 for (a = 0; a < dirty->n_seg; a++) {
                     for (i = dirty->segs[a].s; i < dirty->segs[a].e; i++) {
                         dst_wt[i] += src_wt[i];
+                        src_wt[i] = 0;
                     }
                 }
             } else {
@@ -334,7 +351,7 @@ static int wt_updater_dirty(wt_updater_t *wt_updater, wt_dirty_buf_t *dirty,
     return 0;
 }
 
-static int wt_updater_dirty_buf(wt_updater_t *wt_updater,
+static int wt_updater_dirty_cpy(wt_updater_t *wt_updater,
         wt_dirty_buf_t *dst_dirty, wt_dirty_buf_t *src_dirty)
 {
     size_t sz;
@@ -425,19 +442,19 @@ int wt_flush(wt_updater_t *wt_updater, count_t n_step)
 
     if (wt_updater->param.mini_batch > 0) {
         if (n_step % wt_updater->param.mini_batch == 0) {
+            if (wt_updater->param.sync_size > 0) {
+                if (wt_updater_dirty_cpy(wt_updater,
+                        &wt_updater->sync_dirty, &wt_updater->mini_dirty) < 0) {
+                    ST_WARNING("Failed to wt_updater_dirty_cpy.");
+                    return -1;
+                }
+            }
+
             if (wt_updater_flush(wt_updater, wt_updater->wt,
                         wt_updater->delta_wt, &wt_updater->mini_dirty,
                         true) < 0) {
                 ST_WARNING("Failed to wt_updater_flush for minibatch.");
                 return -1;
-            }
-
-            if (wt_updater->param.sync_size > 0) {
-                if (wt_updater_dirty_buf(wt_updater,
-                        &wt_updater->sync_dirty, &wt_updater->mini_dirty) < 0) {
-                    ST_WARNING("Failed to wt_updater_dirty_buf.");
-                    return -1;
-                }
             }
         }
     }
