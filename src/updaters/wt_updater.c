@@ -60,6 +60,7 @@ void wt_updater_destroy(wt_updater_t *wt_updater)
         wt_updater->wt = NULL;
     }
     wt_updater->shared_wt = NULL;
+    safe_free(wt_updater->ori_wt);
     safe_free(wt_updater->delta_wt);
     wt_updater->row = -1;
     wt_updater->col = -1;
@@ -106,6 +107,13 @@ wt_updater_t* wt_updater_create(param_t *param,
             goto ERR;
         }
         memcpy(wt_updater->wt, wt, sz);
+
+        if (posix_memalign((void **)&wt_updater->ori_wt, ALIGN_SIZE, sz) != 0
+                || wt_updater->ori_wt == NULL) {
+            ST_WARNING("Failed to malloc ori_wt.");
+            goto ERR;
+        }
+        memcpy(wt_updater->ori_wt, wt_updater->wt, sz);
     } else {
         wt_updater->wt = wt;
     }
@@ -140,7 +148,7 @@ void wt_updater_clear(wt_updater_t *wt_updater)
 }
 
 static int wt_updater_flush(wt_updater_t *wt_updater,
-        real_t* dst_wt, real_t *src_wt, wt_dirty_buf_t *dirty, bool delta)
+        real_t* dst_wt, real_t *src_wt, wt_dirty_buf_t *dirty, real_t *ori_wt)
 {
     int row, col;
     int sz, i, a;
@@ -156,17 +164,21 @@ static int wt_updater_flush(wt_updater_t *wt_updater,
                 sz = row;
             }
             sz *= sizeof(real_t);
-            if (delta) {
+            if (ori_wt == NULL) {
                 for (i = 0; i < sz; i++) {
                     dst_wt[i] += src_wt[i];
                 }
             } else {
-                memcpy(dst_wt, src_wt, sz);
+                for (i = 0; i < sz; i++) {
+                    dst_wt[i] += src_wt[i] - ori_wt[i];
+                }
+                memcpy(src_wt, dst_wt, sz);
+                memcpy(ori_wt, src_wt, sz);
             }
             break;
 
         case WT_UT_PART:
-            if (delta) {
+            if (ori_wt == NULL) {
                 for (a = 0; a < dirty->n_seg; a++) {
                     for (i = dirty->segs[a].s; i < dirty->segs[a].e; i++) {
                         dst_wt[i] += src_wt[i];
@@ -175,9 +187,14 @@ static int wt_updater_flush(wt_updater_t *wt_updater,
                 }
             } else {
                 for (a = 0; a < dirty->n_seg; a++) {
-                    memcpy(dst_wt + dirty->segs[a].s,
-                            src_wt + dirty->segs[a].s, sizeof(real_t)
-                            * (dirty->segs[a].e - dirty->segs[a].s));
+                    for (i = dirty->segs[a].s; i < dirty->segs[a].e; i++) {
+                        dst_wt[i] += src_wt[i] - ori_wt[i];
+                    }
+                    sz = dirty->segs[a].e - dirty->segs[a].s;
+                    memcpy(src_wt + dirty->segs[a].s,
+                            dst_wt + dirty->segs[a].s, sizeof(real_t) * sz);
+                    memcpy(ori_wt + dirty->segs[a].s,
+                           src_wt + dirty->segs[a].s, sizeof(real_t) * sz);
                 }
             }
             dirty->n_seg = 0;
@@ -352,28 +369,34 @@ static int wt_updater_dirty(wt_updater_t *wt_updater, wt_dirty_buf_t *dirty,
 }
 
 static int wt_updater_dirty_cpy(wt_updater_t *wt_updater,
-        wt_dirty_buf_t *dst_dirty, wt_dirty_buf_t *src_dirty)
+        wt_dirty_buf_t *dst, wt_dirty_buf_t *src)
 {
     size_t sz;
+    int i;
 
     switch (wt_updater->type) {
         case WT_UT_FULL:
             break;
         case WT_UT_PART:
-            if (dst_dirty->n_seg + src_dirty->n_seg > dst_dirty->cap_seg) {
-                dst_dirty->cap_seg += src_dirty->n_seg;
-                sz = dst_dirty->cap_seg * sizeof(st_int_seg_t);
-                dst_dirty->segs = (st_int_seg_t *)realloc(dst_dirty->segs, sz);
-                if (dst_dirty->segs == NULL) {
+            if (dst->n_seg + src->n_seg > dst->cap_seg) {
+                dst->cap_seg += src->n_seg;
+                sz = dst->cap_seg * sizeof(st_int_seg_t);
+                dst->segs = (st_int_seg_t *)realloc(dst->segs, sz);
+                if (dst->segs == NULL) {
                     ST_WARNING("Failed to realloc segs");
                     return -1;
                 }
             }
-            if (st_int_seg_union(dst_dirty->segs, &dst_dirty->n_seg,
-                        src_dirty->segs, src_dirty->n_seg,
+            for (i = 0; i < src->n_seg; i++) {
+                src->segs[i].n = src->segs[i].e - src->segs[i].s;
+            }
+            if (st_int_seg_union(dst->segs, &dst->n_seg, src->segs, src->n_seg,
                         wt_updater->row) < 0) {
                 ST_WARNING("Failed to st_int_seg_union.");
                 return -1;
+            }
+            for (i = 0; i < src->n_seg; i++) {
+                src->segs[i].e = src->segs[i].s + src->segs[i].n;
             }
             break;
         case WT_UT_ONE_SHOT:
@@ -452,7 +475,7 @@ int wt_flush(wt_updater_t *wt_updater, count_t n_step)
 
             if (wt_updater_flush(wt_updater, wt_updater->wt,
                         wt_updater->delta_wt, &wt_updater->mini_dirty,
-                        true) < 0) {
+                        NULL) < 0) {
                 ST_WARNING("Failed to wt_updater_flush for minibatch.");
                 return -1;
             }
@@ -462,7 +485,8 @@ int wt_flush(wt_updater_t *wt_updater, count_t n_step)
     if (wt_updater->param.sync_size > 0) {
         if (n_step % wt_updater->param.sync_size == 0) {
             if (wt_updater_flush(wt_updater, wt_updater->shared_wt,
-                        wt_updater->wt, &wt_updater->sync_dirty, false) < 0) {
+                        wt_updater->wt, &wt_updater->sync_dirty,
+                        wt_updater->ori_wt) < 0) {
                 ST_WARNING("Failed to wt_updater_flush for sync.");
                 return -1;
             }
