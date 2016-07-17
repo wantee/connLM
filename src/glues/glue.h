@@ -37,6 +37,7 @@ extern "C" {
 #include "output.h"
 #include "layers/layer.h"
 
+#include "weight.h"
 #include "param.h"
 
 /** @defgroup g_glue NNet glue.
@@ -58,7 +59,7 @@ typedef struct _glue_implementation_t_ {
 
     void (*destroy)(glue_t *glue); /**< destroy glue. */
 
-    int (*dup)(glue_t *dst, glue_t *src); /**< duplicate glue. */
+    void* (*dup)(void *extra); /**< duplicate glue. */
 
     int (*parse_topo)(glue_t *glue,
             const char *line); /**< parse topo for glue. */
@@ -83,10 +84,6 @@ typedef struct _glue_implementation_t_ {
 
     int (*init_data)(glue_t *glue, input_t *input,
             layer_t **layers, output_t *output); /**< init data of glue. */
-
-    int (*load_train_opt)(glue_t *glue, st_opt_t *opt,
-            const char *sec_name,
-            param_t *parent); /**< load train opt for  glue. */
 } glue_impl_t;
 
 /**
@@ -105,6 +102,9 @@ typedef struct _glue_t_ {
     real_t* out_scales; /**< scale for output layers. */
     int num_out_layer; /**< number of output layers. */
     bool recur; /**< whether this glue is recurrent. */
+
+    weight_t *wt; /**< weight matrix. */
+    param_t param; /**< updating parameters. */
 
     glue_impl_t *impl; /**< implementation for glue. */
     void *extra; /**< hook to store extra data. */

@@ -14,19 +14,18 @@ INCS = utils.h \
        output.h \
        component.h \
        input.h \
+       weight.h \
        layers/layer.h \
        layers/sigmoid_layer.h \
        layers/tanh_layer.h \
        glues/glue.h \
        glues/sum_glue.h \
-       glues/append_glue.h \
+       glues/concat_glue.h \
        glues/clone_glue.h \
        glues/direct_glue.h \
-       glues/emb_wt_glue.h \
-       glues/out_wt_glue.h \
-       weights/weight.h \
-       weights/output_weight.h \
-       weights/direct_weight.h \
+       glues/fc_glue.h \
+       glues/emb_glue.h \
+       glues/out_glue.h \
        graph.h \
        updaters/updater.h \
        updaters/output_updater.h \
@@ -34,9 +33,9 @@ INCS = utils.h \
        updaters/component_updater.h \
        updaters/glue_updaters/glue_updater.h \
        updaters/glue_updaters/direct_glue_updater.h \
-       updaters/glue_updaters/wt_glue_updater.h \
-       updaters/glue_updaters/emb_wt_glue_updater.h \
-       updaters/glue_updaters/out_wt_glue_updater.h \
+       updaters/glue_updaters/fc_glue_updater.h \
+       updaters/glue_updaters/emb_glue_updater.h \
+       updaters/glue_updaters/out_glue_updater.h \
        updaters/wt_updater.h
 
 SRCS = utils.c \
@@ -48,20 +47,18 @@ SRCS = utils.c \
        output.c \
        component.c \
        input.c \
+       weight.c \
        layers/layer.c \
        layers/sigmoid_layer.c \
        layers/tanh_layer.c \
        glues/glue.c \
        glues/sum_glue.c \
-       glues/append_glue.c \
+       glues/concat_glue.c \
        glues/clone_glue.c \
        glues/direct_glue.c \
-       glues/wt_glue.c \
-       glues/emb_wt_glue.c \
-       glues/out_wt_glue.c \
-       weights/weight.c \
-       weights/output_weight.c \
-       weights/direct_weight.c \
+       glues/fc_glue.c \
+       glues/emb_glue.c \
+       glues/out_glue.c \
        graph.c \
        updaters/updater.c \
        updaters/output_updater.c \
@@ -69,9 +66,9 @@ SRCS = utils.c \
        updaters/component_updater.c \
        updaters/glue_updaters/glue_updater.c \
        updaters/glue_updaters/direct_glue_updater.c \
-       updaters/glue_updaters/wt_glue_updater.c \
-       updaters/glue_updaters/emb_wt_glue_updater.c \
-       updaters/glue_updaters/out_wt_glue_updater.c \
+       updaters/glue_updaters/fc_glue_updater.c \
+       updaters/glue_updaters/emb_glue_updater.c \
+       updaters/glue_updaters/out_glue_updater.c \
        updaters/wt_updater.c
 
 BINS = bin/connlm-train \

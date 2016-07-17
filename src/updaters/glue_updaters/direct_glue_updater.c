@@ -30,6 +30,7 @@
 
 #include "output.h"
 #include "../../glues/direct_glue.h"
+#include "../component_updater.h"
 #include "updaters/wt_updater.h"
 
 #include "direct_glue_updater.h"
@@ -86,9 +87,9 @@ void dgu_data_destroy(dgu_data_t *data)
 dgu_data_t* dgu_data_init(glue_updater_t *glue_updater)
 {
     dgu_data_t *data = NULL;
-    direct_glue_data_t *glue_data;
+    glue_t *glue;
 
-    glue_data = (direct_glue_data_t *)glue_updater->glue->extra;
+    glue= glue_updater->glue;
 
     data = (dgu_data_t *)malloc(sizeof(dgu_data_t));
     if (data == NULL) {
@@ -97,9 +98,8 @@ dgu_data_t* dgu_data_init(glue_updater_t *glue_updater)
     }
     memset(data, 0, sizeof(dgu_data_t));
 
-    data->wt_updater = wt_updater_create(&glue_data->param,
-            glue_data->direct_wt->hash_wt, glue_data->hash_sz, -1,
-            WT_UT_PART);
+    data->wt_updater = wt_updater_create(&glue->param, glue->wt->mat,
+            glue->wt->row, glue->wt->col, WT_UT_PART);
     if (data->wt_updater == NULL) {
         ST_WARNING("Failed to wt_updater_create.");
         goto ERR;
@@ -350,7 +350,6 @@ int direct_glue_updater_forward(glue_updater_t *glue_updater,
         comp_updater_t *comp_updater, int *words, int n_word, int tgt_pos)
 {
     dgu_data_t *data;
-    direct_glue_data_t *glue_data;
     out_updater_t *out_updater;
     input_t *input;
 
@@ -363,7 +362,6 @@ int direct_glue_updater_forward(glue_updater_t *glue_updater,
             || words == NULL, -1);
 
     data = (dgu_data_t *)glue_updater->extra;
-    glue_data = (direct_glue_data_t *)glue_updater->glue->extra;
     out_updater = comp_updater->out_updater;
     input = comp_updater->comp->input;
 
@@ -397,7 +395,7 @@ int direct_glue_updater_forward(glue_updater_t *glue_updater,
     dw_args.wt_updater = data->wt_updater;
     dw_args.n_step = -1;
     for (a = 0; a < data->hash_order; a++) {
-        data->hash[a] = data->hash[a] % glue_data->hash_sz;
+        data->hash[a] = data->hash[a] % data->wt_updater->row;
         dw_args.h = data->hash[a];
         if (output_walk_through_path(out_updater->output, words[tgt_pos],
                     direct_forward_walker, (void *)&dw_args) < 0) {
@@ -448,7 +446,6 @@ int direct_glue_updater_backprop(glue_updater_t *glue_updater, count_t n_step,
         comp_updater_t *comp_updater, int *words, int n_word, int tgt_pos)
 {
     dgu_data_t *data;
-    direct_glue_data_t *glue_data;
     out_updater_t *out_updater;
 
     direct_walker_args_t dw_args;
@@ -458,7 +455,6 @@ int direct_glue_updater_backprop(glue_updater_t *glue_updater, count_t n_step,
             || words == NULL, -1);
 
     data = (dgu_data_t *)glue_updater->extra;
-    glue_data = (direct_glue_data_t *)glue_updater->glue->extra;
     out_updater = comp_updater->out_updater;
 
     dw_args.out_updater = out_updater;

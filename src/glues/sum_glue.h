@@ -40,7 +40,7 @@ extern "C" {
 #define SUM_GLUE_NAME "sum"
 
 typedef struct _sum_glue_data_t_ {
-    bool avg;
+    bool avg; /**< whether avg. */
 } sum_glue_data_t;
 
 /**
@@ -61,11 +61,10 @@ int sum_glue_init(glue_t *glue);
 /**
  * Duplicate a sum glue.
  * @ingroup g_glue_sum
- * @param[out] dst dst glue to be duplicated.
- * @param[in] src src glue to be duplicated.
- * @return non-zero if any error
+ * @param[in] extra source data.
+ * @return duplicated extra data, NULL if error.
  */
-int sum_glue_dup(glue_t *dst, glue_t *src);
+void* sum_glue_dup(void *extra);
 
 /**
  * Parse a topo config line.

@@ -161,8 +161,8 @@ int sigmoid_parse_topo(layer_t *layer, const char *line)
 
     while (p != NULL) {
         p = get_next_token(p, token);
-        if (*token == '\0') {
-            break;
+        if (token[0] == '\0') {
+            continue;
         }
 
         if (split_line(token, keyvalue, 2, MAX_LINE_LEN, "=") != 2) {

@@ -15,6 +15,7 @@ if ($help) {
 
 my $comp = undef;
 my $glue = undef;
+my $wt = undef;
 my %wts;
 while(my $line = <STDIN>) {
   chomp $line;
@@ -31,6 +32,7 @@ while(my $line = <STDIN>) {
 
   if ($line =~ m/<GLUE>:(.+)/i) {
     $glue = lc($1);
+    $wt = undef;
     next;
   }
 
@@ -38,8 +40,19 @@ while(my $line = <STDIN>) {
     next;
   }
 
-  if ($line =~ m/Type:(.+wt)/) {
-    $wts{$comp."/".$glue} = 1;
+  if ($line =~ m/<WEIGHT>/i) {
+    $wt = 1;
+    next;
+  }
+
+  if (!$wt) {
+    next;
+  }
+
+  if ($line =~ m/Row\s*:\s*(.+)/i) {
+    if ($1 > 0) {
+      $wts{$comp."/".$glue} = 1;
+    }
   }
 }
 

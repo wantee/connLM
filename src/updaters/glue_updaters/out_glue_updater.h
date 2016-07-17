@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef  _CONNLM_OUT_WT_GLUE_UPDATER_H_
-#define  _CONNLM_OUT_WT_GLUE_UPDATER_H_
+#ifndef  _CONNLM_OUT_GLUE_UPDATER_H_
+#define  _CONNLM_OUT_GLUE_UPDATER_H_
 
 #ifdef __cplusplus
 extern "C" {
@@ -31,37 +31,37 @@ extern "C" {
 
 #include <connlm/config.h>
 
-#include "../../glues/out_wt_glue.h"
+#include "../../glues/out_glue.h"
 #include "glue_updater.h"
 
-/** @defgroup g_glue_updater_out_wt out_wt glue_updater.
+/** @defgroup g_glue_updater_out out glue_updater.
  * @ingroup g_updater
- * Data structures and functions for out_wt glue_updater.
+ * Data structures and functions for out glue_updater.
  */
 
 /**
  * Destroy a wt glue_updater.
- * @ingroup g_glue_updater_out_wt
- * @param[in] glue_updater out_wt glue_updater to be destroyed.
+ * @ingroup g_glue_updater_out
+ * @param[in] glue_updater out glue_updater to be destroyed.
  */
-void out_wt_glue_updater_destroy(glue_updater_t* glue_updater);
+void out_glue_updater_destroy(glue_updater_t* glue_updater);
 
 /**
- * Initialize a out_wt glue_updater.
- * @ingroup g_glue_updater_out_wt
- * @param[in] glue_updater out_wt glue_updater to be initialized.
+ * Initialize a out glue_updater.
+ * @ingroup g_glue_updater_out
+ * @param[in] glue_updater out glue_updater to be initialized.
  * @return non-zero if any error
  */
-int out_wt_glue_updater_init(glue_updater_t *glue_updater);
+int out_glue_updater_init(glue_updater_t *glue_updater);
 
 /**
- * Feed-forward one word for a out_wt_glue_updater.
- * @ingroup g_glue_updater_out_wt
+ * Feed-forward one word for a out_glue_updater.
+ * @ingroup g_glue_updater_out
  * @param[in] glue_updater glue_updater.
  * @param[in] comp_updater the comp_updater.
  * @return non-zero value if any error.
  */
-int out_wt_glue_updater_forward(glue_updater_t *glue_updater,
+int out_glue_updater_forward(glue_updater_t *glue_updater,
         comp_updater_t *comp_updater);
 
 #ifdef __cplusplus

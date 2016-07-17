@@ -153,6 +153,10 @@ static int comp_parse_topo(component_t *comp, const char *line)
 
     while (p != NULL) {
         p = get_next_token(p, token);
+        if (token[0] == '\0') {
+            continue;
+        }
+
         if (split_line(token, keyvalue, 2, MAX_LINE_LEN, "=") < 0) {
             ST_WARNING("Failed to split key/value. [%s]", token);
             return -1;

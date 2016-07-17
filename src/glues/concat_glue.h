@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef  _CONNLM_CLONE_GLUE_H_
-#define  _CONNLM_CLONE_GLUE_H_
+#ifndef  _CONNLM_CONCAT_GLUE_H_
+#define  _CONNLM_CONCAT_GLUE_H_
 
 #ifdef __cplusplus
 extern "C" {
@@ -32,25 +32,25 @@ extern "C" {
 #include <connlm/config.h>
 #include "glue.h"
 
-/** @defgroup g_glue_clone clone glue.
+/** @defgroup g_glue_concat concat glue.
  * @ingroup g_glue
- * Data structures and functions for clone glue.
+ * Data structures and functions for concat glue.
  */
 
-#define CLONE_GLUE_NAME "clone"
+#define CONCAT_GLUE_NAME "concat"
 
 /**
  * Parse a topo config line.
- * @ingroup g_glue_clone
+ * @ingroup g_glue_concat
  * @param[in] glue specific glue.
  * @param[in] line topo config line.
  * @return non-zero if any error
  */
-int clone_glue_parse_topo(glue_t *glue, const char *line);
+int concat_glue_parse_topo(glue_t *glue, const char *line);
 
 /**
- * Check a clone glue is valid.
- * @ingroup g_glue_clone
+ * Check a concat glue is valid.
+ * @ingroup g_glue_concat
  * @param[in] glue specific glue.
  * @param[in] layers layers in the component.
  * @param[in] n_layer number of layers.
@@ -58,7 +58,7 @@ int clone_glue_parse_topo(glue_t *glue, const char *line);
  * @param[in] output output layer.
  * @return non-zero if any error
  */
-bool clone_glue_check(glue_t *glue, layer_t **layers, int n_layer,
+bool concat_glue_check(glue_t *glue, layer_t **layer, int n_layer,
         input_t *input, output_t *output);
 
 #ifdef __cplusplus

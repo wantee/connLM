@@ -1,7 +1,7 @@
 /*
  * The MIT License (MIT)
  *
- * Copyright (c) 2015 Wang Jian
+ * Copyright (c) 2016 Wang Jian
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,44 +22,47 @@
  * SOFTWARE.
  */
 
-#ifndef  _CONNLM_CLONE_GLUE_H_
-#define  _CONNLM_CLONE_GLUE_H_
+#ifndef  _CONNLM_FC_GLUE_UPDATER_H_
+#define  _CONNLM_FC_GLUE_UPDATER_H_
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 #include <connlm/config.h>
-#include "glue.h"
 
-/** @defgroup g_glue_clone clone glue.
- * @ingroup g_glue
- * Data structures and functions for clone glue.
+#include "../../glues/fc_glue.h"
+#include "glue_updater.h"
+
+/** @defgroup g_glue_updater_wt wt glue_updater.
+ * @ingroup g_updater
+ * Data structures and functions for wt glue_updater.
  */
-
-#define CLONE_GLUE_NAME "clone"
 
 /**
- * Parse a topo config line.
- * @ingroup g_glue_clone
- * @param[in] glue specific glue.
- * @param[in] line topo config line.
- * @return non-zero if any error
+ * Destroy a wt glue_updater.
+ * @ingroup g_glue_updater_wt
+ * @param[in] glue_updater wt glue_updater to be destroyed.
  */
-int clone_glue_parse_topo(glue_t *glue, const char *line);
+void fc_glue_updater_destroy(glue_updater_t* glue_updater);
 
 /**
- * Check a clone glue is valid.
- * @ingroup g_glue_clone
- * @param[in] glue specific glue.
- * @param[in] layers layers in the component.
- * @param[in] n_layer number of layers.
- * @param[in] input input layer.
- * @param[in] output output layer.
+ * Initialize a wt glue_updater.
+ * @ingroup g_glue_updater_wt
+ * @param[in] glue_updater wt glue_updater to be initialized.
  * @return non-zero if any error
  */
-bool clone_glue_check(glue_t *glue, layer_t **layers, int n_layer,
-        input_t *input, output_t *output);
+int fc_glue_updater_init(glue_updater_t *glue_updater);
+
+/**
+ * Feed-forward one word for a fc_glue_updater.
+ * @ingroup g_glue_updater_wt
+ * @param[in] glue_updater glue_updater.
+ * @param[in] comp_updater the comp_updater.
+ * @return non-zero value if any error.
+ */
+int fc_glue_updater_forward(glue_updater_t *glue_updater,
+        comp_updater_t *comp_updater);
 
 #ifdef __cplusplus
 }

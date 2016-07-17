@@ -102,6 +102,10 @@ input_t* input_parse_topo(const char *line, int input_size)
     input->n_ctx = 0;
     while (p != NULL) {
         p = get_next_token(p, token);
+        if (token[0] == '\0') {
+            continue;
+        }
+
         if (split_line(token, keyvalue, 2, MAX_LINE_LEN, "=") != 2) {
             ST_WARNING("Failed to split key/value. [%s][%s]", line, token);
             goto ERR;

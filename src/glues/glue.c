@@ -32,49 +32,39 @@
 #include "updaters/output_updater.h"
 
 #include "sum_glue.h"
-#include "append_glue.h"
+#include "concat_glue.h"
 #include "clone_glue.h"
 #include "direct_glue.h"
-#include "wt_glue.h"
-#include "emb_wt_glue.h"
-#include "out_wt_glue.h"
+#include "fc_glue.h"
+#include "emb_glue.h"
+#include "out_glue.h"
 #include "glue.h"
 
 static const int GLUE_MAGIC_NUM = 626140498 + 70;
 
 static glue_impl_t GLUE_IMPL[] = {
-    {SUM_GLUE_NAME, sum_glue_init, sum_glue_destroy,
-        sum_glue_dup, sum_glue_parse_topo, sum_glue_check,
-        sum_glue_draw_label, NULL, NULL, NULL, NULL, NULL},
-    {APPEND_GLUE_NAME, append_glue_init, append_glue_destroy,
-        append_glue_dup, append_glue_parse_topo, append_glue_check,
-        append_glue_draw_label, NULL, NULL, NULL, NULL, NULL},
-    {CLONE_GLUE_NAME, clone_glue_init, clone_glue_destroy,
-        clone_glue_dup, clone_glue_parse_topo, clone_glue_check,
-        clone_glue_draw_label, NULL, NULL, NULL, NULL, NULL},
-    {DIRECT_GLUE_NAME, direct_glue_init, direct_glue_destroy,
-        direct_glue_dup, direct_glue_parse_topo, direct_glue_check,
-        direct_glue_draw_label, direct_glue_load_header,
-        direct_glue_load_body, direct_glue_save_header,
-        direct_glue_save_body, direct_glue_init_data,
-        direct_glue_load_train_opt},
-    {WT_GLUE_NAME, wt_glue_init, wt_glue_destroy,
-        wt_glue_dup, wt_glue_parse_topo, wt_glue_check,
-        wt_glue_draw_label, wt_glue_load_header, wt_glue_load_body,
-        wt_glue_save_header, wt_glue_save_body,
-        wt_glue_init_data, wt_glue_load_train_opt},
-    {EMB_WT_GLUE_NAME, emb_wt_glue_init, emb_wt_glue_destroy,
-        emb_wt_glue_dup, emb_wt_glue_parse_topo, emb_wt_glue_check,
-        emb_wt_glue_draw_label, emb_wt_glue_load_header,
-        emb_wt_glue_load_body, emb_wt_glue_save_header,
-        emb_wt_glue_save_body, emb_wt_glue_init_data,
-        emb_wt_glue_load_train_opt},
-    {OUT_WT_GLUE_NAME, out_wt_glue_init, out_wt_glue_destroy,
-        out_wt_glue_dup, out_wt_glue_parse_topo, out_wt_glue_check,
-        out_wt_glue_draw_label, out_wt_glue_load_header,
-        out_wt_glue_load_body, out_wt_glue_save_header,
-        out_wt_glue_save_body, out_wt_glue_init_data,
-        out_wt_glue_load_train_opt},
+    {SUM_GLUE_NAME, sum_glue_init, sum_glue_destroy, sum_glue_dup,
+        sum_glue_parse_topo, sum_glue_check, sum_glue_draw_label,
+        NULL, NULL, NULL, NULL, NULL},
+    {CONCAT_GLUE_NAME, NULL, NULL, NULL,
+        concat_glue_parse_topo, concat_glue_check, NULL,
+        NULL, NULL, NULL, NULL, NULL},
+    {CLONE_GLUE_NAME, NULL, NULL, NULL,
+        clone_glue_parse_topo, clone_glue_check, NULL,
+        NULL, NULL, NULL, NULL, NULL},
+    {DIRECT_GLUE_NAME, direct_glue_init, direct_glue_destroy, direct_glue_dup,
+        direct_glue_parse_topo, direct_glue_check, direct_glue_draw_label,
+        NULL, NULL, NULL, NULL,
+        direct_glue_init_data},
+    {FC_GLUE_NAME, NULL, NULL, NULL,
+        fc_glue_parse_topo, fc_glue_check, NULL,
+        NULL, NULL, NULL, NULL, NULL},
+    {EMB_GLUE_NAME, NULL, NULL, NULL,
+        emb_glue_parse_topo, emb_glue_check, NULL,
+        NULL, NULL, NULL, NULL, NULL},
+    {OUT_GLUE_NAME, NULL, NULL, NULL,
+        out_glue_parse_topo, out_glue_check, NULL,
+        NULL, NULL, NULL, NULL, NULL},
 };
 
 static glue_impl_t* glue_get_impl(const char *type)
@@ -125,6 +115,7 @@ void glue_destroy(glue_t *glue)
     safe_free(glue->out_offsets);
     safe_free(glue->out_scales);
     glue->num_out_layer = 0;
+    safe_wt_destroy(glue->wt);
 }
 
 bool glue_check(glue_t *glue)
@@ -204,7 +195,7 @@ glue_t* glue_parse_topo(const char *line, layer_t **layers,
 
     char keyvalue[2*MAX_LINE_LEN];
     char token[MAX_LINE_LEN];
-    char impl_topo[MAX_LINE_LEN];
+    char untouch_topo[MAX_LINE_LEN];
     char *names = NULL;
     size_t name_cap = 16;
 
@@ -227,17 +218,19 @@ glue_t* glue_parse_topo(const char *line, layer_t **layers,
         goto ERR;
     }
 
-    p = line;
-
-    p = get_next_token(p, token);
+    p = get_next_token(line, token);
     if (strcasecmp("glue", token) != 0) {
         ST_WARNING("Not glue line.");
         goto ERR;
     }
 
-    impl_topo[0] = '\0';
+    untouch_topo[0] = '\0';
     while (p != NULL) {
         p = get_next_token(p, token);
+        if (token[0] == '\0') {
+            continue;
+        }
+
         if (split_line(token, keyvalue, 2, MAX_LINE_LEN, "=") != 2) {
             ST_WARNING("Failed to split key/value. [%s]", token);
             goto ERR;
@@ -255,7 +248,7 @@ glue_t* glue_parse_topo(const char *line, layer_t **layers,
                 ST_WARNING("Unknown type of glue [%s].", glue->type);
                 goto ERR;
             }
-            if (glue->impl->init(glue) < 0) {
+            if (glue->impl->init != NULL && glue->impl->init(glue) < 0) {
                 ST_WARNING("Failed to init impl glue.");
                 goto ERR;
             }
@@ -482,17 +475,29 @@ glue_t* glue_parse_topo(const char *line, layer_t **layers,
                 glue->out_scales[l] = (real_t)1.0;
             }
         } else {
-            strncpy(impl_topo + strlen(impl_topo), token,
-                    MAX_LINE_LEN - strlen(impl_topo));
-            if (strlen(impl_topo) < MAX_LINE_LEN) {
-                impl_topo[strlen(impl_topo)] = ' ';
+            strncpy(untouch_topo + strlen(untouch_topo), token,
+                    MAX_LINE_LEN - strlen(untouch_topo));
+            if (strlen(untouch_topo) < MAX_LINE_LEN) {
+                untouch_topo[strlen(untouch_topo)] = ' ';
             }
-            impl_topo[MAX_LINE_LEN - 1] = '\0';
+            untouch_topo[MAX_LINE_LEN - 1] = '\0';
         }
     }
 
     if (glue->name[0] == '\0') {
         ST_WARNING("No glue name found.");
+        goto ERR;
+    }
+
+    glue->wt = (weight_t *)malloc(sizeof(weight_t));
+    if (glue->wt == NULL) {
+        ST_WARNING("Failed to malloc weight_t");
+        goto ERR;
+    }
+    memset(glue->wt, 0, sizeof(weight_t));
+
+    if (wt_parse_topo(glue->wt, untouch_topo, MAX_LINE_LEN) < 0) {
+        ST_WARNING("Failed to wt_parse_topo.");
         goto ERR;
     }
 
@@ -506,7 +511,7 @@ glue_t* glue_parse_topo(const char *line, layer_t **layers,
         goto ERR;
     }
     if (glue->impl->parse_topo != NULL) {
-        if (glue->impl->parse_topo(glue, impl_topo) < 0) {
+        if (glue->impl->parse_topo(glue, untouch_topo) < 0) {
             ST_WARNING("Failed to parse_topo for impl glue.");
             goto ERR;
         }
@@ -599,6 +604,21 @@ glue_t* glue_dup(glue_t *g)
         memcpy(glue->out_scales, g->out_scales, sz);
     }
     glue->recur = g->recur;
+
+    glue->wt = wt_dup(g->wt);
+    if (glue->wt == NULL) {
+        ST_WARNING("Failed to wt_dup.");
+        goto ERR;
+    }
+    glue->param = g->param;
+
+    if (glue->impl != NULL && glue->impl->dup != NULL && g->extra != NULL) {
+        glue->extra = glue->impl->dup(g->extra);
+        if (glue->extra == NULL) {
+            ST_WARNING("Failed to impl dup");
+            goto ERR;
+        }
+    }
 
     return glue;
 
@@ -729,6 +749,17 @@ int glue_load_header(glue_t **glue, int version,
         fprintf(fo_info, "Num out layer: %d\n", num_out_layer);
     }
 
+    if (wt_load_header(glue != NULL ? &((*glue)->wt) : NULL,
+            version, fp, &b, fo_info) < 0) {
+        ST_WARNING("Failed to wt_load_header.");
+        goto ERR;
+    }
+
+    if (b != *binary) {
+        ST_WARNING("binary not match");
+        goto ERR;
+    }
+
     if (impl->load_header != NULL) {
         if (impl->load_header(glue != NULL ? &((*glue)->extra) : NULL,
                 version, fp, &b, fo_info) < 0) {
@@ -737,7 +768,7 @@ int glue_load_header(glue_t **glue, int version,
         }
 
         if (b != *binary) {
-            ST_WARNING("Tree binary not match with output binary");
+            ST_WARNING("binary not match");
             goto ERR;
         }
     }
@@ -942,6 +973,11 @@ int glue_load_body(glue_t *glue, int version, FILE *fp, bool binary)
         }
     }
 
+    if (wt_load_body(glue->wt, version, fp, binary) < 0) {
+        ST_WARNING("Failed to wt_load_body.");
+        goto ERR;
+    }
+
     if (glue->impl->load_body != NULL) {
         if (glue->impl->load_body(glue->extra, version, fp, binary) < 0) {
             ST_WARNING("Failed to glue->impl->load_body.");
@@ -1025,6 +1061,11 @@ int glue_save_header(glue_t *glue, FILE *fp, bool binary)
             ST_WARNING("Failed to fprintf num_out_layer.");
             return -1;
         }
+    }
+
+    if (wt_save_header(glue->wt, fp, binary) < 0) {
+        ST_WARNING("Failed to wt_save_header.");
+        return -1;
     }
 
     if (glue->impl != NULL && glue->impl->save_header != NULL) {
@@ -1165,6 +1206,11 @@ int glue_save_body(glue_t *glue, FILE *fp, bool binary)
         }
     }
 
+    if (wt_save_body(glue->wt, fp, binary) < 0) {
+        ST_WARNING("Failed to wt_save_body.");
+        return -1;
+    }
+
     if (glue->impl != NULL && glue->impl->save_body != NULL) {
         if (glue->impl->save_body(glue->extra, fp, binary) < 0) {
             ST_WARNING("Failed to glue->impl->save_body.");
@@ -1239,19 +1285,16 @@ int glue_load_train_opt(glue_t *glue, st_opt_t *opt,
 
     ST_CHECK_PARAM(glue == NULL || opt == NULL, -1);
 
-    if (glue->impl == NULL || glue->impl->load_train_opt == NULL) {
-        return 0;
-    }
-
-    if (sec_name == NULL || sec_name[0] == '\0') {
-        snprintf(name, MAX_ST_CONF_LEN, "%s", glue->name);
-    } else {
-        snprintf(name, MAX_ST_CONF_LEN, "%s/%s", sec_name,
-                glue->name);
-    }
-    if (glue->impl->load_train_opt(glue, opt, name, parent) < 0) {
-        ST_WARNING("Failed to glue->impl load_train_opt.");
-        goto ST_OPT_ERR;
+    if (glue->wt != NULL && glue->wt->row > 0) {
+        if (sec_name == NULL || sec_name[0] == '\0') {
+            snprintf(name, MAX_ST_CONF_LEN, "%s", glue->name);
+        } else {
+            snprintf(name, MAX_ST_CONF_LEN, "%s/%s", sec_name, glue->name);
+        }
+        if (param_load(&glue->param, opt, name, parent) < 0) {
+            ST_WARNING("Failed to param_load.");
+            goto ST_OPT_ERR;
+        }
     }
 
     return 0;

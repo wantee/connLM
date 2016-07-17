@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef  _CONNLM_EMB_WT_GLUE_UPDATER_H_
-#define  _CONNLM_EMB_WT_GLUE_UPDATER_H_
+#ifndef  _CONNLM_FC_GLUE_H_
+#define  _CONNLM_FC_GLUE_H_
 
 #ifdef __cplusplus
 extern "C" {
@@ -31,38 +31,38 @@ extern "C" {
 
 #include <connlm/config.h>
 
-#include "../../glues/emb_wt_glue.h"
-#include "glue_updater.h"
+#include "weight.h"
+#include "param.h"
+#include "glue.h"
 
-/** @defgroup g_glue_updater_emb_wt emb_wt glue_updater.
- * @ingroup g_updater
- * Data structures and functions for emb_wt glue_updater.
+/** @defgroup g_glue_fc weight glue.
+ * @ingroup g_glue
+ * Data structures and functions for full-connected glue.
  */
 
-/**
- * Destroy a emb_wt glue_updater.
- * @ingroup g_glue_updater_emb_wt
- * @param[in] glue_updater emb_wt glue_updater to be destroyed.
- */
-void emb_wt_glue_updater_destroy(glue_updater_t* glue_updater);
+#define FC_GLUE_NAME "fc"
 
 /**
- * Initialize a emb_wt glue_updater.
- * @ingroup g_glue_updater_emb_wt
- * @param[in] glue_updater emb_wt glue_updater to be initialized.
+ * Parse a topo config line.
+ * @ingroup g_glue_fc
+ * @param[in] glue specific glue.
+ * @param[in] line topo config line.
  * @return non-zero if any error
  */
-int emb_wt_glue_updater_init(glue_updater_t *glue_updater);
+int fc_glue_parse_topo(glue_t *glue, const char *line);
 
 /**
- * Feed-forward one word for a emb_wt_glue_updater.
- * @ingroup g_glue_updater_emb_wt
- * @param[in] glue_updater glue_updater.
- * @param[in] comp_updater the comp_updater.
- * @return non-zero value if any error.
+ * Check a fc glue is valid.
+ * @ingroup g_glue_fc
+ * @param[in] glue specific glue.
+ * @param[in] layers layers in the component.
+ * @param[in] n_layer number of layers.
+ * @param[in] input input layer.
+ * @param[in] output output layer.
+ * @return non-zero if any error
  */
-int emb_wt_glue_updater_forward(glue_updater_t *glue_updater,
-        comp_updater_t *comp_updater);
+bool fc_glue_check(glue_t *glue, layer_t **layers, int n_layer,
+        input_t *input, output_t *output);
 
 #ifdef __cplusplus
 }

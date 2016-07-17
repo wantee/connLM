@@ -32,6 +32,7 @@ extern "C" {
 #include <connlm/config.h>
 
 #include "../../glues/glue.h"
+#include "../../glues/glue.h"
 #include "glue_updater.h"
 
 /** @defgroup g_glue_updater_direct direct glue_updater.

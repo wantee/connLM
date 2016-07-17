@@ -22,14 +22,16 @@
  * SOFTWARE.
  */
 
+#include <string.h>
+
 #include <stutils/st_log.h>
 #include <stutils/st_utils.h>
 
 #include "input.h"
 #include "output.h"
-#include "clone_glue.h"
+#include "fc_glue.h"
 
-int clone_glue_parse_topo(glue_t *glue, const char *line)
+int fc_glue_parse_topo(glue_t *glue, const char *line)
 {
     char *p;
 
@@ -38,7 +40,7 @@ int clone_glue_parse_topo(glue_t *glue, const char *line)
     p = (char *)line;
     while(*p != '\0') {
         if (*p != ' ' || *p != '\t') {
-            ST_WARNING("clone glue should be empty. [%s]", line);
+            ST_WARNING("wt glue should be empty. [%s]", line);
             return -1;
         }
     }
@@ -46,25 +48,23 @@ int clone_glue_parse_topo(glue_t *glue, const char *line)
     return 0;
 }
 
-bool clone_glue_check(glue_t *glue, layer_t **layers, int n_layer,
+bool fc_glue_check(glue_t *glue, layer_t **layers, int n_layer,
         input_t *input, output_t *output)
 {
-    int i;
-
     ST_CHECK_PARAM(glue == NULL, false);
 
-    if (strcasecmp(glue->type, CLONE_GLUE_NAME) != 0) {
-        ST_WARNING("Not a clone glue. [%s]", glue->type);
+    if (strcasecmp(glue->type, FC_GLUE_NAME) != 0) {
+        ST_WARNING("Not a fc_wt glue. [%s]", glue->type);
+        return false;
+    }
+
+    if (glue->num_out_layer != 1) {
+        ST_WARNING("fc_wt glue: num_out_layer shoule be equal to 1.");
         return false;
     }
 
     if (glue->num_in_layer != 1) {
-        ST_WARNING("clone glue: num_in_layer shoule be equal to 1.");
-        return false;
-    }
-
-    if (glue->num_out_layer < 1) {
-        ST_WARNING("clone glue: num_out_layer shoule be bigger then 1.");
+        ST_WARNING("fc_wt glue: num_in_layer shoule be equal to 1.");
         return false;
     }
 
@@ -75,29 +75,14 @@ bool clone_glue_check(glue_t *glue, layer_t **layers, int n_layer,
 
     if (strcasecmp(layers[glue->in_layers[0]]->type,
                 INPUT_LAYER_NAME) == 0) {
-        ST_WARNING("wt glue: in layer should not be input layer.");
+        ST_WARNING("fc_wt glue: in layer should not be input layer.");
         return false;
     }
 
-    for (i = 0; i < glue->num_out_layer; i++) {
-        if (strcasecmp(layers[glue->out_layers[i]]->type,
-                    OUTPUT_LAYER_NAME) == 0) {
-            ST_WARNING("wt glue: out layer should not be output layer.");
-            return false;
-        }
-
-        if (layers[glue->out_layers[i]]->size - glue->out_offsets[i]
-                != layers[glue->in_layers[0]]->size - glue->in_offsets[0]) {
-            ST_WARNING("in_layer[%s]([%d/%d]) size not match with "
-                    "out_layer[%s]([%d/%d]).",
-                    layers[glue->in_layers[0]]->name,
-                    layers[glue->in_layers[0]]->size,
-                    glue->in_offsets[0],
-                    layers[glue->out_layers[i]]->name,
-                    layers[glue->out_layers[i]]->size,
-                    glue->out_offsets[i]);
-            return false;
-        }
+    if (strcasecmp(layers[glue->out_layers[0]]->type,
+                OUTPUT_LAYER_NAME) == 0) {
+        ST_WARNING("fc_wt glue: out layer should not be output layer.");
+        return false;
     }
 
     return true;

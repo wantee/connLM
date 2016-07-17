@@ -1,9 +1,9 @@
 <component>
 property name=maxent
 
-input context=-1
+input context=-2,-1
 
-glue name=glue type=direct in=input out=output
+glue name=direct type=direct size=2M in=input out=output
 </component>
 <component>
 property name=rnn
@@ -12,7 +12,7 @@ input context=-1
 
 layer name=hidden size=15 type=sigmoid
 
-glue name=emb type=emb_wt in=input out=hidden
-glue name=recur type=wt in=hidden out=hidden
-glue name=out type=out_wt in=hidden out=output
+glue name=emb type=emb in=input out=hidden
+glue name=recur type=fc in=hidden out=hidden
+glue name=out type=out in=hidden out=output
 </component>

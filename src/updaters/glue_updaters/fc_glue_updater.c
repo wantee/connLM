@@ -27,84 +27,84 @@
 #include <stutils/st_macro.h>
 #include <stutils/st_log.h>
 
-#include "../../glues/wt_glue.h"
-#include "wt_glue_updater.h"
+#include "../../glues/fc_glue.h"
+#include "fc_glue_updater.h"
 
-typedef struct _wt_glue_updater_data_t_ {
-} wt_glue_updater_data_t;
+typedef struct _fc_glue_updater_data_t_ {
+} fc_glue_updater_data_t;
 
-#define safe_wt_glue_updater_data_destroy(ptr) do {\
+#define safe_fc_glue_updater_data_destroy(ptr) do {\
     if((ptr) != NULL) {\
-        wt_glue_updater_data_destroy((wt_glue_updater_data_t *)ptr);\
+        fc_glue_updater_data_destroy((fc_glue_updater_data_t *)ptr);\
         safe_free(ptr);\
         (ptr) = NULL;\
     }\
     } while(0)
 
-void wt_glue_updater_data_destroy(wt_glue_updater_data_t *data)
+void fc_glue_updater_data_destroy(fc_glue_updater_data_t *data)
 {
     if (data == NULL) {
         return;
     }
 }
 
-wt_glue_updater_data_t* wt_glue_updater_data_init()
+fc_glue_updater_data_t* fc_glue_updater_data_init()
 {
-    wt_glue_updater_data_t *data = NULL;
+    fc_glue_updater_data_t *data = NULL;
 
-    data = (wt_glue_updater_data_t *)malloc(sizeof(wt_glue_updater_data_t));
+    data = (fc_glue_updater_data_t *)malloc(sizeof(fc_glue_updater_data_t));
     if (data == NULL) {
-        ST_WARNING("Failed to malloc wt_glue_updater_data.");
+        ST_WARNING("Failed to malloc fc_glue_updater_data.");
         goto ERR;
     }
-    memset(data, 0, sizeof(wt_glue_updater_data_t));
+    memset(data, 0, sizeof(fc_glue_updater_data_t));
 
     return data;
 ERR:
-    safe_wt_glue_updater_data_destroy(data);
+    safe_fc_glue_updater_data_destroy(data);
     return NULL;
 }
 
-void wt_glue_updater_destroy(glue_updater_t *glue_updater)
+void fc_glue_updater_destroy(glue_updater_t *glue_updater)
 {
     if (glue_updater == NULL) {
         return;
     }
 
-    safe_wt_glue_updater_data_destroy(glue_updater->extra);
+    safe_fc_glue_updater_data_destroy(glue_updater->extra);
 }
 
-int wt_glue_updater_init(glue_updater_t *glue_updater)
+int fc_glue_updater_init(glue_updater_t *glue_updater)
 {
     ST_CHECK_PARAM(glue_updater == NULL, -1);
 
-    if (strcasecmp(glue_updater->glue->type, WT_GLUE_NAME) != 0) {
+    if (strcasecmp(glue_updater->glue->type, FC_GLUE_NAME) != 0) {
         ST_WARNING("Not a direct glue_updater. [%s]",
                 glue_updater->glue->type);
         return -1;
     }
 
-    glue_updater->extra = (void *)wt_glue_updater_data_init();
+    glue_updater->extra = (void *)fc_glue_updater_data_init();
     if (glue_updater->extra == NULL) {
-        ST_WARNING("Failed to wt_glue_updater_data_init.");
+        ST_WARNING("Failed to fc_glue_updater_data_init.");
         goto ERR;
     }
 
     return 0;
 
 ERR:
-    safe_wt_glue_updater_data_destroy(glue_updater->extra);
+    safe_fc_glue_updater_data_destroy(glue_updater->extra);
     return -1;
 }
 
-int wt_glue_updater_forward(glue_updater_t *glue_updater,
+int fc_glue_updater_forward(glue_updater_t *glue_updater,
         comp_updater_t *comp_updater)
 {
-//    wt_glue_data_t *data = NULL;
+//    fc_glue_data_t *data = NULL;
 
     ST_CHECK_PARAM(glue_updater == NULL || comp_updater == NULL, -1);
 
-//    data = (wt_glue_data_t *)glue_updater->glue->extra;
+//    data = (fc_glue_data_t *)glue_updater->glue->extra;
 
     return 0;
 }

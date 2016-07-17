@@ -22,59 +22,37 @@
  * SOFTWARE.
  */
 
-#ifndef  _CONNLM_APPEND_GLUE_H_
-#define  _CONNLM_APPEND_GLUE_H_
+#ifndef  _CONNLM_EMB_GLUE_H_
+#define  _CONNLM_EMB_GLUE_H_
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 #include <connlm/config.h>
+
+#include "param.h"
 #include "glue.h"
 
-/** @defgroup g_glue_append append glue.
+/** @defgroup g_glue_emb embedding weight glue.
  * @ingroup g_glue
- * Data structures and functions for append glue.
+ * Data structures and functions for emb glue.
  */
 
-#define APPEND_GLUE_NAME "append"
-
-/**
- * Destroy a append glue.
- * @ingroup g_glue_append
- * @param[in] glue append glue to be destroyed.
- */
-void append_glue_destroy(glue_t* glue);
-
-/**
- * Initialize a append glue.
- * @ingroup g_glue_append
- * @param[in] glue append glue to be initialized.
- * @return non-zero if any error
- */
-int append_glue_init(glue_t *glue);
-
-/**
- * Duplicate a append glue.
- * @ingroup g_glue_append
- * @param[out] dst dst glue to be duplicated.
- * @param[in] src src glue to be duplicated.
- * @return non-zero if any error
- */
-int append_glue_dup(glue_t *dst, glue_t *src);
+#define EMB_GLUE_NAME "emb"
 
 /**
  * Parse a topo config line.
- * @ingroup g_glue_append
+ * @ingroup g_glue_emb
  * @param[in] glue specific glue.
  * @param[in] line topo config line.
  * @return non-zero if any error
  */
-int append_glue_parse_topo(glue_t *glue, const char *line);
+int emb_glue_parse_topo(glue_t *glue, const char *line);
 
 /**
- * Check a append glue is valid.
- * @ingroup g_glue_append
+ * Check a emb glue is valid.
+ * @ingroup g_glue_emb
  * @param[in] glue specific glue.
  * @param[in] layers layers in the component.
  * @param[in] n_layer number of layers.
@@ -82,18 +60,8 @@ int append_glue_parse_topo(glue_t *glue, const char *line);
  * @param[in] output output layer.
  * @return non-zero if any error
  */
-bool append_glue_check(glue_t *glue, layer_t **layer, int n_layer,
+bool emb_glue_check(glue_t *glue, layer_t **layers, int n_layer,
         input_t *input, output_t *output);
-
-/**
- * Provide label string for drawing append glue.
- * @ingroup g_glue_append
- * @param[in] glue glue.
- * @param[out] label buffer to write string.
- * @param[in] labe_len length of label.
- * @return label on success, NULL if any error.
- */
-char* append_glue_draw_label(glue_t *glue, char *label, size_t label_len);
 
 #ifdef __cplusplus
 }

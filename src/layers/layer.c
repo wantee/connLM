@@ -97,9 +97,7 @@ layer_t* layer_parse_topo(const char *line)
     }
     memset(layer, 0, sizeof(layer_t));
 
-    p = line;
-
-    p = get_next_token(p, token);
+    p = get_next_token(line, token);
     if (strcasecmp("layer", token) != 0) {
         ST_WARNING("Not layer line.");
         goto ERR;
@@ -108,6 +106,10 @@ layer_t* layer_parse_topo(const char *line)
     impl_topo[0] = '\0';
     while (p != NULL) {
         p = get_next_token(p, token);
+        if (token[0] == '\0') {
+            continue;
+        }
+
         if (split_line(token, keyvalue, 2, MAX_LINE_LEN, "=") != 2) {
             ST_WARNING("Failed to split key/value. [%s][%s]", line, token);
             goto ERR;

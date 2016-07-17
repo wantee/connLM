@@ -28,37 +28,30 @@
 #include <stutils/st_log.h>
 
 #include "../../glues/direct_glue.h"
-#include "../../glues/wt_glue.h"
-#include "../../glues/emb_wt_glue.h"
-#include "../../glues/out_wt_glue.h"
+#include "../../glues/fc_glue.h"
+#include "../../glues/emb_glue.h"
+#include "../../glues/out_glue.h"
+
+#include "../component_updater.h"
+#include "../layer_updater.h"
+#include "direct_glue_updater.h"
+#include "fc_glue_updater.h"
+#include "emb_glue_updater.h"
+#include "out_glue_updater.h"
 
 #include "glue_updater.h"
-#include "direct_glue_updater.h"
-#include "wt_glue_updater.h"
-#include "emb_wt_glue_updater.h"
-#include "out_wt_glue_updater.h"
 
 static glue_updater_impl_t GLUE_UPDATER_IMPL[] = {
-    {DIRECT_GLUE_NAME, direct_glue_updater_init,
-        direct_glue_updater_destroy,
+    {DIRECT_GLUE_NAME, direct_glue_updater_init, direct_glue_updater_destroy,
         direct_glue_updater_setup,
         direct_glue_updater_forward,
         direct_glue_updater_backprop},
-    {WT_GLUE_NAME, wt_glue_updater_init,
-        wt_glue_updater_destroy,
-        NULL,
-        NULL,
-        NULL},
-    {EMB_WT_GLUE_NAME, emb_wt_glue_updater_init,
-        emb_wt_glue_updater_destroy,
-        NULL,
-        NULL,
-        NULL},
-    {OUT_WT_GLUE_NAME, out_wt_glue_updater_init,
-        out_wt_glue_updater_destroy,
-        NULL,
-        NULL,
-        NULL},
+    {FC_GLUE_NAME, fc_glue_updater_init, fc_glue_updater_destroy,
+        NULL, NULL, NULL},
+    {EMB_GLUE_NAME, emb_glue_updater_init, emb_glue_updater_destroy,
+        NULL, NULL, NULL},
+    {OUT_GLUE_NAME, out_glue_updater_init, out_glue_updater_destroy,
+        NULL, NULL, NULL},
 };
 
 static glue_updater_impl_t* glue_updater_get_impl(const char *type)
