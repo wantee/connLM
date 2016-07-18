@@ -82,6 +82,7 @@ void glue_updater_destroy(glue_updater_t *glue_updater)
         }
     }
 
+    safe_wt_updater_destroy(glue_updater->wt_updater);
     glue_updater->glue = NULL;
 }
 
@@ -123,6 +124,8 @@ int glue_updater_setup(glue_updater_t *glue_updater,
         comp_updater_t *comp_updater, bool backprop)
 {
     ST_CHECK_PARAM(glue_updater == NULL, -1);
+
+    wt_updater_clear(glue_updater->wt_updater);
 
     if (glue_updater->impl != NULL && glue_updater->impl->setup != NULL) {
         if (glue_updater->impl->setup(glue_updater,
@@ -215,6 +218,26 @@ int glue_updater_backprop(glue_updater_t *glue_updater, count_t n_step,
                     glue->name);
             return -1;
         }
+    }
+
+    return 0;
+}
+
+int glue_updater_finish(glue_updater_t *glue_updater)
+{
+    glue_t *glue;
+
+    ST_CHECK_PARAM(glue_updater == NULL, -1);
+
+    glue = glue_updater->glue;
+
+#if _CONNLM_TRACE_PROCEDURE_
+    ST_TRACE("Finish: glue[%s]", glue->name);
+#endif
+
+    if (wt_flush(glue_updater->wt_updater, 0) < 0) {
+        ST_WARNING("Failed to wt_flush.");
+        return -1;
     }
 
     return 0;

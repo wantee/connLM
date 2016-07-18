@@ -222,7 +222,25 @@ int comp_updater_end(comp_updater_t *comp_updater)
 
 int comp_updater_finish(comp_updater_t *comp_updater)
 {
+    component_t *comp;
+    glue_updater_t *glue_updater;
+    int g;
+
     ST_CHECK_PARAM(comp_updater == NULL, -1);
+
+    comp = comp_updater->comp;
+
+#if _CONNLM_TRACE_PROCEDURE_
+    ST_TRACE("Finish: comp[%s]", comp->name);
+#endif
+
+    for (g = comp->num_glue - 1; g >= 0; g--) {
+        glue_updater = comp_updater->glue_updaters[comp->fwd_order[g]];
+        if (glue_updater_finish(glue_updater) < 0) {
+            ST_WARNING("Failed to finish glue[%s].", glue_updater->glue->name);
+            return -1;
+        }
+    }
 
     return 0;
 }

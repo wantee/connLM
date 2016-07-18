@@ -31,7 +31,6 @@
 #include "output.h"
 #include "../../glues/direct_glue.h"
 #include "../component_updater.h"
-#include "updaters/wt_updater.h"
 
 #include "direct_glue_updater.h"
 
@@ -53,8 +52,6 @@ typedef struct _dgu_data_t_ {
                          P0 + P0 * P1 * w1 + P0 * P1 * P2 * w2 + ... */
     int n_ctx;
     int positive; /* beginning positon of positive context. */
-
-    wt_updater_t *wt_updater;
 } dgu_data_t;
 
 #define safe_dgu_data_destroy(ptr) do {\
@@ -80,8 +77,6 @@ void dgu_data_destroy(dgu_data_t *data)
     safe_free(data->P);
     data->n_ctx = 0;
     data->positive = 0;
-
-    safe_wt_updater_destroy(data->wt_updater);
 }
 
 dgu_data_t* dgu_data_init(glue_updater_t *glue_updater)
@@ -98,9 +93,9 @@ dgu_data_t* dgu_data_init(glue_updater_t *glue_updater)
     }
     memset(data, 0, sizeof(dgu_data_t));
 
-    data->wt_updater = wt_updater_create(&glue->param, glue->wt->mat,
+    glue_updater->wt_updater = wt_updater_create(&glue->param, glue->wt->mat,
             glue->wt->row, glue->wt->col, WT_UT_PART);
-    if (data->wt_updater == NULL) {
+    if (glue_updater->wt_updater == NULL) {
         ST_WARNING("Failed to wt_updater_create.");
         goto ERR;
     }
@@ -182,8 +177,6 @@ int dgu_data_setup(dgu_data_t *data, st_wt_int_t *context, int n_ctx)
             }
         }
     }
-
-    wt_updater_clear(data->wt_updater);
 
     return 0;
 ERR:
@@ -384,7 +377,7 @@ static int direct_compute_hash(glue_updater_t *glue_updater,
     data->hash_order += 1/* for hash[0]. */;
 
     for (a = 0; a < data->hash_order; a++) {
-        data->hash[a] = data->hash[a] % data->wt_updater->row;
+        data->hash[a] = data->hash[a] % glue_updater->wt_updater->row;
     }
 
     return 0;
@@ -414,7 +407,7 @@ int direct_glue_updater_forward(glue_updater_t *glue_updater,
     dw_args.out_updater = out_updater;
     dw_args.in_scale = glue_updater->glue->in_scales[0];
     dw_args.out_scale = glue_updater->glue->out_scales[0];
-    dw_args.wt_updater = data->wt_updater;
+    dw_args.wt_updater = glue_updater->wt_updater;
     dw_args.n_step = -1;
     for (a = 0; a < data->hash_order; a++) {
         dw_args.h = data->hash[a];
@@ -481,7 +474,7 @@ int direct_glue_updater_backprop(glue_updater_t *glue_updater, count_t n_step,
     dw_args.out_updater = out_updater;
     dw_args.in_scale = glue_updater->glue->in_scales[0];
     dw_args.out_scale = glue_updater->glue->out_scales[0];
-    dw_args.wt_updater = data->wt_updater;
+    dw_args.wt_updater = glue_updater->wt_updater;
     dw_args.n_step = n_step;
     for (a = 0; a < data->hash_order; a++) {
         dw_args.h = data->hash[a];
@@ -492,7 +485,7 @@ int direct_glue_updater_backprop(glue_updater_t *glue_updater, count_t n_step,
         }
     }
 
-    if (wt_flush(data->wt_updater, n_step) < 0) {
+    if (wt_flush(glue_updater->wt_updater, n_step) < 0) {
         ST_WARNING("Failed to wt_flush.");
         return -1;
     }
@@ -542,7 +535,7 @@ int direct_glue_updater_forward_out(glue_updater_t *glue_updater,
 
     hash_sz = glue_updater->glue->wt->row;
     scale = glue_updater->glue->in_scales[0] * glue_updater->glue->out_scales[0];
-    hash_wt = data->wt_updater->wt;
+    hash_wt = glue_updater->wt_updater->wt;
 
     if (output->norm == ON_SOFTMAX) {
         for (a = 0; a < data->hash_order; a++) {

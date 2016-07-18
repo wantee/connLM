@@ -32,6 +32,7 @@ extern "C" {
 #include <connlm/config.h>
 
 #include "glues/glue.h"
+#include "updaters/wt_updater.h"
 
 /** @defgroup g_updater_glue Updater for glue.
  * @ingroup g_updater
@@ -77,6 +78,7 @@ typedef struct _glue_updater_implementation_t_ {
 typedef struct _glue_updater_t_ {
     glue_t *glue; /**< the glue. */
 
+    wt_updater_t *wt_updater; /**< the wt_updater. */
     glue_updater_impl_t *impl; /**< implementation for glue. */
     void *extra; /**< hook to store extra data. */
 } glue_updater_t;
@@ -147,6 +149,15 @@ int glue_updater_forward(glue_updater_t *glue_updater,
  */
 int glue_updater_backprop(glue_updater_t *glue_updater, count_t n_step,
         comp_updater_t *comp_updater, int *words, int n_word, int tgt_pos);
+
+/**
+ * Finish running for glue_updater.
+ * Called after all words performed.
+ * @ingroup g_updater_glue
+ * @param[in] glue_updater glue_updater.
+ * @return non-zero value if any error.
+ */
+int glue_updater_finish(glue_updater_t *glue_updater);
 
 /**
  * Feed-forward util output layer.
