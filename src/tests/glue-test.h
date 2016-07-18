@@ -174,7 +174,7 @@ void glue_test_mk_topo_line(char *line, size_t len, glue_ref_t *ref, int id)
                 st_strncatf(line, len, " avg=false");
             }
         }
-    } else if (strcasecmp(ref->type, "direct_wt") == 0) {
+    } else if (strcasecmp(ref->type, "direct") == 0) {
         st_strncatf(line, len, " size=%s", st_ll2str(name, MAX_NAME_LEN,
                     ref->direct_glue.sz, false));
     }

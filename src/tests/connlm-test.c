@@ -137,7 +137,7 @@ static int unit_test_connlm_read_topo()
                 .num_glue = 1,
                 .glue_refs = {
                     {
-                        .type = "direct_wt",
+                        .type = "direct",
                         .num_in_layer = 1,
                         .in_layers = {1},
                         .in_offsets = {0},

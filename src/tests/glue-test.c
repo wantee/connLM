@@ -51,7 +51,7 @@ static int unit_test_glue_read_topo()
     glue_t *glue = NULL;
     glue_ref_t ref;
     glue_ref_t std_ref = {
-        .type = "direct_wt",
+        .type = "direct",
         .num_in_layer = 1,
         .in_layers = {1},
         .in_offsets = {0},
