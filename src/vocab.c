@@ -45,7 +45,7 @@ int vocab_load_opt(vocab_opt_t *vocab_opt, st_opt_t *opt,
     memset(vocab_opt, 0, sizeof(vocab_opt_t));
 
     ST_OPT_SEC_GET_INT(opt, sec_name, "MAX_ALPHABET_SIZE",
-        vocab_opt->max_alphabet_size, 10000000,
+        vocab_opt->max_alphabet_size, 1000000,
         "Maximum size of alphabet for vocab.");
 
     return 0;

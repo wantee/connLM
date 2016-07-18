@@ -3,6 +3,8 @@
 VAL_OUT=${VAL_OUT:-"valgrind.out"}
 
 
+VAL_EXCLUDE=($VAL_EXCLUDE)
+
 VAL_FD=10
 VAL_RUN=1
 
@@ -11,7 +13,10 @@ if [ -n "$VAL_EXES" ]; then
 
   shopt -s expand_aliases
   for x in $VAL_EXES; do
-    alias $x="echo \"Run \$VAL_RUN: `date`\" >> $VAL_OUT; VAL_RUN=\$((VAL_RUN+1));valgrind --log-fd=$VAL_FD $x"
+    if [[ " ${VAL_EXCLUDE[@]} " =~ " ${x} " ]]; then
+      continue
+    fi
+    alias $x="echo \"Run \$VAL_RUN: \$(date)\" >> $VAL_OUT; VAL_RUN=\$((VAL_RUN+1));valgrind --log-fd=$VAL_FD $x"
   done
 fi
 
@@ -25,9 +30,9 @@ function val_exit()
 
 #  echo "Checking valgrind log from $VAL_OUT"
   perl -e '$pr = -1;
-           while(<>) { 
+           while(<>) {
              if (m/^Run (\d+)$/) {
-               $run = $1; 
+               $run = $1;
              } elsif (m/ERROR SUMMARY: (\d+) errors /) {
                if ($1 != 0) {
                    if ($pr != $run) {

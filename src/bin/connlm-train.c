@@ -174,7 +174,7 @@ int main(int argc, const char *argv[])
     st_opt_show(g_cmd_opt, "connLM Train Options");
 
     if (g_dry_run) {
-        return 0;
+        goto RET;
     }
 
     reader = reader_create(&g_reader_opt, g_num_thr, connlm->vocab, argv[2]);
@@ -212,6 +212,8 @@ int main(int argc, const char *argv[])
         ST_WARNING("Failed to connlm_save. [%s]", argv[3]);
         goto ERR;
     }
+
+RET:
     safe_st_fclose(fp);
 
     safe_st_opt_destroy(g_cmd_opt);
