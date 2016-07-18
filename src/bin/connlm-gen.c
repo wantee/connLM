@@ -167,8 +167,8 @@ int main(int argc, const char *argv[])
     }
 
     safe_st_opt_destroy(g_cmd_opt);
-    safe_connlm_destroy(connlm);
     safe_driver_destroy(driver);
+    safe_connlm_destroy(connlm);
 
     st_log_close(0);
     return 0;
@@ -176,8 +176,8 @@ int main(int argc, const char *argv[])
 ERR:
     safe_st_fclose(fp);
     safe_st_opt_destroy(g_cmd_opt);
-    safe_connlm_destroy(connlm);
     safe_driver_destroy(driver);
+    safe_connlm_destroy(connlm);
 
     st_log_close(1);
     return -1;
