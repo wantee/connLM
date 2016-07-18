@@ -534,7 +534,7 @@ int direct_glue_updater_forward_out(glue_updater_t *glue_updater,
     output = out_updater->output;
 
     child_s = s_children(output->tree, node);
-    child_e = s_children(output->tree, node);
+    child_e = e_children(output->tree, node);
 
     if (child_s >= child_e) {
         return 0;

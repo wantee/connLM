@@ -267,7 +267,8 @@ int glue_updater_forward_util_out(glue_updater_t *glue_updater,
         }
     }
 
-    if (glue_updater->impl != NULL && glue_updater->impl->forward != NULL) {
+    if (glue_updater->impl != NULL
+            && glue_updater->impl->forward_util_out != NULL) {
         if (glue_updater->impl->forward_util_out(glue_updater, comp_updater,
                     words, n_word, tgt_pos) < 0) {
             ST_WARNING("Failed to glue_updater->impl->forward_util_out.[%s]",
@@ -292,7 +293,7 @@ int glue_updater_forward_out(glue_updater_t *glue_updater,
     ST_TRACE("Forward-util-out: glue[%s]", glue->name);
 #endif
 
-    if (glue_updater->impl != NULL && glue_updater->impl->forward != NULL) {
+    if (glue_updater->impl != NULL && glue_updater->impl->forward_out != NULL) {
         if (glue_updater->impl->forward_out(glue_updater, comp_updater,
                     node) < 0) {
             ST_WARNING("Failed to glue_updater->impl->forward_out.[%s]",
@@ -303,4 +304,3 @@ int glue_updater_forward_out(glue_updater_t *glue_updater,
 
     return 0;
 }
-

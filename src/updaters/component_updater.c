@@ -271,7 +271,8 @@ int comp_updater_forward_out(comp_updater_t *comp_updater,
     output = comp_updater->out_updater->output;
 
 #if _CONNLM_TRACE_PROCEDURE_
-    ST_TRACE("Forward-out: comp[%s]", comp->name);
+    ST_TRACE("Forward-out: comp[%s], node["OUTPUT_NODE_FMT"]", comp->name,
+            node);
 #endif
 
     s = s_children(output->tree, node);

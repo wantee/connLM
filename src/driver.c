@@ -536,6 +536,7 @@ static int driver_gen(driver_t *driver)
 
     int word;
     int i;
+    bool first;
 
     struct timeval tts, tte;
     long ms;
@@ -563,6 +564,7 @@ static int driver_gen(driver_t *driver)
     n_sent = 0;
     n_word = 0;
     while(true) {
+        first = true;
         if (text_fp != NULL && !feof(text_fp)) {
             if (connlm_egs_read(&egs, NULL, 1, text_fp, vocab, NULL) < 0) {
                 ST_WARNING("Failed to connlm_egs_read.");
@@ -591,6 +593,7 @@ static int driver_gen(driver_t *driver)
                         ST_WARNING("Failed to updater_step.");
                         return -1;
                     }
+                    first = false;
                 }
             } else if (feof(text_fp)) {
                 break;
@@ -599,10 +602,6 @@ static int driver_gen(driver_t *driver)
 
         word = -1;
         while (word != SENT_END_ID) {
-            if (word != -1) { // not first word
-                printf(" ");
-            }
-
             word = UNK_ID;
             while (word == UNK_ID) {
                 word = updater_sampling(updater);
@@ -615,6 +614,11 @@ static int driver_gen(driver_t *driver)
             if (word == SENT_END_ID) {
                 printf("\n");
             } else {
+                if (!first) {
+                    printf(" ");
+                } else {
+                    first = false;
+                }
                 printf("%s", vocab_get_word(vocab, word));
             }
             fflush(stdout);

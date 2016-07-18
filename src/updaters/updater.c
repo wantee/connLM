@@ -459,7 +459,8 @@ static int updater_forward_util_out(updater_t *updater)
 
     for (c = 0; c < updater->connlm->num_comp; c++) {
         if (comp_updater_forward_util_out(updater->comp_updaters[c],
-                    updater->words, updater->n_word, updater->tgt_pos) < 0) {
+                    updater->words, updater->n_word,
+                    updater->tgt_pos - 1) < 0) {
             ST_WARNING("Failed to comp_updater_forward[%s].",
                     updater->connlm->comps[c]->name);
             return -1;
@@ -522,4 +523,3 @@ int updater_sampling(updater_t *updater)
 
     return word;
 }
-

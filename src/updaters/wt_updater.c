@@ -418,7 +418,7 @@ int wt_update(wt_updater_t *wt_updater, count_t n_step, int row_s,
     ST_CHECK_PARAM(wt_updater == NULL, -1);
 
 #if _CONNLM_TRACE_PROCEDURE_
-    ST_TRACE("Update weight[%s]", wt_updater->glue->name);
+    ST_TRACE("Update weight");
 #endif
 
     if (wt_updater->param.mini_batch > 0) {
@@ -460,7 +460,7 @@ int wt_flush(wt_updater_t *wt_updater, count_t n_step)
     ST_CHECK_PARAM(wt_updater == NULL, -1);
 
 #if _CONNLM_TRACE_PROCEDURE_
-    ST_TRACE("Flush weight[%s]", wt_updater->glue->name);
+    ST_TRACE("Flush weight");
 #endif
 
     if (wt_updater->param.mini_batch > 0) {
