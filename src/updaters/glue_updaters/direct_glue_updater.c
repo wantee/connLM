@@ -346,23 +346,17 @@ static int direct_forward_walker(output_t *output, output_node_id_t node,
     return 0;
 }
 
-int direct_glue_updater_forward(glue_updater_t *glue_updater,
+static int direct_compute_hash(glue_updater_t *glue_updater,
         comp_updater_t *comp_updater, int *words, int n_word, int tgt_pos)
 {
     dgu_data_t *data;
-    out_updater_t *out_updater;
     input_t *input;
 
     int future_order;
-
-    direct_walker_args_t dw_args;
     int a;
 
-    ST_CHECK_PARAM(glue_updater == NULL || comp_updater == NULL
-            || words == NULL, -1);
 
     data = (dgu_data_t *)glue_updater->extra;
-    out_updater = comp_updater->out_updater;
     input = comp_updater->comp->input;
 
     /* history ngrams. */
@@ -389,13 +383,40 @@ int direct_glue_updater_forward(glue_updater_t *glue_updater,
 
     data->hash_order += 1/* for hash[0]. */;
 
+    for (a = 0; a < data->hash_order; a++) {
+        data->hash[a] = data->hash[a] % data->wt_updater->row;
+    }
+
+    return 0;
+}
+
+int direct_glue_updater_forward(glue_updater_t *glue_updater,
+        comp_updater_t *comp_updater, int *words, int n_word, int tgt_pos)
+{
+    dgu_data_t *data;
+    out_updater_t *out_updater;
+
+    direct_walker_args_t dw_args;
+    int a;
+
+    ST_CHECK_PARAM(glue_updater == NULL || comp_updater == NULL
+            || words == NULL, -1);
+
+    data = (dgu_data_t *)glue_updater->extra;
+    out_updater = comp_updater->out_updater;
+
+    if (direct_compute_hash(glue_updater, comp_updater,
+                words, n_word, tgt_pos) < 0) {
+        ST_WARNING("Failed to direct_compute_hash.");
+        return -1;
+    }
+
     dw_args.out_updater = out_updater;
     dw_args.in_scale = glue_updater->glue->in_scales[0];
     dw_args.out_scale = glue_updater->glue->out_scales[0];
     dw_args.wt_updater = data->wt_updater;
     dw_args.n_step = -1;
     for (a = 0; a < data->hash_order; a++) {
-        data->hash[a] = data->hash[a] % data->wt_updater->row;
         dw_args.h = data->hash[a];
         if (output_walk_through_path(out_updater->output, words[tgt_pos],
                     direct_forward_walker, (void *)&dw_args) < 0) {
@@ -474,6 +495,75 @@ int direct_glue_updater_backprop(glue_updater_t *glue_updater, count_t n_step,
     if (wt_flush(data->wt_updater, n_step) < 0) {
         ST_WARNING("Failed to wt_flush.");
         return -1;
+    }
+
+    return 0;
+}
+
+int direct_glue_updater_forward_util_out(glue_updater_t *glue_updater,
+        comp_updater_t *comp_updater, int *words, int n_word, int tgt_pos)
+{
+    if (direct_compute_hash(glue_updater, comp_updater,
+                words, n_word, tgt_pos) < 0) {
+        ST_WARNING("Failed to direct_compute_hash.");
+        return -1;
+    }
+
+    return 0;
+}
+
+int direct_glue_updater_forward_out(glue_updater_t *glue_updater,
+        comp_updater_t *comp_updater, output_node_id_t node)
+{
+    dgu_data_t *data;
+    out_updater_t *out_updater;
+    output_t *output;
+
+    real_t *hash_wt;
+    real_t scale;
+    int hash_sz, a;
+    hash_t h;
+
+    output_node_id_t ch, child_s, child_e;
+
+    ST_CHECK_PARAM(glue_updater == NULL || comp_updater == NULL
+            || node == OUTPUT_NODE_NONE, -1);
+
+    data = (dgu_data_t *)glue_updater->extra;
+    out_updater = comp_updater->out_updater;
+    output = out_updater->output;
+
+    child_s = s_children(output->tree, node);
+    child_e = s_children(output->tree, node);
+
+    if (child_s >= child_e) {
+        return 0;
+    }
+
+    hash_sz = glue_updater->glue->wt->row;
+    scale = glue_updater->glue->in_scales[0] * glue_updater->glue->out_scales[0];
+    hash_wt = data->wt_updater->wt;
+
+    if (output->norm == ON_SOFTMAX) {
+        for (a = 0; a < data->hash_order; a++) {
+            h = data->hash[a] + child_s;
+            if (h > hash_sz) {
+                h -= hash_sz;
+            }
+
+            if (h + child_e - child_s - 1 > hash_sz) {
+                for (ch = child_s; h < hash_sz; ch++, h++) {
+                    out_updater->ac[ch] += scale * hash_wt[h];
+                }
+                for (h = 0; ch < child_e - 1; ch++, h++) {
+                    out_updater->ac[ch] += scale * hash_wt[h];
+                }
+            } else {
+                for (ch = child_s; ch < child_e - 1; ch++, h++) {
+                    out_updater->ac[ch] += scale * hash_wt[h];
+                }
+            }
+        }
     }
 
     return 0;

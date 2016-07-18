@@ -69,6 +69,39 @@ typedef struct _connlm_egs_t_ {
 } connlm_egs_t;
 
 /**
+ * Destroy a connlm_egs and set the pointer to NULL.
+ * @ingroup g_reader
+ * @param[in] ptr pointer to connlm_egs_t.
+ */
+#define safe_connlm_egs_destroy(ptr) do {\
+    if((ptr) != NULL) {\
+        connlm_egs_destroy(ptr);\
+        safe_free(ptr);\
+        (ptr) = NULL;\
+    }\
+    } while(0)
+/**
+ * Destroy a connlm_egs.
+ * @ingroup g_reader
+ * @param[in] egs egs to be destroyed.
+ */
+void connlm_egs_destroy(connlm_egs_t *egs);
+
+/**
+ * Read words into egs.
+ * @ingroup g_reader
+ * @param[in] egs connlm_egs.
+ * @param[out] sent_ends postion of </s>s.
+ * @param[in] epoch_size number sents read one time.
+ * @param[in] text_fp text file.
+ * @param[in] vocab vocab.
+ * @param[out] oovs number of oovs.
+ * @return non-zero value if any error.
+ */
+int connlm_egs_read(connlm_egs_t *egs, int *sent_ends,
+        int epoch_size, FILE *text_fp, vocab_t *vocab, int *oovs);
+
+/**
  * Load reader option.
  * @ingroup g_reader
  * @param[out] reader_opt options loaded.

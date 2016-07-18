@@ -31,6 +31,7 @@
 #include <stutils/st_macro.h>
 #include <stutils/st_log.h>
 #include <stutils/st_rand.h>
+#include <stutils/st_io.h>
 
 #include "driver.h"
 
@@ -103,7 +104,7 @@ driver_t* driver_create(connlm_t *connlm, reader_t *reader, int n_thr)
 
     int i;
 
-    ST_CHECK_PARAM(connlm == NULL || reader == NULL || n_thr <= 0, NULL);
+    ST_CHECK_PARAM(connlm == NULL || n_thr <= 0, NULL);
 
     driver = (driver_t *)malloc(sizeof(driver_t));
     if (driver == NULL) {
@@ -170,11 +171,17 @@ int driver_setup(driver_t *driver, driver_mode_t mode)
         }
     }
 
+    if (mode == DRIVER_GEN) {
+        if (driver->updaters[0]->ctx_rightmost > 0) {
+            ST_WARNING("Can not generating: future words in input context.");
+            return -1;
+        }
+    }
+
     return 0;
 }
 
-int driver_set_eval(driver_t *driver, driver_eval_opt_t *eval_opt,
-        FILE *fp_log)
+int driver_set_eval(driver_t *driver, driver_eval_opt_t *eval_opt, FILE *fp_log)
 {
     ST_CHECK_PARAM(driver == NULL || eval_opt == NULL, -1);
 
@@ -184,10 +191,9 @@ int driver_set_eval(driver_t *driver, driver_eval_opt_t *eval_opt,
     return 0;
 }
 
-int driver_set_gen(driver_t *driver, driver_gen_opt_t *gen_opt,
-        int num_sents)
+int driver_set_gen(driver_t *driver, driver_gen_opt_t *gen_opt, int num_sents)
 {
-    ST_CHECK_PARAM(driver == NULL || gen_opt == NULL, -1);
+    ST_CHECK_PARAM(driver == NULL || gen_opt == NULL || num_sents < 0, -1);
 
     driver->gen_opt = gen_opt;
     driver->gen_num_sents = num_sents;
@@ -366,7 +372,7 @@ ERR:
     return NULL;
 }
 
-int driver_run(driver_t *driver)
+static int driver_do_run(driver_t *driver)
 {
     driver_thr_t *thrs = NULL;
     pthread_t *pts = NULL;
@@ -397,11 +403,6 @@ int driver_run(driver_t *driver)
             ST_NOTICE("Printing Probs, setting num_thread to 1.");
             driver->n_thr = 1;
         }
-    } else if (driver->mode == DRIVER_GEN) {
-        if (driver->gen_opt == NULL) {
-            ST_WARNING("Gen opt not set.");
-            return -1;
-        }
     }
 
     gettimeofday(&tts, NULL);
@@ -422,46 +423,39 @@ int driver_run(driver_t *driver)
 
     driver->err = 0;
 
-    if (driver->reader != NULL) {
-        stats = (thr_stat_t *)malloc(sizeof(thr_stat_t) * n_thr);
-        if (stats == NULL) {
-            ST_WARNING("Failed to malloc stats");
-            goto ERR;
-        }
-        memset(stats, 0, sizeof(thr_stat_t) * n_thr);
+    stats = (thr_stat_t *)malloc(sizeof(thr_stat_t) * n_thr);
+    if (stats == NULL) {
+        ST_WARNING("Failed to malloc stats");
+        goto ERR;
+    }
+    memset(stats, 0, sizeof(thr_stat_t) * n_thr);
 
+    if (reader_read(driver->reader, stats, &driver->err) < 0) {
+        ST_WARNING("Failed to reader_read.");
+        goto ERR;
+    }
 
-        if (reader_read(driver->reader, stats, &driver->err) < 0) {
-            ST_WARNING("Failed to reader_read.");
+    for (i = 0; i < n_thr; i++) {
+        thrs[i].driver = driver;
+        thrs[i].tid = i;
+        thrs[i].stat = stats + i;
+        if (pthread_create(pts + i, NULL, driver_thread,
+                    (void *)(thrs + i)) != 0) {
+            ST_WARNING("Falied to pthread_create driver_thread.");
             goto ERR;
         }
     }
 
-    if (driver->mode == DRIVER_TRAIN || driver->mode == DRIVER_EVAL) {
-        for (i = 0; i < n_thr; i++) {
-            thrs[i].driver = driver;
-            thrs[i].tid = i;
-            thrs[i].stat = stats + i;
-            if (pthread_create(pts + i, NULL, driver_thread,
-                        (void *)(thrs + i)) != 0) {
-                ST_WARNING("Falied to pthread_create driver_thread.");
-                goto ERR;
-            }
-        }
-
-        for (i = 0; i < n_thr; i++) {
-            if (pthread_join(pts[i], NULL) != 0) {
-                ST_WARNING("Falied to pthread_join.");
-                goto ERR;
-            }
+    for (i = 0; i < n_thr; i++) {
+        if (pthread_join(pts[i], NULL) != 0) {
+            ST_WARNING("Falied to pthread_join.");
+            goto ERR;
         }
     }
 
-    if (driver->reader != NULL) {
-        if(reader_wait(driver->reader) != 0) {
-            ST_WARNING("Failed to reader_wait.");
-            goto ERR;
-        }
+    if(reader_wait(driver->reader) != 0) {
+        ST_WARNING("Failed to reader_wait.");
+        goto ERR;
     }
 
     if (driver->err != 0) {
@@ -496,11 +490,6 @@ int driver_run(driver_t *driver)
         ST_NOTICE("LogP: %f", logp);
         ST_NOTICE("Entropy: %f", -logp / log10(2) / words);
         ST_NOTICE("PPL: %f", exp10(-logp / (double) words));
-    } else {
-        ST_NOTICE("Finish generating in %ldms.", ms);
-        ST_NOTICE("Words: " COUNT_FMT "    Sentences: " COUNT_FMT
-                ", words/sec: %.1f", words, sents,
-                words / ((double) ms / 1000));
     }
 
     if (driver->mode == DRIVER_EVAL) {
@@ -531,33 +520,13 @@ ERR:
     return -1;
 }
 
-#if 0
-static int connlm_gen_word(connlm_t *connlm)
+static int driver_gen(driver_t *driver)
 {
-    int word;
-
-    ST_CHECK_PARAM(connlm == NULL, -1);
-
-    if (connlm_forward_hidden(connlm, 0) < 0) {
-        ST_WARNING("Failed to connlm_forward_hidden.");
-        return -1;
-    }
-
-    word = output_gen_word(connlm->output, 0);
-    if (word < 0) {
-        ST_WARNING("Failed to output_gen_word.");
-        return -1;
-    }
-
-    return word;
-}
-
-int connlm_gen(connlm_t *connlm, int num_sents)
-{
-    count_t words;
-    count_t sents;
-
     FILE *text_fp = NULL;
+    updater_t *updater;
+    vocab_t *vocab;
+
+    count_t n_word, n_sent;
 
     connlm_egs_t egs = {
         .words = NULL,
@@ -568,55 +537,61 @@ int connlm_gen(connlm_t *connlm, int num_sents)
     int word;
     int i;
 
-    struct timeval tts_gen, tte_gen;
+    struct timeval tts, tte;
     long ms;
 
-    ST_CHECK_PARAM(connlm == NULL || num_sents < 0, -1);
+    ST_CHECK_PARAM(driver == NULL, -1);
 
-    if (connlm->gen_opt.prefix_file[0] != '\0') {
-        text_fp = st_fopen(connlm->gen_opt.prefix_file, "rb");
+    if (driver->gen_opt == NULL) {
+        ST_WARNING("Gen opt not set.");
+        return -1;
+    }
+
+    updater = driver->updaters[0];
+    vocab = driver->connlm->vocab;
+
+    if (driver->gen_opt->prefix_file[0] != '\0') {
+        text_fp = st_fopen(driver->gen_opt->prefix_file, "rb");
         if (text_fp == NULL) {
             ST_WARNING("Failed to open prefix file[%s]",
-                    connlm->gen_opt.prefix_file);
+                    driver->gen_opt->prefix_file);
             goto ERR;
         }
     }
 
-    gettimeofday(&tts_gen, NULL);
-    sents = 0;
-    words = 0;
+    gettimeofday(&tts, NULL);
+    n_sent = 0;
+    n_word = 0;
     while(true) {
-        if (connlm_reset(connlm, 0, false) < 0) {
-            ST_WARNING("Failed to connlm_reset.");
-            goto ERR;
-        }
         if (text_fp != NULL && !feof(text_fp)) {
-            if (connlm_get_egs(&egs, NULL, 1, text_fp,
-                        connlm->vocab, NULL) < 0) {
-                ST_WARNING("Failed to connlm_get_egs.");
+            if (connlm_egs_read(&egs, NULL, 1, text_fp, vocab, NULL) < 0) {
+                ST_WARNING("Failed to connlm_egs_read.");
                 goto ERR;
             }
 
             if (egs.size > 1) {
                 printf("[");
                 for (i = 0; i < egs.size - 1; i++) {
-                    word = egs.words[i];
-                    if (connlm_forward(connlm, word, 0) < 0) {
-                        ST_WARNING("Failed to connlm_forward.");
-                        goto ERR;
-                    }
-
-                    if (connlm_end(connlm, word, 0, false) < 0) {
-                        ST_WARNING("connlm_end_gen.");
-                        goto ERR;
-                    }
-
-                    printf("%s", vocab_get_word(connlm->vocab, word));
+                    printf("%s", vocab_get_word(vocab, egs.words[i]));
                     if (i < egs.size - 2) {
                         printf(" ");
                     }
                 }
                 printf("] ");
+
+                if (updater_feed(updater, egs.words, egs.size - 1) < 0) {
+                    ST_WARNING("Failed to updater_feed.");
+                    goto ERR;
+                }
+
+                /* steps the prefix words. */
+                while (updater_steppable(updater)) {
+                    word = updater_step(updater);
+                    if (word < 0) {
+                        ST_WARNING("Failed to updater_step.");
+                        return -1;
+                    }
+                }
             } else if (feof(text_fp)) {
                 break;
             }
@@ -628,29 +603,41 @@ int connlm_gen(connlm_t *connlm, int num_sents)
                 printf(" ");
             }
 
-            word = connlm_gen_word(connlm);
-            if (word < 0) {
-                ST_WARNING("Failed to connlm_gen_word.");
-                goto ERR;
+            word = UNK_ID;
+            while (word == UNK_ID) {
+                word = updater_sampling(updater);
+                if (word < 0) {
+                    ST_WARNING("Failed to updater_sampling.");
+                    goto ERR;
+                }
             }
 
             if (word == SENT_END_ID) {
                 printf("\n");
             } else {
-                printf("%s", vocab_get_word(connlm->vocab, word));
+                printf("%s", vocab_get_word(vocab, word));
             }
             fflush(stdout);
 
-            if (connlm_end(connlm, word, 0, false) < 0) {
-                ST_WARNING("connlm_end_gen.");
+            if (updater_feed(updater, &word, 1) < 0) {
+                ST_WARNING("Failed to updater_feed.");
                 goto ERR;
             }
 
-            words++;
+            /* steps the prefix words. */
+            while (updater_steppable(updater)) {
+                word = updater_step(updater);
+                if (word < 0) {
+                    ST_WARNING("Failed to updater_step.");
+                    return -1;
+                }
+            }
+
+            n_word++;
         }
 
-        sents++;
-        if (sents >= num_sents) {
+        n_sent++;
+        if (n_sent >= driver->gen_num_sents) {
             if(text_fp != NULL) {
                 if (feof(text_fp)) {
                     break;
@@ -661,19 +648,40 @@ int connlm_gen(connlm_t *connlm, int num_sents)
         }
     }
 
-    gettimeofday(&tte_gen, NULL);
-    ms = TIMEDIFF(tts_gen, tte_gen);
+    gettimeofday(&tte, NULL);
+    ms = TIMEDIFF(tts, tte);
 
     ST_NOTICE("Finish generating in %ldms.", ms);
-
     ST_NOTICE("Words: " COUNT_FMT "    Sentences: " COUNT_FMT
-            ", words/sec: %.1f", words, sents,
-             words / ((double) ms / 1000));
+            ", words/sec: %.1f", n_word, n_sent,
+            n_word / ((double) ms / 1000));
 
+    safe_fclose(text_fp);
     return 0;
 
 ERR:
-
+    safe_fclose(text_fp);
     return -1;
 }
-#endif
+
+int driver_run(driver_t *driver)
+{
+    ST_CHECK_PARAM(driver == NULL, -1);
+
+    if (driver->mode == DRIVER_EVAL || driver->mode == DRIVER_TRAIN) {
+        if (driver_do_run(driver) < 0) {
+            ST_WARNING("Failed to driver_do_run.");
+            return -1;
+        }
+    } else if (driver->mode == DRIVER_GEN) {
+        if (driver_gen(driver) < 0) {
+            ST_WARNING("Failed to driver_gen.");
+            return -1;
+        }
+    } else {
+        ST_WARNING("Unknown mode[%d]", driver->mode);
+        return -1;
+    }
+
+    return 0;
+}

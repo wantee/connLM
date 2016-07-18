@@ -226,3 +226,68 @@ int comp_updater_finish(comp_updater_t *comp_updater)
 
     return 0;
 }
+
+int comp_updater_forward_util_out(comp_updater_t *comp_updater, int *words,
+        int n_word, int tgt_pos)
+{
+    component_t *comp;
+    glue_updater_t *glue_updater;
+    int g;
+
+    ST_CHECK_PARAM(comp_updater == NULL, -1);
+
+    comp = comp_updater->comp;
+
+#if _CONNLM_TRACE_PROCEDURE_
+    ST_TRACE("Forward-util-out: comp[%s]", comp->name);
+#endif
+
+    for (g = 0; g < comp->num_glue; g++) {
+        glue_updater = comp_updater->glue_updaters[comp->fwd_order[g]];
+        if (glue_updater_forward_util_out(glue_updater, comp_updater,
+                    words, n_word, tgt_pos) < 0) {
+            ST_WARNING("Failed to forward_util_out glue[%s].",
+                    glue_updater->glue->name);
+            return -1;
+        }
+    }
+
+    return 0;
+}
+
+int comp_updater_forward_out(comp_updater_t *comp_updater,
+        output_node_id_t node)
+{
+    component_t *comp;
+    glue_updater_t *glue_updater;
+    output_t *output;
+
+    output_node_id_t s, e;
+    int g;
+
+    ST_CHECK_PARAM(comp_updater == NULL, -1);
+
+    comp = comp_updater->comp;
+    output = comp_updater->out_updater->output;
+
+#if _CONNLM_TRACE_PROCEDURE_
+    ST_TRACE("Forward-out: comp[%s]", comp->name);
+#endif
+
+    s = s_children(output->tree, node);
+    e = e_children(output->tree, node);
+    if (s < e) {
+        memset(comp_updater->out_updater->ac + s, 0 , e - s);
+    }
+
+    for (g = 0; g < comp->num_glue; g++) {
+        glue_updater = comp_updater->glue_updaters[comp->fwd_order[g]];
+        if (glue_updater_forward_out(glue_updater, comp_updater, node) < 0) {
+            ST_WARNING("Failed to forward_out glue[%s].",
+                    glue_updater->glue->name);
+            return -1;
+        }
+    }
+
+    return 0;
+}

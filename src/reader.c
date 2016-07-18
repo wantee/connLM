@@ -39,7 +39,7 @@
 
 #define NUM_WORD_PER_SENT 128
 
-static void connlm_egs_destroy(connlm_egs_t *egs)
+void connlm_egs_destroy(connlm_egs_t *egs)
 {
     if (egs != NULL) {
         safe_free(egs->words);
@@ -104,7 +104,7 @@ static int connlm_egs_print(FILE *fp, pthread_mutex_t *fp_lock,
     return 0;
 }
 
-static int reader_read_egs(connlm_egs_t *egs, int *sent_ends,
+int connlm_egs_read(connlm_egs_t *egs, int *sent_ends,
         int epoch_size, FILE *text_fp, vocab_t *vocab, int *oovs)
 {
     char *line = NULL;
@@ -120,7 +120,7 @@ static int reader_read_egs(connlm_egs_t *egs, int *sent_ends,
     bool err;
 
     // assert len(sent_ends) >= epoch_size
-    ST_CHECK_PARAM(egs == NULL || text_fp == NULL, -1);
+    ST_CHECK_PARAM(egs == NULL || text_fp == NULL || vocab == NULL, -1);
 
     err = false;
     num_sents = 0;
@@ -461,10 +461,10 @@ static void* reader_read_thread(void *args)
 #ifdef _TIME_PROF_
         gettimeofday(&tts_io, NULL);
 #endif
-        num_sents = reader_read_egs(&egs, sent_ends,
+        num_sents = connlm_egs_read(&egs, sent_ends,
                 epoch_size, text_fp, reader->vocab, &oovs);
         if (num_sents < 0) {
-            ST_WARNING("Failed to reader_read_egs.");
+            ST_WARNING("Failed to connlm_egs_read.");
             goto ERR;
         }
 #ifdef _TIME_PROF_

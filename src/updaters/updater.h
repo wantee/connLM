@@ -142,6 +142,14 @@ int updater_finalize(updater_t *updater);
  */
 int updater_get_logp(updater_t *updater, int word, double *logp);
 
+/**
+ * Sampling a word.
+ * @ingroup g_updater
+ * @param[in] updater updater.
+ * @return the sampled word, -1 if any error.
+ */
+int updater_sampling(updater_t *updater);
+
 #ifdef __cplusplus
 }
 #endif

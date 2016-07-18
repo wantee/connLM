@@ -153,6 +153,16 @@ int out_updater_finish(out_updater_t *out_updater);
  */
 int out_updater_get_logp(out_updater_t *out_updater, int word, double *logp);
 
+/**
+ * Sample a node from children.
+ * @ingroup g_updater_output
+ * @param[in] out_updater the out_updater.
+ * @param[in] node the parent node.
+ * @return sampled child, OUTPUT_NODE_NONE if any error.
+ */
+output_node_id_t out_updater_sample(out_updater_t *out_updater,
+        output_node_id_t node);
+
 #ifdef __cplusplus
 }
 #endif

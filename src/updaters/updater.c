@@ -450,3 +450,76 @@ int updater_get_logp(updater_t *updater, int word, double *logp)
 
     return 0;
 }
+
+static int updater_forward_util_out(updater_t *updater)
+{
+    int c;
+
+    ST_CHECK_PARAM(updater == NULL, -1);
+
+    for (c = 0; c < updater->connlm->num_comp; c++) {
+        if (comp_updater_forward_util_out(updater->comp_updaters[c],
+                    updater->words, updater->n_word, updater->tgt_pos) < 0) {
+            ST_WARNING("Failed to comp_updater_forward[%s].",
+                    updater->connlm->comps[c]->name);
+            return -1;
+        }
+    }
+
+    return 0;
+}
+
+static int updater_sample_out(updater_t *updater)
+{
+    output_t *output;
+    output_node_id_t node;
+    int c;
+
+    ST_CHECK_PARAM(updater == NULL, -1);
+
+    output = updater->connlm->output;
+    node = output->tree->root;
+
+    while (!is_leaf(output->tree, node)) {
+        for (c = 0; c < updater->connlm->num_comp; c++) {
+            if (comp_updater_forward_out(updater->comp_updaters[c], node) < 0) {
+                ST_WARNING("Failed to comp_updater_forward[%s].",
+                        updater->connlm->comps[c]->name);
+                return -1;
+            }
+
+            node = out_updater_sample(updater->out_updater, node);
+            if (node == OUTPUT_NODE_NONE) {
+                ST_WARNING("Failed to out_updater_sample.");
+                return -1;
+            }
+        }
+    }
+
+    return output_tree_leaf2word(output->tree, node);
+}
+
+int updater_sampling(updater_t *updater)
+{
+    int word;
+
+    ST_CHECK_PARAM(updater == NULL, -1);
+
+#if _CONNLM_TRACE_PROCEDURE_
+    ST_TRACE("Sampling");
+#endif
+
+    if (updater_forward_util_out(updater) < 0) {
+        ST_WARNING("Failed to updater_forward_util_out.");
+        return -1;
+    }
+
+    word = updater_sample_out(updater);
+    if (word < 0) {
+        ST_WARNING("Failed to updater_sample_out.");
+        return -1;
+    }
+
+    return word;
+}
+

@@ -26,6 +26,7 @@
 
 #include <stutils/st_macro.h>
 #include <stutils/st_log.h>
+#include <stutils/st_rand.h>
 
 #include "utils.h"
 #include "output_updater.h"
@@ -272,4 +273,45 @@ int out_updater_get_logp(out_updater_t *out_updater, int word, double *logp)
     *logp += log10(out_updater->ac[node]);
 
     return 0;
+}
+
+output_node_id_t out_updater_sample(out_updater_t *out_updater,
+        output_node_id_t node)
+{
+    output_t *output;
+    output_node_id_t s, e, sampled;
+
+    double u, p;
+
+    ST_CHECK_PARAM(out_updater == NULL || node == OUTPUT_NODE_NONE,
+            OUTPUT_NODE_NONE);
+
+    output = out_updater->output;
+
+    s = s_children(output->tree, node);
+    e = e_children(output->tree, node);
+    if (s >= e) {
+        ST_WARNING("No children to be sampled.");
+        return OUTPUT_NODE_NONE;
+    }
+
+    if (output->norm == ON_SOFTMAX) {
+        out_updater->ac[e - 1] = 0;
+        softmax(out_updater->ac + s, e - s);
+    }
+
+    u = st_random(0, 1);
+    sampled = s;
+
+    p = 0;
+
+    for (sampled = s; sampled < e; sampled++) {
+        p += out_updater->ac[sampled];
+
+        if (p >= u) {
+            break;
+        }
+    }
+
+    return sampled;
 }

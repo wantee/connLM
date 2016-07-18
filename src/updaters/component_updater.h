@@ -153,6 +153,28 @@ int comp_updater_end(comp_updater_t *comp_updater);
  */
 int comp_updater_finish(comp_updater_t *comp_updater);
 
+/**
+ * Feed-forward util output layer.
+ * @ingroup g_updater_comp
+ * @param[in] comp_updater the comp_updater.
+ * @param[in] words input words buffer.
+ * @param[in] n_word length of words.
+ * @param[in] tgt_pos position of target word in words buffer.
+ * @return non-zero value if any error.
+ */
+int comp_updater_forward_util_out(comp_updater_t *comp_updater, int *words,
+        int n_word, int tgt_pos);
+
+/**
+ * Feed-forward one node of output layer.
+ * @ingroup g_updater_comp
+ * @param[in] comp_updater the comp_updater.
+ * @param[in] node node of output tree.
+ * @return non-zero value if any error.
+ */
+int comp_updater_forward_out(comp_updater_t *comp_updater,
+        output_node_id_t node);
+
 #ifdef __cplusplus
 }
 #endif
