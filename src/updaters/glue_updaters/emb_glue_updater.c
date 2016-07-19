@@ -77,8 +77,8 @@ int emb_glue_updater_forward(glue_updater_t *glue_updater,
     layer_updater_t *out_layer_updater;
     real_t *wt;
 
-    int a, b, i, j;
-    real_t scale;
+    int a, b, i, j, col;
+    real_t scale, ac;
 
     ST_CHECK_PARAM(glue_updater == NULL || comp_updater == NULL
             || words == NULL, -1);
@@ -87,17 +87,56 @@ int emb_glue_updater_forward(glue_updater_t *glue_updater,
     input = comp_updater->comp->input;
     out_layer_updater = comp_updater->layer_updaters[glue->out_layers[0]];
     wt = glue_updater->wt_updater->wt;
+    col = glue->wt->col;
 
-    for (a = 0; a < input->n_ctx; a++) {
-        i = tgt_pos + input->context[a].i;
-        if (i < 0 || i >= n_word) {
-            continue;
-        }
-        scale = input->context[a].w * glue->in_scales[0] * glue->out_scales[0];
-        j = words[i] * glue->wt->col;
-        for (b = 0; b < glue->wt->col; b++, j++) {
-            out_layer_updater->ac[b] +=  scale * wt[j];
-        }
+    switch (input->combine) {
+        case IC_SUM:
+            for (a = 0; a < input->n_ctx; a++) {
+                i = tgt_pos + input->context[a].i;
+                if (i < 0 || i >= n_word) {
+                    continue;
+                }
+                scale = input->context[a].w * glue->in_scales[0]
+                    * glue->out_scales[0];
+                j = words[i] * col;
+                for (b = 0; b < col; b++, j++) {
+                    out_layer_updater->ac[b] += scale * wt[j];
+                }
+            }
+            break;
+        case IC_AVG:
+            for (b = 0; b < col; b++) {
+                ac = 0;
+                for (a = 0; a < input->n_ctx; a++) {
+                    i = tgt_pos + input->context[a].i;
+                    if (i < 0 || i >= n_word) {
+                        continue;
+                    }
+                    scale = input->context[a].w * glue->in_scales[0]
+                        * glue->out_scales[0];
+                    j = words[i] * col + b;
+                    ac += scale * wt[j];
+                }
+                out_layer_updater->ac[b] += ac / input->n_ctx;
+            }
+            break;
+        case IC_CONCAT:
+            for (a = 0; a < input->n_ctx; a++) {
+                i = tgt_pos + input->context[a].i;
+                if (i < 0 || i >= n_word) {
+                    continue;
+                }
+                scale = input->context[a].w * glue->in_scales[0]
+                    * glue->out_scales[0];
+                j = words[i] * col;
+                for (b = a * col; b < (a + 1) * col; b++, j++) {
+                    out_layer_updater->ac[b] += scale * wt[j];
+                }
+            }
+            break;
+        default:
+            ST_WARNING("Unknown combine[%d]", input->combine);
+            return -1;
     }
 
     return 0;
@@ -112,6 +151,7 @@ int emb_glue_updater_backprop(glue_updater_t *glue_updater, count_t n_step,
 
     st_wt_int_t in_idx;
     int a, i;
+    real_t out_scale;
 
     ST_CHECK_PARAM(glue_updater == NULL || comp_updater == NULL
             || words == NULL, -1);
@@ -119,19 +159,41 @@ int emb_glue_updater_backprop(glue_updater_t *glue_updater, count_t n_step,
     glue = glue_updater->glue;
     input = comp_updater->comp->input;
     out_layer_updater = comp_updater->layer_updaters[glue->out_layers[0]];
+    out_scale = glue->out_scales[0];
 
-    for (a = 0; a < input->n_ctx; a++) {
-        i = tgt_pos + input->context[a].i;
-        if (i < 0 || i >= n_word) {
-            continue;
+    if (input->combine == IC_CONCAT) {
+        for (a = 0; a < input->n_ctx; a++) {
+            i = tgt_pos + input->context[a].i;
+            if (i < 0 || i >= n_word) {
+                continue;
+            }
+            in_idx.w = input->context[a].w;
+            in_idx.i = words[i];
+            if (wt_update(glue_updater->wt_updater, n_step, 0,
+                        out_layer_updater->er + a * glue->wt->col,
+                        out_scale, NULL,
+                        NULL, glue->in_scales[0], &in_idx) < 0) {
+                ST_WARNING("Failed to wt_update.");
+                return -1;
+            }
         }
-        in_idx.w = input->context[a].w;
-        in_idx.i = words[i];
-        if (wt_update(glue_updater->wt_updater, n_step, 0,
-                    out_layer_updater->er, glue->out_scales[0], NULL,
-                    NULL, glue->in_scales[0], &in_idx) < 0) {
-            ST_WARNING("Failed to wt_update.");
-            return -1;
+    } else {
+        if (input->combine == IC_AVG) {
+            out_scale = glue->out_scales[0] / input->n_ctx;
+        }
+        for (a = 0; a < input->n_ctx; a++) {
+            i = tgt_pos + input->context[a].i;
+            if (i < 0 || i >= n_word) {
+                continue;
+            }
+            in_idx.w = input->context[a].w;
+            in_idx.i = words[i];
+            if (wt_update(glue_updater->wt_updater, n_step, 0,
+                        out_layer_updater->er, out_scale, NULL,
+                        NULL, glue->in_scales[0], &in_idx) < 0) {
+                ST_WARNING("Failed to wt_update.");
+                return -1;
+            }
         }
     }
 

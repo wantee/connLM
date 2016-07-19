@@ -110,6 +110,8 @@ bool emb_glue_check(glue_t *glue, layer_t **layers, int n_layer,
 int emb_glue_init_data(glue_t *glue, input_t *input,
         layer_t **layers, output_t *output)
 {
+    int col;
+
     ST_CHECK_PARAM(glue == NULL || glue->wt == NULL
             || input == NULL, -1);
 
@@ -118,8 +120,13 @@ int emb_glue_init_data(glue_t *glue, input_t *input,
         return -1;
     }
 
-    if (wt_init(glue->wt, input->input_size,
-                layers[glue->out_layers[0]]->size) < 0) {
+    if (input->combine == IC_CONCAT) {
+        col = layers[glue->out_layers[0]]->size / input->n_ctx;
+    } else {
+        col = layers[glue->out_layers[0]]->size;
+    }
+
+    if (wt_init(glue->wt, input->input_size, col) < 0) {
         ST_WARNING("Failed to wt_init.");
         return -1;
     }

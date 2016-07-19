@@ -14,9 +14,10 @@ realtype="float"
 
 stepnames[1]="Learn Vocab"
 stepnames[2]="Train MaxEnt model"
-stepnames[3]="Train RNN model"
-stepnames[4]="Train RNN+MaxEnt model"
-stepnames[5]="Train RNN~MaxEnt merge model"
+stepnames[3]="Train CBOW model"
+stepnames[4]="Train RNN model"
+stepnames[5]="Train RNN+MaxEnt model"
+stepnames[6]="Train RNN~MaxEnt merge model"
 
 steps_len=${#stepnames[*]}
 
