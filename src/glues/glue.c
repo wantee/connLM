@@ -65,7 +65,8 @@ static glue_impl_t GLUE_IMPL[] = {
         emb_glue_init_data},
     {OUT_GLUE_NAME, NULL, NULL, NULL,
         out_glue_parse_topo, out_glue_check, NULL,
-        NULL, NULL, NULL, NULL, NULL},
+        NULL, NULL, NULL, NULL,
+        out_glue_init_data},
 };
 
 static glue_impl_t* glue_get_impl(const char *type)

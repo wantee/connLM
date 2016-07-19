@@ -53,8 +53,8 @@ static glue_updater_impl_t GLUE_UPDATER_IMPL[] = {
         NULL, emb_glue_updater_forward, emb_glue_updater_backprop,
         emb_glue_updater_forward, NULL},
     {OUT_GLUE_NAME, out_glue_updater_init, out_glue_updater_destroy,
-        NULL, NULL, NULL,
-        NULL, NULL},
+        NULL, out_glue_updater_forward, out_glue_updater_backprop,
+        NULL, out_glue_updater_forward_out},
 };
 
 static glue_updater_impl_t* glue_updater_get_impl(const char *type)

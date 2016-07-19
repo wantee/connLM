@@ -331,6 +331,7 @@ static int wt_updater_acc_wt(wt_updater_t *wt_updater, count_t n_step,
                 wt += col;
             }
 #endif
+            break;
         default:
             ST_WARNING("Unknown updating type[%d].", wt_updater->type);
             return -1;

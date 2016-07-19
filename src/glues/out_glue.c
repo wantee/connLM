@@ -87,3 +87,23 @@ bool out_glue_check(glue_t *glue, layer_t **layers, int n_layer,
 
     return true;
 }
+
+int out_glue_init_data(glue_t *glue, input_t *input,
+        layer_t **layers, output_t *output)
+{
+    ST_CHECK_PARAM(glue == NULL || glue->wt == NULL
+            || input == NULL, -1);
+
+    if (strcasecmp(glue->type, OUT_GLUE_NAME) != 0) {
+        ST_WARNING("Not a out glue. [%s]", glue->type);
+        return -1;
+    }
+
+    if (wt_init(glue->wt, output->tree->num_node,
+                layers[glue->in_layers[0]]->size) < 0) {
+        ST_WARNING("Failed to wt_init.");
+        return -1;
+    }
+
+    return 0;
+}
