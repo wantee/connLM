@@ -49,7 +49,6 @@ typedef struct _layer_updater_t_ {
     real_t *er; /**< error of layer. */
 
     bool activated; /**< activation indicator. */
-    bool cleared; /**< cleared indicator. */
 } layer_updater_t;
 
 /**
@@ -95,7 +94,7 @@ int layer_updater_setup(layer_updater_t *layer_updater, bool backprop);
  * @param[in] offset offset of layer.
  * @return non-zero value if any error.
  */
-int layer_updater_activate(layer_updater_t *layer_updater, int offset);
+int layer_updater_activate(layer_updater_t *layer_updater);
 
 /**
  * Clear a layer_updater.
@@ -104,7 +103,7 @@ int layer_updater_activate(layer_updater_t *layer_updater, int offset);
  * @param[in] offset offset of layer.
  * @return non-zero value if any error.
  */
-int layer_updater_clear(layer_updater_t *layer_updater, int offset);
+int layer_updater_clear(layer_updater_t *layer_updater);
 
 #ifdef __cplusplus
 }

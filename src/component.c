@@ -232,6 +232,10 @@ component_t *comp_init_from_topo(const char* topo_content,
         goto ERR;
     }
 
+    if (comp->num_layer != 0) {
+        ST_WARNING("output layer must be the 0-layer.");
+        goto ERR;
+    }
     comp->layers[comp->num_layer] = output_get_layer(output);
     if (comp->layers[comp->num_layer] == NULL) {
         ST_WARNING("Failed to output_get_layer.");
@@ -283,6 +287,10 @@ component_t *comp_init_from_topo(const char* topo_content,
                 goto ERR;
             }
 
+            if (comp->num_layer != 1) {
+                ST_WARNING("input layer must be the 1-layer.");
+                goto ERR;
+            }
             comp->layers[comp->num_layer] = input_get_layer(comp->input);
             if (comp->layers[comp->num_layer] == NULL) {
                 ST_WARNING("Failed to input_get_layer.");

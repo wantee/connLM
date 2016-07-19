@@ -58,7 +58,7 @@ typedef struct _component_t_ {
 
     input_t *input; /**< input layer. */
 
-    layer_t **layers; /**< hidden layers. */
+    layer_t **layers; /**< layers. 0 is output layer, 1 is input layer. */
     int num_layer; /**< number of hidden layers. */
     glue_t **glues; /**< glues. */
     int num_glue; /**< number of glues. */

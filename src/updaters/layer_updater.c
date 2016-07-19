@@ -65,14 +65,43 @@ ERR:
 
 int layer_updater_setup(layer_updater_t *layer_updater, bool backprop)
 {
+    size_t sz;
+
     ST_CHECK_PARAM(layer_updater == NULL, -1);
 
+    safe_free(layer_updater->ac);
+    safe_free(layer_updater->er);
+
+    sz = sizeof(real_t) * layer_updater->layer->size;
+    if (posix_memalign((void **)&layer_updater->ac, ALIGN_SIZE, sz) != 0
+            || layer_updater->ac == NULL) {
+        ST_WARNING("Failed to malloc ac.");
+        goto ERR;
+    }
+    memset(layer_updater->ac, 0, sz);
+
+    if (backprop) {
+        if (posix_memalign((void **)&layer_updater->er, ALIGN_SIZE, sz) != 0
+                || layer_updater->er == NULL) {
+            ST_WARNING("Failed to malloc er.");
+            goto ERR;
+        }
+        memset(layer_updater->er, 0, sz);
+    }
+
     return 0;
+
+ERR:
+
+    safe_free(layer_updater->ac);
+    safe_free(layer_updater->er);
+
+    return -1;
 }
 
-int layer_updater_activate(layer_updater_t *layer_updater, int offset)
+int layer_updater_activate(layer_updater_t *layer_updater)
 {
-    ST_CHECK_PARAM(layer_updater == NULL || offset < 0, -1);
+    ST_CHECK_PARAM(layer_updater == NULL, -1);
 
 #if 0
     if (strcmp(layer->name, INPUT_LAYER_NAME) == 0
@@ -84,16 +113,19 @@ int layer_updater_activate(layer_updater_t *layer_updater, int offset)
     return 0;
 }
 
-int layer_updater_clear(layer_updater_t *layer_updater, int offset)
+int layer_updater_clear(layer_updater_t *layer_updater)
 {
-    ST_CHECK_PARAM(layer_updater == NULL || offset < 0, -1);
+    size_t sz;
 
-#if 0
-    if (strcmp(layer->name, INPUT_LAYER_NAME) == 0
-            || strcmp(layer->name, OUTPUT_LAYER_NAME) == 0) {
-        return 0;
+    ST_CHECK_PARAM(layer_updater == NULL, -1);
+
+    sz = sizeof(real_t) * layer_updater->layer->size;
+    memset(layer_updater->ac, 0, sz);
+    layer_updater->activated = false;
+
+    if (layer_updater->er != NULL) {
+        memset(layer_updater->er, 0, sz);
     }
-#endif
 
     return 0;
 }

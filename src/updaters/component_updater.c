@@ -38,7 +38,7 @@ void comp_updater_destroy(comp_updater_t *comp_updater)
     }
 
     if (comp_updater->layer_updaters != NULL) {
-        for (i = 0; i < comp_updater->comp->num_layer; i++) {
+        for (i = 2; i < comp_updater->comp->num_layer; i++) {
             safe_layer_updater_destroy(comp_updater->layer_updaters[i]);
         }
         safe_free(comp_updater->layer_updaters);
@@ -82,8 +82,9 @@ comp_updater_t* comp_updater_create(component_t *comp,
             ST_WARNING("Failed to malloc layer_updaters.");
             goto ERR;
         }
+        memset(comp_updater->layer_updaters, 0, sz);
 
-        for (i = 0; i < comp->num_layer; i++) {
+        for (i = 2; i < comp->num_layer; i++) {
             comp_updater->layer_updaters[i] = layer_updater_create(comp->layers[i]);
             if (comp_updater->layer_updaters[i] == NULL) {
                 ST_WARNING("Failed to layer_updater_create[%s].",
@@ -123,7 +124,7 @@ int comp_updater_setup(comp_updater_t *comp_updater, bool backprop)
 
     ST_CHECK_PARAM(comp_updater == NULL, -1);
 
-    for (i = 0; i < comp_updater->comp->num_layer; i++) {
+    for (i = 2; i < comp_updater->comp->num_layer; i++) {
         if (layer_updater_setup(comp_updater->layer_updaters[i],
                     backprop) < 0) {
             ST_WARNING("Failed to layer_updater_setup[%s].",
@@ -152,7 +153,16 @@ int comp_updater_reset(comp_updater_t *comp_updater)
 
 int comp_updater_start(comp_updater_t *comp_updater)
 {
+    int i;
     ST_CHECK_PARAM(comp_updater == NULL, -1);
+
+    for (i = 2; i < comp_updater->comp->num_layer; i++) {
+        if (layer_updater_clear(comp_updater->layer_updaters[i]) < 0) {
+            ST_WARNING("Failed to layer_clear.[%s]",
+                    comp_updater->comp->layers[i]->name);
+            return -1;
+        }
+    }
 
     return 0;
 }

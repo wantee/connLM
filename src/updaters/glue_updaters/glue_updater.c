@@ -146,7 +146,6 @@ int glue_updater_forward(glue_updater_t *glue_updater,
     layer_updater_t **layer_updaters;
     int l;
     int lid;
-    int off;
 
     ST_CHECK_PARAM(glue_updater == NULL || comp_updater == NULL, -1);
 
@@ -160,29 +159,17 @@ int glue_updater_forward(glue_updater_t *glue_updater,
 
     for (l = 0; l < glue->num_in_layer; l++) {
         lid = glue->in_layers[l];
-        off = glue->in_offsets[l];
+        if (lid < 2) {
+            continue;
+        }
         if (!layer_updaters[lid]->activated) {
-            if (layer_updater_activate(layer_updaters[lid], off) < 0) {
+            if (layer_updater_activate(layer_updaters[lid]) < 0) {
                 ST_WARNING("Failed to layer_activate.[%s]",
                         comp_updater->comp->layers[lid]->name);
                 return -1;
             }
 
             layer_updaters[lid]->activated = true;
-        }
-    }
-
-    for (l = 0; l < glue->num_out_layer; l++) {
-        lid = glue->out_layers[l];
-        off = glue->out_offsets[l];
-        if (!layer_updaters[lid]->cleared) {
-            if (layer_updater_clear(layer_updaters[lid], off) < 0) {
-                ST_WARNING("Failed to layer_clear.[%s]",
-                        comp_updater->comp->layers[lid]->name);
-                return -1;
-            }
-
-            layer_updaters[lid]->cleared = true;
         }
     }
 
@@ -246,7 +233,6 @@ int glue_updater_forward_util_out(glue_updater_t *glue_updater,
     layer_updater_t **layer_updaters;
     int l;
     int lid;
-    int off;
 
     ST_CHECK_PARAM(glue_updater == NULL || comp_updater == NULL, -1);
 
@@ -260,29 +246,17 @@ int glue_updater_forward_util_out(glue_updater_t *glue_updater,
 
     for (l = 0; l < glue->num_in_layer; l++) {
         lid = glue->in_layers[l];
-        off = glue->in_offsets[l];
+        if (lid < 2) {
+            continue;
+        }
         if (!layer_updaters[lid]->activated) {
-            if (layer_updater_activate(layer_updaters[lid], off) < 0) {
+            if (layer_updater_activate(layer_updaters[lid]) < 0) {
                 ST_WARNING("Failed to layer_activate.[%s]",
                         comp_updater->comp->layers[lid]->name);
                 return -1;
             }
 
             layer_updaters[lid]->activated = true;
-        }
-    }
-
-    for (l = 0; l < glue->num_out_layer; l++) {
-        lid = glue->out_layers[l];
-        off = glue->out_offsets[l];
-        if (!layer_updaters[lid]->cleared) {
-            if (layer_updater_clear(layer_updaters[lid], off) < 0) {
-                ST_WARNING("Failed to layer_clear.[%s]",
-                        comp_updater->comp->layers[lid]->name);
-                return -1;
-            }
-
-            layer_updaters[lid]->cleared = true;
         }
     }
 

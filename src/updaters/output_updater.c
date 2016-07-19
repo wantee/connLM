@@ -113,15 +113,18 @@ static int out_start_walker(output_t *output, output_node_id_t node,
         output_node_id_t child_s, output_node_id_t child_e, void *args)
 {
     out_updater_t *out_updater;
-    output_node_id_t ch;
+    size_t sz;
 
     out_updater = (out_updater_t *)args;
 
-    for (ch = child_s; ch < child_e; ch++) {
-        out_updater->ac[ch] = 0.0;
-        if (out_updater->er != NULL) {
-            out_updater->er[ch] = 0.0;
-        }
+    if (child_s >= child_e) {
+        return 0;
+    }
+
+    sz = (child_e - child_s) * sizeof(real_t);
+    memset(out_updater->ac + child_s, 0, sz);
+    if (out_updater->er != NULL) {
+        memset(out_updater->er + child_s, 0, sz);
     }
 
     return 0;
