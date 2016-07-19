@@ -52,6 +52,9 @@ void sigmoid(real_t *vec, int vec_size);
 
 void softmax(real_t *vec, int vec_size);
 
+void propagate_error(real_t *dst, real_t *vec, real_t *mat,
+        int mat_col, int in_vec_size, real_t er_cutoff, real_t scale);
+
 void connlm_show_usage(const char *module_name, const char *header,
         const char *usage, const char *eg,
         st_opt_t *opt, const char *trailer);

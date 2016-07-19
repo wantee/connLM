@@ -241,6 +241,24 @@ void softmax(real_t *vec, int vec_size)
     }
 }
 
+void propagate_error(real_t *dst, real_t *vec, real_t *mat,
+        int mat_col, int in_vec_size, real_t er_cutoff, real_t scale)
+{
+    int a;
+
+    vecXmat(dst, vec, mat, mat_col, in_vec_size, scale);
+
+    if (er_cutoff > 0) {
+        for (a = 0; a < mat_col; a++) {
+            if (dst[a] > er_cutoff) {
+                dst[a] = er_cutoff;
+            } else if (dst[a] < -er_cutoff) {
+                dst[a] = -er_cutoff;
+            }
+        }
+    }
+}
+
 void connlm_show_usage(const char *module_name, const char *header,
         const char *usage, const char *eg,
         st_opt_t *opt, const char *trailer)

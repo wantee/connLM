@@ -49,6 +49,7 @@ typedef struct _param_t_ {
     real_t momentum; /**< value of momentum */
     int mini_batch; /**< size of mini-batch */
     int sync_size; /**< if bigger than 0, sync weight for threads every sync_size steps. */
+    real_t er_cutoff; /**< cutoff of error. */
 } param_t;
 
 /**

@@ -40,6 +40,7 @@ static param_t def_param = {
     .momentum = 0.0,
     .mini_batch = 0,
     .sync_size = 0,
+    .er_cutoff = 50.0,
 };
 
 void param_show_usage()
@@ -109,6 +110,11 @@ int param_load(param_t *param, st_opt_t *opt, const char *sec_name,
     ST_OPT_SEC_GET_INT(opt, sec_name, "SYNC_SIZE", param->sync_size,
             param->sync_size,
             "if bigger than 0, sync weight for threads every sync_size steps.");
+
+    ST_OPT_SEC_GET_DOUBLE(opt, sec_name, "ERR_CUTOFF", d,
+            (double)param->er_cutoff, "Cutoff of error");
+    param->er_cutoff = (real_t)d;
+
 
     return 0;
 ST_OPT_ERR:

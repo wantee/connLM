@@ -236,14 +236,12 @@ static int wt_updater_acc_wt(wt_updater_t *wt_updater, count_t n_step,
         real_t *er, real_t er_scale, st_int_seg_t *er_seg,
         real_t *in, real_t in_scale, st_wt_int_t *in_idx)
 {
-//    real_t *w;
-
     real_t lr;
     real_t l2;
 
     int row, col;
 
-    int i, j;
+    int i, j, start, end;
     real_t scale;
 
     lr = wt_updater->param.learn_rate;
@@ -258,8 +256,6 @@ static int wt_updater_acc_wt(wt_updater_t *wt_updater, count_t n_step,
     }
 
     switch (wt_updater->type) {
-        case WT_UT_FULL:
-            break;
         case WT_UT_PART:
             // Hash-based weight
             // needed: row_s, er_seg, er
@@ -286,18 +282,16 @@ static int wt_updater_acc_wt(wt_updater_t *wt_updater, count_t n_step,
                 wt[i] += scale * er[j] - l2 * wt[i];
             }
             break;
-#if 0
-        case WT_UT_ONE_SEG:
+        case WT_UT_SEG:
             /* FALL THROUGH */
-        case WT_UT_ONE_FULL:
-            if (wt_updater->type == WT_UT_ONE_FULL) {
+        case WT_UT_FULL:
+            if (wt_updater->type == WT_UT_FULL) {
                 start = 0;
                 end = row;
             } else {
-                start = er_s;
-                end = er_e;
+                start = er_seg->s;
+                end = er_seg->e;
             }
-            lr *= in_scale;
 #ifdef _USE_BLAS_
             cblas_gemm(CblasRowMajor, CblasTrans, CblasNoTrans,
                     end - start, col, 1,
@@ -330,14 +324,12 @@ static int wt_updater_acc_wt(wt_updater_t *wt_updater, count_t n_step,
                 }
             }
 #else
-            w = wt;
             for (j = start; j < end; j++) {
                 for (i = 0; i < col; i++) {
-                    w[i] += lr * er[j] * in[i] - l2 * w[i];
+                    wt[i] += lr * er[j] * in[i] - l2 * wt[i];
                 }
-                w += col;
+                wt += col;
             }
-#endif
 #endif
         default:
             ST_WARNING("Unknown updating type[%d].", wt_updater->type);
