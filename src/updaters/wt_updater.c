@@ -202,7 +202,26 @@ static int wt_updater_flush(wt_updater_t *wt_updater,
             break;
 
         case WT_UT_ONE_SHOT:
-            // assert(col > 0);
+            if (ori_wt == NULL) {
+                for (a = 0; a < dirty->n_in_idx; a++) {
+                    i = dirty->in_idxs[a] * col;
+                    for (; i < (dirty->in_idxs[a] + 1) * col; i++) {
+                        dst_wt[i] += src_wt[i];
+                        src_wt[i] = 0;
+                    }
+                }
+            } else {
+                for (a = 0; a < dirty->n_in_idx; a++) {
+                    i = dirty->in_idxs[a] * col;
+                    for (; i < (dirty->in_idxs[a] + 1) * col; i++) {
+                        dst_wt[i] += src_wt[i] - ori_wt[i];
+                    }
+                    i = dirty->in_idxs[a] * col;
+                    memcpy(src_wt + i, dst_wt + i, sizeof(int) * col);
+                    memcpy(ori_wt + i, src_wt + i, sizeof(int) * col);
+                }
+            }
+            dirty->n_in_idx = 0;
             break;
         default:
             ST_WARNING("Unknown updating type[%d].", wt_updater->type);
@@ -222,15 +241,16 @@ static int wt_updater_acc_wt(wt_updater_t *wt_updater, count_t n_step,
     real_t lr;
     real_t l2;
 
-    int row;//, col;
+    int row, col;
 
     int i, j;
+    real_t scale;
 
     lr = wt_updater->param.learn_rate;
     lr *= er_scale * in_scale;
     l2 = 0.0;
     row = wt_updater->row;
-//    col = wt_updater->col;
+    col = wt_updater->col;
 
     if (wt_updater->param.l2_gap > 0
             && n_step % wt_updater->param.l2_gap == 0) {
@@ -242,11 +262,7 @@ static int wt_updater_acc_wt(wt_updater_t *wt_updater, count_t n_step,
             break;
         case WT_UT_PART:
             // Hash-based weight
-            if (er_seg == NULL) {
-                ST_WARNING("no er_seg for WT_UT_PART");
-                return -1;
-            }
-
+            // needed: row_s, er_seg, er
             if (row_s + er_seg->n > row) {
                 for (j = er_seg->s, i = row_s; i < row; j++, i++) {
                     wt[i] += lr * er[j] - l2 * wt[i];
@@ -262,15 +278,15 @@ static int wt_updater_acc_wt(wt_updater_t *wt_updater, count_t n_step,
             }
             break;
 
-#if 0
         case WT_UT_ONE_SHOT:
-            // ignore er_s & er_e
-            i = in_idx;
-            for (j = 0; j < row; j++) {
-                wt[i] += lr * er[j] - l2 * wt[i];
-                i += col;
+            // needed: in_idx, er
+            i = in_idx->i * col;
+            scale = lr * in_idx->w;
+            for (j = 0; j < col; j++, i++) {
+                wt[i] += scale * er[j] - l2 * wt[i];
             }
             break;
+#if 0
         case WT_UT_ONE_SEG:
             /* FALL THROUGH */
         case WT_UT_ONE_FULL:
@@ -359,6 +375,20 @@ static int wt_updater_dirty(wt_updater_t *wt_updater, wt_dirty_buf_t *dirty,
             }
             break;
         case WT_UT_ONE_SHOT:
+            if (dirty->n_in_idx >= dirty->cap_in_idx) {
+                dirty->cap_in_idx += 100;
+                sz = dirty->cap_in_idx * sizeof(int);
+                dirty->in_idxs = (int *)realloc(dirty->in_idxs, sz);
+                if (dirty->in_idxs == NULL) {
+                    ST_WARNING("Failed to realloc in_idxs");
+                    return -1;
+                }
+            }
+            if (st_int_insert(dirty->in_idxs, dirty->cap_in_idx,
+                        &dirty->n_in_idx, in_idx) < 0) {
+                ST_WARNING("Failed to st_int_insert.");
+                return -1;
+            }
             break;
         default:
             ST_WARNING("Unknown updating type[%d].", wt_updater->type);
@@ -400,6 +430,22 @@ static int wt_updater_dirty_cpy(wt_updater_t *wt_updater,
             }
             break;
         case WT_UT_ONE_SHOT:
+            if (dst->n_in_idx + src->n_in_idx > dst->cap_in_idx) {
+                dst->cap_in_idx += src->n_in_idx;
+                sz = dst->cap_in_idx * sizeof(int);
+                dst->in_idxs = (int *)realloc(dst->in_idxs, sz);
+                if (dst->in_idxs == NULL) {
+                    ST_WARNING("Failed to realloc in_idxs");
+                    return -1;
+                }
+            }
+            for (i = 0; i < src->n_in_idx; i++) {
+                if (st_int_insert(dst->in_idxs, dst->cap_in_idx,
+                            &dst->n_in_idx, src->in_idxs[i]) < 0) {
+                    ST_WARNING("Failed to st_int_insert.");
+                    return -1;
+                }
+            }
             break;
         default:
             ST_WARNING("Unknown updating type[%d].", wt_updater->type);

@@ -63,6 +63,18 @@ int emb_glue_parse_topo(glue_t *glue, const char *line);
 bool emb_glue_check(glue_t *glue, layer_t **layers, int n_layer,
         input_t *input, output_t *output);
 
+/**
+ * Initialise data of emb glue.
+ * @ingroup g_glue_emb
+ * @param[in] glue glue.
+ * @param[in] input input layer of network.
+ * @param[in] layers layers of network.
+ * @param[in] output output layer of network.
+ * @return non-zero if any error
+ */
+int emb_glue_init_data(glue_t *glue, input_t *input,
+        layer_t **layers, output_t *output);
+
 #ifdef __cplusplus
 }
 #endif

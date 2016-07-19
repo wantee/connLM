@@ -25,58 +25,29 @@
 #include <string.h>
 
 #include <stutils/st_macro.h>
+#include <stutils/st_utils.h>
 #include <stutils/st_log.h>
 
+#include "output.h"
 #include "../../glues/emb_glue.h"
+#include "../component_updater.h"
+
 #include "emb_glue_updater.h"
-
-typedef struct _emb_glue_updater_data_t_ {
-} emb_glue_updater_data_t;
-
-#define safe_emb_glue_updater_data_destroy(ptr) do {\
-    if((ptr) != NULL) {\
-        emb_glue_updater_data_destroy((emb_glue_updater_data_t *)ptr);\
-        safe_free(ptr);\
-        (ptr) = NULL;\
-    }\
-    } while(0)
-
-void emb_glue_updater_data_destroy(emb_glue_updater_data_t *data)
-{
-    if (data == NULL) {
-        return;
-    }
-}
-
-emb_glue_updater_data_t* emb_glue_updater_data_init()
-{
-    emb_glue_updater_data_t *data = NULL;
-
-    data = (emb_glue_updater_data_t *)malloc(sizeof(emb_glue_updater_data_t));
-    if (data == NULL) {
-        ST_WARNING("Failed to malloc emb_glue_updater_data.");
-        goto ERR;
-    }
-    memset(data, 0, sizeof(emb_glue_updater_data_t));
-
-    return data;
-ERR:
-    safe_emb_glue_updater_data_destroy(data);
-    return NULL;
-}
 
 void emb_glue_updater_destroy(glue_updater_t *glue_updater)
 {
     if (glue_updater == NULL) {
         return;
     }
-
-    safe_emb_glue_updater_data_destroy(glue_updater->extra);
 }
 
 int emb_glue_updater_init(glue_updater_t *glue_updater)
 {
+    glue_t *glue;
+
     ST_CHECK_PARAM(glue_updater == NULL, -1);
+
+    glue = glue_updater->glue;
 
     if (strcasecmp(glue_updater->glue->type, EMB_GLUE_NAME) != 0) {
         ST_WARNING("Not a emb glue_updater. [%s]",
@@ -84,27 +55,90 @@ int emb_glue_updater_init(glue_updater_t *glue_updater)
         return -1;
     }
 
-    glue_updater->extra = (void *)emb_glue_updater_data_init();
-    if (glue_updater->extra == NULL) {
-        ST_WARNING("Failed to emb_glue_updater_data_init.");
+    glue_updater->wt_updater = wt_updater_create(&glue->param, glue->wt->mat,
+            glue->wt->row, glue->wt->col, WT_UT_ONE_SHOT);
+    if (glue_updater->wt_updater == NULL) {
+        ST_WARNING("Failed to wt_updater_create.");
         goto ERR;
     }
 
     return 0;
 
 ERR:
-    safe_emb_glue_updater_data_destroy(glue_updater->extra);
+    wt_updater_destroy(glue_updater->wt_updater);
     return -1;
 }
 
 int emb_glue_updater_forward(glue_updater_t *glue_updater,
-        comp_updater_t *comp_updater)
+        comp_updater_t *comp_updater, int *words, int n_word, int tgt_pos)
 {
-//    emb_glue_data_t *data = NULL;
+    glue_t *glue;
+    input_t *input;
+    layer_updater_t *out_layer_updater;
+    real_t *wt;
 
-    ST_CHECK_PARAM(glue_updater == NULL || comp_updater == NULL, -1);
+    int a, b, i, j;
+    real_t scale;
 
-//    data = (emb_glue_data_t *)glue_updater->glue->extra;
+    ST_CHECK_PARAM(glue_updater == NULL || comp_updater == NULL
+            || words == NULL, -1);
+
+    glue = glue_updater->glue;
+    input = comp_updater->comp->input;
+    out_layer_updater = comp_updater->layer_updaters[glue->out_layers[0]];
+    wt = glue_updater->wt_updater->wt;
+
+    for (a = 0; a < input->n_ctx; a++) {
+        i = tgt_pos + input->context[a].i;
+        if (i < 0 || i >= n_word) {
+            continue;
+        }
+        scale = input->context[a].w * glue->in_scales[0] * glue->out_scales[0];
+        j = words[i] * glue->wt->col;
+        for (b = 0; b < glue->wt->col; b++, j++) {
+            out_layer_updater->ac[b] +=  scale * wt[j];
+        }
+    }
+
+    return 0;
+}
+
+int emb_glue_updater_backprop(glue_updater_t *glue_updater, count_t n_step,
+        comp_updater_t *comp_updater, int *words, int n_word, int tgt_pos)
+{
+    glue_t *glue;
+    input_t *input;
+    layer_updater_t *out_layer_updater;
+
+    st_wt_int_t in_idx;
+    int a, i;
+
+    ST_CHECK_PARAM(glue_updater == NULL || comp_updater == NULL
+            || words == NULL, -1);
+
+    glue = glue_updater->glue;
+    input = comp_updater->comp->input;
+    out_layer_updater = comp_updater->layer_updaters[glue->out_layers[0]];
+
+    for (a = 0; a < input->n_ctx; a++) {
+        i = tgt_pos + input->context[a].i;
+        if (i < 0 || i >= n_word) {
+            continue;
+        }
+        in_idx.w = input->context[a].w;
+        in_idx.i = words[i];
+        if (wt_update(glue_updater->wt_updater, n_step, 0,
+                    out_layer_updater->er, glue->out_scales[0], NULL,
+                    NULL, glue->in_scales[0], &in_idx) < 0) {
+            ST_WARNING("Failed to wt_update.");
+            return -1;
+        }
+    }
+
+    if (wt_flush(glue_updater->wt_updater, n_step) < 0) {
+        ST_WARNING("Failed to wt_flush.");
+        return -1;
+    }
 
     return 0;
 }

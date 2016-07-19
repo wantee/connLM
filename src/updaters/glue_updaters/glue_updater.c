@@ -50,8 +50,8 @@ static glue_updater_impl_t GLUE_UPDATER_IMPL[] = {
         NULL, NULL, NULL,
         NULL, NULL},
     {EMB_GLUE_NAME, emb_glue_updater_init, emb_glue_updater_destroy,
-        NULL, NULL, NULL,
-        NULL, NULL},
+        NULL, emb_glue_updater_forward, emb_glue_updater_backprop,
+        emb_glue_updater_forward, NULL},
     {OUT_GLUE_NAME, out_glue_updater_init, out_glue_updater_destroy,
         NULL, NULL, NULL,
         NULL, NULL},
@@ -225,14 +225,10 @@ int glue_updater_backprop(glue_updater_t *glue_updater, count_t n_step,
 
 int glue_updater_finish(glue_updater_t *glue_updater)
 {
-    glue_t *glue;
-
     ST_CHECK_PARAM(glue_updater == NULL, -1);
 
-    glue = glue_updater->glue;
-
 #if _CONNLM_TRACE_PROCEDURE_
-    ST_TRACE("Finish: glue[%s]", glue->name);
+    ST_TRACE("Finish: glue[%s]", glue_updater->glue->name);
 #endif
 
     if (wt_flush(glue_updater->wt_updater, 0) < 0) {
