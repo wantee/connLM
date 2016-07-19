@@ -1,0 +1,10 @@
+<component>
+property name=cbow
+
+input context=-2,-1,1,2 combine=sum
+
+layer name=hidden size=15 type=linear
+
+glue name=emb type=emb in=input out=hidden
+glue name=out type=out in=hidden out=output
+</component>
