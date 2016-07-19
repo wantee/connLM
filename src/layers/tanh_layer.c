@@ -86,12 +86,4 @@ int tanh_parse_topo(layer_t *layer, const char *line)
     return 0;
 }
 
-char* tanh_draw_label(layer_t *layer, char *label, size_t label_len)
-{
-    ST_CHECK_PARAM(layer == NULL || label == NULL || label_len <= 0, NULL);
-
-    label[0] = '\0';
-
-    return label;
-}
 /* vim: set expandtab ts=4 sw=4 sts=4 tw=100: */

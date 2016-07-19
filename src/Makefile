@@ -16,6 +16,7 @@ INCS = utils.h \
        input.h \
        weight.h \
        layers/layer.h \
+       layers/linear_layer.h \
        layers/sigmoid_layer.h \
        layers/tanh_layer.h \
        glues/glue.h \
@@ -49,6 +50,7 @@ SRCS = utils.c \
        input.c \
        weight.c \
        layers/layer.c \
+       layers/linear_layer.c \
        layers/sigmoid_layer.c \
        layers/tanh_layer.c \
        glues/glue.c \

@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef  _CONNLM_SIGMOID_LAYER_H_
-#define  _CONNLM_SIGMOID_LAYER_H_
+#ifndef  _CONNLM_LINEAR_LAYER_H_
+#define  _CONNLM_LINEAR_LAYER_H_
 
 #ifdef __cplusplus
 extern "C" {
@@ -32,101 +32,101 @@ extern "C" {
 #include <connlm/config.h>
 #include "layer.h"
 
-/** @defgroup g_layer_sigmoid sigmoid layer.
+/** @defgroup g_layer_linear linear layer.
  * @ingroup g_layer
- * Data structures and functions for sigmoid layer.
+ * Data structures and functions for linear layer.
  */
 
-#define SIGMOID_NAME "sigmoid"
+#define LINEAR_NAME "linear"
 
-typedef struct _sigmoid_data_t_ {
-    real_t steepness;
-} sigmoid_data_t;
+typedef struct _linear_data_t_ {
+    real_t scale;
+} linear_data_t;
 
 /**
- * Destroy a sigmoid layer.
- * @ingroup g_layer_sigmoid
- * @param[in] layer sigmoid layer to be destroyed.
+ * Destroy a linear layer.
+ * @ingroup g_layer_linear
+ * @param[in] layer linear layer to be destroyed.
  */
-void sigmoid_destroy(layer_t* layer);
+void linear_destroy(layer_t* layer);
 
 /**
- * Initialize a sigmoid layer.
- * @ingroup g_layer_sigmoid
- * @param[in] layer sigmoid layer to be initialized.
+ * Initialize a linear layer.
+ * @ingroup g_layer_linear
+ * @param[in] layer linear layer to be initialized.
  * @return non-zero if any error
  */
-int sigmoid_init(layer_t *layer);
+int linear_init(layer_t *layer);
 
 /**
- * Duplicate a sigmoid layer.
- * @ingroup g_layer_sigmoid
+ * Duplicate a linear layer.
+ * @ingroup g_layer_linear
  * @param[out] dst dst layer to be duplicated.
  * @param[in] src src layer to be duplicated.
  * @return non-zero if any error
  */
-int sigmoid_dup(layer_t *dst, layer_t *src);
+int linear_dup(layer_t *dst, layer_t *src);
 
 /**
  * Parse a topo config line.
- * @ingroup g_layer_sigmoid
+ * @ingroup g_layer_linear
  * @param[in] layer specific layer.
  * @param[in] line topo config line.
  * @return non-zero if any error
  */
-int sigmoid_parse_topo(layer_t *layer, const char *line);
+int linear_parse_topo(layer_t *layer, const char *line);
 
 /**
- * Load sigmoid layer header and initialise a new sigmoid.
- * @ingroup g_layer_sigmoid
+ * Load linear layer header and initialise a new linear.
+ * @ingroup g_layer_linear
  * @param[out] extra extra data to be initialised.
  * @param[in] version file version of loading file.
  * @param[in] fp file stream loaded from.
  * @param[out] binary whether the file stream is in binary format.
  * @param[in] fo file stream used to print information, if it is not NULL.
- * @see sigmoid_load_body
- * @see sigmoid_save_header, sigmoid_save_body
+ * @see linear_load_body
+ * @see linear_save_header, linear_save_body
  * @return non-zero value if any error.
  */
-int sigmoid_load_header(void **extra, int version,
+int linear_load_header(void **extra, int version,
         FILE *fp, bool *binary, FILE *fo_info);
 
 /**
- * Load sigmoid layer body.
- * @ingroup g_layer_sigmoid
+ * Load linear layer body.
+ * @ingroup g_layer_linear
  * @param[in] extra extra data to be loaded.
  * @param[in] version file version of loading file.
  * @param[in] fp file stream loaded from.
  * @param[in] binary whether to use binary format.
- * @see sigmoid_load_header
- * @see sigmoid_save_header, sigmoid_save_body
+ * @see linear_load_header
+ * @see linear_save_header, linear_save_body
  * @return non-zero value if any error.
  */
-int sigmoid_load_body(void *extra, int version, FILE *fp, bool binary);
+int linear_load_body(void *extra, int version, FILE *fp, bool binary);
 
 /**
- * Save sigmoid layer header.
- * @ingroup g_layer_sigmoid
+ * Save linear layer header.
+ * @ingroup g_layer_linear
  * @param[in] extra extra data to be saved.
  * @param[in] fp file stream saved to.
  * @param[in] binary whether to use binary format.
- * @see sigmoid_save_body
- * @see sigmoid_load_header, sigmoid_load_body
+ * @see linear_save_body
+ * @see linear_load_header, linear_load_body
  * @return non-zero value if any error.
  */
-int sigmoid_save_header(void *extra, FILE *fp, bool binary);
+int linear_save_header(void *extra, FILE *fp, bool binary);
 
 /**
- * Save sigmoid layer body.
- * @ingroup g_layer_sigmoid
+ * Save linear layer body.
+ * @ingroup g_layer_linear
  * @param[in] extra extra data to be saved.
  * @param[in] fp file stream saved to.
  * @param[in] binary whether to use binary format.
- * @see sigmoid_save_header
- * @see sigmoid_load_header, sigmoid_load_body
+ * @see linear_save_header
+ * @see linear_load_header, linear_load_body
  * @return non-zero value if any error.
  */
-int sigmoid_save_body(void *extra, FILE *fp, bool binary);
+int linear_save_body(void *extra, FILE *fp, bool binary);
 
 #ifdef __cplusplus
 }

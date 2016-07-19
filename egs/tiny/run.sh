@@ -80,6 +80,14 @@ if shu-in-range $st $steps; then
 echo
 echo "Step $st: ${stepnames[$st]} ..."
 ../steps/run_standalone.sh --train-thr $tr_thr --eval-thr $eval_thr \
+    cbow $conf_dir $exp_dir $train_file $valid_file $test_file || exit 1;
+fi
+((st++))
+
+if shu-in-range $st $steps; then
+echo
+echo "Step $st: ${stepnames[$st]} ..."
+../steps/run_standalone.sh --train-thr $tr_thr --eval-thr $eval_thr \
     rnn $conf_dir $exp_dir $train_file $valid_file $test_file || exit 1;
 fi
 ((st++))

@@ -72,16 +72,6 @@ int tanh_dup(layer_t *dst, layer_t *src);
  */
 int tanh_parse_topo(layer_t *layer, const char *line);
 
-/**
- * Provide label string for drawing tanh layer.
- * @ingroup g_layer_tanh
- * @param[in] layer layer.
- * @param[out] label buffer to write string.
- * @param[in] labe_len length of label.
- * @return label on success, NULL if any error.
- */
-char* tanh_draw_label(layer_t *layer, char *label, size_t label_len);
-
 #ifdef __cplusplus
 }
 #endif
