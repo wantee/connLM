@@ -56,6 +56,6 @@ while(my $line = <STDIN>) {
   }
 }
 
-for my $name (keys(%wts)) {
+for my $name (sort keys(%wts)) {
   print "$name\n";
 }

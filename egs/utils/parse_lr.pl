@@ -39,7 +39,7 @@ while(my $line = <STDIN>) {
   }
 }
 
-for my $sec (keys(%lrs)) {
+for my $sec (sort keys(%lrs)) {
   if ($wt_names{$sec}) {
     my $lr = $lrs{$sec};
     $sec =~ s!/!^!g;

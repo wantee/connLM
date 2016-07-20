@@ -3,7 +3,7 @@ property name=cbow
 
 input context=-2,-1,1,2 combine=sum
 
-layer name=hidden size=256 type=linear
+layer name=hidden size=128 type=linear
 
 glue name=emb type=emb in=input out=hidden init_param=0.001
 glue name=out type=out in=hidden out=output init_param=10
