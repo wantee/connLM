@@ -34,8 +34,8 @@ while(my $line = <STDIN>) {
     $sec = lc($1);
   }
 
-  if ($line =~ m/LEARN_RATE\s*:\s*([0-9\.]+)/i) {
-    $lrs{$sec} = $1;
+  if ($line =~ m/LEARN_RATE\s*:([^}]+)/i) {
+    $lrs{$sec} = $1 + 0.0;
   }
 }
 

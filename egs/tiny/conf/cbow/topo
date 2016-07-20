@@ -5,6 +5,6 @@ input context=-2,-1,1,2 combine=sum
 
 layer name=hidden size=15 type=linear
 
-glue name=emb type=emb in=input out=hidden
-glue name=out type=out in=hidden out=output
+glue name=emb type=emb in=input out=hidden init_param=0.001
+glue name=out type=out in=hidden out=output init_param=3
 </component>

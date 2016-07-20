@@ -18,7 +18,7 @@ my ($scale) = @ARGV;
 while(my $line = <STDIN>) {
   chomp $line;
 
-  if ($line =~ m/--(.*?)=([0-9\.]+)/) {
+  if ($line =~ m/--(.*?)=(.+)/) {
     print "--$1=".($2 * $scale)."\n";
   }
 }
