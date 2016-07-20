@@ -27,6 +27,10 @@
 #include <stutils/st_macro.h>
 #include <stutils/st_log.h>
 
+#include "../layers/linear_layer.h"
+#include "../layers/sigmoid_layer.h"
+#include "../layers/tanh_layer.h"
+
 #include "layer_updater.h"
 
 void layer_updater_destroy(layer_updater_t *layer_updater)
@@ -39,6 +43,30 @@ void layer_updater_destroy(layer_updater_t *layer_updater)
     safe_free(layer_updater->er);
 
     layer_updater->layer = NULL;
+}
+
+typedef struct _layer_activate_func_t_ {
+    char type[MAX_NAME_LEN];
+    activate_func_t activate;
+} layer_act_t;
+
+static layer_act_t LAYER_ACT[] = {
+    {LINEAR_NAME, linear_activate},
+    {SIGMOID_NAME, sigmoid_activate},
+    {TANH_NAME, tanh_activate},
+};
+
+static layer_act_t* layer_get_act(const char *type)
+{
+    int t;
+
+    for (t = 0; t < sizeof(LAYER_ACT) / sizeof(LAYER_ACT[0]); t++) {
+        if (strcasecmp(type, LAYER_ACT[t].type) == 0) {
+            return LAYER_ACT + t;
+        }
+    }
+
+    return NULL;
 }
 
 layer_updater_t* layer_updater_create(layer_t *layer)
@@ -55,6 +83,7 @@ layer_updater_t* layer_updater_create(layer_t *layer)
     memset(layer_updater, 0, sizeof(layer_updater_t));
 
     layer_updater->layer = layer;
+    layer_updater->activate = layer_get_act(layer->type)->activate;
 
     return layer_updater;
 
@@ -103,12 +132,18 @@ int layer_updater_activate(layer_updater_t *layer_updater)
 {
     ST_CHECK_PARAM(layer_updater == NULL, -1);
 
-#if 0
-    if (strcmp(layer->name, INPUT_LAYER_NAME) == 0
-            || strcmp(layer->name, OUTPUT_LAYER_NAME) == 0) {
-        return 0;
-    }
+#if _CONNLM_TRACE_PROCEDURE_
+    ST_TRACE("Activate: layer[%s]", layer_updater->layer->name);
 #endif
+
+    if (layer_updater->activate != NULL) {
+        if (layer_updater->activate(layer_updater->layer,
+                    layer_updater->ac, layer_updater->layer->size) < 0) {
+            ST_WARNING("Failed to layer_updater->activate.[%s]",
+                    layer_updater->layer->name);
+            return -1;
+        }
+    }
 
     return 0;
 }

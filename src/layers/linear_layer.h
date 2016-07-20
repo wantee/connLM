@@ -128,6 +128,16 @@ int linear_save_header(void *extra, FILE *fp, bool binary);
  */
 int linear_save_body(void *extra, FILE *fp, bool binary);
 
+/**
+ * Activate linear layer.
+ * @ingroup g_layer_linear
+ * @param[in] layer the linear layer.
+ * @param[in] vec the vector.
+ * @param[in] size size of vector.
+ * @return non-zero value if any error.
+ */
+int linear_activate(layer_t *layer, real_t *vec, int size);
+
 #ifdef __cplusplus
 }
 #endif

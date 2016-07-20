@@ -38,6 +38,8 @@ extern "C" {
  * Data structures and functions for layer updater.
  */
 
+typedef struct _layer_updater_t_ layer_updater_t;
+typedef int (*activate_func_t)(layer_t *layer, real_t *vec, int size); /**< activate function. */
 /**
  * Layer updater.
  * @ingroup g_updater_layer
@@ -48,6 +50,7 @@ typedef struct _layer_updater_t_ {
     real_t *ac; /**< activation of layer. */
     real_t *er; /**< error of layer. */
 
+    activate_func_t activate; /**< activate function. */
     bool activated; /**< activation indicator. */
 } layer_updater_t;
 
@@ -73,7 +76,7 @@ void layer_updater_destroy(layer_updater_t *layer_updater);
 /**
  * Create a layer_updater.
  * @ingroup g_updater_layer
- * @param[in] connlm the connlm model.
+ * @param[in] layer the layer.
  * @return layer_updater on success, otherwise NULL.
  */
 layer_updater_t* layer_updater_create(layer_t *layer);

@@ -72,6 +72,16 @@ int tanh_dup(layer_t *dst, layer_t *src);
  */
 int tanh_parse_topo(layer_t *layer, const char *line);
 
+/**
+ * Activate tanh layer.
+ * @ingroup g_layer_tanh
+ * @param[in] layer the tanh layer.
+ * @param[in] vec the vector.
+ * @param[in] size size of vector.
+ * @return non-zero value if any error.
+ */
+int tanh_activate(layer_t *layer, real_t *vec, int size);
+
 #ifdef __cplusplus
 }
 #endif

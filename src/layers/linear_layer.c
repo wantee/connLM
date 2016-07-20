@@ -172,6 +172,10 @@ int linear_parse_topo(layer_t *layer, const char *line)
 
         if (strcasecmp("scale", keyvalue) == 0) {
             data->scale = atof(keyvalue + MAX_LINE_LEN);
+            if (data->scale == 0) {
+                ST_WARNING("Scale should not be zero.");
+                goto ERR;
+            }
         } else {
             ST_WARNING("Unknown key/value[%s]", token);
         }
@@ -351,6 +355,24 @@ int linear_save_body(void *extra, FILE *fp, bool binary)
         if (fprintf(fp, "<LINEAR-LAYER-DATA>\n") < 0) {
             ST_WARNING("Failed to fprintf header.");
             return -1;
+        }
+    }
+
+    return 0;
+}
+
+int linear_activate(layer_t *layer, real_t *vec, int size)
+{
+    linear_data_t *param;
+    int i;
+
+    ST_CHECK_PARAM(layer == NULL || vec == NULL, -1);
+
+    param = (linear_data_t *)layer->extra;
+
+    if (param->scale != 1.0) {
+        for (i = 0; i < size; i++) {
+            vec[i] *= param->scale;
         }
     }
 

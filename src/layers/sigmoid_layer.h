@@ -128,6 +128,16 @@ int sigmoid_save_header(void *extra, FILE *fp, bool binary);
  */
 int sigmoid_save_body(void *extra, FILE *fp, bool binary);
 
+/**
+ * Activate sigmoid layer.
+ * @ingroup g_layer_sigmoid
+ * @param[in] layer the sigmoid layer.
+ * @param[in] vec the vector.
+ * @param[in] size size of vector.
+ * @return non-zero value if any error.
+ */
+int sigmoid_activate(layer_t *layer, real_t *vec, int size);
+
 #ifdef __cplusplus
 }
 #endif

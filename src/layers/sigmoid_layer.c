@@ -28,6 +28,7 @@
 #include <stutils/st_io.h>
 #include <stutils/st_string.h>
 
+#include "utils.h"
 #include "sigmoid_layer.h"
 
 static const int SIGMOID_LAYER_MAGIC_NUM = 626140498 + 62;
@@ -172,6 +173,10 @@ int sigmoid_parse_topo(layer_t *layer, const char *line)
 
         if (strcasecmp("steepness", keyvalue) == 0) {
             data->steepness = atof(keyvalue + MAX_LINE_LEN);
+            if (data->steepness <= 0) {
+                ST_WARNING("Stepness should not be non-positive.");
+                goto ERR;
+            }
         } else {
             ST_WARNING("Unknown key/value[%s]", token);
         }
@@ -353,6 +358,26 @@ int sigmoid_save_body(void *extra, FILE *fp, bool binary)
             return -1;
         }
     }
+
+    return 0;
+}
+
+int sigmoid_activate(layer_t *layer, real_t *vec, int size)
+{
+    sigmoid_data_t *param;
+    int i;
+
+    ST_CHECK_PARAM(layer == NULL || vec == NULL, -1);
+
+    param = (sigmoid_data_t *)layer->extra;
+
+    if (param->steepness != 1.0) {
+        for (i = 0; i < size; i++) {
+            vec[i] *= param->steepness;
+        }
+    }
+
+    sigmoid(vec, size);
 
     return 0;
 }

@@ -86,4 +86,22 @@ int tanh_parse_topo(layer_t *layer, const char *line)
     return 0;
 }
 
+int tanh_activate(layer_t *layer, real_t *vec, int size)
+{
+#if 0
+    tanh_data_t *param;
+
+    ST_CHECK_PARAM(layer == NULL || vec == NULL, -1);
+
+    param = (tanh_data_t *)layer->extra;
+
+    if (param->scale != 1.0) {
+        for (int i = 0; i < size; i++) {
+            vec[i] *= param->scale;
+        }
+    }
+
+#endif
+    return 0;
+}
 /* vim: set expandtab ts=4 sw=4 sts=4 tw=100: */
