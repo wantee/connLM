@@ -138,6 +138,17 @@ int linear_save_body(void *extra, FILE *fp, bool binary);
  */
 int linear_activate(layer_t *layer, real_t *vec, int size);
 
+/**
+ * Deriv linear layer.
+ * @ingroup g_layer_linear
+ * @param[in] layer the linear layer.
+ * @param[in] er the error.
+ * @param[in] ac the activation.
+ * @param[in] size size of vectors.
+ * @return non-zero value if any error.
+ */
+int linear_deriv(layer_t *layer, real_t *er, real_t *ac, int size);
+
 #ifdef __cplusplus
 }
 #endif

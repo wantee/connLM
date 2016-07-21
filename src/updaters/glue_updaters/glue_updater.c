@@ -162,14 +162,10 @@ int glue_updater_forward(glue_updater_t *glue_updater,
         if (lid < 2) {
             continue;
         }
-        if (!layer_updaters[lid]->activated) {
-            if (layer_updater_activate(layer_updaters[lid]) < 0) {
-                ST_WARNING("Failed to layer_activate.[%s]",
-                        comp_updater->comp->layers[lid]->name);
-                return -1;
-            }
-
-            layer_updaters[lid]->activated = true;
+        if (layer_updater_activate(layer_updaters[lid]) < 0) {
+            ST_WARNING("Failed to layer_activate.[%s]",
+                    comp_updater->comp->layers[lid]->name);
+            return -1;
         }
     }
 
@@ -189,6 +185,9 @@ int glue_updater_backprop(glue_updater_t *glue_updater, count_t n_step,
         comp_updater_t *comp_updater, int *words, int n_word, int tgt_pos)
 {
     glue_t *glue;
+    layer_updater_t **layer_updaters;
+    int l;
+    int lid;
 
     ST_CHECK_PARAM(glue_updater == NULL, -1);
 
@@ -197,6 +196,20 @@ int glue_updater_backprop(glue_updater_t *glue_updater, count_t n_step,
 #if _CONNLM_TRACE_PROCEDURE_
     ST_TRACE("Backprop: glue[%s]", glue->name);
 #endif
+
+    layer_updaters = comp_updater->layer_updaters;
+
+    for (l = 0; l < glue->num_out_layer; l++) {
+        lid = glue->out_layers[l];
+        if (lid < 2) {
+            continue;
+        }
+        if (layer_updater_deriv(layer_updaters[lid]) < 0) {
+            ST_WARNING("Failed to layer_deriv.[%s]",
+                    comp_updater->comp->layers[lid]->name);
+            return -1;
+        }
+    }
 
     if (glue_updater->impl != NULL && glue_updater->impl->backprop != NULL) {
         if (glue_updater->impl->backprop(glue_updater, n_step, comp_updater,

@@ -82,6 +82,17 @@ int tanh_parse_topo(layer_t *layer, const char *line);
  */
 int tanh_activate(layer_t *layer, real_t *vec, int size);
 
+/**
+ * Deriv tanh layer.
+ * @ingroup g_layer_tanh
+ * @param[in] layer the tanh layer.
+ * @param[in] er the error.
+ * @param[in] ac the activation.
+ * @param[in] size size of vectors.
+ * @return non-zero value if any error.
+ */
+int tanh_deriv(layer_t *layer, real_t *er, real_t *ac, int size);
+
 #ifdef __cplusplus
 }
 #endif

@@ -378,3 +378,21 @@ int linear_activate(layer_t *layer, real_t *vec, int size)
 
     return 0;
 }
+
+int linear_deriv(layer_t *layer, real_t *er, real_t *ac, int size)
+{
+    linear_data_t *param;
+    int i;
+
+    ST_CHECK_PARAM(layer == NULL || er == NULL || ac == NULL, -1);
+
+    param = (linear_data_t *)layer->extra;
+
+    if (param->scale != 1.0) {
+        for (i = 0; i < size; i++) {
+            er[i] *= param->scale;
+        }
+    }
+
+    return 0;
+}

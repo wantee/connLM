@@ -138,6 +138,17 @@ int sigmoid_save_body(void *extra, FILE *fp, bool binary);
  */
 int sigmoid_activate(layer_t *layer, real_t *vec, int size);
 
+/**
+ * Deriv sigmoid layer.
+ * @ingroup g_layer_sigmoid
+ * @param[in] layer the sigmoid layer.
+ * @param[in] er the error.
+ * @param[in] ac the activation.
+ * @param[in] size size of vectors.
+ * @return non-zero value if any error.
+ */
+int sigmoid_deriv(layer_t *layer, real_t *er, real_t *ac, int size);
+
 #ifdef __cplusplus
 }
 #endif

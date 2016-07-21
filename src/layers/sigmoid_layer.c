@@ -381,3 +381,25 @@ int sigmoid_activate(layer_t *layer, real_t *vec, int size)
 
     return 0;
 }
+
+int sigmoid_deriv(layer_t *layer, real_t *er, real_t *ac, int size)
+{
+    sigmoid_data_t *param;
+    int i;
+
+    ST_CHECK_PARAM(layer == NULL || er == NULL || ac == NULL, -1);
+
+    param = (sigmoid_data_t *)layer->extra;
+
+    if (param->steepness != 1.0) {
+        for (i = 0; i < size; i++) {
+            er[i] *= ac[i] * (1 - ac[i]);
+        }
+    } else {
+        for (i = 0; i < size; i++) {
+            er[i] *= param->steepness * ac[i] * (1 - ac[i]);
+        }
+    }
+
+    return 0;
+}

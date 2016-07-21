@@ -104,4 +104,10 @@ int tanh_activate(layer_t *layer, real_t *vec, int size)
 #endif
     return 0;
 }
-/* vim: set expandtab ts=4 sw=4 sts=4 tw=100: */
+
+int tanh_deriv(layer_t *layer, real_t *er, real_t *ac, int size)
+{
+    ST_CHECK_PARAM(layer == NULL || er == NULL || ac == NULL, -1);
+
+    return 0;
+}

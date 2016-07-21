@@ -40,6 +40,7 @@ extern "C" {
 
 typedef struct _layer_updater_t_ layer_updater_t;
 typedef int (*activate_func_t)(layer_t *layer, real_t *vec, int size); /**< activate function. */
+typedef int (*deriv_func_t)(layer_t *layer, real_t *er, real_t *ac, int size); /**< deriv function. */
 /**
  * Layer updater.
  * @ingroup g_updater_layer
@@ -52,6 +53,8 @@ typedef struct _layer_updater_t_ {
 
     activate_func_t activate; /**< activate function. */
     bool activated; /**< activation indicator. */
+    deriv_func_t deriv; /**< deriv function. */
+    bool derived; /**< derived indicator. */
 } layer_updater_t;
 
 /**
@@ -94,10 +97,18 @@ int layer_updater_setup(layer_updater_t *layer_updater, bool backprop);
  * Activate a layer_updater.
  * @ingroup g_updater_layer
  * @param[in] layer_updater the layer_updater.
- * @param[in] offset offset of layer.
  * @return non-zero value if any error.
  */
 int layer_updater_activate(layer_updater_t *layer_updater);
+
+/**
+ * Deriv a layer_updater.
+ * @ingroup g_updater_layer
+ * @param[in] layer_updater the layer_updater.
+ * @param[in] offset offset of layer.
+ * @return non-zero value if any error.
+ */
+int layer_updater_deriv(layer_updater_t *layer_updater);
 
 /**
  * Clear a layer_updater.

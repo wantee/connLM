@@ -48,12 +48,13 @@ void layer_updater_destroy(layer_updater_t *layer_updater)
 typedef struct _layer_activate_func_t_ {
     char type[MAX_NAME_LEN];
     activate_func_t activate;
+    deriv_func_t deriv;
 } layer_act_t;
 
 static layer_act_t LAYER_ACT[] = {
-    {LINEAR_NAME, linear_activate},
-    {SIGMOID_NAME, sigmoid_activate},
-    {TANH_NAME, tanh_activate},
+    {LINEAR_NAME, linear_activate, linear_deriv},
+    {SIGMOID_NAME, sigmoid_activate, sigmoid_deriv},
+    {TANH_NAME, tanh_activate, tanh_deriv},
 };
 
 static layer_act_t* layer_get_act(const char *type)
@@ -132,6 +133,10 @@ int layer_updater_activate(layer_updater_t *layer_updater)
 {
     ST_CHECK_PARAM(layer_updater == NULL, -1);
 
+    if (layer_updater->activated) {
+        return 0;
+    }
+
 #if _CONNLM_TRACE_PROCEDURE_
     ST_TRACE("Activate: layer[%s]", layer_updater->layer->name);
 #endif
@@ -144,6 +149,34 @@ int layer_updater_activate(layer_updater_t *layer_updater)
             return -1;
         }
     }
+
+    layer_updater->activated = true;
+
+    return 0;
+}
+
+int layer_updater_deriv(layer_updater_t *layer_updater)
+{
+    ST_CHECK_PARAM(layer_updater == NULL, -1);
+
+    if (layer_updater->derived) {
+        return 0;
+    }
+
+#if _CONNLM_TRACE_PROCEDURE_
+    ST_TRACE("Deriv: layer[%s]", layer_updater->layer->name);
+#endif
+
+    if (layer_updater->deriv != NULL) {
+        if (layer_updater->deriv(layer_updater->layer, layer_updater->er,
+                    layer_updater->ac, layer_updater->layer->size) < 0) {
+            ST_WARNING("Failed to layer_updater->deriv.[%s]",
+                    layer_updater->layer->name);
+            return -1;
+        }
+    }
+
+    layer_updater->derived = true;
 
     return 0;
 }
@@ -160,6 +193,7 @@ int layer_updater_clear(layer_updater_t *layer_updater)
 
     if (layer_updater->er != NULL) {
         memset(layer_updater->er, 0, sz);
+        layer_updater->derived = false;
     }
 
     return 0;
