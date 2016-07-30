@@ -361,7 +361,7 @@ static int wt_updater_dirty(wt_updater_t *wt_updater, wt_dirty_buf_t *dirty,
             }
             row_seg.s = row_s;
             row_seg.n = er_seg->n;
-            if (st_int_seg_union(dirty->segs, &dirty->n_seg,
+            if (st_int_seg_union(dirty->segs, dirty->cap_seg, &dirty->n_seg,
                         &row_seg, 1, wt_updater->row) < 0) {
                 ST_WARNING("Failed to st_int_seg_union.");
                 return -1;
@@ -413,7 +413,8 @@ static int wt_updater_dirty_cpy(wt_updater_t *wt_updater,
             for (i = 0; i < src->n_seg; i++) {
                 src->segs[i].n = src->segs[i].e - src->segs[i].s;
             }
-            if (st_int_seg_union(dst->segs, &dst->n_seg, src->segs, src->n_seg,
+            if (st_int_seg_union(dst->segs, dst->cap_seg,
+                        &dst->n_seg, src->segs, src->n_seg,
                         wt_updater->row) < 0) {
                 ST_WARNING("Failed to st_int_seg_union.");
                 return -1;
