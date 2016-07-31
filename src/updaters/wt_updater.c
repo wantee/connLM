@@ -26,6 +26,7 @@
 
 #include <stutils/st_macro.h>
 #include <stutils/st_log.h>
+#include <stutils/st_utils.h>
 
 #include "blas.h"
 #include "utils.h"
@@ -177,6 +178,8 @@ static int wt_updater_flush(wt_updater_t *wt_updater,
             }
             break;
 
+        case WT_UT_SEG:
+            /* FALL THROUGH */
         case WT_UT_PART:
             if (ori_wt == NULL) {
                 for (a = 0; a < dirty->n_seg; a++) {
@@ -340,6 +343,23 @@ static int wt_updater_acc_wt(wt_updater_t *wt_updater, count_t n_step,
     return 0;
 }
 
+static st_cmp_ret_t cmp_seg(const void *elem1, const void *elem2, void *args)
+{
+    st_int_seg_t *a;
+    st_int_seg_t *b;
+
+    a = (st_int_seg_t *)elem1;
+    b = (st_int_seg_t *)elem2;
+
+    if (a->e <= b->s) {
+        return ST_CMP_LESS;
+    } else if (a->s >= b->e) {
+        return ST_CMP_GREATER;
+    }
+
+    return ST_CMP_ERR;
+}
+
 static int wt_updater_dirty(wt_updater_t *wt_updater, wt_dirty_buf_t *dirty,
         int row_s, st_int_seg_t *er_seg, int in_idx)
 {
@@ -380,6 +400,23 @@ static int wt_updater_dirty(wt_updater_t *wt_updater, wt_dirty_buf_t *dirty,
             if (st_int_insert(dirty->in_idxs, dirty->cap_in_idx,
                         &dirty->n_in_idx, in_idx) < 0) {
                 ST_WARNING("Failed to st_int_insert.");
+                return -1;
+            }
+            break;
+        case WT_UT_SEG:
+            if (dirty->n_seg >= dirty->cap_seg) {
+                dirty->cap_seg += 100;
+                sz = dirty->cap_seg * sizeof(st_int_seg_t);
+                dirty->segs = (st_int_seg_t *)realloc(dirty->segs, sz);
+                if (dirty->segs == NULL) {
+                    ST_WARNING("Failed to realloc segs");
+                    return -1;
+                }
+            }
+            if (st_insert((void *)dirty->segs, dirty->cap_seg,
+                        sizeof(st_int_seg_t), &dirty->n_seg,
+                        er_seg, cmp_seg, NULL) < 0) {
+                ST_WARNING("Failed to st_insert.");
                 return -1;
             }
             break;
@@ -437,6 +474,27 @@ static int wt_updater_dirty_cpy(wt_updater_t *wt_updater,
                 if (st_int_insert(dst->in_idxs, dst->cap_in_idx,
                             &dst->n_in_idx, src->in_idxs[i]) < 0) {
                     ST_WARNING("Failed to st_int_insert.");
+                    return -1;
+                }
+            }
+            break;
+        case WT_UT_SEG:
+            if (dst->n_seg + src->n_seg > dst->cap_seg) {
+                dst->cap_seg += src->n_seg;
+                sz = dst->cap_seg * sizeof(st_int_seg_t);
+                dst->segs = (st_int_seg_t *)realloc(dst->segs, sz);
+                if (dst->segs == NULL) {
+                    ST_WARNING("Failed to realloc segs");
+                    return -1;
+                }
+            }
+
+            /* TODO: We could use merge sort here. */
+            for (i = 0; i < src->n_seg; i++) {
+                if (st_insert((void *)dst->segs, dst->cap_seg,
+                            sizeof(st_int_seg_t), &dst->n_seg,
+                            src->segs + i, cmp_seg, NULL) < 0) {
+                    ST_WARNING("Failed to st_insert.");
                     return -1;
                 }
             }
