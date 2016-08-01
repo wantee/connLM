@@ -26,6 +26,7 @@
 
 #include <stutils/st_macro.h>
 #include <stutils/st_log.h>
+#include <stutils/st_mem.h>
 
 #include "../layers/linear_layer.h"
 #include "../layers/sigmoid_layer.h"
@@ -39,8 +40,8 @@ void layer_updater_destroy(layer_updater_t *layer_updater)
         return;
     }
 
-    safe_free(layer_updater->ac);
-    safe_free(layer_updater->er);
+    safe_st_aligned_free(layer_updater->ac);
+    safe_st_aligned_free(layer_updater->er);
 
     layer_updater->layer = NULL;
 }
@@ -99,21 +100,21 @@ int layer_updater_setup(layer_updater_t *layer_updater, bool backprop)
 
     ST_CHECK_PARAM(layer_updater == NULL, -1);
 
-    safe_free(layer_updater->ac);
-    safe_free(layer_updater->er);
+    safe_st_aligned_free(layer_updater->ac);
+    safe_st_aligned_free(layer_updater->er);
 
     sz = sizeof(real_t) * layer_updater->layer->size;
-    if (posix_memalign((void **)&layer_updater->ac, ALIGN_SIZE, sz) != 0
-            || layer_updater->ac == NULL) {
-        ST_WARNING("Failed to malloc ac.");
+    layer_updater->ac = st_aligned_malloc(sz, ALIGN_SIZE);
+    if (layer_updater->ac == NULL) {
+        ST_WARNING("Failed to st_aligned_malloc ac.");
         goto ERR;
     }
     memset(layer_updater->ac, 0, sz);
 
     if (backprop) {
-        if (posix_memalign((void **)&layer_updater->er, ALIGN_SIZE, sz) != 0
-                || layer_updater->er == NULL) {
-            ST_WARNING("Failed to malloc er.");
+        layer_updater->er = st_aligned_malloc(sz, ALIGN_SIZE);
+        if (layer_updater->er == NULL) {
+            ST_WARNING("Failed to st_aligned_malloc er.");
             goto ERR;
         }
         memset(layer_updater->er, 0, sz);
@@ -123,8 +124,8 @@ int layer_updater_setup(layer_updater_t *layer_updater, bool backprop)
 
 ERR:
 
-    safe_free(layer_updater->ac);
-    safe_free(layer_updater->er);
+    safe_st_aligned_free(layer_updater->ac);
+    safe_st_aligned_free(layer_updater->er);
 
     return -1;
 }

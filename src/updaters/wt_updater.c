@@ -27,6 +27,7 @@
 #include <stutils/st_macro.h>
 #include <stutils/st_log.h>
 #include <stutils/st_utils.h>
+#include <stutils/st_mem.h>
 
 #include "blas.h"
 #include "utils.h"
@@ -56,13 +57,13 @@ void wt_updater_destroy(wt_updater_t *wt_updater)
     }
 
     if (wt_updater->wt != wt_updater->shared_wt) {
-        safe_free(wt_updater->wt);
+        safe_st_aligned_free(wt_updater->wt);
     } else {
         wt_updater->wt = NULL;
     }
     wt_updater->shared_wt = NULL;
-    safe_free(wt_updater->ori_wt);
-    safe_free(wt_updater->delta_wt);
+    safe_st_aligned_free(wt_updater->ori_wt);
+    safe_st_aligned_free(wt_updater->delta_wt);
     wt_updater->row = -1;
     wt_updater->col = -1;
 
@@ -102,15 +103,15 @@ wt_updater_t* wt_updater_create(param_t *param,
     sz *= sizeof(real_t);
 
     if (wt_updater->param.sync_size > 0) {
-        if (posix_memalign((void **)&wt_updater->wt, ALIGN_SIZE, sz) != 0
-                || wt_updater->wt == NULL) {
-            ST_WARNING("Failed to malloc wt.");
+        wt_updater->wt = st_aligned_malloc(sz, ALIGN_SIZE);
+        if (wt_updater->wt == NULL) {
+            ST_WARNING("Failed to st_aligned_malloc wt.");
             goto ERR;
         }
         memcpy(wt_updater->wt, wt, sz);
 
-        if (posix_memalign((void **)&wt_updater->ori_wt, ALIGN_SIZE, sz) != 0
-                || wt_updater->ori_wt == NULL) {
+        wt_updater->ori_wt = st_aligned_malloc(sz, ALIGN_SIZE);
+        if (wt_updater->ori_wt == NULL) {
             ST_WARNING("Failed to malloc ori_wt.");
             goto ERR;
         }
@@ -120,9 +121,8 @@ wt_updater_t* wt_updater_create(param_t *param,
     }
 
     if (wt_updater->param.mini_batch > 0) {
-        if (posix_memalign((void **)&wt_updater->delta_wt,
-                    ALIGN_SIZE, sz) != 0
-                || wt_updater->delta_wt == NULL) {
+        wt_updater->delta_wt = st_aligned_malloc(sz, ALIGN_SIZE);
+        if (wt_updater->delta_wt == NULL) {
             ST_WARNING("Failed to malloc delta_wt.");
             goto ERR;
         }

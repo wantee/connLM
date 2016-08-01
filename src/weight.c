@@ -28,6 +28,7 @@
 #include <stutils/st_io.h>
 #include <stutils/st_string.h>
 #include <stutils/st_rand.h>
+#include <stutils/st_mem.h>
 
 #include "weight.h"
 
@@ -64,7 +65,7 @@ void wt_destroy(weight_t *wt)
         return;
     }
 
-    safe_free(wt->mat);
+    safe_st_aligned_free(wt->mat);
     wt->row = 0;
     wt->col = 0;
 }
@@ -81,9 +82,9 @@ static int wt_alloc(weight_t *wt, int row, int col)
     }
     sz *= sizeof(real_t);
 
-    if (posix_memalign((void **)&(wt->mat), ALIGN_SIZE, sz) != 0
-            || wt->mat == NULL) {
-        ST_WARNING("Failed to malloc mat.");
+    wt->mat = st_aligned_malloc(sz, ALIGN_SIZE);
+    if (wt->mat == NULL) {
+        ST_WARNING("Failed to st_aligned_malloc mat.");
         goto ERR;
     }
     wt->row = row;
@@ -92,7 +93,7 @@ static int wt_alloc(weight_t *wt, int row, int col)
     return 0;
 
 ERR:
-    safe_free(wt->mat);
+    safe_st_aligned_free(wt->mat);
     wt->row = 0;
     wt->col = 0;
     return -1;
@@ -544,6 +545,6 @@ int wt_init(weight_t *wt, int row, int col)
     return 0;
 
 ERR:
-    safe_free(wt->mat);
+    safe_st_aligned_free(wt->mat);
     return -1;
 }

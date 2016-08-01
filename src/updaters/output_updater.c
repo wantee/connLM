@@ -27,6 +27,7 @@
 #include <stutils/st_macro.h>
 #include <stutils/st_log.h>
 #include <stutils/st_rand.h>
+#include <stutils/st_mem.h>
 
 #include "utils.h"
 #include "output_updater.h"
@@ -37,8 +38,8 @@ void out_updater_destroy(out_updater_t *out_updater)
         return;
     }
 
-    safe_free(out_updater->ac);
-    safe_free(out_updater->er);
+    safe_st_aligned_free(out_updater->ac);
+    safe_st_aligned_free(out_updater->er);
 
     out_updater->output = NULL;
 }
@@ -71,21 +72,21 @@ int out_updater_setup(out_updater_t *out_updater, bool backprop)
 
     ST_CHECK_PARAM(out_updater == NULL, -1);
 
-    safe_free(out_updater->ac);
-    safe_free(out_updater->er);
+    safe_st_aligned_free(out_updater->ac);
+    safe_st_aligned_free(out_updater->er);
 
     sz = sizeof(real_t) * out_updater->output->tree->num_node;
-    if (posix_memalign((void **)&out_updater->ac, ALIGN_SIZE, sz) != 0
-            || out_updater->ac == NULL) {
-        ST_WARNING("Failed to malloc ac.");
+    out_updater->ac = st_aligned_malloc(sz, ALIGN_SIZE);
+    if (out_updater->ac == NULL) {
+        ST_WARNING("Failed to st_aligned_malloc ac.");
         goto ERR;
     }
     memset(out_updater->ac, 0, sz);
 
     if (backprop) {
-        if (posix_memalign((void **)&out_updater->er, ALIGN_SIZE, sz) != 0
-                || out_updater->er == NULL) {
-            ST_WARNING("Failed to malloc er.");
+        out_updater->er = st_aligned_malloc(sz, ALIGN_SIZE);
+        if (out_updater->er == NULL) {
+            ST_WARNING("Failed to st_aligned_malloc er.");
             goto ERR;
         }
         memset(out_updater->er, 0, sz);
@@ -95,8 +96,8 @@ int out_updater_setup(out_updater_t *out_updater, bool backprop)
 
 ERR:
 
-    safe_free(out_updater->ac);
-    safe_free(out_updater->er);
+    safe_st_aligned_free(out_updater->ac);
+    safe_st_aligned_free(out_updater->er);
 
     return -1;
 }
