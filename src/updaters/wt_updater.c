@@ -152,7 +152,7 @@ static int wt_updater_flush(wt_updater_t *wt_updater,
         real_t* dst_wt, real_t *src_wt, wt_dirty_buf_t *dirty, real_t *ori_wt)
 {
     int row, col;
-    int sz, i, a;
+    int sz, i, a, j;
 
     row = wt_updater->row;
     col = wt_updater->col;
@@ -179,7 +179,35 @@ static int wt_updater_flush(wt_updater_t *wt_updater,
             break;
 
         case WT_UT_SEG:
-            /* FALL THROUGH */
+            if (ori_wt == NULL) {
+                for (a = 0; a < dirty->n_seg; a++) {
+                    for (i = dirty->segs[a].s; i < dirty->segs[a].e; i++) {
+                        for (j = 0; j < col; j++) {
+                            dst_wt[i * col + j] += src_wt[i * col + j];
+                            src_wt[i * col + j] = 0;
+                        }
+                    }
+                }
+            } else {
+                for (a = 0; a < dirty->n_seg; a++) {
+                    for (i = dirty->segs[a].s; i < dirty->segs[a].e; i++) {
+                        for (j = 0; j < col; j++) {
+                            dst_wt[i * col + j] += src_wt[i * col + j]
+                                - ori_wt[i * col + j];
+                        }
+                    }
+                    sz = col * (dirty->segs[a].e - dirty->segs[a].s);
+                    memcpy(src_wt + dirty->segs[a].s * col,
+                           dst_wt + dirty->segs[a].s * col,
+                           sizeof(real_t) * sz);
+                    memcpy(ori_wt + dirty->segs[a].s * col,
+                           src_wt + dirty->segs[a].s * col,
+                           sizeof(real_t) * sz);
+                }
+            }
+            dirty->n_seg = 0;
+
+            break;
         case WT_UT_PART:
             if (ori_wt == NULL) {
                 for (a = 0; a < dirty->n_seg; a++) {
@@ -295,36 +323,29 @@ static int wt_updater_acc_wt(wt_updater_t *wt_updater, count_t n_step,
                 start = er_seg->s;
                 end = er_seg->e;
             }
+            wt += start * col;
 #ifdef _USE_BLAS_
             cblas_gemm(CblasRowMajor, CblasTrans, CblasNoTrans,
                     end - start, col, 1,
-                    lr, er, end - start, in, col,
-                    1.0, wt, col);
+                    lr, er + start, end - start, in, col,
+                    1.0 - l2, wt, col);
 #elif defined(_PARAM_UPDATE_UNROLL_)
             for (j = start; j < end; j++) {
                 for (i = 0; i < col / N * N; i+=N) {
-                    wt[j * col + i + 0] += lr * er[j] * in[i + 0]
-                        - l2 * wt[j * col + i + 0];
-                    wt[j * col + i + 1] += lr * er[j] * in[i + 1]
-                        - l2 * wt[j * col + i + 1];
-                    wt[j * col + i + 2] += lr * er[j] * in[i + 2]
-                        - l2 * wt[j * col + i + 2];
-                    wt[j * col + i + 3] += lr * er[j] * in[i + 3]
-                        - l2 * wt[j * col + i + 3];
+                    wt[i + 0] += lr * er[j] * in[i + 0] - l2 * wt[i + 0];
+                    wt[i + 1] += lr * er[j] * in[i + 1] - l2 * wt[i + 1];
+                    wt[i + 2] += lr * er[j] * in[i + 2] - l2 * wt[i + 2];
+                    wt[i + 3] += lr * er[j] * in[i + 3] - l2 * wt[i + 3];
 
-                    wt[j * col + i + 4] += lr * er[j] * in[i + 4]
-                        - l2 * wt[j * col + i + 4];
-                    wt[j * col + i + 5] += lr * er[j] * in[i + 5]
-                        - l2 * wt[j * col + i + 5];
-                    wt[j * col + i + 6] += lr * er[j] * in[i + 6]
-                        - l2 * wt[j * col + i + 6];
-                    wt[j * col + i + 7] += lr * er[j] * in[i + 7]
-                        - l2 * wt[j * col + i + 7];
+                    wt[i + 4] += lr * er[j] * in[i + 4] - l2 * wt[i + 4];
+                    wt[i + 5] += lr * er[j] * in[i + 5] - l2 * wt[i + 5];
+                    wt[i + 6] += lr * er[j] * in[i + 6] - l2 * wt[i + 6];
+                    wt[i + 7] += lr * er[j] * in[i + 7] - l2 * wt[i + 7];
                 }
                 for (; i < col; i++) {
-                    wt[j * col + i] += lr * er[j] * in[i]
-                        - l2 * wt[j * col + i];
+                    wt[i] += lr * er[j] * in[i] - l2 * wt[i];
                 }
+                wt += col;
             }
 #else
             for (j = start; j < end; j++) {
