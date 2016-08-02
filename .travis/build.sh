@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e
+
 source tools/shutils/shutils.sh
 
 if [ $TRAVIS_BRANCH == 'master' ]; then
@@ -12,7 +14,7 @@ if [ $TRAVIS_BRANCH == 'master' ]; then
   fi
 
   ( cd egs/tiny; shu-testing $CASE )
-elif [ $TRAVIS_BRANCH == 'emb_updater']; then
+elif [ $TRAVIS_BRANCH == 'emb_updater' ]; then
   if [ $CASE -eq 1 ]; then
     make -C src test
     (cd egs/tiny; shu-testing 1-3)
