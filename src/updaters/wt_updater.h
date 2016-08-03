@@ -52,6 +52,33 @@ typedef enum _weight_update_type_t_ {
     WT_UT_ONE_SHOT, /**< one-shot updated weight. e.g. embedding wt. */
 } wt_update_type_t;
 
+#ifdef _BLAS_BATCH_UPDATE_
+/**
+ * st_int_seg with an id.
+ * @ingroup g_updater_wt
+ */
+typedef struct _st_int_seg_with_id_t_ {
+    st_int_seg_t seg; /* the seg. */
+    int id; /* the id. */
+} seg_with_id_t;
+
+/**
+ * Concatable Matrix
+ *
+ * Matrix built by concating row by row
+ *
+ * @ingroup g_updater_wt
+ */
+typedef struct _concatable_matrix_t_ {
+    real_t *val; /* values of matrix. */
+    int col; /* number of col. */
+    int n_row; /* number of row. */
+    int cap_row; /* capacity of row. */
+} concat_mat_t;
+
+
+#endif
+
 /**
  * Store the dirty part of weight.
  * @ingroup g_updater_wt
@@ -66,6 +93,13 @@ typedef struct _weight_dirty_buffer_t_ {
     int *ids;
     int cap_id;
     int n_id;
+
+#ifdef _BLAS_BATCH_UPDATE_
+    concat_mat_t *buf_in; /**< sized by n_id and cap_id. */
+    real_t in_scale;
+    concat_mat_t *buf_er; /**< sized by n_id and cap_id. */
+    real_t er_scale;
+#endif
 } wt_dirty_buf_t;
 
 /**
