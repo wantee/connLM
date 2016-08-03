@@ -3,8 +3,8 @@ property name=cbow
 
 input context=-2,-1,1,2 combine=sum
 
-layer name=hidden size=32 type=linear
+layer name=hidden size=16 type=linear
 
 glue name=emb type=emb in=input out=hidden init_param=0.01
-glue name=out type=out in=hidden out=output init_param=0.1
+glue name=out type=out in=hidden out=output init_param=0.5
 </component>

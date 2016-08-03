@@ -16,56 +16,50 @@ Step 3: Train CBOW model ...
 ../steps/init_model.sh: Elapse time: 0hr0m0s
 ../steps/run_standalone.sh: Stage 2 --- Training model...
 ../steps/train_model.sh --train-config test/tmp/case-15/exp/conf/cbow/train.conf --eval-config test/tmp/case-15/exp/conf/eval.conf --train-threads 1 --eval-threads 1 ./data/train ./data/valid test/tmp/case-15/exp/cbow
-Prerun Valid Entropy: 8.857677
-ITERATION 01: LR(cbow^emb=1e-05 cbow^out=0.1), TrEnt 8.192390, W/s 15.3k, CVEnt: 7.738067
+Prerun Valid Entropy: 8.858256
+ITERATION 01: LR(cbow^emb=1e-05 cbow^out=0.1), TrEnt 8.260374, W/s 24.9k, CVEnt: 7.761022
 nnet accepted (01.clm)
-ITERATION 02: LR(cbow^emb=1e-05 cbow^out=0.1), TrEnt 7.590964, W/s 15.2k, CVEnt: 7.529295
+ITERATION 02: LR(cbow^emb=1e-05 cbow^out=0.1), TrEnt 7.629474, W/s 24.9k, CVEnt: 7.545620
 nnet accepted (02.clm)
-ITERATION 03: LR(cbow^emb=1e-05 cbow^out=0.1), TrEnt 7.402219, W/s 15.2k, CVEnt: 7.438753
+ITERATION 03: LR(cbow^emb=1e-05 cbow^out=0.1), TrEnt 7.436157, W/s 24.6k, CVEnt: 7.457738
 nnet accepted (03.clm)
-ITERATION 04: LR(cbow^emb=1e-05 cbow^out=0.1), TrEnt 7.286071, W/s 15.3k, CVEnt: 7.369934
+ITERATION 04: LR(cbow^emb=1e-05 cbow^out=0.1), TrEnt 7.321111, W/s 24.9k, CVEnt: 7.396451
 nnet accepted (04.clm)
-ITERATION 05: LR(cbow^emb=1e-05 cbow^out=0.1), TrEnt 7.197444, W/s 15.3k, CVEnt: 7.311005
+ITERATION 05: LR(cbow^emb=1e-05 cbow^out=0.1), TrEnt 7.240026, W/s 25.0k, CVEnt: 7.343535
 nnet accepted (05.clm)
-ITERATION 06: LR(cbow^emb=1e-05 cbow^out=0.1), TrEnt 7.119762, W/s 15.3k, CVEnt: 7.265144
+ITERATION 06: LR(cbow^emb=1e-05 cbow^out=0.1), TrEnt 7.169192, W/s 24.6k, CVEnt: 7.303118
 nnet accepted (06.clm)
-ITERATION 07: LR(cbow^emb=1e-05 cbow^out=0.1), TrEnt 7.052764, W/s 15.4k, CVEnt: 7.211593
+ITERATION 07: LR(cbow^emb=1e-05 cbow^out=0.1), TrEnt 7.104886, W/s 24.4k, CVEnt: 7.250006
 nnet accepted (07.clm)
-ITERATION 08: LR(cbow^emb=1e-05 cbow^out=0.1), TrEnt 6.994847, W/s 15.4k, CVEnt: 7.172022
+ITERATION 08: LR(cbow^emb=1e-05 cbow^out=0.1), TrEnt 7.047815, W/s 24.7k, CVEnt: 7.211189
 nnet accepted (08.clm)
-ITERATION 09: LR(cbow^emb=1e-05 cbow^out=0.1), TrEnt 6.945760, W/s 15.4k, CVEnt: 7.136281
+ITERATION 09: LR(cbow^emb=1e-05 cbow^out=0.1), TrEnt 6.999013, W/s 24.7k, CVEnt: 7.174659
 nnet accepted (09.clm)
-ITERATION 10: LR(cbow^emb=1e-05 cbow^out=0.1), TrEnt 6.901820, W/s 15.4k, CVEnt: 7.107206
+ITERATION 10: LR(cbow^emb=1e-05 cbow^out=0.1), TrEnt 6.955659, W/s 24.8k, CVEnt: 7.145740
 nnet accepted (10.clm)
-ITERATION 11: LR(cbow^emb=1e-05 cbow^out=0.1), TrEnt 6.862730, W/s 15.3k, CVEnt: 7.082837
+ITERATION 11: LR(cbow^emb=1e-05 cbow^out=0.1), TrEnt 6.916749, W/s 25.0k, CVEnt: 7.120296
 nnet accepted (11.clm)
-ITERATION 12: LR(cbow^emb=1e-05 cbow^out=0.1), TrEnt 6.826713, W/s 15.4k, CVEnt: 7.058587
+ITERATION 12: LR(cbow^emb=1e-05 cbow^out=0.1), TrEnt 6.882612, W/s 24.8k, CVEnt: 7.097319
 nnet accepted (12.clm)
-ITERATION 13: LR(cbow^emb=1e-05 cbow^out=0.1), TrEnt 6.792550, W/s 15.3k, CVEnt: 7.037124
+ITERATION 13: LR(cbow^emb=1e-05 cbow^out=0.1), TrEnt 6.849976, W/s 24.8k, CVEnt: 7.077550
 nnet accepted (13.clm)
-ITERATION 14: LR(cbow^emb=1e-05 cbow^out=0.1), TrEnt 6.764582, W/s 15.4k, CVEnt: 7.012939
+ITERATION 14: LR(cbow^emb=5e-06 cbow^out=0.05), TrEnt 6.823304, W/s 24.5k, CVEnt: 7.061583
 nnet accepted (14.clm)
-ITERATION 15: LR(cbow^emb=1e-05 cbow^out=0.1), TrEnt 6.735194, W/s 15.2k, CVEnt: 6.994689
+ITERATION 15: LR(cbow^emb=2.5e-06 cbow^out=0.025), TrEnt 6.809686, W/s 24.6k, CVEnt: 7.057003
 nnet accepted (15.clm)
-ITERATION 16: LR(cbow^emb=5e-06 cbow^out=0.05), TrEnt 6.703158, W/s 15.3k, CVEnt: 6.987714
+ITERATION 16: LR(cbow^emb=1.25e-06 cbow^out=0.0125), TrEnt 6.798869, W/s 24.4k, CVEnt: 7.055782
 nnet accepted (16.clm)
-ITERATION 17: LR(cbow^emb=2.5e-06 cbow^out=0.025), TrEnt 6.692224, W/s 15.3k, CVEnt: 6.981575
-nnet accepted (17.clm)
-ITERATION 18: LR(cbow^emb=1.25e-06 cbow^out=0.0125), TrEnt 6.681742, W/s 15.4k, CVEnt: 6.975882
-nnet accepted (18.clm)
-ITERATION 19: LR(cbow^emb=6.25e-07 cbow^out=0.00625), TrEnt 6.677997, W/s 15.3k, CVEnt: 6.974728
-nnet accepted (19.clm)
-../steps/train_model.sh: finished, too small rel. improvement .0001654271
+../steps/train_model.sh: finished, too small rel. improvement .0001730196
 ../steps/train_model.sh: Succeeded training the Neural Network : test/tmp/case-15/exp/cbow/final.clm
-../steps/train_model.sh: Elapse time: 0hr1m46s
-../steps/train_model.sh: Effective speed: 14.5k words/sec
+../steps/train_model.sh: Elapse time: 0hr0m56s
+../steps/train_model.sh: Effective speed: 23.2k words/sec
 ../steps/run_standalone.sh: Stage 3 --- Testing model...
 ../steps/eval_model.sh --config-file test/tmp/case-15/exp/conf/eval.conf --eval-threads 1 test/tmp/case-15/exp/cbow ./data/test
 ../steps/eval_model.sh: Evaluating model test/tmp/case-15/exp/cbow/final.clm ...
 =================================
-Eval Entropy: 6.907886
-Eval PPL: 120.082820
-Eval Speed: 92.3k words/sec
+Eval Entropy: 6.990359
+Eval PPL: 127.147497
+Eval Speed: 130.7k words/sec
 =================================
 ../steps/eval_model.sh: Elapse time: 0hr0m0s
-../steps/run_standalone.sh: Elapse time: 0hr1m46s
+../steps/run_standalone.sh: Elapse time: 0hr0m56s
