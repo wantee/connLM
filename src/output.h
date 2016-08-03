@@ -30,6 +30,7 @@ extern "C" {
 #endif
 
 #include <stutils/st_opt.h>
+#include <stutils/st_int.h>
 #include <stutils/st_alphabet.h>
 
 #include <connlm/config.h>
@@ -348,6 +349,15 @@ static inline output_node_id_t output_param_size(output_t *output)
 
     return output->tree->num_node;
 }
+
+/**
+ * Generate int segments for tree.
+ * @ingroup g_output
+ * @param[in] output the output layer.
+ * @param[out] n_seg number of segs generated.
+ * @return the generated segs, NULL if any error.
+ */
+st_int_seg_t* output_gen_segs(output_t *output, int *n_seg);
 
 #ifdef __cplusplus
 }

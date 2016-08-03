@@ -159,7 +159,6 @@ static int out_backprop_walker(output_t *output, output_node_id_t node,
     glue_t *glue;
     layer_updater_t *in_layer_updater;
     wt_updater_t *wt_updater;
-    st_int_seg_t seg;
     real_t *wt;
     real_t *in_er;
     real_t *in_ac;
@@ -185,9 +184,7 @@ static int out_backprop_walker(output_t *output, output_node_id_t node,
             return 0;
         }
 
-        seg.s = output_param_idx(output, child_s);
-        seg.n = child_e - child_s - 1;
-        if (wt_update(wt_updater, ow_args->n_step, &seg,
+        if (wt_update(wt_updater, ow_args->n_step, NULL, node,
                     out_er + child_s, glue->out_scales[0],
                     in_ac, glue->in_scales[0], NULL) < 0) {
             ST_WARNING("Failed to wt_update.");
@@ -208,24 +205,48 @@ int out_glue_updater_backprop(glue_updater_t *glue_updater, count_t n_step,
 {
     out_walker_args_t ow_args;
 
+    output_t *output;
+    st_int_seg_t *segs = NULL;
+    int n_seg;
+
     ST_CHECK_PARAM(glue_updater == NULL || comp_updater == NULL
             || words == NULL, -1);
+
+    output = comp_updater->out_updater->output;
+    if (glue_updater->wt_updater->segs == NULL) {
+        segs = output_gen_segs(output, &n_seg);
+        if (segs == NULL || n_seg <= 0) {
+            ST_WARNING("Failed to output_gen_segs.");
+            goto ERR;
+        }
+
+        if (wt_updater_set_segs(glue_updater->wt_updater, segs, n_seg) < 0) {
+            ST_WARNING("Failed to wt_updater_set_segs.");
+            goto ERR;
+        }
+
+        safe_free(segs);
+    }
 
     ow_args.comp_updater = comp_updater;
     ow_args.glue_updater = glue_updater;
     ow_args.n_step = n_step;
-    if (output_walk_through_path(comp_updater->out_updater->output,
-                words[tgt_pos], out_backprop_walker, (void *)&ow_args) < 0) {
+    if (output_walk_through_path(output, words[tgt_pos],
+                out_backprop_walker, (void *)&ow_args) < 0) {
         ST_WARNING("Failed to output_walk_through_path.");
-        return -1;
+        goto ERR;
     }
 
     if (wt_flush(glue_updater->wt_updater, n_step) < 0) {
         ST_WARNING("Failed to wt_flush.");
-        return -1;
+        goto ERR;
     }
 
     return 0;
+
+ERR:
+    safe_free(segs);
+    return -1;
 }
 
 int out_glue_updater_forward_out(glue_updater_t *glue_updater,

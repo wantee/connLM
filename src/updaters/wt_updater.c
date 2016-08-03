@@ -45,9 +45,9 @@ void wt_dirty_destroy(wt_dirty_buf_t *dirty)
     dirty->cap_seg = 0;
     dirty->n_seg = 0;
 
-    safe_free(dirty->in_idxs);
-    dirty->cap_in_idx = 0;
-    dirty->n_in_idx = 0;
+    safe_free(dirty->ids);
+    dirty->cap_id = 0;
+    dirty->n_id = 0;
 }
 
 void wt_updater_destroy(wt_updater_t *wt_updater)
@@ -66,6 +66,9 @@ void wt_updater_destroy(wt_updater_t *wt_updater)
     safe_st_aligned_free(wt_updater->delta_wt);
     wt_updater->row = -1;
     wt_updater->col = -1;
+
+    safe_free(wt_updater->segs);
+    wt_updater->n_seg = 0;
 
     wt_dirty_destroy(&wt_updater->mini_dirty);
     wt_dirty_destroy(&wt_updater->sync_dirty);
@@ -136,10 +139,30 @@ ERR:
     return NULL;
 }
 
+int wt_updater_set_segs(wt_updater_t *wt_updater, st_int_seg_t *segs, int n_seg)
+{
+    ST_CHECK_PARAM(wt_updater == NULL || segs == NULL || n_seg <= 0, -1);
+
+    safe_free(wt_updater->segs);
+    wt_updater->segs = (st_int_seg_t *)malloc(sizeof(st_int_seg_t) * n_seg);
+    if (wt_updater->segs == NULL) {
+        ST_WARNING("Failed to malloc segs.");
+        goto ERR;
+    }
+    memcpy(wt_updater->segs, segs, sizeof(st_int_seg_t) * n_seg);
+    wt_updater->n_seg = n_seg;
+
+    return 0;
+
+ERR:
+    safe_free(wt_updater->segs);
+    return -1;
+}
+
 void wt_dirty_clear(wt_dirty_buf_t *dirty)
 {
     dirty->n_seg = 0;
-    dirty->n_in_idx = 0;
+    dirty->n_id = 0;
 }
 
 void wt_updater_clear(wt_updater_t *wt_updater)
@@ -151,6 +174,7 @@ void wt_updater_clear(wt_updater_t *wt_updater)
 static int wt_updater_flush(wt_updater_t *wt_updater,
         real_t* dst_wt, real_t *src_wt, wt_dirty_buf_t *dirty, real_t *ori_wt)
 {
+    st_int_seg_t *seg;
     int row, col;
     int sz, i, a, j;
 
@@ -180,8 +204,9 @@ static int wt_updater_flush(wt_updater_t *wt_updater,
 
         case WT_UT_SEG:
             if (ori_wt == NULL) {
-                for (a = 0; a < dirty->n_seg; a++) {
-                    for (i = dirty->segs[a].s; i < dirty->segs[a].e; i++) {
+                for (a = 0; a < dirty->n_id; a++) {
+                    seg = wt_updater->segs + dirty->ids[a];
+                    for (i = seg->s; i < seg->s + seg->n; i++) {
                         for (j = 0; j < col; j++) {
                             dst_wt[i * col + j] += src_wt[i * col + j];
                             src_wt[i * col + j] = 0;
@@ -189,23 +214,20 @@ static int wt_updater_flush(wt_updater_t *wt_updater,
                     }
                 }
             } else {
-                for (a = 0; a < dirty->n_seg; a++) {
-                    for (i = dirty->segs[a].s; i < dirty->segs[a].e; i++) {
+                for (a = 0; a < dirty->n_id; a++) {
+                    seg = wt_updater->segs + dirty->ids[a];
+                    for (i = seg->s; i < seg->s + seg->n; i++) {
                         for (j = 0; j < col; j++) {
                             dst_wt[i * col + j] += src_wt[i * col + j]
                                 - ori_wt[i * col + j];
                         }
                     }
-                    sz = col * (dirty->segs[a].e - dirty->segs[a].s);
-                    memcpy(src_wt + dirty->segs[a].s * col,
-                           dst_wt + dirty->segs[a].s * col,
-                           sizeof(real_t) * sz);
-                    memcpy(ori_wt + dirty->segs[a].s * col,
-                           src_wt + dirty->segs[a].s * col,
-                           sizeof(real_t) * sz);
+                    sz = col * seg->n * sizeof(real_t);
+                    memcpy(src_wt + seg->s * col, dst_wt + seg->s * col, sz);
+                    memcpy(ori_wt + seg->s * col, src_wt + seg->s * col, sz);
                 }
             }
-            dirty->n_seg = 0;
+            dirty->n_id = 0;
 
             break;
         case WT_UT_PART:
@@ -234,25 +256,25 @@ static int wt_updater_flush(wt_updater_t *wt_updater,
 
         case WT_UT_ONE_SHOT:
             if (ori_wt == NULL) {
-                for (a = 0; a < dirty->n_in_idx; a++) {
-                    i = dirty->in_idxs[a] * col;
-                    for (; i < (dirty->in_idxs[a] + 1) * col; i++) {
+                for (a = 0; a < dirty->n_id; a++) {
+                    i = dirty->ids[a] * col;
+                    for (; i < (dirty->ids[a] + 1) * col; i++) {
                         dst_wt[i] += src_wt[i];
                         src_wt[i] = 0;
                     }
                 }
             } else {
-                for (a = 0; a < dirty->n_in_idx; a++) {
-                    i = dirty->in_idxs[a] * col;
-                    for (; i < (dirty->in_idxs[a] + 1) * col; i++) {
+                for (a = 0; a < dirty->n_id; a++) {
+                    i = dirty->ids[a] * col;
+                    for (; i < (dirty->ids[a] + 1) * col; i++) {
                         dst_wt[i] += src_wt[i] - ori_wt[i];
                     }
-                    i = dirty->in_idxs[a] * col;
+                    i = dirty->ids[a] * col;
                     memcpy(src_wt + i, dst_wt + i, sizeof(int) * col);
                     memcpy(ori_wt + i, src_wt + i, sizeof(int) * col);
                 }
             }
-            dirty->n_in_idx = 0;
+            dirty->n_id = 0;
             break;
         default:
             ST_WARNING("Unknown updating type[%d].", wt_updater->type);
@@ -263,7 +285,7 @@ static int wt_updater_flush(wt_updater_t *wt_updater,
 }
 
 static int wt_updater_acc_wt(wt_updater_t *wt_updater, count_t n_step,
-        real_t *wt, st_int_seg_t *row_seg,
+        real_t *wt, st_int_seg_t *row_seg, int row_seg_id,
         real_t *er, real_t er_scale,
         real_t *in, real_t in_scale, st_wt_int_t *in_idx)
 {
@@ -313,7 +335,7 @@ static int wt_updater_acc_wt(wt_updater_t *wt_updater, count_t n_step,
             }
             break;
         case WT_UT_SEG:
-            // needed: in, er, row_seg
+            // needed: in, er, row_seg_id
             /* FALL THROUGH */
         case WT_UT_FULL:
             // needed: in, er
@@ -321,10 +343,10 @@ static int wt_updater_acc_wt(wt_updater_t *wt_updater, count_t n_step,
                 row_start = er_start = 0;
                 row_end = er_end = row;
             } else {
-                row_start = row_seg->s;
-                row_end = row_seg->s + row_seg->n;
+                row_start = wt_updater->segs[row_seg_id].s;
+                row_end = row_start + wt_updater->segs[row_seg_id].n;
                 er_start = 0;
-                er_end = row_seg->n;
+                er_end = wt_updater->segs[row_seg_id].n;
             }
             wt += row_start * col;
 #ifdef _USE_BLAS_
@@ -367,27 +389,9 @@ static int wt_updater_acc_wt(wt_updater_t *wt_updater, count_t n_step,
     return 0;
 }
 
-static st_cmp_ret_t cmp_seg(const void *elem1, const void *elem2, void *args)
-{
-    st_int_seg_t *a;
-    st_int_seg_t *b;
-
-    a = (st_int_seg_t *)elem1;
-    b = (st_int_seg_t *)elem2;
-
-    if (a->e <= b->s) {
-        return ST_CMP_LESS;
-    } else if (a->s >= b->e) {
-        return ST_CMP_GREATER;
-    }
-
-    return ST_CMP_ERR;
-}
-
 static int wt_updater_dirty(wt_updater_t *wt_updater, wt_dirty_buf_t *dirty,
-        st_int_seg_t *row_seg, int in_idx)
+        st_int_seg_t *row_seg, int row_seg_id, int in_idx)
 {
-    st_int_seg_t tmp_seg;
     size_t sz;
 
     switch (wt_updater->type) {
@@ -410,37 +414,35 @@ static int wt_updater_dirty(wt_updater_t *wt_updater, wt_dirty_buf_t *dirty,
             }
             break;
         case WT_UT_ONE_SHOT:
-            if (dirty->n_in_idx >= dirty->cap_in_idx) {
-                dirty->cap_in_idx += 100;
-                sz = dirty->cap_in_idx * sizeof(int);
-                dirty->in_idxs = (int *)realloc(dirty->in_idxs, sz);
-                if (dirty->in_idxs == NULL) {
-                    ST_WARNING("Failed to realloc in_idxs");
+            if (dirty->n_id >= dirty->cap_id) {
+                dirty->cap_id += 100;
+                sz = dirty->cap_id * sizeof(int);
+                dirty->ids = (int *)realloc(dirty->ids, sz);
+                if (dirty->ids == NULL) {
+                    ST_WARNING("Failed to realloc ids");
                     return -1;
                 }
             }
-            if (st_int_insert(dirty->in_idxs, dirty->cap_in_idx,
-                        &dirty->n_in_idx, in_idx) < 0) {
+            if (st_int_insert(dirty->ids, dirty->cap_id,
+                        &dirty->n_id, in_idx) < 0) {
                 ST_WARNING("Failed to st_int_insert.");
                 return -1;
             }
             break;
+
         case WT_UT_SEG:
-            if (dirty->n_seg >= dirty->cap_seg) {
-                dirty->cap_seg += 100;
-                sz = dirty->cap_seg * sizeof(st_int_seg_t);
-                dirty->segs = (st_int_seg_t *)realloc(dirty->segs, sz);
-                if (dirty->segs == NULL) {
-                    ST_WARNING("Failed to realloc segs");
+            if (dirty->n_id >= dirty->cap_id) {
+                dirty->cap_id += 100;
+                sz = dirty->cap_id * sizeof(int);
+                dirty->ids = (int *)realloc(dirty->ids, sz);
+                if (dirty->ids == NULL) {
+                    ST_WARNING("Failed to realloc ids");
                     return -1;
                 }
             }
-            tmp_seg.s = row_seg->s;
-            tmp_seg.e = row_seg->s + row_seg->n;
-            if (st_insert((void *)dirty->segs, dirty->cap_seg,
-                        sizeof(st_int_seg_t), &dirty->n_seg,
-                        &tmp_seg, cmp_seg, NULL) < 0) {
-                ST_WARNING("Failed to st_insert.");
+            if (st_int_insert(dirty->ids, dirty->cap_id,
+                        &dirty->n_id, row_seg_id) < 0) {
+                ST_WARNING("Failed to st_int_insert.");
                 return -1;
             }
             break;
@@ -485,40 +487,22 @@ static int wt_updater_dirty_cpy(wt_updater_t *wt_updater,
             }
             break;
         case WT_UT_ONE_SHOT:
-            if (dst->n_in_idx + src->n_in_idx > dst->cap_in_idx) {
-                dst->cap_in_idx += src->n_in_idx;
-                sz = dst->cap_in_idx * sizeof(int);
-                dst->in_idxs = (int *)realloc(dst->in_idxs, sz);
-                if (dst->in_idxs == NULL) {
-                    ST_WARNING("Failed to realloc in_idxs");
-                    return -1;
-                }
-            }
-            for (i = 0; i < src->n_in_idx; i++) {
-                if (st_int_insert(dst->in_idxs, dst->cap_in_idx,
-                            &dst->n_in_idx, src->in_idxs[i]) < 0) {
-                    ST_WARNING("Failed to st_int_insert.");
-                    return -1;
-                }
-            }
-            break;
+            /* FALL THROUGH */
         case WT_UT_SEG:
-            if (dst->n_seg + src->n_seg > dst->cap_seg) {
-                dst->cap_seg += src->n_seg;
-                sz = dst->cap_seg * sizeof(st_int_seg_t);
-                dst->segs = (st_int_seg_t *)realloc(dst->segs, sz);
-                if (dst->segs == NULL) {
-                    ST_WARNING("Failed to realloc segs");
+            if (dst->n_id + src->n_id > dst->cap_id) {
+                dst->cap_id += src->n_id;
+                sz = dst->cap_id * sizeof(int);
+                dst->ids = (int *)realloc(dst->ids, sz);
+                if (dst->ids == NULL) {
+                    ST_WARNING("Failed to realloc ids");
                     return -1;
                 }
             }
-
             /* TODO: We could use merge sort here. */
-            for (i = 0; i < src->n_seg; i++) {
-                if (st_insert((void *)dst->segs, dst->cap_seg,
-                            sizeof(st_int_seg_t), &dst->n_seg,
-                            src->segs + i, cmp_seg, NULL) < 0) {
-                    ST_WARNING("Failed to st_insert.");
+            for (i = 0; i < src->n_id; i++) {
+                if (st_int_insert(dst->ids, dst->cap_id,
+                            &dst->n_id, src->ids[i]) < 0) {
+                    ST_WARNING("Failed to st_int_insert.");
                     return -1;
                 }
             }
@@ -531,7 +515,8 @@ static int wt_updater_dirty_cpy(wt_updater_t *wt_updater,
     return 0;
 }
 
-int wt_update(wt_updater_t *wt_updater, count_t n_step, st_int_seg_t *row_seg,
+int wt_update(wt_updater_t *wt_updater, count_t n_step,
+        st_int_seg_t *row_seg, int row_seg_id,
         real_t *er, real_t er_scale,
         real_t *in, real_t in_scale, st_wt_int_t *in_idx)
 {
@@ -549,7 +534,7 @@ int wt_update(wt_updater_t *wt_updater, count_t n_step, st_int_seg_t *row_seg,
         wt = wt_updater->wt;
     }
 
-    if (wt_updater_acc_wt(wt_updater, n_step, wt, row_seg,
+    if (wt_updater_acc_wt(wt_updater, n_step, wt, row_seg, row_seg_id,
                 er, er_scale, in, in_scale, in_idx) < 0) {
         ST_WARNING("Failed to wt_updater_acc_wt.");
         return -1;
@@ -557,7 +542,7 @@ int wt_update(wt_updater_t *wt_updater, count_t n_step, st_int_seg_t *row_seg,
 
     if (wt_updater->param.mini_batch > 0) {
         if (wt_updater_dirty(wt_updater, &wt_updater->mini_dirty,
-                    row_seg, in_idx != NULL ? in_idx->i : -1) < 0) {
+                row_seg, row_seg_id, in_idx != NULL ? in_idx->i : -1) < 0) {
             ST_WARNING("Failed to wt_updater_dirty for minibatch.");
             return -1;
         }
@@ -566,7 +551,7 @@ int wt_update(wt_updater_t *wt_updater, count_t n_step, st_int_seg_t *row_seg,
     if (wt_updater->param.sync_size > 0) {
         if (wt_updater->param.mini_batch <= 0) {
             if (wt_updater_dirty(wt_updater, &wt_updater->sync_dirty,
-                        row_seg, in_idx != NULL ? in_idx->i : -1) < 0) {
+                    row_seg, row_seg_id, in_idx != NULL ? in_idx->i : -1) < 0) {
                 ST_WARNING("Failed to wt_updater_dirty for sync.");
                 return -1;
             }

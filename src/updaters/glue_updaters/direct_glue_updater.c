@@ -446,7 +446,7 @@ static int direct_backprop_walker(output_t *output, output_node_id_t node,
 
         seg.s = h;
         seg.n = child_e - child_s - 1;
-        if (wt_update(dw_args->wt_updater, dw_args->n_step, &seg,
+        if (wt_update(dw_args->wt_updater, dw_args->n_step, &seg, -1,
                     dw_args->out_updater->er + child_s, dw_args->out_scale,
                     NULL, dw_args->in_scale, NULL) < 0) {
             ST_WARNING("Failed to wt_update.");
