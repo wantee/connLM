@@ -99,7 +99,7 @@ int out_glue_init_data(glue_t *glue, input_t *input,
         return -1;
     }
 
-    if (wt_init(glue->wt, output->tree->num_node,
+    if (wt_init(glue->wt, output_param_size(output),
                 layers[glue->in_layers[0]]->size) < 0) {
         ST_WARNING("Failed to wt_init.");
         return -1;

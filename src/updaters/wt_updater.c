@@ -263,8 +263,8 @@ static int wt_updater_flush(wt_updater_t *wt_updater,
 }
 
 static int wt_updater_acc_wt(wt_updater_t *wt_updater, count_t n_step,
-        real_t *wt, int row_s,
-        real_t *er, real_t er_scale, st_int_seg_t *er_seg,
+        real_t *wt, st_int_seg_t *row_seg,
+        real_t *er, real_t er_scale,
         real_t *in, real_t in_scale, st_wt_int_t *in_idx)
 {
     real_t lr;
@@ -272,7 +272,7 @@ static int wt_updater_acc_wt(wt_updater_t *wt_updater, count_t n_step,
 
     int row, col;
 
-    int i, j, start, end;
+    int i, j, row_start, row_end, er_start, er_end;
     real_t scale;
 
     lr = wt_updater->param.learn_rate;
@@ -289,17 +289,16 @@ static int wt_updater_acc_wt(wt_updater_t *wt_updater, count_t n_step,
     switch (wt_updater->type) {
         case WT_UT_PART:
             // Hash-based weight
-            // needed: row_s, er_seg, er
-            if (row_s + er_seg->n > row) {
-                for (j = er_seg->s, i = row_s; i < row; j++, i++) {
+            // needed: row_seg, er
+            if (row_seg->s + row_seg->n > row) {
+                for (j = 0, i = row_seg->s; i < row; j++, i++) {
                     wt[i] += lr * er[j] - l2 * wt[i];
                 }
-                for (i = 0; j < er_seg->n + er_seg->s; j++, i++) {
+                for (i = 0; j < row_seg->n; j++, i++) {
                     wt[i] += lr * er[j] - l2 * wt[i];
                 }
             } else {
-                for (j = er_seg->s, i = row_s;
-                        j < er_seg->n + er_seg->s; j++, i++) {
+                for (j = 0, i = row_seg->s; j < row_seg->n; j++, i++) {
                     wt[i] += lr * er[j] - l2 * wt[i];
                 }
             }
@@ -314,23 +313,27 @@ static int wt_updater_acc_wt(wt_updater_t *wt_updater, count_t n_step,
             }
             break;
         case WT_UT_SEG:
+            // needed: in, er, row_seg
             /* FALL THROUGH */
         case WT_UT_FULL:
+            // needed: in, er
             if (wt_updater->type == WT_UT_FULL) {
-                start = 0;
-                end = row;
+                row_start = er_start = 0;
+                row_end = er_end = row;
             } else {
-                start = er_seg->s;
-                end = er_seg->e;
+                row_start = row_seg->s;
+                row_end = row_seg->s + row_seg->n;
+                er_start = 0;
+                er_end = row_seg->n;
             }
-            wt += start * col;
+            wt += row_start * col;
 #ifdef _USE_BLAS_
             cblas_gemm(CblasRowMajor, CblasTrans, CblasNoTrans,
-                    end - start, col, 1,
-                    lr, er + start, end - start, in, col,
+                    row_end - row_start, col, 1,
+                    lr, er, er_end - er_start, in, col,
                     1.0 - l2, wt, col);
 #elif defined(_PARAM_UPDATE_UNROLL_)
-            for (j = start; j < end; j++) {
+            for (j = er_start; j < er_end; j++) {
                 for (i = 0; i < col / N * N; i+=N) {
                     wt[i + 0] += lr * er[j] * in[i + 0] - l2 * wt[i + 0];
                     wt[i + 1] += lr * er[j] * in[i + 1] - l2 * wt[i + 1];
@@ -348,7 +351,7 @@ static int wt_updater_acc_wt(wt_updater_t *wt_updater, count_t n_step,
                 wt += col;
             }
 #else
-            for (j = start; j < end; j++) {
+            for (j = er_start; j < er_end; j++) {
                 for (i = 0; i < col; i++) {
                     wt[i] += lr * er[j] * in[i] - l2 * wt[i];
                 }
@@ -382,9 +385,9 @@ static st_cmp_ret_t cmp_seg(const void *elem1, const void *elem2, void *args)
 }
 
 static int wt_updater_dirty(wt_updater_t *wt_updater, wt_dirty_buf_t *dirty,
-        int row_s, st_int_seg_t *er_seg, int in_idx)
+        st_int_seg_t *row_seg, int in_idx)
 {
-    st_int_seg_t row_seg;
+    st_int_seg_t tmp_seg;
     size_t sz;
 
     switch (wt_updater->type) {
@@ -400,10 +403,8 @@ static int wt_updater_dirty(wt_updater_t *wt_updater, wt_dirty_buf_t *dirty,
                     return -1;
                 }
             }
-            row_seg.s = row_s;
-            row_seg.n = er_seg->n;
             if (st_int_seg_union(dirty->segs, dirty->cap_seg, &dirty->n_seg,
-                        &row_seg, 1, wt_updater->row) < 0) {
+                        row_seg, 1, wt_updater->row) < 0) {
                 ST_WARNING("Failed to st_int_seg_union.");
                 return -1;
             }
@@ -434,9 +435,11 @@ static int wt_updater_dirty(wt_updater_t *wt_updater, wt_dirty_buf_t *dirty,
                     return -1;
                 }
             }
+            tmp_seg.s = row_seg->s;
+            tmp_seg.e = row_seg->s + row_seg->n;
             if (st_insert((void *)dirty->segs, dirty->cap_seg,
                         sizeof(st_int_seg_t), &dirty->n_seg,
-                        er_seg, cmp_seg, NULL) < 0) {
+                        &tmp_seg, cmp_seg, NULL) < 0) {
                 ST_WARNING("Failed to st_insert.");
                 return -1;
             }
@@ -528,8 +531,8 @@ static int wt_updater_dirty_cpy(wt_updater_t *wt_updater,
     return 0;
 }
 
-int wt_update(wt_updater_t *wt_updater, count_t n_step, int row_s,
-        real_t *er, real_t er_scale, st_int_seg_t *er_seg,
+int wt_update(wt_updater_t *wt_updater, count_t n_step, st_int_seg_t *row_seg,
+        real_t *er, real_t er_scale,
         real_t *in, real_t in_scale, st_wt_int_t *in_idx)
 {
     real_t *wt;
@@ -546,16 +549,15 @@ int wt_update(wt_updater_t *wt_updater, count_t n_step, int row_s,
         wt = wt_updater->wt;
     }
 
-    if (wt_updater_acc_wt(wt_updater, n_step, wt, row_s,
-                er, er_scale, er_seg,
-                in, in_scale, in_idx) < 0) {
+    if (wt_updater_acc_wt(wt_updater, n_step, wt, row_seg,
+                er, er_scale, in, in_scale, in_idx) < 0) {
         ST_WARNING("Failed to wt_updater_acc_wt.");
         return -1;
     }
 
     if (wt_updater->param.mini_batch > 0) {
-        if (wt_updater_dirty(wt_updater, &wt_updater->mini_dirty, row_s,
-                    er_seg, in_idx != NULL ? in_idx->i : -1) < 0) {
+        if (wt_updater_dirty(wt_updater, &wt_updater->mini_dirty,
+                    row_seg, in_idx != NULL ? in_idx->i : -1) < 0) {
             ST_WARNING("Failed to wt_updater_dirty for minibatch.");
             return -1;
         }
@@ -563,8 +565,8 @@ int wt_update(wt_updater_t *wt_updater, count_t n_step, int row_s,
 
     if (wt_updater->param.sync_size > 0) {
         if (wt_updater->param.mini_batch <= 0) {
-            if (wt_updater_dirty(wt_updater, &wt_updater->sync_dirty, row_s,
-                        er_seg, in_idx != NULL ? in_idx->i : -1) < 0) {
+            if (wt_updater_dirty(wt_updater, &wt_updater->sync_dirty,
+                        row_seg, in_idx != NULL ? in_idx->i : -1) < 0) {
                 ST_WARNING("Failed to wt_updater_dirty for sync.");
                 return -1;
             }
@@ -614,206 +616,3 @@ int wt_flush(wt_updater_t *wt_updater, count_t n_step)
 
     return 0;
 }
-
-#if 0
-#ifdef _MINI_UPDATE_
-int param_acc_wt_minibatch(int batch, real_t *wt, real_t *er, int er_size,
-        real_t *in, int in_size)
-{
-    if (!(er_size > 0 && in_size > 0 && in != NULL)) {
-        ST_WARNING("Do not support this type of update_minibatch.");
-        return -1;
-    }
-
-    cblas_gemm(CblasRowMajor, CblasTrans, CblasNoTrans,
-            er_size, in_size, batch,
-            1.0, er, er_size, in, in_size,
-            1.0, wt, in_size);
-}
-
-int param_update_minibatch(wt_updater_t *wt_updater, bool update_arg,
-        int batch, real_t *wt, real_t *er, real_t er_scale,
-        int er_size, real_t *in, int in_size)
-{
-    real_t lr;
-    real_t l2;
-
-    lr = wt_updater->param.learn_rate;
-    l2 = wt_updater->param.l2_penalty;
-
-    if (wt_updater->param.l2_gap > 1) {
-        if (wt_updater->l2_step != 0) {
-            l2 = 0.0;
-        }
-
-        if (update_arg) {
-            wt_updater->l2_step++;
-            if (wt_updater->l2_step >= wt_updater->param.l2_gap) {
-                wt_updater->l2_step = 0;
-            }
-        }
-    }
-
-    if (!(er_size > 0 && in_size > 0 && in != NULL)) {
-        ST_WARNING("Do not support this type of update_minibatch.");
-        return;
-    }
-
-    cblas_gemm(CblasRowMajor, CblasTrans, CblasNoTrans,
-            er_size, in_size, batch,
-            lr*er_scale, er, er_size, in, in_size,
-            1.0 - l2, wt, in_size);
-}
-#endif
-#endif
-
-#if 0
-/*
- * accumulate weights
- *
- * in is [ in_size x 1 ];
- *
- *
- * er_size > 0 && in_size > 0: er is [ 1 x er_size ]; wt is [ er_size x in_size ]; if in == NULL: in is one-shot vector
- * er_size > 0 && in_size < 0: er is [ 1 x er_size ]; wt is hash based 1d vector; in is one-shot vector
- * er_size < 0 && in_size > 0: er is delta-weight matrix [ er_size x in_size ]; wt is [ er_size x in_size ];
- * er_size < 0 && in_size < 0: er is delta-weight matrix [ er_size x in_size ]; wt is [ er_size x in_size ]; in is one-shot vector
- */
-void param_acc_wt(real_t *wt, real_t *er, int er_size, real_t *in, int in_size)
-{
-    real_t *w;
-    real_t *delta_w;
-
-    int i;
-    int j;
-
-    if (er_size > 0 && in_size > 0) {
-        if (in == NULL) {
-            i = 0;
-            for (j = 0; j < er_size; j++) {
-                wt[i] += er[j];
-                i += in_size;
-            }
-        } else {
-#ifdef _USE_BLAS_
-            cblas_gemm(CblasRowMajor, CblasTrans, CblasNoTrans,
-                    er_size, in_size, 1,
-                    1.0, er, er_size, in, in_size,
-                    1.0, wt, in_size);
-#elif defined(_PARAM_UPDATE_UNROLL_)
-            for (j = 0; j < er_size; j++) {
-                for (i = 0; i < in_size / N * N; i+=N) {
-                    wt[j * in_size + i + 0] += er[j] * in[i + 0];
-                    wt[j * in_size + i + 1] += er[j] * in[i + 1];
-                    wt[j * in_size + i + 2] += er[j] * in[i + 2];
-                    wt[j * in_size + i + 3] += er[j] * in[i + 3];
-
-                    wt[j * in_size + i + 4] += er[j] * in[i + 4];
-                    wt[j * in_size + i + 5] += er[j] * in[i + 5];
-                    wt[j * in_size + i + 6] += er[j] * in[i + 6];
-                    wt[j * in_size + i + 7] += er[j] * in[i + 7];
-                }
-
-                for (; i < in_size; i++) {
-                    wt[j * in_size + i] += er[j] * in[i];
-                }
-            }
-#else
-            w = wt;
-            for (j = 0; j < er_size; j++) {
-                for (i = 0; i < in_size; i++) {
-                    w[i] += er[j] * in[i];
-                }
-                w += in_size;
-            }
-#endif
-        }
-    } else if (er_size > 0 && in_size < 0) {
-        for (j = 0; j < er_size; j++) {
-            wt[j] += er[j];
-        }
-    } else if (er_size < 0 && in_size > 0) {
-        er_size = - er_size;
-        w = wt;
-        delta_w = er;
-
-        for (j = 0; j < er_size; j++) {
-            for (i = 0; i < in_size; i++) {
-                w[i] += delta_w[i];
-            }
-            w += in_size;
-            delta_w += in_size;
-        }
-    } else {
-        in_size = - in_size;
-        er_size = - er_size;
-        w = wt;
-        delta_w = er;
-
-        i = 0;
-        for (j = 0; j < er_size; j++) {
-            w[i] += delta_w[i];
-            i += in_size;
-        }
-    }
-}
-
-static void wt_updater_minibatch(wt_updater_t *wt_updater)
-{
-    if (er_size < 0 && in_size > 0) {
-        er_size = - er_size;
-
-#ifdef _PARAM_UPDATE_UNROLL_
-        for (j = 0; j < er_size; j++) {
-            for (i = 0; i < in_size / N * N; i+=N) {
-                wt[j * in_size + i + 0] += lr * er[j * in_size + i + 0] * er_scale
-                    - l2 * wt[j * in_size + i + 0];
-                wt[j * in_size + i + 1] += lr * er[j * in_size + i + 1] * er_scale
-                    - l2 * wt[j * in_size + i + 1];
-                wt[j * in_size + i + 2] += lr * er[j * in_size + i + 2] * er_scale
-                    - l2 * wt[j * in_size + i + 2];
-                wt[j * in_size + i + 3] += lr * er[j * in_size + i + 3] * er_scale
-                    - l2 * wt[j * in_size + i + 3];
-
-                wt[j * in_size + i + 4] += lr * er[j * in_size + i + 4] * er_scale
-                    - l2 * wt[j * in_size + i + 4];
-                wt[j * in_size + i + 5] += lr * er[j * in_size + i + 5] * er_scale
-                    - l2 * wt[j * in_size + i + 5];
-                wt[j * in_size + i + 6] += lr * er[j * in_size + i + 6] * er_scale
-                    - l2 * wt[j * in_size + i + 6];
-                wt[j * in_size + i + 7] += lr * er[j * in_size + i + 7] * er_scale
-                    - l2 * wt[j * in_size + i + 7];
-            }
-
-            for (; i < in_size; i++) {
-                wt[j * in_size + i] += lr * er[j * in_size + i] * er_scale
-                    - l2 * wt[j * in_size + i];
-            }
-        }
-#else
-        w = wt;
-        delta_w = er;
-        for (j = 0; j < er_size; j++) {
-            for (i = 0; i < in_size; i++) {
-                w[i] += lr * delta_w[i] * er_scale
-                    - l2 * w[i];
-            }
-            w += in_size;
-            delta_w += in_size;
-        }
-#endif
-    } else {
-        in_size = - in_size;
-        er_size = - er_size;
-        w = wt;
-        delta_w = er;
-
-        i = 0;
-        for (j = 0; j < er_size; j++) {
-            w[i] += lr * delta_w[i] * er_scale
-                - l2 * w[i];
-            i += in_size;
-        }
-    }
-}
-#endif

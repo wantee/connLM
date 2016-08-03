@@ -98,7 +98,8 @@ static int out_glue_updater_forward_node(glue_updater_t *glue_updater,
 
     if (output->norm == ON_SOFTMAX) {
         if (child_e - child_s - 1 > 0) {
-            matXvec(out_ac + child_s, wt + child_s * layer_size,
+            matXvec(out_ac + child_s,
+                    wt + output_param_idx(output, child_s) * layer_size,
                     in_ac, child_e - child_s - 1, layer_size, scale);
         }
     }
@@ -184,10 +185,10 @@ static int out_backprop_walker(output_t *output, output_node_id_t node,
             return 0;
         }
 
-        seg.s = child_s;
-        seg.e = child_e - 1;
-        if (wt_update(wt_updater, ow_args->n_step, 0, out_er,
-                    glue->out_scales[0], &seg,
+        seg.s = output_param_idx(output, child_s);
+        seg.n = child_e - child_s - 1;
+        if (wt_update(wt_updater, ow_args->n_step, &seg,
+                    out_er + child_s, glue->out_scales[0],
                     in_ac, glue->in_scales[0], NULL) < 0) {
             ST_WARNING("Failed to wt_update.");
             return -1;
@@ -195,7 +196,8 @@ static int out_backprop_walker(output_t *output, output_node_id_t node,
     }
 
     propagate_error(in_er, out_er + child_s,
-            wt + child_s * layer_size, layer_size, child_e - child_s,
+            wt + output_param_idx(output, child_s) * layer_size,
+            layer_size, child_e - child_s - 1,
             wt_updater->param.er_cutoff, scale);
 
     return 0;

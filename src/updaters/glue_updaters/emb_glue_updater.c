@@ -169,10 +169,9 @@ int emb_glue_updater_backprop(glue_updater_t *glue_updater, count_t n_step,
             }
             in_idx.w = input->context[a].w;
             in_idx.i = words[i];
-            if (wt_update(glue_updater->wt_updater, n_step, 0,
+            if (wt_update(glue_updater->wt_updater, n_step, NULL,
                         out_layer_updater->er + a * glue->wt->col,
-                        out_scale, NULL,
-                        NULL, glue->in_scales[0], &in_idx) < 0) {
+                        out_scale, NULL, glue->in_scales[0], &in_idx) < 0) {
                 ST_WARNING("Failed to wt_update.");
                 return -1;
             }
@@ -188,8 +187,8 @@ int emb_glue_updater_backprop(glue_updater_t *glue_updater, count_t n_step,
             }
             in_idx.w = input->context[a].w;
             in_idx.i = words[i];
-            if (wt_update(glue_updater->wt_updater, n_step, 0,
-                        out_layer_updater->er, out_scale, NULL,
+            if (wt_update(glue_updater->wt_updater, n_step, NULL,
+                        out_layer_updater->er, out_scale,
                         NULL, glue->in_scales[0], &in_idx) < 0) {
                 ST_WARNING("Failed to wt_update.");
                 return -1;

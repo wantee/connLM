@@ -135,23 +135,22 @@ void wt_updater_clear(wt_updater_t *wt_updater);
  * @ingroup g_updater_wt
  *
  * For WT_UT_FULL: in is [ col x 1 ]; er is [ 1 x row ];
- * For WT_UT_PART: in is [ col x 1 ]; er is [ 1 x (segs[0].e - sges[0].s) ];
- * For WT_UT_SEG: in is [ col x 1 ]; er is [ 1 x (segs[seg_idx].e - sges[seg_idx].s) ];
+ * For WT_UT_PART: in is [ col x 1 ]; er is [ 1 x row_seg.n ];
+ * For WT_UT_SEG: in is [ col x 1 ]; er is [ 1 x row_seg.n ];
  * For WT_UT_ONE_SHOT: in is NULL; er is [ 1 x row ]; updating cols in in_idx of wt;
  *
  * @param[in] wt_updater the wt_updater.
  * @param[in] n_step updating step for wt_updater.
- * @param[in] row_s start row of wt to be updated.
+ * @param[in] row_seg segment of wt row corresponding to error vector.
  * @param[in] er the error vector.
  * @param[in] er_scale scale of error vector.
- * @param[in] er_seg segment of error vector.
  * @param[in] in the input vector.
  * @param[in] in_scale scale of input vector.
- * @param[in] in_idx input indexe (with scale) of input one-shot vector.
+ * @param[in] in_idx input index (with scale) of input one-shot vector.
  * @return non-zero value if any error.
  */
-int wt_update(wt_updater_t *wt_updater, count_t n_step, int row_s,
-        real_t *er, real_t er_scale, st_int_seg_t *er_seg,
+int wt_update(wt_updater_t *wt_updater, count_t n_step, st_int_seg_t* row_seg,
+        real_t *er, real_t er_scale,
         real_t *in, real_t in_scale, st_wt_int_t *in_idx);
 
 /**
