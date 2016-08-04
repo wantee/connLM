@@ -46,6 +46,14 @@ void matXvec(real_t *dst, real_t *mat, real_t *vec,
 void vecXmat(real_t *dst, real_t *vec, real_t *mat,
         int mat_col, int vec_size, real_t scale);
 
+/*
+ * Computing C = alpha * A' * B + beta * C
+ * A is [k X m]; B is [k X n]; C is [m X n]
+ * A' is transpose of A.
+ */
+void matXmat(real_t *C, real_t *A, real_t *B, int m, int n, int k,
+        real_t alpha, real_t beta);
+
 real_t dot_product(real_t *v1, real_t *v2, int vec_size);
 
 void sigmoid(real_t *vec, int vec_size);
@@ -88,6 +96,40 @@ model_filter_t parse_model_filter(const char *mdl_filter,
 const char* model_filter_help();
 
 char* escape_dot(char *out, size_t len, const char *str);
+
+/**
+ * Concatable Matrix
+ *
+ * Matrix built by concating row by row
+ *
+ * @ingroup g_updater_wt
+ */
+typedef struct _concatable_matrix_t_ {
+    real_t *val; /* values of matrix. */
+    int col; /* number of col. */
+    int n_row; /* number of row. */
+    int cap_row; /* capacity of row. */
+} concat_mat_t;
+
+#define safe_concat_mat_destroy(ptr) do {\
+    if((ptr) != NULL) {\
+        concat_mat_destroy(ptr);\
+        safe_free(ptr);\
+        (ptr) = NULL;\
+    }\
+    } while(0)
+
+void concat_mat_destroy(concat_mat_t *mat);
+
+/*
+ * Add one row to concat_mat
+ */
+int concat_mat_add_row(concat_mat_t *mat, real_t *vec, int vec_size);
+
+/*
+ * Add all rows from src to dst
+ */
+int concat_mat_add_mat(concat_mat_t *dst, concat_mat_t *src);
 
 #ifdef __cplusplus
 }

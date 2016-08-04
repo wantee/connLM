@@ -30,34 +30,11 @@
 #include <stutils/st_mem.h>
 
 #include "blas.h"
-#include "utils.h"
 #include "wt_updater.h"
 
-#define N 8
 #define REALLOC_NUM 100
 
-#ifdef _BLAS_BATCH_UPDATE_
-#define safe_concat_mat_destroy(ptr) do {\
-    if((ptr) != NULL) {\
-        concat_mat_destroy(ptr);\
-        safe_free(ptr);\
-        (ptr) = NULL;\
-    }\
-    } while(0)
-void concat_mat_destroy(concat_mat_t *mat)
-{
-    if (mat == NULL) {
-        return;
-    }
-
-    safe_free(mat->val);
-    mat->col = 0;
-    mat->n_row = 0;
-    mat->cap_row = 0;
-}
-#endif
-
-void wt_dirty_destroy(wt_dirty_buf_t *dirty)
+void wt_dirty_destroy(wt_dirty_buf_t *dirty, int n_seg)
 {
     if (dirty == NULL) {
         return;
@@ -72,14 +49,20 @@ void wt_dirty_destroy(wt_dirty_buf_t *dirty)
     dirty->n_id = 0;
 
 #ifdef _BLAS_BATCH_UPDATE_
-    int i;
-    safe_free(dirty->seg_ids);
-    for (i = 0; i < dirty->n_seg_id; i++) {
-        concat_mat_destroy(dirty->buf_in + i);
-        concat_mat_destroy(dirty->buf_er + i);
+    if (dirty->buf_er != NULL) {
+        int i;
+        for (i = 0; i < n_seg; i++) {
+            concat_mat_destroy(dirty->buf_er + i);
+        }
+        safe_free(dirty->buf_er);
     }
-    dirty->n_seg_id = 0;
-    dirty->cap_seg_id = 0;
+    if (dirty->buf_in != NULL) {
+        int i;
+        for (i = 0; i < n_seg; i++) {
+            concat_mat_destroy(dirty->buf_in + i);
+        }
+        safe_free(dirty->buf_in);
+    }
 #endif
 }
 
@@ -100,11 +83,11 @@ void wt_updater_destroy(wt_updater_t *wt_updater)
     wt_updater->row = -1;
     wt_updater->col = -1;
 
+    wt_dirty_destroy(&wt_updater->mini_dirty, wt_updater->n_seg);
+    wt_dirty_destroy(&wt_updater->sync_dirty, wt_updater->n_seg);
+
     safe_free(wt_updater->segs);
     wt_updater->n_seg = 0;
-
-    wt_dirty_destroy(&wt_updater->mini_dirty);
-    wt_dirty_destroy(&wt_updater->sync_dirty);
 
     wt_updater_clear(wt_updater);
 }
@@ -172,6 +155,43 @@ ERR:
     return NULL;
 }
 
+#ifdef _BLAS_BATCH_UPDATE_
+int dirty_set_segs(wt_dirty_buf_t *dirty, int col,
+        st_int_seg_t *segs, int  n_seg)
+{
+    size_t sz;
+    int i;
+
+    ST_CHECK_PARAM(dirty == NULL || segs == NULL || n_seg < 0, -1);
+
+    sz = sizeof(concat_mat_t) * n_seg;
+    dirty->buf_in = (concat_mat_t *)malloc(sz);
+    if (dirty->buf_in == NULL) {
+        ST_WARNING("Failed to mallco buf_in.");
+        return -1;
+    }
+    memset(dirty->buf_in, 0, sz);
+
+    dirty->buf_er = (concat_mat_t *)malloc(sz);
+    if (dirty->buf_er == NULL) {
+        ST_WARNING("Failed to mallco buf_er.");
+        return -1;
+    }
+    memset(dirty->buf_er, 0, sz);
+
+    for (i = 0; i < n_seg; i++) {
+        dirty->buf_in[i].col = col;
+        if (segs[i].s > 0 && segs[i].n > 0) {
+            dirty->buf_er[i].col = segs[i].n;
+        } else {
+            dirty->buf_er[i].col = 0;
+        }
+    }
+
+    return 0;
+}
+#endif
+
 int wt_updater_set_segs(wt_updater_t *wt_updater, st_int_seg_t *segs, int n_seg)
 {
     ST_CHECK_PARAM(wt_updater == NULL || segs == NULL || n_seg <= 0, -1);
@@ -185,6 +205,23 @@ int wt_updater_set_segs(wt_updater_t *wt_updater, st_int_seg_t *segs, int n_seg)
     memcpy(wt_updater->segs, segs, sizeof(st_int_seg_t) * n_seg);
     wt_updater->n_seg = n_seg;
 
+#ifdef _BLAS_BATCH_UPDATE_
+    if (wt_updater->param.mini_batch > 0) {
+        if (dirty_set_segs(&wt_updater->mini_dirty, wt_updater->col,
+                    segs, n_seg) < 0) {
+            ST_WARNING("Failed to dirty_set_segs for mini-batch.");
+            goto ERR;
+        }
+    }
+
+    if (wt_updater->param.sync_size > 0) {
+        if (dirty_set_segs(&wt_updater->sync_dirty, wt_updater->col,
+                    segs, n_seg) < 0) {
+            ST_WARNING("Failed to dirty_set_segs for sync.");
+            goto ERR;
+        }
+    }
+#endif
     return 0;
 
 ERR:
@@ -194,13 +231,25 @@ ERR:
 
 void wt_dirty_clear(wt_dirty_buf_t *dirty)
 {
+#ifdef _BLAS_BATCH_UPDATE_
+    if (dirty->buf_in != NULL) {
+        int i;
+        for (i = 0; i < dirty->n_id; i++) {
+            dirty->buf_in[dirty->ids[i]].n_row = 0;
+        }
+        dirty->in_scale = 0.0;
+    }
+    if (dirty->buf_er != NULL) {
+        int i;
+        for (i = 0; i < dirty->n_id; i++) {
+            dirty->buf_er[dirty->ids[i]].n_row = 0;
+        }
+        dirty->er_scale = 0.0;
+    }
+#endif
+
     dirty->n_seg = 0;
     dirty->n_id = 0;
-
-#ifdef _BLAS_BATCH_UPDATE_
-    dirty->in_scale = 0.0;
-    dirty->er_scale = 0.0;
-#endif
 }
 
 void wt_updater_clear(wt_updater_t *wt_updater)
@@ -209,12 +258,15 @@ void wt_updater_clear(wt_updater_t *wt_updater)
     wt_dirty_clear(&wt_updater->sync_dirty);
 }
 
-static int wt_updater_flush(wt_updater_t *wt_updater,
-        real_t* dst_wt, real_t *src_wt, wt_dirty_buf_t *dirty, real_t *ori_wt)
+static int wt_updater_flush(wt_updater_t *wt_updater, real_t* dst_wt,
+        real_t *src_wt, wt_dirty_buf_t *dirty, real_t *ori_wt, count_t n_step)
 {
     st_int_seg_t *seg;
     int row, col;
     int sz, i, a, j;
+#ifdef _BLAS_BATCH_UPDATE_
+    real_t lr, l2;
+#endif
 
     row = wt_updater->row;
     col = wt_updater->col;
@@ -241,6 +293,26 @@ static int wt_updater_flush(wt_updater_t *wt_updater,
             break;
 
         case WT_UT_SEG:
+#ifdef _BLAS_BATCH_UPDATE_
+            if (dirty->buf_er != NULL) {
+                lr = wt_updater->param.learn_rate;
+                lr *= dirty->er_scale * dirty->in_scale;
+                l2 = 0.0;
+                if (wt_updater->param.l2_gap > 0
+                        && n_step % wt_updater->param.l2_gap == 0) {
+                    l2 = wt_updater->param.l2_penalty;
+                }
+
+                for (a = 0; a < dirty->n_id; a++) {
+                    i = dirty->ids[a];
+                    seg = wt_updater->segs + i;
+                    matXmat(src_wt + seg->s * col, dirty->buf_er[i].val,
+                            dirty->buf_in[i].val, seg->n, col,
+                            dirty->buf_er[i].n_row,
+                            lr, 1.0 - l2);
+                }
+            }
+#endif
             if (ori_wt == NULL) {
                 for (a = 0; a < dirty->n_id; a++) {
                     seg = wt_updater->segs + dirty->ids[a];
@@ -284,7 +356,7 @@ static int wt_updater_flush(wt_updater_t *wt_updater,
                     memcpy(src_wt + dirty->segs[a].s,
                             dst_wt + dirty->segs[a].s, sizeof(real_t) * sz);
                     memcpy(ori_wt + dirty->segs[a].s,
-                           src_wt + dirty->segs[a].s, sizeof(real_t) * sz);
+                            src_wt + dirty->segs[a].s, sizeof(real_t) * sz);
                 }
             }
             break;
@@ -330,7 +402,7 @@ static int wt_updater_acc_wt(wt_updater_t *wt_updater, count_t n_step,
 
     int row, col;
 
-    int i, j, row_start, row_end, er_start, er_end;
+    int i, j, row_start, row_end;
     real_t scale;
 
     lr = wt_updater->param.learn_rate;
@@ -372,7 +444,10 @@ static int wt_updater_acc_wt(wt_updater_t *wt_updater, count_t n_step,
             break;
         case WT_UT_SEG:
 #ifdef _BLAS_BATCH_UPDATE_
-            break; /* Do nothing. */
+            if (wt_updater->param.mini_batch > 0
+                    || wt_updater->param.sync_size > 0) {
+                break; /* Do nothing. */
+            }
 #else
             // needed: in, er, row_seg_id
             /* FALL THROUGH */
@@ -380,13 +455,11 @@ static int wt_updater_acc_wt(wt_updater_t *wt_updater, count_t n_step,
         case WT_UT_FULL:
             // needed: in, er
             if (wt_updater->type == WT_UT_FULL) {
-                row_start = er_start = 0;
-                row_end = er_end = row;
+                row_start = 0;
+                row_end = row;
             } else {
                 row_start = wt_updater->segs[row_seg_id].s;
                 row_end = row_start + wt_updater->segs[row_seg_id].n;
-                er_start = 0;
-                er_end = wt_updater->segs[row_seg_id].n;
             }
 
             if (row_start < 0 || row_start >= row_end) {
@@ -394,38 +467,8 @@ static int wt_updater_acc_wt(wt_updater_t *wt_updater, count_t n_step,
                         row_seg_id);
                 return -1;
             }
-            wt += row_start * col;
-#ifdef _USE_BLAS_
-            cblas_gemm(CblasRowMajor, CblasTrans, CblasNoTrans,
-                    row_end - row_start, col, 1,
-                    lr, er, er_end - er_start, in, col,
-                    1.0 - l2, wt, col);
-#elif defined(_PARAM_UPDATE_UNROLL_)
-            for (j = er_start; j < er_end; j++) {
-                for (i = 0; i < col / N * N; i+=N) {
-                    wt[i + 0] += lr * er[j] * in[i + 0] - l2 * wt[i + 0];
-                    wt[i + 1] += lr * er[j] * in[i + 1] - l2 * wt[i + 1];
-                    wt[i + 2] += lr * er[j] * in[i + 2] - l2 * wt[i + 2];
-                    wt[i + 3] += lr * er[j] * in[i + 3] - l2 * wt[i + 3];
-
-                    wt[i + 4] += lr * er[j] * in[i + 4] - l2 * wt[i + 4];
-                    wt[i + 5] += lr * er[j] * in[i + 5] - l2 * wt[i + 5];
-                    wt[i + 6] += lr * er[j] * in[i + 6] - l2 * wt[i + 6];
-                    wt[i + 7] += lr * er[j] * in[i + 7] - l2 * wt[i + 7];
-                }
-                for (; i < col; i++) {
-                    wt[i] += lr * er[j] * in[i] - l2 * wt[i];
-                }
-                wt += col;
-            }
-#else
-            for (j = er_start; j < er_end; j++) {
-                for (i = 0; i < col; i++) {
-                    wt[i] += lr * er[j] * in[i] - l2 * wt[i];
-                }
-                wt += col;
-            }
-#endif
+            matXmat(wt + row_start * col, er, in, row_end - row_start, col, 1,
+                    lr, 1.0 - l2);
             break;
         default:
             ST_WARNING("Unknown updating type[%d].", wt_updater->type);
@@ -435,85 +478,11 @@ static int wt_updater_acc_wt(wt_updater_t *wt_updater, count_t n_step,
     return 0;
 }
 
-#ifdef _BLAS_BATCH_UPDATE_
-
-static int dirty_ensure_capacity(wt_dirty_buf_t *dirty, int extra)
-{
-    size_t sz;
-
-    ST_CHECK_PARAM(dirty == NULL || extra <= 0, -1);
-
-    if (dirty->n_seg_id + extra <= dirty->cap_seg_id) {
-        return 0;
-    }
-
-    dirty->cap_seg_id += extra + REALLOC_NUM;
-
-    sz = dirty->cap_seg_id * sizeof(seg_with_id_t);
-    dirty->seg_ids = (seg_with_id_t *)realloc(dirty->seg_ids, sz);
-    if (dirty->seg_ids == NULL) {
-        ST_WARNING("Failed to realloc seg_ids");
-        return -1;
-    }
-
-    sz = dirty->cap_seg_id * sizeof(concat_mat_t);
-    dirty->buf_in = (concat_mat_t *)realloc(dirty->buf_in, sz);
-    if (dirty->buf_in == NULL) {
-        ST_WARNING("Failed to realloc buf_in");
-        return -1;
-    }
-
-    dirty->buf_er = (concat_mat_t *)realloc(dirty->buf_er, sz);
-    if (dirty->buf_er == NULL) {
-        ST_WARNING("Failed to realloc buf_er");
-        return -1;
-    }
-
-    return 0;
-}
-
-static int concat_mat_add_row(concat_mat_t *mat, real_t *vec, int vec_size)
-{
-    size_t sz;
-
-    ST_CHECK_PARAM(mat == NULL || vec == NULL || vec_size <= 0, -1);
-
-    if (mat->col == 0) {
-        mat->col = vec_size;
-    } else if (mat->col != vec_size) {
-        ST_WARNING("col not match.");
-        return -1;
-    }
-
-    if (mat->n_row >= mat->cap_row) {
-        mat->cap_row += REALLOC_NUM;
-        sz = mat->cap_row * mat->col * sizeof(real_t);
-        mat->val = (real_t *)st_aligned_realloc(dirty->val, sz, ALIGN_SIZE);
-        if (mat->val == NULL) {
-            ST_WARNING("Failed to realloc val");
-            return -1;
-        }
-    }
-
-    memcpy(mat->val + mat->n_row * mat->col, vec, sizeof(real_t) * mat->col);
-    mat->n_row++;
-
-    return 0;
-}
-
 static int wt_updater_dirty(wt_updater_t *wt_updater, wt_dirty_buf_t *dirty,
         st_int_seg_t *row_seg, int row_seg_id, int in_idx,
         real_t *er, real_t er_scale, real_t *in, real_t in_scale)
-#else
-static int wt_updater_dirty(wt_updater_t *wt_updater, wt_dirty_buf_t *dirty,
-        st_int_seg_t *row_seg, int row_seg_id, int in_idx)
-#endif
 {
     size_t sz;
-
-#ifdef _BLAS_BATCH_UPDATE_
-    seg_with_id_t seg_id;
-#endif
 
     switch (wt_updater->type) {
         case WT_UT_FULL:
@@ -552,50 +521,6 @@ static int wt_updater_dirty(wt_updater_t *wt_updater, wt_dirty_buf_t *dirty,
             break;
 
         case WT_UT_SEG:
-#ifdef _BLAS_BATCH_UPDATE_
-            if (dirty_ensure_capacity(dirty, 1) < 0) {
-                ST_WARNING("Failed to dirty_ensure_capacity");
-                return -1;
-            }
-
-            seg_id.seg = *er_seg;
-            seg_id.id = st_insert((void *)dirty->seg_ids, dirty->cap_seg_id,
-                    sizeof(seg_with_id_t), &dirty->n_seg_id,
-                    &seg_id, cmp_seg_id, NULL);
-            if (seg_id.id < 0) {
-                ST_WARNING("Failed to st_insert.");
-                return -1;
-            }
-
-            if (seg_id.id == dirty->n_seg_id - 1) { // fresh added
-                memset(dirty->buf_er + seg_id.id, 0, sizeof(concat_mat_t));
-                memset(dirty->buf_in + seg_id.id, 0, sizeof(concat_mat_t));
-            }
-
-            if (dirty->er_scale == 0.0) {
-                dirty->er_scale = er_scale;
-            } else if (dirty->er_scale != er_scale) {
-                ST_WARNING("er_scale changed.");
-                return -1;
-            }
-            if (concat_mat_add_row(dirty->buf_er + seg_id.id, er + er_seg->s,
-                        er_seg->e - er_seg->s) < 0) {
-                ST_WARNING("Failed to concat_mat_add_row for buf_er.");
-                return -1;
-            }
-
-            if (dirty->in_scale == 0.0) {
-                dirty->in_scale = in_scale;
-            } else if (dirty->in_scale != in_scale) {
-                ST_WARNING("in_scale changed.");
-                return -1;
-            }
-            if (concat_mat_add_row(dirty->buf_in + seg_id.id, in,
-                        wt_updater->col) < 0) {
-                ST_WARNING("Failed to concat_mat_add_row for buf_in.");
-                return -1;
-            }
-#else
             if (dirty->n_id >= dirty->cap_id) {
                 dirty->cap_id += 100;
                 sz = dirty->cap_id * sizeof(int);
@@ -609,6 +534,32 @@ static int wt_updater_dirty(wt_updater_t *wt_updater, wt_dirty_buf_t *dirty,
                         &dirty->n_id, row_seg_id) < 0) {
                 ST_WARNING("Failed to st_int_insert.");
                 return -1;
+            }
+#ifdef _BLAS_BATCH_UPDATE_
+            if (dirty->buf_er != NULL) {
+                if (dirty->er_scale == 0.0) {
+                    dirty->er_scale = er_scale;
+                } else if (dirty->er_scale != er_scale) {
+                    ST_WARNING("er_scale changed.");
+                    return -1;
+                }
+                if (concat_mat_add_row(dirty->buf_er + row_seg_id, er,
+                            wt_updater->segs[row_seg_id].n) < 0) {
+                    ST_WARNING("Failed to concat_mat_add_row for buf_er.");
+                    return -1;
+                }
+
+                if (dirty->in_scale == 0.0) {
+                    dirty->in_scale = in_scale;
+                } else if (dirty->in_scale != in_scale) {
+                    ST_WARNING("in_scale changed.");
+                    return -1;
+                }
+                if (concat_mat_add_row(dirty->buf_in + row_seg_id, in,
+                            wt_updater->col) < 0) {
+                    ST_WARNING("Failed to concat_mat_add_row for buf_in.");
+                    return -1;
+                }
             }
 #endif
             break;
@@ -654,67 +605,34 @@ static int wt_updater_dirty_cpy(wt_updater_t *wt_updater,
             break;
         case WT_UT_SEG:
 #ifdef _BLAS_BATCH_UPDATE_
-            if (dst->n_seg_id + src->n_seg_id >= dst->cap_seg_id) {
-                dst->cap_seg_id += src->n_seg_id;
-                sz = dst->cap_seg_id * sizeof(seg_with_id_t);
-                dst->seg_ids = (seg_with_id_t *)realloc(dst->seg_ids, sz);
-                if (dst->seg_ids == NULL) {
-                    ST_WARNING("Failed to realloc seg_ids");
-                    return -1;
-                }
-            }
-
-            /* TODO: We could use merge sort here. */
-            for (i = 0; i < src->n_seg_id; i++) {
-                id = st_insert((void *)dst->seg_ids, dst->cap_seg_id,
-                        sizeof(seg_with_id_t), &dst->n_seg_id,
-                        &src->seg_ids + i, cmp_seg_id, NULL);
-                if (id < 0) {
-                    ST_WARNING("Failed to st_insert.");
-                    return -1;
-                }
-
-                if (id >= dst->cap_buf) {
-                    dst->cap_buf += REALLOC_NUM;
-                    sz = dst->cap_buf * wt_updater->col * sizeof(real_t);
-                    dst->buf_in = (real_t *)st_aligned_realloc(dst->buf_in,
-                            sz, ALIGN_SIZE);
-                    if (dst->buf_in == NULL) {
-                        ST_WARNING("Failed to realloc buf_in");
-                        return -1;
-                    }
-
-                    sz = dst->cap_buf * sizeof(real_t)
-                        * (src->seg_ids[i].seg.e - src->seg_ids[i].seg.s);
-                    dst->buf_er = (real_t *)st_aligned_realloc(dst->buf_er,
-                            sz, ALIGN_SIZE);
-                    if (dst->buf_er == NULL) {
-                        ST_WARNING("Failed to realloc buf_er");
-                        return -1;
-                    }
-                }
-
+            if (dst->buf_er != NULL) {
                 if (dst->er_scale == 0.0) {
                     dst->er_scale = src->er_scale;
                 } else if (dst->er_scale != src->er_scale) {
                     ST_WARNING("er_scale changed.");
                     return -1;
                 }
-                memcpy(dst->buf_er + id, src->buf_er + src->seg_ids[i].id,
-                        sizeof(real_t)
-                        * (src->seg_ids[i].seg.e - src->seg_ids[i].seg.s));
-
                 if (dst->in_scale == 0.0) {
                     dst->in_scale = src->in_scale;
                 } else if (dst->in_scale != src->in_scale) {
                     ST_WARNING("in_scale changed.");
                     return -1;
                 }
-                memcpy(dst->buf_in + id, in,
-                        sizeof(real_t) * wt_updater->col);
+                for (i = 0; i < src->n_id; i++) {
+                    if (concat_mat_add_mat(dst->buf_er + src->ids[i],
+                                src->buf_er + src->ids[i]) < 0) {
+                        ST_WARNING("Failed to concat_mat_add_mat for buf_er.");
+                        return -1;
+                    }
+
+                    if (concat_mat_add_mat(dst->buf_in + src->ids[i],
+                                src->buf_in + src->ids[i]) < 0) {
+                        ST_WARNING("Failed to concat_mat_add_mat for buf_er.");
+                        return -1;
+                    }
+                }
             }
-            break;
-#else
+#endif
             /* FALL THROUGH */
         case WT_UT_ONE_SHOT:
             if (dst->n_id + src->n_id > dst->cap_id) {
@@ -734,7 +652,6 @@ static int wt_updater_dirty_cpy(wt_updater_t *wt_updater,
                     return -1;
                 }
             }
-#endif
             break;
         default:
             ST_WARNING("Unknown updating type[%d].", wt_updater->type);
@@ -770,38 +687,22 @@ int wt_update(wt_updater_t *wt_updater, count_t n_step,
     }
 
     if (wt_updater->param.mini_batch > 0) {
-#ifdef _BLAS_BATCH_UPDATE_
         if (wt_updater_dirty(wt_updater, &wt_updater->mini_dirty,
-                    row_seg, in_idx != NULL ? in_idx->i : -1,
+                    row_seg, row_seg_id, in_idx != NULL ? in_idx->i : -1,
                     er, er_scale, in, in_scale) < 0) {
             ST_WARNING("Failed to wt_updater_dirty for minibatch.");
             return -1;
         }
-#else
-        if (wt_updater_dirty(wt_updater, &wt_updater->mini_dirty,
-                row_seg, row_seg_id, in_idx != NULL ? in_idx->i : -1) < 0) {
-            ST_WARNING("Failed to wt_updater_dirty for minibatch.");
-            return -1;
-        }
-#endif
     }
 
     if (wt_updater->param.sync_size > 0) {
         if (wt_updater->param.mini_batch <= 0) {
-#ifdef _BLAS_BATCH_UPDATE_
             if (wt_updater_dirty(wt_updater, &wt_updater->sync_dirty,
-                        row_seg, in_idx != NULL ? in_idx->i : -1,
+                        row_seg, row_seg_id, in_idx != NULL ? in_idx->i : -1,
                         er, er_scale, in, in_scale) < 0) {
                 ST_WARNING("Failed to wt_updater_dirty for sync.");
                 return -1;
             }
-#else
-            if (wt_updater_dirty(wt_updater, &wt_updater->sync_dirty,
-                    row_seg, row_seg_id, in_idx != NULL ? in_idx->i : -1) < 0) {
-                ST_WARNING("Failed to wt_updater_dirty for sync.");
-                return -1;
-            }
-#endif
         }
     }
 
@@ -828,7 +729,7 @@ int wt_flush(wt_updater_t *wt_updater, count_t n_step)
 
             if (wt_updater_flush(wt_updater, wt_updater->wt,
                         wt_updater->delta_wt, &wt_updater->mini_dirty,
-                        NULL) < 0) {
+                        NULL, n_step) < 0) {
                 ST_WARNING("Failed to wt_updater_flush for minibatch.");
                 return -1;
             }
@@ -839,7 +740,7 @@ int wt_flush(wt_updater_t *wt_updater, count_t n_step)
         if (n_step % wt_updater->param.sync_size == 0) {
             if (wt_updater_flush(wt_updater, wt_updater->shared_wt,
                         wt_updater->wt, &wt_updater->sync_dirty,
-                        wt_updater->ori_wt) < 0) {
+                        wt_updater->ori_wt, n_step) < 0) {
                 ST_WARNING("Failed to wt_updater_flush for sync.");
                 return -1;
             }

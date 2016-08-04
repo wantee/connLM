@@ -29,10 +29,13 @@
 #include <stutils/st_macro.h>
 #include <stutils/st_log.h>
 #include <stutils/st_utils.h>
+#include <stutils/st_mem.h>
 
 #include "utils.h"
 #include "fastexp.h"
 #include "blas.h"
+
+#define REALLOC_NUM 100
 
 void matXvec(real_t *dst, real_t *mat, real_t *vec,
         int mat_row, int in_vec_size, real_t scale)
@@ -174,6 +177,49 @@ void vecXmat(real_t *dst, real_t *vec, real_t *mat,
         for (j = 0; j < in_vec_size; j++) {
             dst[i] += vec[j] * mat[i + j*mat_col] * scale;
         }
+    }
+#endif
+}
+
+/*
+ * Computing C = alpha * A' * B + beta * C
+ * A is [k X m]; B is [k X n]; C is [m X n]
+ * A' is transpose of A.
+ */
+void matXmat(real_t *C, real_t *A, real_t *B, int m, int n, int k,
+        real_t alpha, real_t beta)
+{
+#ifdef _USE_BLAS_
+    cblas_gemm(CblasRowMajor, CblasTrans, CblasNoTrans, m, n, k,
+            alpha, A, m, B, n, beta, C, n);
+#elif defined(_PARAM_UPDATE_UNROLL_)
+    int i, j;
+
+    for (j = 0; j < m; j++) {
+        for (i = 0; i < n / N * N; i+=N) {
+            C[i + 0] = alpha * A[j] * B[i + 0] + beta * C[i + 0];
+            C[i + 1] = alpha * A[j] * B[i + 1] + beta * C[i + 1];
+            C[i + 2] = alpha * A[j] * B[i + 2] + beta * C[i + 2];
+            C[i + 3] = alpha * A[j] * B[i + 3] + beta * C[i + 3];
+
+            C[i + 4] = alpha * A[j] * B[i + 4] + beta * C[i + 4];
+            C[i + 5] = alpha * A[j] * B[i + 5] + beta * C[i + 5];
+            C[i + 6] = alpha * A[j] * B[i + 6] + beta * C[i + 6];
+            C[i + 7] = alpha * A[j] * B[i + 7] + beta * C[i + 7];
+        }
+        for (; i < n; i++) {
+            C[i] = alpha * A[j] * B[i] + beta * C[i];
+        }
+        C += n;
+    }
+#else
+    int i, j;
+
+    for (j = 0; j < m; j++) {
+        for (i = 0; i < n; i++) {
+            C[i] = alpha * A[j] * B[i] + beta * C[i];
+        }
+        C += n;
     }
 #endif
 }
@@ -439,4 +485,73 @@ char* escape_dot(char *out, size_t len, const char *str)
     *q = '\0';
 
     return out;
+}
+
+void concat_mat_destroy(concat_mat_t *mat)
+{
+    if (mat == NULL) {
+        return;
+    }
+
+    safe_st_aligned_free(mat->val);
+    mat->col = 0;
+    mat->n_row = 0;
+    mat->cap_row = 0;
+}
+
+int concat_mat_add_row(concat_mat_t *mat, real_t *vec, int vec_size)
+{
+    size_t sz;
+
+    ST_CHECK_PARAM(mat == NULL || vec == NULL || vec_size <= 0, -1);
+
+    if (mat->col == 0) {
+        mat->col = vec_size;
+    } else if (mat->col != vec_size) {
+        ST_WARNING("col not match.");
+        return -1;
+    }
+
+    if (mat->n_row >= mat->cap_row) {
+        mat->cap_row += REALLOC_NUM;
+        sz = mat->cap_row * mat->col * sizeof(real_t);
+        mat->val = (real_t *)st_aligned_realloc(mat->val, sz, ALIGN_SIZE);
+        if (mat->val == NULL) {
+            ST_WARNING("Failed to realloc val");
+            return -1;
+        }
+    }
+
+    memcpy(mat->val + mat->n_row * mat->col, vec, sizeof(real_t) * mat->col);
+    mat->n_row++;
+
+    return 0;
+}
+
+int concat_mat_add_mat(concat_mat_t *dst, concat_mat_t *src)
+{
+    size_t sz;
+
+    ST_CHECK_PARAM(dst == NULL || src == NULL, -1);
+
+    if (src->col != dst->col) {
+        ST_WARNING("col not match.");
+        return -1;
+    }
+
+    if (dst->n_row + src->n_row >= dst->cap_row) {
+        dst->cap_row += src->n_row;
+        sz = dst->cap_row * dst->col * sizeof(real_t);
+        dst->val = (real_t *)st_aligned_realloc(dst->val, sz, ALIGN_SIZE);
+        if (dst->val == NULL) {
+            ST_WARNING("Failed to realloc val");
+            return -1;
+        }
+    }
+
+    memcpy(dst->val + dst->n_row * dst->col, src->val,
+            sizeof(real_t) * src->n_row * src->col);
+    dst->n_row += src->n_row;
+
+    return 0;
 }

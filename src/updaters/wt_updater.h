@@ -33,6 +33,7 @@ extern "C" {
 
 #include <connlm/config.h>
 
+#include "utils.h"
 #include "param.h"
 
 /** @defgroup g_updater_wt Updater for param.
@@ -51,33 +52,6 @@ typedef enum _weight_update_type_t_ {
     WT_UT_SEG, /**< segmently(non-overlap) updated weight. e.g. output wt. */
     WT_UT_ONE_SHOT, /**< one-shot updated weight. e.g. embedding wt. */
 } wt_update_type_t;
-
-#ifdef _BLAS_BATCH_UPDATE_
-/**
- * st_int_seg with an id.
- * @ingroup g_updater_wt
- */
-typedef struct _st_int_seg_with_id_t_ {
-    st_int_seg_t seg; /* the seg. */
-    int id; /* the id. */
-} seg_with_id_t;
-
-/**
- * Concatable Matrix
- *
- * Matrix built by concating row by row
- *
- * @ingroup g_updater_wt
- */
-typedef struct _concatable_matrix_t_ {
-    real_t *val; /* values of matrix. */
-    int col; /* number of col. */
-    int n_row; /* number of row. */
-    int cap_row; /* capacity of row. */
-} concat_mat_t;
-
-
-#endif
 
 /**
  * Store the dirty part of weight.
@@ -185,7 +159,7 @@ void wt_updater_clear(wt_updater_t *wt_updater);
  *
  * For WT_UT_FULL: in is [ col x 1 ]; er is [ 1 x row ];
  * For WT_UT_PART: in is [ col x 1 ]; er is [ 1 x row_seg.n ];
- * For WT_UT_SEG: in is [ col x 1 ]; er is [ 1 x row_seg.n ];
+ * For WT_UT_SEG: in is [ col x 1 ]; er is [ 1 x updater->segs[row_seg_id].n ];
  * For WT_UT_ONE_SHOT: in is NULL; er is [ 1 x row ]; updating cols in in_idx of wt;
  *
  * @param[in] wt_updater the wt_updater.
