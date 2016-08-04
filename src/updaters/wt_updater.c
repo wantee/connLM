@@ -388,6 +388,12 @@ static int wt_updater_acc_wt(wt_updater_t *wt_updater, count_t n_step,
                 er_start = 0;
                 er_end = wt_updater->segs[row_seg_id].n;
             }
+
+            if (row_start < 0 || row_start >= row_end) {
+                ST_WARNING("Error row_seg_id[%d], lead to a invalid seg.",
+                        row_seg_id);
+                return -1;
+            }
             wt += row_start * col;
 #ifdef _USE_BLAS_
             cblas_gemm(CblasRowMajor, CblasTrans, CblasNoTrans,
