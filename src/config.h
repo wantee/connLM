@@ -57,7 +57,7 @@ typedef unsigned long long hash_t;
 #define ALIGN_SIZE 128
 
 #ifdef _USE_BLAS_
-#  define _BLAS_BATCH_UPDATE_
+#  define _BATCH_UPDATE_
 #endif
 
 #define SENT_END "</s>"

@@ -48,7 +48,7 @@ void wt_dirty_destroy(wt_dirty_buf_t *dirty, int n_seg)
     dirty->cap_id = 0;
     dirty->n_id = 0;
 
-#ifdef _BLAS_BATCH_UPDATE_
+#ifdef _BATCH_UPDATE_
     if (dirty->buf_er != NULL) {
         int i;
         for (i = 0; i < n_seg; i++) {
@@ -155,7 +155,7 @@ ERR:
     return NULL;
 }
 
-#ifdef _BLAS_BATCH_UPDATE_
+#ifdef _BATCH_UPDATE_
 int dirty_set_segs(wt_dirty_buf_t *dirty, int col,
         st_int_seg_t *segs, int  n_seg)
 {
@@ -205,7 +205,7 @@ int wt_updater_set_segs(wt_updater_t *wt_updater, st_int_seg_t *segs, int n_seg)
     memcpy(wt_updater->segs, segs, sizeof(st_int_seg_t) * n_seg);
     wt_updater->n_seg = n_seg;
 
-#ifdef _BLAS_BATCH_UPDATE_
+#ifdef _BATCH_UPDATE_
     if (wt_updater->param.mini_batch > 0) {
         if (dirty_set_segs(&wt_updater->mini_dirty, wt_updater->col,
                     segs, n_seg) < 0) {
@@ -231,7 +231,7 @@ ERR:
 
 void wt_dirty_clear(wt_dirty_buf_t *dirty)
 {
-#ifdef _BLAS_BATCH_UPDATE_
+#ifdef _BATCH_UPDATE_
     if (dirty->buf_in != NULL) {
         int i;
         for (i = 0; i < dirty->n_id; i++) {
@@ -264,7 +264,7 @@ static int wt_updater_flush(wt_updater_t *wt_updater, real_t* dst_wt,
     st_int_seg_t *seg;
     int row, col;
     int sz, i, a, j;
-#ifdef _BLAS_BATCH_UPDATE_
+#ifdef _BATCH_UPDATE_
     real_t lr, l2;
 #endif
 
@@ -293,13 +293,13 @@ static int wt_updater_flush(wt_updater_t *wt_updater, real_t* dst_wt,
             break;
 
         case WT_UT_SEG:
-#ifdef _BLAS_BATCH_UPDATE_
+#ifdef _BATCH_UPDATE_
             if (dirty->buf_er != NULL) {
                 lr = wt_updater->param.learn_rate;
                 lr *= dirty->er_scale * dirty->in_scale;
                 l2 = 0.0;
-                if (wt_updater->param.l2_gap > 0
-                        && n_step % wt_updater->param.l2_gap == 0) {
+                if (wt_updater->param.l2_delay > 0
+                        && n_step % wt_updater->param.l2_delay == 0) {
                     l2 = wt_updater->param.l2_penalty;
                 }
 
@@ -411,8 +411,8 @@ static int wt_updater_acc_wt(wt_updater_t *wt_updater, count_t n_step,
     row = wt_updater->row;
     col = wt_updater->col;
 
-    if (wt_updater->param.l2_gap > 0
-            && n_step % wt_updater->param.l2_gap == 0) {
+    if (wt_updater->param.l2_delay > 0
+            && n_step % wt_updater->param.l2_delay == 0) {
         l2 = wt_updater->param.l2_penalty;
     }
 
@@ -443,7 +443,7 @@ static int wt_updater_acc_wt(wt_updater_t *wt_updater, count_t n_step,
             }
             break;
         case WT_UT_SEG:
-#ifdef _BLAS_BATCH_UPDATE_
+#ifdef _BATCH_UPDATE_
             if (wt_updater->param.mini_batch > 0
                     || wt_updater->param.sync_size > 0) {
                 break; /* Do nothing. */
@@ -535,7 +535,7 @@ static int wt_updater_dirty(wt_updater_t *wt_updater, wt_dirty_buf_t *dirty,
                 ST_WARNING("Failed to st_int_insert.");
                 return -1;
             }
-#ifdef _BLAS_BATCH_UPDATE_
+#ifdef _BATCH_UPDATE_
             if (dirty->buf_er != NULL) {
                 if (dirty->er_scale == 0.0) {
                     dirty->er_scale = er_scale;
@@ -604,7 +604,7 @@ static int wt_updater_dirty_cpy(wt_updater_t *wt_updater,
             }
             break;
         case WT_UT_SEG:
-#ifdef _BLAS_BATCH_UPDATE_
+#ifdef _BATCH_UPDATE_
             if (dst->buf_er != NULL) {
                 if (dst->er_scale == 0.0) {
                     dst->er_scale = src->er_scale;

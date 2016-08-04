@@ -68,7 +68,7 @@ typedef struct _weight_dirty_buffer_t_ {
     int cap_id;
     int n_id;
 
-#ifdef _BLAS_BATCH_UPDATE_
+#ifdef _BATCH_UPDATE_
     concat_mat_t *buf_in; /**< sized by n_id and cap_id. */
     real_t in_scale;
     concat_mat_t *buf_er; /**< sized by n_id and cap_id. */

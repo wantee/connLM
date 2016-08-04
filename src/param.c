@@ -36,7 +36,7 @@ static param_t def_param = {
     .learn_rate = 0.1,
     .l1_penalty = 0.0,
     .l2_penalty = 0.0,
-    .l2_gap = 1,
+    .l2_delay = 0,
     .momentum = 0.0,
     .mini_batch = 0,
     .sync_size = 0,
@@ -94,9 +94,9 @@ int param_load(param_t *param, st_opt_t *opt, const char *sec_name,
             "L2 penalty (weight decay)");
     param->l2_penalty = (real_t)d;
 
-    ST_OPT_SEC_GET_INT(opt, sec_name, "L2_GAP", param->l2_gap,
-            param->l2_gap,
-            "if biggen than 0, applying L2 penalty every l2_gap steps");
+    ST_OPT_SEC_GET_INT(opt, sec_name, "L2_DELAY", param->l2_delay,
+            param->l2_delay,
+            "delayed step of applying L2 penalty.");
 
     ST_OPT_SEC_GET_DOUBLE(opt, sec_name, "MOMENTUM", d,
             (double)param->momentum,
