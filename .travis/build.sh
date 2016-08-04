@@ -14,7 +14,7 @@ if [ $TRAVIS_BRANCH == 'master' ]; then
   fi
 
   ( cd egs/tiny; shu-testing $CASE )
-elif [ $TRAVIS_BRANCH == 'graph' ]; then
+elif [ $TRAVIS_BRANCH == 'graph' ] || [ $TRAVIS_BRANCH == 'fc_updater' ]; then
   if [ $CASE -eq 1 ]; then
     echo "Testing miscs"
     make -C src test

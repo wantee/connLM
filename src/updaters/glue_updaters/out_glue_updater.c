@@ -35,13 +35,6 @@
 
 #include "out_glue_updater.h"
 
-void out_glue_updater_destroy(glue_updater_t *glue_updater)
-{
-    if (glue_updater == NULL) {
-        return;
-    }
-}
-
 int out_glue_updater_init(glue_updater_t *glue_updater)
 {
     glue_t *glue;
@@ -50,9 +43,8 @@ int out_glue_updater_init(glue_updater_t *glue_updater)
 
     glue = glue_updater->glue;
 
-    if (strcasecmp(glue_updater->glue->type, OUT_GLUE_NAME) != 0) {
-        ST_WARNING("Not a out glue_updater. [%s]",
-                glue_updater->glue->type);
+    if (strcasecmp(glue->type, OUT_GLUE_NAME) != 0) {
+        ST_WARNING("Not a out glue_updater. [%s]", glue->type);
         return -1;
     }
 

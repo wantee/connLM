@@ -41,13 +41,6 @@ extern "C" {
  */
 
 /**
- * Destroy a out glue_updater.
- * @ingroup g_glue_updater_out
- * @param[in] glue_updater out glue_updater to be destroyed.
- */
-void out_glue_updater_destroy(glue_updater_t* glue_updater);
-
-/**
  * Initialize a out glue_updater.
  * @ingroup g_glue_updater_out
  * @param[in] glue_updater out glue_updater to be initialized.

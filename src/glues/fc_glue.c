@@ -54,7 +54,7 @@ bool fc_glue_check(glue_t *glue, layer_t **layers, int n_layer,
     ST_CHECK_PARAM(glue == NULL, false);
 
     if (strcasecmp(glue->type, FC_GLUE_NAME) != 0) {
-        ST_WARNING("Not a fc_wt glue. [%s]", glue->type);
+        ST_WARNING("Not a fc glue. [%s]", glue->type);
         return false;
     }
 
@@ -86,4 +86,26 @@ bool fc_glue_check(glue_t *glue, layer_t **layers, int n_layer,
     }
 
     return true;
+}
+
+int fc_glue_init_data(glue_t *glue, input_t *input,
+        layer_t **layers, output_t *output)
+{
+    ST_CHECK_PARAM(glue == NULL || glue->wt == NULL
+            || input == NULL, -1);
+
+    if (strcasecmp(glue->type, FC_GLUE_NAME) != 0) {
+        ST_WARNING("Not a fc glue. [%s]", glue->type);
+        return -1;
+    }
+
+    ST_WARNING("%d, %d", layers[glue->out_layers[0]]->size,
+            layers[glue->in_layers[0]]->size);
+    if (wt_init(glue->wt, layers[glue->out_layers[0]]->size,
+                layers[glue->in_layers[0]]->size) < 0) {
+        ST_WARNING("Failed to wt_init.");
+        return -1;
+    }
+
+    return 0;
 }

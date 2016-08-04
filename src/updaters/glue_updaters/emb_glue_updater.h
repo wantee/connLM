@@ -41,13 +41,6 @@ extern "C" {
  */
 
 /**
- * Destroy a emb glue_updater.
- * @ingroup g_glue_updater_emb
- * @param[in] glue_updater emb glue_updater to be destroyed.
- */
-void emb_glue_updater_destroy(glue_updater_t* glue_updater);
-
-/**
  * Initialize a emb glue_updater.
  * @ingroup g_glue_updater_emb
  * @param[in] glue_updater emb glue_updater to be initialized.

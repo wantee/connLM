@@ -190,9 +190,9 @@ int direct_glue_updater_init(glue_updater_t *glue_updater)
     ST_CHECK_PARAM(glue_updater == NULL, -1);
 
     glue= glue_updater->glue;
-    if (strcasecmp(glue_updater->glue->type, DIRECT_GLUE_NAME) != 0) {
-        ST_WARNING("Not a direct glue_updater. [%s]",
-                glue_updater->glue->type);
+
+    if (strcasecmp(glue->type, DIRECT_GLUE_NAME) != 0) {
+        ST_WARNING("Not a direct glue_updater. [%s]", glue->type);
         return -1;
     }
 

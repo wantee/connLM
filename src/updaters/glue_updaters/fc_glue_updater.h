@@ -34,35 +34,45 @@ extern "C" {
 #include "../../glues/fc_glue.h"
 #include "glue_updater.h"
 
-/** @defgroup g_glue_updater_wt wt glue_updater.
+/** @defgroup g_glue_updater_wt full-connected glue_updater.
  * @ingroup g_updater
- * Data structures and functions for wt glue_updater.
+ * Data structures and functions for fc glue_updater.
  */
 
 /**
- * Destroy a wt glue_updater.
+ * Initialize a fc glue_updater.
  * @ingroup g_glue_updater_wt
- * @param[in] glue_updater wt glue_updater to be destroyed.
- */
-void fc_glue_updater_destroy(glue_updater_t* glue_updater);
-
-/**
- * Initialize a wt glue_updater.
- * @ingroup g_glue_updater_wt
- * @param[in] glue_updater wt glue_updater to be initialized.
+ * @param[in] glue_updater fc glue_updater to be initialized.
  * @return non-zero if any error
  */
 int fc_glue_updater_init(glue_updater_t *glue_updater);
 
 /**
  * Feed-forward one word for a fc_glue_updater.
- * @ingroup g_glue_updater_wt
+ * @ingroup g_glue_updater_fc
  * @param[in] glue_updater glue_updater.
  * @param[in] comp_updater the comp_updater.
+ * @param[in, unused] words input words buffer.
+ * @param[in, unused] n_word length of words.
+ * @param[in, unused] tgt_pos position of target word in words buffer.
  * @return non-zero value if any error.
  */
 int fc_glue_updater_forward(glue_updater_t *glue_updater,
-        comp_updater_t *comp_updater);
+        comp_updater_t *comp_updater, int *words, int n_word, int tgt_pos);
+
+/**
+ * Back-prop one word for a fc_glue_updater.
+ * @ingroup g_glue_updater_fc
+ * @param[in] glue_updater glue_updater.
+ * @param[in] n_step updating step.
+ * @param[in] comp_updater the comp_updater.
+ * @param[in, unused] words input words buffer.
+ * @param[in, unused] n_word length of words.
+ * @param[in, unused] tgt_pos position of target word in words buffer.
+ * @return non-zero value if any error.
+ */
+int fc_glue_updater_backprop(glue_updater_t *glue_updater, count_t n_step,
+        comp_updater_t *comp_updater, int *words, int n_word, int tgt_pos);
 
 #ifdef __cplusplus
 }

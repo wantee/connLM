@@ -34,13 +34,6 @@
 
 #include "emb_glue_updater.h"
 
-void emb_glue_updater_destroy(glue_updater_t *glue_updater)
-{
-    if (glue_updater == NULL) {
-        return;
-    }
-}
-
 int emb_glue_updater_init(glue_updater_t *glue_updater)
 {
     glue_t *glue;
@@ -49,9 +42,8 @@ int emb_glue_updater_init(glue_updater_t *glue_updater)
 
     glue = glue_updater->glue;
 
-    if (strcasecmp(glue_updater->glue->type, EMB_GLUE_NAME) != 0) {
-        ST_WARNING("Not a emb glue_updater. [%s]",
-                glue_updater->glue->type);
+    if (strcasecmp(glue->type, EMB_GLUE_NAME) != 0) {
+        ST_WARNING("Not a emb glue_updater. [%s]", glue->type);
         return -1;
     }
 

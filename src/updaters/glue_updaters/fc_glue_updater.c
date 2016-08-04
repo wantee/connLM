@@ -28,83 +28,90 @@
 #include <stutils/st_log.h>
 
 #include "../../glues/fc_glue.h"
+#include "../component_updater.h"
+
 #include "fc_glue_updater.h"
-
-typedef struct _fc_glue_updater_data_t_ {
-} fc_glue_updater_data_t;
-
-#define safe_fc_glue_updater_data_destroy(ptr) do {\
-    if((ptr) != NULL) {\
-        fc_glue_updater_data_destroy((fc_glue_updater_data_t *)ptr);\
-        safe_free(ptr);\
-        (ptr) = NULL;\
-    }\
-    } while(0)
-
-void fc_glue_updater_data_destroy(fc_glue_updater_data_t *data)
-{
-    if (data == NULL) {
-        return;
-    }
-}
-
-fc_glue_updater_data_t* fc_glue_updater_data_init()
-{
-    fc_glue_updater_data_t *data = NULL;
-
-    data = (fc_glue_updater_data_t *)malloc(sizeof(fc_glue_updater_data_t));
-    if (data == NULL) {
-        ST_WARNING("Failed to malloc fc_glue_updater_data.");
-        goto ERR;
-    }
-    memset(data, 0, sizeof(fc_glue_updater_data_t));
-
-    return data;
-ERR:
-    safe_fc_glue_updater_data_destroy(data);
-    return NULL;
-}
-
-void fc_glue_updater_destroy(glue_updater_t *glue_updater)
-{
-    if (glue_updater == NULL) {
-        return;
-    }
-
-    safe_fc_glue_updater_data_destroy(glue_updater->extra);
-}
 
 int fc_glue_updater_init(glue_updater_t *glue_updater)
 {
+    glue_t *glue;
+
     ST_CHECK_PARAM(glue_updater == NULL, -1);
 
-    if (strcasecmp(glue_updater->glue->type, FC_GLUE_NAME) != 0) {
-        ST_WARNING("Not a direct glue_updater. [%s]",
-                glue_updater->glue->type);
+    glue = glue_updater->glue;
+
+    if (strcasecmp(glue->type, FC_GLUE_NAME) != 0) {
+        ST_WARNING("Not a fc glue_updater. [%s]", glue->type);
         return -1;
     }
 
-    glue_updater->extra = (void *)fc_glue_updater_data_init();
-    if (glue_updater->extra == NULL) {
-        ST_WARNING("Failed to fc_glue_updater_data_init.");
+    glue_updater->wt_updater = wt_updater_create(&glue->param, glue->wt->mat,
+            glue->wt->row, glue->wt->col, WT_UT_FULL);
+    if (glue_updater->wt_updater == NULL) {
+        ST_WARNING("Failed to wt_updater_create.");
         goto ERR;
     }
 
     return 0;
 
 ERR:
-    safe_fc_glue_updater_data_destroy(glue_updater->extra);
+    safe_wt_updater_destroy(glue_updater->wt_updater);
     return -1;
 }
 
 int fc_glue_updater_forward(glue_updater_t *glue_updater,
-        comp_updater_t *comp_updater)
+        comp_updater_t *comp_updater, int *words, int n_word, int tgt_pos)
 {
-//    fc_glue_data_t *data = NULL;
+    glue_t *glue;
+    layer_updater_t *in_layer_updater;
+    layer_updater_t *out_layer_updater;
+    wt_updater_t *wt_updater;
 
     ST_CHECK_PARAM(glue_updater == NULL || comp_updater == NULL, -1);
 
-//    data = (fc_glue_data_t *)glue_updater->glue->extra;
+    glue = glue_updater->glue;
+    in_layer_updater = comp_updater->layer_updaters[glue->in_layers[0]];
+    out_layer_updater = comp_updater->layer_updaters[glue->out_layers[0]];
+    wt_updater = glue_updater->wt_updater;
+
+    matXvec(out_layer_updater->ac, wt_updater->wt, in_layer_updater->ac,
+            wt_updater->row, wt_updater->col,
+            glue->in_scales[0] * glue->out_scales[0]);
+
+    return 0;
+}
+
+int fc_glue_updater_backprop(glue_updater_t *glue_updater, count_t n_step,
+        comp_updater_t *comp_updater, int *words, int n_word, int tgt_pos)
+{
+    glue_t *glue;
+    layer_updater_t *in_layer_updater;
+    layer_updater_t *out_layer_updater;
+    wt_updater_t *wt_updater;
+
+    ST_CHECK_PARAM(glue_updater == NULL || comp_updater == NULL, -1);
+
+    glue = glue_updater->glue;
+    in_layer_updater = comp_updater->layer_updaters[glue->in_layers[0]];
+    out_layer_updater = comp_updater->layer_updaters[glue->out_layers[0]];
+    wt_updater = glue_updater->wt_updater;
+
+    if (wt_update(wt_updater, n_step, NULL, -1,
+                out_layer_updater->er, glue->out_scales[0],
+                in_layer_updater->ac, glue->in_scales[0], NULL) < 0) {
+        ST_WARNING("Failed to wt_update.");
+        return -1;
+    }
+
+    if (wt_flush(wt_updater, n_step) < 0) {
+        ST_WARNING("Failed to wt_flush.");
+        return -1;
+    }
+
+    propagate_error(in_layer_updater->er, out_layer_updater->er,
+            wt_updater->wt, wt_updater->col, wt_updater->row,
+            wt_updater->param.er_cutoff,
+            glue->in_scales[0] * glue->out_scales[0]);
 
     return 0;
 }
