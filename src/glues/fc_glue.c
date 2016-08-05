@@ -99,8 +99,6 @@ int fc_glue_init_data(glue_t *glue, input_t *input,
         return -1;
     }
 
-    ST_WARNING("%d, %d", layers[glue->out_layers[0]]->size,
-            layers[glue->in_layers[0]]->size);
     if (wt_init(glue->wt, layers[glue->out_layers[0]]->size,
                 layers[glue->in_layers[0]]->size) < 0) {
         ST_WARNING("Failed to wt_init.");
