@@ -1,0 +1,45 @@
+
+Step 1: Learn Vocab ...
+../steps/learn_vocab.sh --config-file test/tmp/case-19/exp/conf/vocab.conf ./data/train test/tmp/case-19/exp
+../steps/learn_vocab.sh: Learning vocab test/tmp/case-19/exp/vocab.clm from ./data/train
+=================================
+Words:  81350
+Vocab size:  3721
+=================================
+../steps/learn_vocab.sh: Elapse time: 0hr0m1s
+
+Step 4: Train FFNN model ...
+../steps/run_standalone.sh --train-thr 1 --eval-thr 1 ffnn test/tmp/case-19/exp/conf test/tmp/case-19/exp ./data/train ./data/valid ./data/test
+../steps/run_standalone.sh: Stage 1 --- Initialising model...
+../steps/init_model.sh --init-config-file test/tmp/case-19/exp/conf/ffnn/init.conf --output-config-file test/tmp/case-19/exp/conf/ffnn/output.conf test/tmp/case-19/exp/vocab.clm test/tmp/case-19/exp/conf/ffnn/topo test/tmp/case-19/exp/ffnn
+../steps/init_model.sh: Initializing model test/tmp/case-19/exp/vocab.clm to test/tmp/case-19/exp/ffnn/init.clm ...
+../steps/init_model.sh: Elapse time: 0hr0m0s
+../steps/run_standalone.sh: Stage 2 --- Training model...
+../steps/train_model.sh --train-config test/tmp/case-19/exp/conf/ffnn/train.conf --eval-config test/tmp/case-19/exp/conf/eval.conf --train-threads 1 --eval-threads 1 ./data/train ./data/valid test/tmp/case-19/exp/ffnn
+Prerun Valid Entropy: 10.090943
+ITERATION 01: LR(ffnn^emb=0.0001 ffnn^fc=0.001 ffnn^out=0.01), TrEnt 7.881133, W/s 23.7k, CVEnt: 7.751359
+nnet accepted (01.clm)
+ITERATION 02: LR(ffnn^emb=0.0001 ffnn^fc=0.001 ffnn^out=0.01), TrEnt 7.567057, W/s 23.6k, CVEnt: 7.612624
+nnet accepted (02.clm)
+ITERATION 03: LR(ffnn^emb=0.0001 ffnn^fc=0.001 ffnn^out=0.01), TrEnt 7.399628, W/s 23.6k, CVEnt: 7.556627
+nnet accepted (03.clm)
+ITERATION 04: LR(ffnn^emb=0.0001 ffnn^fc=0.001 ffnn^out=0.01), TrEnt 7.322207, W/s 23.8k, CVEnt: 7.511917
+nnet accepted (04.clm)
+ITERATION 05: LR(ffnn^emb=0.0001 ffnn^fc=0.001 ffnn^out=0.01), TrEnt 7.262226, W/s 23.3k, CVEnt: 7.570122
+nnet rejected (05.clm)
+ITERATION 06: LR(ffnn^emb=5e-05 ffnn^fc=0.0005 ffnn^out=0.005), TrEnt 7.248419, W/s 23.8k, CVEnt: 7.576495
+nnet rejected (06.clm)
+../steps/train_model.sh: finished, too small rel. improvement 0
+../steps/train_model.sh: Succeeded training the Neural Network : test/tmp/case-19/exp/ffnn/final.clm
+../steps/train_model.sh: Elapse time: 0hr0m21s
+../steps/train_model.sh: Effective speed: 23.2k words/sec
+../steps/run_standalone.sh: Stage 3 --- Testing model...
+../steps/eval_model.sh --config-file test/tmp/case-19/exp/conf/eval.conf --eval-threads 1 test/tmp/case-19/exp/ffnn ./data/test
+../steps/eval_model.sh: Evaluating model test/tmp/case-19/exp/ffnn/final.clm ...
+=================================
+Eval Entropy: 7.404678
+Eval PPL: 169.445589
+Eval Speed: 116.4k words/sec
+=================================
+../steps/eval_model.sh: Elapse time: 0hr0m1s
+../steps/run_standalone.sh: Elapse time: 0hr0m22s

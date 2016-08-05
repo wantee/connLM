@@ -23,11 +23,16 @@ elif [ $TRAVIS_BRANCH == 'graph' ] || [ $TRAVIS_BRANCH == 'fc_updater' ]; then
 
   if [ $CASE -eq 2 ]; then
     echo "Testing MaxEnt related cases"
-    (cd egs/tiny; shu-testing 4,9,12,14);
+    (cd egs/tiny; shu-testing 4,10,14,17);
   fi
 
   if [ $CASE -eq 3 ]; then
     echo "Testing CBOW related cases"
-    (cd egs/tiny; shu-testing 5,10,13,15);
+    (cd egs/tiny; shu-testing 5,11,15,18);
+  fi
+
+  if [ $CASE -eq 4 ]; then
+    echo "Testing FFNN related cases"
+    (cd egs/tiny; shu-testing 6,12,16,19);
   fi
 fi
