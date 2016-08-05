@@ -13,11 +13,12 @@ eval_thr=1
 realtype="float"
 
 stepnames[1]="Learn Vocab"
-stepnames[2]="Train MaxEnt model"
-stepnames[3]="Train CBOW model"
-stepnames[4]="Train RNN model"
-stepnames[5]="Train RNN+MaxEnt model"
-stepnames[6]="Train RNN~MaxEnt merge model"
+stepnames+=("Train MaxEnt model:maxent")
+stepnames+=("Train CBOW model:cbow")
+stepnames+=("Train FFNN model:ffnn")
+stepnames+=("Train RNN model:rnn")
+stepnames+=("Train RNN+MaxEnt model:rnn+maxent")
+stepnames+=("Train RNN~MaxEnt merge model:rnn~maxent")
 
 steps_len=${#stepnames[*]}
 
@@ -29,7 +30,7 @@ function print_help()
   st=1
   while [ $st -le $steps_len ]
   do
-  echo "   step$st:	${stepnames[$st]}"
+  echo "   step$st:	${stepnames[$st]%%:*}"
   ((st++))
   done
   echo ""
@@ -68,44 +69,14 @@ echo "Step $st: ${stepnames[$st]} ..."
 fi
 ((st++))
 
-if shu-in-range $st $steps; then
-echo
-echo "Step $st: ${stepnames[$st]} ..."
-../steps/run_standalone.sh --train-thr $tr_thr --eval-thr $eval_thr \
-    maxent $conf_dir $exp_dir $train_file $valid_file $test_file || exit 1;
-fi
-((st++))
-
-if shu-in-range $st $steps; then
-echo
-echo "Step $st: ${stepnames[$st]} ..."
-../steps/run_standalone.sh --train-thr $tr_thr --eval-thr $eval_thr \
-    cbow $conf_dir $exp_dir $train_file $valid_file $test_file || exit 1;
-fi
-((st++))
-
-if shu-in-range $st $steps; then
-echo
-echo "Step $st: ${stepnames[$st]} ..."
-../steps/run_standalone.sh --train-thr $tr_thr --eval-thr $eval_thr \
-    rnn $conf_dir $exp_dir $train_file $valid_file $test_file || exit 1;
-fi
-((st++))
-
-if shu-in-range $st $steps; then
-echo
-echo "Step $st: ${stepnames[$st]} ..."
-../steps/run_standalone.sh --train-thr $tr_thr --eval-thr $eval_thr \
-    rnn+maxent $conf_dir $exp_dir $train_file $valid_file $test_file \
-  || exit 1;
-fi
-((st++))
-
-if shu-in-range $st $steps; then
-echo
-echo "Step $st: ${stepnames[$st]} ..."
-../steps/run_cascade.sh --train-thr $tr_thr --eval-thr $eval_thr \
-    maxent~rnn $conf_dir $exp_dir $train_file $valid_file $test_file \
-  || exit 1;
-fi
-((st++))
+while [ $st -le $steps_len ]
+do
+  if shu-in-range $st $steps; then
+  echo
+  echo "Step $st: ${stepnames[$st]%%:*} ..."
+  ../steps/run_standalone.sh --train-thr $tr_thr --eval-thr $eval_thr \
+      ${stepnames[$st]#*:} $conf_dir $exp_dir \
+      $train_file $valid_file $test_file || exit 1;
+  fi
+  ((st++))
+done
