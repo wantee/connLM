@@ -281,6 +281,7 @@ static int wt_updater_flush(wt_updater_t *wt_updater, real_t* dst_wt,
             if (ori_wt == NULL) {
                 for (i = 0; i < sz; i++) {
                     dst_wt[i] += src_wt[i];
+                    src_wt[i] = 0;
                 }
             } else {
                 for (i = 0; i < sz; i++) {
