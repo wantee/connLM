@@ -278,7 +278,6 @@ static int wt_updater_flush(wt_updater_t *wt_updater, real_t* dst_wt,
             } else {
                 sz = row;
             }
-            sz *= sizeof(real_t);
             if (ori_wt == NULL) {
                 for (i = 0; i < sz; i++) {
                     dst_wt[i] += src_wt[i];
@@ -287,8 +286,8 @@ static int wt_updater_flush(wt_updater_t *wt_updater, real_t* dst_wt,
                 for (i = 0; i < sz; i++) {
                     dst_wt[i] += src_wt[i] - ori_wt[i];
                 }
-                memcpy(src_wt, dst_wt, sz);
-                memcpy(ori_wt, src_wt, sz);
+                memcpy(src_wt, dst_wt, sz * sizeof(real_t));
+                memcpy(ori_wt, src_wt, sz * sizeof(real_t));
             }
             break;
 
