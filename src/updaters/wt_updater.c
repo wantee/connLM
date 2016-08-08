@@ -181,7 +181,7 @@ int dirty_set_segs(wt_dirty_buf_t *dirty, int col,
 
     for (i = 0; i < n_seg; i++) {
         dirty->buf_in[i].col = col;
-        if (segs[i].s > 0 && segs[i].n > 0) {
+        if (segs[i].s >= 0 && segs[i].n > 0) {
             dirty->buf_er[i].col = segs[i].n;
         } else {
             dirty->buf_er[i].col = 0;
