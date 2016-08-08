@@ -126,7 +126,6 @@ static int graph_dfs(graph_t *graph, int start,
 
     int l, lk;
     int to;
-    st_stack_id_t s;
 
     void *tmp;
 
@@ -159,18 +158,7 @@ static int graph_dfs(graph_t *graph, int start,
                 return -1;
             }
         } else if(on_stack[to]) {
-            for(s = 1; s <= node_stack->top; s++) {
-                if (st_stack_topn(node_stack, s, &tmp) != ST_STACK_OK) {
-                    ST_WARNING("Failed to st_stack_topn node.[%d]", s);
-                    return -1;
-                }
-
-                graph->glues[(int)(long)tmp]->recur = true;
-
-                if ((int)(long)tmp == to) {
-                    break;
-                }
-            }
+            graph->glues[start]->recur = true;
         }
     }
 
