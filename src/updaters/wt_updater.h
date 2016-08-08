@@ -73,6 +73,7 @@ typedef struct _weight_dirty_buffer_t_ {
     real_t in_scale;
     concat_mat_t *buf_er; /**< sized by n_id and cap_id. */
     real_t er_scale;
+    int n_buf;
 #endif
 } wt_dirty_buf_t;
 

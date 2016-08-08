@@ -34,7 +34,7 @@
 
 #define REALLOC_NUM 100
 
-void wt_dirty_destroy(wt_dirty_buf_t *dirty, int n_seg)
+void wt_dirty_destroy(wt_dirty_buf_t *dirty)
 {
     if (dirty == NULL) {
         return;
@@ -51,18 +51,19 @@ void wt_dirty_destroy(wt_dirty_buf_t *dirty, int n_seg)
 #ifdef _BATCH_UPDATE_
     if (dirty->buf_er != NULL) {
         int i;
-        for (i = 0; i < n_seg; i++) {
+        for (i = 0; i < dirty->n_buf; i++) {
             concat_mat_destroy(dirty->buf_er + i);
         }
         safe_free(dirty->buf_er);
     }
     if (dirty->buf_in != NULL) {
         int i;
-        for (i = 0; i < n_seg; i++) {
+        for (i = 0; i < dirty->n_buf; i++) {
             concat_mat_destroy(dirty->buf_in + i);
         }
         safe_free(dirty->buf_in);
     }
+    dirty->n_buf = 0;
 #endif
 }
 
@@ -83,14 +84,61 @@ void wt_updater_destroy(wt_updater_t *wt_updater)
     wt_updater->row = -1;
     wt_updater->col = -1;
 
-    wt_dirty_destroy(&wt_updater->mini_dirty, wt_updater->n_seg);
-    wt_dirty_destroy(&wt_updater->sync_dirty, wt_updater->n_seg);
+    wt_dirty_destroy(&wt_updater->mini_dirty);
+    wt_dirty_destroy(&wt_updater->sync_dirty);
 
     safe_free(wt_updater->segs);
     wt_updater->n_seg = 0;
 
     wt_updater_clear(wt_updater);
 }
+
+#ifdef _BATCH_UPDATE_
+int dirty_set_segs(wt_dirty_buf_t *dirty, int col,
+        st_int_seg_t *segs, int  n_seg)
+{
+    size_t sz;
+    int i;
+
+    ST_CHECK_PARAM(dirty == NULL || segs == NULL || n_seg < 0, -1);
+
+    safe_free(dirty->buf_er);
+    safe_free(dirty->buf_in);
+
+    sz = sizeof(concat_mat_t) * n_seg;
+    dirty->buf_in = (concat_mat_t *)malloc(sz);
+    if (dirty->buf_in == NULL) {
+        ST_WARNING("Failed to mallco buf_in.");
+        goto ERR;
+    }
+    memset(dirty->buf_in, 0, sz);
+
+    dirty->buf_er = (concat_mat_t *)malloc(sz);
+    if (dirty->buf_er == NULL) {
+        ST_WARNING("Failed to mallco buf_er.");
+        goto ERR;
+    }
+    memset(dirty->buf_er, 0, sz);
+
+    for (i = 0; i < n_seg; i++) {
+        dirty->buf_in[i].col = col;
+        if (segs[i].s >= 0 && segs[i].n > 0) {
+            dirty->buf_er[i].col = segs[i].n;
+        } else {
+            dirty->buf_er[i].col = 0;
+        }
+    }
+    dirty->n_buf = n_seg;
+
+    return 0;
+
+ERR:
+    safe_free(dirty->buf_er);
+    safe_free(dirty->buf_in);
+    dirty->n_buf = 0;
+    return -1;
+}
+#endif
 
 wt_updater_t* wt_updater_create(param_t *param,
         real_t *wt, int row, int col, wt_update_type_t type)
@@ -148,49 +196,35 @@ wt_updater_t* wt_updater_create(param_t *param,
         memset(wt_updater->delta_wt, 0, sz);
     }
 
+#ifdef _BATCH_UPDATE_
+    if (wt_updater->type == WT_UT_FULL) {
+        st_int_seg_t seg;
+
+        seg.s = 0;
+        seg.n = wt_updater->row;
+
+        if (wt_updater->param.mini_batch > 0) {
+            if (dirty_set_segs(&wt_updater->mini_dirty, col, &seg, 1) < 0) {
+                ST_WARNING("Failed to dirty_set_segs for mini-batch.");
+                goto ERR;
+            }
+        }
+
+        if (wt_updater->param.sync_size > 0) {
+            if (dirty_set_segs(&wt_updater->sync_dirty, col, &seg, 1) < 0) {
+                ST_WARNING("Failed to dirty_set_segs for sync.");
+                goto ERR;
+            }
+        }
+    }
+#endif
+
     return wt_updater;
 
 ERR:
     safe_wt_updater_destroy(wt_updater);
     return NULL;
 }
-
-#ifdef _BATCH_UPDATE_
-int dirty_set_segs(wt_dirty_buf_t *dirty, int col,
-        st_int_seg_t *segs, int  n_seg)
-{
-    size_t sz;
-    int i;
-
-    ST_CHECK_PARAM(dirty == NULL || segs == NULL || n_seg < 0, -1);
-
-    sz = sizeof(concat_mat_t) * n_seg;
-    dirty->buf_in = (concat_mat_t *)malloc(sz);
-    if (dirty->buf_in == NULL) {
-        ST_WARNING("Failed to mallco buf_in.");
-        return -1;
-    }
-    memset(dirty->buf_in, 0, sz);
-
-    dirty->buf_er = (concat_mat_t *)malloc(sz);
-    if (dirty->buf_er == NULL) {
-        ST_WARNING("Failed to mallco buf_er.");
-        return -1;
-    }
-    memset(dirty->buf_er, 0, sz);
-
-    for (i = 0; i < n_seg; i++) {
-        dirty->buf_in[i].col = col;
-        if (segs[i].s >= 0 && segs[i].n > 0) {
-            dirty->buf_er[i].col = segs[i].n;
-        } else {
-            dirty->buf_er[i].col = 0;
-        }
-    }
-
-    return 0;
-}
-#endif
 
 int wt_updater_set_segs(wt_updater_t *wt_updater, st_int_seg_t *segs, int n_seg)
 {
@@ -234,15 +268,27 @@ void wt_dirty_clear(wt_dirty_buf_t *dirty)
 #ifdef _BATCH_UPDATE_
     if (dirty->buf_in != NULL) {
         int i;
-        for (i = 0; i < dirty->n_id; i++) {
-            dirty->buf_in[dirty->ids[i]].n_row = 0;
+        if (dirty->n_id > 0) {
+            for (i = 0; i < dirty->n_id; i++) {
+                dirty->buf_in[dirty->ids[i]].n_row = 0;
+            }
+        } else {
+            for (i = 0; i < dirty->n_buf; i++) {
+                dirty->buf_in[i].n_row = 0;
+            }
         }
-        dirty->in_scale = 0.0;
     }
+    dirty->in_scale = 0.0;
     if (dirty->buf_er != NULL) {
         int i;
-        for (i = 0; i < dirty->n_id; i++) {
-            dirty->buf_er[dirty->ids[i]].n_row = 0;
+        if (dirty->n_id > 0) {
+            for (i = 0; i < dirty->n_id; i++) {
+                dirty->buf_er[dirty->ids[i]].n_row = 0;
+            }
+        } else {
+            for (i = 0; i < dirty->n_buf; i++) {
+                dirty->buf_er[i].n_row = 0;
+            }
         }
         dirty->er_scale = 0.0;
     }
@@ -273,6 +319,22 @@ static int wt_updater_flush(wt_updater_t *wt_updater, real_t* dst_wt,
 
     switch (wt_updater->type) {
         case WT_UT_FULL:
+#ifdef _BATCH_UPDATE_
+            if (dirty->buf_er != NULL) {
+                lr = wt_updater->param.learn_rate;
+                lr *= dirty->er_scale * dirty->in_scale;
+                l2 = 0.0;
+                if (wt_updater->param.l2_delay > 0
+                        && n_step % wt_updater->param.l2_delay == 0) {
+                    l2 = wt_updater->param.l2_penalty;
+                }
+
+                matXmat(src_wt, dirty->buf_er[0].val,
+                        dirty->buf_in[0].val, row, col,
+                        dirty->buf_er[0].n_row,
+                        lr, 1.0 - l2);
+            }
+#endif
             if (col > 0) {
                 sz = row * col;
             } else {
@@ -443,17 +505,16 @@ static int wt_updater_acc_wt(wt_updater_t *wt_updater, count_t n_step,
             }
             break;
         case WT_UT_SEG:
+            // needed: in, er, row_seg_id
+            /* FALL THROUGH */
+        case WT_UT_FULL:
+            // needed: in, er
 #ifdef _BATCH_UPDATE_
             if (wt_updater->param.mini_batch > 0
                     || wt_updater->param.sync_size > 0) {
                 break; /* Do nothing. */
             }
-#else
-            // needed: in, er, row_seg_id
-            /* FALL THROUGH */
 #endif
-        case WT_UT_FULL:
-            // needed: in, er
             if (wt_updater->type == WT_UT_FULL) {
                 row_start = 0;
                 row_end = row;
@@ -486,6 +547,33 @@ static int wt_updater_dirty(wt_updater_t *wt_updater, wt_dirty_buf_t *dirty,
 
     switch (wt_updater->type) {
         case WT_UT_FULL:
+#ifdef _BATCH_UPDATE_
+            if (dirty->buf_er != NULL) {
+                if (dirty->er_scale == 0.0) {
+                    dirty->er_scale = er_scale;
+                } else if (dirty->er_scale != er_scale) {
+                    ST_WARNING("er_scale changed.");
+                    return -1;
+                }
+                if (concat_mat_add_row(dirty->buf_er, er,
+                            wt_updater->row) < 0) {
+                    ST_WARNING("Failed to concat_mat_add_row for buf_er.");
+                    return -1;
+                }
+
+                if (dirty->in_scale == 0.0) {
+                    dirty->in_scale = in_scale;
+                } else if (dirty->in_scale != in_scale) {
+                    ST_WARNING("in_scale changed.");
+                    return -1;
+                }
+                if (concat_mat_add_row(dirty->buf_in, in,
+                            wt_updater->col) < 0) {
+                    ST_WARNING("Failed to concat_mat_add_row for buf_in.");
+                    return -1;
+                }
+            }
+#endif
             break;
         case WT_UT_PART:
             if (dirty->n_seg >= dirty->cap_seg) {
@@ -579,6 +667,31 @@ static int wt_updater_dirty_cpy(wt_updater_t *wt_updater,
 
     switch (wt_updater->type) {
         case WT_UT_FULL:
+#ifdef _BATCH_UPDATE_
+            if (dst->buf_er != NULL) {
+                if (dst->er_scale == 0.0) {
+                    dst->er_scale = src->er_scale;
+                } else if (dst->er_scale != src->er_scale) {
+                    ST_WARNING("er_scale changed.");
+                    return -1;
+                }
+                if (dst->in_scale == 0.0) {
+                    dst->in_scale = src->in_scale;
+                } else if (dst->in_scale != src->in_scale) {
+                    ST_WARNING("in_scale changed.");
+                    return -1;
+                }
+                if (concat_mat_add_mat(dst->buf_er, src->buf_er) < 0) {
+                    ST_WARNING("Failed to concat_mat_add_mat for buf_er.");
+                    return -1;
+                }
+
+                if (concat_mat_add_mat(dst->buf_in, src->buf_in) < 0) {
+                    ST_WARNING("Failed to concat_mat_add_mat for buf_in.");
+                    return -1;
+                }
+            }
+#endif
             break;
         case WT_UT_PART:
             if (dst->n_seg + src->n_seg > dst->cap_seg) {
@@ -627,7 +740,7 @@ static int wt_updater_dirty_cpy(wt_updater_t *wt_updater,
 
                     if (concat_mat_add_mat(dst->buf_in + src->ids[i],
                                 src->buf_in + src->ids[i]) < 0) {
-                        ST_WARNING("Failed to concat_mat_add_mat for buf_er.");
+                        ST_WARNING("Failed to concat_mat_add_mat for buf_in.");
                         return -1;
                     }
                 }
