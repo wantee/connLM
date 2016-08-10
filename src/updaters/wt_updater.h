@@ -95,6 +95,9 @@ typedef struct _weight_updater_t_ {
     st_int_seg_t *segs; /**< segs for type == WT_UT_SEG. */
     int n_seg; /**< number of segs. */
 
+    count_t n_step; /**< updating step. */
+    count_t n_flush_step; /**< flushing step. */
+
     wt_dirty_buf_t mini_dirty; /**< dirty buffer for mini-batch. */
     wt_dirty_buf_t sync_dirty; /**< dirty buffer for sync. */
 } wt_updater_t;
@@ -164,7 +167,6 @@ void wt_updater_clear(wt_updater_t *wt_updater);
  * For WT_UT_ONE_SHOT: in is NULL; er is [ 1 x row ]; updating cols in in_idx of wt;
  *
  * @param[in] wt_updater the wt_updater.
- * @param[in] n_step updating step for wt_updater.
  * @param[in] row_seg segment of wt row corresponding to error vector.
  * @param[in] row_seg_id id of segment of wt row, used by WT_UT_SEG.
  * @param[in] er the error vector.
@@ -174,7 +176,7 @@ void wt_updater_clear(wt_updater_t *wt_updater);
  * @param[in] in_idx input index (with scale) of input one-shot vector.
  * @return non-zero value if any error.
  */
-int wt_update(wt_updater_t *wt_updater, count_t n_step,
+int wt_update(wt_updater_t *wt_updater,
         st_int_seg_t* row_seg, int row_seg_id,
         real_t *er, real_t er_scale,
         real_t *in, real_t in_scale, st_wt_int_t *in_idx);
@@ -184,10 +186,9 @@ int wt_update(wt_updater_t *wt_updater, count_t n_step,
  * @ingroup g_updater_wt
  *
  * @param[in] wt_updater the wt_updater.
- * @param[in] n_step updating step for wt_updater.
  * @return non-zero value if any error.
  */
-int wt_flush(wt_updater_t *wt_updater, count_t n_step);
+int wt_flush(wt_updater_t *wt_updater);
 
 #ifdef __cplusplus
 }

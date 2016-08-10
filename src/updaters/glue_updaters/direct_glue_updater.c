@@ -296,7 +296,6 @@ typedef struct _direct_walker_args_t_ {
     hash_t h;
 
     wt_updater_t *wt_updater;
-    count_t n_step;
 } direct_walker_args_t;
 
 static int direct_forward_walker(output_t *output, output_node_id_t node,
@@ -409,7 +408,6 @@ int direct_glue_updater_forward(glue_updater_t *glue_updater,
     dw_args.in_scale = glue_updater->glue->in_scales[0];
     dw_args.out_scale = glue_updater->glue->out_scales[0];
     dw_args.wt_updater = glue_updater->wt_updater;
-    dw_args.n_step = -1;
     for (a = 0; a < data->hash_order; a++) {
         dw_args.h = data->hash[a];
         if (output_walk_through_path(out_updater->output, words[tgt_pos],
@@ -446,7 +444,7 @@ static int direct_backprop_walker(output_t *output, output_node_id_t node,
 
         seg.s = h;
         seg.n = child_e - child_s - 1;
-        if (wt_update(dw_args->wt_updater, dw_args->n_step, &seg, -1,
+        if (wt_update(dw_args->wt_updater, &seg, -1,
                     dw_args->out_updater->er + child_s, dw_args->out_scale,
                     NULL, dw_args->in_scale, NULL) < 0) {
             ST_WARNING("Failed to wt_update.");
@@ -457,7 +455,7 @@ static int direct_backprop_walker(output_t *output, output_node_id_t node,
     return 0;
 }
 
-int direct_glue_updater_backprop(glue_updater_t *glue_updater, count_t n_step,
+int direct_glue_updater_backprop(glue_updater_t *glue_updater,
         comp_updater_t *comp_updater, int *words, int n_word, int tgt_pos)
 {
     dgu_data_t *data;
@@ -476,7 +474,6 @@ int direct_glue_updater_backprop(glue_updater_t *glue_updater, count_t n_step,
     dw_args.in_scale = glue_updater->glue->in_scales[0];
     dw_args.out_scale = glue_updater->glue->out_scales[0];
     dw_args.wt_updater = glue_updater->wt_updater;
-    dw_args.n_step = n_step;
     for (a = 0; a < data->hash_order; a++) {
         dw_args.h = data->hash[a];
         if (output_walk_through_path(out_updater->output, words[tgt_pos],

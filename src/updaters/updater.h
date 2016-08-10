@@ -56,8 +56,6 @@ typedef struct _updater_t_ {
     int ctx_leftmost; /**< leftmost for all input contexts. */
     int ctx_rightmost; /**< rightmost for all input contexts. */
 
-    count_t n_step; /**< updating step. */
-
     bool finalized; /**< whether finalized by caller. */
     bool backprop; /**< whether do backpropagation. */
 } updater_t;

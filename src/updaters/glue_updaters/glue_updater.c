@@ -181,7 +181,7 @@ int glue_updater_forward(glue_updater_t *glue_updater,
     return 0;
 }
 
-int glue_updater_backprop(glue_updater_t *glue_updater, count_t n_step,
+int glue_updater_backprop(glue_updater_t *glue_updater,
         comp_updater_t *comp_updater, int *words, int n_word, int tgt_pos)
 {
     glue_t *glue;
@@ -212,14 +212,14 @@ int glue_updater_backprop(glue_updater_t *glue_updater, count_t n_step,
     }
 
     if (glue_updater->impl != NULL && glue_updater->impl->backprop != NULL) {
-        if (glue_updater->impl->backprop(glue_updater, n_step, comp_updater,
+        if (glue_updater->impl->backprop(glue_updater, comp_updater,
                     words, n_word, tgt_pos) < 0) {
             ST_WARNING("Failed to glue_updater->impl->backprop.[%s]",
                     glue->name);
             return -1;
         }
 
-        if (wt_flush(glue_updater->wt_updater, n_step) < 0) {
+        if (wt_flush(glue_updater->wt_updater) < 0) {
             ST_WARNING("Failed to wt_flush.");
             return -1;
         }
@@ -237,7 +237,7 @@ int glue_updater_finish(glue_updater_t *glue_updater)
     ST_TRACE("Finish: glue[%s]", glue_updater->glue->name);
 #endif
 
-    if (wt_flush(glue_updater->wt_updater, 0) < 0) {
+    if (wt_flush(glue_updater->wt_updater) < 0) {
         ST_WARNING("Failed to wt_flush.");
         return -1;
     }

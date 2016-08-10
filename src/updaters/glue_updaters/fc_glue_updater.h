@@ -64,14 +64,13 @@ int fc_glue_updater_forward(glue_updater_t *glue_updater,
  * Back-prop one word for a fc_glue_updater.
  * @ingroup g_glue_updater_fc
  * @param[in] glue_updater glue_updater.
- * @param[in] n_step updating step.
  * @param[in] comp_updater the comp_updater.
  * @param[in, unused] words input words buffer.
  * @param[in, unused] n_word length of words.
  * @param[in, unused] tgt_pos position of target word in words buffer.
  * @return non-zero value if any error.
  */
-int fc_glue_updater_backprop(glue_updater_t *glue_updater, count_t n_step,
+int fc_glue_updater_backprop(glue_updater_t *glue_updater,
         comp_updater_t *comp_updater, int *words, int n_word, int tgt_pos);
 
 #ifdef __cplusplus

@@ -81,7 +81,7 @@ int fc_glue_updater_forward(glue_updater_t *glue_updater,
     return 0;
 }
 
-int fc_glue_updater_backprop(glue_updater_t *glue_updater, count_t n_step,
+int fc_glue_updater_backprop(glue_updater_t *glue_updater,
         comp_updater_t *comp_updater, int *words, int n_word, int tgt_pos)
 {
     glue_t *glue;
@@ -96,7 +96,7 @@ int fc_glue_updater_backprop(glue_updater_t *glue_updater, count_t n_step,
     out_layer_updater = comp_updater->layer_updaters[glue->out_layers[0]];
     wt_updater = glue_updater->wt_updater;
 
-    if (wt_update(wt_updater, n_step, NULL, -1,
+    if (wt_update(wt_updater, NULL, -1,
                 out_layer_updater->er, glue->out_scales[0],
                 in_layer_updater->ac, glue->in_scales[0], NULL) < 0) {
         ST_WARNING("Failed to wt_update.");

@@ -102,7 +102,6 @@ static int out_glue_updater_forward_node(glue_updater_t *glue_updater,
 typedef struct _out_walker_args_t_ {
     comp_updater_t *comp_updater;
     glue_updater_t *glue_updater;
-    count_t n_step;
 } out_walker_args_t;
 
 static int out_forward_walker(output_t *output, output_node_id_t node,
@@ -133,7 +132,6 @@ int out_glue_updater_forward(glue_updater_t *glue_updater,
 
     ow_args.glue_updater = glue_updater;
     ow_args.comp_updater = comp_updater;
-    ow_args.n_step = -1;
     if (output_walk_through_path(comp_updater->out_updater->output,
                 words[tgt_pos], out_forward_walker, (void *)&ow_args) < 0) {
         ST_WARNING("Failed to output_walk_through_path.");
@@ -176,7 +174,7 @@ static int out_backprop_walker(output_t *output, output_node_id_t node,
             return 0;
         }
 
-        if (wt_update(wt_updater, ow_args->n_step, NULL, node,
+        if (wt_update(wt_updater, NULL, node,
                     out_er + child_s, glue->out_scales[0],
                     in_ac, glue->in_scales[0], NULL) < 0) {
             ST_WARNING("Failed to wt_update.");
@@ -192,7 +190,7 @@ static int out_backprop_walker(output_t *output, output_node_id_t node,
     return 0;
 }
 
-int out_glue_updater_backprop(glue_updater_t *glue_updater, count_t n_step,
+int out_glue_updater_backprop(glue_updater_t *glue_updater,
         comp_updater_t *comp_updater, int *words, int n_word, int tgt_pos)
 {
     out_walker_args_t ow_args;
@@ -222,7 +220,6 @@ int out_glue_updater_backprop(glue_updater_t *glue_updater, count_t n_step,
 
     ow_args.comp_updater = comp_updater;
     ow_args.glue_updater = glue_updater;
-    ow_args.n_step = n_step;
     if (output_walk_through_path(output, words[tgt_pos],
                 out_backprop_walker, (void *)&ow_args) < 0) {
         ST_WARNING("Failed to output_walk_through_path.");

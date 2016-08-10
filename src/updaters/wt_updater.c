@@ -161,6 +161,8 @@ wt_updater_t* wt_updater_create(param_t *param,
     wt_updater->col = col;
     wt_updater->shared_wt = wt;
     wt_updater->type = type;
+    wt_updater->n_step = 0;
+    wt_updater->n_flush_step = 1;
 
     if (wt_updater->col > 0) {
         sz =  wt_updater->row * wt_updater->col;
@@ -289,8 +291,18 @@ void wt_updater_clear(wt_updater_t *wt_updater)
     wt_dirty_clear(&wt_updater->sync_dirty);
 }
 
+static inline real_t get_l2(wt_updater_t *wt_updater)
+{
+    if (wt_updater->param.l2_delay > 0
+            && wt_updater->n_flush_step % wt_updater->param.l2_delay == 0) {
+        return wt_updater->param.l2_penalty;
+    } else {
+        return 0.0;
+    }
+}
+
 static int wt_updater_flush(wt_updater_t *wt_updater, real_t* dst_wt,
-        real_t *src_wt, wt_dirty_buf_t *dirty, real_t *ori_wt, count_t n_step)
+        real_t *src_wt, wt_dirty_buf_t *dirty, real_t *ori_wt)
 {
     st_int_seg_t *seg;
     int row, col;
@@ -308,11 +320,7 @@ static int wt_updater_flush(wt_updater_t *wt_updater, real_t* dst_wt,
             if (dirty->buf_er != NULL) {
                 lr = wt_updater->param.learn_rate;
                 lr *= dirty->er_scale * dirty->in_scale;
-                l2 = 0.0;
-                if (wt_updater->param.l2_delay > 0
-                        && n_step % wt_updater->param.l2_delay == 0) {
-                    l2 = wt_updater->param.l2_penalty;
-                }
+                l2 = get_l2(wt_updater);
 
                 matXmat(src_wt, dirty->buf_er[0].val,
                         dirty->buf_in[0].val, row, col,
@@ -344,11 +352,7 @@ static int wt_updater_flush(wt_updater_t *wt_updater, real_t* dst_wt,
             if (dirty->buf_er != NULL) {
                 lr = wt_updater->param.learn_rate;
                 lr *= dirty->er_scale * dirty->in_scale;
-                l2 = 0.0;
-                if (wt_updater->param.l2_delay > 0
-                        && n_step % wt_updater->param.l2_delay == 0) {
-                    l2 = wt_updater->param.l2_penalty;
-                }
+                l2 = get_l2(wt_updater);
 
                 for (a = 0; a < dirty->n_id; a++) {
                     i = dirty->ids[a];
@@ -439,7 +443,7 @@ static int wt_updater_flush(wt_updater_t *wt_updater, real_t* dst_wt,
     return 0;
 }
 
-static int wt_updater_acc_wt(wt_updater_t *wt_updater, count_t n_step,
+static int wt_updater_acc_wt(wt_updater_t *wt_updater,
         real_t *wt, st_int_seg_t *row_seg, int row_seg_id,
         real_t *er, real_t er_scale,
         real_t *in, real_t in_scale, st_wt_int_t *in_idx)
@@ -454,14 +458,10 @@ static int wt_updater_acc_wt(wt_updater_t *wt_updater, count_t n_step,
 
     lr = wt_updater->param.learn_rate;
     lr *= er_scale * in_scale;
-    l2 = 0.0;
     row = wt_updater->row;
     col = wt_updater->col;
 
-    if (wt_updater->param.l2_delay > 0
-            && n_step % wt_updater->param.l2_delay == 0) {
-        l2 = wt_updater->param.l2_penalty;
-    }
+    l2 = get_l2(wt_updater);
 
     switch (wt_updater->type) {
         case WT_UT_PART:
@@ -758,7 +758,7 @@ static int wt_updater_dirty_cpy(wt_updater_t *wt_updater,
     return 0;
 }
 
-int wt_update(wt_updater_t *wt_updater, count_t n_step,
+int wt_update(wt_updater_t *wt_updater,
         st_int_seg_t *row_seg, int row_seg_id,
         real_t *er, real_t er_scale,
         real_t *in, real_t in_scale, st_wt_int_t *in_idx)
@@ -777,7 +777,7 @@ int wt_update(wt_updater_t *wt_updater, count_t n_step,
         wt = wt_updater->wt;
     }
 
-    if (wt_updater_acc_wt(wt_updater, n_step, wt, row_seg, row_seg_id,
+    if (wt_updater_acc_wt(wt_updater, wt, row_seg, row_seg_id,
                 er, er_scale, in, in_scale, in_idx) < 0) {
         ST_WARNING("Failed to wt_updater_acc_wt.");
         return -1;
@@ -806,7 +806,7 @@ int wt_update(wt_updater_t *wt_updater, count_t n_step,
     return 0;
 }
 
-int wt_flush(wt_updater_t *wt_updater, count_t n_step)
+int wt_flush(wt_updater_t *wt_updater)
 {
     ST_CHECK_PARAM(wt_updater == NULL, -1);
 
@@ -814,8 +814,10 @@ int wt_flush(wt_updater_t *wt_updater, count_t n_step)
     ST_TRACE("Flush weight");
 #endif
 
+    wt_updater->n_step++;
+
     if (wt_updater->param.mini_batch > 0) {
-        if (n_step % wt_updater->param.mini_batch == 0) {
+        if (wt_updater->n_step % wt_updater->param.mini_batch == 0) {
             if (wt_updater->param.sync_size > 0) {
                 if (wt_updater_dirty_cpy(wt_updater,
                         &wt_updater->sync_dirty, &wt_updater->mini_dirty) < 0) {
@@ -826,18 +828,22 @@ int wt_flush(wt_updater_t *wt_updater, count_t n_step)
 
             if (wt_updater_flush(wt_updater, wt_updater->wt,
                         wt_updater->delta_wt, &wt_updater->mini_dirty,
-                        NULL, n_step) < 0) {
+                        NULL) < 0) {
                 ST_WARNING("Failed to wt_updater_flush for minibatch.");
                 return -1;
             }
+
+            wt_updater->n_flush_step++;
         }
+    } else {
+        wt_updater->n_flush_step++;
     }
 
     if (wt_updater->param.sync_size > 0) {
-        if (n_step % wt_updater->param.sync_size == 0) {
+        if (wt_updater->n_step % wt_updater->param.sync_size == 0) {
             if (wt_updater_flush(wt_updater, wt_updater->shared_wt,
                         wt_updater->wt, &wt_updater->sync_dirty,
-                        wt_updater->ori_wt, n_step) < 0) {
+                        wt_updater->ori_wt) < 0) {
                 ST_WARNING("Failed to wt_updater_flush for sync.");
                 return -1;
             }

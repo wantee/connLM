@@ -125,14 +125,13 @@ int comp_updater_forward(comp_updater_t *comp_updater, int *words,
  * Back-propagate one word for a comp_updater.
  * @ingroup g_updater_comp
  * @param[in] comp_updater the comp_updater.
- * @param[in] n_step updating step.
  * @param[in] words input words buffer.
  * @param[in] n_word length of words.
  * @param[in] tgt_pos position of target word in words buffer.
  * @see comp_updater_forward
  * @return non-zero value if any error.
  */
-int comp_updater_backprop(comp_updater_t *comp_updater, count_t n_step,
+int comp_updater_backprop(comp_updater_t *comp_updater,
         int *words, int n_word, int tgt_pos);
 
 /**

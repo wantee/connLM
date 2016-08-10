@@ -119,7 +119,7 @@ static int updater_backprop(updater_t *updater)
     }
 
     for (c = 0; c < updater->connlm->num_comp; c++) {
-        if (comp_updater_backprop(updater->comp_updaters[c], updater->n_step,
+        if (comp_updater_backprop(updater->comp_updaters[c],
                     updater->words, updater->n_word, updater->tgt_pos) < 0) {
             ST_WARNING("Failed to comp_updater_backprop[%s].",
                     updater->connlm->comps[c]->name);
@@ -194,7 +194,6 @@ void updater_destroy(updater_t *updater)
     updater->n_word = 0;
     updater->cap_word = 0;
     updater->tgt_pos = 0;
-    updater->n_step = 0;
 }
 
 updater_t* updater_create(connlm_t *connlm)
@@ -262,8 +261,6 @@ int updater_setup(updater_t *updater, bool backprop)
         ST_WARNING("Failed to out_updater_setup.");
         goto ERR;
     }
-
-    updater->n_step = 0;
 
     updater->ctx_leftmost = 0;
     updater->ctx_rightmost = 0;
@@ -386,8 +383,6 @@ int updater_step(updater_t *updater)
 #if _CONNLM_TRACE_PROCEDURE_
     ST_TRACE("Step: word[%d]", word);
 #endif
-
-    updater->n_step++;
 
     if (updater_start(updater) < 0) {
         ST_WARNING("updater_start.");
