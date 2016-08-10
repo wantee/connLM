@@ -229,11 +229,6 @@ int out_glue_updater_backprop(glue_updater_t *glue_updater, count_t n_step,
         goto ERR;
     }
 
-    if (wt_flush(glue_updater->wt_updater, n_step) < 0) {
-        ST_WARNING("Failed to wt_flush.");
-        goto ERR;
-    }
-
     return 0;
 
 ERR:

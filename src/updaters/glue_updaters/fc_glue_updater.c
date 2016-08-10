@@ -103,11 +103,6 @@ int fc_glue_updater_backprop(glue_updater_t *glue_updater, count_t n_step,
         return -1;
     }
 
-    if (wt_flush(wt_updater, n_step) < 0) {
-        ST_WARNING("Failed to wt_flush.");
-        return -1;
-    }
-
     propagate_error(in_layer_updater->er, out_layer_updater->er,
             wt_updater->wt, wt_updater->col, wt_updater->row,
             wt_updater->param.er_cutoff,
