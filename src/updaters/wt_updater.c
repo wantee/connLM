@@ -209,13 +209,6 @@ wt_updater_t* wt_updater_create(param_t *param,
                 goto ERR;
             }
         }
-
-        if (wt_updater->param.sync_size > 0) {
-            if (dirty_set_segs(&wt_updater->sync_dirty, col, &seg, 1) < 0) {
-                ST_WARNING("Failed to dirty_set_segs for sync.");
-                goto ERR;
-            }
-        }
     }
 #endif
 
@@ -244,14 +237,6 @@ int wt_updater_set_segs(wt_updater_t *wt_updater, st_int_seg_t *segs, int n_seg)
         if (dirty_set_segs(&wt_updater->mini_dirty, wt_updater->col,
                     segs, n_seg) < 0) {
             ST_WARNING("Failed to dirty_set_segs for mini-batch.");
-            goto ERR;
-        }
-    }
-
-    if (wt_updater->param.sync_size > 0) {
-        if (dirty_set_segs(&wt_updater->sync_dirty, wt_updater->col,
-                    segs, n_seg) < 0) {
-            ST_WARNING("Failed to dirty_set_segs for sync.");
             goto ERR;
         }
     }
@@ -510,8 +495,7 @@ static int wt_updater_acc_wt(wt_updater_t *wt_updater, count_t n_step,
         case WT_UT_FULL:
             // needed: in, er
 #ifdef _BATCH_UPDATE_
-            if (wt_updater->param.mini_batch > 0
-                    || wt_updater->param.sync_size > 0) {
+            if (wt_updater->param.mini_batch > 0) {
                 break; /* Do nothing. */
             }
 #endif
