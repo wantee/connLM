@@ -124,7 +124,7 @@ static int graph_dfs(graph_t *graph, int start,
 {
     node_t *node;
 
-    int l, lk;
+    int l, lk, recur_lk = -1;
     int to;
 
     void *tmp;
@@ -159,6 +159,10 @@ static int graph_dfs(graph_t *graph, int start,
             }
         } else if(on_stack[to]) {
             graph->glues[start]->recur = true;
+            /* FIXME: we assume that there will not be multiple recur
+               links for one node. */
+            ST_WARNING("%d, %d", start, to);
+            recur_lk = lk;
         }
     }
 
@@ -170,7 +174,11 @@ static int graph_dfs(graph_t *graph, int start,
     ST_DEBUG("Node pop: %d", (int)(long)tmp);
 #endif
     on_stack[start] = false;
-    post_order[*post_i] = start;
+    if (recur_lk >= 0) {
+        post_order[*post_i] = -recur_lk;// store the recur_lk as negtive value
+    } else {
+        post_order[*post_i] = start;
+    }
     *post_i += 1;
 
     return 0;
@@ -199,7 +207,7 @@ int* graph_sort(graph_t *graph)
         goto ERR;
     }
     for (n = 0; n < graph->num_node; n++) {
-        post_order[n] = -1;
+        post_order[n] = -graph->num_node;
     }
 
     if (graph->num_link <= 0) {
