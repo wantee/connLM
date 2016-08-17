@@ -28,7 +28,6 @@
 
 #include <stutils/st_utils.h>
 
-#include "glues/sum_glue.h"
 #include "glues/direct_glue.h"
 #include "connlm.h"
 
@@ -138,15 +137,8 @@ static int unit_test_connlm_read_topo()
                 .glue_refs = {
                     {
                         .type = "direct",
-                        .num_in_layer = 1,
-                        .in_layers = {1},
-                        .in_offsets = {0},
-                        .in_scales = {1.0},
-                        .num_out_layer = 1,
-                        .out_layers = {0},
-                        .out_offsets = {0},
-                        .out_scales = {1.0},
-                        .sum_glue = {true, true},
+                        .in_layer = 1,
+                        .out_layer = 0,
                         .direct_glue = {2000000},
                     },
                 },

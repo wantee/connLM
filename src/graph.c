@@ -342,7 +342,6 @@ graph_t* graph_construct(layer_t **layers, int n_layer,
 
     size_t sz;
     int l;
-    int m;
     int g, gg;
     int lk;
 
@@ -364,14 +363,12 @@ graph_t* graph_construct(layer_t **layers, int n_layer,
     for (g = 0; g < n_glue; g++) {
         graph->nodes[g].links = NULL;
         graph->nodes[g].num_link = 0;
-        for (l = 0; l < glues[g]->num_in_layer; l++) {
-            if (strcasecmp(layers[glues[g]->in_layers[l]]->type,
-                        INPUT_LAYER_NAME) == 0) {
-                if (graph->root != -1) {
-                    ST_WARNING("Too many weights out from input layer");
-                }
-                graph->root = g;
+        if (strcasecmp(layers[glues[g]->in_layer]->type,
+                    INPUT_LAYER_NAME) == 0) {
+            if (graph->root != -1) {
+                ST_WARNING("Too many weights out from input layer");
             }
+            graph->root = g;
         }
     }
     graph->num_node = n_glue;
@@ -396,11 +393,9 @@ graph_t* graph_construct(layer_t **layers, int n_layer,
     memset(out_glues, 0, sz);
 
     for (g = 0; g < n_glue; g++) {
-        for (l = 0; l < glues[g]->num_in_layer; l++) {
-            if (glue_set_add(out_glues + glues[g]->in_layers[l], g) < 0) {
-                ST_WARNING("Failed to out_glue_add.");
-                goto ERR;
-            }
+        if (glue_set_add(out_glues + glues[g]->in_layer, g) < 0) {
+            ST_WARNING("Failed to out_glue_add.");
+            goto ERR;
         }
     }
 #ifdef _GRAPH_DEBUG_
@@ -416,21 +411,19 @@ graph_t* graph_construct(layer_t **layers, int n_layer,
 #endif
 
     for (g = 0; g < n_glue; g++) {
-        for (m = 0; m < glues[g]->num_out_layer; m++) {
-            l = glues[g]->out_layers[m];
-            if (out_glues[l].glues != NULL) {
-                for (gg = 0; gg < out_glues[l].num_glue; gg++) {
-                    lk = graph_add_link(graph);
-                    if (lk == -1) {
-                        ST_WARNING("Failed to graph_add_link.");
-                        goto ERR;
-                    }
-                    graph->links[lk].to = out_glues[l].glues[gg];
+        l = glues[g]->out_layer;
+        if (out_glues[l].glues != NULL) {
+            for (gg = 0; gg < out_glues[l].num_glue; gg++) {
+                lk = graph_add_link(graph);
+                if (lk == -1) {
+                    ST_WARNING("Failed to graph_add_link.");
+                    goto ERR;
+                }
+                graph->links[lk].to = out_glues[l].glues[gg];
 
-                    if (node_add_link(graph->nodes + g, lk) == -1) {
-                        ST_WARNING("Failed to node_add_link.");
-                        goto ERR;
-                    }
+                if (node_add_link(graph->nodes + g, lk) == -1) {
+                    ST_WARNING("Failed to node_add_link.");
+                    goto ERR;
                 }
             }
         }

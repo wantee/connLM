@@ -52,15 +52,8 @@ static int unit_test_glue_read_topo()
     glue_ref_t ref;
     glue_ref_t std_ref = {
         .type = "direct",
-        .num_in_layer = 1,
-        .in_layers = {1},
-        .in_offsets = {0},
-        .in_scales = {1.0},
-        .num_out_layer = 1,
-        .out_layers = {0},
-        .out_offsets = {0},
-        .out_scales = {1.0},
-        .sum_glue = {true, true},
+        .in_layer = 1,
+        .out_layer = 0,
         .direct_glue = {2000000},
     };
     int id = 0;

@@ -58,28 +58,18 @@ bool fc_glue_check(glue_t *glue, layer_t **layers, int n_layer,
         return false;
     }
 
-    if (glue->num_out_layer != 1) {
-        ST_WARNING("fc_wt glue: num_out_layer shoule be equal to 1.");
-        return false;
-    }
-
-    if (glue->num_in_layer != 1) {
-        ST_WARNING("fc_wt glue: num_in_layer shoule be equal to 1.");
-        return false;
-    }
-
     if (layers == NULL) {
         ST_WARNING("No layers.");
         return false;
     }
 
-    if (strcasecmp(layers[glue->in_layers[0]]->type,
+    if (strcasecmp(layers[glue->in_layer]->type,
                 INPUT_LAYER_NAME) == 0) {
         ST_WARNING("fc_wt glue: in layer should not be input layer.");
         return false;
     }
 
-    if (strcasecmp(layers[glue->out_layers[0]]->type,
+    if (strcasecmp(layers[glue->out_layer]->type,
                 OUTPUT_LAYER_NAME) == 0) {
         ST_WARNING("fc_wt glue: out layer should not be output layer.");
         return false;
@@ -91,16 +81,15 @@ bool fc_glue_check(glue_t *glue, layer_t **layers, int n_layer,
 int fc_glue_init_data(glue_t *glue, input_t *input,
         layer_t **layers, output_t *output)
 {
-    ST_CHECK_PARAM(glue == NULL || glue->wt == NULL
-            || input == NULL, -1);
+    ST_CHECK_PARAM(glue == NULL || glue->wt == NULL || input == NULL, -1);
 
     if (strcasecmp(glue->type, FC_GLUE_NAME) != 0) {
         ST_WARNING("Not a fc glue. [%s]", glue->type);
         return -1;
     }
 
-    if (wt_init(glue->wt, layers[glue->out_layers[0]]->size,
-                layers[glue->in_layers[0]]->size) < 0) {
+    if (wt_init(glue->wt, layers[glue->out_layer]->size,
+                layers[glue->in_layer]->size) < 0) {
         ST_WARNING("Failed to wt_init.");
         return -1;
     }

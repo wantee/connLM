@@ -80,13 +80,13 @@ static int out_glue_updater_forward_node(glue_updater_t *glue_updater,
 
     glue = glue_updater->glue;
     output = comp_updater->out_updater->output;
-    in_layer_updater = comp_updater->layer_updaters[glue->in_layers[0]];
+    in_layer_updater = comp_updater->layer_updaters[glue->in_layer];
 
     wt = glue_updater->wt_updater->wt;
     in_ac = in_layer_updater->ac;
     out_ac = comp_updater->out_updater->ac;
     layer_size = glue_updater->wt_updater->col;
-    scale = glue->in_scales[0] * glue->out_scales[0];
+    scale = comp_updater->comp->comp_scale;
 
     if (output->norm == ON_SOFTMAX) {
         if (child_e - child_s - 1 > 0) {
@@ -160,23 +160,22 @@ static int out_backprop_walker(output_t *output, output_node_id_t node,
 
     glue = ow_args->glue_updater->glue;
     wt_updater = ow_args->glue_updater->wt_updater;
-    in_layer_updater = ow_args->comp_updater->layer_updaters[glue->in_layers[0]];
+    in_layer_updater = ow_args->comp_updater->layer_updaters[glue->in_layer];
 
     wt = wt_updater->wt;
     in_er = in_layer_updater->er;
     in_ac = in_layer_updater->ac;
     out_er = ow_args->comp_updater->out_updater->er;
     layer_size = wt_updater->col;
-    scale = glue->in_scales[0] * glue->out_scales[0];
+    scale = ow_args->comp_updater->comp->comp_scale;
 
     if (output->norm == ON_SOFTMAX) {
         if (child_e <= child_s + 1) {
             return 0;
         }
 
-        if (wt_update(wt_updater, NULL, node,
-                    out_er + child_s, glue->out_scales[0],
-                    in_ac, glue->in_scales[0], NULL) < 0) {
+        if (wt_update(wt_updater, NULL, node, out_er + child_s, scale,
+                    in_ac, 1.0, NULL) < 0) {
             ST_WARNING("Failed to wt_update.");
             return -1;
         }

@@ -58,28 +58,18 @@ bool emb_glue_check(glue_t *glue, layer_t **layers, int n_layer,
         return false;
     }
 
-    if (glue->num_out_layer != 1) {
-        ST_WARNING("emb glue: num_out_layer shoule be equal to 1.");
-        return false;
-    }
-
-    if (glue->num_in_layer != 1) {
-        ST_WARNING("emb glue: num_in_layer shoule be equal to 1.");
-        return false;
-    }
-
     if (layers == NULL) {
         ST_WARNING("No layers.");
         return false;
     }
 
-    if (strcasecmp(layers[glue->in_layers[0]]->type,
+    if (strcasecmp(layers[glue->in_layer]->type,
                 INPUT_LAYER_NAME) != 0) {
         ST_WARNING("emb glue: in layer should be input layer.");
         return false;
     }
 
-    if (strcasecmp(layers[glue->out_layers[0]]->type,
+    if (strcasecmp(layers[glue->out_layer]->type,
                 OUTPUT_LAYER_NAME) == 0) {
         ST_WARNING("emb glue: out layer should not be output layer.");
         return false;
@@ -97,7 +87,7 @@ bool emb_glue_check(glue_t *glue, layer_t **layers, int n_layer,
     }
 
     if (input->combine == IC_CONCAT) {
-        if (layers[glue->out_layers[0]]->size % input->n_ctx != 0) {
+        if (layers[glue->out_layer]->size % input->n_ctx != 0) {
             ST_WARNING("emb glue: can not apply CONCAT combination. "
                     "hidden layer size can not divided by context number.");
             return false;
@@ -121,9 +111,9 @@ int emb_glue_init_data(glue_t *glue, input_t *input,
     }
 
     if (input->combine == IC_CONCAT) {
-        col = layers[glue->out_layers[0]]->size / input->n_ctx;
+        col = layers[glue->out_layer]->size / input->n_ctx;
     } else {
-        col = layers[glue->out_layers[0]]->size;
+        col = layers[glue->out_layer]->size;
     }
 
     if (wt_init(glue->wt, input->input_size, col) < 0) {

@@ -291,8 +291,7 @@ int direct_glue_updater_setup(glue_updater_t *glue_updater,
 
 typedef struct _direct_walker_args_t_ {
     out_updater_t *out_updater;
-    real_t in_scale;
-    real_t out_scale;
+    real_t comp_scale;
     hash_t h;
 
     wt_updater_t *wt_updater;
@@ -311,7 +310,7 @@ static int direct_forward_walker(output_t *output, output_node_id_t node,
 
     dw_args = (direct_walker_args_t *) args;
 
-    scale = dw_args->in_scale * dw_args->out_scale;
+    scale = dw_args->comp_scale;
     hash_wt = dw_args->wt_updater->wt;
 
     if (output->norm == ON_SOFTMAX) {
@@ -405,8 +404,7 @@ int direct_glue_updater_forward(glue_updater_t *glue_updater,
     }
 
     dw_args.out_updater = out_updater;
-    dw_args.in_scale = glue_updater->glue->in_scales[0];
-    dw_args.out_scale = glue_updater->glue->out_scales[0];
+    dw_args.comp_scale = comp_updater->comp->comp_scale;
     dw_args.wt_updater = glue_updater->wt_updater;
     for (a = 0; a < data->hash_order; a++) {
         dw_args.h = data->hash[a];
@@ -445,8 +443,8 @@ static int direct_backprop_walker(output_t *output, output_node_id_t node,
         seg.s = h;
         seg.n = child_e - child_s - 1;
         if (wt_update(dw_args->wt_updater, &seg, -1,
-                    dw_args->out_updater->er + child_s, dw_args->out_scale,
-                    NULL, dw_args->in_scale, NULL) < 0) {
+                    dw_args->out_updater->er + child_s, dw_args->comp_scale,
+                    NULL, 1.0, NULL) < 0) {
             ST_WARNING("Failed to wt_update.");
             return -1;
         }
@@ -471,8 +469,7 @@ int direct_glue_updater_backprop(glue_updater_t *glue_updater,
     out_updater = comp_updater->out_updater;
 
     dw_args.out_updater = out_updater;
-    dw_args.in_scale = glue_updater->glue->in_scales[0];
-    dw_args.out_scale = glue_updater->glue->out_scales[0];
+    dw_args.comp_scale = comp_updater->comp->comp_scale;
     dw_args.wt_updater = glue_updater->wt_updater;
     for (a = 0; a < data->hash_order; a++) {
         dw_args.h = data->hash[a];
@@ -527,7 +524,7 @@ int direct_glue_updater_forward_out(glue_updater_t *glue_updater,
     }
 
     hash_sz = glue_updater->glue->wt->row;
-    scale = glue_updater->glue->in_scales[0] * glue_updater->glue->out_scales[0];
+    scale = comp_updater->comp->comp_scale;
     hash_wt = glue_updater->wt_updater->wt;
 
     if (output->norm == ON_SOFTMAX) {

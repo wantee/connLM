@@ -58,29 +58,17 @@ bool out_glue_check(glue_t *glue, layer_t **layers, int n_layer,
         return false;
     }
 
-    if (glue->num_out_layer != 1) {
-        ST_WARNING("out glue: num_out_layer shoule be equal to 1.");
-        return false;
-    }
-
-    if (glue->num_in_layer != 1) {
-        ST_WARNING("out glue: num_in_layer shoule be equal to 1.");
-        return false;
-    }
-
     if (layers == NULL) {
         ST_WARNING("No layers.");
         return false;
     }
 
-    if (strcasecmp(layers[glue->in_layers[0]]->type,
-                INPUT_LAYER_NAME) == 0) {
+    if (strcasecmp(layers[glue->in_layer]->type, INPUT_LAYER_NAME) == 0) {
         ST_WARNING("out glue: in layer should not be input layer.");
         return false;
     }
 
-    if (strcasecmp(layers[glue->out_layers[0]]->type,
-                OUTPUT_LAYER_NAME) != 0) {
+    if (strcasecmp(layers[glue->out_layer]->type, OUTPUT_LAYER_NAME) != 0) {
         ST_WARNING("out glue: out layer should be output layer.");
         return false;
     }
@@ -100,7 +88,7 @@ int out_glue_init_data(glue_t *glue, input_t *input,
     }
 
     if (wt_init(glue->wt, output_param_size(output),
-                layers[glue->in_layers[0]]->size) < 0) {
+                layers[glue->in_layer]->size) < 0) {
         ST_WARNING("Failed to wt_init.");
         return -1;
     }

@@ -62,6 +62,7 @@ typedef struct _component_t_ {
     int num_layer; /**< number of hidden layers. */
     glue_t **glues; /**< glues. */
     int num_glue; /**< number of glues. */
+    real_t comp_scale; /**< scale of component for output. */
 
     int* fwd_order; /**< forward order of glue. */
 

@@ -144,7 +144,6 @@ int glue_updater_forward(glue_updater_t *glue_updater,
 {
     glue_t *glue;
     layer_updater_t **layer_updaters;
-    int l;
     int lid;
 
     ST_CHECK_PARAM(glue_updater == NULL || comp_updater == NULL, -1);
@@ -157,11 +156,8 @@ int glue_updater_forward(glue_updater_t *glue_updater,
 
     layer_updaters = comp_updater->layer_updaters;
 
-    for (l = 0; l < glue->num_in_layer; l++) {
-        lid = glue->in_layers[l];
-        if (lid < 2) {
-            continue;
-        }
+    lid = glue->in_layer;
+    if (lid >= 2) { // Ignore input & output layer
         if (layer_updater_activate(layer_updaters[lid]) < 0) {
             ST_WARNING("Failed to layer_activate.[%s]",
                     comp_updater->comp->layers[lid]->name);
@@ -186,7 +182,6 @@ int glue_updater_backprop(glue_updater_t *glue_updater,
 {
     glue_t *glue;
     layer_updater_t **layer_updaters;
-    int l;
     int lid;
 
     ST_CHECK_PARAM(glue_updater == NULL, -1);
@@ -199,11 +194,8 @@ int glue_updater_backprop(glue_updater_t *glue_updater,
 
     layer_updaters = comp_updater->layer_updaters;
 
-    for (l = 0; l < glue->num_out_layer; l++) {
-        lid = glue->out_layers[l];
-        if (lid < 2) {
-            continue;
-        }
+    lid = glue->out_layer;
+    if (lid >= 2) { // Ignore input & output layer
         if (layer_updater_deriv(layer_updaters[lid]) < 0) {
             ST_WARNING("Failed to layer_deriv.[%s]",
                     comp_updater->comp->layers[lid]->name);
@@ -250,7 +242,6 @@ int glue_updater_forward_util_out(glue_updater_t *glue_updater,
 {
     glue_t *glue;
     layer_updater_t **layer_updaters;
-    int l;
     int lid;
 
     ST_CHECK_PARAM(glue_updater == NULL || comp_updater == NULL, -1);
@@ -263,11 +254,8 @@ int glue_updater_forward_util_out(glue_updater_t *glue_updater,
 
     layer_updaters = comp_updater->layer_updaters;
 
-    for (l = 0; l < glue->num_in_layer; l++) {
-        lid = glue->in_layers[l];
-        if (lid < 2) {
-            continue;
-        }
+    lid = glue->in_layer;
+    if (lid >= 2) { // Ignore input & output layer
         if (!layer_updaters[lid]->activated) {
             if (layer_updater_activate(layer_updaters[lid]) < 0) {
                 ST_WARNING("Failed to layer_activate.[%s]",

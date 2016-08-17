@@ -165,6 +165,12 @@ static int comp_parse_topo(component_t *comp, const char *line)
         if (strcasecmp("name", keyvalue) == 0) {
             strncpy(comp->name, keyvalue + MAX_LINE_LEN, MAX_NAME_LEN);
             comp->name[MAX_NAME_LEN - 1] = '\0';
+        } else if (strcasecmp("scale", keyvalue) == 0) {
+            comp->comp_scale = atof(keyvalue + MAX_LINE_LEN);
+            if (comp->comp_scale == 0) {
+                ST_WARNING("Error comp_scale[%s]", keyvalue + MAX_LINE_LEN);
+                return -1;
+            }
         } else {
             ST_WARNING("Unknown key[%s].", keyvalue);
         }
@@ -224,6 +230,7 @@ component_t *comp_init_from_topo(const char* topo_content,
         goto ERR;
     }
     memset(comp, 0, sizeof(component_t));
+    comp->comp_scale = 1.0;
 
     comp->layers = (layer_t **)realloc(comp->layers,
             sizeof(layer_t *) * (comp->num_layer + 1));
@@ -440,6 +447,7 @@ int comp_load_header(component_t **comp, int version,
     char name[MAX_NAME_LEN];
     int num_layer;
     int num_glue;
+    real_t scale;
     int l;
     int g;
 
@@ -487,6 +495,11 @@ int comp_load_header(component_t **comp, int version,
             ST_WARNING("Failed to read num_glue.");
             return -1;
         }
+
+        if (fread(&scale, sizeof(real_t), 1, fp) != 1) {
+            ST_WARNING("Failed to read scale.");
+            return -1;
+        }
     } else {
         if (st_readline(fp, "") != 0) {
             ST_WARNING("tag error.");
@@ -510,6 +523,11 @@ int comp_load_header(component_t **comp, int version,
 
         if (st_readline(fp, "Num glue: %d", &num_glue) != 1) {
             ST_WARNING("Failed to parse num_glue.");
+            return -1;
+        }
+
+        if (st_readline(fp, "Scale: "REAL_FMT, &scale) != 1) {
+            ST_WARNING("Failed to parse scale.");
             return -1;
         }
     }
@@ -542,12 +560,15 @@ int comp_load_header(component_t **comp, int version,
         }
         memset((*comp)->glues, 0, sz);
         (*comp)->num_glue = num_glue;
+
+        (*comp)->comp_scale = scale;
     }
 
     if (fo_info != NULL) {
         fprintf(fo_info, "\n<COMPONENT>:%s\n", name);
         fprintf(fo_info, "Num layer: %d\n", num_layer);
         fprintf(fo_info, "Num glue: %d\n", num_glue);
+        fprintf(fo_info, "Scale: "REAL_FMT"\n", scale);
     }
 
     if (input_load_header(comp != NULL ? &((*comp)->input) : NULL,
@@ -692,6 +713,11 @@ int comp_save_header(component_t *comp, FILE *fp, bool binary)
             ST_WARNING("Failed to write num_glue.");
             return -1;
         }
+
+        if (fwrite(&comp->comp_scale, sizeof(int), 1, fp) != 1) {
+            ST_WARNING("Failed to write scale.");
+            return -1;
+        }
     } else {
         if (fprintf(fp, "    \n<COMPONENT>\n") < 0) {
             ST_WARNING("Failed to fprintf header.");
@@ -702,14 +728,16 @@ int comp_save_header(component_t *comp, FILE *fp, bool binary)
             ST_WARNING("Failed to fprintf name.");
             return -1;
         }
-        if (fprintf(fp, "Num layer: %d\n",
-                    comp->num_layer) < 0) {
+        if (fprintf(fp, "Num layer: %d\n", comp->num_layer) < 0) {
             ST_WARNING("Failed to fprintf num layer.");
             return -1;
         }
-        if (fprintf(fp, "Num glue: %d\n",
-                    comp->num_glue) < 0) {
+        if (fprintf(fp, "Num glue: %d\n", comp->num_glue) < 0) {
             ST_WARNING("Failed to fprintf num glue.");
+            return -1;
+        }
+        if (fprintf(fp, "Scale: "REAL_FMT"\n", comp->comp_scale) < 0) {
+            ST_WARNING("Failed to fprintf scale.");
             return -1;
         }
     }
@@ -866,24 +894,20 @@ int comp_draw(component_t *comp, FILE *fp, bool verbose)
             fprintf(fp, "\\n%d", order);
         }
         fprintf(fp, "\"];\n");
-        for (l = 0; l < comp->glues[g]->num_in_layer; l++) {
-            fprintf(fp, "    %s -> %s [label=\"%s\"];\n",
-                    layer2nodename(comp,
-                        comp->glues[g]->in_layers[l],
-                        nodename, MAX_NAME_LEN),
-                    gluenodename,
-                    glue_draw_label_one(comp->glues[g], l,
-                        label, MAX_NAME_LEN, verbose));
-        }
-        for (l = 0; l < comp->glues[g]->num_out_layer; l++) {
-            fprintf(fp, "    %s -> %s [label=\"%s\"];\n",
-                    gluenodename,
-                    layer2nodename(comp,
-                        comp->glues[g]->out_layers[l],
-                        nodename, MAX_NAME_LEN),
-                    glue_draw_label_one(comp->glues[g], l,
-                        label, MAX_NAME_LEN, verbose));
-        }
+        fprintf(fp, "    %s -> %s [label=\"%s\"];\n",
+                layer2nodename(comp,
+                    comp->glues[g]->in_layer,
+                    nodename, MAX_NAME_LEN),
+                gluenodename,
+                glue_draw_label_one(comp->glues[g], l,
+                    label, MAX_NAME_LEN, verbose));
+        fprintf(fp, "    %s -> %s [label=\"%s\"];\n",
+                gluenodename,
+                layer2nodename(comp,
+                    comp->glues[g]->out_layer,
+                    nodename, MAX_NAME_LEN),
+                glue_draw_label_one(comp->glues[g], l,
+                    label, MAX_NAME_LEN, verbose));
 
         if (comp->glues[g]->recur) {
             fprintf(fp, "    node[color=black,fontcolor=black];\n");

@@ -93,14 +93,8 @@ typedef struct _glue_implementation_t_ {
 typedef struct _glue_t_ {
     char name[MAX_NAME_LEN]; /**< glue name. */
     char type[MAX_NAME_LEN]; /**< glue type. */
-    int* in_layers; /**< input layers. */
-    int* in_offsets; /**< offset for input layers. */
-    real_t* in_scales; /**< scale for input layers. */
-    int num_in_layer; /**< number of input layers. */
-    int* out_layers; /**< output layers. */
-    int* out_offsets; /**< offset for output layers. */
-    real_t* out_scales; /**< scale for output layers. */
-    int num_out_layer; /**< number of output layers. */
+    int in_layer; /**< input layer id. */
+    int out_layer; /**< output layer id. */
     bool recur; /**< whether this glue is recurrent. */
 
     weight_t *wt; /**< weight matrix. */

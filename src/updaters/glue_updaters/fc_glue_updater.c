@@ -70,13 +70,12 @@ int fc_glue_updater_forward(glue_updater_t *glue_updater,
     ST_CHECK_PARAM(glue_updater == NULL || comp_updater == NULL, -1);
 
     glue = glue_updater->glue;
-    in_layer_updater = comp_updater->layer_updaters[glue->in_layers[0]];
-    out_layer_updater = comp_updater->layer_updaters[glue->out_layers[0]];
+    in_layer_updater = comp_updater->layer_updaters[glue->in_layer];
+    out_layer_updater = comp_updater->layer_updaters[glue->out_layer];
     wt_updater = glue_updater->wt_updater;
 
     matXvec(out_layer_updater->ac, wt_updater->wt, in_layer_updater->ac,
-            wt_updater->row, wt_updater->col,
-            glue->in_scales[0] * glue->out_scales[0]);
+            wt_updater->row, wt_updater->col, 1.0);
 
     return 0;
 }
@@ -92,21 +91,19 @@ int fc_glue_updater_backprop(glue_updater_t *glue_updater,
     ST_CHECK_PARAM(glue_updater == NULL || comp_updater == NULL, -1);
 
     glue = glue_updater->glue;
-    in_layer_updater = comp_updater->layer_updaters[glue->in_layers[0]];
-    out_layer_updater = comp_updater->layer_updaters[glue->out_layers[0]];
+    in_layer_updater = comp_updater->layer_updaters[glue->in_layer];
+    out_layer_updater = comp_updater->layer_updaters[glue->out_layer];
     wt_updater = glue_updater->wt_updater;
 
-    if (wt_update(wt_updater, NULL, -1,
-                out_layer_updater->er, glue->out_scales[0],
-                in_layer_updater->ac, glue->in_scales[0], NULL) < 0) {
+    if (wt_update(wt_updater, NULL, -1, out_layer_updater->er, 1.0,
+                in_layer_updater->ac, 1.0, NULL) < 0) {
         ST_WARNING("Failed to wt_update.");
         return -1;
     }
 
     propagate_error(in_layer_updater->er, out_layer_updater->er,
             wt_updater->wt, wt_updater->col, wt_updater->row,
-            wt_updater->param.er_cutoff,
-            glue->in_scales[0] * glue->out_scales[0]);
+            wt_updater->param.er_cutoff, 1.0);
 
     return 0;
 }
