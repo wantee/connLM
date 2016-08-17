@@ -4,7 +4,8 @@ _case_dir=test/tmp/case-$SHU_CASE/
 
 before="rm -rf ${_case_dir}; mkdir -p ${_case_dir}; mkdir -p test/output/; cp -r conf ${_case_dir}"
 
-script="./run.sh --conf-dir ${_case_dir}/conf --exp-dir ${_case_dir}/exp 1,3 > test/output/case-$SHU_CASE.out && source ../steps/path.sh && connlm-init ${_case_dir}/exp/rnn/output.clm conf/rnn/complex.topo ${_case_dir}/exp/rnn/complex.init.clm && connlm-draw --verbose=true --log-file=/dev/stderr mdl,-o:${_case_dir}/exp/rnn/complex.init.clm - >> test/output/case-$SHU_CASE.out"
+script="./run.sh --conf-dir ${_case_dir}/conf --exp-dir ${_case_dir}/exp 1,3 > test/output/case-$SHU_CASE.out && source ../steps/path.sh && connlm-init ${_case_dir}/exp/rnn/output.clm conf/rnn/complex.topo ${_case_dir}/exp/rnn/complex.init.clm && connlm-draw --verbose=true --log-file=/dev/stderr mdl,-o:${_case_dir}/exp/rnn/complex.init.clm - > test/output/case-$SHU_CASE.rnn.dot"
 
 normalize="./test/normalize_log.sh"
 compare_normalize=("expected/case-$SHU_CASE.out:test/output/case-$SHU_CASE.out")
+compare_normalize=("expected/case-$SHU_CASE.rnn.dot:test/output/case-$SHU_CASE.rnn.dot")

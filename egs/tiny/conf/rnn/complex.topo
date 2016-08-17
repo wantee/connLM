@@ -25,5 +25,6 @@ glue name=recur1 type=fc in=hidden1 out=hidden1
 glue name=recur2 type=fc in=hidden3 out=hidden1
 glue name=recur3 type=fc in=hidden4 out=hidden2
 glue name=recur4 type=fc in=hidden4 out=hidden3
+glue name=recur5 type=fc in=hidden3 out=hidden2
 glue name=out type=out in=hidden4 out=output
 </component>
