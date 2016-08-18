@@ -62,7 +62,6 @@ typedef struct _node_t_ {
 typedef struct _graph_t_ {
     node_t *nodes; /**< nodes in graph. */
     int num_node; /**< number of nodes. */
-    int cap_link; /**< capacity of links. */
 
     link_t *links; /**< links in graph. */
     int num_link; /**< number of links. */
