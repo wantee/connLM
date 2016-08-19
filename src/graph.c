@@ -148,14 +148,11 @@ typedef struct _dfs_args_t_ {
     bool *passed;
     int *node_order;
     int node_i; /* index for node_order. */
-    elem_set_t *recur_to; /* store the dest nodes for a recur link. */
-    int num_link;
+    int *recur_to; /* store the dest node for a recur link. */
 } dfs_args_t;
 
 static void dfs_args_destroy(dfs_args_t *args)
 {
-    int i;
-
     if (args == NULL) {
         return;
     }
@@ -163,10 +160,8 @@ static void dfs_args_destroy(dfs_args_t *args)
     safe_free(args->on_stack);
     safe_free(args->visited);
     safe_free(args->passed);
-    for (i = 0; i < args->num_link; i++) {
-        elem_set_destroy(args->recur_to + i);
-    }
-    args->num_link = 0;
+    safe_free(args->recur_to);
+    safe_free(args->node_order);
     args->node_i = 0;
 }
 
@@ -197,19 +192,13 @@ static int dfs_args_init(dfs_args_t *args, graph_t *graph)
     }
     memset(args->passed, 0, sizeof(bool) * graph->num_link);
 
-    // the num_node and num_link should not be a large number
-    args->recur_to = (elem_set_t *)malloc(sizeof(elem_set_t) * graph->num_link);
+    args->recur_to = (int *)malloc(sizeof(int) * graph->num_link);
     if (args->recur_to == NULL) {
         ST_WARNING("Failed to malloc recur_to");
         goto ERR;
     }
-    memset(args->recur_to, 0, sizeof(elem_set_t) * graph->num_link);
-    args->num_link = graph->num_link;
     for (i = 0; i < graph->num_link; i++) {
-        if (elem_set_init(args->recur_to + i, graph->num_node) < 0) {
-            ST_WARNING("Failed to elem_set_init recur_to.");
-            goto ERR;
-        }
+        args->recur_to[i] = -1;
     }
 
     args->node_order = (int *)malloc(sizeof(int) * graph->num_node);
@@ -258,10 +247,7 @@ static int graph_dfs(graph_t *graph, int start, dfs_args_t *args)
             }
         } else if(args->on_stack[to]) {
             graph->glues[lk]->recur = true;
-            if (elem_set_add(args->recur_to + lk, to) < 0) {
-                ST_WARNING("Failed to elem_set_add for recur_to.");
-                return -1;
-            }
+            args->recur_to[lk] = to;
 #ifdef _GRAPH_DEBUG_
             ST_DEBUG("recur_to[%d] for link[%d]", to, lk);
 #endif
@@ -278,14 +264,15 @@ static int graph_dfs(graph_t *graph, int start, dfs_args_t *args)
 /*
  * convert node order to link order, considering the recur link.
  */
-static int* node2link_order(int *node_order, graph_t *graph,
-        elem_set_t *recur_to)
+static int* node2link_order(int *node_order, graph_t *graph, int *recur_to)
 {
     int *link_order = NULL;
+
     elem_set_t *recur_links_for_node = NULL;
+    int *recur_link_pos = NULL;
 
     size_t sz;
-    int i, j, n, l, pos;
+    int i, n, l, pos;
     int num_lk, lk;
     node_t *node;
 
@@ -325,26 +312,22 @@ static int* node2link_order(int *node_order, graph_t *graph,
                 continue;
             }
 
-            if (recur_to[lk].num <= 0) {
+            if (recur_to[lk] < 0) {
                 ST_WARNING("No recur_to for recur_link[%d]", lk);
                 goto ERR;
             }
 
             /* find the most front dest node. */
             pos = graph->num_node;
-            for (i = 0; i < recur_to[lk].num; i++) {
-                for (j = 0; j < graph->num_node; j++) {
-                    if (node_order[j] == recur_to[lk].elems[i]) {
-                        if (j < pos) {
-                            pos = j;
-                        }
-                        break;
-                    }
+            for (i = 0; i < graph->num_node; i++) {
+                if (node_order[i] == recur_to[lk]) {
+                    pos = i;
+                    break;
                 }
             }
             if (pos >= graph->num_node) {
                 ST_WARNING("dest node[%d] not found in node order",
-                        recur_to[lk].elems[i]);
+                        recur_to[lk]);
                 goto ERR;
             }
 
@@ -356,18 +339,72 @@ static int* node2link_order(int *node_order, graph_t *graph,
     }
 
     // sort the links
+    // the recur_link_pos stores the final position of all recur_links
+    recur_link_pos = (int *)malloc(sizeof(int) * graph->num_link);
+    if (recur_link_pos == NULL) {
+        ST_WARNING("Falied to malloc recur_link_pos.");
+        goto ERR;
+    }
+    for (i = 0; i < graph->num_link; i++) {
+        recur_link_pos[i] = -1;
+    }
+
     num_lk = 0;
     for (n = 0; n < graph->num_node; n++) {
         node = graph->nodes + node_order[n];
-        // place the recur links first
-        for (i = 0; i < recur_links_for_node[n].num; i++) {
-            if (num_lk >= graph->num_link) {
-                ST_WARNING("num_lk overflow");
+        if (recur_links_for_node[n].num > 0) {
+            // we must place the recur links in recur_links_for_node[n], if any,
+            // in front of all out links of this node, including the recur
+            // links.
+            // So, first, find the most front position of out recur links
+            pos = num_lk; // if there is no recur links, this is the current pos
+            for (l = 0; l < node->num_link; l++) {
+                lk = node->links[l];
+                if (!graph->glues[lk]->recur) {
+                    continue;
+                }
+                if (graph->links[lk].to == node_order[n]) {
+                    // the self-loop can be treated the same as a non-recur link
+                    continue;
+                }
+                if (recur_link_pos[lk] < 0) {
+                    ST_WARNING("recur link[%d] did not find its own "
+                               "position.", lk);
+                    goto ERR;
+                }
+                if (recur_link_pos[lk] < pos) {
+                    pos = recur_link_pos[lk];
+                }
+            }
+
+            // place the recur links first
+            if (num_lk + recur_links_for_node[n].num >= graph->num_link) {
+                ST_WARNING("num_lk[%d + %d > %d] overflow.", num_lk,
+                        recur_links_for_node[n].num, graph->num_link);
                 goto ERR;
             }
-            link_order[num_lk] = recur_links_for_node[n].elems[i];
-            num_lk++;
+            if (pos < num_lk) {
+                // move the links after pos
+                memmove(link_order + pos + recur_links_for_node[n].num,
+                        link_order + pos,
+                        sizeof(int) * (num_lk - pos));
+                // update the recur_link_pos
+                for (i = 0; i < graph->num_link; i++) {
+                    if (recur_link_pos[i] > pos) {
+                        recur_link_pos[i] += recur_links_for_node[n].num;
+                    }
+                }
+            }
+            for (i = 0; i < recur_links_for_node[n].num; i++) {
+                lk = recur_links_for_node[n].elems[i];
+                link_order[pos] = lk;
+                recur_link_pos[lk] = pos;
+                pos++;
+            }
+            num_lk += recur_links_for_node[n].num;
         }
+
+        // now place the non-recur links
         for (l = 0; l < node->num_link; l++) {
             lk = node->links[l];
             if (graph->glues[lk]->recur) {
@@ -392,6 +429,7 @@ static int* node2link_order(int *node_order, graph_t *graph,
         elem_set_destroy(recur_links_for_node + i);
     }
     safe_free(recur_links_for_node);
+    safe_free(recur_link_pos);
 
     return link_order;
 
@@ -402,6 +440,7 @@ ERR:
         }
         safe_free(recur_links_for_node);
     }
+    safe_free(recur_link_pos);
     safe_free(link_order);
     return NULL;
 }
