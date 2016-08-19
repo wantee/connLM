@@ -55,6 +55,8 @@ typedef struct _layer_updater_t_ {
     bool activated; /**< activation indicator. */
     deriv_func_t deriv; /**< deriv function. */
     bool derived; /**< derived indicator. */
+
+    real_t *ac_state; /**< state of layer, i.e. activation of prev timestep. */
 } layer_updater_t;
 
 /**
@@ -94,6 +96,15 @@ layer_updater_t* layer_updater_create(layer_t *layer);
 int layer_updater_setup(layer_updater_t *layer_updater, bool backprop);
 
 /**
+ * Setup layer_updater state for running.
+ * @ingroup g_updater_layer
+ * @param[in] layer_updater layer_updater.
+ * @param[in] backprop whether do backprop.
+ * @return non-zero value if any error.
+ */
+int layer_updater_setup_state(layer_updater_t *layer_updater, bool backprop);
+
+/**
  * Activate a layer_updater.
  * @ingroup g_updater_layer
  * @param[in] layer_updater the layer_updater.
@@ -105,7 +116,6 @@ int layer_updater_activate(layer_updater_t *layer_updater);
  * Deriv a layer_updater.
  * @ingroup g_updater_layer
  * @param[in] layer_updater the layer_updater.
- * @param[in] offset offset of layer.
  * @return non-zero value if any error.
  */
 int layer_updater_deriv(layer_updater_t *layer_updater);
@@ -114,10 +124,17 @@ int layer_updater_deriv(layer_updater_t *layer_updater);
  * Clear a layer_updater.
  * @ingroup g_updater_layer
  * @param[in] layer_updater the layer_updater.
- * @param[in] offset offset of layer.
  * @return non-zero value if any error.
  */
 int layer_updater_clear(layer_updater_t *layer_updater);
+
+/**
+ * Reset a layer_updater.
+ * @ingroup g_updater_layer
+ * @param[in] layer_updater the layer_updater.
+ * @return non-zero value if any error.
+ */
+int layer_updater_reset(layer_updater_t *layer_updater);
 
 #ifdef __cplusplus
 }

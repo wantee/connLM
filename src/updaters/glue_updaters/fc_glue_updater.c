@@ -60,21 +60,20 @@ ERR:
 }
 
 int fc_glue_updater_forward(glue_updater_t *glue_updater,
-        comp_updater_t *comp_updater, int *words, int n_word, int tgt_pos)
+        comp_updater_t *comp_updater, int *words, int n_word, int tgt_pos,
+        real_t *in_ac)
 {
     glue_t *glue;
-    layer_updater_t *in_layer_updater;
     layer_updater_t *out_layer_updater;
     wt_updater_t *wt_updater;
 
     ST_CHECK_PARAM(glue_updater == NULL || comp_updater == NULL, -1);
 
     glue = glue_updater->glue;
-    in_layer_updater = comp_updater->layer_updaters[glue->in_layer];
     out_layer_updater = comp_updater->layer_updaters[glue->out_layer];
     wt_updater = glue_updater->wt_updater;
 
-    matXvec(out_layer_updater->ac, wt_updater->wt, in_layer_updater->ac,
+    matXvec(out_layer_updater->ac, wt_updater->wt, in_ac,
             wt_updater->row, wt_updater->col, 1.0);
 
     return 0;

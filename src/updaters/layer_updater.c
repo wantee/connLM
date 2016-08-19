@@ -130,6 +130,31 @@ ERR:
     return -1;
 }
 
+int layer_updater_setup_state(layer_updater_t *layer_updater, bool backprop)
+{
+    size_t sz;
+
+    ST_CHECK_PARAM(layer_updater == NULL, -1);
+
+    safe_st_aligned_free(layer_updater->ac_state);
+
+    sz = sizeof(real_t) * layer_updater->layer->size;
+    layer_updater->ac_state = st_aligned_malloc(sz, ALIGN_SIZE);
+    if (layer_updater->ac_state == NULL) {
+        ST_WARNING("Failed to st_aligned_malloc ac_state.");
+        goto ERR;
+    }
+    memset(layer_updater->ac_state, 0, sz);
+
+    return 0;
+
+ERR:
+
+    safe_st_aligned_free(layer_updater->ac_state);
+
+    return -1;
+}
+
 int layer_updater_activate(layer_updater_t *layer_updater)
 {
     ST_CHECK_PARAM(layer_updater == NULL, -1);
@@ -195,6 +220,25 @@ int layer_updater_clear(layer_updater_t *layer_updater)
     if (layer_updater->er != NULL) {
         memset(layer_updater->er, 0, sz);
         layer_updater->derived = false;
+    }
+
+    if (layer_updater->ac_state != NULL) {
+        memcpy(layer_updater->ac_state, layer_updater->ac,
+                sizeof(real_t) * layer_updater->layer->size);
+    }
+
+    return 0;
+}
+
+int layer_updater_reset(layer_updater_t *layer_updater)
+{
+    size_t sz;
+
+    ST_CHECK_PARAM(layer_updater == NULL, -1);
+
+    sz = sizeof(real_t) * layer_updater->layer->size;
+    if (layer_updater->ac_state != NULL) {
+        memset(layer_updater->ac_state, 0, sz);
     }
 
     return 0;

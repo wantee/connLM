@@ -74,10 +74,12 @@ int direct_glue_updater_setup(glue_updater_t *glue_updater,
  * @param[in] words input words buffer.
  * @param[in] n_word length of words.
  * @param[in] tgt_pos position of target word in words buffer.
+ * @param[noused] in_ac activation of in layer.
  * @return non-zero value if any error.
  */
 int direct_glue_updater_forward(glue_updater_t *glue_updater,
-        comp_updater_t *comp_updater, int *words, int n_word, int tgt_pos);
+        comp_updater_t *comp_updater, int *words, int n_word, int tgt_pos,
+        real_t *in_ac);
 
 /**
  * Back-prop one word for a direct_glue_updater.
@@ -100,10 +102,12 @@ int direct_glue_updater_backprop(glue_updater_t *glue_updater,
  * @param[in] words input words buffer.
  * @param[in] n_word length of words.
  * @param[in] tgt_pos position of target word in words buffer.
+ * @param[noused] in_ac activation of in layer.
  * @return non-zero value if any error.
  */
 int direct_glue_updater_forward_util_out(glue_updater_t *glue_updater,
-        comp_updater_t *comp_updater, int *words, int n_word, int tgt_pos);
+        comp_updater_t *comp_updater, int *words, int n_word, int tgt_pos,
+        real_t *in_ac);
 
 /**
  * Feed-forward one node of output layer.
@@ -111,10 +115,11 @@ int direct_glue_updater_forward_util_out(glue_updater_t *glue_updater,
  * @param[in] glue_updater the glue_updater.
  * @param[in] comp_updater the comp_updater.
  * @param[in] node node of output tree.
+ * @param[noused] in_ac activation of in layer.
  * @return non-zero value if any error.
  */
 int direct_glue_updater_forward_out(glue_updater_t *glue_updater,
-        comp_updater_t *comp_updater, output_node_id_t node);
+        comp_updater_t *comp_updater, output_node_id_t node, real_t *in_ac);
 
 #ifdef __cplusplus
 }

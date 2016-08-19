@@ -383,7 +383,8 @@ static int direct_compute_hash(glue_updater_t *glue_updater,
 }
 
 int direct_glue_updater_forward(glue_updater_t *glue_updater,
-        comp_updater_t *comp_updater, int *words, int n_word, int tgt_pos)
+        comp_updater_t *comp_updater, int *words, int n_word, int tgt_pos,
+        real_t *in_ac)
 {
     dgu_data_t *data;
     out_updater_t *out_updater;
@@ -484,7 +485,8 @@ int direct_glue_updater_backprop(glue_updater_t *glue_updater,
 }
 
 int direct_glue_updater_forward_util_out(glue_updater_t *glue_updater,
-        comp_updater_t *comp_updater, int *words, int n_word, int tgt_pos)
+        comp_updater_t *comp_updater, int *words, int n_word, int tgt_pos,
+        real_t *in_ac)
 {
     if (direct_compute_hash(glue_updater, comp_updater,
                 words, n_word, tgt_pos) < 0) {
@@ -496,7 +498,7 @@ int direct_glue_updater_forward_util_out(glue_updater_t *glue_updater,
 }
 
 int direct_glue_updater_forward_out(glue_updater_t *glue_updater,
-        comp_updater_t *comp_updater, output_node_id_t node)
+        comp_updater_t *comp_updater, output_node_id_t node, real_t *in_ac)
 {
     dgu_data_t *data;
     out_updater_t *out_updater;

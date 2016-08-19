@@ -54,20 +54,22 @@ typedef struct _glue_updater_implementation_t_ {
     int (*setup)(glue_updater_t *glue_updater, comp_updater_t *comp_updater,
             bool backprop); /**< setup glue updater.*/
 
-    int (*forward)(glue_updater_t *glue_updater, comp_updater_t *comp_updater,
-            int *words, int n_word, int tgt_pos); /**< forward glue updater.*/
+    int (*forward)(glue_updater_t *glue_updater,
+            comp_updater_t *comp_updater,
+            int *words, int n_word, int tgt_pos,
+            real_t *in_ac); /**< forward glue updater.*/
 
     int (*backprop)(glue_updater_t *glue_updater,
             comp_updater_t *comp_updater,
             int *words, int n_word, int tgt_pos); /**< backprop glue updater.*/
 
     int (*forward_util_out)(glue_updater_t *glue_updater,
-            comp_updater_t *comp_updater,
-            int *words, int n_word, int tgt_pos); /**< forward_util_out glue updater.*/
+            comp_updater_t *comp_updater, int *words, int n_word,
+            int tgt_pos, real_t *in_ac); /**< forward_util_out glue updater.*/
 
     int (*forward_out)(glue_updater_t *glue_updater,
-            comp_updater_t *comp_updater,
-            output_node_id_t node); /**< forward_out glue updater.*/
+            comp_updater_t *comp_updater, output_node_id_t node,
+            real_t *in_ac); /**< forward_out glue updater.*/
 
 } glue_updater_impl_t;
 

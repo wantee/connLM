@@ -62,7 +62,8 @@ ERR:
 }
 
 int emb_glue_updater_forward(glue_updater_t *glue_updater,
-        comp_updater_t *comp_updater, int *words, int n_word, int tgt_pos)
+        comp_updater_t *comp_updater, int *words, int n_word, int tgt_pos,
+        real_t *in_ac)
 {
     glue_t *glue;
     input_t *input;
