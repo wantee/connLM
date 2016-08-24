@@ -83,12 +83,10 @@ int fc_glue_updater_backprop(glue_updater_t *glue_updater,
         comp_updater_t *comp_updater, int *words, int n_word, int tgt_pos,
         real_t *in_ac, real_t *out_er, real_t *in_er)
 {
-    glue_t *glue;
     wt_updater_t *wt_updater;
 
     ST_CHECK_PARAM(glue_updater == NULL || comp_updater == NULL, -1);
 
-    glue = glue_updater->glue;
     wt_updater = glue_updater->wt_updater;
 
     if (wt_update(wt_updater, NULL, -1, out_er, 1.0, in_ac, 1.0, NULL) < 0) {

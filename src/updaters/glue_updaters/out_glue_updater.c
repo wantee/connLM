@@ -66,14 +66,10 @@ static int out_glue_updater_forward_node(glue_updater_t *glue_updater,
         output_t *output, output_node_id_t child_s, output_node_id_t child_e,
         real_t *in_ac, real_t *out_ac, real_t scale)
 {
-    glue_t *glue;
-
     real_t *wt;
     int layer_size;
 
     ST_CHECK_PARAM(glue_updater == NULL, -1);
-
-    glue = glue_updater->glue;
 
     wt = glue_updater->wt_updater->wt;
     layer_size = glue_updater->wt_updater->col;
@@ -146,14 +142,12 @@ static int out_backprop_walker(output_t *output, output_node_id_t node,
         output_node_id_t child_s, output_node_id_t child_e, void *args)
 {
     out_walker_args_t *ow_args;
-    glue_t *glue;
     wt_updater_t *wt_updater;
     real_t *wt;
     int layer_size;
 
     ow_args = (out_walker_args_t *) args;
 
-    glue = ow_args->glue_updater->glue;
     wt_updater = ow_args->glue_updater->wt_updater;
 
     wt = wt_updater->wt;
