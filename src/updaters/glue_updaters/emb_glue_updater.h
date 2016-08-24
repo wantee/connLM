@@ -56,7 +56,7 @@ int emb_glue_updater_init(glue_updater_t *glue_updater);
  * @param[in] words input words buffer.
  * @param[in] n_word length of words.
  * @param[in] tgt_pos position of target word in words buffer.
- * @param[noused] in_ac activation of in layer.
+ * @param[in, noused] in_ac activation of in layer.
  * @return non-zero value if any error.
  */
 int emb_glue_updater_forward(glue_updater_t *glue_updater,
@@ -71,10 +71,14 @@ int emb_glue_updater_forward(glue_updater_t *glue_updater,
  * @param[in] words input words buffer.
  * @param[in] n_word length of words.
  * @param[in] tgt_pos position of target word in words buffer.
+ * @param[in, noused] in_ac activation of in layer.
+ * @param[in] out_er error of out layer.
+ * @param[out, noused] in_er error of in layer.
  * @return non-zero value if any error.
  */
 int emb_glue_updater_backprop(glue_updater_t *glue_updater,
-        comp_updater_t *comp_updater, int *words, int n_word, int tgt_pos);
+        comp_updater_t *comp_updater, int *words, int n_word, int tgt_pos,
+        real_t *in_ac, real_t *out_er, real_t *in_er);
 
 #ifdef __cplusplus
 }

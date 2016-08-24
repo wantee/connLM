@@ -63,28 +63,20 @@ ERR:
 }
 
 static int out_glue_updater_forward_node(glue_updater_t *glue_updater,
-        comp_updater_t *comp_updater, output_node_id_t child_s,
-        output_node_id_t child_e, real_t *in_ac)
+        output_t *output, output_node_id_t child_s, output_node_id_t child_e,
+        real_t *in_ac, real_t *out_ac, real_t scale)
 {
     glue_t *glue;
-    output_t *output;
-    layer_updater_t *in_layer_updater;
 
     real_t *wt;
-    real_t *out_ac;
-    real_t scale;
     int layer_size;
 
-    ST_CHECK_PARAM(glue_updater == NULL || comp_updater == NULL, -1);
+    ST_CHECK_PARAM(glue_updater == NULL, -1);
 
     glue = glue_updater->glue;
-    output = comp_updater->out_updater->output;
-    in_layer_updater = comp_updater->layer_updaters[glue->in_layer];
 
     wt = glue_updater->wt_updater->wt;
-    out_ac = comp_updater->out_updater->ac;
     layer_size = glue_updater->wt_updater->col;
-    scale = comp_updater->comp->comp_scale;
 
     if (output->norm == ON_SOFTMAX) {
         if (child_e - child_s - 1 > 0) {
@@ -98,9 +90,13 @@ static int out_glue_updater_forward_node(glue_updater_t *glue_updater,
 }
 
 typedef struct _out_walker_args_t_ {
-    comp_updater_t *comp_updater;
     glue_updater_t *glue_updater;
+    output_t *output;
+    real_t scale;
     real_t *in_ac;
+    real_t *out_ac;
+    real_t *out_er;
+    real_t *in_er;
 } out_walker_args_t;
 
 static int out_forward_walker(output_t *output, output_node_id_t node,
@@ -112,8 +108,8 @@ static int out_forward_walker(output_t *output, output_node_id_t node,
     ow_args = (out_walker_args_t *) args;
 
     if (out_glue_updater_forward_node(ow_args->glue_updater,
-                ow_args->comp_updater, child_s, child_e,
-                ow_args->in_ac) < 0) {
+                ow_args->output, child_s, child_e,
+                ow_args->in_ac, ow_args->out_ac, ow_args->scale) < 0) {
         ST_WARNING("Failed to out_glue_updater_forward_node.");
         return -1;
     }
@@ -132,8 +128,10 @@ int out_glue_updater_forward(glue_updater_t *glue_updater,
             || words == NULL, -1);
 
     ow_args.glue_updater = glue_updater;
-    ow_args.comp_updater = comp_updater;
+    ow_args.output = comp_updater->out_updater->output;
     ow_args.in_ac = in_ac;
+    ow_args.out_ac = comp_updater->out_updater->ac;
+    ow_args.scale = comp_updater->comp->comp_scale;
     if (output_walk_through_path(comp_updater->out_updater->output,
                 words[tgt_pos], out_forward_walker, (void *)&ow_args) < 0) {
         ST_WARNING("Failed to output_walk_through_path.");
@@ -149,50 +147,41 @@ static int out_backprop_walker(output_t *output, output_node_id_t node,
 {
     out_walker_args_t *ow_args;
     glue_t *glue;
-    layer_updater_t *in_layer_updater;
     wt_updater_t *wt_updater;
     real_t *wt;
-    real_t *in_er;
-    real_t *in_ac;
-    real_t *out_er;
-    real_t scale;
     int layer_size;
 
     ow_args = (out_walker_args_t *) args;
 
     glue = ow_args->glue_updater->glue;
     wt_updater = ow_args->glue_updater->wt_updater;
-    in_layer_updater = ow_args->comp_updater->layer_updaters[glue->in_layer];
 
     wt = wt_updater->wt;
-    in_er = in_layer_updater->er;
-    in_ac = in_layer_updater->ac;
-    out_er = ow_args->comp_updater->out_updater->er;
     layer_size = wt_updater->col;
-    scale = ow_args->comp_updater->comp->comp_scale;
 
     if (output->norm == ON_SOFTMAX) {
         if (child_e <= child_s + 1) {
             return 0;
         }
 
-        if (wt_update(wt_updater, NULL, node, out_er + child_s, scale,
-                    in_ac, 1.0, NULL) < 0) {
+        if (wt_update(wt_updater, NULL, node, ow_args->out_er + child_s,
+                    ow_args->scale, ow_args->in_ac, 1.0, NULL) < 0) {
             ST_WARNING("Failed to wt_update.");
             return -1;
         }
     }
 
-    propagate_error(in_er, out_er + child_s,
-            wt + output_param_idx(output, child_s) * layer_size,
+    propagate_error(ow_args->in_er, ow_args->out_er + child_s,
+            wt + output_param_idx(ow_args->output, child_s) * layer_size,
             layer_size, child_e - child_s - 1,
-            wt_updater->param.er_cutoff, scale);
+            wt_updater->param.er_cutoff, ow_args->scale);
 
     return 0;
 }
 
 int out_glue_updater_backprop(glue_updater_t *glue_updater,
-        comp_updater_t *comp_updater, int *words, int n_word, int tgt_pos)
+        comp_updater_t *comp_updater, int *words, int n_word, int tgt_pos,
+        real_t *in_ac, real_t *out_er, real_t *in_er)
 {
     out_walker_args_t ow_args;
 
@@ -219,8 +208,12 @@ int out_glue_updater_backprop(glue_updater_t *glue_updater,
         safe_free(segs);
     }
 
-    ow_args.comp_updater = comp_updater;
     ow_args.glue_updater = glue_updater;
+    ow_args.output = comp_updater->out_updater->output;
+    ow_args.in_ac = in_ac;
+    ow_args.out_er = out_er;
+    ow_args.in_er = in_er;
+    ow_args.scale = comp_updater->comp->comp_scale;
     if (output_walk_through_path(output, words[tgt_pos],
                 out_backprop_walker, (void *)&ow_args) < 0) {
         ST_WARNING("Failed to output_walk_through_path.");
@@ -253,8 +246,9 @@ int out_glue_updater_forward_out(glue_updater_t *glue_updater,
         return 0;
     }
 
-    if (out_glue_updater_forward_node(glue_updater, comp_updater,
-                child_s, child_e, in_ac) < 0) {
+    if (out_glue_updater_forward_node(glue_updater, output,
+                child_s, child_e, in_ac, comp_updater->out_updater->ac,
+                comp_updater->comp->comp_scale) < 0) {
         ST_WARNING("Failed to out_glue_updater_forward_node.");
         return -1;
     }

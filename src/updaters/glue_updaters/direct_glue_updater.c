@@ -290,8 +290,9 @@ int direct_glue_updater_setup(glue_updater_t *glue_updater,
 }
 
 typedef struct _direct_walker_args_t_ {
-    out_updater_t *out_updater;
     real_t comp_scale;
+    real_t *out_ac;
+    real_t *out_er;
     hash_t h;
 
     wt_updater_t *wt_updater;
@@ -323,14 +324,14 @@ static int direct_forward_walker(output_t *output, output_node_id_t node,
 
         if (h + child_e - child_s - 1 > hash_sz) {
             for (ch = child_s; h < hash_sz; ch++, h++) {
-                dw_args->out_updater->ac[ch] += scale * hash_wt[h];
+                dw_args->out_ac[ch] += scale * hash_wt[h];
             }
             for (h = 0; ch < child_e - 1; ch++, h++) {
-                dw_args->out_updater->ac[ch] += scale * hash_wt[h];
+                dw_args->out_ac[ch] += scale * hash_wt[h];
             }
         } else {
             for (ch = child_s; ch < child_e - 1; ch++, h++) {
-                dw_args->out_updater->ac[ch] += scale * hash_wt[h];
+                dw_args->out_ac[ch] += scale * hash_wt[h];
             }
         }
     }
@@ -404,7 +405,7 @@ int direct_glue_updater_forward(glue_updater_t *glue_updater,
         return -1;
     }
 
-    dw_args.out_updater = out_updater;
+    dw_args.out_ac = out_updater->ac;
     dw_args.comp_scale = comp_updater->comp->comp_scale;
     dw_args.wt_updater = glue_updater->wt_updater;
     for (a = 0; a < data->hash_order; a++) {
@@ -444,7 +445,7 @@ static int direct_backprop_walker(output_t *output, output_node_id_t node,
         seg.s = h;
         seg.n = child_e - child_s - 1;
         if (wt_update(dw_args->wt_updater, &seg, -1,
-                    dw_args->out_updater->er + child_s, dw_args->comp_scale,
+                    dw_args->out_er + child_s, dw_args->comp_scale,
                     NULL, 1.0, NULL) < 0) {
             ST_WARNING("Failed to wt_update.");
             return -1;
@@ -455,7 +456,8 @@ static int direct_backprop_walker(output_t *output, output_node_id_t node,
 }
 
 int direct_glue_updater_backprop(glue_updater_t *glue_updater,
-        comp_updater_t *comp_updater, int *words, int n_word, int tgt_pos)
+        comp_updater_t *comp_updater, int *words, int n_word, int tgt_pos,
+        real_t *in_ac, real_t *out_er, real_t *in_er)
 {
     dgu_data_t *data;
     out_updater_t *out_updater;
@@ -469,7 +471,7 @@ int direct_glue_updater_backprop(glue_updater_t *glue_updater,
     data = (dgu_data_t *)glue_updater->extra;
     out_updater = comp_updater->out_updater;
 
-    dw_args.out_updater = out_updater;
+    dw_args.out_er = out_er;
     dw_args.comp_scale = comp_updater->comp->comp_scale;
     dw_args.wt_updater = glue_updater->wt_updater;
     for (a = 0; a < data->hash_order; a++) {

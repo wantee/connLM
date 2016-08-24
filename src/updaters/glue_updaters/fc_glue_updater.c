@@ -80,29 +80,27 @@ int fc_glue_updater_forward(glue_updater_t *glue_updater,
 }
 
 int fc_glue_updater_backprop(glue_updater_t *glue_updater,
-        comp_updater_t *comp_updater, int *words, int n_word, int tgt_pos)
+        comp_updater_t *comp_updater, int *words, int n_word, int tgt_pos,
+        real_t *in_ac, real_t *out_er, real_t *in_er)
 {
     glue_t *glue;
-    layer_updater_t *in_layer_updater;
-    layer_updater_t *out_layer_updater;
     wt_updater_t *wt_updater;
 
     ST_CHECK_PARAM(glue_updater == NULL || comp_updater == NULL, -1);
 
     glue = glue_updater->glue;
-    in_layer_updater = comp_updater->layer_updaters[glue->in_layer];
-    out_layer_updater = comp_updater->layer_updaters[glue->out_layer];
     wt_updater = glue_updater->wt_updater;
 
-    if (wt_update(wt_updater, NULL, -1, out_layer_updater->er, 1.0,
-                in_layer_updater->ac, 1.0, NULL) < 0) {
+    if (wt_update(wt_updater, NULL, -1, out_er, 1.0, in_ac, 1.0, NULL) < 0) {
         ST_WARNING("Failed to wt_update.");
         return -1;
     }
 
-    propagate_error(in_layer_updater->er, out_layer_updater->er,
-            wt_updater->wt, wt_updater->col, wt_updater->row,
-            wt_updater->param.er_cutoff, 1.0);
+    if (in_er != NULL) {
+        propagate_error(in_er, out_er,
+                wt_updater->wt, wt_updater->col, wt_updater->row,
+                wt_updater->param.er_cutoff, 1.0);
+    }
 
     return 0;
 }

@@ -201,7 +201,10 @@ int glue_updater_backprop(glue_updater_t *glue_updater,
 {
     glue_t *glue;
     layer_updater_t **layer_updaters;
-    int lid;
+    real_t *in_ac = NULL;
+    real_t *out_er = NULL;
+    real_t *in_er = NULL;
+    int out_lid;
 
     ST_CHECK_PARAM(glue_updater == NULL, -1);
 
@@ -213,18 +216,31 @@ int glue_updater_backprop(glue_updater_t *glue_updater,
 
     layer_updaters = comp_updater->layer_updaters;
 
-    lid = glue->out_layer;
-    if (lid >= 2) { // Ignore input & output layer
-        if (layer_updater_deriv(layer_updaters[lid]) < 0) {
+    out_lid = glue->out_layer;
+    if (out_lid >= 2) { // Ignore input & output layer
+        if (layer_updater_deriv(layer_updaters[out_lid]) < 0) {
             ST_WARNING("Failed to layer_deriv.[%s]",
-                    comp_updater->comp->layers[lid]->name);
+                    comp_updater->comp->layers[out_lid]->name);
             return -1;
         }
     }
 
     if (glue_updater->impl != NULL && glue_updater->impl->backprop != NULL) {
+        if (glue->in_layer >= 2) { // Ignore input layer
+            if (glue->recur) {
+                in_ac = layer_updaters[glue->in_layer]->ac_state;
+            } else {
+                in_ac = layer_updaters[glue->in_layer]->ac;
+                in_er = layer_updaters[glue->in_layer]->er;
+            }
+        }
+        if (out_lid == 0) { // output layer
+            out_er = comp_updater->out_updater->er;
+        } else {
+            out_er = layer_updaters[out_lid]->er;
+        }
         if (glue_updater->impl->backprop(glue_updater, comp_updater,
-                    words, n_word, tgt_pos) < 0) {
+                    words, n_word, tgt_pos, in_ac, out_er, in_er) < 0) {
             ST_WARNING("Failed to glue_updater->impl->backprop.[%s]",
                     glue->name);
             return -1;

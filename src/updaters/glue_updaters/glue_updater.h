@@ -61,7 +61,8 @@ typedef struct _glue_updater_implementation_t_ {
 
     int (*backprop)(glue_updater_t *glue_updater,
             comp_updater_t *comp_updater,
-            int *words, int n_word, int tgt_pos); /**< backprop glue updater.*/
+            int *words, int n_word, int tgt_pos,
+            real_t *in_ac, real_t *out_er, real_t *in_er); /**< backprop glue updater.*/
 
     int (*forward_util_out)(glue_updater_t *glue_updater,
             comp_updater_t *comp_updater, int *words, int n_word,

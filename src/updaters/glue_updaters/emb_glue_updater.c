@@ -133,11 +133,11 @@ int emb_glue_updater_forward(glue_updater_t *glue_updater,
 }
 
 int emb_glue_updater_backprop(glue_updater_t *glue_updater,
-        comp_updater_t *comp_updater, int *words, int n_word, int tgt_pos)
+        comp_updater_t *comp_updater, int *words, int n_word, int tgt_pos,
+        real_t *in_ac, real_t *out_er, real_t *in_er)
 {
     glue_t *glue;
     input_t *input;
-    layer_updater_t *out_layer_updater;
 
     st_wt_int_t in_idx;
     int a, i;
@@ -147,7 +147,6 @@ int emb_glue_updater_backprop(glue_updater_t *glue_updater,
 
     glue = glue_updater->glue;
     input = comp_updater->comp->input;
-    out_layer_updater = comp_updater->layer_updaters[glue->out_layer];
 
     if (input->combine == IC_CONCAT) {
         for (a = 0; a < input->n_ctx; a++) {
@@ -158,7 +157,7 @@ int emb_glue_updater_backprop(glue_updater_t *glue_updater,
             in_idx.w = input->context[a].w;
             in_idx.i = words[i];
             if (wt_update(glue_updater->wt_updater, NULL, -1,
-                        out_layer_updater->er + a * glue->wt->col,
+                        out_er + a * glue->wt->col,
                         1.0, NULL, 1.0, &in_idx) < 0) {
                 ST_WARNING("Failed to wt_update.");
                 return -1;
@@ -173,7 +172,7 @@ int emb_glue_updater_backprop(glue_updater_t *glue_updater,
             in_idx.w = input->context[a].w;
             in_idx.i = words[i];
             if (wt_update(glue_updater->wt_updater, NULL, -1,
-                        out_layer_updater->er, 1.0, NULL, 1.0, &in_idx) < 0) {
+                        out_er, 1.0, NULL, 1.0, &in_idx) < 0) {
                 ST_WARNING("Failed to wt_update.");
                 return -1;
             }
