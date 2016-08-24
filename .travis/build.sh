@@ -44,21 +44,21 @@ elif [ $TRAVIS_BRANCH == 'bptt' ]; then
 
   if [ $CASE -eq 2 ]; then
     echo "Testing MaxEnt related cases"
-    (cd egs/tiny; shu-testing 4,10,14,18);
+    (cd egs/tiny; shu-testing 4-7);
   fi
 
   if [ $CASE -eq 3 ]; then
     echo "Testing CBOW related cases"
-    (cd egs/tiny; shu-testing 5,11,15,19);
+    (cd egs/tiny; shu-testing 8-11);
   fi
 
   if [ $CASE -eq 4 ]; then
     echo "Testing FFNN related cases"
-    (cd egs/tiny; shu-testing 6,12,16,20);
+    (cd egs/tiny; shu-testing 12-15);
   fi
 
   if [ $CASE -eq 5 ]; then
     echo "Testing RNN related cases"
-    (cd egs/tiny; shu-testing 7,13,17,21);
+    (cd egs/tiny; shu-testing 16-19);
   fi
 fi

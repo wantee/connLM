@@ -1,8 +1,8 @@
-name="CBOW with sync"
+name="FFNN with minibatch & sync"
 
-before="rm -rf test/tmp/case-$SHU_CASE; mkdir -p test/tmp/case-$SHU_CASE; mkdir -p test/output; cp -r conf test/tmp/case-$SHU_CASE; perl -i -pe 's/SYNC_SIZE[[:space:]]*:[[:space:]]*0/SYNC_SIZE : 1/' test/tmp/case-$SHU_CASE/conf/cbow/train.conf"
+before="rm -rf test/tmp/case-$SHU_CASE; mkdir -p test/tmp/case-$SHU_CASE; mkdir -p test/output; cp -r conf test/tmp/case-$SHU_CASE; perl -i -pe 's/MINI_BATCH[[:space:]]*:[[:space:]]*0/MINI_BATCH : 1/' test/tmp/case-$SHU_CASE/conf/ffnn/train.conf; perl -i -pe 's/SYNC_SIZE[[:space:]]*:[[:space:]]*0/SYNC_SIZE : 1/' test/tmp/case-$SHU_CASE/conf/ffnn/train.conf"
 
-script="./run.sh --conf-dir test/tmp/case-$SHU_CASE/conf --exp-dir test/tmp/case-$SHU_CASE/exp 1,3 > test/output/case-$SHU_CASE.out"
+script="./run.sh --conf-dir test/tmp/case-$SHU_CASE/conf --exp-dir test/tmp/case-$SHU_CASE/exp 1,4 > test/output/case-$SHU_CASE.out"
 
 normalize="./test/normalize_log.sh"
 compare_normalize=("expected/case-$SHU_CASE.out:test/output/case-$SHU_CASE.out")
