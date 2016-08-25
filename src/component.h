@@ -113,11 +113,12 @@ component_t *comp_init_from_topo(const char* topo_content,
  * @param[in] component component to be loaded with.
  * @param[in] opt runtime options passed by caller.
  * @param[in] sec_name section name of runtime options to be loaded.
- * @param[in] parent parent param.
+ * @param[in] parent_param parent param.
+ * @param[in] parent_bptt_opt parent bptt_opt.
  * @return non-zero value if any error.
  */
-int comp_load_train_opt(component_t *comp, st_opt_t *opt,
-        const char *sec_name, param_t *parent);
+int comp_load_train_opt(component_t *comp, st_opt_t *opt, const char *sec_name,
+        param_t *parent_param, bptt_opt_t *parent_bptt_opt);
 
 /**
  * Load component header and initialise a new component.

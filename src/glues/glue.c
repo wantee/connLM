@@ -656,8 +656,8 @@ int glue_init_data(glue_t *glue, input_t *input,
     return 0;
 }
 
-int glue_load_train_opt(glue_t *glue, st_opt_t *opt,
-        const char *sec_name, param_t *parent)
+int glue_load_train_opt(glue_t *glue, st_opt_t *opt, const char *sec_name,
+        param_t *parent_param, bptt_opt_t *parent_bptt_opt)
 {
     char name[MAX_ST_CONF_LEN];
 
@@ -669,9 +669,16 @@ int glue_load_train_opt(glue_t *glue, st_opt_t *opt,
         } else {
             snprintf(name, MAX_ST_CONF_LEN, "%s/%s", sec_name, glue->name);
         }
-        if (param_load(&glue->param, opt, name, parent) < 0) {
+        if (param_load(&glue->param, opt, name, parent_param) < 0) {
             ST_WARNING("Failed to param_load.");
             goto ST_OPT_ERR;
+        }
+        if (glue->recur) {
+            if (bptt_opt_load(&glue->bptt_opt, opt, name,
+                        parent_bptt_opt) < 0) {
+                ST_WARNING("Failed to bptt_opt_load");
+                goto ST_OPT_ERR;
+            }
         }
     }
 

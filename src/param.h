@@ -55,7 +55,7 @@ typedef struct _param_t_ {
 /**
  * Load param option.
  * @ingroup g_param
- * @param[out] param loaded.
+ * @param[out] param parameters loaded.
  * @param[in] opt runtime options passed by caller.
  * @param[in] sec_name section name of runtime options to be loaded.
  * @param[in] parent_param default value of parameters.
@@ -69,6 +69,33 @@ int param_load(param_t *param, st_opt_t *opt, const char *sec_name,
  * @ingroup g_param
  */
 void param_show_usage();
+
+/**
+ * BPTT options.
+ * @ingroup g_param
+ */
+typedef struct _bptt_opt_t_ {
+    int bptt; /**< time steps for BPTT. */
+    int bptt_delay; /**< if bigger than 0, apply bptt for every bptt_delay steps. */
+} bptt_opt_t;
+
+/**
+ * Load BPTT option.
+ * @ingroup g_param
+ * @param[out] bptt_opt options loaded.
+ * @param[in] opt runtime options passed by caller.
+ * @param[in] sec_name section name of runtime options to be loaded.
+ * @param[in] parent_bptt_opt default value of options.
+ * @return non-zero value if any error.
+ */
+int bptt_opt_load(bptt_opt_t *bptt_opt, st_opt_t *opt, const char *sec_name,
+        bptt_opt_t *parent_bptt_opt);
+
+/**
+ * Show bptt_opt usage to stderr
+ * @ingroup g_param
+ */
+void bptt_opt_show_usage();
 
 #ifdef __cplusplus
 }

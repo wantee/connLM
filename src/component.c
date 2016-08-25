@@ -403,11 +403,12 @@ ERR:
     return NULL;
 }
 
-int comp_load_train_opt(component_t *comp, st_opt_t *opt,
-        const char *sec_name, param_t *parent)
+int comp_load_train_opt(component_t *comp, st_opt_t *opt, const char *sec_name,
+        param_t *parent_param, bptt_opt_t *parent_bptt_opt)
 {
     char name[MAX_ST_CONF_LEN];
     param_t param;
+    bptt_opt_t bptt_opt;
     int g;
 
     ST_CHECK_PARAM(comp == NULL || opt == NULL, -1);
@@ -418,13 +419,18 @@ int comp_load_train_opt(component_t *comp, st_opt_t *opt,
         snprintf(name, MAX_ST_CONF_LEN, "%s/%s", sec_name,
                 comp->name);
     }
-    if (param_load(&param, opt, name, parent) < 0) {
+    if (param_load(&param, opt, name, parent_param) < 0) {
+        ST_WARNING("Failed to param_load.");
+        goto ST_OPT_ERR;
+    }
+    if (bptt_opt_load(&bptt_opt, opt, name, parent_bptt_opt) < 0) {
         ST_WARNING("Failed to param_load.");
         goto ST_OPT_ERR;
     }
 
     for (g = 0; g < comp->num_glue; g++) {
-        if (glue_load_train_opt(comp->glues[g], opt, name, &param) < 0) {
+        if (glue_load_train_opt(comp->glues[g], opt, name,
+                    &param, &bptt_opt) < 0) {
             ST_WARNING("Failed to glue_load_train_opt.");
             goto ST_OPT_ERR;
         }

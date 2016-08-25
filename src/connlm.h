@@ -75,7 +75,7 @@ typedef struct _connlm_t_ {
  * @param[in] sec_name section name of runtime options to be loaded.
  * @return non-zero value if any error.
  */
-int connlm_load_param(connlm_t *connlm, st_opt_t *opt,
+int connlm_load_train_opt(connlm_t *connlm, st_opt_t *opt,
         const char *sec_name);
 
 /**

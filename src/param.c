@@ -120,3 +120,53 @@ int param_load(param_t *param, st_opt_t *opt, const char *sec_name,
 ST_OPT_ERR:
     return -1;
 }
+
+static bptt_opt_t def_bptt_opt = {
+    .bptt = 0,
+    .bptt_delay = 0,
+};
+
+void bptt_opt_show_usage()
+{
+    bptt_opt_t bptt_opt;
+    st_opt_t *opt = NULL;
+
+    opt = st_opt_create();
+    if (opt == NULL) {
+        ST_WARNING("Failed to st_opt_create.");
+        goto ST_OPT_ERR;
+    }
+
+    if (bptt_opt_load(&bptt_opt, opt, NULL, NULL) < 0) {
+        ST_WARNING("Failed to bptt_opt_load");
+        goto ST_OPT_ERR;
+    }
+
+    fprintf(stderr, "\nBPTT options for recurrent glue:\n");
+    st_opt_show_usage(opt, stderr, false);
+
+ST_OPT_ERR:
+    safe_st_opt_destroy(opt);
+}
+
+int bptt_opt_load(bptt_opt_t *bptt_opt, st_opt_t *opt, const char *sec_name,
+        bptt_opt_t *parent_bptt_opt)
+{
+    ST_CHECK_PARAM(bptt_opt == NULL || opt == NULL, -1);
+
+    if (parent_bptt_opt == NULL) {
+        *bptt_opt = def_bptt_opt;
+    } else {
+        *bptt_opt = *parent_bptt_opt;
+    }
+
+    ST_OPT_SEC_GET_INT(opt, sec_name, "BPTT", bptt_opt->bptt,
+            bptt_opt->bptt, "Time steps of BPTT.");
+
+    ST_OPT_SEC_GET_INT(opt, sec_name, "BPTT_DELAY", bptt_opt->bptt_delay,
+            bptt_opt->bptt_delay, "delayed step of applying BPTT.");
+
+    return 0;
+ST_OPT_ERR:
+    return -1;
+}

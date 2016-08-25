@@ -101,12 +101,13 @@ void show_usage(const char *module_name)
             "exp/init.clm data/train ext/01.clm",
             g_cmd_opt, NULL);
     param_show_usage();
-    fprintf(stderr, "Individual param can be set with "
-            "component and/or glue name, e.g.:\n");
+    bptt_opt_show_usage();
+    fprintf(stderr, "Individual parameter or bptt options can be set with "
+            "component and/or glue name,\ne.g.:\n");
     fprintf(stderr, "  --<comp_name>^<param> "
-            "set param for a component.\n");
+            "set param/bptt_opt for a component.\n");
     fprintf(stderr, "  --<comp_name>^<glue_name>^<param> "
-            "set param for a glue.\n");
+            "set param/bptt_opt for a glue.\n");
 }
 
 int main(int argc, const char *argv[])
@@ -166,8 +167,8 @@ int main(int argc, const char *argv[])
     }
     safe_st_fclose(fp);
 
-    if (connlm_load_param(connlm, g_cmd_opt, NULL) < 0) {
-        ST_WARNING("Failed to connlm_load_param");
+    if (connlm_load_train_opt(connlm, g_cmd_opt, NULL) < 0) {
+        ST_WARNING("Failed to connlm_load_train_opt");
         goto ERR;
     }
 

@@ -43,10 +43,10 @@ const char* connlm_revision()
     return CONNLM_GIT_COMMIT;
 }
 
-int connlm_load_param(connlm_t *connlm, st_opt_t *opt,
-        const char *sec_name)
+int connlm_load_train_opt(connlm_t *connlm, st_opt_t *opt, const char *sec_name)
 {
     param_t param;
+    bptt_opt_t bptt_opt;
     int c;
 
     ST_CHECK_PARAM(connlm == NULL || opt == NULL, -1);
@@ -55,10 +55,14 @@ int connlm_load_param(connlm_t *connlm, st_opt_t *opt,
         ST_WARNING("Failed to param_load.");
         goto ST_OPT_ERR;
     }
+    if (bptt_opt_load(&bptt_opt, opt, sec_name, NULL) < 0) {
+        ST_WARNING("Failed to bptt_opt_load.");
+        goto ST_OPT_ERR;
+    }
 
     for (c = 0; c < connlm->num_comp; c++) {
         if (comp_load_train_opt(connlm->comps[c], opt, sec_name,
-                    &param) < 0) {
+                    &param, &bptt_opt) < 0) {
             ST_WARNING("Failed to comp_load_train_opt.");
             goto ST_OPT_ERR;
         }

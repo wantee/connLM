@@ -96,6 +96,7 @@ typedef struct _glue_t_ {
     int in_layer; /**< input layer id. */
     int out_layer; /**< output layer id. */
     bool recur; /**< whether this glue is recurrent. */
+    bptt_opt_t bptt_opt; /**< options for BPTT, only relevant with recur glue. */
 
     weight_t *wt; /**< weight matrix. */
     param_t param; /**< updating parameters. */
@@ -247,11 +248,12 @@ int glue_init_data(glue_t *glue, input_t *input,
  * @param[in] glue glue to be loaded with.
  * @param[in] opt runtime options passed by caller.
  * @param[in] sec_name section name of runtime options to be loaded.
- * @param[in] parent parent param.
+ * @param[in] parent_param parent param.
+ * @param[in] parent_bptt_opt parent bptt_opt.
  * @return non-zero value if any error.
  */
-int glue_load_train_opt(glue_t *glue, st_opt_t *opt,
-        const char *sec_name, param_t *parent);
+int glue_load_train_opt(glue_t *glue, st_opt_t *opt, const char *sec_name,
+        param_t *parent_param, bptt_opt_t *parent_bptt_opt);
 
 /**
  * Feed-forward one word for a thread of glue.
