@@ -1,69 +1,69 @@
 
 Step 1: Learn Vocab ...
-../steps/learn_vocab.sh --config-file test/tmp/case-16/exp/conf/vocab.conf ./data/train test/tmp/case-16/exp
-../steps/learn_vocab.sh: Learning vocab test/tmp/case-16/exp/vocab.clm from ./data/train
+../steps/learn_vocab.sh --config-file test/tmp/case-14/exp/conf/vocab.conf ./data/train test/tmp/case-14/exp
+../steps/learn_vocab.sh: Learning vocab test/tmp/case-14/exp/vocab.clm from ./data/train
 =================================
 Words:  81350
 Vocab size:  3721
 =================================
-../steps/learn_vocab.sh: Elapse time: 0hr0m1s
+../steps/learn_vocab.sh: Elapse time: 0hr0m0s
 
 Step 4: Train FFNN model ...
-../steps/run_standalone.sh --train-thr 1 --eval-thr 1 ffnn test/tmp/case-16/exp/conf test/tmp/case-16/exp ./data/train ./data/valid ./data/test
+../steps/run_standalone.sh --train-thr 1 --eval-thr 1 ffnn test/tmp/case-14/exp/conf test/tmp/case-14/exp ./data/train ./data/valid ./data/test
 ../steps/run_standalone.sh: Stage 1 --- Initialising model...
-../steps/init_model.sh --init-config-file test/tmp/case-16/exp/conf/ffnn/init.conf --output-config-file test/tmp/case-16/exp/conf/ffnn/output.conf test/tmp/case-16/exp/vocab.clm test/tmp/case-16/exp/conf/ffnn/topo test/tmp/case-16/exp/ffnn
-../steps/init_model.sh: Initializing model test/tmp/case-16/exp/vocab.clm to test/tmp/case-16/exp/ffnn/init.clm ...
+../steps/init_model.sh --init-config-file test/tmp/case-14/exp/conf/ffnn/init.conf --output-config-file test/tmp/case-14/exp/conf/ffnn/output.conf test/tmp/case-14/exp/vocab.clm test/tmp/case-14/exp/conf/ffnn/topo test/tmp/case-14/exp/ffnn
+../steps/init_model.sh: Initializing model test/tmp/case-14/exp/vocab.clm to test/tmp/case-14/exp/ffnn/init.clm ...
 ../steps/init_model.sh: Elapse time: 0hr0m0s
 ../steps/run_standalone.sh: Stage 2 --- Training model...
-../steps/train_model.sh --train-config test/tmp/case-16/exp/conf/ffnn/train.conf --eval-config test/tmp/case-16/exp/conf/eval.conf --train-threads 1 --eval-threads 1 ./data/train ./data/valid test/tmp/case-16/exp/ffnn
+../steps/train_model.sh --train-config test/tmp/case-14/exp/conf/ffnn/train.conf --eval-config test/tmp/case-14/exp/conf/eval.conf --train-threads 1 --eval-threads 1 ./data/train ./data/valid test/tmp/case-14/exp/ffnn
 Prerun Valid Entropy: 10.090943
-ITERATION 01: LR(ffnn^emb=0.0001 ffnn^fc=0.001 ffnn^out=0.01), TrEnt 7.896419, W/s 30.7k, CVEnt: 7.847595
+ITERATION 01: LR(ffnn^emb=0.0001 ffnn^fc=0.001 ffnn^out=0.01), TrEnt 7.896418, W/s 31.8k, CVEnt: 7.847569
 nnet accepted (01.clm)
-ITERATION 02: LR(ffnn^emb=0.0001 ffnn^fc=0.001 ffnn^out=0.01), TrEnt 7.741148, W/s 31.1k, CVEnt: 7.742304
+ITERATION 02: LR(ffnn^emb=0.0001 ffnn^fc=0.001 ffnn^out=0.01), TrEnt 7.741096, W/s 31.4k, CVEnt: 7.742294
 nnet accepted (02.clm)
-ITERATION 03: LR(ffnn^emb=0.0001 ffnn^fc=0.001 ffnn^out=0.01), TrEnt 7.590722, W/s 31.0k, CVEnt: 7.617824
+ITERATION 03: LR(ffnn^emb=0.0001 ffnn^fc=0.001 ffnn^out=0.01), TrEnt 7.590648, W/s 31.4k, CVEnt: 7.617822
 nnet accepted (03.clm)
-ITERATION 04: LR(ffnn^emb=0.0001 ffnn^fc=0.001 ffnn^out=0.01), TrEnt 7.454276, W/s 30.0k, CVEnt: 7.521253
+ITERATION 04: LR(ffnn^emb=0.0001 ffnn^fc=0.001 ffnn^out=0.01), TrEnt 7.454209, W/s 31.3k, CVEnt: 7.521333
 nnet accepted (04.clm)
-ITERATION 05: LR(ffnn^emb=0.0001 ffnn^fc=0.001 ffnn^out=0.01), TrEnt 7.330201, W/s 31.0k, CVEnt: 7.448312
+ITERATION 05: LR(ffnn^emb=0.0001 ffnn^fc=0.001 ffnn^out=0.01), TrEnt 7.330157, W/s 32.0k, CVEnt: 7.448503
 nnet accepted (05.clm)
-ITERATION 06: LR(ffnn^emb=0.0001 ffnn^fc=0.001 ffnn^out=0.01), TrEnt 7.209120, W/s 30.7k, CVEnt: 7.385791
+ITERATION 06: LR(ffnn^emb=0.0001 ffnn^fc=0.001 ffnn^out=0.01), TrEnt 7.209107, W/s 31.0k, CVEnt: 7.386045
 nnet accepted (06.clm)
-ITERATION 07: LR(ffnn^emb=0.0001 ffnn^fc=0.001 ffnn^out=0.01), TrEnt 7.120691, W/s 30.9k, CVEnt: 7.341870
+ITERATION 07: LR(ffnn^emb=0.0001 ffnn^fc=0.001 ffnn^out=0.01), TrEnt 7.120645, W/s 31.8k, CVEnt: 7.341980
 nnet accepted (07.clm)
-ITERATION 08: LR(ffnn^emb=0.0001 ffnn^fc=0.001 ffnn^out=0.01), TrEnt 7.048554, W/s 30.9k, CVEnt: 7.301133
+ITERATION 08: LR(ffnn^emb=0.0001 ffnn^fc=0.001 ffnn^out=0.01), TrEnt 7.048431, W/s 31.6k, CVEnt: 7.301205
 nnet accepted (08.clm)
-ITERATION 09: LR(ffnn^emb=0.0001 ffnn^fc=0.001 ffnn^out=0.01), TrEnt 6.988413, W/s 31.3k, CVEnt: 7.266462
+ITERATION 09: LR(ffnn^emb=0.0001 ffnn^fc=0.001 ffnn^out=0.01), TrEnt 6.988267, W/s 32.1k, CVEnt: 7.266449
 nnet accepted (09.clm)
-ITERATION 10: LR(ffnn^emb=0.0001 ffnn^fc=0.001 ffnn^out=0.01), TrEnt 6.941243, W/s 31.0k, CVEnt: 7.220099
+ITERATION 10: LR(ffnn^emb=0.0001 ffnn^fc=0.001 ffnn^out=0.01), TrEnt 6.941090, W/s 32.0k, CVEnt: 7.220083
 nnet accepted (10.clm)
-ITERATION 11: LR(ffnn^emb=0.0001 ffnn^fc=0.001 ffnn^out=0.01), TrEnt 6.909919, W/s 31.3k, CVEnt: 7.189094
+ITERATION 11: LR(ffnn^emb=0.0001 ffnn^fc=0.001 ffnn^out=0.01), TrEnt 6.909800, W/s 31.8k, CVEnt: 7.189143
 nnet accepted (11.clm)
-ITERATION 12: LR(ffnn^emb=0.0001 ffnn^fc=0.001 ffnn^out=0.01), TrEnt 6.888671, W/s 30.9k, CVEnt: 7.173796
+ITERATION 12: LR(ffnn^emb=0.0001 ffnn^fc=0.001 ffnn^out=0.01), TrEnt 6.888386, W/s 32.0k, CVEnt: 7.174153
 nnet accepted (12.clm)
-ITERATION 13: LR(ffnn^emb=5e-05 ffnn^fc=0.0005 ffnn^out=0.005), TrEnt 6.845603, W/s 31.4k, CVEnt: 7.152909
+ITERATION 13: LR(ffnn^emb=5e-05 ffnn^fc=0.0005 ffnn^out=0.005), TrEnt 6.845730, W/s 32.0k, CVEnt: 7.153158
 nnet accepted (13.clm)
-ITERATION 14: LR(ffnn^emb=2.5e-05 ffnn^fc=0.00025 ffnn^out=0.0025), TrEnt 6.816569, W/s 31.1k, CVEnt: 7.143060
+ITERATION 14: LR(ffnn^emb=2.5e-05 ffnn^fc=0.00025 ffnn^out=0.0025), TrEnt 6.816861, W/s 32.0k, CVEnt: 7.143338
 nnet accepted (14.clm)
-ITERATION 15: LR(ffnn^emb=1.25e-05 ffnn^fc=0.000125 ffnn^out=0.00125), TrEnt 6.803044, W/s 30.4k, CVEnt: 7.138421
+ITERATION 15: LR(ffnn^emb=1.25e-05 ffnn^fc=0.000125 ffnn^out=0.00125), TrEnt 6.803337, W/s 32.2k, CVEnt: 7.138633
 nnet accepted (15.clm)
-ITERATION 16: LR(ffnn^emb=6.25e-06 ffnn^fc=6.25e-05 ffnn^out=0.000625), TrEnt 6.795701, W/s 31.3k, CVEnt: 7.135448
+ITERATION 16: LR(ffnn^emb=6.25e-06 ffnn^fc=6.25e-05 ffnn^out=0.000625), TrEnt 6.795951, W/s 32.2k, CVEnt: 7.135675
 nnet accepted (16.clm)
-ITERATION 17: LR(ffnn^emb=3.125e-06 ffnn^fc=3.125e-05 ffnn^out=0.0003125), TrEnt 6.792471, W/s 31.4k, CVEnt: 7.130990
+ITERATION 17: LR(ffnn^emb=3.125e-06 ffnn^fc=3.125e-05 ffnn^out=0.0003125), TrEnt 6.792667, W/s 32.1k, CVEnt: 7.131104
 nnet accepted (17.clm)
-ITERATION 18: LR(ffnn^emb=1.5625e-06 ffnn^fc=1.5625e-05 ffnn^out=0.00015625), TrEnt 6.792831, W/s 31.5k, CVEnt: 7.131623
+ITERATION 18: LR(ffnn^emb=1.5625e-06 ffnn^fc=1.5625e-05 ffnn^out=0.00015625), TrEnt 6.792961, W/s 28.8k, CVEnt: 7.131824
 nnet rejected (18.clm)
 ../steps/train_model.sh: finished, too small rel. improvement 0
-../steps/train_model.sh: Succeeded training the Neural Network : test/tmp/case-16/exp/ffnn/final.clm
-../steps/train_model.sh: Elapse time: 0hr0m50s
-../steps/train_model.sh: Effective speed: 29.2k words/sec
+../steps/train_model.sh: Succeeded training the Neural Network : test/tmp/case-14/exp/ffnn/final.clm
+../steps/train_model.sh: Elapse time: 0hr0m52s
+../steps/train_model.sh: Effective speed: 28.1k words/sec
 ../steps/run_standalone.sh: Stage 3 --- Testing model...
-../steps/eval_model.sh --config-file test/tmp/case-16/exp/conf/eval.conf --eval-threads 1 test/tmp/case-16/exp/ffnn ./data/test
-../steps/eval_model.sh: Evaluating model test/tmp/case-16/exp/ffnn/final.clm ...
+../steps/eval_model.sh --config-file test/tmp/case-14/exp/conf/eval.conf --eval-threads 1 test/tmp/case-14/exp/ffnn ./data/test
+../steps/eval_model.sh: Evaluating model test/tmp/case-14/exp/ffnn/final.clm ...
 =================================
-Eval Entropy: 6.998812
-Eval PPL: 127.894653
-Eval Speed: 119.6k words/sec
+Eval Entropy: 6.998950
+Eval PPL: 127.906912
+Eval Speed: 92.3k words/sec
 =================================
 ../steps/eval_model.sh: Elapse time: 0hr0m0s
-../steps/run_standalone.sh: Elapse time: 0hr0m50s
+../steps/run_standalone.sh: Elapse time: 0hr0m52s

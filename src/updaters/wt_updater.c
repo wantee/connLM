@@ -294,7 +294,7 @@ void wt_updater_clear(wt_updater_t *wt_updater)
 static inline real_t get_l2(wt_updater_t *wt_updater)
 {
     if (wt_updater->param.l2_delay > 0
-            && wt_updater->n_flush_step % wt_updater->param.l2_delay == 0) {
+        && wt_updater->n_flush_step % (wt_updater->param.l2_delay + 1) == 0) {
         return wt_updater->param.l2_penalty;
     } else {
         return 0.0;
