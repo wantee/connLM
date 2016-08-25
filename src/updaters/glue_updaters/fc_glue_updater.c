@@ -89,15 +89,15 @@ int fc_glue_updater_backprop(glue_updater_t *glue_updater,
 
     wt_updater = glue_updater->wt_updater;
 
-    if (wt_update(wt_updater, NULL, -1, out_er, 1.0, in_ac, 1.0, NULL) < 0) {
-        ST_WARNING("Failed to wt_update.");
-        return -1;
-    }
-
     if (in_er != NULL) {
         propagate_error(in_er, out_er,
                 wt_updater->wt, wt_updater->col, wt_updater->row,
                 wt_updater->param.er_cutoff, 1.0);
+    }
+
+    if (wt_update(wt_updater, NULL, -1, out_er, 1.0, in_ac, 1.0, NULL) < 0) {
+        ST_WARNING("Failed to wt_update.");
+        return -1;
     }
 
     return 0;

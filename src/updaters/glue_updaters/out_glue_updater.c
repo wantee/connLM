@@ -153,6 +153,11 @@ static int out_backprop_walker(output_t *output, output_node_id_t node,
     wt = wt_updater->wt;
     layer_size = wt_updater->col;
 
+    propagate_error(ow_args->in_er, ow_args->out_er + child_s,
+            wt + output_param_idx(ow_args->output, child_s) * layer_size,
+            layer_size, child_e - child_s - 1,
+            wt_updater->param.er_cutoff, ow_args->scale);
+
     if (output->norm == ON_SOFTMAX) {
         if (child_e <= child_s + 1) {
             return 0;
@@ -164,11 +169,6 @@ static int out_backprop_walker(output_t *output, output_node_id_t node,
             return -1;
         }
     }
-
-    propagate_error(ow_args->in_er, ow_args->out_er + child_s,
-            wt + output_param_idx(ow_args->output, child_s) * layer_size,
-            layer_size, child_e - child_s - 1,
-            wt_updater->param.er_cutoff, ow_args->scale);
 
     return 0;
 }
