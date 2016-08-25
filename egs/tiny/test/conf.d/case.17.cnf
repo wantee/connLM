@@ -1,8 +1,8 @@
 name="RNN with minibatch"
 
-before="rm -rf test/tmp/case-$SHU_CASE; mkdir -p test/tmp/case-$SHU_CASE; mkdir -p test/output; cp -r conf test/tmp/case-$SHU_CASE; perl -i -pe 's/MINI_BATCH[[:space:]]*:[[:space:]]*0/MINI_BATCH : 1/' test/tmp/case-$SHU_CASE/conf/rnn/train.conf"
+before="./test/test_model_before.sh rnn mini"
 
-script="./run.sh --conf-dir test/tmp/case-$SHU_CASE/conf --exp-dir test/tmp/case-$SHU_CASE/exp 1,5 > test/output/case-$SHU_CASE.out"
+script="./test/test_model_script.sh 5"
 
 normalize="./test/normalize_log.sh"
 compare_normalize=("expected/case-$SHU_CASE.out:test/output/case-$SHU_CASE.out")
