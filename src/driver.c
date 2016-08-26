@@ -573,7 +573,7 @@ static int driver_gen(driver_t *driver)
 
             if (egs.size > 1) {
                 printf("[");
-                for (i = 0; i < egs.size - 1; i++) {
+                for (i = 1; i < egs.size - 1; i++) {
                     printf("%s", vocab_get_word(vocab, egs.words[i]));
                     if (i < egs.size - 2) {
                         printf(" ");

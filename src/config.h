@@ -62,8 +62,10 @@ typedef unsigned long long hash_t;
 
 #define SENT_END "</s>"
 #define SENT_END_ID 0
+#define SENT_START "<s>"
+#define SENT_START_ID 1
 #define UNK "<unk>"
-#define UNK_ID 1
+#define UNK_ID 2
 
 #ifdef __cplusplus
 }

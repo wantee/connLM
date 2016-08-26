@@ -105,12 +105,13 @@ ERR:
     return -1;
 }
 
-static int input_updater_update_sent(input_updater_t *input_updater)
+static int input_updater_update_sent(input_updater_t *input_updater,
+        sent_t *sent)
 {
     int i;
     int next;
 
-    ST_CHECK_PARAM(input_updater == NULL, -1);
+    ST_CHECK_PARAM(input_updater == NULL || sent == NULL, -1);
 
     if (input_updater->sent_head >= 0) {
         if (input_updater->words[input_updater->sent_tail-1] != SENT_END_ID) {
@@ -147,6 +148,14 @@ static int input_updater_update_sent(input_updater_t *input_updater)
         }
     }
 
+    sent->words = input_updater->words + input_updater->sent_head;
+    sent->n_word = input_updater->sent_tail - input_updater->sent_head;
+    if (input_updater->words[input_updater->cur_pos] == SENT_START_ID) {
+        // we never use <s> as target word, since P(<s>) should be equal to 1
+        input_updater->cur_pos++;
+    }
+    sent->tgt_pos = input_updater->cur_pos - input_updater->sent_head;
+
     return 0;
 }
 
@@ -155,7 +164,7 @@ int input_updater_feed(input_updater_t *input_updater, int *words, int n_word,
 {
     int drop;
 
-    ST_CHECK_PARAM(input_updater == NULL || words == NULL || sent == NULL, -1);
+    ST_CHECK_PARAM(input_updater == NULL || words == NULL, -1);
 
     // drop words already done
     drop = input_updater->cur_pos - input_updater->ctx_leftmost;
@@ -184,32 +193,24 @@ int input_updater_feed(input_updater_t *input_updater, int *words, int n_word,
             sizeof(int)*n_word);
     input_updater->n_word += n_word;
 
-    if (input_updater_update_sent(input_updater) < 0) {
+    if (input_updater_update_sent(input_updater, sent) < 0) {
         ST_WARNING("Failed to input_updater_update_sent.");
         return -1;
     }
-
-    sent->words = input_updater->words + input_updater->sent_head;
-    sent->n_word = input_updater->sent_tail - input_updater->sent_head;
-    sent->tgt_pos = input_updater->cur_pos - input_updater->sent_head;
 
     return 0;
 }
 
 int input_updater_move(input_updater_t *input_updater, sent_t *sent)
 {
-    ST_CHECK_PARAM(input_updater == NULL || sent == NULL, -1);
+    ST_CHECK_PARAM(input_updater == NULL, -1);
 
     input_updater->cur_pos++;
 
-    if (input_updater_update_sent(input_updater) < 0) {
+    if (input_updater_update_sent(input_updater, sent) < 0) {
         ST_WARNING("Failed to input_updater_update_sent.");
         return -1;
     }
-
-    sent->words = input_updater->words + input_updater->sent_head;
-    sent->n_word = input_updater->sent_tail - input_updater->sent_head;
-    sent->tgt_pos = input_updater->cur_pos - input_updater->sent_head;
 
     return 0;
 }
