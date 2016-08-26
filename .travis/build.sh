@@ -39,26 +39,26 @@ elif [ $TRAVIS_BRANCH == 'bptt' ]; then
   if [ $CASE -eq 1 ]; then
     echo "Testing miscs"
     make -C src test
-    (cd egs/tiny; shu-testing 1-3)
+    (cd egs/tiny; shu-testing 1)
   fi
 
   if [ $CASE -eq 2 ]; then
     echo "Testing MaxEnt related cases"
-    (cd egs/tiny; shu-testing 4-7);
+    (cd egs/tiny; shu-testing 2-5);
   fi
 
   if [ $CASE -eq 3 ]; then
     echo "Testing CBOW related cases"
-    (cd egs/tiny; shu-testing 8-11);
+    (cd egs/tiny; shu-testing 6-9);
   fi
 
   if [ $CASE -eq 4 ]; then
     echo "Testing FFNN related cases"
-    (cd egs/tiny; shu-testing 12-15);
+    (cd egs/tiny; shu-testing 10-13);
   fi
 
   if [ $CASE -eq 5 ]; then
     echo "Testing RNN related cases"
-    (cd egs/tiny; shu-testing 16-19);
+    (cd egs/tiny; shu-testing 14-17);
   fi
 fi

@@ -1,8 +1,8 @@
-name="MaxEnt with minibatch & sync"
+name="CBOW with minibatch"
 
-before="./test/test_model_before.sh maxent mini+sync"
+before="./test/test_model_before.sh cbow mini"
 
-script="./test/test_model_script.sh 2"
+script="./test/test_model_script.sh 3"
 
 normalize="./test/normalize_log.sh"
 compare_normalize=("expected/case-$SHU_CASE.out:test/output/case-$SHU_CASE.out")

@@ -13,11 +13,32 @@ if [ -z "$SHU_CASE"  ]; then
 fi
 
 if [ $# -lt 1 ]; then
-  echo "Usage: $0 <step>"
+  echo "Usage: $0 <step> [model]"
   exit 1
 fi
 
 step=$1
-./run.sh --conf-dir "test/tmp/case-$SHU_CASE/conf" \
-         --exp-dir "test/tmp/case-$SHU_CASE/exp" 1,$step \
+model=$2
+
+case_dir="test/tmp/case-$SHU_CASE"
+
+./run.sh --conf-dir "$case_dir/conf" --exp-dir "$case_dir/exp" 1,$step \
       > "test/output/case-$SHU_CASE.out"
+
+if [ -n "$model" ]; then
+  prefix="$case_dir/prefix.txt"
+  echo -e 'I AM\nIT IS THAT\nYEAH' > "$prefix"
+
+  source ../steps/path.sh
+
+  model_file="$case_dir/exp/$model/final.clm"
+  gen="test/output/case-$SHU_CASE.gen.txt"
+  opt="--log-file=$case_dir/exp/$model/log/gen.log --random-seed=1"
+
+  echo "# Generate 1" > $gen
+  connlm-gen $opt $model_file >> $gen
+  echo "# Generate 10" >> $gen
+  connlm-gen $opt $model_file 10 >> $gen
+  echo "# Generate with prefix" >> $gen
+  connlm-gen $opt --prefix-file=$prefix $model_file >> $gen
+fi

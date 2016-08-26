@@ -7,27 +7,26 @@ if [ "`basename $PWD`" != "tiny" ]; then
   exit 1
 fi
 
-train_file=${1:-./data/train}
-dir=${2:-./test/tmp/}
-mkdir -p $dir
+if [ $# -lt 2 ]; then
+  echo "Usage: $0 <model> <exp_dir> [train_file]"
+  exit 1
+fi
 
-shu-run connlm-vocab $train_file $dir/vocab.clm || exit 1
+model=$1
+exp_dir=$2
+train_file=${3:-./data/train}
 
-shu-run connlm-output $dir/vocab.clm $dir/output.clm || exit 1
+shu-run connlm-info $exp_dir/init.clm || exit 1
 
-shu-run connlm-init $dir/output.clm conf/rnn+maxent/topo $dir/init.clm || exit 1
+shu-run connlm-copy --binary=true $exp_dir/init.clm $exp_dir/bin.clm || exit 1
 
-shu-run connlm-info $dir/init.clm || exit 1
+shu-run connlm-copy --binary=false $exp_dir/bin.clm $exp_dir/txt.clm || exit 1
 
-shu-run connlm-copy --binary=true $dir/init.clm $dir/bin.clm || exit 1
+shu-run connlm-copy --binary=false $exp_dir/txt.clm $exp_dir/txt1.clm || exit 1
 
-shu-run connlm-copy --binary=false $dir/bin.clm $dir/txt.clm || exit 1
+shu-run connlm-copy --binary=true $exp_dir/txt.clm $exp_dir/bin1.clm || exit 1
 
-shu-run connlm-copy --binary=false $dir/txt.clm $dir/txt1.clm || exit 1
-
-shu-run connlm-copy --binary=true $dir/txt.clm $dir/bin1.clm || exit 1
-
-diff $dir/txt.clm $dir/txt1.clm || exit
+diff $exp_dir/txt.clm $exp_dir/txt1.clm || exit
 
 echo "All Passed."
 exit 0

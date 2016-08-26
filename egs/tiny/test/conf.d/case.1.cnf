@@ -1,5 +1,6 @@
 name="Reading thread"
 
-before="rm -rf test/tmp/case-$SHU_CASE; mkdir -p test/tmp/case-$SHU_CASE; cp -r conf test/tmp/case-$SHU_CASE; ./run.sh --conf-dir test/tmp/case-$SHU_CASE/conf --exp-dir test/tmp/case-$SHU_CASE/exp 1,2 > /dev/null"
+_case_dir=test/tmp/case-$SHU_CASE
+before="rm -rf ${_case_dir}; mkdir -p ${_case_dir}; cp -r conf ${_case_dir}/; ./run.sh --conf-dir ${_case_dir}/conf --exp-dir ${_case_dir}/exp 1,2 > /dev/null"
 
-script="./test/test_read.sh test/tmp/case-$SHU_CASE/exp/maxent test/tmp/case-$SHU_CASE > test/tmp/case-$SHU_CASE/test_read.log"
+script="./test/test_read.sh ${_case_dir}/exp/maxent ${_case_dir}> ${_case_dir}/test_read.log"

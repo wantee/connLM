@@ -6,7 +6,7 @@ Step 1: Learn Vocab ...
 Words:  81350
 Vocab size:  3721
 =================================
-../steps/learn_vocab.sh: Elapse time: 1s
+../steps/learn_vocab.sh: Elapse time: 0s
 
 Step 5: Train RNN model ...
 ../steps/run_standalone.sh --train-thr 1 --eval-thr 1 rnn test/tmp/case-17/exp/conf test/tmp/case-17/exp ./data/train ./data/valid ./data/test
@@ -17,39 +17,39 @@ Step 5: Train RNN model ...
 ../steps/run_standalone.sh: Stage 2 --- Training model...
 ../steps/train_model.sh --train-config test/tmp/case-17/exp/conf/rnn/train.conf --eval-config test/tmp/case-17/exp/conf/eval.conf --train-threads 1 --eval-threads 1 ./data/train ./data/valid test/tmp/case-17/exp/rnn
 Prerun Valid Entropy: 8.919648
-ITERATION 01: LR(rnn^emb=0.05 rnn^out=0.01 rnn^recur=0.01), TrEnt 7.429884, W/s 46.3k, CVEnt: 7.284988
+ITERATION 01: LR(rnn^emb=0.05 rnn^out=0.01 rnn^recur=0.01), TrEnt 7.429884, W/s 30.6k, CVEnt: 7.284988
 nnet accepted (01.clm)
-ITERATION 02: LR(rnn^emb=0.05 rnn^out=0.01 rnn^recur=0.01), TrEnt 7.038388, W/s 43.2k, CVEnt: 7.139413
+ITERATION 02: LR(rnn^emb=0.05 rnn^out=0.01 rnn^recur=0.01), TrEnt 7.038388, W/s 29.5k, CVEnt: 7.139413
 nnet accepted (02.clm)
-ITERATION 03: LR(rnn^emb=0.05 rnn^out=0.01 rnn^recur=0.01), TrEnt 6.863683, W/s 46.7k, CVEnt: 7.032435
+ITERATION 03: LR(rnn^emb=0.05 rnn^out=0.01 rnn^recur=0.01), TrEnt 6.863683, W/s 31.8k, CVEnt: 7.032435
 nnet accepted (03.clm)
-ITERATION 04: LR(rnn^emb=0.05 rnn^out=0.01 rnn^recur=0.01), TrEnt 6.746803, W/s 45.3k, CVEnt: 6.973462
+ITERATION 04: LR(rnn^emb=0.05 rnn^out=0.01 rnn^recur=0.01), TrEnt 6.746803, W/s 30.9k, CVEnt: 6.973462
 nnet accepted (04.clm)
-ITERATION 05: LR(rnn^emb=0.05 rnn^out=0.01 rnn^recur=0.01), TrEnt 6.653903, W/s 42.8k, CVEnt: 6.937918
+ITERATION 05: LR(rnn^emb=0.05 rnn^out=0.01 rnn^recur=0.01), TrEnt 6.653903, W/s 32.2k, CVEnt: 6.937918
 nnet accepted (05.clm)
-ITERATION 06: LR(rnn^emb=0.05 rnn^out=0.01 rnn^recur=0.01), TrEnt 6.580464, W/s 47.7k, CVEnt: 6.912143
+ITERATION 06: LR(rnn^emb=0.05 rnn^out=0.01 rnn^recur=0.01), TrEnt 6.580464, W/s 32.0k, CVEnt: 6.912143
 nnet accepted (06.clm)
-ITERATION 07: LR(rnn^emb=0.05 rnn^out=0.01 rnn^recur=0.01), TrEnt 6.516026, W/s 46.9k, CVEnt: 6.903815
+ITERATION 07: LR(rnn^emb=0.05 rnn^out=0.01 rnn^recur=0.01), TrEnt 6.516026, W/s 32.5k, CVEnt: 6.903815
 nnet accepted (07.clm)
-ITERATION 08: LR(rnn^emb=0.025 rnn^out=0.005 rnn^recur=0.005), TrEnt 6.443017, W/s 48.2k, CVEnt: 6.894437
+ITERATION 08: LR(rnn^emb=0.025 rnn^out=0.005 rnn^recur=0.005), TrEnt 6.443017, W/s 30.8k, CVEnt: 6.894437
 nnet accepted (08.clm)
-ITERATION 09: LR(rnn^emb=0.0125 rnn^out=0.0025 rnn^recur=0.0025), TrEnt 6.404249, W/s 48.1k, CVEnt: 6.871252
+ITERATION 09: LR(rnn^emb=0.0125 rnn^out=0.0025 rnn^recur=0.0025), TrEnt 6.404249, W/s 32.1k, CVEnt: 6.871252
 nnet accepted (09.clm)
-ITERATION 10: LR(rnn^emb=0.00625 rnn^out=0.00125 rnn^recur=0.00125), TrEnt 6.384253, W/s 47.3k, CVEnt: 6.868398
+ITERATION 10: LR(rnn^emb=0.00625 rnn^out=0.00125 rnn^recur=0.00125), TrEnt 6.384253, W/s 32.5k, CVEnt: 6.868398
 nnet accepted (10.clm)
-ITERATION 11: LR(rnn^emb=0.003125 rnn^out=0.000625 rnn^recur=0.000625), TrEnt 6.373600, W/s 47.8k, CVEnt: 6.868515
+ITERATION 11: LR(rnn^emb=0.003125 rnn^out=0.000625 rnn^recur=0.000625), TrEnt 6.373600, W/s 32.7k, CVEnt: 6.868515
 nnet rejected (11.clm)
 ../steps/train_model.sh: finished, too small rel. improvement 0
 ../steps/train_model.sh: Succeeded training the Neural Network : test/tmp/case-17/exp/rnn/final.clm
-../steps/train_model.sh: Elapse time: 21s
-../steps/train_model.sh: Effective speed: 42.6k words/sec
+../steps/train_model.sh: Elapse time: 30s
+../steps/train_model.sh: Effective speed: 29.8k words/sec
 ../steps/run_standalone.sh: Stage 3 --- Testing model...
 ../steps/eval_model.sh --config-file test/tmp/case-17/exp/conf/eval.conf --eval-threads 1 test/tmp/case-17/exp/rnn ./data/test
 ../steps/eval_model.sh: Evaluating model test/tmp/case-17/exp/rnn/final.clm ...
 =================================
 Eval Entropy: 6.750321
 Eval PPL: 107.658684
-Eval Speed: 119.6k words/sec
+Eval Speed: 121.4k words/sec
 =================================
 ../steps/eval_model.sh: Elapse time: 0s
-../steps/run_standalone.sh: Elapse time: 21s
+../steps/run_standalone.sh: Elapse time: 31s

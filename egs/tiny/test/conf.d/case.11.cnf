@@ -1,8 +1,14 @@
-name="CBOW with sync"
+name="FFNN"
 
-before="./test/test_model_before.sh cbow sync"
+_model=ffnn
+_step=4
 
-script="./test/test_model_script.sh 3"
+before="./test/test_model_before.sh ${_model}"
+
+script="./test/test_model_script.sh ${_step} ${_model}"
+
+after="./test/test_model_after.sh ${_model}"
 
 normalize="./test/normalize_log.sh"
 compare_normalize=("expected/case-$SHU_CASE.out:test/output/case-$SHU_CASE.out")
+compare=("expected/case-$SHU_CASE.gen.txt:test/output/case-$SHU_CASE.gen.txt")
