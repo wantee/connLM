@@ -152,7 +152,7 @@ int glue_updater_setup(glue_updater_t *glue_updater,
 }
 
 int glue_updater_forward(glue_updater_t *glue_updater,
-        comp_updater_t *comp_updater, int *words, int n_word, int tgt_pos)
+        comp_updater_t *comp_updater, sent_t *input_sent)
 {
     glue_t *glue;
     layer_updater_t **layer_updaters;
@@ -186,7 +186,7 @@ int glue_updater_forward(glue_updater_t *glue_updater,
 
     if (glue_updater->impl != NULL && glue_updater->impl->forward != NULL) {
         if (glue_updater->impl->forward(glue_updater, comp_updater,
-                    words, n_word, tgt_pos, in_ac) < 0) {
+                    input_sent, in_ac) < 0) {
             ST_WARNING("Failed to glue_updater->impl->forward.[%s]",
                     glue->name);
             return -1;
@@ -197,7 +197,7 @@ int glue_updater_forward(glue_updater_t *glue_updater,
 }
 
 int glue_updater_backprop(glue_updater_t *glue_updater,
-        comp_updater_t *comp_updater, int *words, int n_word, int tgt_pos)
+        comp_updater_t *comp_updater, sent_t *input_sent)
 {
     glue_t *glue;
     layer_updater_t **layer_updaters;
@@ -240,7 +240,7 @@ int glue_updater_backprop(glue_updater_t *glue_updater,
             out_er = layer_updaters[out_lid]->er;
         }
         if (glue_updater->impl->backprop(glue_updater, comp_updater,
-                    words, n_word, tgt_pos, in_ac, out_er, in_er) < 0) {
+                    input_sent, in_ac, out_er, in_er) < 0) {
             ST_WARNING("Failed to glue_updater->impl->backprop.[%s]",
                     glue->name);
             return -1;
@@ -273,7 +273,7 @@ int glue_updater_finish(glue_updater_t *glue_updater)
 }
 
 int glue_updater_forward_util_out(glue_updater_t *glue_updater,
-        comp_updater_t *comp_updater, int *words, int n_word, int tgt_pos)
+        comp_updater_t *comp_updater, sent_t *input_sent)
 {
     glue_t *glue;
     layer_updater_t **layer_updaters;
@@ -308,7 +308,7 @@ int glue_updater_forward_util_out(glue_updater_t *glue_updater,
     if (glue_updater->impl != NULL
             && glue_updater->impl->forward_util_out != NULL) {
         if (glue_updater->impl->forward_util_out(glue_updater, comp_updater,
-                    words, n_word, tgt_pos, in_ac) < 0) {
+                    input_sent, in_ac) < 0) {
             ST_WARNING("Failed to glue_updater->impl->forward_util_out.[%s]",
                     glue->name);
             return -1;

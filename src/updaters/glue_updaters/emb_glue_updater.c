@@ -62,8 +62,7 @@ ERR:
 }
 
 int emb_glue_updater_forward(glue_updater_t *glue_updater,
-        comp_updater_t *comp_updater, int *words, int n_word, int tgt_pos,
-        real_t *in_ac)
+        comp_updater_t *comp_updater, sent_t *input_sent, real_t *in_ac)
 {
     glue_t *glue;
     input_t *input;
@@ -74,7 +73,7 @@ int emb_glue_updater_forward(glue_updater_t *glue_updater,
     real_t scale, ac;
 
     ST_CHECK_PARAM(glue_updater == NULL || comp_updater == NULL
-            || words == NULL, -1);
+            || input_sent == NULL, -1);
 
     glue = glue_updater->glue;
     input = comp_updater->comp->input;
@@ -85,12 +84,12 @@ int emb_glue_updater_forward(glue_updater_t *glue_updater,
     switch (input->combine) {
         case IC_SUM:
             for (a = 0; a < input->n_ctx; a++) {
-                i = tgt_pos + input->context[a].i;
-                if (i < 0 || i >= n_word) {
+                i = input_sent->tgt_pos + input->context[a].i;
+                if (i < 0 || i >= input_sent->n_word) {
                     continue;
                 }
                 scale = input->context[a].w;
-                j = words[i] * col;
+                j = input_sent->words[i] * col;
                 for (b = 0; b < col; b++, j++) {
                     out_layer_updater->ac[b] += scale * wt[j];
                 }
@@ -100,12 +99,12 @@ int emb_glue_updater_forward(glue_updater_t *glue_updater,
             for (b = 0; b < col; b++) {
                 ac = 0;
                 for (a = 0; a < input->n_ctx; a++) {
-                    i = tgt_pos + input->context[a].i;
-                    if (i < 0 || i >= n_word) {
+                    i = input_sent->tgt_pos + input->context[a].i;
+                    if (i < 0 || i >= input_sent->n_word) {
                         continue;
                     }
                     scale = input->context[a].w;
-                    j = words[i] * col + b;
+                    j = input_sent->words[i] * col + b;
                     ac += scale * wt[j];
                 }
                 out_layer_updater->ac[b] += ac / input->n_ctx;
@@ -113,12 +112,12 @@ int emb_glue_updater_forward(glue_updater_t *glue_updater,
             break;
         case IC_CONCAT:
             for (a = 0; a < input->n_ctx; a++) {
-                i = tgt_pos + input->context[a].i;
-                if (i < 0 || i >= n_word) {
+                i = input_sent->tgt_pos + input->context[a].i;
+                if (i < 0 || i >= input_sent->n_word) {
                     continue;
                 }
                 scale = input->context[a].w;
-                j = words[i] * col;
+                j = input_sent->words[i] * col;
                 for (b = a * col; b < (a + 1) * col; b++, j++) {
                     out_layer_updater->ac[b] += scale * wt[j];
                 }
@@ -133,7 +132,7 @@ int emb_glue_updater_forward(glue_updater_t *glue_updater,
 }
 
 int emb_glue_updater_backprop(glue_updater_t *glue_updater,
-        comp_updater_t *comp_updater, int *words, int n_word, int tgt_pos,
+        comp_updater_t *comp_updater, sent_t *input_sent,
         real_t *in_ac, real_t *out_er, real_t *in_er)
 {
     glue_t *glue;
@@ -143,19 +142,19 @@ int emb_glue_updater_backprop(glue_updater_t *glue_updater,
     int a, i;
 
     ST_CHECK_PARAM(glue_updater == NULL || comp_updater == NULL
-            || words == NULL, -1);
+            || input_sent == NULL, -1);
 
     glue = glue_updater->glue;
     input = comp_updater->comp->input;
 
     if (input->combine == IC_CONCAT) {
         for (a = 0; a < input->n_ctx; a++) {
-            i = tgt_pos + input->context[a].i;
-            if (i < 0 || i >= n_word) {
+            i = input_sent->tgt_pos + input->context[a].i;
+            if (i < 0 || i >= input_sent->n_word) {
                 continue;
             }
             in_idx.w = input->context[a].w;
-            in_idx.i = words[i];
+            in_idx.i = input_sent->words[i];
             if (wt_update(glue_updater->wt_updater, NULL, -1,
                         out_er + a * glue->wt->col,
                         1.0, NULL, 1.0, &in_idx) < 0) {
@@ -165,12 +164,12 @@ int emb_glue_updater_backprop(glue_updater_t *glue_updater,
         }
     } else {
         for (a = 0; a < input->n_ctx; a++) {
-            i = tgt_pos + input->context[a].i;
-            if (i < 0 || i >= n_word) {
+            i = input_sent->tgt_pos + input->context[a].i;
+            if (i < 0 || i >= input_sent->n_word) {
                 continue;
             }
             in_idx.w = input->context[a].w;
-            in_idx.i = words[i];
+            in_idx.i = input_sent->words[i];
             if (wt_update(glue_updater->wt_updater, NULL, -1,
                         out_er, 1.0, NULL, 1.0, &in_idx) < 0) {
                 ST_WARNING("Failed to wt_update.");

@@ -115,13 +115,12 @@ static int out_forward_walker(output_t *output, output_node_id_t node,
 }
 
 int out_glue_updater_forward(glue_updater_t *glue_updater,
-        comp_updater_t *comp_updater, int *words, int n_word, int tgt_pos,
-        real_t *in_ac)
+        comp_updater_t *comp_updater, sent_t *input_sent, real_t *in_ac)
 {
     out_walker_args_t ow_args;
 
     ST_CHECK_PARAM(glue_updater == NULL || comp_updater == NULL
-            || words == NULL, -1);
+            || input_sent == NULL, -1);
 
     ow_args.glue_updater = glue_updater;
     ow_args.output = comp_updater->out_updater->output;
@@ -129,7 +128,8 @@ int out_glue_updater_forward(glue_updater_t *glue_updater,
     ow_args.out_ac = comp_updater->out_updater->ac;
     ow_args.scale = comp_updater->comp->comp_scale;
     if (output_walk_through_path(comp_updater->out_updater->output,
-                words[tgt_pos], out_forward_walker, (void *)&ow_args) < 0) {
+                input_sent->words[input_sent->tgt_pos],
+                out_forward_walker, (void *)&ow_args) < 0) {
         ST_WARNING("Failed to output_walk_through_path.");
         return -1;
     }
@@ -174,7 +174,7 @@ static int out_backprop_walker(output_t *output, output_node_id_t node,
 }
 
 int out_glue_updater_backprop(glue_updater_t *glue_updater,
-        comp_updater_t *comp_updater, int *words, int n_word, int tgt_pos,
+        comp_updater_t *comp_updater, sent_t *input_sent,
         real_t *in_ac, real_t *out_er, real_t *in_er)
 {
     out_walker_args_t ow_args;
@@ -184,7 +184,7 @@ int out_glue_updater_backprop(glue_updater_t *glue_updater,
     int n_seg;
 
     ST_CHECK_PARAM(glue_updater == NULL || comp_updater == NULL
-            || words == NULL, -1);
+            || input_sent == NULL, -1);
 
     output = comp_updater->out_updater->output;
     if (glue_updater->wt_updater->segs == NULL) {
@@ -208,7 +208,7 @@ int out_glue_updater_backprop(glue_updater_t *glue_updater,
     ow_args.out_er = out_er;
     ow_args.in_er = in_er;
     ow_args.scale = comp_updater->comp->comp_scale;
-    if (output_walk_through_path(output, words[tgt_pos],
+    if (output_walk_through_path(output, input_sent->words[input_sent->tgt_pos],
                 out_backprop_walker, (void *)&ow_args) < 0) {
         ST_WARNING("Failed to output_walk_through_path.");
         goto ERR;

@@ -26,6 +26,7 @@ INCS = utils.h \
        glues/out_glue.h \
        graph.h \
        updaters/updater.h \
+       updaters/input_updater.h \
        updaters/output_updater.h \
        updaters/layer_updater.h \
        updaters/component_updater.h \
@@ -57,6 +58,7 @@ SRCS = utils.c \
        glues/out_glue.c \
        graph.c \
        updaters/updater.c \
+       updaters/input_updater.c \
        updaters/output_updater.c \
        updaters/layer_updater.c \
        updaters/component_updater.c \

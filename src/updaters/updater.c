@@ -51,6 +51,8 @@ static int updater_reset(updater_t *updater)
     return 0;
 }
 
+#define tgt_word(updater) (updater)->sent.words[(updater)->sent.tgt_pos]
+
 static int updater_start(updater_t *updater)
 {
     int c;
@@ -65,8 +67,7 @@ static int updater_start(updater_t *updater)
         }
     }
 
-    if (out_updater_start(updater->out_updater,
-                updater->words[updater->tgt_pos]) < 0) {
+    if (out_updater_start(updater->out_updater, tgt_word(updater)) < 0) {
         ST_WARNING("Failed to out_updater_start.");
         return -1;
     }
@@ -81,20 +82,19 @@ static int updater_forward(updater_t *updater)
     ST_CHECK_PARAM(updater == NULL, -1);
 
 #if _CONNLM_TRACE_PROCEDURE_
-    ST_TRACE("Forward: word[%d]", updater->words[updater->tgt_pos]);
+    ST_TRACE("Forward: word[%d]", tgt_word(updater));
 #endif
 
     for (c = 0; c < updater->connlm->num_comp; c++) {
         if (comp_updater_forward(updater->comp_updaters[c],
-                    updater->words, updater->n_word, updater->tgt_pos) < 0) {
+                &updater->sent) < 0) {
             ST_WARNING("Failed to comp_updater_forward[%s].",
                     updater->connlm->comps[c]->name);
             return -1;
         }
     }
 
-    if (out_updater_activate(updater->out_updater,
-                updater->words[updater->tgt_pos]) < 0) {
+    if (out_updater_activate(updater->out_updater, tgt_word(updater)) < 0) {
         ST_WARNING("Failed to out_updater_forward.");
         return -1;
     }
@@ -109,18 +109,17 @@ static int updater_backprop(updater_t *updater)
     ST_CHECK_PARAM(updater == NULL, -1);
 
 #if _CONNLM_TRACE_PROCEDURE_
-    ST_TRACE("Backprop: word[%d]", updater->words[updater->tgt_pos]);
+    ST_TRACE("Backprop: word[%d]", tgt_word(updater));
 #endif
 
-    if (out_updater_loss(updater->out_updater,
-                updater->words[updater->tgt_pos]) < 0) {
+    if (out_updater_loss(updater->out_updater, tgt_word(updater)) < 0) {
         ST_WARNING("Failed to out_updater_backprop.");
         return -1;
     }
 
     for (c = 0; c < updater->connlm->num_comp; c++) {
         if (comp_updater_backprop(updater->comp_updaters[c],
-                    updater->words, updater->n_word, updater->tgt_pos) < 0) {
+                    &updater->sent) < 0) {
             ST_WARNING("Failed to comp_updater_backprop[%s].",
                     updater->connlm->comps[c]->name);
             return -1;
@@ -190,10 +189,6 @@ void updater_destroy(updater_t *updater)
         safe_free(updater->comp_updaters);
     }
     updater->connlm = NULL;
-    safe_free(updater->words);
-    updater->n_word = 0;
-    updater->cap_word = 0;
-    updater->tgt_pos = 0;
 }
 
 updater_t* updater_create(connlm_t *connlm)
@@ -213,6 +208,12 @@ updater_t* updater_create(connlm_t *connlm)
     memset(updater, 0, sizeof(updater_t));
 
     updater->connlm = connlm;
+
+    updater->input_updater = input_updater_create();
+    if (updater->input_updater == NULL) {
+        ST_WARNING("Failed to out_updater_create.");
+        goto ERR;
+    }
 
     updater->out_updater = out_updater_create(connlm->output);
     if (updater->out_updater == NULL) {
@@ -250,8 +251,10 @@ int updater_setup(updater_t *updater, bool backprop)
 {
     input_t *input;
 
-    size_t sz;
     int c;
+
+    int ctx_leftmost;
+    int ctx_rightmost;
 
     ST_CHECK_PARAM(updater == NULL, -1);
 
@@ -262,8 +265,8 @@ int updater_setup(updater_t *updater, bool backprop)
         goto ERR;
     }
 
-    updater->ctx_leftmost = 0;
-    updater->ctx_rightmost = 0;
+    ctx_leftmost = 0;
+    ctx_rightmost = 0;
     for (c = 0; c < updater->connlm->num_comp; c++) {
         if (comp_updater_setup(updater->comp_updaters[c], backprop) < 0) {
             ST_WARNING("Failed to comp_updater_setup[%s].",
@@ -273,28 +276,22 @@ int updater_setup(updater_t *updater, bool backprop)
 
         input = updater->connlm->comps[c]->input;
         if (input->context[0].i < 0) {
-            if (-input->context[0].i > updater->ctx_leftmost) {
-                updater->ctx_leftmost = -input->context[0].i;
+            if (-input->context[0].i > ctx_leftmost) {
+                ctx_leftmost = -input->context[0].i;
             }
         }
         if (input->context[input->n_ctx - 1].i > 0) {
-            if (input->context[input->n_ctx - 1].i > updater->ctx_rightmost) {
-                updater->ctx_rightmost = input->context[input->n_ctx - 1].i;
+            if (input->context[input->n_ctx - 1].i > ctx_rightmost) {
+                ctx_rightmost = input->context[input->n_ctx - 1].i;
             }
         }
     }
 
-    updater->cap_word = updater->ctx_leftmost + updater->ctx_rightmost + 1;
-
-    sz = sizeof(int) * updater->cap_word;
-    updater->words = (int *)malloc(sz);
-    if (updater->words == NULL) {
-        ST_WARNING("Failed to malloc words.");
+    if (input_updater_setup(updater->input_updater, ctx_leftmost,
+                ctx_rightmost) < 0) {
+        ST_WARNING("Failed to input_updater_setup.");
         goto ERR;
     }
-    memset(updater->words, 0, sz);
-    updater->n_word = 0;
-    updater->tgt_pos = 0;
 
     updater->finalized = false;
 
@@ -306,70 +303,53 @@ int updater_setup(updater_t *updater, bool backprop)
     return 0;
 
 ERR:
-    safe_free(updater->words);
-    updater->n_word = 0;
-    updater->cap_word = 0;
-    updater->tgt_pos = 0;
-
     return -1;
 }
 
 int updater_feed(updater_t *updater, int *words, int n_word)
 {
-    int drop;
+    ST_CHECK_PARAM(updater == NULL, -1);
 
-    ST_CHECK_PARAM(updater == NULL || words == NULL, -1);
-
-    // drop words already done
-    drop = updater->tgt_pos - updater->ctx_leftmost;
-    if (drop > 0) {
-        memmove(updater->words, updater->words + drop,
-                sizeof(int) * (updater->n_word - drop));
-        updater->n_word -= drop;
-        updater->tgt_pos -= drop;
+    if (input_updater_feed(updater->input_updater, words, n_word,
+                &updater->sent) < 0) {
+        ST_WARNING("Failed to input_updater_feed.");
+        return -1;
     }
-
-    // append new words
-    if (updater->n_word + n_word > updater->cap_word) {
-        updater->cap_word = updater->n_word + n_word;
-        updater->words = (int *)realloc(updater->words,
-                sizeof(int) * updater->cap_word);
-        if (updater->words == NULL) {
-            ST_WARNING("Failed to realloc words.");
-            return -1;
-        }
-        //memset(updater->words + updater->n_word, 0,
-        //         sizeof(int) * (updater->cap_word - updater->n_word));
-    }
-    memcpy(updater->words + updater->n_word, words, sizeof(int)*n_word);
-    updater->n_word += n_word;
 
     return 0;
 }
 
 bool updater_steppable(updater_t *updater)
 {
-    bool steppable;
-    int i;
-
     ST_CHECK_PARAM(updater == NULL, false);
 
-    if (updater->tgt_pos + updater->ctx_rightmost < updater->n_word) {
+    if (updater->sent.n_word <= 0) {
+        return false;
+    }
+
+    if (updater->sent.tgt_pos + updater->input_updater->ctx_rightmost
+            < updater->sent.n_word) {
         return true;
     }
 
     if (updater->finalized) {
-        return updater->tgt_pos < updater->n_word;
+        return updater->sent.tgt_pos < updater->sent.n_word;
     }
 
-    steppable = false;
-    for (i = updater->tgt_pos; i < updater->n_word; i++) {
-        if (updater->words[i] == SENT_END_ID) {
-            steppable = true;
-        }
+    // if the sentence if over, we step to the end
+    return (updater->sent.words[updater->sent.n_word - 1] == SENT_END_ID);
+}
+
+int updater_move_input(updater_t *updater)
+{
+    ST_CHECK_PARAM(updater == NULL, -1);
+
+    if (input_updater_move(updater->input_updater, &updater->sent) < 0) {
+        ST_WARNING("Failed to input_updater_move.");
+        return -1;
     }
 
-    return steppable;
+    return 0;
 }
 
 int updater_step(updater_t *updater)
@@ -378,7 +358,7 @@ int updater_step(updater_t *updater)
 
     ST_CHECK_PARAM(updater == NULL, -1);
 
-    word = updater->words[updater->tgt_pos];
+    word = tgt_word(updater);
 
 #if _CONNLM_TRACE_PROCEDURE_
     ST_TRACE("Step: word[%d]", word);
@@ -413,7 +393,10 @@ int updater_step(updater_t *updater)
         }
     }
 
-    updater->tgt_pos++;
+    if (updater_move_input(updater) < 0) {
+        ST_WARNING("Failed to updater_move_input.");
+        return -1;
+    }
 
     if (updater->finalized) {
         if (updater_finish(updater) < 0) {
@@ -454,8 +437,7 @@ static int updater_forward_util_out(updater_t *updater)
 
     for (c = 0; c < updater->connlm->num_comp; c++) {
         if (comp_updater_forward_util_out(updater->comp_updaters[c],
-                    updater->words, updater->n_word,
-                    updater->tgt_pos) < 0) {
+                    &updater->sent) < 0) {
             ST_WARNING("Failed to comp_updater_forward[%s].",
                     updater->connlm->comps[c]->name);
             return -1;

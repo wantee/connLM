@@ -172,7 +172,7 @@ int driver_setup(driver_t *driver, driver_mode_t mode)
     }
 
     if (mode == DRIVER_GEN) {
-        if (driver->updaters[0]->ctx_rightmost > 0) {
+        if (driver->updaters[0]->input_updater->ctx_rightmost > 0) {
             ST_WARNING("Can not generating: future words in input context.");
             return -1;
         }

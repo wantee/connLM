@@ -60,8 +60,7 @@ ERR:
 }
 
 int fc_glue_updater_forward(glue_updater_t *glue_updater,
-        comp_updater_t *comp_updater, int *words, int n_word, int tgt_pos,
-        real_t *in_ac)
+        comp_updater_t *comp_updater, sent_t *input_sent, real_t *in_ac)
 {
     glue_t *glue;
     layer_updater_t *out_layer_updater;
@@ -80,7 +79,7 @@ int fc_glue_updater_forward(glue_updater_t *glue_updater,
 }
 
 int fc_glue_updater_backprop(glue_updater_t *glue_updater,
-        comp_updater_t *comp_updater, int *words, int n_word, int tgt_pos,
+        comp_updater_t *comp_updater, sent_t *input_sent,
         real_t *in_ac, real_t *out_er, real_t *in_er)
 {
     wt_updater_t *wt_updater;

@@ -177,8 +177,7 @@ int comp_updater_start(comp_updater_t *comp_updater)
     return 0;
 }
 
-int comp_updater_forward(comp_updater_t *comp_updater, int *words,
-        int n_word, int tgt_pos)
+int comp_updater_forward(comp_updater_t *comp_updater, sent_t *input_sent)
 {
     component_t *comp;
     glue_updater_t *glue_updater;
@@ -194,8 +193,7 @@ int comp_updater_forward(comp_updater_t *comp_updater, int *words,
 
     for (g = 0; g < comp->num_glue; g++) {
         glue_updater = comp_updater->glue_updaters[comp->fwd_order[g]];
-        if (glue_updater_forward(glue_updater, comp_updater,
-                    words, n_word, tgt_pos) < 0) {
+        if (glue_updater_forward(glue_updater, comp_updater, input_sent) < 0) {
             ST_WARNING("Failed to forward glue[%s].",
                     glue_updater->glue->name);
             return -1;
@@ -205,8 +203,7 @@ int comp_updater_forward(comp_updater_t *comp_updater, int *words,
     return 0;
 }
 
-int comp_updater_backprop(comp_updater_t *comp_updater,
-        int *words, int n_word, int tgt_pos)
+int comp_updater_backprop(comp_updater_t *comp_updater, sent_t *input_sent)
 {
     component_t *comp;
     glue_updater_t *glue_updater;
@@ -222,8 +219,7 @@ int comp_updater_backprop(comp_updater_t *comp_updater,
 
     for (g = comp->num_glue - 1; g >= 0; g--) {
         glue_updater = comp_updater->glue_updaters[comp->fwd_order[g]];
-        if (glue_updater_backprop(glue_updater, comp_updater,
-                    words, n_word, tgt_pos) < 0) {
+        if (glue_updater_backprop(glue_updater, comp_updater, input_sent) < 0) {
             ST_WARNING("Failed to backprop glue[%s].",
                     glue_updater->glue->name);
             return -1;
@@ -265,8 +261,8 @@ int comp_updater_finish(comp_updater_t *comp_updater)
     return 0;
 }
 
-int comp_updater_forward_util_out(comp_updater_t *comp_updater, int *words,
-        int n_word, int tgt_pos)
+int comp_updater_forward_util_out(comp_updater_t *comp_updater,
+        sent_t *input_sent)
 {
     component_t *comp;
     glue_updater_t *glue_updater;
@@ -283,7 +279,7 @@ int comp_updater_forward_util_out(comp_updater_t *comp_updater, int *words,
     for (g = 0; g < comp->num_glue; g++) {
         glue_updater = comp_updater->glue_updaters[comp->fwd_order[g]];
         if (glue_updater_forward_util_out(glue_updater, comp_updater,
-                    words, n_word, tgt_pos) < 0) {
+                    input_sent) < 0) {
             ST_WARNING("Failed to forward_util_out glue[%s].",
                     glue_updater->glue->name);
             return -1;

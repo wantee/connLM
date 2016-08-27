@@ -340,7 +340,7 @@ static int direct_forward_walker(output_t *output, output_node_id_t node,
 }
 
 static int direct_compute_hash(glue_updater_t *glue_updater,
-        comp_updater_t *comp_updater, int *words, int n_word, int tgt_pos)
+        comp_updater_t *comp_updater, sent_t *input_sent)
 {
     dgu_data_t *data;
     input_t *input;
@@ -355,7 +355,7 @@ static int direct_compute_hash(glue_updater_t *glue_updater,
     /* history ngrams. */
     data->hash_order = direct_get_hash_neg(data->hash + 1, data->hash[0],
             data->P, input->context, data->positive,
-            words, n_word, tgt_pos);
+            input_sent->words, input_sent->n_word, input_sent->tgt_pos);
     if (data->hash_order < 0) {
         ST_WARNING("Failed to direct_wt_get_hash history.");
         return -1;
@@ -366,7 +366,8 @@ static int direct_compute_hash(glue_updater_t *glue_updater,
         future_order = direct_get_hash_pos(data->hash + 1 + data->hash_order,
                 data->hash[0], data->P + data->positive,
                 input->context + data->positive,
-                input->n_ctx - data->positive, words, n_word, tgt_pos);
+                input->n_ctx - data->positive,
+                input_sent->words, input_sent->n_word, input_sent->tgt_pos);
         if (future_order < 0) {
             ST_WARNING("Failed to direct_wt_get_hash future.");
             return -1;
@@ -384,8 +385,7 @@ static int direct_compute_hash(glue_updater_t *glue_updater,
 }
 
 int direct_glue_updater_forward(glue_updater_t *glue_updater,
-        comp_updater_t *comp_updater, int *words, int n_word, int tgt_pos,
-        real_t *in_ac)
+        comp_updater_t *comp_updater, sent_t *input_sent, real_t *in_ac)
 {
     dgu_data_t *data;
     out_updater_t *out_updater;
@@ -394,13 +394,13 @@ int direct_glue_updater_forward(glue_updater_t *glue_updater,
     int a;
 
     ST_CHECK_PARAM(glue_updater == NULL || comp_updater == NULL
-            || words == NULL, -1);
+            || input_sent == NULL, -1);
 
     data = (dgu_data_t *)glue_updater->extra;
     out_updater = comp_updater->out_updater;
 
     if (direct_compute_hash(glue_updater, comp_updater,
-                words, n_word, tgt_pos) < 0) {
+                input_sent) < 0) {
         ST_WARNING("Failed to direct_compute_hash.");
         return -1;
     }
@@ -410,7 +410,8 @@ int direct_glue_updater_forward(glue_updater_t *glue_updater,
     dw_args.wt_updater = glue_updater->wt_updater;
     for (a = 0; a < data->hash_order; a++) {
         dw_args.h = data->hash[a];
-        if (output_walk_through_path(out_updater->output, words[tgt_pos],
+        if (output_walk_through_path(out_updater->output,
+                    input_sent->words[input_sent->tgt_pos],
                     direct_forward_walker, (void *)&dw_args) < 0) {
             ST_WARNING("Failed to output_walk_through_path.");
             return -1;
@@ -456,7 +457,7 @@ static int direct_backprop_walker(output_t *output, output_node_id_t node,
 }
 
 int direct_glue_updater_backprop(glue_updater_t *glue_updater,
-        comp_updater_t *comp_updater, int *words, int n_word, int tgt_pos,
+        comp_updater_t *comp_updater, sent_t *input_sent,
         real_t *in_ac, real_t *out_er, real_t *in_er)
 {
     dgu_data_t *data;
@@ -466,7 +467,7 @@ int direct_glue_updater_backprop(glue_updater_t *glue_updater,
     int a;
 
     ST_CHECK_PARAM(glue_updater == NULL || comp_updater == NULL
-            || words == NULL, -1);
+            || input_sent == NULL, -1);
 
     data = (dgu_data_t *)glue_updater->extra;
     out_updater = comp_updater->out_updater;
@@ -476,7 +477,8 @@ int direct_glue_updater_backprop(glue_updater_t *glue_updater,
     dw_args.wt_updater = glue_updater->wt_updater;
     for (a = 0; a < data->hash_order; a++) {
         dw_args.h = data->hash[a];
-        if (output_walk_through_path(out_updater->output, words[tgt_pos],
+        if (output_walk_through_path(out_updater->output,
+                    input_sent->words[input_sent->tgt_pos],
                     direct_backprop_walker, (void *)&dw_args) < 0) {
             ST_WARNING("Failed to output_walk_through_path.");
             return -1;
@@ -487,11 +489,9 @@ int direct_glue_updater_backprop(glue_updater_t *glue_updater,
 }
 
 int direct_glue_updater_forward_util_out(glue_updater_t *glue_updater,
-        comp_updater_t *comp_updater, int *words, int n_word, int tgt_pos,
-        real_t *in_ac)
+        comp_updater_t *comp_updater, sent_t *input_sent, real_t *in_ac)
 {
-    if (direct_compute_hash(glue_updater, comp_updater,
-                words, n_word, tgt_pos) < 0) {
+    if (direct_compute_hash(glue_updater, comp_updater, input_sent) < 0) {
         ST_WARNING("Failed to direct_compute_hash.");
         return -1;
     }

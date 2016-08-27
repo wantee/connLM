@@ -32,6 +32,7 @@ extern "C" {
 #include <connlm/config.h>
 
 #include "component.h"
+#include "updaters/input_updater.h"
 #include "updaters/output_updater.h"
 #include "updaters/layer_updater.h"
 #include "updaters/glue_updaters/glue_updater.h"
@@ -112,27 +113,21 @@ int comp_updater_start(comp_updater_t *comp_updater);
  * Feed-forward one word for a comp_updater.
  * @ingroup g_updater_comp
  * @param[in] comp_updater the comp_updater.
- * @param[in] words input words buffer.
- * @param[in] n_word length of words.
- * @param[in] tgt_pos position of target word in words buffer.
+ * @param[in] input_sent input sentence buffer.
  * @see comp_updater_backprop
  * @return non-zero value if any error.
  */
-int comp_updater_forward(comp_updater_t *comp_updater, int *words,
-        int n_word, int tgt_pos);
+int comp_updater_forward(comp_updater_t *comp_updater, sent_t *input_sent);
 
 /**
  * Back-propagate one word for a comp_updater.
  * @ingroup g_updater_comp
  * @param[in] comp_updater the comp_updater.
- * @param[in] words input words buffer.
- * @param[in] n_word length of words.
- * @param[in] tgt_pos position of target word in words buffer.
+ * @param[in] input_sent input sentence buffer.
  * @see comp_updater_forward
  * @return non-zero value if any error.
  */
-int comp_updater_backprop(comp_updater_t *comp_updater,
-        int *words, int n_word, int tgt_pos);
+int comp_updater_backprop(comp_updater_t *comp_updater, sent_t *input_sent);
 
 /**
  * End running for comp_updater.
@@ -156,13 +151,11 @@ int comp_updater_finish(comp_updater_t *comp_updater);
  * Feed-forward util output layer.
  * @ingroup g_updater_comp
  * @param[in] comp_updater the comp_updater.
- * @param[in] words input words buffer.
- * @param[in] n_word length of words.
- * @param[in] tgt_pos position of target word in words buffer.
+ * @param[in] input_sent input sentence buffer.
  * @return non-zero value if any error.
  */
-int comp_updater_forward_util_out(comp_updater_t *comp_updater, int *words,
-        int n_word, int tgt_pos);
+int comp_updater_forward_util_out(comp_updater_t *comp_updater,
+        sent_t *input_sent);
 
 /**
  * Feed-forward one node of output layer.

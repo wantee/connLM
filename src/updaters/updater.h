@@ -32,6 +32,7 @@ extern "C" {
 #include <connlm/config.h>
 
 #include "connlm.h"
+#include "updaters/input_updater.h"
 #include "updaters/output_updater.h"
 #include "updaters/component_updater.h"
 
@@ -46,18 +47,14 @@ extern "C" {
 typedef struct _updater_t_ {
     connlm_t *connlm; /**< the model. */
 
+    input_updater_t *input_updater; /**< input layer updater. */
     out_updater_t *out_updater; /**< output layer updater. */
     comp_updater_t **comp_updaters; /**< component updaters. */
 
-    int *words; /**< buffer for input words. */
-    int n_word; /**< number of input words. */
-    int cap_word; /**< capacity of input words buffer. */
-    int tgt_pos; /**< position of target predicted word in word buffer. */
-    int ctx_leftmost; /**< leftmost for all input contexts. */
-    int ctx_rightmost; /**< rightmost for all input contexts. */
-
     bool finalized; /**< whether finalized by caller. */
     bool backprop; /**< whether do backpropagation. */
+
+    sent_t sent; /**< current sentence, filled by input_updater. */
 } updater_t;
 
 /**
