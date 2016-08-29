@@ -1,7 +1,5 @@
-name="Generating text"
+name="I/O testing"
 
-before="mkdir -p test/output; rm -rf test/tmp/case-$SHU_CASE; mkdir -p test/tmp/case-$SHU_CASE; cp -r conf test/tmp/case-$SHU_CASE; ./run.sh --conf-dir test/tmp/case-$SHU_CASE/conf --exp-dir test/tmp/case-$SHU_CASE/exp 1,2 > /dev/null; echo -e 'I AM\nIT IS THAT\nYEAH' > test/tmp/case-$SHU_CASE/prefix.txt"
+before="rm -rf test/tmp/case-$SHU_CASE; mkdir -p test/tmp/case-$SHU_CASE;"
 
-script="source ../steps/path.sh && connlm-gen --log-file=/dev/null --random-seed=1 test/tmp/case-$SHU_CASE/exp/maxent/final.clm > test/output/case-$SHU_CASE.out && connlm-gen --log-file=/dev/null --random-seed=1 test/tmp/case-$SHU_CASE/exp/maxent/final.clm 10 >> test/output/case-$SHU_CASE.out && connlm-gen --log-file=/dev/null --prefix-file=test/tmp/case-$SHU_CASE/prefix.txt --random-seed=1 test/tmp/case-$SHU_CASE/exp/maxent/final.clm >> test/output/case-$SHU_CASE.out"
-
-compare=("expected/case-$SHU_CASE.out:test/output/case-$SHU_CASE.out")
+script="./test/test_io.sh data/train test/tmp/case-$SHU_CASE >/dev/null 2>&1"

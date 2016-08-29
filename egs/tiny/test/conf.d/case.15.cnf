@@ -1,6 +1,6 @@
-name="FFNN with minibatch & sync"
+name="FFNN with sync"
 
-before="./test/test_model_before.sh ffnn mini+sync"
+before="./test/test_model_before.sh ffnn sync"
 
 script="./test/test_model_script.sh 4"
 

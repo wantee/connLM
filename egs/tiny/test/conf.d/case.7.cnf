@@ -1,6 +1,6 @@
-name="MaxEnt with minibatch & sync"
+name="MaxEnt with sync"
 
-before="./test/test_model_before.sh maxent mini+sync"
+before="./test/test_model_before.sh maxent sync"
 
 script="./test/test_model_script.sh 2"
 

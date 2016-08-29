@@ -1,6 +1,6 @@
-name="MaxEnt with minibatch"
+name="MaxEnt"
 
-before="./test/test_model_before.sh maxent mini"
+before="./test/test_model_before.sh maxent"
 
 script="./test/test_model_script.sh 2"
 

@@ -1,6 +1,6 @@
-name="CBOW with sync"
+name="CBOW with minibatch"
 
-before="./test/test_model_before.sh cbow sync"
+before="./test/test_model_before.sh cbow mini"
 
 script="./test/test_model_script.sh 3"
 

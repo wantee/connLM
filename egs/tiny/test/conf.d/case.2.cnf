@@ -1,5 +1,7 @@
-name="I/O testing"
+name="Input words"
 
-before="rm -rf test/tmp/case-$SHU_CASE; mkdir -p test/tmp/case-$SHU_CASE;"
+before="rm -rf test/tmp/case-$SHU_CASE; mkdir -p test/tmp/case-$SHU_CASE; cp -r conf test/tmp/case-$SHU_CASE; ./run.sh --conf-dir test/tmp/case-$SHU_CASE/conf --exp-dir test/tmp/case-$SHU_CASE/exp 1,2 > /dev/null && (cd ../../src && make clean > /dev/null && CFLAGS=-D_CONNLM_TRACE_PROCEDURE_ make -j 4 > /dev/null)"
 
-script="./test/test_io.sh data/train test/tmp/case-$SHU_CASE >/dev/null 2>&1"
+script="./test/test_input.sh test/tmp/case-$SHU_CASE/exp/maxent test/tmp/case-$SHU_CASE > test/tmp/case-$SHU_CASE/test_input.log"
+
+after="(cd ../../src && make clean > /dev/null && CONNLM_NO_OPT=1 make -j 4 > /dev/null)"

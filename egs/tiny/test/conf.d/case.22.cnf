@@ -1,6 +1,6 @@
-name="RNN with minibatch"
+name="RNN with minibatch & sync"
 
-before="./test/test_model_before.sh rnn mini"
+before="./test/test_model_before.sh rnn mini+sync"
 
 script="./test/test_model_script.sh 5"
 

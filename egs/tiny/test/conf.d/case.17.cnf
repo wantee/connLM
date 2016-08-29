@@ -1,8 +1,9 @@
-name="RNN with minibatch"
+name="RNN"
 
-before="./test/test_model_before.sh rnn mini"
+before="./test/test_model_before.sh rnn"
 
-script="./test/test_model_script.sh 5"
+script="./test/test_model_script.sh 5 && ./test/test_rnn_topo.sh"
 
 normalize="./test/normalize_log.sh"
 compare_normalize=("expected/case-$SHU_CASE.out:test/output/case-$SHU_CASE.out")
+compare=("expected/case-$SHU_CASE.rnn.dot:test/output/case-$SHU_CASE.rnn.dot")

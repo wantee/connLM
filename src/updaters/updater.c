@@ -361,7 +361,8 @@ int updater_step(updater_t *updater)
     word = tgt_word(updater);
 
 #if _CONNLM_TRACE_PROCEDURE_
-    ST_TRACE("Step: word[%d]", word);
+    ST_TRACE("Step: word[%s]/[%d]",
+            vocab_get_word(updater->connlm->vocab, word), word);
 #endif
 
     if (updater_start(updater) < 0) {
