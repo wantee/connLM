@@ -271,6 +271,7 @@ int reader_load_opt(reader_opt_t *reader_opt,
         st_opt_t *opt, const char *sec_name)
 {
     char name[MAX_ST_CONF_LEN];
+    char str[MAX_ST_CONF_LEN];
 
     ST_CHECK_PARAM(reader_opt == NULL || opt == NULL, -1);
 
@@ -284,13 +285,13 @@ int reader_load_opt(reader_opt_t *reader_opt,
     ST_OPT_SEC_GET_UINT(opt, name, "RANDOM_SEED",
             reader_opt->rand_seed, 1, "Random seed");
 
-    ST_OPT_SEC_GET_INT(opt, name, "EPOCH_SIZE",
-            reader_opt->epoch_size, 10,
-            "Number of sentences read in one epoch per thread (in kilos)");
-    if (reader_opt->epoch_size > 0) {
-        reader_opt->epoch_size *= 1000;
-    } else {
-        reader_opt->epoch_size = 1;
+    ST_OPT_SEC_GET_STR(opt, name, "EPOCH_SIZE", str, MAX_ST_CONF_LEN, "10k",
+            "Number of sentences read in one epoch per thread (can be set to "
+            "10k, 25M, etc.)");
+    reader_opt->epoch_size = (int)st_str2ll(str);
+    if (reader_opt->epoch_size <= 0) {
+        ST_WARNING("Invalid epoch_size[%s]", str);
+        goto ST_OPT_ERR;
     }
 
     ST_OPT_SEC_GET_BOOL(opt, name, "SHUFFLE",

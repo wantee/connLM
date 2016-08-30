@@ -17,15 +17,16 @@ out_file="$dir/out.sort"
 cat "data/train" | awk 'NF' | sort > $tr_file
 
 echo -n "Testing input..."
-connlm-eval --log-file=- --num-thread=1 \
-            $exp_dir/01.clm data/train 2>"$dir/eval.log.wf" \
-  | grep -o -E "Step: word\[.*\]" \
-  | awk -F "[][]" '{if($2 == "</s>") {\
-                      printf("\n");
-                    } else {
-                      printf("%s ", $2);
-                    }}' \
-  | sed 's/ $//' | sort > $out_file
+log_file="$dir/eval.log"
+connlm-eval --log-file=$log_file --num-thread=1 --reader^epoch-size=1k \
+            $exp_dir/01.clm data/train || exit 1
+cat $log_file | grep -o -E "Step: word\[.*\]" \
+    | awk -F "[][]" '{if($2 == "</s>") {\
+                        printf("\n");
+                      } else {
+                        printf("%s ", $2);
+                      }}' \
+    | sed 's/ $//' | sort > $out_file
 
 if ! diff $tr_file $out_file > /dev/null; then
   echo "[ERROR]"
