@@ -1,8 +1,0 @@
-name="RNN with minibatch & sync"
-
-before="./test/test_model_before.sh rnn mini+sync"
-
-script="./test/test_model_script.sh 5"
-
-normalize="./test/normalize_log.sh"
-compare_normalize=("expected/case-$SHU_CASE.out:test/output/case-$SHU_CASE.out")

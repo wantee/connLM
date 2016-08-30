@@ -1,12 +1,12 @@
 <component>
 property name=ffnn
 
-input context=-4,-3,-2,-1 combine=concat
+input context=-2,-1 combine=concat
 
 layer name=emb size=16 type=linear
-layer name=hidden size=16 type=sigmoid
+layer name=hidden size=8 type=sigmoid
 
 glue name=emb type=emb in=input out=emb init_param=0.1
 glue name=fc  type=fc  in=emb out=hidden init_param=0.1
-glue name=out type=out in=hidden out=output init_param=1.0
+glue name=out type=out in=hidden out=output init_param=2.0
 </component>
