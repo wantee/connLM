@@ -163,7 +163,7 @@ int glue_updater_forward(glue_updater_t *glue_updater,
 
     glue = glue_updater->glue;
 
-#if _CONNLM_TRACE_PROCEDURE_
+#ifdef _CONNLM_TRACE_PROCEDURE_
     ST_TRACE("Forward: glue[%s]", glue->name);
 #endif
 
@@ -210,7 +210,7 @@ int glue_updater_backprop(glue_updater_t *glue_updater,
 
     glue = glue_updater->glue;
 
-#if _CONNLM_TRACE_PROCEDURE_
+#ifdef _CONNLM_TRACE_PROCEDURE_
     ST_TRACE("Backprop: glue[%s]", glue->name);
 #endif
 
@@ -260,7 +260,7 @@ int glue_updater_finish(glue_updater_t *glue_updater)
 {
     ST_CHECK_PARAM(glue_updater == NULL, -1);
 
-#if _CONNLM_TRACE_PROCEDURE_
+#ifdef _CONNLM_TRACE_PROCEDURE_
     ST_TRACE("Finish: glue[%s]", glue_updater->glue->name);
 #endif
 
@@ -284,7 +284,7 @@ int glue_updater_forward_util_out(glue_updater_t *glue_updater,
 
     glue = glue_updater->glue;
 
-#if _CONNLM_TRACE_PROCEDURE_
+#ifdef _CONNLM_TRACE_PROCEDURE_
     ST_TRACE("Forward-util-out: glue[%s]", glue->name);
 #endif
 
@@ -329,7 +329,7 @@ int glue_updater_forward_out(glue_updater_t *glue_updater,
 
     glue = glue_updater->glue;
 
-#if _CONNLM_TRACE_PROCEDURE_
+#ifdef _CONNLM_TRACE_PROCEDURE_
     ST_TRACE("Forward-out: glue[%s]", glue->name);
 #endif
 

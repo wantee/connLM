@@ -81,7 +81,7 @@ static int updater_forward(updater_t *updater)
 
     ST_CHECK_PARAM(updater == NULL, -1);
 
-#if _CONNLM_TRACE_PROCEDURE_
+#ifdef _CONNLM_TRACE_PROCEDURE_
     ST_TRACE("Forward: word[%d]", tgt_word(updater));
 #endif
 
@@ -108,7 +108,7 @@ static int updater_backprop(updater_t *updater)
 
     ST_CHECK_PARAM(updater == NULL, -1);
 
-#if _CONNLM_TRACE_PROCEDURE_
+#ifdef _CONNLM_TRACE_PROCEDURE_
     ST_TRACE("Backprop: word[%d]", tgt_word(updater));
 #endif
 
@@ -360,7 +360,7 @@ int updater_step(updater_t *updater)
 
     word = tgt_word(updater);
 
-#if _CONNLM_TRACE_PROCEDURE_
+#ifdef _CONNLM_TRACE_PROCEDURE_
     ST_TRACE("Step: word[%s]/[%d]",
             vocab_get_word(updater->connlm->vocab, word), word);
 #endif
@@ -484,7 +484,7 @@ int updater_sampling(updater_t *updater)
 
     ST_CHECK_PARAM(updater == NULL, -1);
 
-#if _CONNLM_TRACE_PROCEDURE_
+#ifdef _CONNLM_TRACE_PROCEDURE_
     ST_TRACE("Sampling");
 #endif
 

@@ -163,7 +163,7 @@ int layer_updater_activate(layer_updater_t *layer_updater)
         return 0;
     }
 
-#if _CONNLM_TRACE_PROCEDURE_
+#ifdef _CONNLM_TRACE_PROCEDURE_
     ST_TRACE("Activate: layer[%s]", layer_updater->layer->name);
 #endif
 
@@ -189,7 +189,7 @@ int layer_updater_deriv(layer_updater_t *layer_updater)
         return 0;
     }
 
-#if _CONNLM_TRACE_PROCEDURE_
+#ifdef _CONNLM_TRACE_PROCEDURE_
     ST_TRACE("Deriv: layer[%s]", layer_updater->layer->name);
 #endif
 

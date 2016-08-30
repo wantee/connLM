@@ -767,7 +767,7 @@ int wt_update(wt_updater_t *wt_updater,
 
     ST_CHECK_PARAM(wt_updater == NULL, -1);
 
-#if _CONNLM_TRACE_PROCEDURE_
+#ifdef _CONNLM_TRACE_PROCEDURE_
     ST_TRACE("Update weight");
 #endif
 
@@ -810,7 +810,7 @@ int wt_flush(wt_updater_t *wt_updater)
 {
     ST_CHECK_PARAM(wt_updater == NULL, -1);
 
-#if _CONNLM_TRACE_PROCEDURE_
+#ifdef _CONNLM_TRACE_PROCEDURE_
     ST_TRACE("Flush weight");
 #endif
 

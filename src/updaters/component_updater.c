@@ -187,7 +187,7 @@ int comp_updater_forward(comp_updater_t *comp_updater, sent_t *input_sent)
 
     comp = comp_updater->comp;
 
-#if _CONNLM_TRACE_PROCEDURE_
+#ifdef _CONNLM_TRACE_PROCEDURE_
     ST_TRACE("Forward: comp[%s]", comp->name);
 #endif
 
@@ -213,7 +213,7 @@ int comp_updater_backprop(comp_updater_t *comp_updater, sent_t *input_sent)
 
     comp = comp_updater->comp;
 
-#if _CONNLM_TRACE_PROCEDURE_
+#ifdef _CONNLM_TRACE_PROCEDURE_
     ST_TRACE("Backprop: comp[%s]", comp->name);
 #endif
 
@@ -246,7 +246,7 @@ int comp_updater_finish(comp_updater_t *comp_updater)
 
     comp = comp_updater->comp;
 
-#if _CONNLM_TRACE_PROCEDURE_
+#ifdef _CONNLM_TRACE_PROCEDURE_
     ST_TRACE("Finish: comp[%s]", comp->name);
 #endif
 
@@ -272,7 +272,7 @@ int comp_updater_forward_util_out(comp_updater_t *comp_updater,
 
     comp = comp_updater->comp;
 
-#if _CONNLM_TRACE_PROCEDURE_
+#ifdef _CONNLM_TRACE_PROCEDURE_
     ST_TRACE("Forward-util-out: comp[%s]", comp->name);
 #endif
 
@@ -304,7 +304,7 @@ int comp_updater_forward_out(comp_updater_t *comp_updater,
     comp = comp_updater->comp;
     output = comp_updater->out_updater->output;
 
-#if _CONNLM_TRACE_PROCEDURE_
+#ifdef _CONNLM_TRACE_PROCEDURE_
     ST_TRACE("Forward-out: comp[%s], node["OUTPUT_NODE_FMT"]", comp->name,
             node);
 #endif
