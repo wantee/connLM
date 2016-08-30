@@ -113,9 +113,20 @@ static int input_updater_update_sent(input_updater_t *input_updater)
     ST_CHECK_PARAM(input_updater == NULL, -1);
 
     if (input_updater->sent_head >= 0) {
-        if (input_updater->cur_pos >= input_updater->sent_tail) {
+        if (input_updater->words[input_updater->sent_tail-1] != SENT_END_ID) {
+            // move util sentence end
+            next = input_updater->sent_tail;
+            input_updater->sent_tail = input_updater->n_word;
+            for (i = next; i < input_updater->n_word; i++) {
+                if (input_updater->words[i] == SENT_END_ID) {
+                    input_updater->sent_tail = i + 1;
+                    break;
+                }
+            }
+        } else if (input_updater->cur_pos >= input_updater->sent_tail) {
             // move to next sentence
             input_updater->sent_head = input_updater->sent_tail;
+            // move util sentence end
             next = input_updater->sent_tail;
             input_updater->sent_tail = input_updater->n_word;
             for (i = next; i < input_updater->n_word; i++) {
@@ -173,11 +184,9 @@ int input_updater_feed(input_updater_t *input_updater, int *words, int n_word,
             sizeof(int)*n_word);
     input_updater->n_word += n_word;
 
-    if (input_updater->sent_head < 0) {
-        if (input_updater_update_sent(input_updater) < 0) {
-            ST_WARNING("Failed to input_updater_update_sent.");
-            return -1;
-        }
+    if (input_updater_update_sent(input_updater) < 0) {
+        ST_WARNING("Failed to input_updater_update_sent.");
+        return -1;
     }
 
     sent->words = input_updater->words + input_updater->sent_head;

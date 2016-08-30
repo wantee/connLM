@@ -579,7 +579,7 @@ static int driver_gen(driver_t *driver)
                         printf(" ");
                     }
                 }
-                printf("] ");
+                printf("]");
 
                 if (updater_feed(updater, egs.words, egs.size - 1) < 0) {
                     ST_WARNING("Failed to updater_feed.");
