@@ -95,24 +95,24 @@ int out_updater_setup(out_updater_t *out_updater, bool backprop);
 int out_updater_reset(out_updater_t *out_updater);
 
 /**
- * Start running for out_updater.
- * Called before every input word to be performed.
+ * Clear path for a word in out_updater.
  * @ingroup g_updater_out
  * @param[in] out_updater out_updater.
  * @param[in] word current predicted word.
  * @return non-zero value if any error.
  */
-int out_updater_start(out_updater_t *out_updater, int word);
+int out_updater_clear(out_updater_t *out_updater, int word);
 
 /**
  * Activate one word for a out_updater.
  * @ingroup g_updater_out
  * @param[in] out_updater out_updater.
  * @param[in] word current predicted word.
+ * @param[out] logp logp for current predicted word.
  * @see out_updater_loss
  * @return non-zero value if any error.
  */
-int out_updater_activate(out_updater_t *out_updater, int word);
+int out_updater_activate(out_updater_t *out_updater, int word, double *logp);
 
 /**
  * Compute loss of one word for a out_updater.
@@ -125,15 +125,6 @@ int out_updater_activate(out_updater_t *out_updater, int word);
 int out_updater_loss(out_updater_t *out_updater, int word);
 
 /**
- * End running for out_updater.
- * Called after every input word performed.
- * @ingroup g_updater_out
- * @param[in] out_updater out_updater.
- * @return non-zero value if any error.
- */
-int out_updater_end(out_updater_t *out_updater);
-
-/**
  * Finish running for out_updater.
  * Called after all words performed.
  * @ingroup g_updater_out
@@ -141,17 +132,6 @@ int out_updater_end(out_updater_t *out_updater);
  * @return non-zero value if any error.
  */
 int out_updater_finish(out_updater_t *out_updater);
-
-/**
- * Get log probability of a word.
- * Should be called after out_updater_activate.
- * @ingroup g_updater_output
- * @param[in] out_updater the out_updater.
- * @param[in] word target word.
- * @param[out] logp log probability.
- * @return non-zero value if any error.
- */
-int out_updater_get_logp(out_updater_t *out_updater, int word, double *logp);
 
 /**
  * Sample a node from children.

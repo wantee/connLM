@@ -150,7 +150,8 @@ static int input_updater_update_sent(input_updater_t *input_updater,
 
     sent->words = input_updater->words + input_updater->sent_head;
     sent->n_word = input_updater->sent_tail - input_updater->sent_head;
-    if (input_updater->words[input_updater->cur_pos] == SENT_START_ID) {
+    if (input_updater->cur_pos < input_updater->n_word - 1
+         && input_updater->words[input_updater->cur_pos] == SENT_START_ID) {
         // we never use <s> as target word, since P(<s>) should be equal to 1
         input_updater->cur_pos++;
     }

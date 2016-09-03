@@ -207,7 +207,6 @@ static int driver_steps(driver_t *driver, int tid, double *logp,
     updater_t *updater;
 
     int word;
-    double logp_word = 0.0;
 
     ST_CHECK_PARAM(driver == NULL || tid < 0 || logp == NULL
             || logp_sent == NULL || sents == NULL || words == NULL, -1);
@@ -221,25 +220,21 @@ static int driver_steps(driver_t *driver, int tid, double *logp,
             return -1;
         }
 
-        if (updater_get_logp(updater, word, &logp_word) < 0) {
-            ST_WARNING("Failed to updater_get_logp for word[%d].", word);
-        }
-
-        *logp += logp_word;
+        *logp += updater->logp;
         if (driver->eval_opt != NULL) {
-            *logp_sent += logn10(logp_word, driver->eval_opt->out_log_base);
+            *logp_sent += logn10(updater->logp, driver->eval_opt->out_log_base);
         }
 
         if ((*logp != *logp) || (isinf(*logp))) {
             ST_WARNING("Numerical error. tid[%d], log(p_word(%d)) = %g",
-                    tid, word, logp_word);
+                    tid, word, updater->logp);
             return -1;
         }
 
         if (driver->fp_log != NULL
                 && (! driver->eval_opt->print_sent_prob)) {
             fprintf(driver->fp_log, "%d\t%.6f\t%s", word,
-                    logn10(logp_word, driver->eval_opt->out_log_base),
+                    logn10(updater->logp, driver->eval_opt->out_log_base),
                     vocab_get_word(updater->connlm->vocab, word));
 
             fprintf(driver->fp_log, "\n");
@@ -602,13 +597,10 @@ static int driver_gen(driver_t *driver)
 
         word = -1;
         while (word != SENT_END_ID) {
-            word = UNK_ID;
-            while (word == UNK_ID || word == SENT_START_ID) {
-                word = updater_sampling(updater);
-                if (word < 0) {
-                    ST_WARNING("Failed to updater_sampling.");
-                    goto ERR;
-                }
+            word = updater_sampling(updater, first);
+            if (word < 0) {
+                ST_WARNING("Failed to updater_sampling.");
+                goto ERR;
             }
 
             if (word == SENT_END_ID) {
@@ -616,27 +608,12 @@ static int driver_gen(driver_t *driver)
             } else {
                 if (!first) {
                     printf(" ");
-                } else {
-                    first = false;
                 }
                 printf("%s", vocab_get_word(vocab, word));
             }
             fflush(stdout);
 
-            if (updater_feed(updater, &word, 1) < 0) {
-                ST_WARNING("Failed to updater_feed.");
-                goto ERR;
-            }
-
-            /* steps the prefix words. */
-            while (updater_steppable(updater)) {
-                word = updater_step(updater);
-                if (word < 0) {
-                    ST_WARNING("Failed to updater_step.");
-                    return -1;
-                }
-            }
-
+            first = false;
             n_word++;
         }
 

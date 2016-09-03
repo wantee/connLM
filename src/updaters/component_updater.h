@@ -101,15 +101,6 @@ int comp_updater_setup(comp_updater_t *comp_updater, bool backprop);
 int comp_updater_reset(comp_updater_t *comp_updater);
 
 /**
- * Start running for comp_updater.
- * Called before every input word to be performed.
- * @ingroup g_updater_comp
- * @param[in] comp_updater comp_updater.
- * @return non-zero value if any error.
- */
-int comp_updater_start(comp_updater_t *comp_updater);
-
-/**
  * Feed-forward one word for a comp_updater.
  * @ingroup g_updater_comp
  * @param[in] comp_updater the comp_updater.
@@ -130,13 +121,12 @@ int comp_updater_forward(comp_updater_t *comp_updater, sent_t *input_sent);
 int comp_updater_backprop(comp_updater_t *comp_updater, sent_t *input_sent);
 
 /**
- * End running for comp_updater.
- * Called after every input word performed.
+ * Clear buffers for comp_updater.
  * @ingroup g_updater_comp
  * @param[in] comp_updater comp_updater.
  * @return non-zero value if any error.
  */
-int comp_updater_end(comp_updater_t *comp_updater);
+int comp_updater_clear(comp_updater_t *comp_updater);
 
 /**
  * Finish running for comp_updater.

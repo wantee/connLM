@@ -109,7 +109,7 @@ int out_updater_reset(out_updater_t *out_updater)
     return 0;
 }
 
-static int out_start_walker(output_t *output, output_node_id_t node,
+static int out_clear_walker(output_t *output, output_node_id_t node,
         output_node_id_t next_node,
         output_node_id_t child_s, output_node_id_t child_e, void *args)
 {
@@ -131,11 +131,11 @@ static int out_start_walker(output_t *output, output_node_id_t node,
     return 0;
 }
 
-int out_updater_start(out_updater_t *out_updater, int word)
+int out_updater_clear(out_updater_t *out_updater, int word)
 {
     ST_CHECK_PARAM(out_updater == NULL || word < 0, -1);
 
-    if (output_walk_through_path(out_updater->output, word, out_start_walker,
+    if (output_walk_through_path(out_updater->output, word, out_clear_walker,
                 (void *)out_updater) < 0) {
         ST_WARNING("Failed to output_walk_through_path.");
         return -1;
@@ -144,39 +144,53 @@ int out_updater_start(out_updater_t *out_updater, int word)
     return 0;
 }
 
+typedef struct _out_act_walker_args_t_ {
+    double logp;
+    real_t *ac;
+} out_act_walker_args_t;
+
 static int out_act_walker(output_t *output, output_node_id_t node,
         output_node_id_t next_node,
         output_node_id_t child_s, output_node_id_t child_e, void *args)
 {
-    out_updater_t *out_updater;
+    out_act_walker_args_t *oaw_args;
 
-    out_updater = (out_updater_t *)args;
+    oaw_args = (out_act_walker_args_t *)args;
 
     if (child_e <= child_s || child_e == OUTPUT_NODE_NONE) {
         return 0;
     }
 
     if (output->norm == ON_SOFTMAX) {
-        out_updater->ac[child_e - 1] = 0;
-        softmax(out_updater->ac + child_s, child_e - child_s);
+        oaw_args->ac[child_e - 1] = 0;
+        softmax(oaw_args->ac + child_s, child_e - child_s);
     }
+
+    oaw_args->logp += log10(oaw_args->ac[next_node]);
 
     return 0;
 }
 
-int out_updater_activate(out_updater_t *out_updater, int word)
+int out_updater_activate(out_updater_t *out_updater, int word, double *logp)
 {
-    ST_CHECK_PARAM(out_updater == NULL || word < 0, -1);
+    out_act_walker_args_t oaw_args;
+
+    ST_CHECK_PARAM(out_updater == NULL || word < 0 || logp == NULL, -1);
 
 #ifdef _CONNLM_TRACE_PROCEDURE_
     ST_TRACE("Activate:output: word[%d]", word);
 #endif
 
+    oaw_args.logp = 0.0;
+    oaw_args.ac = out_updater->ac;
+
     if (output_walk_through_path(out_updater->output, word, out_act_walker,
-                (void *)out_updater) < 0) {
+                (void *)&oaw_args) < 0) {
         ST_WARNING("Failed to output_walk_through_path.");
         return -1;
     }
+
+    *logp = oaw_args.logp;
 
     return 0;
 }
@@ -217,64 +231,9 @@ int out_updater_loss(out_updater_t *out_updater, int word)
     return 0;
 }
 
-int out_updater_end(out_updater_t *out_updater)
-{
-    ST_CHECK_PARAM(out_updater == NULL, -1);
-
-    return 0;
-}
-
 int out_updater_finish(out_updater_t *out_updater)
 {
     ST_CHECK_PARAM(out_updater == NULL, -1);
-
-    return 0;
-}
-
-typedef struct _out_logp_walker_args_t_ {
-    double logp;
-    real_t *ac;
-} out_logp_walker_args_t;
-
-static int out_logp_walker(output_t *output, output_node_id_t node,
-        output_node_id_t next_node,
-        output_node_id_t child_s, output_node_id_t child_e, void *args)
-{
-    out_logp_walker_args_t *olw_args;
-
-    olw_args = (out_logp_walker_args_t *)args;
-
-    if (node == output->tree->root) {
-        return 0;
-    }
-
-    olw_args->logp += log10(olw_args->ac[node]);
-
-    return 0;
-}
-
-int out_updater_get_logp(out_updater_t *out_updater, int word, double *logp)
-{
-    out_logp_walker_args_t olw_args;
-    output_t *output;
-
-    output_node_id_t node;
-
-    ST_CHECK_PARAM(out_updater == NULL || word < 0 || logp == NULL, -1);
-
-    output = out_updater->output;
-
-    olw_args.logp = 0.0;
-    olw_args.ac = out_updater->ac;
-    if (output_walk_through_path(out_updater->output, word, out_logp_walker,
-                (void *)&olw_args) < 0) {
-        ST_WARNING("Failed to output_walk_through_path.");
-        return -1;
-    }
-    *logp = olw_args.logp;
-
-    node = output_tree_word2leaf(output->tree, word);
-    *logp += log10(out_updater->ac[node]);
 
     return 0;
 }
@@ -286,6 +245,7 @@ output_node_id_t out_updater_sample(out_updater_t *out_updater,
     output_node_id_t s, e, sampled;
 
     double u, p;
+    int word;
 
     ST_CHECK_PARAM(out_updater == NULL || node == OUTPUT_NODE_NONE,
             OUTPUT_NODE_NONE);
@@ -299,22 +259,50 @@ output_node_id_t out_updater_sample(out_updater_t *out_updater,
         return OUTPUT_NODE_NONE;
     }
 
+    if (e - s <= 2) {
+        for (sampled = s; sampled < e; sampled++) {
+            if (!is_leaf(output->tree, sampled)) {
+                break;
+            }
+            word = output_tree_leaf2word(output->tree, sampled);
+            if (word != UNK_ID && word != SENT_START_ID) {
+                break;
+            }
+        }
+        if (sampled == e) {
+            ST_WARNING("Can't sample from node["OUTPUT_NODE_FMT"], "
+                   "because all its children are <unk> or <s>.");
+            return OUTPUT_NODE_NONE;
+        }
+    }
+
     if (output->norm == ON_SOFTMAX) {
         out_updater->ac[e - 1] = 0;
         softmax(out_updater->ac + s, e - s);
     }
 
-    u = st_random(0, 1);
-    sampled = s;
+    while (true) {
+        u = st_random(0, 1);
+        sampled = s;
 
-    p = 0;
+        p = 0;
 
-    for (sampled = s; sampled < e; sampled++) {
-        p += out_updater->ac[sampled];
+        for (sampled = s; sampled < e; sampled++) {
+            p += out_updater->ac[sampled];
 
-        if (p >= u) {
-            break;
+            if (p >= u) {
+                break;
+            }
         }
+
+        if (is_leaf(output->tree, sampled)) {
+            word = output_tree_leaf2word(output->tree, sampled);
+            if (word == UNK_ID || word == SENT_START_ID) {
+                continue;
+            }
+        }
+
+        break;
     }
 
     return sampled;

@@ -55,6 +55,7 @@ typedef struct _updater_t_ {
     bool backprop; /**< whether do backpropagation. */
 
     sent_t sent; /**< current sentence, filled by input_updater. */
+    double logp; /**< logp for current target word. */
 } updater_t;
 
 /**
@@ -128,22 +129,13 @@ int updater_step(updater_t *updater);
 int updater_finalize(updater_t *updater);
 
 /**
- * Get log probablity for word from a updater.
- * @ingroup g_updater
- * @param[in] updater updater.
- * @param[in] word predicted word.
- * @param[out] logp log probablity.
- * @return non-zero value if any error.
- */
-int updater_get_logp(updater_t *updater, int word, double *logp);
-
-/**
  * Sampling a word.
  * @ingroup g_updater
  * @param[in] updater updater.
+ * @param[in] startover if true, feed <s> than sampling.
  * @return the sampled word, -1 if any error.
  */
-int updater_sampling(updater_t *updater);
+int updater_sampling(updater_t *updater, bool startover);
 
 #ifdef __cplusplus
 }
