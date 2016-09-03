@@ -293,11 +293,15 @@ static void* driver_thread(void *args)
 
     gettimeofday(&tts, NULL);
 
+#ifdef _DETERMINISTIC_
+    fifo = true;
+#else
     if (driver->mode == DRIVER_EVAL && driver->n_thr == 1){
         fifo = true;
     } else {
         fifo = false;
     }
+#endif
     words = 0;
     sents = 0;
     logp = 0.0;
