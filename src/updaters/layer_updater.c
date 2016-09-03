@@ -214,18 +214,17 @@ int layer_updater_clear(layer_updater_t *layer_updater)
     ST_CHECK_PARAM(layer_updater == NULL, -1);
 
     sz = sizeof(real_t) * layer_updater->layer->size;
-    memset(layer_updater->ac, 0, sz);
-    layer_updater->activated = false;
-
     if (layer_updater->er != NULL) {
         memset(layer_updater->er, 0, sz);
         layer_updater->derived = false;
     }
 
     if (layer_updater->ac_state != NULL) {
-        memcpy(layer_updater->ac_state, layer_updater->ac,
-                sizeof(real_t) * layer_updater->layer->size);
+        memcpy(layer_updater->ac_state, layer_updater->ac, sz);
     }
+
+    memset(layer_updater->ac, 0, sz);
+    layer_updater->activated = false;
 
     return 0;
 }
