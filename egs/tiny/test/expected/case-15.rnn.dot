@@ -19,17 +19,29 @@ digraph network {
     input_rnn -> glue_rnn_emb [label=""];
     glue_rnn_emb -> layer_rnn_hidden1 [label=""];
 
+    node[color=blue,fontcolor=blue];
+    edge[color=blue];
     glue_rnn_ff1 [label="ff1/type=fc\n4"];
     layer_rnn_hidden1 -> glue_rnn_ff1 [label=""];
     glue_rnn_ff1 -> layer_rnn_hidden2 [label=""];
+    node[color=black,fontcolor=black];
+    edge[color=black];
 
+    node[color=blue,fontcolor=blue];
+    edge[color=blue];
     glue_rnn_ff2 [label="ff2/type=fc\n7"];
     layer_rnn_hidden2 -> glue_rnn_ff2 [label=""];
     glue_rnn_ff2 -> layer_rnn_hidden3 [label=""];
+    node[color=black,fontcolor=black];
+    edge[color=black];
 
+    node[color=blue,fontcolor=blue];
+    edge[color=blue];
     glue_rnn_ff3 [label="ff3/type=fc\n8"];
     layer_rnn_hidden3 -> glue_rnn_ff3 [label=""];
     glue_rnn_ff3 -> layer_rnn_hidden4 [label=""];
+    node[color=black,fontcolor=black];
+    edge[color=black];
 
     node[color=red,fontcolor=red];
     edge[color=red];

@@ -25,6 +25,7 @@
 #include <string.h>
 
 #include <stutils/st_log.h>
+#include <stutils/st_stack.h>
 
 #include "input.h"
 #include "graph.h"
@@ -145,6 +146,7 @@ static int elem_set_add(elem_set_t* set, int elem)
 typedef struct _dfs_args_t_ {
     bool *on_stack;
     bool *visited;
+    st_stack_t *link_stack;
     bool *passed;
     int *node_order;
     int node_i; /* index for node_order. */
@@ -159,6 +161,7 @@ static void dfs_args_destroy(dfs_args_t *args)
 
     safe_free(args->on_stack);
     safe_free(args->visited);
+    safe_st_stack_destroy(args->link_stack);
     safe_free(args->passed);
     safe_free(args->recur_to);
     safe_free(args->node_order);
@@ -184,6 +187,13 @@ static int dfs_args_init(dfs_args_t *args, graph_t *graph)
         goto ERR;
     }
     memset(args->visited, 0, sizeof(bool) * graph->num_node);
+
+    args->link_stack = st_stack_create((st_stack_id_t)graph->num_link);
+    if (args->link_stack == NULL) {
+        ST_WARNING("Failed to st_stack_create link_stack.");
+        goto ERR;
+    }
+    (void)st_stack_clear(args->link_stack);
 
     args->passed = (bool *)malloc(sizeof(bool) * graph->num_link);
     if (args->passed == NULL) {
@@ -222,7 +232,10 @@ static int graph_dfs(graph_t *graph, int start, dfs_args_t *args)
 {
     node_t *node;
 
-    int l, lk;
+    void *tmp;
+    st_stack_id_t s;
+
+    int l, lk, llk;
     int to;
 
     ST_CHECK_PARAM(graph == NULL || args == NULL, -1);
@@ -241,17 +254,48 @@ static int graph_dfs(graph_t *graph, int start, dfs_args_t *args)
 
         to = graph->links[lk].to;
         if(!args->visited[to]) {
+            if (st_stack_push(args->link_stack, (void *)(long)lk)
+                    != ST_STACK_OK) {
+                ST_WARNING("Failed to st_stack_push link[%d].", lk);
+                return -1;
+            }
+#ifdef _GRAPH_DEBUG_
+            ST_DEBUG("Link push: %d", lk);
+#endif
             if (graph_dfs(graph, to, args) < 0) {
                 ST_WARNING("Failed to graph_dfs[%d].", to);
                 return -1;
             }
+
+            if (st_stack_pop(args->link_stack, &tmp) != ST_STACK_OK) {
+                ST_WARNING("Failed to st_stack_pop link.");
+                return -1;
+            }
+#ifdef _GRAPH_DEBUG_
+            ST_DEBUG("Link pop: %d", (int)(long)tmp);
+#endif
         } else if(args->on_stack[to]) {
-            graph->glues[lk]->recur = true;
+            graph->glues[lk]->recur_type = RECUR_HEAD;
             args->recur_to[lk] = to;
 #ifdef _GRAPH_DEBUG_
             ST_DEBUG("recur_to[%d] for link[%d]", to, lk);
 #endif
-        }
+            for(s = 1; s <= args->link_stack->top; s++) {
+                if (st_stack_topn(args->link_stack, s, &tmp) != ST_STACK_OK) {
+                    ST_WARNING("Failed to st_stack_topn link.[%d]", s);
+                    return -1;
+                }
+
+                llk = (int)(long)tmp;
+                if (graph->links[llk].to == to) {
+                    break;
+                }
+
+                if (graph->glues[llk]->recur_type == RECUR_NON) {
+                    graph->glues[llk]->recur_type = RECUR_BODY;
+                }
+            }
+       }
     }
 
     args->on_stack[start] = false;
@@ -308,7 +352,7 @@ static int* node2link_order(int *node_order, graph_t *graph, int *recur_to)
         node = graph->nodes + node_order[n];
         for (l = 0; l < node->num_link; l++) {
             lk = node->links[l];
-            if (!graph->glues[lk]->recur) {
+            if (graph->glues[lk]->recur_type != RECUR_HEAD) {
                 continue;
             }
 
@@ -360,7 +404,7 @@ static int* node2link_order(int *node_order, graph_t *graph, int *recur_to)
             pos = num_lk; // if there is no recur links, this is the current pos
             for (l = 0; l < node->num_link; l++) {
                 lk = node->links[l];
-                if (!graph->glues[lk]->recur) {
+                if (graph->glues[lk]->recur_type != RECUR_HEAD) {
                     continue;
                 }
                 if (graph->links[lk].to == node_order[n]) {
@@ -407,7 +451,7 @@ static int* node2link_order(int *node_order, graph_t *graph, int *recur_to)
         // now place the non-recur links
         for (l = 0; l < node->num_link; l++) {
             lk = node->links[l];
-            if (graph->glues[lk]->recur) {
+            if (graph->glues[lk]->recur_type == RECUR_HEAD) {
                 continue;
             }
 

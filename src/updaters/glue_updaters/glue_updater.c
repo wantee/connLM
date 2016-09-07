@@ -140,7 +140,7 @@ int glue_updater_setup(glue_updater_t *glue_updater,
     }
 
     glue = glue_updater->glue;
-    if (glue->recur) {
+    if (glue->recur_type == RECUR_HEAD) {
         in_layer_updater = comp_updater->layer_updaters[glue->in_layer];
         if (layer_updater_setup_state(in_layer_updater, backprop) < 0) {
             ST_WARNING("Failed to layer_updater_setup_state.");
@@ -172,7 +172,7 @@ int glue_updater_forward(glue_updater_t *glue_updater,
     in_ac = NULL;
     lid = glue->in_layer;
     if (lid >= 2) { // Ignore input & output layer
-        if (glue->recur) {
+        if (glue->recur_type == RECUR_HEAD) {
             in_ac = layer_updaters[lid]->ac_state;
         } else {
             if (layer_updater_activate(layer_updaters[lid]) < 0) {
@@ -227,7 +227,7 @@ int glue_updater_backprop(glue_updater_t *glue_updater,
 
     if (glue_updater->impl != NULL && glue_updater->impl->backprop != NULL) {
         if (glue->in_layer >= 2) { // Ignore input layer
-            if (glue->recur) {
+            if (glue->recur_type == RECUR_HEAD) {
                 in_ac = layer_updaters[glue->in_layer]->ac_state;
             } else {
                 in_ac = layer_updaters[glue->in_layer]->ac;
@@ -293,7 +293,7 @@ int glue_updater_forward_util_out(glue_updater_t *glue_updater,
     lid = glue->in_layer;
     in_ac = NULL;
     if (lid >= 2) { // Ignore input & output layer
-        if (glue->recur) {
+        if (glue->recur_type == RECUR_HEAD) {
             in_ac = layer_updaters[lid]->ac_state;
         } else {
             if (layer_updater_activate(layer_updaters[lid]) < 0) {
@@ -337,7 +337,7 @@ int glue_updater_forward_out(glue_updater_t *glue_updater,
         in_ac = NULL;
         lid = glue->in_layer;
         if (lid >= 2) { // Ignore input & output layer
-            if (glue->recur) {
+            if (glue->recur_type == RECUR_HEAD) {
                 in_ac = comp_updater->layer_updaters[glue->in_layer]->ac_state;
             } else {
                 in_ac = comp_updater->layer_updaters[glue->in_layer]->ac;

@@ -87,6 +87,16 @@ typedef struct _glue_implementation_t_ {
 } glue_impl_t;
 
 /**
+ * type of recurrent for a glue.
+ * @ingroup g_glue
+ */
+typedef enum _glue_recur_type_t_ {
+    RECUR_NON = 0,  /**< non-recur glue. */
+    RECUR_HEAD, /**< head of a recur chain. */
+    RECUR_BODY, /**< non-head of any recur chains. */
+} glue_recur_type_t;
+
+/**
  * NNet glue.
  * @ingroup g_glue
  */
@@ -95,7 +105,7 @@ typedef struct _glue_t_ {
     char type[MAX_NAME_LEN]; /**< glue type. */
     int in_layer; /**< input layer id. */
     int out_layer; /**< output layer id. */
-    bool recur; /**< whether this glue is recurrent. */
+    glue_recur_type_t recur_type; /**< recur_type of this glue. */
     bptt_opt_t bptt_opt; /**< options for BPTT, only relevant with recur glue. */
 
     weight_t *wt; /**< weight matrix. */

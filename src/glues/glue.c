@@ -277,7 +277,7 @@ glue_t* glue_dup(glue_t *g)
     glue->in_layer = g->in_layer;
     glue->out_layer = g->out_layer;
 
-    glue->recur = g->recur;
+    glue->recur_type = g->recur_type;
 
     glue->wt = wt_dup(g->wt);
     if (glue->wt == NULL) {
@@ -673,7 +673,7 @@ int glue_load_train_opt(glue_t *glue, st_opt_t *opt, const char *sec_name,
             ST_WARNING("Failed to param_load.");
             goto ST_OPT_ERR;
         }
-        if (glue->recur) {
+        if (glue->recur_type == RECUR_HEAD) {
             if (bptt_opt_load(&glue->bptt_opt, opt, name,
                         parent_bptt_opt) < 0) {
                 ST_WARNING("Failed to bptt_opt_load");

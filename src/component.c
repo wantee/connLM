@@ -881,9 +881,12 @@ int comp_draw(component_t *comp, FILE *fp, bool verbose)
     }
     fprintf(fp, "];\n");
     for (g = 0; g < comp->num_glue; g++) {
-        if (comp->glues[g]->recur) {
+        if (comp->glues[g]->recur_type == RECUR_HEAD) {
             fprintf(fp, "    node[color=red,fontcolor=red];\n");
             fprintf(fp, "    edge[color=red];\n");
+        } else if (comp->glues[g]->recur_type == RECUR_BODY) {
+            fprintf(fp, "    node[color=blue,fontcolor=blue];\n");
+            fprintf(fp, "    edge[color=blue];\n");
         }
         (void)glue2nodename(comp, g, gluenodename, MAX_NAME_LEN),
         fprintf(fp, "    %s [label=\"%s", gluenodename,
@@ -915,7 +918,7 @@ int comp_draw(component_t *comp, FILE *fp, bool verbose)
                 glue_draw_label_one(comp->glues[g], l,
                     label, MAX_NAME_LEN, verbose));
 
-        if (comp->glues[g]->recur) {
+        if (comp->glues[g]->recur_type != RECUR_NON) {
             fprintf(fp, "    node[color=black,fontcolor=black];\n");
             fprintf(fp, "    edge[color=black];\n");
         }
