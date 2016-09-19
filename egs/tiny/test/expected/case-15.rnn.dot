@@ -3,7 +3,15 @@ digraph network {
   labelloc=t;
   label="Network";
 
-  subgraph structure {
+  subgraph cluster_overview {
+    label="Overview";
+    node [shape=plaintext, style=solid];
+    edge [style=invis];
+
+    legend [label="# Compnoent: 1\lVocab size: 3722\lCycle #0: recur3 -> ff3 -> ff2\lCycle #1: recur4 -> ff3\lCycle #2: recur2 -> ff2 -> ff1\lCycle #3: recur5 -> ff2\lCycle #4: recur1\l"];
+  }
+
+  subgraph cluster_structure {
     label="";
 
     output [shape=triangle, orientation=180];

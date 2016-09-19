@@ -667,7 +667,7 @@ int connlm_save(connlm_t *connlm, FILE *fp, bool binary)
 static int connlm_draw_network(connlm_t *connlm, FILE *fp, bool verbose)
 {
     char nodename[MAX_NAME_LEN];
-    int c;
+    int c, i, n, g, glue_id;
 
     ST_CHECK_PARAM(connlm == NULL || fp == NULL, -1);
 
@@ -676,20 +676,39 @@ static int connlm_draw_network(connlm_t *connlm, FILE *fp, bool verbose)
     fprintf(fp, "  labelloc=t;\n");
     fprintf(fp, "  label=\"Network\";\n\n");
 
-#if 0
-    fprintf(fp, "  subgraph cluster_overview {\n");
-    fprintf(fp, "    label=\"Overview\";\n");
-    fprintf(fp, "    node [shape=plaintext, style=solid];\n");
-    fprintf(fp, "    edge [style=invis];\n\n");
-    fprintf(fp, "    legend [label=\"# Compnoent: %d\\n"
-                     "Vocab size: %d\\n\"];\n",
-                connlm->num_comp,
-                connlm->vocab->vocab_size);
-    fprintf(fp, "  }\n\n");
+    if (verbose) {
+        fprintf(fp, "  subgraph cluster_overview {\n");
+        fprintf(fp, "    label=\"Overview\";\n");
+        fprintf(fp, "    node [shape=plaintext, style=solid];\n");
+        fprintf(fp, "    edge [style=invis];\n\n");
 
-    fprintf(fp, "  subgraph cluster_structure {\n");
-#endif
-    fprintf(fp, "  subgraph structure {\n");
+        fprintf(fp, "    legend [label=\"# Compnoent: %d\\l"
+                         "Vocab size: %d\\l",
+                    connlm->num_comp,
+                    connlm->vocab->vocab_size);
+        i = 0;
+        for (c = 0; c < connlm->num_comp; c++) {
+            for (n = 0; n < connlm->comps[c]->num_glue_cycle; n++) {
+                fprintf(fp, "Cycle #%d: ", i);
+                for (g = 1; g <= connlm->comps[c]->glue_cycles[n][0] - 1; g++) {
+                    glue_id = connlm->comps[c]->glue_cycles[n][g];
+                    fprintf(fp, "%s -> ",
+                            connlm->comps[c]->glues[glue_id]->name);
+                }
+                glue_id = connlm->comps[c]->glue_cycles[n][g];
+                fprintf(fp, "%s\\l", connlm->comps[c]->glues[glue_id]->name);
+                i++;
+            }
+        }
+        fprintf(fp, "\"];\n");
+
+        fprintf(fp, "  }\n\n");
+
+        fprintf(fp, "  subgraph cluster_structure {\n");
+    } else {
+        fprintf(fp, "  subgraph structure {\n");
+    }
+
     fprintf(fp, "    label=\"\";\n");
     fprintf(fp, "\n");
     fprintf(fp, "    %s [shape=triangle, orientation=180];\n",
@@ -709,14 +728,6 @@ static int connlm_draw_network(connlm_t *connlm, FILE *fp, bool verbose)
     }
     fprintf(fp, "}\n");
     fprintf(fp, "  }\n");
-
-#if 0
-    if (connlm->num_comp > 0) {
-    // keep legend in the left
-        fprintf(fp, "  legend -> input_%s [style=invis];\n",
-                connlm->comps[0]->name);
-    }
-#endif
 
     fprintf(fp, "}\n");
 

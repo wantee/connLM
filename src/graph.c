@@ -56,26 +56,31 @@ static void link_destroy(link_t* link)
 
 void graph_destroy(graph_t* graph)
 {
-    int n;
-    int l;
+    int i;
 
     if (graph == NULL) {
         return;
     }
 
-    for (n = 0; n < graph->num_node; n++) {
-        node_destroy(graph->nodes + n);
+    for (i = 0; i < graph->num_node; i++) {
+        node_destroy(graph->nodes + i);
     }
     safe_free(graph->nodes);
     graph->num_node = 0;
 
-    for (l = 0; l < graph->num_link; l++) {
-        link_destroy(graph->links + l);
+    for (i = 0; i < graph->num_link; i++) {
+        link_destroy(graph->links + i);
     }
     safe_free(graph->links);
     graph->num_link = 0;
 
     graph->glues = NULL;
+
+    for (i = 0; i < graph->num_cycle; i++) {
+        safe_free(graph->cycles[i]);
+    }
+    safe_free(graph->cycles);
+    graph->num_cycle = 0;
 }
 
 static int node_add_link(node_t *node, int lk)
@@ -231,6 +236,7 @@ ERR:
 static int graph_dfs(graph_t *graph, int start, dfs_args_t *args)
 {
     node_t *node;
+    int *cycle;
 
     void *tmp;
     st_stack_id_t s;
@@ -280,6 +286,13 @@ static int graph_dfs(graph_t *graph, int start, dfs_args_t *args)
 #ifdef _GRAPH_DEBUG_
             ST_DEBUG("recur_to[%d] for link[%d]", to, lk);
 #endif
+            cycle = (int *)malloc(sizeof(int) * (args->link_stack->top + 2));
+            if (cycle == NULL) {
+                ST_WARNING("Failed to malloc cycle.");
+                return -1;
+            }
+            cycle[1] = lk;
+
             for(s = 1; s <= args->link_stack->top; s++) {
                 if (st_stack_topn(args->link_stack, s, &tmp) != ST_STACK_OK) {
                     ST_WARNING("Failed to st_stack_topn link.[%d]", s);
@@ -294,7 +307,18 @@ static int graph_dfs(graph_t *graph, int start, dfs_args_t *args)
                 if (graph->glues[llk]->recur_type == RECUR_NON) {
                     graph->glues[llk]->recur_type = RECUR_BODY;
                 }
+                cycle[s + 1] = llk;
             }
+            cycle[0] = s;
+
+            graph->cycles = (int **)realloc(graph->cycles,
+                    sizeof(int*)*(graph->num_cycle + 1));
+            if (graph->cycles == NULL) {
+                ST_WARNING("Failed to realloc cycles.");
+                return -1;
+            }
+            graph->cycles[graph->num_cycle] = cycle;
+            graph->num_cycle++;
        }
     }
 

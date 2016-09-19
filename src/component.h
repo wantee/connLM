@@ -65,6 +65,9 @@ typedef struct _component_t_ {
     real_t comp_scale; /**< scale of component for output. */
 
     int* fwd_order; /**< forward order of glue. */
+    int **glue_cycles; /**< cycles of glues for graph.
+                       First elem for each cycle is num_glue for this cycle. */
+    int num_glue_cycle;/**< number of cycles. */
 
     comp_train_opt_t train_opt; /**< train options. */
 } component_t;

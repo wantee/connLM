@@ -34,6 +34,21 @@
 
 static const int COMP_MAGIC_NUM = 626140498 + 30;
 
+static void comp_destroy_glue_cycles(component_t *comp)
+{
+    int i;
+
+    if (comp == NULL) {
+        return;
+    }
+
+    for (i = 0; i < comp->num_glue_cycle; i++) {
+        safe_free(comp->glue_cycles[i]);
+    }
+    safe_free(comp->glue_cycles);
+    comp->num_glue_cycle = 0;
+}
+
 void comp_destroy(component_t *comp)
 {
     int l;
@@ -60,6 +75,38 @@ void comp_destroy(component_t *comp)
     comp->num_glue = 0;
 
     safe_free(comp->fwd_order);
+
+    comp_destroy_glue_cycles(comp);
+}
+
+static int comp_dup_glue_cycles(component_t *comp, int **cycles, int num_cycle)
+{
+    int i, n;
+
+    comp->num_glue_cycle = num_cycle;
+    if (comp->num_glue_cycle > 0) {
+        comp->glue_cycles = (int **)malloc(sizeof(int *)*comp->num_glue_cycle);
+        if (comp->glue_cycles == NULL) {
+            ST_WARNING("Failed to malloc comp->glue_cycles.");
+            goto ERR;
+        }
+
+        for (i = 0; i < comp->num_glue_cycle; i++) {
+            n = cycles[i][0] + 1;
+            comp->glue_cycles[i] = (int *)malloc(sizeof(int) * n);
+            if (comp->glue_cycles[i] == NULL) {
+                ST_WARNING("Failed to malloc comp->glue_cycles[%d].", i);
+                goto ERR;
+            }
+            memcpy(comp->glue_cycles[i], cycles[i], sizeof(int) * n);
+        }
+    }
+
+    return 0;
+
+ERR:
+    comp_destroy_glue_cycles(comp);
+    return -1;
 }
 
 component_t* comp_dup(component_t *c)
@@ -129,6 +176,11 @@ component_t* comp_dup(component_t *c)
         comp->num_glue = 0;
     }
 
+    if (comp_dup_glue_cycles(comp, c->glue_cycles, c->num_glue_cycle) < 0) {
+        ST_WARNING("Failed to comp_dup_glue_cycles.");
+        goto ERR;
+    }
+
     return comp;
 ERR:
     safe_comp_destroy(comp);
@@ -195,6 +247,11 @@ static int comp_sort_glue(component_t *comp)
     comp->fwd_order = graph_sort(graph);
     if (comp->fwd_order == NULL) {
         ST_WARNING("Falied to graph_sort.");
+        goto ERR;
+    }
+
+    if (comp_dup_glue_cycles(comp, graph->cycles, graph->num_cycle) < 0) {
+        ST_WARNING("Failed to comp_dup_cycles.");
         goto ERR;
     }
 

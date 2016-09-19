@@ -68,7 +68,11 @@ typedef struct _graph_t_ {
 
     int root; /**< root of graph. */
 
-    glue_t** glues; /**< glues(nodes) of graph. */
+    glue_t** glues; /**< glues of network. */
+
+    int **cycles; /**< cycles of links for graph.
+                       First elem for each cycle is num_link for this cycle. */
+    int num_cycle;/**< number of cycles. */
 } graph_t;
 
 /**

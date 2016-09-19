@@ -2384,9 +2384,9 @@ int output_draw(output_t *output, FILE *fp, count_t *word_cnts,
     fprintf(fp, "    label=\"Params\";\n");
     fprintf(fp, "    node [shape=plaintext, style=solid];\n");
     fprintf(fp, "    edge [style=invis];\n");
-    fprintf(fp, "    legend [label=\"# Node: "OUTPUT_NODE_FMT"\\n"
-                     "# Leaf: %d\\nmethod: %s\\n"
-                     "max depth: %d\\nmax branch: %d\\n"
+    fprintf(fp, "    legend [label=\"# Node: "OUTPUT_NODE_FMT"\\l"
+                     "# Leaf: %d\\lmethod: %s\\l"
+                     "max depth: %d\\lmax branch: %d\\l"
                      "Normalization: %s\"];\n",
                 output->tree->num_node, output->output_size,
                 method2str(output->output_opt.method),
