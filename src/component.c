@@ -466,7 +466,7 @@ int comp_load_train_opt(component_t *comp, st_opt_t *opt, const char *sec_name,
     char name[MAX_ST_CONF_LEN];
     param_t param;
     bptt_opt_t bptt_opt;
-    int g;
+    int i, c, g;
 
     ST_CHECK_PARAM(comp == NULL || opt == NULL, -1);
 
@@ -492,6 +492,24 @@ int comp_load_train_opt(component_t *comp, st_opt_t *opt, const char *sec_name,
             goto ST_OPT_ERR;
         }
     }
+
+    // Set bptt_opt for glues in cycles
+    for (c = 0; c < comp->num_glue_cycle; c++) {
+        g = comp->glue_cycles[c][1]; // RECUR_HEAD
+        bptt_opt = comp->glues[g]->bptt_opt;
+        for (i = 2; i <= comp->glue_cycles[c][0]; i++) {
+            g = comp->glue_cycles[c][i];
+            // there may be some glue which is in multiple cycles,
+            // we set the maximum value for them
+            if (bptt_opt.bptt > comp->glues[g]->bptt_opt.bptt) {
+                comp->glues[g]->bptt_opt.bptt = bptt_opt.bptt;
+            }
+            if (bptt_opt.bptt_delay > comp->glues[g]->bptt_opt.bptt_delay) {
+                comp->glues[g]->bptt_opt.bptt_delay = bptt_opt.bptt_delay;
+            }
+        }
+    }
+
     return 0;
 
 ST_OPT_ERR:
