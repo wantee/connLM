@@ -26,6 +26,7 @@
 
 #include <stutils/st_macro.h>
 #include <stutils/st_log.h>
+#include <stutils/st_mem.h>
 
 #include "../../glues/direct_glue.h"
 #include "../../glues/fc_glue.h"
@@ -82,6 +83,9 @@ void glue_updater_destroy(glue_updater_t *glue_updater)
         }
     }
 
+    safe_st_aligned_free(glue_updater->ac_bptt);
+    safe_st_aligned_free(glue_updater->er_bptt);
+
     safe_wt_updater_destroy(glue_updater->wt_updater);
     glue_updater->glue = NULL;
 }
@@ -125,6 +129,9 @@ int glue_updater_setup(glue_updater_t *glue_updater,
 {
     glue_t *glue;
     layer_updater_t *in_layer_updater;
+    layer_updater_t *out_layer_updater;
+
+    size_t sz;
 
     ST_CHECK_PARAM(glue_updater == NULL, -1);
 
@@ -135,7 +142,7 @@ int glue_updater_setup(glue_updater_t *glue_updater,
                     comp_updater, backprop) < 0) {
             ST_WARNING("Failed to glue_updater->impl->forward.[%s]",
                     glue_updater->glue->name);
-            return -1;
+            goto ERR;
         }
     }
 
@@ -144,9 +151,50 @@ int glue_updater_setup(glue_updater_t *glue_updater,
         in_layer_updater = comp_updater->layer_updaters[glue->in_layer];
         if (layer_updater_setup_state(in_layer_updater, backprop) < 0) {
             ST_WARNING("Failed to layer_updater_setup_state.");
-            return -1;
+            goto ERR;
         }
     }
+
+    if (glue->bptt_opt.bptt > 1) {
+        if (glue->bptt_opt.bptt_delay < 1) {
+            glue->bptt_opt.bptt_delay = 1;
+        }
+        in_layer_updater = comp_updater->layer_updaters[glue->in_layer];
+        out_layer_updater = comp_updater->layer_updaters[glue->out_layer];
+
+        sz = sizeof(real_t) * in_layer_updater->layer->size
+            * (glue->bptt_opt.bptt + glue->bptt_opt.bptt_delay);
+        glue_updater->ac_bptt = st_aligned_malloc(sz, ALIGN_SIZE);
+        if (glue_updater->ac_bptt == NULL) {
+            ST_WARNING("Failed to st_aligned_malloc ac_bptt.");
+            goto ERR;
+        }
+        memset(glue_updater->ac_bptt, 0, sz);
+        sz = sizeof(real_t) * out_layer_updater->layer->size
+            * glue->bptt_opt.bptt_delay;
+        glue_updater->er_bptt = st_aligned_malloc(sz, ALIGN_SIZE);
+        if (glue_updater->er_bptt == NULL) {
+            ST_WARNING("Failed to st_aligned_malloc er_bptt.");
+            goto ERR;
+        }
+        memset(glue_updater->er_bptt, 0, sz);
+    }
+
+    return 0;
+
+ERR:
+    safe_st_aligned_free(glue_updater->ac_bptt);
+    safe_st_aligned_free(glue_updater->er_bptt);
+
+    return -1;
+}
+
+int glue_updater_reset(glue_updater_t *glue_updater)
+{
+    ST_CHECK_PARAM(glue_updater == NULL, -1);
+
+    glue_updater->num_ac_bptt = 0;
+    glue_updater->num_er_bptt = 0;
 
     return 0;
 }
@@ -204,7 +252,7 @@ int glue_updater_backprop(glue_updater_t *glue_updater,
     real_t *in_ac = NULL;
     real_t *out_er = NULL;
     real_t *in_er = NULL;
-    int out_lid;
+    int out_lid, sz;
 
     ST_CHECK_PARAM(glue_updater == NULL, -1);
 
@@ -240,17 +288,45 @@ int glue_updater_backprop(glue_updater_t *glue_updater,
             out_er = layer_updaters[out_lid]->er;
         }
         if (glue_updater->impl->backprop(glue_updater, comp_updater,
-                    input_sent, in_ac, out_er, in_er) < 0) {
+                    input_sent, glue->bptt_opt.bptt > 1 ? NULL: in_ac,
+                    out_er, in_er) < 0) {
             ST_WARNING("Failed to glue_updater->impl->backprop.[%s]",
                     glue->name);
             return -1;
         }
 
-        if (wt_flush(glue_updater->wt_updater) < 0) {
-            ST_WARNING("Failed to wt_flush.");
-            return -1;
-        }
+        if (glue->bptt_opt.bptt > 1) {
+            // store the ac and er for bptt
+            sz = layer_updaters[glue->in_layer]->layer->size;
+            if (glue_updater->num_ac_bptt >=
+                    glue->bptt_opt.bptt + glue->bptt_opt.bptt_delay) {
+                memmove(glue_updater->ac_bptt, glue_updater->ac_bptt + sz,
+                        sizeof(real_t) * sz * (glue_updater->num_ac_bptt - 1));
+                memcpy(glue_updater->ac_bptt + (glue_updater->num_ac_bptt - 1) * sz,
+                        in_ac, sizeof(real_t) * sz);
+            } else {
+                memcpy(glue_updater->ac_bptt + glue_updater->num_ac_bptt * sz,
+                        in_ac, sizeof(real_t) * sz);
+                glue_updater->num_ac_bptt++;
+            }
 
+            sz = layer_updaters[glue->out_layer]->layer->size;
+            if (glue_updater->num_er_bptt >= glue->bptt_opt.bptt_delay) {
+                memmove(glue_updater->er_bptt, glue_updater->er_bptt + sz,
+                        sizeof(real_t) * sz * (glue_updater->num_er_bptt - 1));
+                memcpy(glue_updater->er_bptt + (glue_updater->num_er_bptt - 1) * sz,
+                        out_er, sizeof(real_t) * sz);
+            } else {
+                memcpy(glue_updater->er_bptt + glue_updater->num_er_bptt * sz,
+                        out_er, sizeof(real_t) * sz);
+                glue_updater->num_er_bptt++;
+            }
+        } else {
+            if (wt_flush(glue_updater->wt_updater) < 0) {
+                ST_WARNING("Failed to wt_flush.");
+                return -1;
+            }
+        }
     }
 
     return 0;

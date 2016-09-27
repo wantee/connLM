@@ -83,6 +83,11 @@ typedef struct _glue_updater_t_ {
     wt_updater_t *wt_updater; /**< the wt_updater. */
     glue_updater_impl_t *impl; /**< implementation for glue. */
     void *extra; /**< hook to store extra data. */
+
+    real_t *ac_bptt; /**< buffer of activation for BPTT. */
+    int num_ac_bptt; /**< number time stpes filled in ac_bptt. */
+    real_t *er_bptt; /**< buffer of error for BPTT. */
+    int num_er_bptt; /**< number time stpes filled in er_bptt. */
 } glue_updater_t;
 
 /**
@@ -122,6 +127,14 @@ glue_updater_t* glue_updater_create(glue_t *glue);
  */
 int glue_updater_setup(glue_updater_t *glue_updater,
         comp_updater_t *comp_updater, bool backprop);
+
+/**
+ * Reset a glue_updater.
+ * @ingroup g_updater_glue
+ * @param[in] glue_updater the glue_updater.
+ * @return non-zero value if any error.
+ */
+int glue_updater_reset(glue_updater_t *glue_updater);
 
 /**
  * Feed-forward one word for a glue_updater.

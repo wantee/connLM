@@ -84,7 +84,7 @@ int fc_glue_updater_backprop(glue_updater_t *glue_updater,
 {
     wt_updater_t *wt_updater;
 
-    ST_CHECK_PARAM(glue_updater == NULL || comp_updater == NULL, -1);
+    ST_CHECK_PARAM(glue_updater == NULL || out_er == NULL, -1);
 
     wt_updater = glue_updater->wt_updater;
 
@@ -94,9 +94,12 @@ int fc_glue_updater_backprop(glue_updater_t *glue_updater,
                 wt_updater->param.er_cutoff, 1.0);
     }
 
-    if (wt_update(wt_updater, NULL, -1, out_er, 1.0, in_ac, 1.0, NULL) < 0) {
-        ST_WARNING("Failed to wt_update.");
-        return -1;
+    if (in_ac != NULL) {
+        if (wt_update(wt_updater, NULL, -1, out_er, 1.0,
+                    in_ac, 1.0, NULL) < 0) {
+            ST_WARNING("Failed to wt_update.");
+            return -1;
+        }
     }
 
     return 0;

@@ -157,6 +157,15 @@ int comp_updater_reset(comp_updater_t *comp_updater)
             return -1;
         }
     }
+
+    for (i = 2; i < comp_updater->comp->num_glue; i++) {
+        if (glue_updater_reset(comp_updater->glue_updaters[i]) < 0) {
+            ST_WARNING("Failed to glue_updater_reset.[%s]",
+                    comp_updater->comp->glues[i]->name);
+            return -1;
+        }
+    }
+
     return 0;
 }
 
