@@ -156,9 +156,6 @@ int glue_updater_setup(glue_updater_t *glue_updater,
     }
 
     if (glue->bptt_opt.bptt > 1) {
-        if (glue->bptt_opt.bptt_delay < 1) {
-            glue->bptt_opt.bptt_delay = 1;
-        }
         in_layer_updater = comp_updater->layer_updaters[glue->in_layer];
         out_layer_updater = comp_updater->layer_updaters[glue->out_layer];
 
