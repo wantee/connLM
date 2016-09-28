@@ -806,7 +806,7 @@ int wt_update(wt_updater_t *wt_updater,
     return 0;
 }
 
-int wt_flush(wt_updater_t *wt_updater)
+int wt_flush(wt_updater_t *wt_updater, bool force)
 {
     ST_CHECK_PARAM(wt_updater == NULL, -1);
 
@@ -817,7 +817,7 @@ int wt_flush(wt_updater_t *wt_updater)
     wt_updater->n_step++;
 
     if (wt_updater->param.mini_batch > 0) {
-        if (wt_updater->n_step % wt_updater->param.mini_batch == 0) {
+        if (wt_updater->n_step % wt_updater->param.mini_batch == 0 || force) {
             if (wt_updater->param.sync_size > 0) {
                 if (wt_updater_dirty_cpy(wt_updater,
                         &wt_updater->sync_dirty, &wt_updater->mini_dirty) < 0) {
@@ -840,7 +840,7 @@ int wt_flush(wt_updater_t *wt_updater)
     }
 
     if (wt_updater->param.sync_size > 0) {
-        if (wt_updater->n_step % wt_updater->param.sync_size == 0) {
+        if (wt_updater->n_step % wt_updater->param.sync_size == 0 || force) {
             if (wt_updater_flush(wt_updater, wt_updater->shared_wt,
                         wt_updater->wt, &wt_updater->sync_dirty,
                         wt_updater->ori_wt) < 0) {

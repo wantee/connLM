@@ -182,13 +182,15 @@ int wt_update(wt_updater_t *wt_updater,
         real_t *in, real_t in_scale, st_wt_int_t *in_idx);
 
 /**
- * Flush weights from mini-batch or sync buffer.
+ * Flush weights from mini-batch or sync buffer,
+ * according to mini-batch size and sync_size.
  * @ingroup g_updater_wt
  *
  * @param[in] wt_updater the wt_updater.
+ * @param[in] force force flushing, i.e. ignoring mini-batch size and sync size.
  * @return non-zero value if any error.
  */
-int wt_flush(wt_updater_t *wt_updater);
+int wt_flush(wt_updater_t *wt_updater, bool force);
 
 #ifdef __cplusplus
 }
