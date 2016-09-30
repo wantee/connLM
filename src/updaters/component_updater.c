@@ -152,7 +152,7 @@ int comp_updater_reset(comp_updater_t *comp_updater)
 
     for (i = 2; i < comp_updater->comp->num_layer; i++) {
         if (layer_updater_reset(comp_updater->layer_updaters[i]) < 0) {
-            ST_WARNING("Failed to layer_reset.[%s]",
+            ST_WARNING("Failed to layer_updater_reset.[%s]",
                     comp_updater->comp->layers[i]->name);
             return -1;
         }
@@ -221,6 +221,23 @@ int comp_updater_backprop(comp_updater_t *comp_updater, sent_t *input_sent)
     return 0;
 }
 
+int comp_updater_save_state(comp_updater_t *comp_updater)
+{
+    int i;
+
+    ST_CHECK_PARAM(comp_updater == NULL, -1);
+
+    for (i = 2; i < comp_updater->comp->num_layer; i++) {
+        if (layer_updater_save_state(comp_updater->layer_updaters[i]) < 0) {
+            ST_WARNING("Failed to layer_updater_save_state.[%s]",
+                    comp_updater->comp->layers[i]->name);
+            return -1;
+        }
+    }
+
+    return 0;
+}
+
 int comp_updater_clear(comp_updater_t *comp_updater)
 {
     int i;
@@ -229,7 +246,7 @@ int comp_updater_clear(comp_updater_t *comp_updater)
 
     for (i = 2; i < comp_updater->comp->num_layer; i++) {
         if (layer_updater_clear(comp_updater->layer_updaters[i]) < 0) {
-            ST_WARNING("Failed to layer_clear.[%s]",
+            ST_WARNING("Failed to layer_updater_clear.[%s]",
                     comp_updater->comp->layers[i]->name);
             return -1;
         }

@@ -75,6 +75,23 @@ static int updater_clear(updater_t *updater)
     return 0;
 }
 
+static int updater_save_state(updater_t *updater)
+{
+    int c;
+
+    ST_CHECK_PARAM(updater == NULL, -1);
+
+    for (c = 0; c < updater->connlm->num_comp; c++) {
+        if (comp_updater_save_state(updater->comp_updaters[c]) < 0) {
+            ST_WARNING("Failed to comp_updater_save_state[%s].",
+                    updater->connlm->comps[c]->name);
+            return -1;
+        }
+    }
+
+    return 0;
+}
+
 static int updater_forward(updater_t *updater)
 {
     int c;
@@ -364,8 +381,8 @@ int updater_step(updater_t *updater)
         }
     }
 
-    if (updater_clear(updater) < 0) {
-        ST_WARNING("updater_clear.");
+    if (updater_save_state(updater) < 0) {
+        ST_WARNING("updater_save_state.");
         return -1;
     }
 
@@ -374,6 +391,11 @@ int updater_step(updater_t *updater)
             ST_WARNING("Failed to updater_reset.");
             return -1;
         }
+    }
+
+    if (updater_clear(updater) < 0) {
+        ST_WARNING("updater_clear.");
+        return -1;
     }
 
     if (updater_move_input(updater) < 0) {
@@ -486,8 +508,8 @@ int updater_sampling(updater_t *updater, bool startover)
         return -1;
     }
 
-    if (updater_clear(updater) < 0) {
-        ST_WARNING("updater_clear.");
+    if (updater_save_state(updater) < 0) {
+        ST_WARNING("updater_save_state.");
         return -1;
     }
 
@@ -496,6 +518,11 @@ int updater_sampling(updater_t *updater, bool startover)
             ST_WARNING("Failed to updater_reset.");
             return -1;
         }
+    }
+
+    if (updater_clear(updater) < 0) {
+        ST_WARNING("updater_clear.");
+        return -1;
     }
 
     // Move cur_pos to the pos fed into later after sampled out

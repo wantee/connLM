@@ -207,6 +207,20 @@ int layer_updater_deriv(layer_updater_t *layer_updater)
     return 0;
 }
 
+int layer_updater_save_state(layer_updater_t *layer_updater)
+{
+    size_t sz;
+
+    ST_CHECK_PARAM(layer_updater == NULL, -1);
+
+    if (layer_updater->ac_state != NULL) {
+        sz = sizeof(real_t) * layer_updater->layer->size;
+        memcpy(layer_updater->ac_state, layer_updater->ac, sz);
+    }
+
+    return 0;
+}
+
 int layer_updater_clear(layer_updater_t *layer_updater)
 {
     size_t sz;
@@ -217,10 +231,6 @@ int layer_updater_clear(layer_updater_t *layer_updater)
     if (layer_updater->er != NULL) {
         memset(layer_updater->er, 0, sz);
         layer_updater->derived = false;
-    }
-
-    if (layer_updater->ac_state != NULL) {
-        memcpy(layer_updater->ac_state, layer_updater->ac, sz);
     }
 
     memset(layer_updater->ac, 0, sz);

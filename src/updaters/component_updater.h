@@ -121,6 +121,14 @@ int comp_updater_forward(comp_updater_t *comp_updater, sent_t *input_sent);
 int comp_updater_backprop(comp_updater_t *comp_updater, sent_t *input_sent);
 
 /**
+ * Save state for a comp_updater.
+ * @ingroup g_updater_layer
+ * @param[in] comp_updater the comp_updater.
+ * @return non-zero value if any error.
+ */
+int comp_updater_save_state(comp_updater_t *comp_updater);
+
+/**
  * Clear buffers for comp_updater.
  * @ingroup g_updater_comp
  * @param[in] comp_updater comp_updater.

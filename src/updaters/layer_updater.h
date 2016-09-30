@@ -121,6 +121,14 @@ int layer_updater_activate(layer_updater_t *layer_updater);
 int layer_updater_deriv(layer_updater_t *layer_updater);
 
 /**
+ * Save state for a layer_updater. i.e. copy the activation to state.
+ * @ingroup g_updater_layer
+ * @param[in] layer_updater the layer_updater.
+ * @return non-zero value if any error.
+ */
+int layer_updater_save_state(layer_updater_t *layer_updater);
+
+/**
  * Clear a layer_updater.
  * @ingroup g_updater_layer
  * @param[in] layer_updater the layer_updater.
