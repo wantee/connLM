@@ -1,7 +1,7 @@
 //
 // The MIT License (MIT)
 //
-// Copyright (c) 2015 Wang Jian
+// Copyright (c) 2016 Wang Jian
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -26,7 +26,31 @@
 
   @section get_started_build Build the Toolkit
 
+  First, clone the project using git:
 
-  @section get_started_makefile Makefile Targets
+  @code{.sh}
+  $ git clone https://github.com/wantee/connLM.git connLM
+  @endcode
 
+  Then build the project from source:
+
+  @code{.sh}
+  $ cd connLM/src
+  $ ./autogen.sh
+  $ make -j 4
+  @endcode
+
+  @section get_started_example Running the examples
+
+  The example scripts are under @c egs/. @c egs/tiny is a tiny example for
+  demonstration. Go to the directory and type @c run.sh will train several
+  models one by one.
+
+  @code{.sh}
+  $ cd connLM/egs/tiny
+  $ ./run.sh
+  @endcode
+
+  There are other examples, some of them may need to download the training
+  corpus from internet. You can run @c run.sh to play around.
 */
