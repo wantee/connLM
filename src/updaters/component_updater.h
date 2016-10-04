@@ -36,6 +36,7 @@ extern "C" {
 #include "updaters/output_updater.h"
 #include "updaters/layer_updater.h"
 #include "updaters/glue_updaters/glue_updater.h"
+#include "updaters/bptt_updater.h"
 
 /** @defgroup g_updater_comp Updater for component.
  * @ingroup g_updater
@@ -52,6 +53,10 @@ typedef struct _component_updater_t_ {
 
     layer_updater_t **layer_updaters; /**< layer updaters. */
     glue_updater_t **glue_updaters; /**< glue updaters. */
+
+    int bptt_step; /**< bptt step in one sentence. */
+    bptt_updater_t **bptt_updaters; /**< bptt updater. Every cycle in
+                                      comp->glue_cycles has one bptt_updater. */
 } comp_updater_t;
 
 /**

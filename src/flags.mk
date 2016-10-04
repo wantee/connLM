@@ -17,6 +17,7 @@ ifndef CONNLM_NO_OPT
     CFLAGS += -ffast-math
   endif
   include ./blas.mk
+  CFLAGS += -DNDEBUG
 else
   CFLAGS += -O0 -D_DETERMINISTIC_
 endif
@@ -33,5 +34,4 @@ LDFLAGS += -lstutils -lpthread
 LDFLAGS += -Wl,-rpath,$(abspath ../tools/stutils/lib/)
 
 CFLAGS += -g -Wall -Winline -pipe
-CFLAGS += -DNDEBUG
 #CFLAGS += -D_TIME_PROF_

@@ -56,7 +56,8 @@ typedef struct _layer_updater_t_ {
     deriv_func_t deriv; /**< deriv function. */
     bool derived; /**< derived indicator. */
 
-    real_t *ac_state; /**< state of layer, i.e. activation of prev timestep. */
+    real_t *ac_state; /**< state of activation(for prev timestep). */
+    real_t *er_state; /**< state of error(before derived). */
 } layer_updater_t;
 
 /**

@@ -146,6 +146,13 @@ int layer_updater_setup_state(layer_updater_t *layer_updater, bool backprop)
     }
     memset(layer_updater->ac_state, 0, sz);
 
+    layer_updater->er_state = st_aligned_malloc(sz, ALIGN_SIZE);
+    if (layer_updater->er_state == NULL) {
+        ST_WARNING("Failed to st_aligned_malloc er_state.");
+        goto ERR;
+    }
+    memset(layer_updater->er_state, 0, sz);
+
     return 0;
 
 ERR:
@@ -192,6 +199,11 @@ int layer_updater_deriv(layer_updater_t *layer_updater)
 #ifdef _CONNLM_TRACE_PROCEDURE_
     ST_TRACE("Deriv: layer[%s]", layer_updater->layer->name);
 #endif
+
+    if (layer_updater->er_state != NULL) {
+        memcpy(layer_updater->er_state, layer_updater->er,
+                sizeof(real_t) * layer_updater->layer->size);
+    }
 
     if (layer_updater->deriv != NULL) {
         if (layer_updater->deriv(layer_updater->layer, layer_updater->er,
