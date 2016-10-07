@@ -8,5 +8,5 @@ layer name=hidden size=8 type=sigmoid
 
 glue name=emb type=emb in=input out=emb init_param=0.1
 glue name=fc  type=fc  in=emb out=hidden init_param=0.1
-glue name=out type=out in=hidden out=output init_param=2.0
+glue name=out type=out in=hidden out=output init_param=0.1
 </component>

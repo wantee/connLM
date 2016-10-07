@@ -86,6 +86,7 @@ layer_updater_t* layer_updater_create(layer_t *layer)
 
     layer_updater->layer = layer;
     layer_updater->activate = layer_get_act(layer->type)->activate;
+    layer_updater->deriv = layer_get_act(layer->type)->deriv;
 
     return layer_updater;
 

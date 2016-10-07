@@ -327,7 +327,6 @@ static int comp_updater_bptt(comp_updater_t *comp_updater, bool force)
                     }
 
                     // deriv
-#if 0
                     out_layer_updater = layer_updaters[glue->out_layer];
                     assert (out_layer_updater->deriv != NULL);
                     if (out_layer_updater->deriv(out_layer_updater->layer,
@@ -337,7 +336,6 @@ static int comp_updater_bptt(comp_updater_t *comp_updater, bool force)
                                 out_layer_updater->layer->name);
                         return -1;
                     }
-#endif
 
                     wt_updater = comp_updater->glue_updaters[g]->wt_updater;
                     // propagate error to time t - 1

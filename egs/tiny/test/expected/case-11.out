@@ -16,46 +16,38 @@ Step 4: Train FFNN model ...
 ../steps/init_model.sh: Elapse time: 1s
 ../steps/run_standalone.sh: Stage 2 --- Training model...
 ../steps/train_model.sh --train-config test/tmp/case-11/exp/conf/ffnn/train.conf --eval-config test/tmp/case-11/exp/conf/eval.conf --train-threads 1 --eval-threads 1 ./data/train ./data/valid test/tmp/case-11/exp/ffnn
-Prerun Valid Entropy: 12.084487
-ITERATION 01: LR(ffnn^emb=0.001 ffnn^fc=0.0001 ffnn^out=0.05), TrEnt 7.914099, W/s 68.6k, CVEnt: 7.811405
+Prerun Valid Entropy: 8.928774
+ITERATION 01: LR(ffnn^emb=0.01 ffnn^fc=0.15 ffnn^out=0.15), TrEnt 7.235768, W/s 66.7k, CVEnt: 7.116339
 nnet accepted (01.clm)
-ITERATION 02: LR(ffnn^emb=0.001 ffnn^fc=0.0001 ffnn^out=0.05), TrEnt 7.558528, W/s 69.4k, CVEnt: 7.569195
+ITERATION 02: LR(ffnn^emb=0.01 ffnn^fc=0.15 ffnn^out=0.15), TrEnt 6.774755, W/s 70.0k, CVEnt: 7.025614
 nnet accepted (02.clm)
-ITERATION 03: LR(ffnn^emb=0.001 ffnn^fc=0.0001 ffnn^out=0.05), TrEnt 7.283242, W/s 69.2k, CVEnt: 7.468407
-nnet accepted (03.clm)
-ITERATION 04: LR(ffnn^emb=0.001 ffnn^fc=0.0001 ffnn^out=0.05), TrEnt 7.111698, W/s 69.8k, CVEnt: 7.327970
+ITERATION 03: LR(ffnn^emb=0.01 ffnn^fc=0.15 ffnn^out=0.15), TrEnt 6.631691, W/s 63.5k, CVEnt: 7.095386
+nnet rejected (03.clm)
+ITERATION 04: LR(ffnn^emb=0.005 ffnn^fc=0.075 ffnn^out=0.075), TrEnt 6.563632, W/s 50.2k, CVEnt: 6.990718
 nnet accepted (04.clm)
-ITERATION 05: LR(ffnn^emb=0.001 ffnn^fc=0.0001 ffnn^out=0.05), TrEnt 6.986609, W/s 69.4k, CVEnt: 7.238531
+ITERATION 05: LR(ffnn^emb=0.0025 ffnn^fc=0.0375 ffnn^out=0.0375), TrEnt 6.466171, W/s 62.9k, CVEnt: 6.953341
 nnet accepted (05.clm)
-ITERATION 06: LR(ffnn^emb=0.001 ffnn^fc=0.0001 ffnn^out=0.05), TrEnt 6.897022, W/s 69.5k, CVEnt: 7.185318
+ITERATION 06: LR(ffnn^emb=0.00125 ffnn^fc=0.01875 ffnn^out=0.01875), TrEnt 6.415002, W/s 64.7k, CVEnt: 6.923309
 nnet accepted (06.clm)
-ITERATION 07: LR(ffnn^emb=0.001 ffnn^fc=0.0001 ffnn^out=0.05), TrEnt 6.844409, W/s 69.7k, CVEnt: 7.204390
-nnet rejected (07.clm)
-ITERATION 08: LR(ffnn^emb=0.0005 ffnn^fc=5e-05 ffnn^out=0.025), TrEnt 6.819014, W/s 70.4k, CVEnt: 7.153773
+ITERATION 07: LR(ffnn^emb=0.000625 ffnn^fc=0.009375 ffnn^out=0.009375), TrEnt 6.387775, W/s 71.0k, CVEnt: 6.902020
+nnet accepted (07.clm)
+ITERATION 08: LR(ffnn^emb=0.0003125 ffnn^fc=0.0046875 ffnn^out=0.0046875), TrEnt 6.373527, W/s 72.0k, CVEnt: 6.897095
 nnet accepted (08.clm)
-ITERATION 09: LR(ffnn^emb=0.00025 ffnn^fc=2.5e-05 ffnn^out=0.0125), TrEnt 6.781630, W/s 69.7k, CVEnt: 7.144158
+ITERATION 09: LR(ffnn^emb=0.00015625 ffnn^fc=0.00234375 ffnn^out=0.00234375), TrEnt 6.365938, W/s 72.6k, CVEnt: 6.894948
 nnet accepted (09.clm)
-ITERATION 10: LR(ffnn^emb=0.000125 ffnn^fc=1.25e-05 ffnn^out=0.00625), TrEnt 6.762459, W/s 70.1k, CVEnt: 7.128532
+ITERATION 10: LR(ffnn^emb=7.8125e-05 ffnn^fc=0.001171875 ffnn^out=0.001171875), TrEnt 6.362657, W/s 61.4k, CVEnt: 6.892940
 nnet accepted (10.clm)
-ITERATION 11: LR(ffnn^emb=6.25e-05 ffnn^fc=6.25e-06 ffnn^out=0.003125), TrEnt 6.753911, W/s 68.6k, CVEnt: 7.118633
-nnet accepted (11.clm)
-ITERATION 12: LR(ffnn^emb=3.125e-05 ffnn^fc=3.125e-06 ffnn^out=0.0015625), TrEnt 6.750339, W/s 69.2k, CVEnt: 7.112977
-nnet accepted (12.clm)
-ITERATION 13: LR(ffnn^emb=1.5625e-05 ffnn^fc=1.5625e-06 ffnn^out=0.00078125), TrEnt 6.749310, W/s 70.1k, CVEnt: 7.110222
-nnet accepted (13.clm)
-ITERATION 14: LR(ffnn^emb=7.8125e-06 ffnn^fc=7.8125e-07 ffnn^out=0.000390625), TrEnt 6.749849, W/s 69.7k, CVEnt: 7.110482
-nnet rejected (14.clm)
-../steps/train_model.sh: finished, too small rel. improvement 0
+../steps/train_model.sh: finished, too small rel. improvement .0002912277
 ../steps/train_model.sh: Succeeded training the Neural Network : test/tmp/case-11/exp/ffnn/final.clm
-../steps/train_model.sh: Elapse time: 20s
-../steps/train_model.sh: Effective speed: 56.9k words/sec
+../steps/train_model.sh: Elapse time: 15s
+../steps/train_model.sh: Effective speed: 54.2k words/sec
 ../steps/run_standalone.sh: Stage 3 --- Testing model...
 ../steps/eval_model.sh --config-file test/tmp/case-11/exp/conf/eval.conf --eval-threads 1 test/tmp/case-11/exp/ffnn ./data/test
 ../steps/eval_model.sh: Evaluating model test/tmp/case-11/exp/ffnn/final.clm ...
 =================================
-Eval Entropy: 6.973293
-Eval PPL: 125.652254
-Eval Speed: 123.1k words/sec
+Eval Entropy: 6.756073
+Eval PPL: 108.088785
+Eval Speed: 99.9k words/sec
 =================================
 ../steps/eval_model.sh: Elapse time: 0s
-../steps/run_standalone.sh: Elapse time: 21s
+../steps/run_standalone.sh: Elapse time: 16s
