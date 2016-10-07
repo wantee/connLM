@@ -321,52 +321,56 @@ static int comp_updater_bptt(comp_updater_t *comp_updater, bool clear)
         } else {
             // store the er for bptt. no need to store er at current timestep,
             // thus in the else clause.
-            for (j = 1; j <= comp->glue_cycles[i][0]; j++) {
-                g = comp->glue_cycles[i][j];
-                glue = comp->glues[g];
-                out_sz = layer_updaters[glue->out_layer]->layer->size;
+            if (bptt_delay - 1 > 0) {
+                for (j = 1; j <= comp->glue_cycles[i][0]; j++) {
+                    g = comp->glue_cycles[i][j];
+                    glue = comp->glues[g];
+                    out_sz = layer_updaters[glue->out_layer]->layer->size;
 
-                out_er = layer_updaters[glue->out_layer]->er_state;
+                    out_er = layer_updaters[glue->out_layer]->er_state;
 
-                if (bptt_updater->num_er_bptt >= bptt_delay - 1) {
-                    memmove(bptt_updater->er_bptt[j],
-                        bptt_updater->er_bptt[j] + out_sz,
-                        sizeof(real_t)*out_sz*(bptt_updater->num_er_bptt - 1));
-                    memcpy(bptt_updater->er_bptt[j]
-                            + (bptt_updater->num_er_bptt - 1) * out_sz,
-                        out_er, sizeof(real_t) * out_sz);
-                } else {
-                    memcpy(bptt_updater->er_bptt[j]
-                            + bptt_updater->num_er_bptt * out_sz,
-                        out_er, sizeof(real_t) * out_sz);
-                    bptt_updater->num_er_bptt++;
+                    if (bptt_updater->num_er_bptt >= bptt_delay - 1) {
+                        memmove(bptt_updater->er_bptt[j],
+                            bptt_updater->er_bptt[j] + out_sz,
+                            sizeof(real_t)*out_sz*(bptt_updater->num_er_bptt-1));
+                        memcpy(bptt_updater->er_bptt[j]
+                                + (bptt_updater->num_er_bptt - 1) * out_sz,
+                                out_er, sizeof(real_t) * out_sz);
+                    } else {
+                        memcpy(bptt_updater->er_bptt[j]
+                                + bptt_updater->num_er_bptt * out_sz,
+                                out_er, sizeof(real_t) * out_sz);
+                        bptt_updater->num_er_bptt++;
+                    }
                 }
             }
         }
         // store the ac for bptt
-        for (j = 1; j <= comp->glue_cycles[i][0]; j++) {
-            g = comp->glue_cycles[i][j];
-            glue = comp->glues[g];
-            in_sz = layer_updaters[glue->in_layer]->layer->size;
+        if (len_ac > 0) {
+            for (j = 1; j <= comp->glue_cycles[i][0]; j++) {
+                g = comp->glue_cycles[i][j];
+                glue = comp->glues[g];
+                in_sz = layer_updaters[glue->in_layer]->layer->size;
 
-            if (j == 1) {
-                in_ac = layer_updaters[glue->in_layer]->ac_state;
-            } else {
-                in_ac = layer_updaters[glue->in_layer]->ac;
-            }
+                if (j == 1) {
+                    in_ac = layer_updaters[glue->in_layer]->ac_state;
+                } else {
+                    in_ac = layer_updaters[glue->in_layer]->ac;
+                }
 
-            if (bptt_updater->num_ac_bptt >= len_ac) {
-                memmove(bptt_updater->ac_bptt[j],
+                if (bptt_updater->num_ac_bptt >= len_ac) {
+                    memmove(bptt_updater->ac_bptt[j],
                         bptt_updater->ac_bptt[j] + in_sz,
                         sizeof(real_t)*in_sz*(bptt_updater->num_ac_bptt - 1));
-                memcpy(bptt_updater->ac_bptt[j]
-                        + (bptt_updater->num_ac_bptt - 1) * in_sz,
-                        in_ac, sizeof(real_t) * in_sz);
-            } else {
-                memcpy(bptt_updater->ac_bptt[j]
-                        + bptt_updater->num_ac_bptt * in_sz,
-                        in_ac, sizeof(real_t) * in_sz);
-                bptt_updater->num_ac_bptt++;
+                    memcpy(bptt_updater->ac_bptt[j]
+                            + (bptt_updater->num_ac_bptt - 1) * in_sz,
+                            in_ac, sizeof(real_t) * in_sz);
+                } else {
+                    memcpy(bptt_updater->ac_bptt[j]
+                            + bptt_updater->num_ac_bptt * in_sz,
+                            in_ac, sizeof(real_t) * in_sz);
+                    bptt_updater->num_ac_bptt++;
+                }
             }
         }
     }
