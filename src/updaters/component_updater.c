@@ -187,71 +187,7 @@ ERR:
     return -1;
 }
 
-int comp_updater_reset(comp_updater_t *comp_updater)
-{
-    int i;
-
-    ST_CHECK_PARAM(comp_updater == NULL, -1);
-
-    if (comp_updater->bptt_updaters != NULL) {
-        comp_updater->bptt_step = 0;
-        // bptt_reset must before layer_reset, since it will use the ac_state.
-        for (i = 0; i < comp_updater->comp->num_glue_cycle; i++) {
-            if (bptt_updater_reset(comp_updater->bptt_updaters[i]) < 0) {
-                ST_WARNING("Failed to bptt_updater_reset.[%d][%s]", i,
-                        comp_updater->comp->glues[
-                        comp_updater->comp->glue_cycles[i][1]]->name);
-                return -1;
-            }
-        }
-    }
-
-    for (i = 2; i < comp_updater->comp->num_layer; i++) {
-        if (layer_updater_reset(comp_updater->layer_updaters[i]) < 0) {
-            ST_WARNING("Failed to layer_updater_reset.[%s]",
-                    comp_updater->comp->layers[i]->name);
-            return -1;
-        }
-    }
-
-    for (i = 2; i < comp_updater->comp->num_glue; i++) {
-        if (glue_updater_reset(comp_updater->glue_updaters[i]) < 0) {
-            ST_WARNING("Failed to glue_updater_reset.[%s]",
-                    comp_updater->comp->glues[i]->name);
-            return -1;
-        }
-    }
-
-    return 0;
-}
-
-int comp_updater_forward(comp_updater_t *comp_updater, sent_t *input_sent)
-{
-    component_t *comp;
-    glue_updater_t *glue_updater;
-    int g;
-
-    ST_CHECK_PARAM(comp_updater == NULL, -1);
-
-    comp = comp_updater->comp;
-
-#ifdef _CONNLM_TRACE_PROCEDURE_
-    ST_TRACE("Forward: comp[%s]", comp->name);
-#endif
-
-    for (g = 0; g < comp->num_glue; g++) {
-        glue_updater = comp_updater->glue_updaters[comp->fwd_order[g]];
-        if (glue_updater_forward(glue_updater, comp_updater, input_sent) < 0) {
-            ST_WARNING("Failed to forward glue[%s].",
-                    glue_updater->glue->name);
-            return -1;
-        }
-    }
-
-    return 0;
-}
-
-static int comp_updater_bptt(comp_updater_t *comp_updater, bool force)
+static int comp_updater_bptt(comp_updater_t *comp_updater, bool clear)
 {
     component_t *comp;
     layer_updater_t **layer_updaters;
@@ -270,10 +206,13 @@ static int comp_updater_bptt(comp_updater_t *comp_updater, bool force)
     layer_updaters = comp_updater->layer_updaters;
 
 #ifdef _CONNLM_TRACE_PROCEDURE_
-    ST_TRACE("Backprop: BPTT comp[%s]", comp->name);
+    ST_TRACE("Backprop: BPTT comp[%s](clear[%s])", comp->name,
+            bool2str(clear));
 #endif
 
-    comp_updater->bptt_step += 1;
+    if (!clear) {
+        comp_updater->bptt_step += 1;
+    }
 
     for (i = 0;  i < comp->num_glue_cycle; i++) {
         g = comp->glue_cycles[i][1];
@@ -282,7 +221,15 @@ static int comp_updater_bptt(comp_updater_t *comp_updater, bool force)
         bptt_updater = comp_updater->bptt_updaters[i];
         len_ac = bptt + bptt_delay - 2;
 
-        if (comp_updater->bptt_step % bptt_delay == 0 || force) {
+        if (clear) {
+           if (comp_updater->bptt_step > 0
+               && (comp_updater->bptt_step % bptt_delay == 0)) {
+            // we already do BPTT in last call to this function, so skip
+            continue;
+           }
+        }
+
+        if (comp_updater->bptt_step % bptt_delay == 0 || clear) {
             // backprop through time
             for (t = bptt_updater->num_ac_bptt; t >= 0; t--) {
                 for (j = 1; j <= comp->glue_cycles[i][0]; j++) {
@@ -370,36 +317,16 @@ static int comp_updater_bptt(comp_updater_t *comp_updater, bool force)
                 }
             }
 
-            bptt_updater->num_ac_bptt = 0;
             bptt_updater->num_er_bptt = 0;
         } else {
-            // store the ac and er for bptt
+            // store the er for bptt. no need to store er at current timestep,
+            // thus in the else clause.
             for (j = 1; j <= comp->glue_cycles[i][0]; j++) {
                 g = comp->glue_cycles[i][j];
                 glue = comp->glues[g];
-                in_sz = layer_updaters[glue->in_layer]->layer->size;
                 out_sz = layer_updaters[glue->out_layer]->layer->size;
 
-                if (j == 1) {
-                    in_ac = layer_updaters[glue->in_layer]->ac_state;
-                } else {
-                    in_ac = layer_updaters[glue->in_layer]->ac;
-                }
                 out_er = layer_updaters[glue->out_layer]->er_state;
-
-                if (bptt_updater->num_ac_bptt >= len_ac) {
-                    memmove(bptt_updater->ac_bptt[j],
-                        bptt_updater->ac_bptt[j] + in_sz,
-                        sizeof(real_t)*in_sz*(bptt_updater->num_ac_bptt - 1));
-                    memcpy(bptt_updater->ac_bptt[j]
-                           + (bptt_updater->num_ac_bptt - 1) * in_sz,
-                        in_ac, sizeof(real_t) * in_sz);
-                } else {
-                    memcpy(bptt_updater->ac_bptt[j]
-                            + bptt_updater->num_ac_bptt * in_sz,
-                        in_ac, sizeof(real_t) * in_sz);
-                    bptt_updater->num_ac_bptt++;
-                }
 
                 if (bptt_updater->num_er_bptt >= bptt_delay - 1) {
                     memmove(bptt_updater->er_bptt[j],
@@ -415,6 +342,101 @@ static int comp_updater_bptt(comp_updater_t *comp_updater, bool force)
                     bptt_updater->num_er_bptt++;
                 }
             }
+        }
+        // store the ac for bptt
+        for (j = 1; j <= comp->glue_cycles[i][0]; j++) {
+            g = comp->glue_cycles[i][j];
+            glue = comp->glues[g];
+            in_sz = layer_updaters[glue->in_layer]->layer->size;
+
+            if (j == 1) {
+                in_ac = layer_updaters[glue->in_layer]->ac_state;
+            } else {
+                in_ac = layer_updaters[glue->in_layer]->ac;
+            }
+
+            if (bptt_updater->num_ac_bptt >= len_ac) {
+                memmove(bptt_updater->ac_bptt[j],
+                        bptt_updater->ac_bptt[j] + in_sz,
+                        sizeof(real_t)*in_sz*(bptt_updater->num_ac_bptt - 1));
+                memcpy(bptt_updater->ac_bptt[j]
+                        + (bptt_updater->num_ac_bptt - 1) * in_sz,
+                        in_ac, sizeof(real_t) * in_sz);
+            } else {
+                memcpy(bptt_updater->ac_bptt[j]
+                        + bptt_updater->num_ac_bptt * in_sz,
+                        in_ac, sizeof(real_t) * in_sz);
+                bptt_updater->num_ac_bptt++;
+            }
+        }
+    }
+
+    return 0;
+}
+
+int comp_updater_reset(comp_updater_t *comp_updater)
+{
+    int i;
+
+    ST_CHECK_PARAM(comp_updater == NULL, -1);
+
+    // bptt_reset must before layer_reset, since it will use the ac_state.
+    if (comp_updater->bptt_updaters != NULL) {
+        if (comp_updater_bptt(comp_updater, true) < 0) {
+            ST_WARNING("Failed to reset bptt comp[%s].",
+                    comp_updater->comp->name);
+            return -1;
+        }
+        comp_updater->bptt_step = 0;
+        for (i = 0; i < comp_updater->comp->num_glue_cycle; i++) {
+            if (bptt_updater_reset(comp_updater->bptt_updaters[i]) < 0) {
+                ST_WARNING("Failed to bptt_updater_reset.[%d][%s]", i,
+                        comp_updater->comp->glues[
+                        comp_updater->comp->glue_cycles[i][1]]->name);
+                return -1;
+            }
+        }
+    }
+
+    for (i = 2; i < comp_updater->comp->num_layer; i++) {
+        if (layer_updater_reset(comp_updater->layer_updaters[i]) < 0) {
+            ST_WARNING("Failed to layer_updater_reset.[%s]",
+                    comp_updater->comp->layers[i]->name);
+            return -1;
+        }
+    }
+
+    for (i = 2; i < comp_updater->comp->num_glue; i++) {
+        if (glue_updater_reset(comp_updater->glue_updaters[i]) < 0) {
+            ST_WARNING("Failed to glue_updater_reset.[%s]",
+                    comp_updater->comp->glues[i]->name);
+            return -1;
+        }
+    }
+
+    return 0;
+}
+
+int comp_updater_forward(comp_updater_t *comp_updater, sent_t *input_sent)
+{
+    component_t *comp;
+    glue_updater_t *glue_updater;
+    int g;
+
+    ST_CHECK_PARAM(comp_updater == NULL, -1);
+
+    comp = comp_updater->comp;
+
+#ifdef _CONNLM_TRACE_PROCEDURE_
+    ST_TRACE("Forward: comp[%s]", comp->name);
+#endif
+
+    for (g = 0; g < comp->num_glue; g++) {
+        glue_updater = comp_updater->glue_updaters[comp->fwd_order[g]];
+        if (glue_updater_forward(glue_updater, comp_updater, input_sent) < 0) {
+            ST_WARNING("Failed to forward glue[%s].",
+                    glue_updater->glue->name);
+            return -1;
         }
     }
 
@@ -504,7 +526,7 @@ int comp_updater_finish(comp_updater_t *comp_updater)
 #endif
 
     if (comp_updater_bptt(comp_updater, true) < 0) {
-        ST_WARNING("Failed to force bptt comp[%s].", comp->name);
+        ST_WARNING("Failed to clear bptt comp[%s].", comp->name);
         return -1;
     }
 
