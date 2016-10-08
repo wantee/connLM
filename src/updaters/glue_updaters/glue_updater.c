@@ -125,7 +125,7 @@ int glue_updater_setup(glue_updater_t *glue_updater,
         comp_updater_t *comp_updater, bool backprop)
 {
     glue_t *glue;
-    layer_updater_t *in_layer_updater;
+    layer_updater_t *layer_updater;
 
     ST_CHECK_PARAM(glue_updater == NULL, -1);
 
@@ -141,11 +141,19 @@ int glue_updater_setup(glue_updater_t *glue_updater,
     }
 
     glue = glue_updater->glue;
-    if (glue->recur_type == RECUR_HEAD) {
-        in_layer_updater = comp_updater->layer_updaters[glue->in_layer];
-        if (layer_updater_setup_state(in_layer_updater, backprop) < 0) {
-            ST_WARNING("Failed to layer_updater_setup_state.");
+    if (glue->recur_type != RECUR_NON) {
+        layer_updater = comp_updater->layer_updaters[glue->out_layer];
+        if (layer_updater_setup_er_raw(layer_updater) < 0) {
+            ST_WARNING("Failed to layer_updater_setup_er_raw.");
             goto ERR;
+        }
+
+        if (glue->recur_type == RECUR_HEAD) {
+            layer_updater = comp_updater->layer_updaters[glue->in_layer];
+            if (layer_updater_setup_state(layer_updater, backprop) < 0) {
+                ST_WARNING("Failed to layer_updater_setup_state.");
+                goto ERR;
+            }
         }
     }
 

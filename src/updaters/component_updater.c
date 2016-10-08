@@ -264,7 +264,7 @@ static int comp_updater_bptt(comp_updater_t *comp_updater, bool clear)
                         // using values in current timestep
                         in_ac = layer_updaters[glue->in_layer]->ac_state;
                         memcpy(out_er,
-                               layer_updaters[glue->out_layer]->er_state,
+                               layer_updaters[glue->out_layer]->er_raw,
                                out_sz * sizeof(real_t));
                         out_ac = layer_updaters[glue->out_layer]->ac;
                     } else {
@@ -346,7 +346,7 @@ static int comp_updater_bptt(comp_updater_t *comp_updater, bool clear)
                     glue = comp->glues[g];
                     out_sz = layer_updaters[glue->out_layer]->layer->size;
 
-                    out_er = layer_updaters[glue->out_layer]->er_state;
+                    out_er = layer_updaters[glue->out_layer]->er_raw;
 
                     if (bptt_updater->num_er_bptt >= bptt_delay - 1) {
                         memmove(bptt_updater->er_bptt[j],

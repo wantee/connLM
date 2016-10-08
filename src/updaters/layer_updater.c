@@ -137,22 +137,40 @@ int layer_updater_setup_state(layer_updater_t *layer_updater, bool backprop)
 
     ST_CHECK_PARAM(layer_updater == NULL, -1);
 
+    if (layer_updater->ac_state == NULL) {
+        sz = sizeof(real_t) * layer_updater->layer->size;
+        layer_updater->ac_state = st_aligned_malloc(sz, ALIGN_SIZE);
+        if (layer_updater->ac_state == NULL) {
+            ST_WARNING("Failed to st_aligned_malloc ac_state.");
+            goto ERR;
+        }
+        memset(layer_updater->ac_state, 0, sz);
+    }
+
+    return 0;
+
+ERR:
+
     safe_st_aligned_free(layer_updater->ac_state);
 
-    sz = sizeof(real_t) * layer_updater->layer->size;
-    layer_updater->ac_state = st_aligned_malloc(sz, ALIGN_SIZE);
-    if (layer_updater->ac_state == NULL) {
-        ST_WARNING("Failed to st_aligned_malloc ac_state.");
-        goto ERR;
-    }
-    memset(layer_updater->ac_state, 0, sz);
+    return -1;
+}
 
-    layer_updater->er_state = st_aligned_malloc(sz, ALIGN_SIZE);
-    if (layer_updater->er_state == NULL) {
-        ST_WARNING("Failed to st_aligned_malloc er_state.");
-        goto ERR;
+int layer_updater_setup_er_raw(layer_updater_t *layer_updater)
+{
+    size_t sz;
+
+    ST_CHECK_PARAM(layer_updater == NULL, -1);
+
+    if (layer_updater->er_raw == NULL) {
+        sz = sizeof(real_t) * layer_updater->layer->size;
+        layer_updater->er_raw = st_aligned_malloc(sz, ALIGN_SIZE);
+        if (layer_updater->er_raw == NULL) {
+            ST_WARNING("Failed to st_aligned_malloc er_raw.");
+            goto ERR;
+        }
+        memset(layer_updater->er_raw, 0, sz);
     }
-    memset(layer_updater->er_state, 0, sz);
 
     return 0;
 
@@ -201,8 +219,8 @@ int layer_updater_deriv(layer_updater_t *layer_updater)
     ST_TRACE("Deriv: layer[%s]", layer_updater->layer->name);
 #endif
 
-    if (layer_updater->er_state != NULL) {
-        memcpy(layer_updater->er_state, layer_updater->er,
+    if (layer_updater->er_raw != NULL) {
+        memcpy(layer_updater->er_raw, layer_updater->er,
                 sizeof(real_t) * layer_updater->layer->size);
     }
 

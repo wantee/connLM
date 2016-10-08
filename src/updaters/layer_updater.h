@@ -57,7 +57,7 @@ typedef struct _layer_updater_t_ {
     bool derived; /**< derived indicator. */
 
     real_t *ac_state; /**< state of activation(for prev timestep). */
-    real_t *er_state; /**< state of error(before derived). */
+    real_t *er_raw; /**< raw value of error(before derived). */
 } layer_updater_t;
 
 /**
@@ -104,6 +104,14 @@ int layer_updater_setup(layer_updater_t *layer_updater, bool backprop);
  * @return non-zero value if any error.
  */
 int layer_updater_setup_state(layer_updater_t *layer_updater, bool backprop);
+
+/**
+ * Setup layer_updater er_raw for BPTT.
+ * @ingroup g_updater_layer
+ * @param[in] layer_updater layer_updater.
+ * @return non-zero value if any error.
+ */
+int layer_updater_setup_er_raw(layer_updater_t *layer_updater);
 
 /**
  * Activate a layer_updater.
