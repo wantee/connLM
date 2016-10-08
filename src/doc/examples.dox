@@ -24,48 +24,122 @@
 /**
   @page examples The Example Recipes
 
-  @section io_intro Introduction
+  We have several example recipes for different corpora, which are all under
+  @c egs/. We have done some tuning for the hyper-parameters, and report the
+  final PPLs. Users can use these examples as the starting point for their
+  own project.
 
-  The low level I/O in connLM use the
-  <a href="https://github.com/wantee/stutils">stutils</a> library.
+  Currently, examples included with connLM are:
+  - <a href="http://www.cis.upenn.edu/~treebank/">Penn Tree Bank (PTB)</a>,
+    downloaded from <a href="http://www.fit.vutbr.cz/~imikolov/rnnlm/simple-examples.tgz">Tomas Mikolov's webpage</a>.
+  - <a href="http://www.danielpovey.com/files/2015_icassp_librispeech.pdf">LibriSpeech</a>,
+    downloaded from <a href="http://www.openslr.org/12/">openslr.org</a>.
+  - <a href="http://www.statmt.org/lm-benchmark/">1 Billion Word Language Model Benchmark</a>,
+    downloaded from <a href="http://statmt.org/wmt11/training-monolingual.tgz">statmt.org</a>.
 
-  Most connLM tools has a @c binary option to determine whether write
-  models in binary format.
+  Scripts for each example is placed under a sub-directory named with the
+  corpus.
 
-  @section io_filter The Model filter
+  There are some standard scripts wrapping the command line tools
+  under @c egs/steps/, including:
+  - @c learn_vocab.sh, which generates a vocabulary from a text source.
+  - @c init_model.sh, which initializes a connLM model, with specified
+    structure.
+  - @c train_model.sh, which trains a model with training corpus.
+  - @c eval_model.sh, which evaluate a (trained) model on some test set.
 
-  ConnLM supports a specific format used to refer a model file,
-  which is called the <em> Model Filter </em>.
+  and,
 
-  The format of model filter is
+  - @c run_standalone.sh, which wraps the above scripts to train a model,
+    whose topology is fixed at the beginning of training.
+  - @c run_cascade.sh, which trains a model as @c run_standalone.sh, but
+    the topology of model could be extended during training.
 
-  @code
-  mdl,[+-][ovmrlf]:file_name
+  Other common utility scripts are under @c egs/utils/.
+
+  @section examples_tiny Recipe Internal
+
+  There is a tiny example for demonstration and regression testing, which can
+  be found in @c egs/tiny. From this, you can see the how training works
+  in connLM.
+
+  @subsection examples_dir_struct Directory Structure
+
+  For every example, we will have a @c run.sh placed in the root of example
+  directory, served as the main user interface for training.
+
+  Besides, there usually are following sub-directories:
+  - @c conf/, which stores the configurations for all models, different models
+    may have their own sub-directory.
+  - @c local/, which contains the custom scripts only used by this example,
+    such as the downloading and pre-processing related scripts.
+  - @c data/, which contains the pre-processed data files, using directly by
+    the connLM command line tools. This could be created after the prep-data
+    step in some examples.
+  - @c exp/, which is the working directory for training.
+
+  @subsection examples_step Running Steps
+
+  The main shell script for training is @c run.sh. @c run.sh accepts a @c -h
+  option to print helping message,
+
+  @code{.sh}
+  $ ./run.sh -h
+  usage: ./run.sh [steps]
+  e.g.: ./run.sh -3,5,7-9,10-
+    stpes could be a number range within 1-7:
+     step1:	Learn Vocab
+     step2:	Train MaxEnt model
+     step3:	Train CBOW model
+     step4:	Train FFNN model
+     step5:	Train RNN model
+     step6:	Train RNN+MaxEnt model
+     step7:	Train RNN~MaxEnt merge model
+
+  options:
+       --conf-dir <conf-dir>         # config directory.
+       --exp-dir <exp-dir>           # exp directory.
+
   @endcode
 
-  @c file_name is the name of model file. The middle part is the filter.
-  Adding @c +/- to add or remove responding component of the model,
-  default is @c +.
+  @c run.sh has one positional arguments, which specify the steps user would
+  like to run. Steps could be one or more integers with comma and dash,
+  default value is empty, which means run all steps.
+  The job of parsing these strings is done by
+  <a href="https://github.com/wantee/shutils">shutils</a> library.
 
-  Filters include:
+  The steps is defined at the beginning of @c run.sh:
 
-  <p>
-  - @c o: Output
-  - @c v: Vocab
-  - @c m: MaxEnt
-  - @c r: RNN
-  - @c l: LBL
-  - @c f: FFNN
-  </p>
-
-  For example, one can use following command line to view the weights
-  of MaxEnt in one model:
-
-  @code
-$ connlm-copy --binary=false exp/maxent/01.clm mdl,m:- | less
+  @code{.sh}
+  stepnames[1]="Learn Vocab"
+  stepnames+=("Train MaxEnt model:maxent")
+  stepnames+=("Train CBOW model:cbow")
+  stepnames+=("Train FFNN model:ffnn")
+  stepnames+=("Train RNN model:rnn")
+  stepnames+=("Train RNN+MaxEnt model:rnn+maxent")
+  stepnames+=("Train RNN~MaxEnt merge model:rnn~maxent")
   @endcode
 
-  Users can find many examples using model filter in the
-  @c egs/steps/run_cascade.sh.
+  The step names consists of two parts, the left part of colon defines the
+  display name of this step and the right part gives the corresponding
+  sub-directory name under @c conf-dir, where @c run.sh can find the
+  configurations for training. Generally, a word in step name is a single
+  component of the model. A '+' means the two components are merged in one
+  model, but a '~' represents the cascaded model, i.e., we will extend the
+  components of the model one by one.
+
+  @subsection examples_vocab Learning the Vocabulary
+
+  The first step before training is to generate the vocabulary. Vocabulary is
+  a mapping which maps word strings into integer ids, see the
+  @ref network_vocab "vocab" section for details.
+
+  In connLM, the vocabulary is learned from a text source(usually this would
+  be the training corpus or a subset of it).
+
+  Since we will need the word counts information to build the output layer of
+  connLM model, the learning process is mandatory. If you want to limit
+  the words in vocabulary in a pre-defined list, you can pre-process the
+  learning text to map the words outside your list to @c \<unk\>.
 
 */

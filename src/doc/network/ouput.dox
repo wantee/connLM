@@ -1,18 +1,18 @@
 //
 // The MIT License (MIT)
-// 
+//
 // Copyright (c) 2015 Wang Jian
-// 
+//
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
 // in the Software without restriction, including without limitation the rights
 // to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 // copies of the Software, and to permit persons to whom the Software is
 // furnished to do so, subject to the following conditions:
-// 
+//
 // The above copyright notice and this permission notice shall be included in all
 // copies or substantial portions of the Software.
-// 
+//
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 // IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 // FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -22,16 +22,16 @@
 // SOFTWARE.
 
 /**
-  @page output The Output Layer
+  @page network_output The Output Layer
 
-  @section output_intro Introduction
-  
+  @section network_output_intro Introduction
+
   A connLM model can only contain one output layer, which is shared by
   one or more component models.
 
   An output layer must be generated before other components added.
 
-  @section output_usage Usage
+  @section network_output_usage Usage
 
   The related source code is in output.h. output_generate() can be called
   to generate a output layer with specific options. During training,
@@ -41,30 +41,30 @@
   The command line interface for generating output layer is
   @c connlm-output, available options are:
 
-  @code
-$ connlm-output --help
-Usage    : connlm-output [options] <model-in> <model-out>
+  @code{.sh}
+  $ connlm-output --help
+  Usage    : connlm-output [options] <model-in> <model-out>
 
-Options  : 
-  --help                     : Print help (bool, default = false)
-  --log-file                 : Log file (string, default = "/dev/stderr")
-  --log-level                : Log level (1-8) (int, default = 8)
-  --class-size               : Size of class layer (int, default = 100)
-  --hs                       : Hierarchical softmax (bool, default = false)
-  --max-code-len             : Maximum length for code used by HS (int, default = 40)
-  --class-hs                 : Whether using HS for classes (bool, default = false)
-  --binary                   : Save file as binary format (bool, default = true)
-  --config                   : config file (string, default = "")
+  Options  :
+    --help                     : Print help (bool, default = false)
+    --log-file                 : Log file (string, default = "/dev/stderr")
+    --log-level                : Log level (1-8) (int, default = 8)
+    --class-size               : Size of class layer (int, default = 100)
+    --hs                       : Hierarchical softmax (bool, default = false)
+    --max-code-len             : Maximum length for code used by HS (int, default = 40)
+    --class-hs                 : Whether using HS for classes (bool, default = false)
+    --binary                   : Save file as binary format (bool, default = true)
+    --config                   : config file (string, default = "")
   @endcode
 
   ConnLM supports three kind of output layer: 1-of-V vector, class based
-  factorization and hierarchical softmax. 
+  factorization and hierarchical softmax.
 
   @c --class-size can be used to set the number of classes used in
   class based factorization. If it is less or equal to zero, no class based
   factorization will be applied.
 
-  @c --hs option determines whether to use hierarchical softmax.  
+  @c --hs option determines whether to use hierarchical softmax.
   @c --max-code-len and @c --class-hs give more fine control of HS.
   @c --max-code-len is the maximum length of code used to build HS tree,
   i.e., the maximum depth of the tree. The reason of such a option is for

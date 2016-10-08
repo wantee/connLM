@@ -1,7 +1,7 @@
 //
 // The MIT License (MIT)
 //
-// Copyright (c) 2015 Wang Jian
+// Copyright (c) 2016 Wang Jian
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -22,17 +22,12 @@
 // SOFTWARE.
 
 /**
-  @mainpage connLM
+  @page network_graph_weight The Weight
 
-  <p>
-    - @subpage about
-    - @subpage get_started
-    - @subpage benchmark
-    - @subpage examples
-    - @subpage network
-    - @subpage training
-    - @subpage cmd
-    - @subpage testing
-    - @subpage selection
-  </p>
+  @section network_graph_weight_intro Introduction
+
+  @section network_graph_weight_init Initialization distributions
+
+  @section network_graph_weight_type Weight Types
+
 */
