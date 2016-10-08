@@ -36,3 +36,4 @@ notifications:
 branches:
   except:
     - temp
+    - doc
