@@ -131,7 +131,8 @@ int comp_updater_setup(comp_updater_t *comp_updater, bool backprop)
 {
     component_t *comp;
     layer_updater_t **layer_updaters;
-    int i;
+    wt_updater_t *wt_updater;
+    int i, j, g;
 
     ST_CHECK_PARAM(comp_updater == NULL, -1);
 
@@ -169,6 +170,24 @@ int comp_updater_setup(comp_updater_t *comp_updater, bool backprop)
                     ST_WARNING("Failed to bptt_updater_create.[%d][%s]", i,
                             comp->glues[comp->glue_cycles[i][1]]->name);
                     goto ERR;
+                }
+                // NOTE: To correctly BPTT, _BATCH_UPDATE_ must be defined
+                // If bptt > 1, we must make sure mini_batch is at least 1,
+                // so that the bptt could be batch updated.
+                g = comp->glue_cycles[i][1];
+                if(comp->glues[g]->bptt_opt.bptt > 1) {
+                    for (j = 1; j <= comp->glue_cycles[i][0]; j++) {
+                        g = comp->glue_cycles[i][j];
+                        wt_updater = comp_updater->glue_updaters[g]->wt_updater;
+                        if (wt_updater->param.mini_batch <= 0) {
+                            wt_updater->param.mini_batch = 1;
+                            if (wt_updater_init(wt_updater) < 0) {
+                                ST_WARNING("Failed to re-init wt_updater[%s].",
+                                        comp->glues[g]->name);
+                                goto ERR;
+                            }
+                        }
+                    }
                 }
             }
         }

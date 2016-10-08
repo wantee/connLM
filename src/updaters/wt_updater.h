@@ -139,6 +139,17 @@ wt_updater_t* wt_updater_create(param_t *param,
         real_t *wt, int row, int col, wt_update_type_t type);
 
 /**
+ * (Re)init a wt_updater.
+ *
+ * param, shared_wt, row, col and type must be already setted before.
+ *
+ * @ingroup g_updater_wt
+ * @param[in] wt_updater the wt_updater.
+ * @return non-zero value if any error.
+ */
+int wt_updater_init(wt_updater_t *wt_updater);
+
+/**
  * Set segs for wt_updater. The segs is used by WT_UT_SEG.
  *
  * @ingroup g_updater_wt

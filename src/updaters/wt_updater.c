@@ -140,27 +140,12 @@ ERR:
 }
 #endif
 
-wt_updater_t* wt_updater_create(param_t *param,
-        real_t *wt, int row, int col, wt_update_type_t type)
+int wt_updater_init(wt_updater_t *wt_updater)
 {
-    wt_updater_t *wt_updater = NULL;
-
     size_t sz;
 
-    ST_CHECK_PARAM(param == NULL || wt == NULL || row <= 0, NULL);
+    ST_CHECK_PARAM(wt_updater == NULL, -1);
 
-    wt_updater = (wt_updater_t *)malloc(sizeof(wt_updater_t));
-    if (wt_updater == NULL) {
-        ST_WARNING("Failed to malloc wt_updater.");
-        goto ERR;
-    }
-    memset(wt_updater, 0, sizeof(wt_updater_t));
-
-    wt_updater->param = *param;
-    wt_updater->row = row;
-    wt_updater->col = col;
-    wt_updater->shared_wt = wt;
-    wt_updater->type = type;
     wt_updater->n_step = 0;
     wt_updater->n_flush_step = 1;
 
@@ -172,13 +157,16 @@ wt_updater_t* wt_updater_create(param_t *param,
     sz *= sizeof(real_t);
 
     if (wt_updater->param.sync_size > 0) {
+        safe_st_aligned_free(wt_updater->wt);
+
         wt_updater->wt = st_aligned_malloc(sz, ALIGN_SIZE);
         if (wt_updater->wt == NULL) {
             ST_WARNING("Failed to st_aligned_malloc wt.");
             goto ERR;
         }
-        memcpy(wt_updater->wt, wt, sz);
+        memcpy(wt_updater->wt, wt_updater->shared_wt, sz);
 
+        safe_st_aligned_free(wt_updater->ori_wt);
         wt_updater->ori_wt = st_aligned_malloc(sz, ALIGN_SIZE);
         if (wt_updater->ori_wt == NULL) {
             ST_WARNING("Failed to malloc ori_wt.");
@@ -186,10 +174,11 @@ wt_updater_t* wt_updater_create(param_t *param,
         }
         memcpy(wt_updater->ori_wt, wt_updater->wt, sz);
     } else {
-        wt_updater->wt = wt;
+        wt_updater->wt = wt_updater->shared_wt;
     }
 
     if (wt_updater->param.mini_batch > 0) {
+        safe_st_aligned_free(wt_updater->delta_wt);
         wt_updater->delta_wt = st_aligned_malloc(sz, ALIGN_SIZE);
         if (wt_updater->delta_wt == NULL) {
             ST_WARNING("Failed to malloc delta_wt.");
@@ -206,13 +195,46 @@ wt_updater_t* wt_updater_create(param_t *param,
         seg.n = wt_updater->row;
 
         if (wt_updater->param.mini_batch > 0) {
-            if (dirty_set_segs(&wt_updater->mini_dirty, col, &seg, 1) < 0) {
+            if (dirty_set_segs(&wt_updater->mini_dirty,
+                        wt_updater->col, &seg, 1) < 0) {
                 ST_WARNING("Failed to dirty_set_segs for mini-batch.");
                 goto ERR;
             }
         }
     }
 #endif
+
+    return 0;
+
+ERR:
+    wt_updater_destroy(wt_updater);
+    return -1;
+}
+
+wt_updater_t* wt_updater_create(param_t *param,
+        real_t *wt, int row, int col, wt_update_type_t type)
+{
+    wt_updater_t *wt_updater = NULL;
+
+    ST_CHECK_PARAM(param == NULL || wt == NULL || row <= 0, NULL);
+
+    wt_updater = (wt_updater_t *)malloc(sizeof(wt_updater_t));
+    if (wt_updater == NULL) {
+        ST_WARNING("Failed to malloc wt_updater.");
+        goto ERR;
+    }
+    memset(wt_updater, 0, sizeof(wt_updater_t));
+
+    wt_updater->param = *param;
+    wt_updater->row = row;
+    wt_updater->col = col;
+    wt_updater->shared_wt = wt;
+    wt_updater->type = type;
+
+    if (wt_updater_init(wt_updater) < 0) {
+        ST_WARNING("Failed to wt_updater_init.");
+        goto ERR;
+    }
 
     return wt_updater;
 
