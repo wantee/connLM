@@ -172,20 +172,18 @@ int comp_updater_setup(comp_updater_t *comp_updater, bool backprop)
                     goto ERR;
                 }
                 // NOTE: To correctly BPTT, _BATCH_UPDATE_ must be defined
-                // If bptt > 1, we must make sure mini_batch is at least 1,
+                // we must make sure mini_batch is at least 1,
                 // so that the bptt could be batch updated.
                 g = comp->glue_cycles[i][1];
-                if(comp->glues[g]->bptt_opt.bptt > 1) {
-                    for (j = 1; j <= comp->glue_cycles[i][0]; j++) {
-                        g = comp->glue_cycles[i][j];
-                        wt_updater = comp_updater->glue_updaters[g]->wt_updater;
-                        if (wt_updater->param.mini_batch <= 0) {
-                            wt_updater->param.mini_batch = 1;
-                            if (wt_updater_init(wt_updater) < 0) {
-                                ST_WARNING("Failed to re-init wt_updater[%s].",
-                                        comp->glues[g]->name);
-                                goto ERR;
-                            }
+                for (j = 1; j <= comp->glue_cycles[i][0]; j++) {
+                    g = comp->glue_cycles[i][j];
+                    wt_updater = comp_updater->glue_updaters[g]->wt_updater;
+                    if (wt_updater->param.mini_batch <= 0) {
+                        wt_updater->param.mini_batch = 1;
+                        if (wt_updater_init(wt_updater) < 0) {
+                            ST_WARNING("Failed to re-init wt_updater[%s].",
+                                    comp->glues[g]->name);
+                            goto ERR;
                         }
                     }
                 }
@@ -217,7 +215,7 @@ static int comp_updater_bptt(comp_updater_t *comp_updater, bool clear)
 
     real_t *in_er, *out_er, *in_ac, *out_ac;
     int bptt, bptt_delay;
-    int i, j, g, t, ii, er_t, in_sz, out_sz, len_ac;
+    int i, j, g, t, ii, er_t, in_sz, out_sz;
 
     ST_CHECK_PARAM(comp_updater == NULL, -1);
 
@@ -233,57 +231,102 @@ static int comp_updater_bptt(comp_updater_t *comp_updater, bool clear)
         comp_updater->bptt_step += 1;
     }
 
-    for (i = 0;  i < comp->num_glue_cycle; i++) {
+    for (i = 0; i < comp->num_glue_cycle; i++) {
         g = comp->glue_cycles[i][1];
         bptt = comp->glues[g]->bptt_opt.bptt;
         bptt_delay = comp->glues[g]->bptt_opt.bptt_delay;
         bptt_updater = comp_updater->bptt_updaters[i];
-        len_ac = bptt + bptt_delay - 2;
 
         if (clear) {
-           if (comp_updater->bptt_step > 0
-               && (comp_updater->bptt_step % bptt_delay == 0)) {
-            // we already do BPTT in last call to this function, so skip
-            continue;
-           }
+            if (comp_updater->bptt_step > 0
+                    && (comp_updater->bptt_step % bptt_delay == 0)) {
+                // we already do BPTT in last call to this function, so skip
+                continue;
+            }
+        } else {
+            // clear == true must only called without step forward
+            // store the ac and er for bptt.
+            for (j = 1; j <= comp->glue_cycles[i][0]; j++) {
+                g = comp->glue_cycles[i][j];
+                glue = comp->glues[g];
+                in_sz = layer_updaters[glue->in_layer]->layer->size;
+                out_sz = layer_updaters[glue->out_layer]->layer->size;
+
+                out_er = layer_updaters[glue->out_layer]->er_raw;
+                if (j == 1) {
+                    in_ac = layer_updaters[glue->in_layer]->ac_state;
+                } else {
+                    in_ac = layer_updaters[glue->in_layer]->ac;
+                }
+
+                if (bptt_updater->num_ac_bptt >= bptt + bptt_delay) {
+                    memmove(bptt_updater->ac_bptt[j],
+                            bptt_updater->ac_bptt[j] + in_sz,
+                            sizeof(real_t)*in_sz*(bptt_updater->num_ac_bptt-1));
+                    memcpy(bptt_updater->ac_bptt[j]
+                            + (bptt_updater->num_ac_bptt - 1) * in_sz,
+                            in_ac, sizeof(real_t) * in_sz);
+                } else {
+                    memcpy(bptt_updater->ac_bptt[j]
+                            + bptt_updater->num_ac_bptt * in_sz,
+                            in_ac, sizeof(real_t) * in_sz);
+                }
+
+                if (bptt_updater->num_er_bptt >= bptt_delay) {
+                    memmove(bptt_updater->er_bptt[j],
+                            bptt_updater->er_bptt[j] + out_sz,
+                            sizeof(real_t)*out_sz*(bptt_updater->num_er_bptt-1));
+                    memcpy(bptt_updater->er_bptt[j]
+                            + (bptt_updater->num_er_bptt - 1) * out_sz,
+                            out_er, sizeof(real_t) * out_sz);
+                } else {
+                    memcpy(bptt_updater->er_bptt[j]
+                            + bptt_updater->num_er_bptt * out_sz,
+                            out_er, sizeof(real_t) * out_sz);
+                }
+            }
+            if (bptt_updater->num_ac_bptt < bptt + bptt_delay) {
+                bptt_updater->num_ac_bptt++;
+            }
+            if (bptt_updater->num_er_bptt < bptt_delay) {
+                bptt_updater->num_er_bptt++;
+            }
         }
 
         if (comp_updater->bptt_step % bptt_delay == 0 || clear) {
             // backprop through time
-            for (t = bptt_updater->num_ac_bptt; t >= 0; t--) {
+            for (t = bptt_updater->num_ac_bptt - 1; t >= 0; t--) {
                 for (j = 1; j <= comp->glue_cycles[i][0]; j++) {
                     g = comp->glue_cycles[i][j];
                     glue = comp->glues[g];
 
-                    in_er = layer_updaters[glue->in_layer]->er;
-                    out_er = layer_updaters[glue->out_layer]->er;
                     in_sz = layer_updaters[glue->in_layer]->layer->size;
                     out_sz = layer_updaters[glue->out_layer]->layer->size;
 
-                    if (t == bptt_updater->num_ac_bptt && j == 1) {
+                    if (t == bptt_updater->num_ac_bptt - 1 && j == 1) {
                         // using values in current timestep
-                        in_ac = layer_updaters[glue->in_layer]->ac_state;
-                        memcpy(out_er,
-                               layer_updaters[glue->out_layer]->er_raw,
-                               out_sz * sizeof(real_t));
+                        out_er = layer_updaters[glue->out_layer]->er;
+                        memset(out_er, 0, out_sz * sizeof(real_t));
                         out_ac = layer_updaters[glue->out_layer]->ac;
                     } else {
                         // the glues in a cycle is joined one-by-one,
-                        // the input of one glue is the output of the next glue
+                        // the output of one glue is the input of the prev glue
                         out_ac = in_ac;
-                        in_ac = bptt_updater->ac_bptt[j] + (t * len_ac);
+                        out_er = in_er;
                     }
+                    in_ac = bptt_updater->ac_bptt[j] + (t * in_sz);
+                    in_er = layer_updaters[glue->in_layer]->er;
 
                     er_t = t - bptt_updater->num_ac_bptt
                              + bptt_updater->num_er_bptt;
-                    if (er_t >= 0 && er_t < bptt_updater->num_er_bptt) {
+                    if (er_t >= 0) {
 #ifdef _CONNLM_TRACE_PROCEDURE_
                         ST_TRACE("Backprop: BPTT timestep(delayed)[%d], "
                                 "glue[%s]", t, comp->glues[g]->name);
 #endif
                         for (ii = 0; ii < out_sz; ii++) {
                             out_er[ii] +=
-                                bptt_updater->er_bptt[j][er_t * len_ac + ii];
+                                bptt_updater->er_bptt[j][er_t * out_sz + ii];
                         }
                     } else {
 #ifdef _CONNLM_TRACE_PROCEDURE_
@@ -304,8 +347,8 @@ static int comp_updater_bptt(comp_updater_t *comp_updater, bool clear)
                     }
 
                     wt_updater = comp_updater->glue_updaters[g]->wt_updater;
-                    // propagate error to time t - 1
-                    if (t - 1 >= 0) {
+                    // propagate error to next glue
+                    if (j < comp->glue_cycles[i][0] || t - 1 >= 0) {
                         memset(in_er, 0, sizeof(real_t) * in_sz);
                         propagate_error(in_er, out_er,
                                 wt_updater->wt,
@@ -318,6 +361,8 @@ static int comp_updater_bptt(comp_updater_t *comp_updater, bool clear)
                     // direct, so the parameters to wt_update only involves
                     // in_ac and out_er
                     // NOTE: To correctly BPTT, _BATCH_UPDATE_ must be defined
+                    // FIXME: do we need to use params of RECUR_HEAD glue
+                    // to update all glues in the same cycle ?
                     if (wt_update(wt_updater, NULL, -1, out_er, 1.0,
                                 in_ac, 1.0, NULL) < 0) {
                         ST_WARNING("Failed to wt_update.");
@@ -337,60 +382,6 @@ static int comp_updater_bptt(comp_updater_t *comp_updater, bool clear)
             }
 
             bptt_updater->num_er_bptt = 0;
-        } else {
-            // store the er for bptt. no need to store er at current timestep,
-            // thus in the else clause.
-            if (bptt_delay - 1 > 0) {
-                for (j = 1; j <= comp->glue_cycles[i][0]; j++) {
-                    g = comp->glue_cycles[i][j];
-                    glue = comp->glues[g];
-                    out_sz = layer_updaters[glue->out_layer]->layer->size;
-
-                    out_er = layer_updaters[glue->out_layer]->er_raw;
-
-                    if (bptt_updater->num_er_bptt >= bptt_delay - 1) {
-                        memmove(bptt_updater->er_bptt[j],
-                            bptt_updater->er_bptt[j] + out_sz,
-                            sizeof(real_t)*out_sz*(bptt_updater->num_er_bptt-1));
-                        memcpy(bptt_updater->er_bptt[j]
-                                + (bptt_updater->num_er_bptt - 1) * out_sz,
-                                out_er, sizeof(real_t) * out_sz);
-                    } else {
-                        memcpy(bptt_updater->er_bptt[j]
-                                + bptt_updater->num_er_bptt * out_sz,
-                                out_er, sizeof(real_t) * out_sz);
-                        bptt_updater->num_er_bptt++;
-                    }
-                }
-            }
-        }
-        // store the ac for bptt
-        if (len_ac > 0) {
-            for (j = 1; j <= comp->glue_cycles[i][0]; j++) {
-                g = comp->glue_cycles[i][j];
-                glue = comp->glues[g];
-                in_sz = layer_updaters[glue->in_layer]->layer->size;
-
-                if (j == 1) {
-                    in_ac = layer_updaters[glue->in_layer]->ac_state;
-                } else {
-                    in_ac = layer_updaters[glue->in_layer]->ac;
-                }
-
-                if (bptt_updater->num_ac_bptt >= len_ac) {
-                    memmove(bptt_updater->ac_bptt[j],
-                        bptt_updater->ac_bptt[j] + in_sz,
-                        sizeof(real_t)*in_sz*(bptt_updater->num_ac_bptt - 1));
-                    memcpy(bptt_updater->ac_bptt[j]
-                            + (bptt_updater->num_ac_bptt - 1) * in_sz,
-                            in_ac, sizeof(real_t) * in_sz);
-                } else {
-                    memcpy(bptt_updater->ac_bptt[j]
-                            + bptt_updater->num_ac_bptt * in_sz,
-                            in_ac, sizeof(real_t) * in_sz);
-                    bptt_updater->num_ac_bptt++;
-                }
-            }
         }
     }
 

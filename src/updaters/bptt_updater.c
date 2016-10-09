@@ -75,32 +75,30 @@ bptt_updater_t* bptt_updater_create(component_t *comp, int cycle_id)
     bptt_delay = bptt_updater->bptt_opt.bptt_delay;
     bptt_updater->num_glue = comp->glue_cycles[cycle_id][1];
 
-    if (bptt > 1) {
-        bptt_updater->ac_bptt = (real_t **)malloc(sizeof(real_t *)
-                * (bptt_updater->num_glue + 1));
-        bptt_updater->er_bptt = (real_t **)malloc(sizeof(real_t *)
-                * (bptt_updater->num_glue + 1));
-        for (i = 1; i <= bptt_updater->num_glue; i++) {
-            g = comp->glue_cycles[cycle_id][i];
-            glue = comp->glues[g];
-            sz = sizeof(real_t) * comp->layers[glue->in_layer]->size
-                * (bptt + bptt_delay - 2);
-            bptt_updater->ac_bptt[i] = st_aligned_malloc(sz, ALIGN_SIZE);
-            if (bptt_updater->ac_bptt[i] == NULL) {
-                ST_WARNING("Failed to st_aligned_malloc ac_bptt[%d].", i);
-                goto ERR;
-            }
-            memset(bptt_updater->ac_bptt[i], 0, sz);
-
-            sz = sizeof(real_t) * comp->layers[glue->out_layer]->size
-                * (bptt_delay - 1);
-            bptt_updater->er_bptt[i] = st_aligned_malloc(sz, ALIGN_SIZE);
-            if (bptt_updater->er_bptt[i] == NULL) {
-                ST_WARNING("Failed to st_aligned_malloc er_bptt[%d].", i);
-                goto ERR;
-            }
-            memset(bptt_updater->er_bptt[i], 0, sz);
+    bptt_updater->ac_bptt = (real_t **)malloc(sizeof(real_t *)
+            * (bptt_updater->num_glue + 1));
+    bptt_updater->er_bptt = (real_t **)malloc(sizeof(real_t *)
+            * (bptt_updater->num_glue + 1));
+    for (i = 1; i <= bptt_updater->num_glue; i++) {
+        g = comp->glue_cycles[cycle_id][i];
+        glue = comp->glues[g];
+        sz = sizeof(real_t) * comp->layers[glue->in_layer]->size
+            * (bptt + bptt_delay);
+        bptt_updater->ac_bptt[i] = st_aligned_malloc(sz, ALIGN_SIZE);
+        if (bptt_updater->ac_bptt[i] == NULL) {
+            ST_WARNING("Failed to st_aligned_malloc ac_bptt[%d].", i);
+            goto ERR;
         }
+        memset(bptt_updater->ac_bptt[i], 0, sz);
+
+        sz = sizeof(real_t) * comp->layers[glue->out_layer]->size
+            * bptt_delay;
+        bptt_updater->er_bptt[i] = st_aligned_malloc(sz, ALIGN_SIZE);
+        if (bptt_updater->er_bptt[i] == NULL) {
+            ST_WARNING("Failed to st_aligned_malloc er_bptt[%d].", i);
+            goto ERR;
+        }
+        memset(bptt_updater->er_bptt[i], 0, sz);
     }
 
     return bptt_updater;
@@ -117,10 +115,5 @@ int bptt_updater_reset(bptt_updater_t *bptt_updater)
     bptt_updater->num_ac_bptt = 0;
     bptt_updater->num_er_bptt = 0;
 
-    return 0;
-}
-
-int bptt_updater_update(bptt_updater_t *bptt_updater, bool force)
-{
     return 0;
 }

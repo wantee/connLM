@@ -90,15 +90,6 @@ bptt_updater_t* bptt_updater_create(component_t *comp, int cycle_id);
  */
 int bptt_updater_reset(bptt_updater_t *bptt_updater);
 
-/**
- * Back-propagate one word for a bptt_updater.
- * @ingroup g_updater_bptt
- * @param[in] bptt_updater the bptt_updater.
- * @param[in] force force updating.
- * @return non-zero value if any error.
- */
-int bptt_updater_update(bptt_updater_t *bptt_updater, bool force);
-
 #ifdef __cplusplus
 }
 #endif

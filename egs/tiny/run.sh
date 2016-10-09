@@ -19,6 +19,7 @@ stepnames+=("Train FFNN model:ffnn")
 stepnames+=("Train RNN model:rnn")
 stepnames+=("Train RNN+MaxEnt model:rnn+maxent")
 stepnames+=("Train RNN~MaxEnt merge model:rnn~maxent")
+stepnames+=("Train crossing RNN model:crossing-rnn")
 
 steps_len=${#stepnames[*]}
 
