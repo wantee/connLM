@@ -344,10 +344,12 @@ static int wt_updater_flush(wt_updater_t *wt_updater, real_t* dst_wt,
                 lr *= dirty->er_scale * dirty->in_scale;
                 l2 = get_l2(wt_updater);
 
-                matXmat(src_wt, dirty->buf_er[0].val,
-                        dirty->buf_in[0].val, row, col,
-                        dirty->buf_er[0].n_row,
-                        lr, 1.0 - l2);
+                if (dirty->buf_er[0].n_row > 0) {
+                    matXmat(src_wt, dirty->buf_er[0].val,
+                            dirty->buf_in[0].val, row, col,
+                            dirty->buf_er[0].n_row,
+                            lr, 1.0 - l2);
+                }
             }
 #endif
             if (col > 0) {
@@ -379,10 +381,12 @@ static int wt_updater_flush(wt_updater_t *wt_updater, real_t* dst_wt,
                 for (a = 0; a < dirty->n_id; a++) {
                     i = dirty->ids[a];
                     seg = wt_updater->segs + i;
-                    matXmat(src_wt + seg->s * col, dirty->buf_er[i].val,
-                            dirty->buf_in[i].val, seg->n, col,
-                            dirty->buf_er[i].n_row,
-                            lr, 1.0 - l2);
+                    if (dirty->buf_er[i].n_row > 0) {
+                        matXmat(src_wt + seg->s * col, dirty->buf_er[i].val,
+                                dirty->buf_in[i].val, seg->n, col,
+                                dirty->buf_er[i].n_row,
+                                lr, 1.0 - l2);
+                    }
                 }
             }
 #endif
