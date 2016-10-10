@@ -15,8 +15,7 @@ function print_help()
   echo "options: "
   echo "     --train-thr <threads>    # default: 1."
   echo "     --eval-thr <threads>     # default: 1."
-  echo "     --class-size <xx;xx;xx>  # default: \"\". Class sizes to be tried."
-  echo "     --hs <true|false>        # default: \"\", up to config file. Whether to use HS"
+  echo "     --stage <stags>          # default: \"\"."
 }
 
 help_message=`print_help`

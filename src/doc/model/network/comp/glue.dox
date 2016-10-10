@@ -22,14 +22,12 @@
 // SOFTWARE.
 
 /**
-  @page network_graph_layer The Layer
+  @page model_network_comp_glue The Glue
 
-  @section network_graph_layer_intro Introduction
+  @section model_network_comp_glue_intro Introduction
 
-  @section network_graph_layer_topo Topology Configurations
+  @section model_network_comp_glue_topo Topology Configurations
 
-  First line must be the initial layer.
-
-  @section network_graph_layer_type Layer Types
+  @section model_network_comp_glue_type Glue Types
 
 */

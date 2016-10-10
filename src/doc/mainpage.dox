@@ -29,7 +29,7 @@
     - @subpage get_started
     - @subpage benchmark
     - @subpage examples
-    - @subpage network
+    - @subpage model
     - @subpage training
     - @subpage cmd
     - @subpage testing

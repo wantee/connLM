@@ -22,13 +22,13 @@
 // SOFTWARE.
 
 /**
- @page network The connLM Network
+ @page model_network The Network
 
  <p>
-  - @subpage network_graph
-  - @subpage network_vocab
-  - @subpage network_output
-  - @subpage network_draw
+  - @subpage model_network_topo
+  - @subpage model_network_comp
+  - @subpage model_network_output
+  - @subpage model_network_draw
  </p>
 
 */

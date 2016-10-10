@@ -22,16 +22,16 @@
 // SOFTWARE.
 
 /**
-  @page network_output The Output Layer
+  @page model_network_output The Output Layer
 
-  @section network_output_intro Introduction
+  @section model_network_output_intro Introduction
 
   A connLM model can only contain one output layer, which is shared by
   one or more component models.
 
   An output layer must be generated before other components added.
 
-  @section network_output_usage Usage
+  @section model_network_output_usage Usage
 
   The related source code is in output.h. output_generate() can be called
   to generate a output layer with specific options. During training,

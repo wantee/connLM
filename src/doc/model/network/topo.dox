@@ -22,12 +22,6 @@
 // SOFTWARE.
 
 /**
-  @page network_graph_weight The Weight
-
-  @section network_graph_weight_intro Introduction
-
-  @section network_graph_weight_init Initialization distributions
-
-  @section network_graph_weight_type Weight Types
+  @page model_network_topo Network Topology
 
 */

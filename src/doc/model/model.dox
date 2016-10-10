@@ -22,6 +22,11 @@
 // SOFTWARE.
 
 /**
-  @page network_draw Drawing the Network
+ @page model The connLM Model
+
+ <p>
+  - @subpage model_vocab
+  - @subpage model_network
+ </p>
 
 */

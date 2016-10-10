@@ -128,11 +128,23 @@
   model, but a '~' represents the cascaded model, i.e., we will extend the
   components of the model one by one.
 
+  @subsection examples_prep Preparing Data
+
+  For most of the corpora, we need to pre-process the raw data, and convert
+  them into format accepted by connLM toolkit.
+
+  The scripts for preprocessing should be placed in @c local/ as they normally
+  are only relevant with one corpus.
+
+  After processing, there should be three files in @c data/ directory, i.e.,
+  @c data/train, @c data/valid and @c data/test for training, validating and
+  testing respectively.
+
   @subsection examples_vocab Learning the Vocabulary
 
-  The first step before training is to generate the vocabulary. Vocabulary is
-  a mapping which maps word strings into integer ids, see the
-  @ref network_vocab "vocab" section for details.
+  Before training the model, we need to generate the vocabulary first.
+  Vocabulary is a mapping which maps word strings into integer ids, see the
+  @ref model_vocab "vocab" section for details.
 
   In connLM, the vocabulary is learned from a text source(usually this would
   be the training corpus or a subset of it).
@@ -141,5 +153,96 @@
   connLM model, the learning process is mandatory. If you want to limit
   the words in vocabulary in a pre-defined list, you can pre-process the
   learning text to map the words outside your list to @c \<unk\>.
+
+  The @c connlm-vocab should be used for learning vocabulary, the wrapper
+  script is @c ../steps/learn_vocab.sh,
+
+  @code
+  $ ../steps/learn_vocab.sh
+  ../steps/learn_vocab.sh
+  usage: ../steps/learn_vocab.sh <train-file> <exp-dir>
+  e.g.: ../steps/learn_vocab.sh data/train exp
+  options:
+       --config-file <file>         # vocab config file.
+  @endcode
+
+  It will learn the vocabulary from @c <train-file> and placed the resulting
+  model file to @c <exp-dir>/vocab.clm. Users can pass configurations to
+  @c connlm-vocab through @c \-\-config-file option, for details of the
+  configurations, please see the @ref cmd_vocab "command description".
+
+  @subsection examples_standalone Training Standalone Model
+
+  Each step of the rest in @c run.sh will train a connLM model. There are
+  two ways to train model in connLM. In a standalone setup, the structure of
+  network is defined before training and fixed after initializing it, while
+  in a cascaded setup, we extend the components of network one by one during
+  training.
+
+  @code
+  $ ../steps/run_standalone.sh
+  ../steps/run_standalone.sh
+  usage: ../steps/run_standalone.sh <model-type> <conf-dir> <exp-dir> <train-file> <valid-file> [test-file]
+  e.g.: ../steps/run_standalone.sh rnn conf exp data/train data/valid data/test
+  options:
+       --train-thr <threads>    # default: 1.
+       --eval-thr <threads>     # default: 1.
+       --stage <stags>          # default: "".
+  @endcode
+
+  This script will train a model with @c <train-file> and dump the final model
+  in @c <exp-dir>/<model-type>/final.clm, and search directory
+  @c <conf-dir>/<model-type> for configurations.
+
+  There are 3 stages in @c run_standalone.sh. First, it calls
+  @c ../steps/init_model.sh to initialize the network structure and value of
+  weights. Then, @c ../steps/train_model.sh is invoked to train the initialized
+  model with training data. At last, if @c <test-file> is specified, it runs
+  @c ../steps/eval_model.sh to compute and report the perplexity of test set.
+
+  @subsubsection Name Convention for Configurations
+
+  Generally, every command of connLM toolkit will have at least one
+  configuration file for common setups, like logging. The name of the
+  configuration file would be consistence with the name of command line tool.
+  They includes:
+
+  - @c vocab.conf  to specify the options for @c connlm-vocab
+  - @c output.conf  to specify the options for @c connlm-output
+  - @c init.conf  to specify the options for @c connlm-init
+  - @c train.conf  to specify the options for @c connlm-train
+  - @c eval.conf  to specify the options for @c connlm-eval
+
+  Besides, there is another configuration for defining network topology. It
+  would be called @c topo, placed under the configuration directory of one
+  model. The format of this file is described in
+  @ref model_network_topo "this page".
+
+  @subsection examples_cascade Training Cascade Model
+
+  Since a connLM model could consist of multiply components, we can merge
+  sub-parts of network into a new one, as long as their output layer is the
+  same.
+
+  With this property, one can train a model gradually. We support this type
+  of training with @c ../steps/run_cascade.sh, whose usage is similar with
+  @c ../steps/run_standalone.sh except that the @c <model-type> must contain
+  at least one '~' character.
+
+  Every word separated by '~' is the name of one component, the @c init.conf
+  and @c topo for this component should be placed in the sub-directory under
+  @c <conf-dir>/<model-type> with the same name.
+
+  The workflow of training cascade model becomes:
+
+  @verbatim
+  model = {}
+  for comp in components
+    1. initialize comp
+    2. merge comp into model
+    3. train with model
+  @endverbatim
+
+  The order of components is given by the model name from left to right.
 
 */

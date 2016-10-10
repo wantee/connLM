@@ -71,4 +71,6 @@
   The low level I/O in connLM use the
   <a href="https://github.com/wantee/stutils">stutils</a> library.
 
+  @section cmd_vocab The connlm-vocab
+
 */

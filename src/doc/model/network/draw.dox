@@ -22,14 +22,6 @@
 // SOFTWARE.
 
 /**
-  @page network_graph The Graph
-
-  @section network_graph_overview Overview
-
-  @section network_graph_topo The Topology Configurations
-
-  - @subpage network_graph_layer
-  - @subpage network_graph_glue
-  - @subpage network_graph_weight
+  @page model_network_draw Drawing the Network
 
 */

@@ -22,38 +22,12 @@
 // SOFTWARE.
 
 /**
-  @page get_started Get Started
+  @page model_network_comp_weight The Weight
 
-  @section get_started_build Build the Toolkit
+  @section model_network_comp_weight_intro Introduction
 
-  First, clone the project using git:
+  @section model_network_comp_weight_init Initialization distributions
 
-  @code{.sh}
-  $ git clone https://github.com/wantee/connLM.git connLM
-  @endcode
+  @section model_network_comp_weight_type Weight Types
 
-  Then build the project from source:
-
-  @code{.sh}
-  $ cd connLM/src
-  $ ./autogen.sh
-  $ make -j 4
-  @endcode
-
-  @section get_started_example Running the examples
-
-  The example scripts are under @c egs/. @c egs/tiny is a tiny example for
-  demonstration. Go to the directory and type @c run.sh will train several
-  models one by one.
-
-  @code{.sh}
-  $ cd connLM/egs/tiny
-  $ ./run.sh
-  @endcode
-
-  After this, you should see it is training models and report the final
-  perplexity of test set.
-
-  There are other examples, some of them may need to download the training
-  corpus from internet. You can run @c run.sh to play around.
 */
