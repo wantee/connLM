@@ -47,13 +47,13 @@ static glue_updater_impl_t GLUE_UPDATER_IMPL[] = {
         direct_glue_updater_setup,
         direct_glue_updater_forward, direct_glue_updater_backprop,
         direct_glue_updater_forward_util_out, direct_glue_updater_forward_out},
-    {FC_GLUE_NAME, fc_glue_updater_init, NULL,
+    {FC_GLUE_NAME, NULL, NULL,
         NULL, fc_glue_updater_forward, fc_glue_updater_backprop,
         fc_glue_updater_forward, NULL},
-    {EMB_GLUE_NAME, emb_glue_updater_init, NULL,
+    {EMB_GLUE_NAME, NULL, NULL,
         NULL, emb_glue_updater_forward, emb_glue_updater_backprop,
         emb_glue_updater_forward, NULL},
-    {OUT_GLUE_NAME, out_glue_updater_init, NULL,
+    {OUT_GLUE_NAME, NULL, NULL,
         NULL, out_glue_updater_forward, out_glue_updater_backprop,
         NULL, out_glue_updater_forward_out},
 };
@@ -112,6 +112,12 @@ glue_updater_t* glue_updater_create(glue_t *glue)
             ST_WARNING("Failed to init impl glue updater.");
             goto ERR;
         }
+    }
+
+    glue_updater->wt_updater = glue_init_wt_updater(glue, NULL);
+    if (glue_updater->wt_updater == NULL) {
+        ST_WARNING("Failed to init_wt_updater for glue updater.");
+        goto ERR;
     }
 
     return glue_updater;

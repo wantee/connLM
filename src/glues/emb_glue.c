@@ -123,3 +123,28 @@ int emb_glue_init_data(glue_t *glue, input_t *input,
 
     return 0;
 }
+
+wt_updater_t* emb_glue_init_wt_updater(glue_t *glue, param_t *param)
+{
+    wt_updater_t *wt_updater = NULL;
+
+    ST_CHECK_PARAM(glue == NULL, NULL);
+
+    if (strcasecmp(glue->type, EMB_GLUE_NAME) != 0) {
+        ST_WARNING("Not a emb glue. [%s]", glue->type);
+        return NULL;
+    }
+
+    wt_updater = wt_updater_create(param == NULL ? &glue->param : param,
+            glue->wt->mat, glue->wt->row, glue->wt->col, WT_UT_ONE_SHOT);
+    if (wt_updater == NULL) {
+        ST_WARNING("Failed to wt_updater_create.");
+        goto ERR;
+    }
+
+    return wt_updater;
+
+ERR:
+    safe_wt_updater_destroy(wt_updater);
+    return NULL;
+}

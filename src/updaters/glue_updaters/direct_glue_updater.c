@@ -196,13 +196,6 @@ int direct_glue_updater_init(glue_updater_t *glue_updater)
         return -1;
     }
 
-    glue_updater->wt_updater = wt_updater_create(&glue->param, glue->wt->mat,
-            glue->wt->row, glue->wt->col, WT_UT_PART);
-    if (glue_updater->wt_updater == NULL) {
-        ST_WARNING("Failed to wt_updater_create.");
-        goto ERR;
-    }
-
     glue_updater->extra = (void *)dgu_data_init(glue_updater);
     if (glue_updater->extra == NULL) {
         ST_WARNING("Failed to dgu_data_init.");
@@ -213,7 +206,6 @@ int direct_glue_updater_init(glue_updater_t *glue_updater)
 
 ERR:
     safe_dgu_data_destroy(glue_updater->extra);
-    wt_updater_destroy(glue_updater->wt_updater);
     return -1;
 }
 

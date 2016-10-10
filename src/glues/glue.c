@@ -43,19 +43,19 @@ static glue_impl_t GLUE_IMPL[] = {
     {DIRECT_GLUE_NAME, direct_glue_init, direct_glue_destroy, direct_glue_dup,
         direct_glue_parse_topo, direct_glue_check, direct_glue_draw_label,
         NULL, NULL, NULL, NULL,
-        direct_glue_init_data},
+        direct_glue_init_data, direct_glue_init_wt_updater},
     {FC_GLUE_NAME, NULL, NULL, NULL,
         fc_glue_parse_topo, fc_glue_check, NULL,
         NULL, NULL, NULL, NULL,
-        fc_glue_init_data},
+        fc_glue_init_data, fc_glue_init_wt_updater},
     {EMB_GLUE_NAME, NULL, NULL, NULL,
         emb_glue_parse_topo, emb_glue_check, NULL,
         NULL, NULL, NULL, NULL,
-        emb_glue_init_data},
+        emb_glue_init_data, emb_glue_init_wt_updater},
     {OUT_GLUE_NAME, NULL, NULL, NULL,
         out_glue_parse_topo, out_glue_check, NULL,
         NULL, NULL, NULL, NULL,
-        out_glue_init_data},
+        out_glue_init_data, out_glue_init_wt_updater},
 };
 
 static glue_impl_t* glue_get_impl(const char *type)
@@ -654,6 +654,27 @@ int glue_init_data(glue_t *glue, input_t *input,
     }
 
     return 0;
+}
+
+wt_updater_t* glue_init_wt_updater(glue_t *glue, param_t *param)
+{
+    wt_updater_t *wt_updater = NULL;
+
+    ST_CHECK_PARAM(glue == NULL, NULL);
+
+    if (glue->impl != NULL && glue->impl->init_wt_updater != NULL) {
+        wt_updater = glue->impl->init_wt_updater(glue, param);
+        if (wt_updater == NULL) {
+            ST_WARNING("Failed to glue->impl->init_wt_updater.[%s]",
+                    glue->name);
+            goto ERR;
+        }
+    }
+
+    return wt_updater;
+
+ERR:
+    return NULL;
 }
 
 int glue_load_train_opt(glue_t *glue, st_opt_t *opt, const char *sec_name,

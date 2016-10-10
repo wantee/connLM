@@ -35,33 +35,6 @@
 
 #include "out_glue_updater.h"
 
-int out_glue_updater_init(glue_updater_t *glue_updater)
-{
-    glue_t *glue;
-
-    ST_CHECK_PARAM(glue_updater == NULL, -1);
-
-    glue = glue_updater->glue;
-
-    if (strcasecmp(glue->type, OUT_GLUE_NAME) != 0) {
-        ST_WARNING("Not a out glue_updater. [%s]", glue->type);
-        return -1;
-    }
-
-    glue_updater->wt_updater = wt_updater_create(&glue->param, glue->wt->mat,
-            glue->wt->row, glue->wt->col, WT_UT_SEG);
-    if (glue_updater->wt_updater == NULL) {
-        ST_WARNING("Failed to wt_updater_create.");
-        goto ERR;
-    }
-
-    return 0;
-
-ERR:
-    wt_updater_destroy(glue_updater->wt_updater);
-    return -1;
-}
-
 static int out_glue_updater_forward_node(glue_updater_t *glue_updater,
         output_t *output, output_node_id_t child_s, output_node_id_t child_e,
         real_t *in_ac, real_t *out_ac, real_t scale)

@@ -40,6 +40,8 @@ extern "C" {
 #include "weight.h"
 #include "param.h"
 
+#include "updaters/wt_updater.h"
+
 /** @defgroup g_glue NNet glue.
  * Data structures and functions for NNet glue.
  */
@@ -84,6 +86,10 @@ typedef struct _glue_implementation_t_ {
 
     int (*init_data)(glue_t *glue, input_t *input,
             layer_t **layers, output_t *output); /**< init data of glue. */
+
+    wt_updater_t* (*init_wt_updater)(glue_t *glue,
+            param_t *param); /**< init wt_updater for glue.*/
+
 } glue_impl_t;
 
 /**
@@ -251,6 +257,15 @@ char* glue_draw_label_one(glue_t *glue, int lid,
  */
 int glue_init_data(glue_t *glue, input_t *input,
         layer_t **layers, output_t *output);
+
+/**
+ * Initialize wt_updater for glue.
+ * @ingroup g_glue
+ * @param[in] glue the glue.
+ * @param[in] param param used for initialising, if not NULL.
+ * @return wt_updater on success, otherwise NULL.
+ */
+wt_updater_t* glue_init_wt_updater(glue_t *glue, param_t *param);
 
 /**
  * Load glue train option.

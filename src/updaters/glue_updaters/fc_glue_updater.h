@@ -34,18 +34,10 @@ extern "C" {
 #include "../../glues/fc_glue.h"
 #include "glue_updater.h"
 
-/** @defgroup g_glue_updater_wt full-connected glue_updater.
+/** @defgroup g_glue_updater_fc full-connected glue_updater.
  * @ingroup g_updater
  * Data structures and functions for fc glue_updater.
  */
-
-/**
- * Initialize a fc glue_updater.
- * @ingroup g_glue_updater_wt
- * @param[in] glue_updater fc glue_updater to be initialized.
- * @return non-zero if any error
- */
-int fc_glue_updater_init(glue_updater_t *glue_updater);
 
 /**
  * Feed-forward one word for a fc_glue_updater.
