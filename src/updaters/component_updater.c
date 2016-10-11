@@ -131,8 +131,7 @@ int comp_updater_setup(comp_updater_t *comp_updater, bool backprop)
 {
     component_t *comp;
     layer_updater_t **layer_updaters;
-    wt_updater_t *wt_updater;
-    int i, j, g;
+    int i;
 
     ST_CHECK_PARAM(comp_updater == NULL, -1);
 
@@ -170,22 +169,6 @@ int comp_updater_setup(comp_updater_t *comp_updater, bool backprop)
                     ST_WARNING("Failed to bptt_updater_create.[%d][%s]", i,
                             comp->glues[comp->glue_cycles[i][1]]->name);
                     goto ERR;
-                }
-                // NOTE: To correctly BPTT, _BATCH_UPDATE_ must be defined
-                // we must make sure mini_batch is at least 1,
-                // so that the bptt could be batch updated.
-                g = comp->glue_cycles[i][1];
-                for (j = 1; j <= comp->glue_cycles[i][0]; j++) {
-                    g = comp->glue_cycles[i][j];
-                    wt_updater = comp_updater->glue_updaters[g]->wt_updater;
-                    if (wt_updater->param.mini_batch <= 0) {
-                        wt_updater->param.mini_batch = 1;
-                        if (wt_updater_init(wt_updater) < 0) {
-                            ST_WARNING("Failed to re-init wt_updater[%s].",
-                                    comp->glues[g]->name);
-                            goto ERR;
-                        }
-                    }
                 }
             }
         }
@@ -346,7 +329,7 @@ static int comp_updater_bptt(comp_updater_t *comp_updater, bool clear)
                         return -1;
                     }
 
-                    wt_updater = comp_updater->glue_updaters[g]->wt_updater;
+                    wt_updater = bptt_updater->wt_updaters[j];
                     // propagate error to next glue
                     if (j < comp->glue_cycles[i][0] || t - 1 >= 0) {
                         memset(in_er, 0, sizeof(real_t) * in_sz);
@@ -360,9 +343,6 @@ static int comp_updater_bptt(comp_updater_t *comp_updater, bool clear)
                     // the recur glue should not be embedding or output or
                     // direct, so the parameters to wt_update only involves
                     // in_ac and out_er
-                    // NOTE: To correctly BPTT, _BATCH_UPDATE_ must be defined
-                    // FIXME: do we need to use params of RECUR_HEAD glue
-                    // to update all glues in the same cycle ?
                     if (wt_update(wt_updater, NULL, -1, out_er, 1.0,
                                 in_ac, 1.0, NULL) < 0) {
                         ST_WARNING("Failed to wt_update.");
@@ -372,9 +352,7 @@ static int comp_updater_bptt(comp_updater_t *comp_updater, bool clear)
             }
 
             for (j = 1; j <= comp->glue_cycles[i][0]; j++) {
-                g = comp->glue_cycles[i][j];
-
-                wt_updater = comp_updater->glue_updaters[g]->wt_updater;
+                wt_updater = bptt_updater->wt_updaters[j];
                 if (wt_flush(wt_updater, false) < 0) {
                     ST_WARNING("Failed to wt_flush.");
                     return -1;

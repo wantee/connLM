@@ -47,6 +47,7 @@ extern "C" {
 typedef struct _bptt_updater_t_ {
     bptt_opt_t bptt_opt; /**< bptt option. */
 
+    wt_updater_t **wt_updaters; /**< wt_updater for every glue. */
     int num_glue; /**< number of glue in this cycle. */
     real_t **ac_bptt; /**< buffer of activation for BPTT in cycle. one-based. */
     int num_ac_bptt; /**< number time stpes filled in ac_bptt. */

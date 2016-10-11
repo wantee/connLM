@@ -47,14 +47,22 @@ void bptt_updater_destroy(bptt_updater_t *bptt_updater)
 
     if (bptt_updater->er_bptt != NULL) {
         for (i = 1; i <= bptt_updater->num_glue; i++) {
-        safe_st_aligned_free(bptt_updater->er_bptt[i]);
+            safe_st_aligned_free(bptt_updater->er_bptt[i]);
         }
         safe_free(bptt_updater->er_bptt);
+    }
+
+    if (bptt_updater->wt_updaters != NULL) {
+        for (i = 1; i <= bptt_updater->num_glue; i++) {
+            safe_wt_updater_destroy(bptt_updater->wt_updaters[i]);
+        }
+        safe_free(bptt_updater->wt_updaters);
     }
 }
 
 bptt_updater_t* bptt_updater_create(component_t *comp, int cycle_id)
 {
+    param_t param;
     bptt_updater_t *bptt_updater = NULL;
     glue_t *glue;
     int g, i, bptt, bptt_delay, sz;
@@ -73,12 +81,40 @@ bptt_updater_t* bptt_updater_create(component_t *comp, int cycle_id)
     bptt_updater->bptt_opt = comp->glues[g]->bptt_opt;
     bptt = bptt_updater->bptt_opt.bptt;
     bptt_delay = bptt_updater->bptt_opt.bptt_delay;
+    param = comp->glues[g]->param;
+
     bptt_updater->num_glue = comp->glue_cycles[cycle_id][1];
 
-    bptt_updater->ac_bptt = (real_t **)malloc(sizeof(real_t *)
-            * (bptt_updater->num_glue + 1));
-    bptt_updater->er_bptt = (real_t **)malloc(sizeof(real_t *)
-            * (bptt_updater->num_glue + 1));
+    sz = sizeof(real_t *) * (bptt_updater->num_glue + 1);
+    bptt_updater->ac_bptt = (real_t **)malloc(sz);
+    if (bptt_updater->ac_bptt == NULL) {
+        ST_WARNING("Failed to malloc ac_bptt.");
+        goto ERR;
+    }
+    memset(bptt_updater->ac_bptt, 0, sz);
+
+    bptt_updater->er_bptt = (real_t **)malloc(sz);
+    if (bptt_updater->er_bptt == NULL) {
+        ST_WARNING("Failed to malloc er_bptt.");
+        goto ERR;
+    }
+    memset(bptt_updater->er_bptt, 0, sz);
+
+    sz = sizeof(wt_updater_t *) * (bptt_updater->num_glue + 1);
+    bptt_updater->wt_updaters = (wt_updater_t **)malloc(sz);
+    if (bptt_updater->wt_updaters == NULL) {
+        ST_WARNING("Failed to malloc wt_updaters.");
+        goto ERR;
+    }
+    memset(bptt_updater->wt_updaters, 0, sz);
+
+    // NOTE: To correctly BPTT, _BATCH_UPDATE_ must be defined
+    // we must make sure mini_batch is at least 1,
+    // so that the bptt could be batch updated.
+    if (param.mini_batch <= 0) {
+        param.mini_batch = 1;
+    }
+
     for (i = 1; i <= bptt_updater->num_glue; i++) {
         g = comp->glue_cycles[cycle_id][i];
         glue = comp->glues[g];
@@ -99,6 +135,12 @@ bptt_updater_t* bptt_updater_create(component_t *comp, int cycle_id)
             goto ERR;
         }
         memset(bptt_updater->er_bptt[i], 0, sz);
+
+        bptt_updater->wt_updaters[i] = glue_init_wt_updater(glue, &param);
+        if (bptt_updater->wt_updaters[i] == NULL) {
+            ST_WARNING("Failed to init_wt_updater[%s].", glue->name);
+            goto ERR;
+        }
     }
 
     return bptt_updater;
