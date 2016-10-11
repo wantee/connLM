@@ -60,6 +60,9 @@ void comp_updater_destroy(comp_updater_t *comp_updater)
         safe_free(comp_updater->bptt_updaters);
     }
 
+    safe_st_aligned_free(comp_updater->bptt_er0);
+    safe_st_aligned_free(comp_updater->bptt_er1);
+
     comp_updater->comp = NULL;
     comp_updater->out_updater = NULL;
 }
@@ -131,7 +134,8 @@ int comp_updater_setup(comp_updater_t *comp_updater, bool backprop)
 {
     component_t *comp;
     layer_updater_t **layer_updaters;
-    int i;
+    glue_t *glue;
+    int i, j, g, sz;
 
     ST_CHECK_PARAM(comp_updater == NULL, -1);
 
@@ -171,6 +175,31 @@ int comp_updater_setup(comp_updater_t *comp_updater, bool backprop)
                     goto ERR;
                 }
             }
+
+            sz = 0;
+            for (i = 0; i < comp->num_glue_cycle; i++) {
+                for (j = 1; j <= comp->glue_cycles[i][0]; j++) {
+                    g = comp->glue_cycles[i][j];
+                    glue = comp->glues[g];
+                    if (comp->layers[glue->in_layer]->size > sz) {
+                        sz = comp->layers[glue->in_layer]->size;
+                    }
+                    if (comp->layers[glue->out_layer]->size > sz) {
+                        sz = comp->layers[glue->out_layer]->size;
+                    }
+                }
+            }
+            sz *= sizeof(real_t);
+            comp_updater->bptt_er0 = st_aligned_malloc(sz, ALIGN_SIZE);
+            if (comp_updater->bptt_er0 == NULL) {
+                ST_WARNING("Failed to st_aligned_malloc bptt_er0.");
+                goto ERR;
+            }
+            comp_updater->bptt_er1 = st_aligned_malloc(sz, ALIGN_SIZE);
+            if (comp_updater->bptt_er1 == NULL) {
+                ST_WARNING("Failed to st_aligned_malloc bptt_er1.");
+                goto ERR;
+            }
         }
     }
 
@@ -183,6 +212,8 @@ ERR:
         }
         safe_free(comp_updater->bptt_updaters);
     }
+    safe_st_aligned_free(comp_updater->bptt_er0);
+    safe_st_aligned_free(comp_updater->bptt_er1);
 
     return -1;
 }
@@ -196,7 +227,7 @@ static int comp_updater_bptt(comp_updater_t *comp_updater, bool clear)
     glue_t *glue;
     bptt_updater_t *bptt_updater;
 
-    real_t *in_er, *out_er, *in_ac, *out_ac;
+    real_t *in_er, *out_er, *in_ac, *out_ac, *tmp;
     int bptt, bptt_delay;
     int i, j, g, t, ii, er_t, in_sz, out_sz;
 
@@ -288,17 +319,26 @@ static int comp_updater_bptt(comp_updater_t *comp_updater, bool clear)
 
                     if (t == bptt_updater->num_ac_bptt - 1 && j == 1) {
                         // using values in current timestep
-                        out_er = layer_updaters[glue->out_layer]->er;
-                        memset(out_er, 0, out_sz * sizeof(real_t));
                         out_ac = layer_updaters[glue->out_layer]->ac;
+
+                        // we can not use in_ or out_layer_updater->er as
+                        // buffer, since it could be the case that
+                        // glue->in_layer == glue->out_layer, then
+                        // in_er and out_er would be the same.
+                        in_er = comp_updater->bptt_er0;
+                        out_er = comp_updater->bptt_er1;
+                        memset(out_er, 0, out_sz * sizeof(real_t));
                     } else {
                         // the glues in a cycle is joined one-by-one,
                         // the output of one glue is the input of the prev glue
                         out_ac = in_ac;
+
+                        // exchange in_er and out_er
+                        tmp = out_er;
                         out_er = in_er;
+                        in_er = tmp;
                     }
                     in_ac = bptt_updater->ac_bptt[j] + (t * in_sz);
-                    in_er = layer_updaters[glue->in_layer]->er;
 
                     er_t = t - bptt_updater->num_ac_bptt
                              + bptt_updater->num_er_bptt;

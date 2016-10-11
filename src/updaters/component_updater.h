@@ -57,6 +57,9 @@ typedef struct _component_updater_t_ {
     int bptt_step; /**< bptt step in one sentence. */
     bptt_updater_t **bptt_updaters; /**< bptt updater. Every cycle in
                                       comp->glue_cycles has one bptt_updater. */
+
+    real_t *bptt_er0; /**< buffer for er used by BPTT. */
+    real_t *bptt_er1; /**< buffer for er used by BPTT. */
 } comp_updater_t;
 
 /**
