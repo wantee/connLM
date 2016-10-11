@@ -1,18 +1,18 @@
 /*
  * The MIT License (MIT)
- * 
+ *
  * Copyright (c) 2015 Wang Jian
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in all
  * copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -44,7 +44,7 @@ int vocab_load_opt(vocab_opt_t *vocab_opt, st_opt_t *opt,
     memset(vocab_opt, 0, sizeof(vocab_opt_t));
 
     ST_OPT_SEC_GET_INT(opt, sec_name, "MAX_ALPHABET_SIZE",
-        vocab_opt->max_alphabet_size, 10000000,
+        vocab_opt->max_alphabet_size, 1000000,
         "Maximum size of alphabet for vocab.");
 
     return 0;
@@ -397,7 +397,7 @@ typedef struct _word_info_t_ {
     count_t cnt;
 } word_info_t;
 
-int word_info_comp(const void *elem1, const void *elem2, void *args) 
+int word_info_comp(const void *elem1, const void *elem2, void *args)
 {
     word_info_t *f = (word_info_t *)elem1;
     word_info_t *s = (word_info_t *)elem2;
