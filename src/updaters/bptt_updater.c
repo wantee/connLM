@@ -136,6 +136,9 @@ bptt_updater_t* bptt_updater_create(component_t *comp, int cycle_id)
         }
         memset(bptt_updater->er_bptt[i], 0, sz);
 
+        // FIXME: when sync_size > 0, the wt_updaters for the same glue
+        // in the cycle could be *Non-Synchronized*, which may lead to
+        // worse performance.
         bptt_updater->wt_updaters[i] = glue_init_wt_updater(glue, &param);
         if (bptt_updater->wt_updaters[i] == NULL) {
             ST_WARNING("Failed to init_wt_updater[%s].", glue->name);

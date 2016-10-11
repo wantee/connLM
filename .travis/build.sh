@@ -61,4 +61,9 @@ elif [ $TRAVIS_BRANCH == 'bptt' ]; then
     echo "Testing RNN related cases"
     (cd egs/tiny; shu-testing 15-18);
   fi
+
+  if [ $CASE -eq 6 ]; then
+    echo "Testing crossing-RNN related cases"
+    (cd egs/tiny; shu-testing 19-22);
+  fi
 fi
