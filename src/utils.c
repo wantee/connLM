@@ -192,34 +192,26 @@ void matXmat(real_t *C, real_t *A, real_t *B, int m, int n, int k,
 #ifdef _USE_BLAS_
     cblas_gemm(CblasRowMajor, CblasTrans, CblasNoTrans, m, n, k,
             alpha, A, m, B, n, beta, C, n);
-#elif defined(_PARAM_UPDATE_UNROLL_)
-    int i, j;
-
-    for (j = 0; j < m; j++) {
-        for (i = 0; i < n / N * N; i+=N) {
-            C[i + 0] = alpha * A[j] * B[i + 0] + beta * C[i + 0];
-            C[i + 1] = alpha * A[j] * B[i + 1] + beta * C[i + 1];
-            C[i + 2] = alpha * A[j] * B[i + 2] + beta * C[i + 2];
-            C[i + 3] = alpha * A[j] * B[i + 3] + beta * C[i + 3];
-
-            C[i + 4] = alpha * A[j] * B[i + 4] + beta * C[i + 4];
-            C[i + 5] = alpha * A[j] * B[i + 5] + beta * C[i + 5];
-            C[i + 6] = alpha * A[j] * B[i + 6] + beta * C[i + 6];
-            C[i + 7] = alpha * A[j] * B[i + 7] + beta * C[i + 7];
-        }
-        for (; i < n; i++) {
-            C[i] = alpha * A[j] * B[i] + beta * C[i];
-        }
-        C += n;
-    }
 #else
-    int i, j;
+    real_t *cc;
+    int i, j, t;
 
-    for (j = 0; j < m; j++) {
-        for (i = 0; i < n; i++) {
-            C[i] = alpha * A[j] * B[i] + beta * C[i];
+    if (beta != 1.0) {
+        for (i = 0; i < m * n; i++) {
+            C[i] = beta * C[i];
         }
-        C += n;
+    }
+
+    for (t = 0; t < k; t++) {
+        cc = C;
+        for (j = 0; j < m; j++) {
+            for (i = 0; i < n; i++) {
+                cc[i] += alpha * A[j] * B[i];
+            }
+            cc += n;
+        }
+        A += m;
+        B += n;
     }
 #endif
 }
