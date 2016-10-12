@@ -22,16 +22,16 @@
  * SOFTWARE.
  */
 
-#ifndef  _MAXENT_H_
-#define  _MAXENT_H_
+#ifndef  _CONNLM_MAXENT_H_
+#define  _CONNLM_MAXENT_H_
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#include <st_opt.h>
+#include <stutils/st_opt.h>
 
-#include "config.h"
+#include <connlm/config.h>
 #include "param.h"
 #include "output.h"
 

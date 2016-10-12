@@ -13,4 +13,3 @@ else
     grep -E -o "$pattern" \
       | tail -n 1 | awk -F"[:]" '{print $2}' | sed 's/^\s*|\s*$//g'
 fi
-

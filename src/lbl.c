@@ -28,9 +28,9 @@
 #include <math.h>
 #include <sys/time.h>
 
-#include <st_macro.h>
-#include <st_utils.h>
-#include <st_log.h>
+#include <stutils/st_macro.h>
+#include <stutils/st_utils.h>
+#include <stutils/st_log.h>
 
 #include "lbl.h"
 
@@ -458,4 +458,3 @@ int lbl_end_gen(lbl_t *lbl, int word)
 {
     return lbl_end_test(lbl, word, 0);
 }
-

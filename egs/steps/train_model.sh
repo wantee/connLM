@@ -2,9 +2,9 @@
 
 # Begin configuration section.
 train_config=./conf/train.conf
-test_config=./conf/test.conf
+eval_config=./conf/eval.conf
 train_threads=1
-test_threads=1
+eval_threads=1
 max_iters=50
 min_iters=0 # keep training, disable weight rejection, start learn-rate halving as usual,
 keep_lr_iters=0 # fix learning rate for N initial epochs,
@@ -20,10 +20,10 @@ function print_help()
   echo "e.g.: $0 data/train data/valid exp/rnn"
   echo "options: "
   echo "     --train-config <config-file>         # default: ./conf/train.conf, trian config file."
-  echo "     --test-config <config-file>          # default: ./conf/test.conf, valid config file."
+  echo "     --eval-config <config-file>          # default: ./conf/eval.conf, valid config file."
   echo "     --max-iters <number>                 # default: 20, maximum number of iterations"
   echo "     --train-threads <number>             # default: 1, number of training threads"
-  echo "     --test-threads <number>              # default: 1, number of testing threads"
+  echo "     --eval-threads <number>              # default: 1, number of evaluating threads"
   echo "     --min-iters <number>                 # default: 0, minimum number of iterations"
   echo "     --keep-lr-iters <number>             # default: 0, fix learning rate for N initial iterations"
   echo "     --start-halving-impr <value>         # default: 0.01, improvement starting halving"
@@ -38,8 +38,8 @@ help_message=`print_help`
 
 . ../utils/parse_options.sh || exit 1
 
-if [ $# -ne 3 ]; then 
-  print_help 1>&2 
+if [ $# -ne 3 ]; then
+  print_help 1>&2
   exit 1;
 fi
 
@@ -50,28 +50,25 @@ mdl_init=init.clm
 
 begin_date=`date +"%Y-%m-%d %H:%M:%S"`
 begin_ts=`date +%s`
-log_dir=$dir/log
+log_dir="$dir/log"
 
-if [ ! -e $dir/.learn_rate ]; then
+if [ ! -e "$dir/.learn_rate" ]; then
   shu-run connlm-train --dry-run=true --log-file="$log_dir/conf.log" \
-             --config="$train_config" || exit 1
-  shu-run ../utils/parse_lr.pl < "$log_dir/conf.log" > "$dir/.learn_rate" \
-    || exit 1
+             --config="$train_config" "$dir/$mdl_init" || exit 1
+  shu-run "connlm-info --log-file=/dev/null $dir/$mdl_init \
+          | ../utils/get_wt_names.pl > $dir/.wt.names" || exit 1
+  shu-run "../utils/parse_lr.pl $dir/.wt.names < $log_dir/conf.log \
+          > $dir/.learn_rate" || exit 1
 fi
 
-lr_rnn=$(sed -n '1p' $dir/.learn_rate)
-lr_maxent=$(sed -n '2p' $dir/.learn_rate)
-lr_lbl=$(sed -n '3p' $dir/.learn_rate)
-lr_ffnn=$(sed -n '4p' $dir/.learn_rate)
+mdl_best="$mdl_init"
+[ -e "$dir/.mdl_best" ] && mdl_best="$(cat $dir/.mdl_best)"
 
-mdl_best=$mdl_init
-[ -e $dir/.mdl_best ] && mdl_best=$(cat $dir/.mdl_best)
-
-shu-run connlm-test --log-file="$log_dir/valid.prerun.log" \
-           --config="$test_config" \
-           --num-thread=$test_threads \
+shu-run connlm-eval --log-file="$log_dir/valid.prerun.log" \
+           --config="$eval_config" \
+           --num-thread=$eval_threads \
            "$dir/$mdl_best" "$valid_file" \
-|| exit 1; 
+|| exit 1;
 
 loss=`../utils/get_value.sh "Entropy" $log_dir/valid.prerun.log`
 echo "Prerun Valid Entropy: $(printf "%.6f" $loss)"
@@ -84,18 +81,20 @@ for iter in $(seq -w $max_iters); do
   echo -n "ITERATION $iter: "
   mdl_next=${iter}.clm
 
-  [ -e $dir/.done_iter$iter ] && echo -n "skipping... " && ls $dir/$mdl_next* && continue 
-  
+  [ -e $dir/.done_iter$iter ] && echo -n "skipping... " && ls $dir/$mdl_next* && continue
+
+  lrs=$(cat "$dir/.learn_rate")
+
+  plrs=$(echo `sed -e 's/^--//;s/\^learn-rate=/=/' $dir/.learn_rate`)
+  echo -n "LR($plrs), "
+
   shu-run connlm-train --log-file="$log_dir/train.${iter}.log" \
              --config="$train_config" \
              --num-thread=$train_threads \
-             --rnn^learn-rate=$lr_rnn \
-             --maxent^learn-rate=$lr_maxent \
-             --lbl^learn-rate=$lr_lbl \
-             --ffnn^learn-rate=$lr_ffnn \
-             --random-seed=$rand_seed \
-             "$train_file" "$dir/$mdl_best" "$dir/$mdl_next" \
-  || exit 1; 
+             $lrs \
+             --reader^random-seed=$rand_seed \
+             "$dir/$mdl_best" "$train_file" "$dir/$mdl_next" \
+  || exit 1;
 
   rand_seed=$((rand_seed+1))
 
@@ -103,16 +102,14 @@ for iter in $(seq -w $max_iters); do
   wpc=`../utils/get_value.sh "words/sec" $log_dir/train.${iter}.log`
   wpc=`bc <<< "scale=1; $wpc / 1000"`k
   echo -n "TrEnt $(printf "%.6f" $tr_loss), "
-  echo -n "lr($(printf "%.6g" $lr_rnn)/$(printf "%.6g" $lr_maxent)"
-  echo -n "/$(printf "%.6g" $lr_lbl)/$(printf "%.6g" $lr_ffnn)), "
   echo -n "W/s $wpc, "
-  
-  shu-run connlm-test --log-file="$log_dir/valid.${iter}.log" \
-             --config="$test_config" \
-             --num-thread=$test_threads \
+
+  shu-run connlm-eval --log-file="$log_dir/valid.${iter}.log" \
+             --config="$eval_config" \
+             --num-thread=$eval_threads \
              "$dir/$mdl_next" "$valid_file" \
-  || exit 1; 
-  
+  || exit 1;
+
   loss_new=`../utils/get_value.sh "Entropy" $log_dir/valid.${iter}.log`
   echo "CVEnt: $(printf "%.6f" $loss_new)"
 
@@ -122,16 +119,17 @@ for iter in $(seq -w $max_iters); do
     loss=$loss_new
     mdl_best=$mdl_next
     echo "nnet accepted ($mdl_best)"
-    echo $mdl_best > $dir/.mdl_best 
+    echo $mdl_best > $dir/.mdl_best
   else
     echo "nnet rejected ($mdl_next)"
   fi
 
   # create .done file as a mark that iteration is over
   touch $dir/.done_iter$iter
-  
+  cp "$dir/.learn_rate" "$dir/.learn_rate.$iter" || exit 1
+
   # no learn-rate halving yet, if keep_lr_iters set accordingly
-  [ $iter -le $keep_lr_iters ] && continue 
+  [ $iter -le $keep_lr_iters ] && continue
 
   # stopping criterion
   rel_impr=$(bc <<< "scale=10; ($loss_prev-$loss)/$loss_prev")
@@ -149,22 +147,16 @@ for iter in $(seq -w $max_iters); do
     halving=1
     echo $halving >$dir/.halving
   fi
-  
+
   # do annealing
   if [ 1 == $halving ]; then
-    lr_rnn=$(awk "BEGIN{print($lr_rnn*$halving_factor)}")
-    lr_maxent=$(awk "BEGIN{print($lr_maxent*$halving_factor)}")
-    lr_lbl=$(awk "BEGIN{print($lr_lbl*$halving_factor)}")
-    lr_ffnn=$(awk "BEGIN{print($lr_ffnn*$halving_factor)}")
-    echo $lr_rnn > $dir/.learn_rate
-    echo $lr_maxent >> $dir/.learn_rate
-    echo $lr_lbl >> $dir/.learn_rate
-    echo $lr_ffnn >> $dir/.learn_rate
+    ../utils/scale_lr.pl $halving_factor < "$dir/.learn_rate.$iter" \
+        > "$dir/.learn_rate" || exit 1
   fi
 done
 
 # select the best network
-if [ $mdl_best != $mdl_init ]; then 
+if [ $mdl_best != $mdl_init ]; then
   ( cd $dir; ln -sf $mdl_best final.clm; )
   echo "$0: Succeeded training the Neural Network : $dir/final.clm"
 else

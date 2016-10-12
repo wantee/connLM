@@ -1,0 +1,8 @@
+name="crossing-RNN with minibatch"
+
+before="./test/test_model_before.sh crossing-rnn mini"
+
+script="./test/test_model_script.sh 6"
+
+normalize="./test/normalize_log.sh"
+compare_normalize=("expected/case-$SHU_CASE.out:test/output/case-$SHU_CASE.out")

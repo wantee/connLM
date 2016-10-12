@@ -28,9 +28,9 @@
 #include <math.h>
 #include <sys/time.h>
 
-#include <st_macro.h>
-#include <st_utils.h>
-#include <st_log.h>
+#include <stutils/st_macro.h>
+#include <stutils/st_utils.h>
+#include <stutils/st_log.h>
 
 #include "utils.h"
 #include "rnn.h"
@@ -1872,4 +1872,3 @@ int rnn_end_gen(rnn_t *rnn, int word)
 {
     return rnn_end_test(rnn, word, 0);
 }
-

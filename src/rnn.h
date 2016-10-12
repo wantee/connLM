@@ -22,16 +22,16 @@
  * SOFTWARE.
  */
 
-#ifndef  _RNN_H_
-#define  _RNN_H_
+#ifndef  _CONNLM_RNN_H_
+#define  _CONNLM_RNN_H_
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#include <st_opt.h>
+#include <stutils/st_opt.h>
 
-#include "config.h"
+#include <connlm/config.h>
 #include "param.h"
 #include "output.h"
 

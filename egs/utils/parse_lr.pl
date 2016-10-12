@@ -3,33 +3,46 @@
 use strict;
 use warnings;
 use Getopt::Long qw(GetOptions);
- 
-my $seed = 1;
+
 my $help;
 GetOptions(
-    'help' => \$help,
-) or die "Usage: $0 < log > lr\n";
- 
+  'help' => \$help,
+) or die "Usage: $0 wt.names < log > lr\n";
+
 if ($help) {
-    die "Usage: $0 < log > lr\n";
+  die "Usage: $0 wt.names < log > lr\n";
 }
 
-my $sec;
+my ($fwt_names) = @ARGV;
+
+open(my $FWT_NAMES, '<', $fwt_names)
+  or die "Could not open file '$fwt_names' $!";
+
+my %wt_names;
+while(my $line = <$FWT_NAMES>) {
+  chomp $line;
+
+  $wt_names{$line} = 1;
+}
+
+my $sec = undef;
 my %lrs;
 while(my $line = <STDIN>) {
-    chomp $line;
+  chomp $line;
 
-    if ($line =~ m/\[(.*)\]/) {
-        $sec = $1;
-    }
+  if ($line =~ m/\[(.*)\]/) {
+    $sec = lc($1);
+  }
 
-    if ($line =~ m/LEARN_RATE : ([0-9\.]+)/) {
-        $lrs{$sec} = $1;
-    }
+  if ($line =~ m/LEARN_RATE\s*:([^}]+)/i) {
+    $lrs{$sec} = $1 + 0.0;
+  }
 }
 
-print $lrs{"RNN"} . "\n";
-print $lrs{"MAXENT"} . "\n";
-print $lrs{"LBL"} . "\n";
-print $lrs{"FFNN"} . "\n";
-
+for my $sec (sort keys(%lrs)) {
+  if ($wt_names{$sec}) {
+    my $lr = $lrs{$sec};
+    $sec =~ s!/!^!g;
+    print "--$sec^learn-rate=$lr\n";
+  }
+}

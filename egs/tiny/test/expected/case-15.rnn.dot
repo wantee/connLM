@@ -1,0 +1,101 @@
+digraph network {
+  rankdir=BT;
+  labelloc=t;
+  label="Network";
+
+  subgraph cluster_overview {
+    label="Overview";
+    node [shape=plaintext, style=solid];
+    edge [style=invis];
+
+    legend [label="# Compnoent: 1\lVocab size: 3722\lCycle #0: recur3 -> ff3 -> ff2\lCycle #1: recur4 -> ff3\lCycle #2: recur2 -> ff2 -> ff1\lCycle #3: recur5 -> ff2\lCycle #4: recur1\l"];
+  }
+
+  subgraph cluster_structure {
+    label="";
+
+    output [shape=triangle, orientation=180];
+    node[shape=box,fixedsize=false];
+    input_rnn [label="rnn/size=3722,ctx={-1:1},combine=Concat"];
+    layer_rnn_hidden1 [label="hidden1/type=sigmoid,size=16"];
+    layer_rnn_hidden2 [label="hidden2/type=sigmoid,size=16"];
+    layer_rnn_hidden3 [label="hidden3/type=sigmoid,size=16"];
+    layer_rnn_hidden4 [label="hidden4/type=sigmoid,size=16"];
+
+    node[shape=circle];
+    glue_rnn_emb [label="emb/type=emb\n0"];
+    input_rnn -> glue_rnn_emb [label=""];
+    glue_rnn_emb -> layer_rnn_hidden1 [label=""];
+
+    node[color=blue,fontcolor=blue];
+    edge[color=blue];
+    glue_rnn_ff1 [label="ff1/type=fc\n4"];
+    layer_rnn_hidden1 -> glue_rnn_ff1 [label=""];
+    glue_rnn_ff1 -> layer_rnn_hidden2 [label=""];
+    node[color=black,fontcolor=black];
+    edge[color=black];
+
+    node[color=blue,fontcolor=blue];
+    edge[color=blue];
+    glue_rnn_ff2 [label="ff2/type=fc\n7"];
+    layer_rnn_hidden2 -> glue_rnn_ff2 [label=""];
+    glue_rnn_ff2 -> layer_rnn_hidden3 [label=""];
+    node[color=black,fontcolor=black];
+    edge[color=black];
+
+    node[color=blue,fontcolor=blue];
+    edge[color=blue];
+    glue_rnn_ff3 [label="ff3/type=fc\n8"];
+    layer_rnn_hidden3 -> glue_rnn_ff3 [label=""];
+    glue_rnn_ff3 -> layer_rnn_hidden4 [label=""];
+    node[color=black,fontcolor=black];
+    edge[color=black];
+
+    node[color=red,fontcolor=red];
+    edge[color=red];
+    glue_rnn_recur1 [label="recur1/type=fc\n1"];
+    layer_rnn_hidden1 -> glue_rnn_recur1 [label=""];
+    glue_rnn_recur1 -> layer_rnn_hidden1 [label=""];
+    node[color=black,fontcolor=black];
+    edge[color=black];
+
+    node[color=red,fontcolor=red];
+    edge[color=red];
+    glue_rnn_recur2 [label="recur2/type=fc\n3"];
+    layer_rnn_hidden3 -> glue_rnn_recur2 [label=""];
+    glue_rnn_recur2 -> layer_rnn_hidden1 [label=""];
+    node[color=black,fontcolor=black];
+    edge[color=black];
+
+    node[color=red,fontcolor=red];
+    edge[color=red];
+    glue_rnn_recur3 [label="recur3/type=fc\n6"];
+    layer_rnn_hidden4 -> glue_rnn_recur3 [label=""];
+    glue_rnn_recur3 -> layer_rnn_hidden2 [label=""];
+    node[color=black,fontcolor=black];
+    edge[color=black];
+
+    node[color=red,fontcolor=red];
+    edge[color=red];
+    glue_rnn_recur4 [label="recur4/type=fc\n2"];
+    layer_rnn_hidden4 -> glue_rnn_recur4 [label=""];
+    glue_rnn_recur4 -> layer_rnn_hidden3 [label=""];
+    node[color=black,fontcolor=black];
+    edge[color=black];
+
+    node[color=red,fontcolor=red];
+    edge[color=red];
+    glue_rnn_recur5 [label="recur5/type=fc\n5"];
+    layer_rnn_hidden3 -> glue_rnn_recur5 [label=""];
+    glue_rnn_recur5 -> layer_rnn_hidden2 [label=""];
+    node[color=black,fontcolor=black];
+    edge[color=black];
+
+    glue_rnn_out [label="out/type=out\n9"];
+    layer_rnn_hidden4 -> glue_rnn_out [label=""];
+    glue_rnn_out -> output [label=""];
+
+
+    { rank=same; input_rnn; }
+  }
+}

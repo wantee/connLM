@@ -20,8 +20,8 @@ help_message=`print_help`
 
 . ../utils/parse_options.sh || exit 1
 
-if [ $# -ne 2 ]; then 
-  print_help 1>&2 
+if [ $# -ne 2 ]; then
+  print_help 1>&2
   exit 1;
 fi
 
@@ -37,14 +37,12 @@ mkdir -p $dir
 
 echo "$0: Learning vocab $model_file from $train_file"
 if [ -z $config_file ]; then
-shu-run cat $train_file | connlm-vocab --log-file=$log_file \
-           - $model_file \
-|| exit 1; 
+shu-run connlm-vocab --log-file=$log_file $train_file $model_file \
+|| exit 1;
 else
-shu-run cat $train_file | connlm-vocab --log-file=$log_file \
-           --config=$config_file \
-           - $model_file \
-|| exit 1; 
+shu-run connlm-vocab --log-file=$log_file --config=$config_file \
+           $train_file $model_file \
+|| exit 1;
 fi
 
 words=`../utils/get_value.sh "Words" $log_file`
@@ -60,4 +58,3 @@ end_ts=`date +%s`
 echo "$0: Elapse time: $(shu-diff-timestamp $begin_ts $end_ts)"
 
 exit 0;
-

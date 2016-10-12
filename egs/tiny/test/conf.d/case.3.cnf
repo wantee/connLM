@@ -1,8 +1,14 @@
-name="MaxEnt with minibatch" 
+name="MaxEnt"
 
-before="rm -rf test/tmp/case-03; mkdir -p test/tmp/case-03; mkdir -p test/output; cp -r conf test/tmp/case-03; perl -i -pe 's/MINI_BATCH[[:space:]]*:[[:space:]]*0/MINI_BATCH : 1/' test/tmp/case-03/conf/maxent/train.conf"
+_model=maxent
+_step=2
 
-script="./run.sh --conf-dir test/tmp/case-03/conf --exp-dir test/tmp/case-03/exp 1,2 > test/output/case-03.out"
+before="./test/test_model_before.sh ${_model}"
+
+script="./test/test_model_script.sh ${_step} ${_model}"
+
+after="./test/test_model_after.sh ${_model}"
 
 normalize="./test/normalize_log.sh"
-compare_normalize=("expected/case-03.out:test/output/case-03.out")
+compare_normalize=("expected/case-$SHU_CASE.out:test/output/case-$SHU_CASE.out")
+compare=("expected/case-$SHU_CASE.gen.txt:test/output/case-$SHU_CASE.gen.txt")

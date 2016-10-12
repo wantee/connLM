@@ -28,9 +28,9 @@
 #include <math.h>
 #include <sys/time.h>
 
-#include <st_macro.h>
-#include <st_utils.h>
-#include <st_log.h>
+#include <stutils/st_macro.h>
+#include <stutils/st_utils.h>
+#include <stutils/st_log.h>
 
 #include "ffnn.h"
 
@@ -459,4 +459,3 @@ int ffnn_end_gen(ffnn_t *ffnn, int word)
 {
     return ffnn_end_test(ffnn, word, 0);
 }
-

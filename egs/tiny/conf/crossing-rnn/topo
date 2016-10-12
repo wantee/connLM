@@ -1,0 +1,13 @@
+<component>
+property name=rnn
+
+input context=-1
+
+layer name=hidden1 size=16 type=sigmoid
+layer name=hidden2 size=16 type=sigmoid
+
+glue name=emb type=emb in=input out=hidden1
+glue name=ff type=fc in=hidden1 out=hidden2
+glue name=recur type=fc in=hidden2 out=hidden1
+glue name=out type=out in=hidden2 out=output
+</component>

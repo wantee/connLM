@@ -1,18 +1,18 @@
 /*
  * The MIT License (MIT)
- * 
+ *
  * Copyright (c) 2015 Wang Jian
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in all
  * copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -28,9 +28,9 @@
 #include <math.h>
 #include <sys/time.h>
 
-#include <st_macro.h>
-#include <st_utils.h>
-#include <st_log.h>
+#include <stutils/st_macro.h>
+#include <stutils/st_utils.h>
+#include <stutils/st_log.h>
 
 #include "maxent.h"
 
@@ -1214,15 +1214,17 @@ static int maxent_union_insert(hash_range_t *range, int *n_range,
 
     n = *n_range;
 
-    if (e < range[0].s) {
-        memmove(range + 1, range, sizeof(hash_range_t)*n);
-        range[0].s = s;
-        range[0].e = e;
-        (*n_range)++;
-        return 0;
-    } else if (e == range[0].s) {
-        range[0].s = s;
-        return 0;
+    if (n > 0) {
+        if (e < range[0].s) {
+            memmove(range + 1, range, sizeof(hash_range_t)*n);
+            range[0].s = s;
+            range[0].e = e;
+            (*n_range)++;
+            return 0;
+        } else if (e == range[0].s) {
+            range[0].s = s;
+            return 0;
+        }
     }
 
     // skip non-intersected sets
@@ -1570,4 +1572,3 @@ int maxent_end_gen(maxent_t *maxent, int word)
 {
     return maxent_end_test(maxent, word, 0);
 }
-

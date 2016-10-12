@@ -1,18 +1,18 @@
 /*
  * The MIT License (MIT)
- * 
+ *
  * Copyright (c) 2015 Wang Jian
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in all
  * copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -29,9 +29,11 @@
 extern "C" {
 #endif
 
-#define CONNLM_VERSION   "0.1"
+#define CONNLM_VERSION   "2.0.0"
 
-#define CONNLM_FILE_VERSION   2
+#define CONNLM_FILE_VERSION   3
+
+#define CONNLM_GIT_COMMIT "0"
 
 #ifndef _USE_DOUBLE_
 #define _USE_DOUBLE_ 0
@@ -50,23 +52,21 @@ typedef unsigned long count_t;
 #define COUNT_MAX ((count_t)-1)
 
 typedef unsigned long long hash_t;
-typedef long long hash_size_t;
-#define HASH_SIZE_FMT "%lld"
+#define HASH_FMT "%llu"
 
 #define ALIGN_SIZE 128
 
-#ifdef _USE_BLAS_
-#  define _MINI_UPDATE_
-#endif
+#define _BATCH_UPDATE_
 
 #define SENT_END "</s>"
 #define SENT_END_ID 0
+#define SENT_START "<s>"
+#define SENT_START_ID 1
 #define UNK "<unk>"
-#define UNK_ID 1
+#define UNK_ID 2
 
 #ifdef __cplusplus
 }
 #endif
 
 #endif
-

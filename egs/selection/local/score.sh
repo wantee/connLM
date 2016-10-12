@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Begin configuration section.
-test_conf=""
+eval_conf=""
 # end configuration sections
 
 echo "$0 $@"  # Print the command line for logging
@@ -10,7 +10,7 @@ function print_help()
   echo "usage: $0 <corpus> <indomain-dir> <general-dir> <score_job>"
   echo "e.g.: $0 data/general.corpus exp/indomain/rnn+maxent/ exp/general/rnn+maxent/"
   echo "options: "
-  echo "     --test-conf <config-file>    # config file for connlm-test."
+  echo "     --eval-conf <config-file>    # config file for connlm-eval."
 }
 
 help_message=`print_help`
@@ -44,9 +44,9 @@ function score_corpus() {
     else
       e=`expr $lines / $score_job \* $i`
     fi
-    ../steps/test_model.sh $opts --test-threads 1 \
+    ../steps/eval_model.sh $opts --eval-threads 1 \
           --out-prob "$score_dir/score.$i.prob" \
-          --test-opts "--print-sent-prob=true --out-log-base=10" \
+          --eval-opts "--print-sent-prob=true --out-log-base=10" \
           --log-file "$score_dir/log/score.$i.log" \
           --pipe-input true \
           "$dir" "sed -n '${s},${e}p' $corpus" \
@@ -79,8 +79,8 @@ function score_corpus() {
 begin_date=`date +"%Y-%m-%d %H:%M:%S"`
 begin_ts=`date +%s`
 
-if [ -z "$test_conf" ]; then
-opts="--config-file $test_conf"
+if [ -z "$eval_conf" ]; then
+opts="--config-file $eval_conf"
 else
 opts=
 fi

@@ -1,0 +1,113 @@
+/*
+ * The MIT License (MIT)
+ *
+ * Copyright (c) 2015 Wang Jian
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
+#include <stutils/st_log.h>
+#include <stutils/st_utils.h>
+
+#include "tanh_layer.h"
+
+void tanh_destroy(layer_t *layer)
+{
+    if (layer == NULL) {
+        return;
+    }
+
+    layer->extra = NULL;
+}
+
+int tanh_init(layer_t *layer)
+{
+    ST_CHECK_PARAM(layer == NULL, -1);
+
+    if (strcasecmp(layer->type, TANH_NAME) != 0) {
+        ST_WARNING("Not a tanh layer. [%s]", layer->type);
+        return -1;
+    }
+
+    layer->extra = NULL;
+
+    return 0;
+}
+
+int tanh_dup(layer_t *dst, layer_t *src)
+{
+    ST_CHECK_PARAM(dst == NULL || src == NULL, -1);
+
+    if (strcasecmp(dst->type, TANH_NAME) != 0) {
+        ST_WARNING("dst is Not a tanh layer. [%s]", dst->type);
+        return -1;
+    }
+
+    if (strcasecmp(src->type, TANH_NAME) != 0) {
+        ST_WARNING("src is Not a tanh layer. [%s]", src->type);
+        return -1;
+    }
+
+    dst->extra = src->extra;
+
+    return 0;
+}
+
+int tanh_parse_topo(layer_t *layer, const char *line)
+{
+    char *p;
+
+    ST_CHECK_PARAM(layer == NULL || line == NULL, -1);
+
+    p = (char *)line;
+    while(*p != '\0') {
+        if (*p != ' ' || *p != '\t') {
+            ST_WARNING("Sigmoid topo should be empty. [%s]", line);
+            return -1;
+        }
+    }
+
+    return 0;
+}
+
+int tanh_activate(layer_t *layer, real_t *vec, int size)
+{
+#if 0
+    tanh_data_t *param;
+
+    ST_CHECK_PARAM(layer == NULL || vec == NULL, -1);
+
+    param = (tanh_data_t *)layer->extra;
+
+    if (param->scale != 1.0) {
+        for (int i = 0; i < size; i++) {
+            vec[i] *= param->scale;
+        }
+    }
+
+#endif
+    return 0;
+}
+
+int tanh_deriv(layer_t *layer, real_t *er, real_t *ac, int size)
+{
+    ST_CHECK_PARAM(layer == NULL || er == NULL || ac == NULL, -1);
+
+    return 0;
+}

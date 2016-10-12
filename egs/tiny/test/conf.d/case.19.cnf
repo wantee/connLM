@@ -1,0 +1,14 @@
+name="crossing-RNN"
+
+_model=crossing-rnn
+_step=6
+
+before="./test/test_model_before.sh ${_model}"
+
+script="./test/test_model_script.sh ${_step} ${_model}"
+
+after="./test/test_model_after.sh ${_model}"
+
+normalize="./test/normalize_log.sh"
+compare_normalize=("expected/case-$SHU_CASE.out:test/output/case-$SHU_CASE.out")
+compare=("expected/case-$SHU_CASE.gen.txt:test/output/case-$SHU_CASE.gen.txt")

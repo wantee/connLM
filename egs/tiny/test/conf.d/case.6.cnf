@@ -1,6 +1,8 @@
-name="I/O testing" 
+name="MaxEnt with minibatch & sync"
 
-before="rm -rf test/tmp/case-06; mkdir -p test/tmp/case-06;"
+before="./test/test_model_before.sh maxent mini+sync"
 
-script="./test/test_io.sh data/train test/tmp/case-06 >/dev/null 2>&1"
+script="./test/test_model_script.sh 2"
 
+normalize="./test/normalize_log.sh"
+compare_normalize=("expected/case-$SHU_CASE.out:test/output/case-$SHU_CASE.out")

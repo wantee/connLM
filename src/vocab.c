@@ -28,13 +28,14 @@
 #include <math.h>
 #include <sys/time.h>
 
-#include <st_macro.h>
-#include <st_log.h>
-#include <st_utils.h>
+#include <stutils/st_macro.h>
+#include <stutils/st_log.h>
+#include <stutils/st_io.h>
+#include <stutils/st_utils.h>
 
 #include "vocab.h"
 
-static const int VOCAB_MAGIC_NUM = 626140498 + 1;
+static const int VOCAB_MAGIC_NUM = 626140498 + 10;
 
 int vocab_load_opt(vocab_opt_t *vocab_opt, st_opt_t *opt,
         const char *sec_name)
@@ -79,6 +80,13 @@ vocab_t *vocab_create(vocab_opt_t *vocab_opt)
         goto ERR;
     }
 
+    if (st_alphabet_add_label(vocab->alphabet, SENT_START) != SENT_START_ID) {
+        ST_WARNING("Failed to add sent_start[%s].", SENT_START);
+        goto ERR;
+    }
+
+    // <unk> must be the last special word, since we will use 'UNK_ID + 1'
+    // in sorting vocab
     if (st_alphabet_add_label(vocab->alphabet, UNK) != UNK_ID) {
         ST_WARNING("Failed to add unk[%s].", UNK);
         goto ERR;
@@ -334,14 +342,23 @@ int vocab_save_header(vocab_t *vocab, FILE *fp, bool binary)
             return -1;
         }
     } else {
-        fprintf(fp, "    \n<VOCAB>\n");
+        if (fprintf(fp, "    \n<VOCAB>\n") < 0) {
+            ST_WARNING("Failed to fprintf header.");
+            return -1;
+        }
 
         if (vocab == NULL) {
-            fprintf(fp, "Vocab size: %d\n", 0);
+            if (fprintf(fp, "Vocab size: %d\n", 0) < 0) {
+                ST_WARNING("Failed to fprintf vocab size.");
+                return -1;
+            }
             return 0;
         }
 
-        fprintf(fp, "Vocab size: %d\n", vocab->vocab_size);
+        if (fprintf(fp, "Vocab size: %d\n", vocab->vocab_size) < 0) {
+            ST_WARNING("Failed to fprintf vocab size.");
+            return -1;
+        }
     }
 
     return 0;
@@ -376,16 +393,25 @@ int vocab_save_body(vocab_t *vocab, FILE *fp, bool binary)
             return -1;
         }
     } else {
-        fprintf(fp, "<VOCAB-DATA>\n");
+        if (fprintf(fp, "<VOCAB-DATA>\n") < 0) {
+            ST_WARNING("Failed to fprintf header.");
+            return -1;
+        }
 
         if (st_alphabet_save_txt(vocab->alphabet, fp) < 0) {
             ST_WARNING("Failed to st_alphabet_save_txt.");
             return -1;
         }
 
-        fprintf(fp, "Word Counts:\n");
+        if (fprintf(fp, "Word Counts:\n") < 0) {
+            ST_WARNING("Failed to fprintf word count.");
+            return -1;
+        }
         for (i = 0; i < vocab->vocab_size; i++) {
-            fprintf(fp, "\t%d\t%lu\n", i, vocab->cnts[i]);
+            if (fprintf(fp, "\t%d\t%lu\n", i, vocab->cnts[i]) < 0) {
+                ST_WARNING("Failed to fprintf cnt[%d]", i);
+                return -1;
+            }
         }
     }
 
@@ -602,6 +628,8 @@ int vocab_learn(vocab_t *vocab, FILE *fp, vocab_learn_opt_t *lr_opt)
     word_infos[SENT_END_ID].cnt = 0;
     word_infos[UNK_ID].id = UNK_ID;
     word_infos[UNK_ID].cnt = 0;
+    word_infos[SENT_START_ID].id = SENT_START_ID;
+    word_infos[SENT_START_ID].cnt = 0;
 
     words = 0;
     while (1) {
@@ -691,4 +719,3 @@ bool vocab_equal(vocab_t *vocab1, vocab_t *vocab2)
 
     return true;
 }
-

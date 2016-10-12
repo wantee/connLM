@@ -22,17 +22,17 @@
  * SOFTWARE.
  */
 
-#ifndef  _VOCAB_H_
-#define  _VOCAB_H_
+#ifndef  _CONNLM_VOCAB_H_
+#define  _CONNLM_VOCAB_H_
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#include <st_opt.h>
-#include <st_alphabet.h>
+#include <stutils/st_opt.h>
+#include <stutils/st_alphabet.h>
 
-#include "config.h"
+#include <connlm/config.h>
 
 /** @defgroup g_vocab Vocab
  * Data structures and functions for Vocab.

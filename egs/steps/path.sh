@@ -1,30 +1,32 @@
 
-CONNLM_BIN=$PWD/../../bin/float
-CONNLM_LIB=$PWD/../../lib/float
+EGS_DIR=$(cd `dirname $BASH_SOURCE`/..; pwd)
+
+CONNLM_BIN=$EGS_DIR/../float/bin
+CONNLM_LIB=$EGS_DIR/../float/lib
 
 if [ ! -z "$CONNLM_REALTYPE" ]; then
   if [ "$CONNLM_REALTYPE" == "double" ]; then
-    CONNLM_BIN=$PWD/../../bin/double
-    CONNLM_LIB=$PWD/../../lib/double
+    CONNLM_BIN=$EGS_DIR/../double/bin
+    CONNLM_LIB=$EGS_DIR/../double/lib
   elif [ "$CONNLM_REALTYPE" == "float" ]; then
-    CONNLM_BIN=$PWD/../../bin/float
-    CONNLM_LIB=$PWD/../../lib/float
+    CONNLM_BIN=$EGS_DIR/../float/bin
+    CONNLM_LIB=$EGS_DIR/../float/lib
   fi
 fi
 
 if [ ! -z "$1" ]; then
   if [ "$1" == "double" ]; then
-    CONNLM_BIN=$PWD/../../bin/double
-    CONNLM_LIB=$PWD/../../lib/double
+    CONNLM_BIN=$EGS_DIR/../double/bin
+    CONNLM_LIB=$EGS_DIR/../double/lib
   elif [ "$1" == "float" ]; then
-    CONNLM_BIN=$PWD/../../bin/float
-    CONNLM_LIB=$PWD/../../lib/float
+    CONNLM_BIN=$EGS_DIR/../float/bin
+    CONNLM_LIB=$EGS_DIR/../float/lib
   fi
 fi
 
-ST_UTILS_LIB=$PWD/../../tools/stutils/lib
+ST_UTILS_LIB=$EGS_DIR/../tools/stutils/lib
 
-export PATH=$CONNLM_BIN:$PWD:$PATH
+export PATH=$CONNLM_BIN:$PATH
 #if [ `uname` ==  "Darwin" ]; then
 #export DYLD_LIBRARY_PATH=$CONNLM_LIB:$ST_UTILS_LIB:$DYLD_LIBRARY_PATH
 #else
@@ -41,8 +43,7 @@ if [ "$USE_VAL" -eq 1 ]; then
       VAL_EXES+=" ${f##*/}"
     fi
   done
-  . ../utils/valgrind.sh
+  . $EGS_DIR/utils/valgrind.sh
 fi
 
-. $PWD/../../tools/shutils/shutils.sh
-
+. $EGS_DIR/../tools/shutils/shutils.sh

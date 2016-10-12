@@ -38,17 +38,14 @@ Run following commands to build this project:
 $ git clone https://github.com/wantee/connLM.git
 $ cd connLM/src
 $ ./autogen.sh
-$ make
+$ make -j 4
 ```
 
 Quick tests:
 
 ```shell
-$ cd $CONNLM_HOME/src
-$ make clean
-$ make test
-$ make
-$ cd ..
+$ cd $CONNLM_HOME
+$ make -C src test
 $ source tools/shutils/shutils.sh
 $ cd egs/tiny
 $ shu-testing

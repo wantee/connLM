@@ -34,11 +34,12 @@ for thr in $thrs; do
   for shuffle in true false; do
     for sz in 1 2 5 10; do
       echo -n "Testing train: thread=$thr, shuffle=$shuffle, sz=$sz..."
-      connlm-train --log-file=/dev/null --debug-file=- \
-                   --num-thread=$thr --shuffle=$shuffle --epoch-size=$sz \
-                   data/train $exp_dir/init.clm $exp_dir/01.clm \
+      connlm-train --log-file=/dev/null --num-thread=$thr \
+                   --reader^debug-file=- --reader^shuffle=$shuffle \
+                   --reader^epoch-size=$sz \
+                   $exp_dir/init.clm data/train $exp_dir/01.clm \
         | grep "<EGS>:" | cut -d' ' -f2- | sort > $out_file
-  
+
       if ! diff $tr_file $out_file > /dev/null; then
         echo "[ERROR]"
         exit 1
@@ -50,12 +51,12 @@ done
 
 for thr in $thrs; do
   for sz in 1 2 5 10; do
-    echo -n "Testing test: thread=$thr, sz=$sz..."
-    connlm-test --log-file=/dev/null --debug-file=- \
-                --num-thread=$thr --epoch-size=$sz \
+    echo -n "Testing eval: thread=$thr, sz=$sz..."
+    connlm-eval --log-file=/dev/null --num-thread=$thr \
+                --reader^debug-file=- --reader^epoch-size=$sz \
                 $exp_dir/01.clm data/train \
       | grep "<EGS>:" | cut -d' ' -f2- | sort > $out_file
-  
+
     if ! diff $tr_file $out_file > /dev/null; then
       echo "[ERROR]"
       exit 1
@@ -63,4 +64,3 @@ for thr in $thrs; do
     echo "[SUCCESS]"
   done
 done
-

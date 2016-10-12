@@ -21,10 +21,15 @@ Session.vim
 .netrwhist
 *~
 
-bin_obj/
+.objs/
+.deps/
+
 html/
 exp/
 tmp/
 output/
 nohup.out
 blas.mk
+
+!src/bin/
+.replace_revision.sh

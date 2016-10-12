@@ -1,18 +1,18 @@
 /*
  * The MIT License (MIT)
- * 
+ *
  * Copyright (c) 2015 Wang Jian
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in all
  * copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -22,89 +22,136 @@
  * SOFTWARE.
  */
 
-#ifndef  _OUTPUT_H_
-#define  _OUTPUT_H_
+#ifndef  _CONNLM_OUTPUT_H_
+#define  _CONNLM_OUTPUT_H_
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#include <st_opt.h>
-#include <st_alphabet.h>
+#include <stutils/st_opt.h>
+#include <stutils/st_int.h>
+#include <stutils/st_alphabet.h>
 
-#include "config.h"
+#include <connlm/config.h>
+
+#include "layers/layer.h"
 
 /** @defgroup g_output Output Layer
  * Data structures and functions for Output Layer.
  */
 
+typedef unsigned int output_node_id_t;
+#define OUTPUT_NODE_FMT "%u"
+
+#define OUTPUT_NODE_NONE ((output_node_id_t)-1)
+
 /**
- * Parameters for output layer.
+ * Type of constructing methods.
+ * @ingroup g_output
+ */
+typedef enum _output_construct_method_t_ {
+    OM_UNKNOWN = -1, /**< Unknown method. */
+    OM_TOP_DOWN = 0, /**< Top-down method. */
+    OM_BOTTOM_UP, /**< Bottom-up method. */
+} output_method_t;
+
+/**
+ * Parameters for output tree.
  * @ingroup g_output
  */
 typedef struct _output_opt_t_ {
-    int class_size; /**< size of class. May be zero. */
-    bool hs;        /**< whether using Hierarchical softmax. */
-    int max_code_len; /**< maximum length for code used by HS. */
-    bool class_hs; /**< whether using HS for class. */
+    output_method_t method; /**< constructing method. */
+    int max_depth; /**< maximum depth of tree. */
+    int max_branch; /**< maximum number of branches. */
 } output_opt_t;
 
+#define s_children(tree, node) (tree)->nodes[node].children_s
+#define e_children(tree, node) (tree)->nodes[node].children_e
+#define is_leaf(tree, node) (s_children(tree, node) >= e_children(tree, node))
+
 /**
- * Neuron of Output Layer.
- * Each neuron used in one single thread.
+ * Output tree Node.
  * @ingroup g_output
  */
-typedef struct _output_neuron_t_ {
-    real_t *ac_o_w; /**< activation of output of word part. */
-    real_t *er_o_w; /**< error of output of word part. */
-    real_t *ac_o_c; /**< activation of output of class part. */
-    real_t *er_o_c; /**< error of output of class part. */
+typedef struct _output_tree_node_t_ {
+    output_node_id_t children_s; /**< start index of children. */
+    output_node_id_t children_e; /**< end index of children. */
+} output_tree_node_t;
 
-    real_t *wt_hs_c; /**< HS weights for classes. */
-    real_t *wt_hs_w; /**< HS weights for words. */
+/**
+ * Output tree.
+ * @ingroup g_output
+ */
+typedef struct _output_tree_t_ {
+    output_tree_node_t *nodes; /**< nodes on output tree. */
+    output_node_id_t num_node; /**< number of nodes on output tree. */
+    output_node_id_t cap_node; /**< capacity of nodes array. */
 
-    real_t *ac_hs_c; /**< HS activiation for classes. */
-    real_t *ac_hs_w; /**< HS activiation for words. */
+    output_node_id_t root; /**< root node of output tree. */
+    output_node_id_t num_leaf; /**< number of leaf nodes. */
+    int *leaf2word; /**< map leaf node id to word id. */
+    output_node_id_t *word2leaf; /**< map word id to leaf node id. */
+} output_tree_t;
 
-    real_t p_hs_c; /**< Probility for class of HS. */
-    real_t p_hs_w; /**< Probility for word of HS. */
-} output_neuron_t;
+static inline int output_tree_leaf2word(output_tree_t *tree,
+        output_node_id_t node)
+{
+    if (tree->leaf2word != NULL) {
+        return tree->leaf2word[node];
+    } else {
+        return (int)node;
+    }
+}
 
+static inline output_node_id_t output_tree_word2leaf(output_tree_t *tree,
+        int word)
+{
+    if (tree->word2leaf != NULL) {
+        return tree->word2leaf[word];
+    } else {
+        return (output_node_id_t)word;
+    }
+}
+
+/**
+ * Output tree path.
+ * @ingroup g_output
+ */
+typedef struct _output_tree_path_t_ {
+    output_node_id_t *nodes; /**< nodes on the path. *EXCLUDE* root & leaf. */
+    output_node_id_t num_node; /**< number of nodes in the path. */
+} output_path_t;
+
+/**
+ * Type of output layer normalization function.
+ * @ingroup g_output
+ */
+typedef enum _output_normalization_method_t_ {
+    ON_UNKNOWN = -1, /**< Unknown. */
+    ON_UNDEFINED = 0, /**< Undefined. */
+    ON_SOFTMAX, /**< Softmax. */
+    ON_NCE, /**< Noise Contrastive Estimation. */
+} output_norm_t;
 /**
  * Output Layer.
  * @ingroup g_output
  */
 typedef struct _output_t_ {
-    output_opt_t output_opt; /**< output layer options. */
+    output_opt_t output_opt; /**< output tree options. */
 
-    int output_size; /**< size of output layer. */
-    int hs_input_size; /**< size of input for HS tree. */
+    int output_size; /**< size of output tree. */
+    output_norm_t norm; /**< normalization method. */
 
-    output_neuron_t *neurons; /**< output layer neurons. */
-    int num_thrs; /**< number of threads/neurons. */
+    output_tree_t *tree; /**< output tree. */
+    output_path_t *paths; /**< Store a path for every leaf(word) node. */
 
-    /** @name Variables for classes. */
-    /**@{*/
-    int *w2c;   /**< word to class map. */
-    int *c2w_s; /**< start for class to word map. */
-    int *c2w_e; /**< end for class to word map. */
-    /**@}*/
-
-    /** @name Variables for HS. */
-    /**@{*/
-    char *code_c; /**< code for classes. */
-    int *pt_c; /**< point for classes. */
-
-    char *code_w; /**< code for words. */
-    int *pt_w; /**< point for words. */
-
-    real_t *wt_hs_c /**< HS weights for classes. */;
-    real_t *wt_hs_w; /**< HS weights for words. */
-    /**@}*/
+    output_node_id_t *param_map; /**< map a node to index in param weight(used by Softmax). */
+    output_node_id_t num_param_map; /**< number of param maps. */
 } output_t;
 
 /**
- * Load output layer option.
+ * Load output tree option.
  * @ingroup g_output
  * @param[out] output_opt options loaded.
  * @param[in] opt runtime options passed by caller.
@@ -115,15 +162,15 @@ int output_load_opt(output_opt_t *output_opt, st_opt_t *opt,
         const char *sec_name);
 
 /**
- * Create a output layer with options.
+ * Create a output tree with options.
  * @ingroup g_output
  * @param[in] output_opt options.
- * @param[in] output_size size of output layer.
- * @return a new output layer.
+ * @param[in] output_size size of output tree.
+ * @return a new output tree.
  */
 output_t *output_create(output_opt_t *output_opt, int output_size);
 /**
- * Destroy a output layer and set the pointer to NULL.
+ * Destroy a output tree and set the pointer to NULL.
  * @ingroup g_output
  * @param[in] ptr pointer to output_t.
  */
@@ -135,13 +182,13 @@ output_t *output_create(output_opt_t *output_opt, int output_size);
     }\
     } while(0)
 /**
- * Destroy a output layer.
+ * Destroy a output tree.
  * @ingroup g_output
  * @param[in] output output to be destroyed.
  */
 void output_destroy(output_t *output);
 /**
- * Duplicate a output layer.
+ * Duplicate a output tree.
  * @ingroup g_output
  * @param[in] o output to be duplicated.
  * @return the duplicated output.
@@ -149,9 +196,9 @@ void output_destroy(output_t *output);
 output_t* output_dup(output_t *o);
 
 /**
- * Load output layer header and initialise a new output layer.
+ * Load output tree header and initialise a new output tree.
  * @ingroup g_output
- * @param[out] output layer initialised.
+ * @param[out] output output tree initialised.
  * @param[in] version file version of loading file.
  * @param[in] fp file stream loaded from.
  * @param[out] binary whether the file stream is in binary format.
@@ -163,9 +210,9 @@ output_t* output_dup(output_t *o);
 int output_load_header(output_t **output, int version, FILE *fp,
         bool *binary, FILE *fo);
 /**
- * Load output layer body.
+ * Load output tree body.
  * @ingroup g_output
- * @param[in] output output layer to be loaded.
+ * @param[in] output output tree to be loaded.
  * @param[in] version file version of loading file.
  * @param[in] fp file stream loaded from.
  * @param[in] binary whether to use binary format.
@@ -175,9 +222,9 @@ int output_load_header(output_t **output, int version, FILE *fp,
  */
 int output_load_body(output_t *output, int version, FILE *fp, bool binary);
 /**
- * Save output layer header.
+ * Save output tree header.
  * @ingroup g_output
- * @param[in] output output layer to be saved.
+ * @param[in] output output tree to be saved.
  * @param[in] fp file stream saved to.
  * @param[in] binary whether to use binary format.
  * @see output_save_body
@@ -186,9 +233,9 @@ int output_load_body(output_t *output, int version, FILE *fp, bool binary);
  */
 int output_save_header(output_t *output, FILE *fp, bool binary);
 /**
- * Save output layer body.
+ * Save output tree body.
  * @ingroup g_output
- * @param[in] output output layer to be saved.
+ * @param[in] output output tree to be saved.
  * @param[in] fp file stream saved to.
  * @param[in] binary whether to use binary format.
  * @see output_save_header
@@ -198,208 +245,119 @@ int output_save_header(output_t *output, FILE *fp, bool binary);
 int output_save_body(output_t *output, FILE *fp, bool binary);
 
 /**
- * Generate output layer with word counts.
+ * Generate output tree with word counts.
  * @ingroup g_output
- * @param[in] output output layer to be generated.
- * @param[in] word_cnts counts of words.
- * @return non-zero value if any error.
+ * @param[in] output_opt options for generating output.
+ * @param[in] word_cnts counts of words, descendingly sorted.
+ * @param[in] output_size size of output layer.
+ * @return generated output, NULL if any error.
  */
-int output_generate(output_t *output, count_t *word_cnts);
+output_t* output_generate(output_opt_t *output_opt, count_t *word_cnts,
+       int output_size);
 
 /**
- * Initializing HS for output layer.
+ * Setup a output layer for running.
  * @ingroup g_output
  * @param[in] output output layer.
- * @param[in] hs_size input size for HS.
  * @return non-zero value if any error.
  */
-int output_hs_init(output_t *output, int hs_input_size);
+int output_setup(output_t *output);
 
 /**
- * Activate neurons of pre output layer.
- * @ingroup g_output
- * @param[in] output output layer related.
- * @param[in] cls class of current word.
- * @param[in] tid thread id (neuron id).
- * @return non-zero value if any error.
- */
-int output_activate_pre_layer(output_t *output, int cls, int tid);
-/**
- * Activate neurons of last output layer.
- * @ingroup g_output
- * @param[in] output output layer related.
- * @param[in] word current word.
- * @param[in] tid thread id (neuron id).
- * @return non-zero value if any error.
- */
-int output_activate_last_layer(output_t *output, int word, int tid);
-/**
- * Compute loss of neurons of output layer.
- * @ingroup g_output
- * @param[in] output output layer related.
- * @param[in] word current word.
- * @param[in] tid thread id (neuron id).
- * @return non-zero value if any error.
- */
-int output_loss(output_t *output, int word, int tid);
-/**
- * Get probability of a word.
- * @ingroup g_output
- * @param[in] output output layer related.
- * @param[in] word current word.
- * @param[in] tid thread id (neuron id).
- * @return non-zero value if any error.
- */
-double output_get_prob(output_t *output, int word, int tid);
-/**
- * Get class probability of a class.
- * @ingroup g_output
- * @param[in] output output layer related.
- * @param[in] cls the specific class.
- * @param[in] tid thread id (neuron id).
- * @return non-zero value if any error.
- */
-double output_get_class_prob_for_class(output_t *output, int cls, int tid);
-/**
- * Get class probability of a word.
- * @ingroup g_output
- * @param[in] output output layer related.
- * @param[in] word the specific word.
- * @param[in] tid thread id (neuron id).
- * @return non-zero value if any error.
- */
-double output_get_class_prob(output_t *output, int word, int tid);
-/**
- * Get word probability of a word.
- * @ingroup g_output
- * @param[in] output output layer related.
- * @param[in] word the specific word.
- * @param[in] tid thread id (neuron id).
- * @return non-zero value if any error.
- */
-double output_get_word_prob(output_t *output, int word, int tid);
-
-/**
- * Setup training for output layer.
- * Called before training.
- * @ingroup g_output
- * @param[in] output output layer.
- * @param[in] num_thrs number of thread to be used.
- * @return non-zero value if any error.
- */
-int output_setup_train(output_t *output, int num_thrs);
-/**
- * Reset training for output layer.
- * Called before every input sentence to be trained.
- * @ingroup g_output
- * @param[in] output output model.
- * @param[in] tid thread id (neuron id).
- * @return non-zero value if any error.
- */
-int output_reset_train(output_t *output, int tid);
-/**
- * Start training for output layer.
- * Called before every input word to be trained.
- * @ingroup g_output
- * @param[in] output output layer.
- * @param[in] word current word.
- * @param[in] tid thread id (neuron id).
- * @return non-zero value if any error.
- */
-int output_start_train(output_t *output, int word, int tid);
-/**
- * End training for output layer.
- * Called after every input word trained.
- * @ingroup g_output
- * @param[in] output output layer.
- * @param[in] word current word.
- * @param[in] tid thread id (neuron id).
- * @return non-zero value if any error.
- */
-int output_end_train(output_t *output, int word, int tid);
-/**
- * Finish training for output model.
- * Called after all words trained.
- * @ingroup g_output
- * @param[in] output output layer.
- * @param[in] tid thread id (neuron id).
- * @return non-zero value if any error.
- */
-int output_finish_train(output_t *output, int tid);
-
-/**
- * Setup testing for output layer.
- * Called before testing.
- * @ingroup g_output
- * @param[in] output output layer.
- * @param[in] num_thrs number of thread to be used.
- * @return non-zero value if any error.
- */
-int output_setup_test(output_t *output, int num_thrs);
-/**
- * Reset testing for output layer.
- * Called before every input sentence to be tested.
- * @ingroup g_output
- * @param[in] output output layer.
- * @param[in] tid thread id (neuron id).
- * @return non-zero value if any error.
- */
-int output_reset_test(output_t *output, int tid);
-/**
- * Start testing for output layer.
- * Called before every input word to be tested.
- * @ingroup g_output
- * @param[in] output output layer.
- * @param[in] word current word.
- * @param[in] tid thread id (neuron id).
- * @return non-zero value if any error.
- */
-int output_start_test(output_t *output, int word, int tid);
-/**
- * End testing for output layer.
- * Called after every input word tested.
- * @ingroup g_output
- * @param[in] output output layer.
- * @param[in] word current word.
- * @param[in] tid thread id (neuron id).
- * @return non-zero value if any error.
- */
-int output_end_test(output_t *output, int word, int tid);
-
-/**
- * Setup generating for output layer.
- * Called before generating.
- * @ingroup g_output
- * @param[in] output output layer.
- * @return non-zero value if any error.
- */
-int output_setup_gen(output_t *output);
-/**
- * Reset generating for output layer.
- * Called before every sentence to be generated.
- * @ingroup g_output
- * @param[in] output output layer.
- * @return non-zero value if any error.
- */
-int output_reset_gen(output_t *output);
-/**
- * End generating for output layer.
- * Called after every word generated.
- * @ingroup g_output
- * @param[in] output output layer.
- * @param[in] word current generated word.
- * @return non-zero value if any error.
- */
-int output_end_gen(output_t *output, int word);
-
-/**
- * Whether two output layer is equal.
+ * Whether two output tree is equal.
  * @ingroup g_output
  * @param[in] output1 first output.
  * @param[in] output2 second output.
  * @return true, if equal, false otherwise.
  */
 bool output_equal(output_t *output1, output_t *output2);
+
+/**
+ * Convert output to Graphviz dot language.
+ * @ingroup g_output
+ * @param[in] output output tree.
+ * @param[in] fp FILE to be writed.
+ * @param[in] word_cnts counts for words, could be NULL.
+ * @param[in] vocab vocab of words, could be NULL.
+ * @return non-zero value if any error.
+ */
+int output_draw(output_t *output, FILE *fp, count_t *word_cnts,
+        st_alphabet_t *vocab);
+
+#define OUTPUT_LAYER_NAME "output"
+
+/**
+ * Return a layer struct for output.
+ * @ingroup g_output
+ * @param[in] output the output layer.
+ * @return layer for the output, else NULL.
+ */
+layer_t* output_get_layer(output_t *output);
+
+/**
+ * Parse topo file for output layer.
+ * @ingroup g_output
+ * @param[in] output the output layer.
+ * @param[in] topo topo configs.
+ * @return non-zero value if any error.
+ */
+int output_parse_topo(output_t *output, const char *topo);
+
+/**
+ * Walk through a path from root to word(not including) in output tree.
+ * @ingroup g_output
+ * @param[in] output the output layer.
+ * @param[in] word the leaf word.
+ * @param[in] walker walker callback called on every node in path.
+ * @param[in] args args passed to walker.
+ * @return non-zero value if any error.
+ */
+int output_walk_through_path(output_t *output, int word,
+        int (*walker)(output_t *output, output_node_id_t node,
+            output_node_id_t next_node,
+            output_node_id_t child_s, output_node_id_t child_e, void *args),
+        void *args);
+
+/**
+ * Map node id to param idx
+ * @ingroup g_output
+ * @param[in] output the output layer.
+ * @param[in] n node id.
+ * @return the (mapped) param idx.
+ */
+static inline output_node_id_t output_param_idx(output_t *output,
+        output_node_id_t n)
+{
+    if (output->param_map != NULL) {
+        return output->param_map[n];
+    }
+
+    return n;
+}
+
+/**
+ * Get output param size.
+ * @ingroup g_output
+ * @param[in] output the output layer.
+ * @return the param size.
+ */
+static inline output_node_id_t output_param_size(output_t *output)
+{
+    if (output->param_map != NULL) {
+        return output->num_param_map;
+    }
+
+    return output->tree->num_node;
+}
+
+/**
+ * Generate int segments for tree.
+ * @ingroup g_output
+ * @param[in] output the output layer.
+ * @param[out] n_seg number of segs generated.
+ * @return the generated segs, NULL if any error.
+ */
+st_int_seg_t* output_gen_segs(output_t *output, int *n_seg);
 
 #ifdef __cplusplus
 }

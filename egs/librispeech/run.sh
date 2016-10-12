@@ -17,7 +17,7 @@ exp_dir=./exp/
 #class_size=""
 class_size="50;100;150;200;250;300;350;400"
 tr_thr=24
-test_thr=24
+eval_thr=24
 
 realtype="float"
 
@@ -122,7 +122,7 @@ if shu-in-range $st $steps; then
 echo
 echo "Step $st: ${stepnames[$st]} ..."
 ../steps/run_standalone.sh --class-size "$class_size" \
-      --train-thr $tr_thr --test-thr $test_thr \
+      --train-thr $tr_thr --eval-thr $eval_thr \
     maxent $conf_dir $exp_dir $train_file $valid_file $test_file || exit 1;
 fi
 ((st++))
@@ -131,7 +131,7 @@ if shu-in-range $st $steps; then
 echo
 echo "Step $st: ${stepnames[$st]} ..."
 ../steps/run_standalone.sh --class-size "$class_size" \
-      --train-thr $tr_thr --test-thr $test_thr \
+      --train-thr $tr_thr --eval-thr $eval_thr \
     rnn $conf_dir $exp_dir $train_file $valid_file $test_file || exit 1;
 fi
 ((st++))
@@ -140,7 +140,7 @@ if shu-in-range $st $steps; then
 echo
 echo "Step $st: ${stepnames[$st]} ..."
 ../steps/run_standalone.sh --class-size "$class_size" \
-      --train-thr $tr_thr --test-thr $test_thr \
+      --train-thr $tr_thr --eval-thr $eval_thr \
     rnn+maxent $conf_dir $exp_dir $train_file $valid_file $test_file \
   || exit 1;
 fi
@@ -150,9 +150,8 @@ if shu-in-range $st $steps; then
 echo
 echo "Step $st: ${stepnames[$st]} ..."
 ../steps/run_cascade.sh --class-size "$class_size" \
-      --train-thr $tr_thr --test-thr $test_thr \
+      --train-thr $tr_thr --eval-thr $eval_thr \
     maxent~rnn $conf_dir $exp_dir $train_file $valid_file $test_file \
   || exit 1;
 fi
 ((st++))
-

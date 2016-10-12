@@ -1,0 +1,8 @@
+name="FFNN with sync"
+
+before="./test/test_model_before.sh ffnn sync"
+
+script="./test/test_model_script.sh 4"
+
+normalize="./test/normalize_log.sh"
+compare_normalize=("expected/case-$SHU_CASE.out:test/output/case-$SHU_CASE.out")

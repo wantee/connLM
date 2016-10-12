@@ -1,7 +1,8 @@
-name="Generating text" 
+name="MaxEnt with sync"
 
-before="mkdir -p test/output; rm -rf test/tmp/case-05; mkdir -p test/tmp/case-05; cp -r conf test/tmp/case-05; ./run.sh --conf-dir test/tmp/case-05/conf --exp-dir test/tmp/case-05/exp 1,2 > /dev/null; echo -e 'I AM\nIT IS THAT\nYEAH' > test/tmp/case-05/prefix.txt"
+before="./test/test_model_before.sh maxent sync"
 
-script="source ../steps/path.sh && connlm-gen --log-file=/dev/null --random-seed=1 test/tmp/case-05/exp/maxent/final.clm > test/output/case-05.out && connlm-gen --log-file=/dev/null --random-seed=1 test/tmp/case-05/exp/maxent/final.clm 10 >> test/output/case-05.out && connlm-gen --log-file=/dev/null --prefix-file=test/tmp/case-05/prefix.txt --random-seed=1 test/tmp/case-05/exp/maxent/final.clm >> test/output/case-05.out"
+script="./test/test_model_script.sh 2"
 
-compare=("expected/case-05.out:test/output/case-05.out")
+normalize="./test/normalize_log.sh"
+compare_normalize=("expected/case-$SHU_CASE.out:test/output/case-$SHU_CASE.out")

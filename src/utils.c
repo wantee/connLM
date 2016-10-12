@@ -1,18 +1,18 @@
 /*
  * The MIT License (MIT)
- * 
+ *
  * Copyright (c) 2015 Wang Jian
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in all
  * copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -26,14 +26,16 @@
 #include <string.h>
 #include <float.h>
 
-#include <st_macro.h>
-#include <st_log.h>
-#include <st_utils.h>
+#include <stutils/st_macro.h>
+#include <stutils/st_log.h>
+#include <stutils/st_utils.h>
+#include <stutils/st_mem.h>
 
-#include "config.h"
 #include "utils.h"
 #include "fastexp.h"
 #include "blas.h"
+
+#define REALLOC_NUM 100
 
 void matXvec(real_t *dst, real_t *mat, real_t *vec,
         int mat_row, int in_vec_size, real_t scale)
@@ -179,6 +181,41 @@ void vecXmat(real_t *dst, real_t *vec, real_t *mat,
 #endif
 }
 
+/*
+ * Computing C = alpha * A' * B + beta * C
+ * A is [k X m]; B is [k X n]; C is [m X n]
+ * A' is transpose of A.
+ */
+void matXmat(real_t *C, real_t *A, real_t *B, int m, int n, int k,
+        real_t alpha, real_t beta)
+{
+#ifdef _USE_BLAS_
+    cblas_gemm(CblasRowMajor, CblasTrans, CblasNoTrans, m, n, k,
+            alpha, A, m, B, n, beta, C, n);
+#else
+    real_t *cc;
+    int i, j, t;
+
+    if (beta != 1.0) {
+        for (i = 0; i < m * n; i++) {
+            C[i] = beta * C[i];
+        }
+    }
+
+    for (t = 0; t < k; t++) {
+        cc = C;
+        for (j = 0; j < m; j++) {
+            for (i = 0; i < n; i++) {
+                cc[i] += alpha * A[j] * B[i];
+            }
+            cc += n;
+        }
+        A += m;
+        B += n;
+    }
+#endif
+}
+
 real_t dot_product(real_t *v1, real_t *v2, int vec_size)
 {
     double s;
@@ -242,44 +279,59 @@ void softmax(real_t *vec, int vec_size)
     }
 }
 
+void propagate_error(real_t *dst, real_t *vec, real_t *mat,
+        int mat_col, int in_vec_size, real_t er_cutoff, real_t scale)
+{
+    int a;
+
+    vecXmat(dst, vec, mat, mat_col, in_vec_size, scale);
+
+    if (er_cutoff > 0) {
+        for (a = 0; a < mat_col; a++) {
+            if (dst[a] > er_cutoff) {
+                dst[a] = er_cutoff;
+            } else if (dst[a] < -er_cutoff) {
+                dst[a] = -er_cutoff;
+            }
+        }
+    }
+}
+
 void connlm_show_usage(const char *module_name, const char *header,
-        const char *usage, st_opt_t *opt)
+        const char *usage, const char *eg,
+        st_opt_t *opt, const char *trailer)
 {
     fprintf(stderr, "\nConnectionist Language Modelling Toolkit\n");
-    fprintf(stderr, "  -- %s\n", header);
-    fprintf(stderr, "Version  : %s\n", CONNLM_VERSION);
+    fprintf(stderr, "    -- %s\n", header);
+    fprintf(stderr, "Version  : %s (%s)\n", CONNLM_VERSION, CONNLM_GIT_COMMIT);
     fprintf(stderr, "File version: %d\n", CONNLM_FILE_VERSION);
     fprintf(stderr, "Real type: %s\n",
             (sizeof(real_t) == sizeof(double)) ? "double" : "float");
     fprintf(stderr, "Usage    : %s [options] %s\n", module_name, usage);
+    if (eg != NULL) {
+        fprintf(stderr, "e.g.: \n");
+        fprintf(stderr, "  %s %s\n", module_name, eg);
+    }
     fprintf(stderr, "\n");
     fprintf(stderr, "Options  : \n");
-    st_opt_show_usage(opt, stderr);
-}
-
-int int_comp(const void *elem1, const void *elem2) 
-{
-    int f = *((int*)elem1);
-    int s = *((int*)elem2);
-    if (f > s) return  1;
-    if (f < s) return -1;
-    return 0;
-}
-
-void int_sort(int *A, size_t n)
-{
-    qsort(A, n, sizeof(int), int_comp);
+    st_opt_show_usage(opt, stderr, true);
+    if (trailer != NULL) {
+        fprintf(stderr, "\n%s\n", trailer);
+    }
 }
 
 model_filter_t parse_model_filter(const char *mdl_filter,
-        char *mdl_file, size_t mdl_file_len) 
+        char *mdl_file, size_t mdl_file_len, char **comp_names,
+        int *num_comp)
 {
     char *ptr;
     char *ptr_fname;
+    char *ptr_comp;
     model_filter_t mf;
     bool add;
 
-    ST_CHECK_PARAM(mdl_filter == NULL || mdl_file == NULL, MF_NONE);
+    ST_CHECK_PARAM(mdl_filter == NULL || mdl_file == NULL ||
+            comp_names == NULL || num_comp == NULL, MF_NONE);
 
     if (strncmp(mdl_filter, "mdl,", 4) != 0) {
         ptr_fname = (char *)mdl_filter;
@@ -295,17 +347,20 @@ model_filter_t parse_model_filter(const char *mdl_filter,
         goto RET;
     }
 
+    *comp_names = NULL;
+    *num_comp = 0;
     if (*ptr == '-') {
-        mf = MF_ALL;
-        ptr++;
+        mf = MF_ALL | MF_COMP_NEG;
         add = false;
-    } else if (*ptr == '+') {
-        mf = MF_NONE;
+
         ptr++;
-        add = true;
     } else {
         mf = MF_NONE;
         add = true;
+
+        if (*ptr == '+') {
+            ptr++;
+        }
     }
 
     while (ptr < ptr_fname) {
@@ -329,34 +384,40 @@ model_filter_t parse_model_filter(const char *mdl_filter,
                     mf &= ~MF_VOCAB;
                 }
                 break;
-            case 'm':
-                if (add) {
-                    mf |= MF_MAXENT;
+            case 'c':
+                if (*(ptr + 1) != '<') {
+                    *num_comp = -1;
+                    break;
                 } else {
-                    mf &= ~MF_MAXENT;
+                    ptr++;
+                    ptr++;
+                    ptr_comp = ptr;
+                    while (ptr < ptr_fname) {
+                        if (*ptr == '>') {
+                            break;
+                        }
+                        ptr++;
+                    }
+                    if (*ptr == '>') {
+                        *comp_names = realloc(*comp_names,
+                                MAX_NAME_LEN*(*num_comp + 1));
+                        if (*comp_names == NULL) {
+                            ST_WARNING("Failed to realloc comp_names");
+                            goto ERR;
+                        }
+
+                        if (ptr - ptr_comp >= MAX_NAME_LEN) {
+                            ST_WARNING("Too long name[%s]", ptr_comp);
+                            goto ERR;
+                        }
+                        strncpy(*comp_names + MAX_NAME_LEN*(*num_comp),
+                                ptr_comp, ptr - ptr_comp);
+                        (*comp_names)[MAX_NAME_LEN*(*num_comp) + ptr - ptr_comp] = '\0';
+                        (*num_comp)++;
+                        break;
+                    }
                 }
-                break;
-            case 'r':
-                if (add) {
-                    mf |= MF_RNN;
-                } else {
-                    mf &= ~MF_RNN;
-                }
-                break;
-            case 'l':
-                if (add) {
-                    mf |= MF_LBL;
-                } else {
-                    mf &= ~MF_LBL;
-                }
-                break;
-            case 'f':
-                if (add) {
-                    mf |= MF_FFNN;
-                } else {
-                    mf &= ~MF_FFNN;
-                }
-                break;
+                /* FALL THROUGH */
             default:
                 ptr_fname = (char *)mdl_filter;
                 mf = MF_ALL;
@@ -372,11 +433,117 @@ RET:
     if (strlen(ptr_fname) >= mdl_file_len) {
         ST_WARNING("mdl_file_len too small.[%zu/%zu]",
                 mdl_file_len, strlen(ptr_fname));
-        mdl_file[0] = '0';
-        return MF_NONE;
+        goto ERR;
     }
     strcpy(mdl_file, ptr_fname);
 
     return mf;
+
+ERR:
+    safe_free(*comp_names);
+    *num_comp = 0;
+    mdl_file[0] = '\0';
+    return MF_ERR;
 }
 
+const char* model_filter_help()
+{
+    return "A model filter can be: 'mdl,[+-][ovc<comp1>c<comp2>]:file_name'.\nAny string not in such format will be treated as a model file name.";
+}
+
+char* escape_dot(char *out, size_t len, const char *str)
+{
+    const char *p;
+    char *q;
+    size_t i;
+
+    p = str;
+    q = out;
+    i = 0;
+    while (*p != '\0') {
+        if (*p == '<' || *p == '>' || *p == '\\') {
+            if (i >= len - 1) {
+                return NULL;
+            }
+            *(q++) = '\\';
+            ++i;
+        }
+        if (i >= len - 1) {
+            return NULL;
+        }
+        *(q++) = *(p++);
+        ++i;
+    }
+    *q = '\0';
+
+    return out;
+}
+
+void concat_mat_destroy(concat_mat_t *mat)
+{
+    if (mat == NULL) {
+        return;
+    }
+
+    safe_st_aligned_free(mat->val);
+    mat->col = 0;
+    mat->n_row = 0;
+    mat->cap_row = 0;
+}
+
+int concat_mat_add_row(concat_mat_t *mat, real_t *vec, int vec_size)
+{
+    size_t sz;
+
+    ST_CHECK_PARAM(mat == NULL || vec == NULL || vec_size <= 0, -1);
+
+    if (mat->col == 0) {
+        mat->col = vec_size;
+    } else if (mat->col != vec_size) {
+        ST_WARNING("col not match.");
+        return -1;
+    }
+
+    if (mat->n_row >= mat->cap_row) {
+        mat->cap_row += REALLOC_NUM;
+        sz = mat->cap_row * mat->col * sizeof(real_t);
+        mat->val = (real_t *)st_aligned_realloc(mat->val, sz, ALIGN_SIZE);
+        if (mat->val == NULL) {
+            ST_WARNING("Failed to realloc val");
+            return -1;
+        }
+    }
+
+    memcpy(mat->val + mat->n_row * mat->col, vec, sizeof(real_t) * mat->col);
+    mat->n_row++;
+
+    return 0;
+}
+
+int concat_mat_add_mat(concat_mat_t *dst, concat_mat_t *src)
+{
+    size_t sz;
+
+    ST_CHECK_PARAM(dst == NULL || src == NULL, -1);
+
+    if (src->col != dst->col) {
+        ST_WARNING("col not match.");
+        return -1;
+    }
+
+    if (dst->n_row + src->n_row >= dst->cap_row) {
+        dst->cap_row += src->n_row;
+        sz = dst->cap_row * dst->col * sizeof(real_t);
+        dst->val = (real_t *)st_aligned_realloc(dst->val, sz, ALIGN_SIZE);
+        if (dst->val == NULL) {
+            ST_WARNING("Failed to realloc val");
+            return -1;
+        }
+    }
+
+    memcpy(dst->val + dst->n_row * dst->col, src->val,
+            sizeof(real_t) * src->n_row * src->col);
+    dst->n_row += src->n_row;
+
+    return 0;
+}

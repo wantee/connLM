@@ -26,6 +26,7 @@
 
   <p>
     - @subpage about
+    - @subpage get_started
     - @subpage benchmark
     - @subpage io
     - @subpage vocab

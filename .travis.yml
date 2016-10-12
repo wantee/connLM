@@ -27,12 +27,12 @@ env:
     - CASE=4
     - CASE=5
     - CASE=6
-script: 
-  - source tools/shutils/shutils.sh
-  - if [ $CASE -eq 2 ]; then make -C src test; fi
-  - if [ $CASE -eq 3 ]; then (cd egs/selection; shu-testing); fi
-  - ( cd egs/tiny; shu-testing $CASE )
+script:
+  - .travis/build.sh
 notifications:
   email:
     on_success: always
     on_failure: always
+branches:
+  except:
+    - temp
