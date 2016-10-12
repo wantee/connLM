@@ -1,0 +1,248 @@
+//
+// The MIT License (MIT)
+//
+// Copyright (c) 2016 Wang Jian
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in all
+// copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+
+/**
+  @page examples The Example Recipes
+
+  We have several example recipes for different corpora, which are all under
+  @c egs/. We have done some tuning for the hyper-parameters, and report the
+  final PPLs. Users can use these examples as the starting point for their
+  own project.
+
+  Currently, examples included with connLM are:
+  - <a href="http://www.cis.upenn.edu/~treebank/">Penn Tree Bank (PTB)</a>,
+    downloaded from <a href="http://www.fit.vutbr.cz/~imikolov/rnnlm/simple-examples.tgz">Tomas Mikolov's webpage</a>.
+  - <a href="http://www.danielpovey.com/files/2015_icassp_librispeech.pdf">LibriSpeech</a>,
+    downloaded from <a href="http://www.openslr.org/12/">openslr.org</a>.
+  - <a href="http://www.statmt.org/lm-benchmark/">1 Billion Word Language Model Benchmark</a>,
+    downloaded from <a href="http://statmt.org/wmt11/training-monolingual.tgz">statmt.org</a>.
+
+  Scripts for each example is placed under a sub-directory named with the
+  corpus.
+
+  There are some standard scripts wrapping the command line tools
+  under @c egs/steps/, including:
+  - @c learn_vocab.sh, which generates a vocabulary from a text source.
+  - @c init_model.sh, which initializes a connLM model, with specified
+    structure.
+  - @c train_model.sh, which trains a model with training corpus.
+  - @c eval_model.sh, which evaluate a (trained) model on some test set.
+
+  and,
+
+  - @c run_standalone.sh, which wraps the above scripts to train a model,
+    whose topology is fixed at the beginning of training.
+  - @c run_cascade.sh, which trains a model as @c run_standalone.sh, but
+    the topology of model could be extended during training.
+
+  Other common utility scripts are under @c egs/utils/.
+
+  @section examples_tiny Recipe Internal
+
+  There is a tiny example for demonstration and regression testing, which can
+  be found in @c egs/tiny. From this, you can see the how training works
+  in connLM.
+
+  @subsection examples_dir_struct Directory Structure
+
+  For every example, we will have a @c run.sh placed in the root of example
+  directory, served as the main user interface for training.
+
+  Besides, there usually are following sub-directories:
+  - @c conf/, which stores the configurations for all models, different models
+    may have their own sub-directory.
+  - @c local/, which contains the custom scripts only used by this example,
+    such as the downloading and pre-processing related scripts.
+  - @c data/, which contains the pre-processed data files, using directly by
+    the connLM command line tools. This could be created after the prep-data
+    step in some examples.
+  - @c exp/, which is the working directory for training.
+
+  @subsection examples_step Running Steps
+
+  The main shell script for training is @c run.sh. @c run.sh accepts a @c -h
+  option to print helping message,
+
+  @code{.sh}
+  $ ./run.sh -h
+  usage: ./run.sh [steps]
+  e.g.: ./run.sh -3,5,7-9,10-
+    stpes could be a number range within 1-7:
+     step1:	Learn Vocab
+     step2:	Train MaxEnt model
+     step3:	Train CBOW model
+     step4:	Train FFNN model
+     step5:	Train RNN model
+     step6:	Train RNN+MaxEnt model
+     step7:	Train RNN~MaxEnt merge model
+
+  options:
+       --conf-dir <conf-dir>         # config directory.
+       --exp-dir <exp-dir>           # exp directory.
+
+  @endcode
+
+  @c run.sh has one positional arguments, which specify the steps user would
+  like to run. Steps could be one or more integers with comma and dash,
+  default value is empty, which means run all steps.
+  The job of parsing these strings is done by
+  <a href="https://github.com/wantee/shutils">shutils</a> library.
+
+  The steps is defined at the beginning of @c run.sh:
+
+  @code{.sh}
+  stepnames[1]="Learn Vocab"
+  stepnames+=("Train MaxEnt model:maxent")
+  stepnames+=("Train CBOW model:cbow")
+  stepnames+=("Train FFNN model:ffnn")
+  stepnames+=("Train RNN model:rnn")
+  stepnames+=("Train RNN+MaxEnt model:rnn+maxent")
+  stepnames+=("Train RNN~MaxEnt merge model:rnn~maxent")
+  @endcode
+
+  The step names consists of two parts, the left part of colon defines the
+  display name of this step and the right part gives the corresponding
+  sub-directory name under @c conf-dir, where @c run.sh can find the
+  configurations for training. Generally, a word in step name is a single
+  component of the model. A '+' means the two components are merged in one
+  model, but a '~' represents the cascaded model, i.e., we will extend the
+  components of the model one by one.
+
+  @subsection examples_prep Preparing Data
+
+  For most of the corpora, we need to pre-process the raw data, and convert
+  them into format accepted by connLM toolkit.
+
+  The scripts for preprocessing should be placed in @c local/ as they normally
+  are only relevant with one corpus.
+
+  After processing, there should be three files in @c data/ directory, i.e.,
+  @c data/train, @c data/valid and @c data/test for training, validating and
+  testing respectively.
+
+  @subsection examples_vocab Learning the Vocabulary
+
+  Before training the model, we need to generate the vocabulary first.
+  Vocabulary is a mapping which maps word strings into integer ids, see the
+  @ref model_vocab "vocab" section for details.
+
+  In connLM, the vocabulary is learned from a text source(usually this would
+  be the training corpus or a subset of it).
+
+  Since we will need the word counts information to build the output layer of
+  connLM model, the learning process is mandatory. If you want to limit
+  the words in vocabulary in a pre-defined list, you can pre-process the
+  learning text to map the words outside your list to @c \<unk\>.
+
+  The @c connlm-vocab should be used for learning vocabulary, the wrapper
+  script is @c ../steps/learn_vocab.sh,
+
+  @code
+  $ ../steps/learn_vocab.sh
+  ../steps/learn_vocab.sh
+  usage: ../steps/learn_vocab.sh <train-file> <exp-dir>
+  e.g.: ../steps/learn_vocab.sh data/train exp
+  options:
+       --config-file <file>         # vocab config file.
+  @endcode
+
+  It will learn the vocabulary from @c <train-file> and placed the resulting
+  model file to @c <exp-dir>/vocab.clm. Users can pass configurations to
+  @c connlm-vocab through @c \-\-config-file option, for details of the
+  configurations, please see the @ref cmd_vocab "command description".
+
+  @subsection examples_standalone Training Standalone Model
+
+  Each step of the rest in @c run.sh will train a connLM model. There are
+  two ways to train model in connLM. In a standalone setup, the structure of
+  network is defined before training and fixed after initializing it, while
+  in a cascaded setup, we extend the components of network one by one during
+  training.
+
+  @code
+  $ ../steps/run_standalone.sh
+  ../steps/run_standalone.sh
+  usage: ../steps/run_standalone.sh <model-type> <conf-dir> <exp-dir> <train-file> <valid-file> [test-file]
+  e.g.: ../steps/run_standalone.sh rnn conf exp data/train data/valid data/test
+  options:
+       --train-thr <threads>    # default: 1.
+       --eval-thr <threads>     # default: 1.
+       --stage <stags>          # default: "".
+  @endcode
+
+  This script will train a model with @c <train-file> and dump the final model
+  in @c <exp-dir>/<model-type>/final.clm, and search directory
+  @c <conf-dir>/<model-type> for configurations.
+
+  There are 3 stages in @c run_standalone.sh. First, it calls
+  @c ../steps/init_model.sh to initialize the network structure and value of
+  weights. Then, @c ../steps/train_model.sh is invoked to train the initialized
+  model with training data. At last, if @c <test-file> is specified, it runs
+  @c ../steps/eval_model.sh to compute and report the perplexity of test set.
+
+  @subsubsection Name Convention for Configurations
+
+  Generally, every command of connLM toolkit will have at least one
+  configuration file for common setups, like logging. The name of the
+  configuration file would be consistence with the name of command line tool.
+  They includes:
+
+  - @c vocab.conf  to specify the options for @c connlm-vocab
+  - @c output.conf  to specify the options for @c connlm-output
+  - @c init.conf  to specify the options for @c connlm-init
+  - @c train.conf  to specify the options for @c connlm-train
+  - @c eval.conf  to specify the options for @c connlm-eval
+
+  Besides, there is another configuration for defining network topology. It
+  would be called @c topo, placed under the configuration directory of one
+  model. The format of this file is described in
+  @ref model_network_topo "this page".
+
+  @subsection examples_cascade Training Cascade Model
+
+  Since a connLM model could consist of multiply components, we can merge
+  sub-parts of network into a new one, as long as their output layer is the
+  same.
+
+  With this property, one can train a model gradually. We support this type
+  of training with @c ../steps/run_cascade.sh, whose usage is similar with
+  @c ../steps/run_standalone.sh except that the @c <model-type> must contain
+  at least one '~' character.
+
+  Every word separated by '~' is the name of one component, the @c init.conf
+  and @c topo for this component should be placed in the sub-directory under
+  @c <conf-dir>/<model-type> with the same name.
+
+  The workflow of training cascade model becomes:
+
+  @verbatim
+  model = {}
+  for comp in components
+    1. initialize comp
+    2. merge comp into model
+    3. train with model
+  @endverbatim
+
+  The order of components is given by the model name from left to right.
+
+*/

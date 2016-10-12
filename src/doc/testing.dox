@@ -1,7 +1,7 @@
 //
 // The MIT License (MIT)
 //
-// Copyright (c) 2015 Wang Jian
+// Copyright (c) 2016 Wang Jian
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -22,12 +22,6 @@
 // SOFTWARE.
 
 /**
-  @page layer The NNet Layer
-
-  @section layer_intro Introduction
-
-  @section layer_topo Topology Configurations
-
-  First line must be the initial layer.
+  @page testing The Testing Framework in connLM
 
 */

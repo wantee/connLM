@@ -1,18 +1,18 @@
 //
 // The MIT License (MIT)
-// 
+//
 // Copyright (c) 2015 Wang Jian
-// 
+//
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
 // in the Software without restriction, including without limitation the rights
 // to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 // copies of the Software, and to permit persons to whom the Software is
 // furnished to do so, subject to the following conditions:
-// 
+//
 // The above copyright notice and this permission notice shall be included in all
 // copies or substantial portions of the Software.
-// 
+//
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 // IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 // FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -25,7 +25,7 @@
   @page about About the connLM toolkit
 
   @section about_what What is connLM?
-  
+
   connLM is a Connectionist Language Modelling Toolkit,
   implementing several neural network based language models.
   connLM is written in C and licensed under the MIT License.
@@ -34,38 +34,16 @@
 
   \image html connLMLogoLarge.png
 
-  As the logo of connLM shown, it is designed to integrate several
-  models together, with the models share the same output layer.
+  A connLM model is a neural network, which consists of one or more components
+  and single output layer. All components end to the output layer.
 
-  Currently, connLM supports following models:
+  Each component has one input layer. The input layer is one-hot vector,
+  typically followed by a embedding layer.
 
-  - \ref rnn "Recurrent Neural Network Language Model(RNN)"
-  - \ref lbl "Log-Bilinear Language Model(LBL)"
-  - \ref ffnn "Feed-Forward Neural Network Language Model(FFNN)"
-  - \ref maxent "(Hash-Based) Maximum Entropy Model(MaxEnt)"
+  The output layer is a N-ary tree, which is the generalization of class-based
+  factorization and hierarchical softmax.
 
-  And supports following \ref output "output layer" type:
-
-  - 1-of-V vector
-  - Class based factorization
-  - Hierarchical Softmax
+  Models can be trained using ASGD with multiple threads.
 
   More details please refers to the related pages in the manual.
-
-  @section about_flavor The flavor of connLM
-
-  The code structure and design pattern are mostly inspired by <a href="link=http://kaldi.sourceforge.net/">the Kaldi project</a>.
-  Thus we release some easy-to-understand and ready-to-run example scripts 
-  along with the codes. Some extra feature of connLM are:
-
-  - We focus connLM on a connectionist language modelling toolkit. 
-    - We try to implement as many types of model as we know.
-    - We will not try to develop a generic neutral network toolkit.
-    - We pay our most attention to the speed of training and testing time
-      of the models.
-
-  - We reduce the dependence on other software as much as possible.
-    - We write the code with pure C code.
-    - We offer every module at least one raw code version, i.e. without any other library, one can run the tools as fast as possible.
-
 */
