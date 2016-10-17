@@ -227,7 +227,7 @@ static int comp_updater_bptt(comp_updater_t *comp_updater, bool clear)
     glue_t *glue;
     bptt_updater_t *bptt_updater;
 
-    real_t *in_er, *out_er, *in_ac, *out_ac, *tmp;
+    real_t *in_er = NULL, *out_er = NULL, *in_ac = NULL, *out_ac, *tmp;
     int bptt, bptt_delay;
     int i, j, g, t, ii, er_t, in_sz, out_sz;
 
