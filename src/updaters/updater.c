@@ -177,6 +177,7 @@ void updater_destroy(updater_t *updater)
         return;
     }
 
+    safe_input_updater_destroy(updater->input_updater);
     safe_out_updater_destroy(updater->out_updater);
     if (updater->comp_updaters != NULL) {
         for (c = 0; c < updater->connlm->num_comp; c++) {
