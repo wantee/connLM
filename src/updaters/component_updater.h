@@ -38,9 +38,9 @@ extern "C" {
 #include "updaters/glue_updaters/glue_updater.h"
 #include "updaters/bptt_updater.h"
 
-/** @defgroup g_updater_comp Updater for component.
+/** @defgroup g_updater_comp Updater for Component
  * @ingroup g_updater
- * Data structures and functions for component updater.
+ * Perform forward and backprop on a component.
  */
 
 /**
@@ -85,6 +85,7 @@ void comp_updater_destroy(comp_updater_t *comp_updater);
  * Create a comp_updater.
  * @ingroup g_updater_comp
  * @param[in] comp the component.
+ * @param[in] out_updater the output updater.
  * @return comp_updater on success, otherwise NULL.
  */
 comp_updater_t* comp_updater_create(component_t *comp,

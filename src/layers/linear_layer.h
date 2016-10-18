@@ -32,15 +32,19 @@ extern "C" {
 #include <connlm/config.h>
 #include "layer.h"
 
-/** @defgroup g_layer_linear linear layer.
+/** @defgroup g_layer_linear Linear Layer
  * @ingroup g_layer
- * Data structures and functions for linear layer.
+ * Hidden layer with linear activation.
  */
 
 #define LINEAR_NAME "linear"
 
+/**
+ * Data for linear layer.
+ * @ingroup g_layer_linear
+ */
 typedef struct _linear_data_t_ {
-    real_t scale;
+    real_t scale; /**< scale for linear. y = scale * x */
 } linear_data_t;
 
 /**
@@ -83,7 +87,7 @@ int linear_parse_topo(layer_t *layer, const char *line);
  * @param[in] version file version of loading file.
  * @param[in] fp file stream loaded from.
  * @param[out] binary whether the file stream is in binary format.
- * @param[in] fo file stream used to print information, if it is not NULL.
+ * @param[in] fo_info file stream used to print information, if it is not NULL.
  * @see linear_load_body
  * @see linear_save_header, linear_save_body
  * @return non-zero value if any error.

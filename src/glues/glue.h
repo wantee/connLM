@@ -42,8 +42,8 @@ extern "C" {
 
 #include "updaters/wt_updater.h"
 
-/** @defgroup g_glue NNet glue.
- * Data structures and functions for NNet glue.
+/** @defgroup g_glue NNet Glue
+ * Glue to connect two layers.
  */
 
 typedef struct _component_updater_t_ comp_updater_t;
@@ -176,7 +176,7 @@ bool glue_check(glue_t *glue);
  * @param[in] version file version of loading file.
  * @param[in] fp file stream loaded from.
  * @param[out] binary whether the file stream is in binary format.
- * @param[in] fo file stream used to print information, if it is not NULL.
+ * @param[in] fo_info file stream used to print information, if it is not NULL.
  * @see glue_load_body
  * @see glue_save_header, glue_save_body
  * @return non-zero value if any error.
@@ -237,9 +237,9 @@ char* glue_draw_label(glue_t *glue, char *label, size_t label_len,
  * Provide label string for drawing one link of glue.
  * @ingroup g_glue
  * @param[in] glue glue.
- * @param[in] in_layer id of layer.
+ * @param[in] lid id of layer.
  * @param[out] label buffer to write string.
- * @param[in] labe_len length of label.
+ * @param[in] label_len length of label.
  * @param[in] verbose verbose output.
  * @return label on success, NULL if any error.
  */

@@ -36,10 +36,14 @@ extern "C" {
 #include <connlm/config.h>
 #include "vocab.h"
 
-/** @defgroup g_reader Sample Reader.
- * Data structure and functions for sample reader.
+/** @defgroup g_reader Samples Reader
+ * Reader to read samples from source text files.
  */
 
+/**
+ * Startistics for single thread.
+ * @ingroup g_reader
+ */
 typedef struct _thread_statistics_t_ {
     count_t words; /**< total number of words trained in this thread. */
     count_t sents; /**< total number of sentences trained in this thread. */
@@ -91,7 +95,7 @@ void connlm_egs_destroy(connlm_egs_t *egs);
  * Read words into egs.
  * @ingroup g_reader
  * @param[in] egs connlm_egs.
- * @param[out] sent_ends postion of </s>s.
+ * @param[out] sent_ends postion of \</s\>s.
  * @param[in] epoch_size number sents read one time.
  * @param[in] text_fp text file.
  * @param[in] vocab vocab.

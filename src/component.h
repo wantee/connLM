@@ -38,8 +38,8 @@ extern "C" {
 #include "layers/layer.h"
 #include "glues/glue.h"
 
-/** @defgroup g_component NNet component.
- * Data structures and functions for NNet component.
+/** @defgroup g_component NNet Component
+ * Component for a NNet, including a input layer, zero or more hidden layers and glues.
  */
 
 /**
@@ -113,7 +113,7 @@ component_t *comp_init_from_topo(const char* topo_content,
 /**
  * Load component train option.
  * @ingroup g_component
- * @param[in] component component to be loaded with.
+ * @param[in] comp component to be loaded with.
  * @param[in] opt runtime options passed by caller.
  * @param[in] sec_name section name of runtime options to be loaded.
  * @param[in] parent_param parent param.
@@ -130,7 +130,7 @@ int comp_load_train_opt(component_t *comp, st_opt_t *opt, const char *sec_name,
  * @param[in] version file version of loading file.
  * @param[in] fp file stream loaded from.
  * @param[out] binary whether the file stream is in binary format.
- * @param[in] fo file stream used to print information, if it is not NULL.
+ * @param[in] fo_info file stream used to print information, if it is not NULL.
  * @see comp_load_body
  * @see comp_save_header, comp_save_body
  * @return non-zero value if any error.

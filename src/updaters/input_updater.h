@@ -31,9 +31,9 @@ extern "C" {
 
 #include <connlm/config.h>
 
-/** @defgroup g_updater_input Updater for input.
+/** @defgroup g_updater_input Updater for Input Layer
  * @ingroup g_updater
- * Data structures and functions for input updater.
+ * Perform forward and backprop on input layer.
  */
 
 /**

@@ -34,9 +34,9 @@ extern "C" {
 #include "glues/glue.h"
 #include "updaters/wt_updater.h"
 
-/** @defgroup g_updater_glue Updater for glue.
+/** @defgroup g_updater_glue Updater for Glue
  * @ingroup g_updater
- * Data structures and functions for glue updater.
+ * Perform forward and backprop on a glue.
  */
 
 typedef struct _glue_updater_t_ glue_updater_t;

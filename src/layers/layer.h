@@ -31,8 +31,8 @@ extern "C" {
 
 #include <connlm/config.h>
 
-/** @defgroup g_layer NNet hidden layer.
- * Data structures and functions for NNet hidden layer.
+/** @defgroup g_layer NNet hidden layer
+ * Hidden layer for NNet with various activation types.
  */
 
 typedef struct _layer_t_ layer_t;
@@ -77,7 +77,7 @@ typedef struct _layer_t_ {
     char type[MAX_NAME_LEN]; /**< layer type. */
     int size; /**< layer size. */
 
-    layer_impl_t *impl; /**, implementaion of the layer. */
+    layer_impl_t *impl; /**< implementaion of the layer. */
     void *extra; /**< hook to store extra data. */
 } layer_t;
 
@@ -123,7 +123,7 @@ layer_t* layer_parse_topo(const char *line);
  * @param[in] version file version of loading file.
  * @param[in] fp file stream loaded from.
  * @param[out] binary whether the file stream is in binary format.
- * @param[in] fo file stream used to print information, if it is not NULL.
+ * @param[in] fo_info file stream used to print information, if it is not NULL.
  * @see layer_load_body
  * @see layer_save_header, layer_save_body
  * @return non-zero value if any error.
@@ -173,7 +173,7 @@ int layer_save_body(layer_t *layer, FILE *fp, bool binary);
  * @ingroup g_layer
  * @param[in] layer layer.
  * @param[out] label buffer to write string.
- * @param[in] labe_len length of label.
+ * @param[in] label_len length of label.
  * @return label on success, NULL if any error.
  */
 char* layer_draw_label(layer_t *layer, char *label, size_t label_len);

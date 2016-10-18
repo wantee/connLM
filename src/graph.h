@@ -34,8 +34,9 @@ extern "C" {
 #include "layers/layer.h"
 #include "glues/glue.h"
 
-/** @defgroup g_graph NNet graph.
- * Data structures and functions for NNet graph.
+/** @defgroup g_graph NNet Graph
+ * Graph structure for a NNet, used to determine the forward order of glues
+ * in a component.
  */
 
 /**

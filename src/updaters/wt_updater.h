@@ -36,9 +36,9 @@ extern "C" {
 #include "utils.h"
 #include "param.h"
 
-/** @defgroup g_updater_wt Updater for param.
+/** @defgroup g_updater_wt Updater for Weight
  * @ingroup g_updater
- * Data structures and functions for param updater.
+ * Update values of a weight.
  */
 
 /**
@@ -59,20 +59,20 @@ typedef enum _weight_update_type_t_ {
  */
 typedef struct _weight_dirty_buffer_t_ {
     // WT_UT_PART
-    st_int_seg_t *segs;
-    int cap_seg;
-    int n_seg;
+    st_int_seg_t *segs; /**< buffer for segements. */
+    int cap_seg; /**< capacity of segements buffer. */
+    int n_seg; /**< size of segements buffer. */
 
     // WT_UT_ONE_SHOT or WT_UT_SEG
-    int *ids;
-    int cap_id;
-    int n_id;
+    int *ids; /**< buffer of ids. */
+    int cap_id; /**< capacity of ids. */
+    int n_id; /**< size of ids. */
 
 #ifdef _BATCH_UPDATE_
-    concat_mat_t *buf_in; /**< sized by n_id and cap_id. */
-    real_t in_scale;
-    concat_mat_t *buf_er; /**< sized by n_id and cap_id. */
-    real_t er_scale;
+    concat_mat_t *buf_in; /**< buffer for in_ac. sized by n_id and cap_id. */
+    real_t in_scale; /**< scale of in_ac. */
+    concat_mat_t *buf_er; /**< buffer for out_er. sized by n_id and cap_id. */
+    real_t er_scale; /**< scale of out_er. */
     int n_buf;
 #endif
 } wt_dirty_buf_t;

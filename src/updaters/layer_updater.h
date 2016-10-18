@@ -33,9 +33,9 @@ extern "C" {
 
 #include "layers/layer.h"
 
-/** @defgroup g_updater_layer Updater for layer.
+/** @defgroup g_updater_layer Updater for Hidden Layer
  * @ingroup g_updater
- * Data structures and functions for layer updater.
+ * Perform forward and backprop on a hidden layer.
  */
 
 typedef struct _layer_updater_t_ layer_updater_t;

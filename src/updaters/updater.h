@@ -36,8 +36,8 @@ extern "C" {
 #include "updaters/output_updater.h"
 #include "updaters/component_updater.h"
 
-/** @defgroup g_updater Updater to update connlm parameter.
- * Data structure and functions for updater.
+/** @defgroup g_updater Updater
+ * Perform forward and backprop on a connlm model.
  */
 
 /**
@@ -132,7 +132,7 @@ int updater_finalize(updater_t *updater);
  * Sampling a word.
  * @ingroup g_updater
  * @param[in] updater updater.
- * @param[in] startover if true, feed <s> than sampling.
+ * @param[in] startover if true, feed \<s\> than sampling.
  * @return the sampled word, -1 if any error.
  */
 int updater_sampling(updater_t *updater, bool startover);

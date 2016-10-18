@@ -35,9 +35,9 @@ extern "C" {
 #include "../../glues/glue.h"
 #include "glue_updater.h"
 
-/** @defgroup g_glue_updater_out out glue_updater.
- * @ingroup g_updater
- * Data structures and functions for out glue_updater.
+/** @defgroup g_glue_updater_out Updater for Output Glue
+ * @ingroup g_updater_glue
+ * Perform forward and backprop on a output glue.
  */
 
 /**
@@ -45,7 +45,7 @@ extern "C" {
  * @ingroup g_glue_updater_out
  * @param[in] glue_updater glue_updater.
  * @param[in] comp_updater the comp_updater.
- * @param[in, unused] input_sent input sentence buffer.
+ * @param[in] input_sent [unused] input sentence buffer.
  * @param[in] in_ac activation of in layer.
  * @return non-zero value if any error.
  */
@@ -58,7 +58,7 @@ int out_glue_updater_forward(glue_updater_t *glue_updater,
  * @ingroup g_glue_updater_out
  * @param[in] glue_updater glue_updater.
  * @param[in] comp_updater the comp_updater.
- * @param[in, unused] input_sent input sentence buffer.
+ * @param[in] input_sent [unused] input sentence buffer.
  * @param[in] in_ac activation of in layer.
  * @param[in] out_er error of out layer.
  * @param[out] in_er error of in layer.

@@ -34,9 +34,9 @@ extern "C" {
 #include "../../glues/fc_glue.h"
 #include "glue_updater.h"
 
-/** @defgroup g_glue_updater_fc full-connected glue_updater.
- * @ingroup g_updater
- * Data structures and functions for fc glue_updater.
+/** @defgroup g_glue_updater_fc Updater for Full-Connected Glue
+ * @ingroup g_updater_glue
+ * Perform forward and backprop on a full-connected glue.
  */
 
 /**
@@ -44,7 +44,7 @@ extern "C" {
  * @ingroup g_glue_updater_fc
  * @param[in] glue_updater glue_updater.
  * @param[in] comp_updater the comp_updater.
- * @param[in, unused] input_sent input sentence buffer.
+ * @param[in] input_sent [unused] input sentence buffer.
  * @param[in] in_ac activation of in layer.
  * @return non-zero value if any error.
  */
@@ -56,7 +56,7 @@ int fc_glue_updater_forward(glue_updater_t *glue_updater,
  * @ingroup g_glue_updater_fc
  * @param[in] glue_updater glue_updater.
  * @param[in] comp_updater the comp_updater.
- * @param[in, unused] input_sent input sentence buffer.
+ * @param[in] input_sent [unused] input sentence buffer.
  * @param[in] in_ac activation of in layer.
  * @param[in] out_er error of out layer.
  * @param[out] in_er error of in layer.

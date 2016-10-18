@@ -34,7 +34,7 @@ extern "C" {
 #include <connlm/config.h>
 
 /** @defgroup g_param Parameter
- * Data structures and functions for training Parameter.
+ * (Hyper)parameters for training a connLM model.
  */
 
 /**

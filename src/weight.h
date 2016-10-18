@@ -31,8 +31,8 @@ extern "C" {
 
 #include <connlm/config.h>
 
-/** @defgroup g_weight NNet weight.
- * Data structures and functions for NNet weight.
+/** @defgroup g_weight NNet weight
+ * Weight for NNet, with various types.
  */
 
 /**
@@ -89,7 +89,8 @@ weight_t* wt_dup(weight_t *src);
 
 /**
  * Parse a topo config line, and return a new glue.
- * @ingroup g_glue
+ * @ingroup g_weight
+ * @param[out] wt the weight.
  * @param[in,out] line topo config line. untouched topo will be stored back.
  * @param[in] line_len lengh of line.
  * @return non-zero value if any error.
@@ -103,7 +104,7 @@ int wt_parse_topo(weight_t *wt, char *line, size_t line_len);
  * @param[in] version file version of loading file.
  * @param[in] fp file stream loaded from.
  * @param[out] binary whether the file stream is in binary format.
- * @param[in] fo file stream used to print information, if it is not NULL.
+ * @param[in] fo_info file stream used to print information, if it is not NULL.
  * @see wt_load_body
  * @see wt_save_header, wt_save_body
  * @return non-zero value if any error.

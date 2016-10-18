@@ -105,10 +105,10 @@ char* escape_dot(char *out, size_t len, const char *str);
  * @ingroup g_updater_wt
  */
 typedef struct _concatable_matrix_t_ {
-    real_t *val; /* values of matrix. */
-    int col; /* number of col. */
-    int n_row; /* number of row. */
-    int cap_row; /* capacity of row. */
+    real_t *val; /**< values of matrix. */
+    int col; /**< number of col. */
+    int n_row; /**< number of row. */
+    int cap_row; /**< capacity of row. */
 } concat_mat_t;
 
 #define safe_concat_mat_destroy(ptr) do {\

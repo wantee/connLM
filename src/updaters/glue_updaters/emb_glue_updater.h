@@ -35,9 +35,9 @@ extern "C" {
 #include "../../glues/glue.h"
 #include "glue_updater.h"
 
-/** @defgroup g_glue_updater_emb emb glue_updater.
- * @ingroup g_updater
- * Data structures and functions for emb glue_updater.
+/** @defgroup g_glue_updater_emb Updater for Embedding Glue
+ * @ingroup g_updater_glue
+ * Perform forward and backprop on a embedding glue.
  */
 
 /**
@@ -46,7 +46,7 @@ extern "C" {
  * @param[in] glue_updater glue_updater.
  * @param[in] comp_updater the comp_updater.
  * @param[in] input_sent input sentence buffer.
- * @param[in, noused] in_ac activation of in layer.
+ * @param[in] in_ac [unused] activation of in layer.
  * @return non-zero value if any error.
  */
 int emb_glue_updater_forward(glue_updater_t *glue_updater,
@@ -58,9 +58,9 @@ int emb_glue_updater_forward(glue_updater_t *glue_updater,
  * @param[in] glue_updater glue_updater.
  * @param[in] comp_updater the comp_updater.
  * @param[in] input_sent input sentence buffer.
- * @param[in, noused] in_ac activation of in layer.
+ * @param[in] in_ac [unused] activation of in layer.
  * @param[in] out_er error of out layer.
- * @param[out, noused] in_er error of in layer.
+ * @param[out] in_er [unused] error of in layer.
  * @return non-zero value if any error.
  */
 int emb_glue_updater_backprop(glue_updater_t *glue_updater,

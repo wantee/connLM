@@ -32,15 +32,20 @@ extern "C" {
 #include <connlm/config.h>
 #include "layer.h"
 
-/** @defgroup g_layer_sigmoid sigmoid layer.
+/** @defgroup g_layer_sigmoid Sigmoid Layer
  * @ingroup g_layer
- * Data structures and functions for sigmoid layer.
+ * Hidden layer with sigmoid activation.
  */
 
 #define SIGMOID_NAME "sigmoid"
 
+/**
+ * Data for sigmoid layer.
+ * @ingroup g_layer_sigmoid
+ */
 typedef struct _sigmoid_data_t_ {
-    real_t steepness;
+    real_t steepness; /**< steepness for sigmoid.
+                        y = 1 / (1 + exp(-steepness * x)) */
 } sigmoid_data_t;
 
 /**
@@ -83,7 +88,7 @@ int sigmoid_parse_topo(layer_t *layer, const char *line);
  * @param[in] version file version of loading file.
  * @param[in] fp file stream loaded from.
  * @param[out] binary whether the file stream is in binary format.
- * @param[in] fo file stream used to print information, if it is not NULL.
+ * @param[in] fo_info file stream used to print information, if it is not NULL.
  * @see sigmoid_load_body
  * @see sigmoid_save_header, sigmoid_save_body
  * @return non-zero value if any error.

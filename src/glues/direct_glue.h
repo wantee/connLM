@@ -37,35 +37,39 @@ extern "C" {
 
 #include "glue.h"
 
-/** @defgroup g_glue_direct direct glue.
+/** @defgroup g_glue_direct Direct Glue
  * @ingroup g_glue
- * Data structures and functions for direct glue.
+ * Glue directly connects the input layer and the output layer.
  */
 
 #define DIRECT_GLUE_NAME "direct"
 
+/**
+ * Data for direct glue
+ * @ingroup g_glue_direct
+ */
 typedef struct _direct_glue_data_t_ {
     int hash_sz; /**< size of hash wt. */
 } direct_glue_data_t;
 
 /**
- * Destroy a sum glue.
- * @ingroup g_glue_sum
- * @param[in] glue sum glue to be destroyed.
+ * Destroy a direct glue.
+ * @ingroup g_glue_direct
+ * @param[in] glue direct glue to be destroyed.
  */
 void direct_glue_destroy(glue_t* glue);
 
 /**
- * Initialize a sum glue.
- * @ingroup g_glue_sum
- * @param[in] glue sum glue to be initialized.
+ * Initialize a direct glue.
+ * @ingroup g_glue_direct
+ * @param[in] glue direct glue to be initialized.
  * @return non-zero if any error
  */
 int direct_glue_init(glue_t *glue);
 
 /**
- * Duplicate a sum glue.
- * @ingroup g_glue_sum
+ * Duplicate a direct glue.
+ * @ingroup g_glue_direct
  * @param[in] extra source data.
  * @return duplicated extra data, NULL if error.
  */
@@ -98,7 +102,7 @@ bool direct_glue_check(glue_t *glue, layer_t **layers, int n_layer,
  * @ingroup g_glue_direct
  * @param[in] glue glue.
  * @param[out] label buffer to write string.
- * @param[in] labe_len length of label.
+ * @param[in] label_len length of label.
  * @return label on success, NULL if any error.
  */
 char* direct_glue_draw_label(glue_t *glue, char *label, size_t label_len);

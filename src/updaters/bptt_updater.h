@@ -34,9 +34,9 @@ extern "C" {
 #include "component.h"
 #include "param.h"
 
-/** @defgroup g_updater_bptt Updater for BPTT.
+/** @defgroup g_updater_bptt Updater for BPTT
  * @ingroup g_updater
- * Data structures and functions for bptt updater.
+ * Perform BPTT training on recurrent glues.
  * Every cycle in component has a bptt updater.
  */
 

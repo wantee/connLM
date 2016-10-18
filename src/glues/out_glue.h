@@ -33,9 +33,9 @@ extern "C" {
 #include "param.h"
 #include "glue.h"
 
-/** @defgroup g_glue_out output weight glue.
+/** @defgroup g_glue_out Output Glue
  * @ingroup g_glue
- * Data structures and functions for out glue.
+ * Glue connects a hidden layers and the output layer.
  */
 
 #define OUT_GLUE_NAME "out"

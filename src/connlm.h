@@ -45,7 +45,7 @@ extern "C" {
 #include "component.h"
 
 /** @defgroup g_connlm connLM Model
- * Data structure and functions for connLM model.
+ * Model of connLM, including a vocab, one or more components and a output layer.
  */
 
 /**

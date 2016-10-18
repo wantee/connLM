@@ -38,7 +38,7 @@ extern "C" {
 #include "layers/layer.h"
 
 /** @defgroup g_output Output Layer
- * Data structures and functions for Output Layer.
+ * Output Layer of NNet, structured as a tree.
  */
 
 typedef unsigned int output_node_id_t;

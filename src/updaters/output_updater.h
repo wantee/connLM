@@ -33,9 +33,9 @@ extern "C" {
 
 #include "output.h"
 
-/** @defgroup g_updater_output Updater for output layer.
+/** @defgroup g_updater_output Updater for Output Layer
  * @ingroup g_updater
- * Data structures and functions for output layer updater.
+ * Perform forward and backprop on a output layer.
  */
 
 /**
@@ -71,7 +71,7 @@ void out_updater_destroy(out_updater_t *out_updater);
 /**
  * Create a out_updater.
  * @ingroup g_updater_output
- * @param[in] connlm the connlm model.
+ * @param[in] output related output layer.
  * @return out_updater on success, otherwise NULL.
  */
 out_updater_t* out_updater_create(output_t *output);

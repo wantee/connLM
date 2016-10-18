@@ -35,9 +35,9 @@ extern "C" {
 #include "param.h"
 #include "glue.h"
 
-/** @defgroup g_glue_fc weight glue.
+/** @defgroup g_glue_fc Full-Connected Glue
  * @ingroup g_glue
- * Data structures and functions for full-connected glue.
+ * Glue fully connects two hidden layers.
  */
 
 #define FC_GLUE_NAME "fc"

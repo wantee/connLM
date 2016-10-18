@@ -37,7 +37,7 @@ extern "C" {
 #include "layers/layer.h"
 
 /** @defgroup g_input Input Layer
- * Data structures and functions for Input Layer.
+ * Input layer of NNet.
  */
 
 /**
@@ -57,12 +57,12 @@ typedef enum _input_combination_method_t_ {
  * @ingroup g_input
  */
 typedef struct _input_t_ {
-    int input_size;
+    int input_size; /**< size of input layer. */
 
-    st_wt_int_t *context;
-    int n_ctx;
+    st_wt_int_t *context; /**< context for input layer. */
+    int n_ctx; /**< number of contexts for input layer. */
 
-    input_combine_t combine;
+    input_combine_t combine; /**< combine method of input layer. */
 } input_t;
 
 /**
@@ -118,7 +118,7 @@ layer_t* input_get_layer(input_t *input);
  * @param[in] version file version of loading file.
  * @param[in] fp file stream loaded from.
  * @param[out] binary whether the file stream is in binary format.
- * @param[in] fo file stream used to print information, if it is not NULL.
+ * @param[in] fo_info file stream used to print information, if it is not NULL.
  * @see input_load_body
  * @see input_save_header, input_save_body
  * @return non-zero value if any error.
@@ -168,7 +168,7 @@ int input_save_body(input_t *input, FILE *fp, bool binary);
  * @ingroup g_input
  * @param[in] input input layer.
  * @param[out] label buffer to write string.
- * @param[in] labe_len length of label.
+ * @param[in] label_len length of label.
  * @return label on success, NULL if any error.
  */
 char* input_draw_label(input_t *input, char *label, size_t label_len);

@@ -32,9 +32,9 @@ extern "C" {
 #include <connlm/config.h>
 #include "layer.h"
 
-/** @defgroup g_layer_tanh tanh layer.
+/** @defgroup g_layer_tanh Tanh Layer
  * @ingroup g_layer
- * Data structures and functions for tanh layer.
+ * Hidden layer with tanh activation.
  */
 
 #define TANH_NAME "tanh"

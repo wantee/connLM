@@ -39,12 +39,12 @@ extern "C" {
 #include "reader.h"
 #include "updaters/updater.h"
 
-/** @defgroup g_driver Driver to run on connlm model.
- * Data structure and functions for diver.
+/** @defgroup g_driver connLM Driver
+ * Driver to perform forward or backprop with connLM model.
  */
 
 /**
- * Driver.
+ * Driver mode.
  * @ingroup g_driver
  */
 typedef enum _driver_mode_t_ {
@@ -149,6 +149,7 @@ driver_t* driver_create(connlm_t *connlm, reader_t *reader, int n_thr);
  * Setup driver for running.
  * @ingroup g_driver
  * @param[in] driver driver.
+ * @param[in] mode running mode.
  * @return non-zero value if any error.
  */
 int driver_setup(driver_t *driver, driver_mode_t mode);
@@ -182,65 +183,6 @@ int driver_set_eval(driver_t *driver, driver_eval_opt_t *eval_opt,
  */
 int driver_set_gen(driver_t *driver, driver_gen_opt_t *gen_opt,
         int num_sents);
-
-#if 0
-/**
- * Setup training for connlm model. Called before training.
- * @ingroup g_connlm
- * @param[in] connlm connlm model.
- * @param[in] train_opt training options.
- * @param[in] train_file training corpus file.
- * @return non-zero value if any error.
- */
-int connlm_setup_train(connlm_t *connlm, const char *train_file);
-
-/**
- * Training a connlm model.
- * @ingroup g_connlm
- * @param[in] connlm connlm model.
- * @param[in] reader data source reader.
- * @return non-zero value if any error.
- */
-int connlm_train(connlm_t *connlm, reader_t *reader);
-
-/**
- * Setup evaluating for connlm model. Called before evaluating.
- * @ingroup g_connlm
- * @param[in] connlm connlm model.
- * @param[in] eval_opt evaluating options.
- * @param[in] eval_file evaluating corpus file.
- * @return non-zero value if any error.
- */
-int connlm_setup_eval(connlm_t *connlm, connlm_opt_t *eval_opt,
-        const char *eval_file);
-
-/**
- * Evaluating a connlm model.
- * @ingroup g_connlm
- * @param[in] connlm connlm model.
- * @param[in] fp_log file stream to write log out.
- * @return non-zero value if any error.
- */
-int connlm_eval(connlm_t *connlm, FILE *fp_log);
-
-/**
- * Setup generating for connlm model. Called before generating.
- * @ingroup g_connlm
- * @param[in] connlm connlm model.
- * @param[in] gen_opt generating options.
- * @return non-zero value if any error.
- */
-int connlm_setup_gen(connlm_t *connlm, connlm_gen_opt_t *gen_opt);
-
-/**
- * Testing a connlm model.
- * @ingroup g_connlm
- * @param[in] connlm connlm model.
- * @param[in] num_sents number of sentences to be generate.
- * @return non-zero value if any error.
- */
-int connlm_gen(connlm_t *connlm, int num_sents);
-#endif
 
 #ifdef __cplusplus
 }

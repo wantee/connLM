@@ -1,7 +1,7 @@
 /*
  * The MIT License (MIT)
  *
- * Copyright (c) 2015 Wang Jian
+ * Copyright (c) 2016 Wang Jian
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -34,9 +34,9 @@ extern "C" {
 #include "param.h"
 #include "glue.h"
 
-/** @defgroup g_glue_emb embedding weight glue.
+/** @defgroup g_glue_emb Embedding Glue
  * @ingroup g_glue
- * Data structures and functions for emb glue.
+ * Glue connects the input layer and a hidden layer.
  */
 
 #define EMB_GLUE_NAME "emb"
