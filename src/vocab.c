@@ -450,27 +450,6 @@ static int vocab_sort(vocab_t *vocab, word_info_t *word_infos,
 
     total_vocab_size = st_alphabet_get_label_num(vocab->alphabet);
 
-#if 0
-    word_info_t swap;
-    count_t max;
-    int b;
-    for (a = UNK_ID + 1; a < total_vocab_size; a++) {
-        max = a;
-        for (b = a + 1; b < total_vocab_size; b++) {
-            if (word_infos[max].cnt < word_infos[b].cnt) {
-                max = b;
-            }
-        }
-
-        if (max == a) {
-            continue;
-        }
-
-        swap = word_infos[max];
-        word_infos[max] = word_infos[a];
-        word_infos[a] = swap;
-    }
-#endif
     st_qsort(word_infos + UNK_ID + 1, total_vocab_size - UNK_ID - 1,
             sizeof(word_info_t), word_info_comp, vocab->alphabet);
 
