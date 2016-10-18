@@ -151,9 +151,7 @@ int driver_setup(driver_t *driver, driver_mode_t mode)
     } else {
         backprop = false;
         if (mode == DRIVER_GEN) {
-            if (driver->gen_opt != NULL) {
-                st_srand(driver->gen_opt->rand_seed);
-            }
+            st_srand(driver->gen_opt.rand_seed);
         }
     }
 
@@ -185,7 +183,7 @@ int driver_set_eval(driver_t *driver, driver_eval_opt_t *eval_opt, FILE *fp_log)
 {
     ST_CHECK_PARAM(driver == NULL || eval_opt == NULL, -1);
 
-    driver->eval_opt = eval_opt;
+    driver->eval_opt = *eval_opt;
     driver->fp_log = fp_log;
 
     return 0;
@@ -195,7 +193,7 @@ int driver_set_gen(driver_t *driver, driver_gen_opt_t *gen_opt, int num_sents)
 {
     ST_CHECK_PARAM(driver == NULL || gen_opt == NULL || num_sents < 0, -1);
 
-    driver->gen_opt = gen_opt;
+    driver->gen_opt = *gen_opt;
     driver->gen_num_sents = num_sents;
 
     return 0;
@@ -221,8 +219,9 @@ static int driver_steps(driver_t *driver, int tid, double *logp,
         }
 
         *logp += updater->logp;
-        if (driver->eval_opt != NULL) {
-            *logp_sent += logn10(updater->logp, driver->eval_opt->out_log_base);
+        if (driver->fp_log != NULL
+                    && driver->eval_opt.print_sent_prob) {
+            *logp_sent += logn10(updater->logp, driver->eval_opt.out_log_base);
         }
 
         if ((*logp != *logp) || (isinf(*logp))) {
@@ -232,9 +231,9 @@ static int driver_steps(driver_t *driver, int tid, double *logp,
         }
 
         if (driver->fp_log != NULL
-                && (! driver->eval_opt->print_sent_prob)) {
+                && (! driver->eval_opt.print_sent_prob)) {
             fprintf(driver->fp_log, "%d\t%.6f\t%s", word,
-                    logn10(updater->logp, driver->eval_opt->out_log_base),
+                    logn10(updater->logp, driver->eval_opt.out_log_base),
                     vocab_get_word(updater->connlm->vocab, word));
 
             fprintf(driver->fp_log, "\n");
@@ -242,11 +241,11 @@ static int driver_steps(driver_t *driver, int tid, double *logp,
 
         if (word == SENT_END_ID) {
             if (driver->fp_log != NULL
-                    && driver->eval_opt->print_sent_prob) {
+                    && driver->eval_opt.print_sent_prob) {
                 fprintf(driver->fp_log, "%.6f\n", *logp_sent);
+                *logp_sent = 0.0;
             }
             ++(*sents);
-            *logp_sent = 0.0;
         }
         ++(*words);
     }
@@ -389,13 +388,8 @@ static int driver_do_run(driver_t *driver)
     ST_CHECK_PARAM(driver == NULL, -1);
 
     if (driver->mode == DRIVER_EVAL) {
-        if (driver->eval_opt == NULL) {
-            ST_WARNING("Eval opt not set.");
-            return -1;
-        }
         if (driver->fp_log != NULL) {
-            if (driver->fp_log != NULL
-                    && (! driver->eval_opt->print_sent_prob)) {
+            if (! driver->eval_opt.print_sent_prob) {
                 fprintf(driver->fp_log, "Index   logP(NET)          Word\n");
                 fprintf(driver->fp_log, "----------------------------------\n");
             }
@@ -492,7 +486,7 @@ static int driver_do_run(driver_t *driver)
     }
 
     if (driver->mode == DRIVER_EVAL) {
-        if (driver->fp_log != NULL && (!driver->eval_opt->print_sent_prob)) {
+        if (driver->fp_log != NULL && (!driver->eval_opt.print_sent_prob)) {
             fprintf(driver->fp_log, "\nSummary:\n");
             fprintf(driver->fp_log, "Words: " COUNT_FMT
                     "    OOVs: " COUNT_FMT "\n",
@@ -542,19 +536,14 @@ static int driver_gen(driver_t *driver)
 
     ST_CHECK_PARAM(driver == NULL, -1);
 
-    if (driver->gen_opt == NULL) {
-        ST_WARNING("Gen opt not set.");
-        return -1;
-    }
-
     updater = driver->updaters[0];
     vocab = driver->connlm->vocab;
 
-    if (driver->gen_opt->prefix_file[0] != '\0') {
-        text_fp = st_fopen(driver->gen_opt->prefix_file, "rb");
+    if (driver->gen_opt.prefix_file[0] != '\0') {
+        text_fp = st_fopen(driver->gen_opt.prefix_file, "rb");
         if (text_fp == NULL) {
             ST_WARNING("Failed to open prefix file[%s]",
-                    driver->gen_opt->prefix_file);
+                    driver->gen_opt.prefix_file);
             goto ERR;
         }
     }

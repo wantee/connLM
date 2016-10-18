@@ -108,11 +108,11 @@ typedef struct _driver_t_ {
 
     driver_mode_t mode; /**< driver mode. */
     // for eval
-    driver_eval_opt_t *eval_opt; /**< Eval options. */
+    driver_eval_opt_t eval_opt; /**< Eval options. */
     FILE *fp_log;    /**< file pointer to print out log. */
 
     // for gen
-    driver_gen_opt_t *gen_opt; /**< Gen options. */
+    driver_gen_opt_t gen_opt; /**< Gen options. */
     int gen_num_sents;    /**< number of sentences to be generated. */
 } driver_t;
 

@@ -161,11 +161,6 @@ int main(int argc, const char *argv[])
         goto ERR;
     }
 
-    if (driver_setup(driver, DRIVER_EVAL) < 0) {
-        ST_WARNING("Failed to driver_setup.");
-        goto ERR;
-    }
-
     if (argc > 3) {
         fp = st_fopen(argv[3], "wb");
         if (fp == NULL) {
@@ -178,6 +173,11 @@ int main(int argc, const char *argv[])
 
     if (driver_set_eval(driver, &g_eval_opt, fp) < 0) {
         ST_WARNING("Failed to driver_set_eval.");
+        goto ERR;
+    }
+
+    if (driver_setup(driver, DRIVER_EVAL) < 0) {
+        ST_WARNING("Failed to driver_setup.");
         goto ERR;
     }
 
