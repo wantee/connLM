@@ -36,7 +36,8 @@ INCS = utils.h \
        updaters/glue_updaters/emb_glue_updater.h \
        updaters/glue_updaters/out_glue_updater.h \
        updaters/wt_updater.h \
-       updaters/bptt_updater.h
+       updaters/bptt_updater.h \
+       fst_converter.h
 
 SRCS = utils.c \
        param.c \
@@ -69,7 +70,8 @@ SRCS = utils.c \
        updaters/glue_updaters/emb_glue_updater.c \
        updaters/glue_updaters/out_glue_updater.c \
        updaters/wt_updater.c \
-       updaters/bptt_updater.c
+       updaters/bptt_updater.c \
+       fst_converter.c
 
 BINS = bin/connlm-train \
        bin/connlm-eval \
@@ -80,6 +82,7 @@ BINS = bin/connlm-train \
        bin/connlm-output \
        bin/connlm-gen \
        bin/connlm-draw \
+       bin/connlm-tofst
 #       bin/connlm-merge maybe rename to connlm-edit
 
 #TESTS = tests/maxent-test
