@@ -58,7 +58,7 @@
   of MaxEnt in one model:
 
   @code{.sh}
-  $ connlm-copy --binary=false exp/maxent/01.clm mdl,c{maxent}:- | less
+  $ connlm-copy --binary=false mdl,c{maxent}:exp/rnn+maxent/final.clm - | less
   @endcode
 
   Users can find many examples using model filter in the
