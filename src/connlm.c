@@ -805,8 +805,10 @@ int connlm_filter(connlm_t *connlm, model_filter_t mf,
                 if (strcasecmp(connlm->comps[c]->name,
                             comp_names + MAX_NAME_LEN * i) == 0) {
                     safe_comp_destroy(connlm->comps[c]);
-                    memmove(connlm->comps + c, connlm->comps + c + 1,
-                            sizeof(component_t *) * connlm->num_comp - c - 1);
+                    if (connlm->num_comp - c - 1 > 0) {
+                        memmove(connlm->comps + c, connlm->comps + c + 1,
+                            sizeof(component_t *) * (connlm->num_comp - c - 1));
+                    }
                     connlm->num_comp--;
                     break;
                 }
@@ -825,8 +827,10 @@ int connlm_filter(connlm_t *connlm, model_filter_t mf,
             }
             if (!found) {
                 safe_comp_destroy(connlm->comps[c]);
-                memmove(connlm->comps + c, connlm->comps + c + 1,
-                        sizeof(component_t *) * connlm->num_comp - c - 1);
+                if (connlm->num_comp - c - 1 > 0) {
+                    memmove(connlm->comps + c, connlm->comps + c + 1,
+                            sizeof(component_t *) * (connlm->num_comp - c - 1));
+                }
                 connlm->num_comp--;
             } else {
                 c++;
