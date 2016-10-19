@@ -113,7 +113,7 @@ int main(int argc, const char *argv[])
 
     mf = parse_model_filter(argv[1], fname, MAX_DIR_LEN,
             &comp_names, &num_comp);
-    if (mf == MF_NONE) {
+    if (mf == MF_ERR) {
         ST_WARNING("Failed to parse_model_filter.");
         goto ERR;
     }

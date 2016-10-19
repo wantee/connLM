@@ -71,14 +71,14 @@ typedef enum _model_filter_t_ {
     MF_NONE       = 0x0000,
     MF_VOCAB      = 0x0001,
     MF_OUTPUT     = 0x0002,
-    MF_ALL        = 0x0003,
     MF_COMP_NEG   = 0x0004,
-    MF_ERR        = 0xFFFF,
+    MF_ALL        = 0x0007,
+    MF_ERR        = 0x1000,
 } model_filter_t;
 
 /**
  * Parsing a model filter.
- * A model filter can be: mdl,[+-][ovc<comp1>c<comp2>]:file_name.
+ * A model filter can be: mdl,[+-][ovc{comp1}c{comp2}]:file_name.
  * Any string not in such format will be treated as a model file name.
  *
  * @ingroup g_utils
@@ -87,7 +87,7 @@ typedef enum _model_filter_t_ {
  * @param[in] mdl_file_len max len of model file buffer.
  * @param[out] comp_names names of components specified, every MAX_NAME_LEN is one name. Must be freed outside this function.
  * @param[out] num_comp number of components specified, -1 means all.
- * @return filter type. MF_NONE if error.
+ * @return filter type. MF_ERR if error.
  */
 model_filter_t parse_model_filter(const char *mdl_filter,
         char *mdl_file, size_t mdl_file_len, char **comp_names,

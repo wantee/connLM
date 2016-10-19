@@ -193,7 +193,7 @@ static int unit_test_parse_model_filter()
     fprintf(stderr, "Success\n");
 
     fprintf(stderr, "    Case %d...", ncase++);
-    strncpy(in, "mdl,oc<rnn:model1.clm", MAX_DIR_LEN);
+    strncpy(in, "mdl,oc{rnn:model1.clm", MAX_DIR_LEN);
     in[MAX_DIR_LEN - 1] = '\0';
     mf = parse_model_filter(in, out, MAX_DIR_LEN, &comp_names, &num_comp);
     if (mf != MF_ALL || strcmp(in, out) != 0) {
@@ -231,7 +231,7 @@ static int unit_test_parse_model_filter()
     fprintf(stderr, "Success\n");
 
     fprintf(stderr, "    Case %d...", ncase++);
-    strncpy(in, "mdl,c<rnn>:model1.clm", MAX_DIR_LEN);
+    strncpy(in, "mdl,c{rnn}:model1.clm", MAX_DIR_LEN);
     in[MAX_DIR_LEN - 1] = '\0';
     mf = parse_model_filter(in, out, MAX_DIR_LEN, &comp_names, &num_comp);
     if ((strcmp(out, "model1.clm") != 0)
@@ -245,7 +245,7 @@ static int unit_test_parse_model_filter()
     fprintf(stderr, "Success\n");
 
     fprintf(stderr, "    Case %d...", ncase++);
-    strncpy(in, "mdl,c<rnn>c<lbl>:model1.clm", MAX_DIR_LEN);
+    strncpy(in, "mdl,c{rnn}c{lbl}:model1.clm", MAX_DIR_LEN);
     in[MAX_DIR_LEN - 1] = '\0';
     mf = parse_model_filter(in, out, MAX_DIR_LEN, &comp_names, &num_comp);
     if ((strcmp(out, "model1.clm") != 0)
@@ -290,7 +290,7 @@ static int unit_test_parse_model_filter()
     fprintf(stderr, "Success\n");
 
     fprintf(stderr, "    Case %d...", ncase++);
-    strncpy(in, "mdl,-c<rnn>:model1.clm", MAX_DIR_LEN);
+    strncpy(in, "mdl,-c{rnn}:model1.clm", MAX_DIR_LEN);
     in[MAX_DIR_LEN - 1] = '\0';
     mf = parse_model_filter(in, out, MAX_DIR_LEN, &comp_names, &num_comp);
     if ((strcmp(out, "model1.clm") != 0)
@@ -306,7 +306,7 @@ static int unit_test_parse_model_filter()
     fprintf(stderr, "Success\n");
 
     fprintf(stderr, "    Case %d...", ncase++);
-    strncpy(in, "mdl,-c<rnn>c<lbl>:model1.clm", MAX_DIR_LEN);
+    strncpy(in, "mdl,-c{rnn}c{lbl}:model1.clm", MAX_DIR_LEN);
     in[MAX_DIR_LEN - 1] = '\0';
     mf = parse_model_filter(in, out, MAX_DIR_LEN, &comp_names, &num_comp);
     if ((strcmp(out, "model1.clm") != 0)
@@ -323,7 +323,7 @@ static int unit_test_parse_model_filter()
     fprintf(stderr, "Success\n");
 
     fprintf(stderr, "    Case %d...", ncase++);
-    strncpy(in, "mdl,c<rnn>v:model1.clm", MAX_DIR_LEN);
+    strncpy(in, "mdl,c{rnn}v:model1.clm", MAX_DIR_LEN);
     in[MAX_DIR_LEN - 1] = '\0';
     mf = parse_model_filter(in, out, MAX_DIR_LEN, &comp_names, &num_comp);
     if ((strcmp(out, "model1.clm") != 0)
@@ -339,7 +339,7 @@ static int unit_test_parse_model_filter()
     fprintf(stderr, "Success\n");
 
     fprintf(stderr, "    Case %d...", ncase++);
-    strncpy(in, "mdl,-oc<rnn>:model1.clm", MAX_DIR_LEN);
+    strncpy(in, "mdl,-oc{rnn}:model1.clm", MAX_DIR_LEN);
     in[MAX_DIR_LEN - 1] = '\0';
     mf = parse_model_filter(in, out, MAX_DIR_LEN, &comp_names, &num_comp);
     if ((strcmp(out, "model1.clm") != 0)

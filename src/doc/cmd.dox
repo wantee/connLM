@@ -38,7 +38,7 @@
   The format of model filter is
 
   @code
-  mdl,[+-][ovmrlf]:file_name
+  mdl,[+-][ovc{comp1}c{comp2}]:file_name
   @endcode
 
   @c file_name is the name of model file. The middle part is the filter.
@@ -50,21 +50,20 @@
   <p>
   - @c o: Output
   - @c v: Vocab
-  - @c m: MaxEnt
-  - @c r: RNN
-  - @c l: LBL
-  - @c f: FFNN
+  - @c c: All component
+  - @c c{comp_name}: Component with name 'comp_name'
   </p>
 
   For example, one can use following command line to view the weights
   of MaxEnt in one model:
 
   @code{.sh}
-  $ connlm-copy --binary=false exp/maxent/01.clm mdl,m:- | less
+  $ connlm-copy --binary=false exp/maxent/01.clm mdl,c{maxent}:- | less
   @endcode
 
   Users can find many examples using model filter in the
-  @c egs/steps/run_cascade.sh.
+  @c egs/steps/run_cascade.sh, where we merge multiple models with different
+  components.
 
   @section cmd_config The Configurations and Options
 

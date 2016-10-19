@@ -331,7 +331,7 @@ model_filter_t parse_model_filter(const char *mdl_filter,
     bool add;
 
     ST_CHECK_PARAM(mdl_filter == NULL || mdl_file == NULL ||
-            comp_names == NULL || num_comp == NULL, MF_NONE);
+            comp_names == NULL || num_comp == NULL, MF_ERR);
 
     if (strncmp(mdl_filter, "mdl,", 4) != 0) {
         ptr_fname = (char *)mdl_filter;
@@ -350,7 +350,7 @@ model_filter_t parse_model_filter(const char *mdl_filter,
     *comp_names = NULL;
     *num_comp = 0;
     if (*ptr == '-') {
-        mf = MF_ALL | MF_COMP_NEG;
+        mf = MF_ALL;
         add = false;
 
         ptr++;
@@ -385,7 +385,7 @@ model_filter_t parse_model_filter(const char *mdl_filter,
                 }
                 break;
             case 'c':
-                if (*(ptr + 1) != '<') {
+                if (*(ptr + 1) != '{') {
                     *num_comp = -1;
                     break;
                 } else {
@@ -393,12 +393,15 @@ model_filter_t parse_model_filter(const char *mdl_filter,
                     ptr++;
                     ptr_comp = ptr;
                     while (ptr < ptr_fname) {
-                        if (*ptr == '>') {
+                        if (*ptr == '}') {
                             break;
                         }
                         ptr++;
                     }
-                    if (*ptr == '>') {
+                    if (*ptr == '}') {
+                        if (*num_comp == -1) { // already set all components with single 'c'
+                            break;
+                        }
                         *comp_names = realloc(*comp_names,
                                 MAX_NAME_LEN*(*num_comp + 1));
                         if (*comp_names == NULL) {
@@ -448,7 +451,8 @@ ERR:
 
 const char* model_filter_help()
 {
-    return "A model filter can be: 'mdl,[+-][ovc<comp1>c<comp2>]:file_name'.\nAny string not in such format will be treated as a model file name.";
+    return "A model filter can be: 'mdl,[+-][ovc{comp1}c{comp2}]:file_name'.\n"
+         "Any string not in such format will be treated as a model file name.";
 }
 
 char* escape_dot(char *out, size_t len, const char *str)

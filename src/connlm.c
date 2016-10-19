@@ -771,31 +771,65 @@ int connlm_filter(connlm_t *connlm, model_filter_t mf,
         safe_vocab_destroy(connlm->vocab);
     }
 
-    if (mf & MF_COMP_NEG) {
-        if (num_comp == -1) {
+    if (num_comp < 0) {
+        if (mf & MF_COMP_NEG) {
             for (c = 0; c < connlm->num_comp; c++) {
                 safe_comp_destroy(connlm->comps[c]);
             }
             safe_free(connlm->comps);
             connlm->num_comp = 0;
-        } else {
-            for (i = 0; i < num_comp; i++) {
-                found = false;
-                for (c = 0; c < connlm->num_comp; c++) {
-                    if (strcasecmp(connlm->comps[c]->name,
-                                comp_names + MAX_NAME_LEN*i)==0) {
-                        safe_comp_destroy(connlm->comps[c]);
-                        memmove(connlm->comps + c, connlm->comps + c + 1,
+        }
+
+        return 0;
+    }
+
+    for (i = 0; i < num_comp; i++) { // check comp_names
+        found = false;
+        for (c = 0; c < connlm->num_comp; c++) {
+            if (strcasecmp(connlm->comps[c]->name,
+                        comp_names + MAX_NAME_LEN * i) == 0) {
+                found = true;
+                break;
+            }
+        }
+        if (!found) {
+            ST_WARNING("No component named [%s]",
+                    comp_names + MAX_NAME_LEN * i);
+            return -1;
+        }
+    }
+
+    if (mf & MF_COMP_NEG) {
+        for (i = 0; i < num_comp; i++) {
+            for (c = 0; c < connlm->num_comp; c++) {
+                if (strcasecmp(connlm->comps[c]->name,
+                            comp_names + MAX_NAME_LEN * i) == 0) {
+                    safe_comp_destroy(connlm->comps[c]);
+                    memmove(connlm->comps + c, connlm->comps + c + 1,
                             sizeof(component_t *) * connlm->num_comp - c - 1);
-                        connlm->num_comp--;
-                        found = true;
-                        break;
-                    }
+                    connlm->num_comp--;
+                    break;
                 }
-                if (!found) {
-                    ST_WARNING("No component named [%s]", comp_names[i]);
-                    return -1;
+            }
+        }
+    } else {
+        c = 0;
+        while (c < connlm->num_comp) {
+            found = false;
+            for (i = 0; i < num_comp; i++) {
+                if (strcasecmp(connlm->comps[c]->name,
+                            comp_names + MAX_NAME_LEN * i) == 0) {
+                    found = true;
+                    break;
                 }
+            }
+            if (!found) {
+                safe_comp_destroy(connlm->comps[c]);
+                memmove(connlm->comps + c, connlm->comps + c + 1,
+                        sizeof(component_t *) * connlm->num_comp - c - 1);
+                connlm->num_comp--;
+            } else {
+                c++;
             }
         }
     }
