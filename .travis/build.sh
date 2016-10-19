@@ -4,7 +4,7 @@ set -e
 
 source tools/shutils/shutils.sh
 
-if [ $TRAVIS_BRANCH == 'master' ]; then
+if [ $TRAVIS_BRANCH == 'master' ] || [ $TRAVIS_BRANCH == 'develop' ]; then
   if [ $CASE -eq 1 ]; then
     echo "Testing miscs"
     make -C src test
