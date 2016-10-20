@@ -1,7 +1,7 @@
 /*
  * The MIT License (MIT)
  *
- * Copyright (c) 2015 Wang Jian
+ * Copyright (c) 2016 Wang Jian
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -269,6 +269,7 @@ glue_t* glue_dup(glue_t *g)
     }
     memset(glue, 0, sizeof(glue_t));
 
+
     strncpy(glue->name, g->name, MAX_NAME_LEN);
     glue->name[MAX_NAME_LEN - 1] = '\0';
     strncpy(glue->type, g->type, MAX_NAME_LEN);
@@ -279,17 +280,19 @@ glue_t* glue_dup(glue_t *g)
 
     glue->recur_type = g->recur_type;
 
+    glue->bptt_opt = g->bptt_opt;
+    glue->param = g->param;
+
     glue->wt = wt_dup(g->wt);
     if (glue->wt == NULL) {
         ST_WARNING("Failed to wt_dup.");
         goto ERR;
     }
-    glue->param = g->param;
 
-    if (glue->impl != NULL && glue->impl->dup != NULL && g->extra != NULL) {
-        glue->extra = glue->impl->dup(g->extra);
-        if (glue->extra == NULL) {
-            ST_WARNING("Failed to impl dup");
+    glue->impl = g->impl;
+    if (glue->impl != NULL && glue->impl->dup != NULL) {
+        if (glue->impl->dup(glue, g) < 0) {
+            ST_WARNING("Failed to glue->impl->dup[%s].", glue->name);
             goto ERR;
         }
     }

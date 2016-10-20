@@ -206,6 +206,14 @@ layer_t* layer_dup(layer_t *l)
     layer->type[MAX_NAME_LEN - 1] = '\0';
     layer->size = l->size;
 
+    layer->impl = l->impl;
+    if (layer->impl != NULL && layer->impl->dup != NULL) {
+        if (layer->impl->dup(layer, l) < 0) {
+            ST_WARNING("Failed to layer->impl->dup[%s].", layer->name);
+            goto ERR;
+        }
+    }
+
     return layer;
 
 ERR:

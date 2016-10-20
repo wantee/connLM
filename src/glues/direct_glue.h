@@ -70,10 +70,11 @@ int direct_glue_init(glue_t *glue);
 /**
  * Duplicate a direct glue.
  * @ingroup g_glue_direct
- * @param[in] extra source data.
- * @return duplicated extra data, NULL if error.
+ * @param[out] dst dst glue to be duplicated.
+ * @param[in] src src glue to be duplicated.
+ * @return non-zero if any error
  */
-void* direct_glue_dup(void *extra);
+int direct_glue_dup(glue_t *dst, glue_t *src);
 
 /**
  * Parse a topo config line.

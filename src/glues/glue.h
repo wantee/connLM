@@ -61,7 +61,7 @@ typedef struct _glue_implementation_t_ {
 
     void (*destroy)(glue_t *glue); /**< destroy glue. */
 
-    void* (*dup)(void *extra); /**< duplicate glue. */
+    int (*dup)(glue_t *dst, glue_t *src); /**< duplicate glue. */
 
     int (*parse_topo)(glue_t *glue,
             const char *line); /**< parse topo for glue. */

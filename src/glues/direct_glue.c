@@ -38,7 +38,7 @@
     }\
     } while(0)
 
-void direct_glue_data_destroy(direct_glue_data_t *data)
+static void direct_glue_data_destroy(direct_glue_data_t *data)
 {
     if (data == NULL) {
         return;
@@ -47,7 +47,7 @@ void direct_glue_data_destroy(direct_glue_data_t *data)
     data->hash_sz = 0;
 }
 
-direct_glue_data_t* direct_glue_data_init()
+static direct_glue_data_t* direct_glue_data_init()
 {
     direct_glue_data_t *data = NULL;
 
@@ -61,6 +61,25 @@ direct_glue_data_t* direct_glue_data_init()
     return data;
 ERR:
     safe_direct_glue_data_destroy(data);
+    return NULL;
+}
+
+static direct_glue_data_t* direct_glue_data_dup(direct_glue_data_t *src)
+{
+    direct_glue_data_t *dst = NULL;
+
+    ST_CHECK_PARAM(src == NULL, NULL);
+
+    dst = direct_glue_data_init();
+    if (dst == NULL) {
+        ST_WARNING("Failed to direct_glue_data_init.");
+        goto ERR;
+    }
+    dst->hash_sz = ((direct_glue_data_t *)src)->hash_sz;
+
+    return (void *)dst;
+ERR:
+    safe_direct_glue_data_destroy(dst);
     return NULL;
 }
 
@@ -95,23 +114,31 @@ ERR:
     return -1;
 }
 
-void* direct_glue_dup(void *src)
+int direct_glue_dup(glue_t *dst, glue_t *src)
 {
-    direct_glue_data_t *dst = NULL;
+    ST_CHECK_PARAM(dst == NULL || src == NULL, -1);
 
-    ST_CHECK_PARAM(src == NULL, NULL);
+    if (strcasecmp(dst->type, DIRECT_GLUE_NAME) != 0) {
+        ST_WARNING("dst is Not a direct glue. [%s]", dst->type);
+        return -1;
+    }
 
-    dst = direct_glue_data_init();
-    if (dst == NULL) {
-        ST_WARNING("Failed to direct_glue_data_init.");
+    if (strcasecmp(src->type, DIRECT_GLUE_NAME) != 0) {
+        ST_WARNING("src is Not a direct glue. [%s]", src->type);
+        return -1;
+    }
+
+    dst->extra = (void *)direct_glue_data_dup((direct_glue_data_t *)src->extra);
+    if (dst->extra == NULL) {
+        ST_WARNING("Failed to direct_glue_data_dup.");
         goto ERR;
     }
-    dst->hash_sz = ((direct_glue_data_t *)src)->hash_sz;
 
-    return (void *)dst;
+    return 0;
+
 ERR:
-    safe_direct_glue_data_destroy(dst);
-    return NULL;
+    safe_direct_glue_data_destroy(dst->extra);
+    return -1;
 }
 
 int direct_glue_parse_topo(glue_t *glue, const char *line)
