@@ -874,8 +874,9 @@ int connlm_add_comp(connlm_t *connlm, component_t *comp)
     }
     if (collision) {
         id = 0;
-        while(collision && id < connlm->num_comp) {
+        while(collision && id <= connlm->num_comp) {
             snprintf(name, MAX_NAME_LEN, "%s_%d", comp->name, id);
+            collision = false;
             for (c = 0; c < connlm->num_comp; c++) {
                 if (strcasecmp(connlm->comps[c]->name, name) == 0) {
                     collision = true;
@@ -883,7 +884,7 @@ int connlm_add_comp(connlm_t *connlm, component_t *comp)
             }
             id++;
         }
-        if (id >= connlm->num_comp) {
+        if (id > connlm->num_comp) {
             ST_WARNING("Can not find a name without collision for comp[%s]",
                     comp->name);
             return -1;
