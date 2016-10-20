@@ -172,6 +172,9 @@ input_t* input_dup(input_t *in)
     }
     memset(input, 0, sizeof(input_t));
 
+    input->input_size = in->input_size;
+    input->combine = in->combine;
+
     input->context = (st_wt_int_t *)malloc(sizeof(st_wt_int_t)*in->n_ctx);
     if (input->context == NULL) {
         ST_WARNING("Failed to malloc context.");

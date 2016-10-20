@@ -333,6 +333,9 @@ model_filter_t parse_model_filter(const char *mdl_filter,
     ST_CHECK_PARAM(mdl_filter == NULL || mdl_file == NULL ||
             comp_names == NULL || num_comp == NULL, MF_ERR);
 
+    *comp_names = NULL;
+    *num_comp = 0;
+
     if (strncmp(mdl_filter, "mdl,", 4) != 0) {
         ptr_fname = (char *)mdl_filter;
         mf = MF_ALL;
@@ -347,8 +350,6 @@ model_filter_t parse_model_filter(const char *mdl_filter,
         goto RET;
     }
 
-    *comp_names = NULL;
-    *num_comp = 0;
     if (*ptr == '-') {
         mf = MF_ALL;
         add = false;

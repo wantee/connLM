@@ -47,10 +47,10 @@ static layer_impl_t LAYER_IMPL[] = {
     /* register-layers. */
     {LINEAR_NAME, linear_init, linear_destroy, linear_dup,
         linear_parse_topo, NULL, linear_load_header,
-        linear_load_body, linear_save_header, linear_save_body},
+        linear_load_body, linear_save_header, NULL},
     {SIGMOID_NAME, sigmoid_init, sigmoid_destroy, sigmoid_dup,
         sigmoid_parse_topo, NULL, sigmoid_load_header,
-        sigmoid_load_body, sigmoid_save_header, sigmoid_save_body},
+        sigmoid_load_body, sigmoid_save_header, NULL},
     {TANH_NAME, tanh_init, tanh_destroy, tanh_dup,
         tanh_parse_topo, NULL, NULL, NULL, NULL, NULL},
 };
@@ -205,6 +205,14 @@ layer_t* layer_dup(layer_t *l)
     strncpy(layer->type, l->type, MAX_NAME_LEN);
     layer->type[MAX_NAME_LEN - 1] = '\0';
     layer->size = l->size;
+
+    layer->impl = l->impl;
+    if (layer->impl != NULL && layer->impl->dup != NULL) {
+        if (layer->impl->dup(layer, l) < 0) {
+            ST_WARNING("Failed to layer->impl->dup[%s].", layer->name);
+            goto ERR;
+        }
+    }
 
     return layer;
 

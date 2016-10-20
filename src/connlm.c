@@ -854,3 +854,59 @@ int connlm_setup(connlm_t *connlm)
 
     return 0;
 }
+
+int connlm_add_comp(connlm_t *connlm, component_t *comp)
+{
+    char name[MAX_NAME_LEN];
+    int id, c;
+    bool collision;
+
+    ST_CHECK_PARAM(connlm == NULL || comp == NULL, -1);
+
+    strncpy(name, comp->name, MAX_NAME_LEN);
+    name[MAX_NAME_LEN - 1] = '\0';
+
+    collision = false;
+    for (c = 0; c < connlm->num_comp; c++) {
+        if (strcasecmp(connlm->comps[c]->name, name) == 0) {
+            collision = true;
+        }
+    }
+    if (collision) {
+        id = 0;
+        while(collision && id <= connlm->num_comp) {
+            snprintf(name, MAX_NAME_LEN, "%s_%d", comp->name, id);
+            collision = false;
+            for (c = 0; c < connlm->num_comp; c++) {
+                if (strcasecmp(connlm->comps[c]->name, name) == 0) {
+                    collision = true;
+                }
+            }
+            id++;
+        }
+        if (id > connlm->num_comp) {
+            ST_WARNING("Can not find a name without collision for comp[%s]",
+                    comp->name);
+            return -1;
+        }
+
+        ST_NOTICE("Rename comp[%s] to [%s].", comp->name, name);
+    }
+
+    connlm->comps = (component_t **)realloc(connlm->comps,
+            sizeof(component_t *) * (connlm->num_comp + 1));
+    if (connlm->comps == NULL) {
+        ST_WARNING("Failed to alloc comps.");
+        return -1;
+    }
+    connlm->comps[connlm->num_comp] = comp_dup(comp);
+    if (connlm->comps[connlm->num_comp] == NULL) {
+        ST_WARNING("Failed to comp_dup.");
+        return -1;
+    }
+    strncpy(connlm->comps[connlm->num_comp]->name, name, MAX_NAME_LEN);
+    connlm->comps[connlm->num_comp]->name[MAX_NAME_LEN - 1] = '\0';
+    connlm->num_comp++;
+
+    return 0;
+}
