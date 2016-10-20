@@ -47,10 +47,10 @@ static layer_impl_t LAYER_IMPL[] = {
     /* register-layers. */
     {LINEAR_NAME, linear_init, linear_destroy, linear_dup,
         linear_parse_topo, NULL, linear_load_header,
-        linear_load_body, linear_save_header, linear_save_body},
+        linear_load_body, linear_save_header, NULL},
     {SIGMOID_NAME, sigmoid_init, sigmoid_destroy, sigmoid_dup,
         sigmoid_parse_topo, NULL, sigmoid_load_header,
-        sigmoid_load_body, sigmoid_save_header, sigmoid_save_body},
+        sigmoid_load_body, sigmoid_save_header, NULL},
     {TANH_NAME, tanh_init, tanh_destroy, tanh_dup,
         tanh_parse_topo, NULL, NULL, NULL, NULL, NULL},
 };

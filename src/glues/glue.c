@@ -42,7 +42,7 @@ static const int GLUE_MAGIC_NUM = 626140498 + 70;
 static glue_impl_t GLUE_IMPL[] = {
     {DIRECT_GLUE_NAME, direct_glue_init, direct_glue_destroy, direct_glue_dup,
         direct_glue_parse_topo, direct_glue_check, direct_glue_draw_label,
-        NULL, NULL, NULL, NULL,
+        direct_glue_load_header, NULL, direct_glue_save_header, NULL,
         direct_glue_init_data, direct_glue_init_wt_updater},
     {FC_GLUE_NAME, NULL, NULL, NULL,
         fc_glue_parse_topo, fc_glue_check, NULL,
