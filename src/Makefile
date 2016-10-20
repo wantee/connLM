@@ -82,8 +82,8 @@ BINS = bin/connlm-train \
        bin/connlm-output \
        bin/connlm-gen \
        bin/connlm-draw \
-       bin/connlm-tofst
-#       bin/connlm-merge maybe rename to connlm-edit
+       bin/connlm-tofst \
+       bin/connlm-merge
 
 #TESTS = tests/maxent-test
 TESTS = tests/utils-test \

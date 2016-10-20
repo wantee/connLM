@@ -127,6 +127,7 @@ component_t* comp_dup(component_t *c)
 
     strncpy(comp->name, c->name, MAX_NAME_LEN);
     comp->name[MAX_NAME_LEN - 1] = '\0';
+    comp->comp_scale = comp->comp_scale;
 
     comp->input = input_dup(c->input);
     if (comp->input == NULL) {

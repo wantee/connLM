@@ -175,6 +175,15 @@ int connlm_filter(connlm_t *connlm, model_filter_t mf,
  */
 int connlm_setup(connlm_t *connlm);
 
+/**
+ * Add a component to connlm model.
+ * @ingroup g_connlm
+ * @param[in] connlm connlm model.
+ * @param[in] comp component to be added.
+ * @return non-zero value if any error.
+ */
+int connlm_add_comp(connlm_t *connlm, component_t *comp);
+
 #ifdef __cplusplus
 }
 #endif
