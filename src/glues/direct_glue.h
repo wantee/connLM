@@ -109,6 +109,31 @@ bool direct_glue_check(glue_t *glue, layer_t **layers, int n_layer,
 char* direct_glue_draw_label(glue_t *glue, char *label, size_t label_len);
 
 /**
+ * Load direct glue header and initialise a new direct_glue.
+ * @ingroup g_glue_direct
+ * @param[out] extra extra data to be initialised.
+ * @param[in] version file version of loading file.
+ * @param[in] fp file stream loaded from.
+ * @param[out] binary whether the file stream is in binary format.
+ * @param[in] fo_info file stream used to print information, if it is not NULL.
+ * @see direct_glue_save_header
+ * @return non-zero value if any error.
+ */
+int direct_glue_load_header(void **extra, int version,
+        FILE *fp, bool *binary, FILE *fo_info);
+
+/**
+ * Save direct glue header.
+ * @ingroup g_glue_direct
+ * @param[in] extra extra data to be saved.
+ * @param[in] fp file stream saved to.
+ * @param[in] binary whether to use binary format.
+ * @see direct_glue_load_header
+ * @return non-zero value if any error.
+ */
+int direct_glue_save_header(void *extra, FILE *fp, bool binary);
+
+/**
  * Initialise data of direct glue.
  * @ingroup g_glue_direct
  * @param[in] glue glue.

@@ -280,6 +280,8 @@ int linear_load_body(void *extra, int version, FILE *fp, bool binary)
     if (version < 3) {
         ST_WARNING("Too old version of connlm file");
         return -1;
+    } else if (version >= 4) { // Remove this empty body from version 4
+        return 0;
     }
 
     if (binary) {
@@ -331,29 +333,6 @@ int linear_save_header(void *extra, FILE *fp, bool binary)
 
         if (fprintf(fp, "Scale: "REAL_FMT"\n", data->scale) < 0) {
             ST_WARNING("Failed to fprintf scale.");
-            return -1;
-        }
-    }
-
-    return 0;
-}
-
-int linear_save_body(void *extra, FILE *fp, bool binary)
-{
-    int n;
-
-    ST_CHECK_PARAM(extra == NULL || fp == NULL, -1);
-
-    if (binary) {
-        n = -LINEAR_LAYER_MAGIC_NUM;
-        if (fwrite(&n, sizeof(int), 1, fp) != 1) {
-            ST_WARNING("Failed to write magic num.");
-            return -1;
-        }
-
-    } else {
-        if (fprintf(fp, "<LINEAR-LAYER-DATA>\n") < 0) {
-            ST_WARNING("Failed to fprintf header.");
             return -1;
         }
     }
