@@ -53,7 +53,7 @@ typedef struct _fst_converter_opt_t_ {
 /**
  * Load converter option.
  * @ingroup g_converter
- * @param[out] eval_opt options loaded.
+ * @param[out] converter_opt options to be loaded.
  * @param[in] opt runtime options passed by caller.
  * @param[in] sec_name section name of runtime options to be loaded.
  * @return non-zero value if any error.
