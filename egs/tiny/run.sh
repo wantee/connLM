@@ -19,7 +19,7 @@ stepnames+=("Train FFNN model:ffnn")
 stepnames+=("Train RNN model:rnn")
 stepnames+=("Train crossing RNN model:crossing-rnn")
 stepnames+=("Train RNN+MaxEnt model:rnn+maxent")
-stepnames+=("Train RNN~MaxEnt merge model:rnn~maxent")
+stepnames+=("Train MaxEnt~RNN merge model:maxent~rnn")
 
 steps_len=${#stepnames[*]}
 
@@ -75,9 +75,16 @@ do
   if shu-in-range $st $steps; then
   echo
   echo "Step $st: ${stepnames[$st]%%:*} ..."
-  ../steps/run_standalone.sh --train-thr $tr_thr --eval-thr $eval_thr \
-      ${stepnames[$st]#*:} $conf_dir $exp_dir \
-      $train_file $valid_file $test_file || exit 1;
+  model=${stepnames[$st]#*:}
+  if [[ "$model" == *"~"* ]]; then
+    ../steps/run_cascade.sh --train-thr $tr_thr --eval-thr $eval_thr \
+        ${model} $conf_dir $exp_dir \
+        $train_file $valid_file $test_file || exit 1;
+  else
+    ../steps/run_standalone.sh --train-thr $tr_thr --eval-thr $eval_thr \
+        ${model} $conf_dir $exp_dir \
+        $train_file $valid_file $test_file || exit 1;
+  fi
   fi
   ((st++))
 done

@@ -15,7 +15,6 @@ function print_help()
   echo "options: "
   echo "     --train-thr <threads>    # default: 1."
   echo "     --eval-thr <threads>     # default: 1."
-  echo "     --class-size <xx:xx:xx>  # default: \"\". Class sizes to be tried."
 }
 
 help_message=`print_help`
@@ -31,15 +30,12 @@ if [ $# -lt 5 ]; then
 fi
 
 function model2filter() {
+# Assume there are no collision within component names
   filter=""
   for m in `echo $1 | tr '~' ' '`; do
-    case "$m" in
-      maxent) filter+="m,";;
-      rnn) filter+="r,";;
-      lbl) filter+="l,";;
-      ffnn) filter+="f,";;
-      *) echo "$0: Unsupported model: $m"; exit 1;;
-    esac
+    for c in `echo $m | tr '+' ' '`; do
+      filter+="c{$c},"
+    done
   done
   echo ${filter%,}
 }
@@ -55,12 +51,6 @@ begin_date=`date +"%Y-%m-%d %H:%M:%S"`
 begin_ts=`date +%s`
 
 models=(${model_type//\~/ })
-for model in ${models[@]}; do
-  case "$model" in
-    maxent|rnn|lbl|ffnn) ;;
-    *) echo "$0: Unsupported model: $model"; exit 1;;
-  esac
-done
 
 conf="$conf_dir/$model_type"
 exp="$exp_dir/$model_type"
@@ -84,16 +74,14 @@ set -o pipefail
 models=("${models[@]:1}")
 for i in `seq ${#models[@]}`; do
   if shu-in-range $st $stage; then
-  echo "$0: Stage $st --- Initializing $m..."
   m=${models[$((i - 1))]}
-  cls=`connlm-info $exp/$model/final.clm 2>/dev/null | ../utils/get_value.sh "Class size"`
-  hs=`connlm-info $exp/$model/final.clm 2>/dev/null | ../utils/get_value.sh "HS"`
+  echo "$0: Stage $st --- Initializing $m..."
 
   # for run_standalone to get standard layout
   ln -sf "`pwd`/$conf/$model/output.conf" "$conf/$m/output.conf" || exit 1
 
-  ../steps/run_standalone.sh --hs "$hs" --class-size "$cls" \
-        --stage 1 --train-thr $train_thr --eval-thr $eval_thr \
+  ../steps/run_standalone.sh --stage 1 \
+      --train-thr $train_thr --eval-thr $eval_thr \
       $m $conf $exp $train_file $valid_file $test_file || exit 1
 
   if [ $i -eq ${#models[@]} ]; then
@@ -115,15 +103,9 @@ for i in `seq ${#models[@]}`; do
   model="$model~$m"
 
   echo "$0: Stage $st --- Training $model..."
-  if [ $i -eq ${#models[@]} ]; then
-    ../steps/run_standalone.sh --stage 2- \
-          --train-thr $train_thr --eval-thr $eval_thr \
-        $model $conf_dir $exp_dir $train_file $valid_file $test_file || exit 1
-  else
-    ../steps/run_standalone.sh --stage 2- \
-          --train-thr $train_thr --eval-thr $eval_thr \
-        $model $conf $exp $train_file $valid_file $test_file || exit 1
-  fi
+  ../steps/run_standalone.sh --stage 2- \
+      --train-thr $train_thr --eval-thr $eval_thr \
+      $model $this_conf $this_exp $train_file $valid_file $test_file || exit 1
   fi
   ((st++))
 done
