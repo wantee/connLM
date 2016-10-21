@@ -65,7 +65,8 @@ model="${models[0]}"
 st=1
 if shu-in-range $st $stage; then
 echo "$0: Stage $st --- Training $model..."
-../steps/run_standalone.sh --train-thr $train_thr --eval-thr $eval_thr \
+opts="--start-halving-impr 0.01 --end-halving-impr 0.001"
+../steps/run_standalone.sh --train-thr $train_thr --eval-thr $eval_thr $opts \
     $model $conf $exp $train_file $valid_file $test_file || exit 1
 fi
 ((st++))
@@ -88,10 +89,12 @@ for i in `seq ${#models[@]}`; do
     this_conf=$conf_dir
     this_exp=$exp_dir
     this_init_dir=$exp
+    opts="--start-halving-impr 0.003 --end-halving-impr 0.0003"
   else
     this_conf=$conf
     this_exp=$exp
     this_init_dir="$exp/$model~$m"
+    opts="--start-halving-impr 0.01 --end-halving-impr 0.001"
     mkdir -p "$this_init_dir"
   fi
   echo "$0: Stage $st --- Merging $model with $m..."
@@ -103,7 +106,7 @@ for i in `seq ${#models[@]}`; do
   model="$model~$m"
 
   echo "$0: Stage $st --- Training $model..."
-  ../steps/run_standalone.sh --stage 2- \
+  ../steps/run_standalone.sh --stage 2- $opts \
       --train-thr $train_thr --eval-thr $eval_thr \
       $model $this_conf $this_exp $train_file $valid_file $test_file || exit 1
   fi
