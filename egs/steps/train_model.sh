@@ -26,8 +26,8 @@ function print_help()
   echo "     --eval-threads <number>              # default: 1, number of evaluating threads"
   echo "     --min-iters <number>                 # default: 0, minimum number of iterations"
   echo "     --keep-lr-iters <number>             # default: 0, fix learning rate for N initial iterations"
-  echo "     --start-halving-impr <value>         # default: 0.01, improvement starting halving"
-  echo "     --end-halving-impr <value>           # default: 0.001, improvement ending halving"
+  echo "     --start-halving-impr <value>         # default: 0.003, improvement starting halving"
+  echo "     --end-halving-impr <value>           # default: 0.0003, improvement ending halving"
   echo "     --halving-factor <value>             # default: 0.5, halving factor"
 }
 
