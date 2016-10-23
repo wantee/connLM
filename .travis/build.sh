@@ -35,6 +35,16 @@ if [ $TRAVIS_BRANCH == 'master' ] || [ $TRAVIS_BRANCH == 'develop' ]; then
     echo "Testing crossing-RNN related cases"
     (cd egs/tiny; shu-testing 19-22);
   fi
+
+  if [ $CASE -eq 7 ]; then
+    echo "Testing RNN+MaxEnt related cases"
+    (cd egs/tiny; shu-testing 23-26);
+  fi
+
+  if [ $CASE -eq 8 ]; then
+    echo "Testing MaxEnt~RNN related cases"
+    (cd egs/tiny; shu-testing 27-30);
+  fi
 elif [ $TRAVIS_BRANCH == 'legacy' ]; then
   if [ $CASE -eq 2 ]; then
     make -C src test
