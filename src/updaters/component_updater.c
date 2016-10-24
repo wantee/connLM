@@ -623,9 +623,6 @@ int comp_updater_forward_out(comp_updater_t *comp_updater,
 
     s = s_children(output->tree, node);
     e = e_children(output->tree, node);
-    if (s < e) {
-        memset(comp_updater->out_updater->ac + s, 0 , e - s);
-    }
 
     for (g = 0; g < comp->num_glue; g++) {
         glue_updater = comp_updater->glue_updaters[comp->fwd_order[g]];
