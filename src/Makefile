@@ -19,6 +19,7 @@ INCS = utils.h \
        layers/linear_layer.h \
        layers/sigmoid_layer.h \
        layers/tanh_layer.h \
+       layers/relu_layer.h \
        glues/glue.h \
        glues/direct_glue.h \
        glues/fc_glue.h \
@@ -53,6 +54,7 @@ SRCS = utils.c \
        layers/linear_layer.c \
        layers/sigmoid_layer.c \
        layers/tanh_layer.c \
+       layers/relu_layer.c \
        glues/glue.c \
        glues/direct_glue.c \
        glues/fc_glue.c \

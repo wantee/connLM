@@ -33,6 +33,7 @@
 #include "linear_layer.h"
 #include "sigmoid_layer.h"
 #include "tanh_layer.h"
+#include "relu_layer.h"
 #include "layer.h"
 
 static const int LAYER_MAGIC_NUM = 626140498 + 60;
@@ -53,6 +54,8 @@ static layer_impl_t LAYER_IMPL[] = {
         sigmoid_load_body, sigmoid_save_header, NULL},
     {TANH_NAME, tanh_init, tanh_destroy, tanh_dup,
         tanh_parse_topo, NULL, NULL, NULL, NULL, NULL},
+    {RELU_NAME, NULL, NULL, NULL,
+        NULL, NULL, NULL, NULL, NULL, NULL},
 };
 
 static layer_impl_t* layer_get_impl(const char *type)
@@ -137,9 +140,11 @@ layer_t* layer_parse_topo(const char *line)
                 ST_WARNING("Unknown type of layer [%s].", layer->type);
                 goto ERR;
             }
-            if (layer->impl->init(layer) < 0) {
-                ST_WARNING("Failed to layer->impl->init.");
-                goto ERR;
+            if (layer->impl->init != NULL) {
+                if (layer->impl->init(layer) < 0) {
+                    ST_WARNING("Failed to layer->impl->init.");
+                    goto ERR;
+                }
             }
         } else if (strcasecmp("size", keyvalue) == 0) {
             if (layer->size != 0) {

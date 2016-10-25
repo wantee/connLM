@@ -31,6 +31,7 @@
 #include "../layers/linear_layer.h"
 #include "../layers/sigmoid_layer.h"
 #include "../layers/tanh_layer.h"
+#include "../layers/relu_layer.h"
 
 #include "layer_updater.h"
 
@@ -59,6 +60,7 @@ static layer_act_t LAYER_ACT[] = {
     {LINEAR_NAME, linear_activate, linear_deriv},
     {SIGMOID_NAME, sigmoid_activate, sigmoid_deriv},
     {TANH_NAME, tanh_activate, tanh_deriv},
+    {RELU_NAME, relu_activate, relu_deriv},
 };
 
 static layer_act_t* layer_get_act(const char *type)
