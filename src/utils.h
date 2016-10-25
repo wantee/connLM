@@ -60,6 +60,8 @@ void sigmoid(real_t *vec, int vec_size);
 
 void softmax(real_t *vec, int vec_size);
 
+void tanH(real_t *vec, int vec_size);
+
 void propagate_error(real_t *dst, real_t *vec, real_t *mat,
         int mat_col, int in_vec_size, real_t er_cutoff, real_t scale);
 

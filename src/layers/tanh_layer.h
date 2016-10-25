@@ -1,7 +1,7 @@
 /*
  * The MIT License (MIT)
  *
- * Copyright (c) 2015 Wang Jian
+ * Copyright (c) 2016 Wang Jian
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -32,45 +32,12 @@ extern "C" {
 #include <connlm/config.h>
 #include "layer.h"
 
-/** @defgroup g_layer_tanh Tanh Layer
+/** @defgroup g_layer_tanh Hyperbolic Tangent Layer
  * @ingroup g_layer
  * Hidden layer with tanh activation.
  */
 
 #define TANH_NAME "tanh"
-
-/**
- * Destroy a tanh layer.
- * @ingroup g_layer_tanh
- * @param[in] layer tanh layer to be destroyed.
- */
-void tanh_destroy(layer_t* layer);
-
-/**
- * Initialize a tanh layer.
- * @ingroup g_layer_tanh
- * @param[in] layer tanh layer to be initialized.
- * @return non-zero if any error
- */
-int tanh_init(layer_t *layer);
-
-/**
- * Duplicate a tanh layer.
- * @ingroup g_layer_tanh
- * @param[out] dst dst layer to be duplicated.
- * @param[in] src src layer to be duplicated.
- * @return non-zero if any error
- */
-int tanh_dup(layer_t *dst, layer_t *src);
-
-/**
- * Parse a topo config line.
- * @ingroup g_layer_tanh
- * @param[in] layer specific layer.
- * @param[in] line topo config line.
- * @return non-zero if any error
- */
-int tanh_parse_topo(layer_t *layer, const char *line);
 
 /**
  * Activate tanh layer.
