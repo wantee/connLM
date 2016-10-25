@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['lbl_20model',['LBL Model',['../group__g__lbl.html',1,'']]]
+  ['embedding_20glue',['Embedding Glue',['../group__g__glue__emb.html',1,'']]]
 ];

@@ -1,12 +1,24 @@
 var searchData=
 [
-  ['the_20ffnn_20model',['The FFNN Model',['../ffnn.html',1,'index']]],
-  ['the_20lbl_20model',['The LBL Model',['../lbl.html',1,'index']]],
-  ['the_20maxent_20model',['The MaxEnt Model',['../maxent.html',1,'index']]],
-  ['the_20output_20layer',['The Output Layer',['../output.html',1,'index']]],
-  ['the_20rnn_20model',['The RNN Model',['../rnn.html',1,'index']]],
-  ['test_5fopt',['test_opt',['../structconnlm__t.html#ace11a0861563ff06ff440c7ccac55d14',1,'connlm_t']]],
-  ['text_5ffile',['text_file',['../structconnlm__t.html#a6b92e27f53a638a23eb7316e47deba4d',1,'connlm_t']]],
-  ['train_5fopt',['train_opt',['../structconnlm__t.html#a3ff65308c94c91a3243a11daf0a9f6a4',1,'connlm_t::train_opt()'],['../structffnn__t.html#a9517616ed4f5f1a67f0a7b9d76e74e93',1,'ffnn_t::train_opt()'],['../structlbl__t.html#a2bb70f6f6206fc7437bbf87055569d88',1,'lbl_t::train_opt()'],['../structmaxent__t.html#a9ee494fd0ab65a30b5ba64701cc8766b',1,'maxent_t::train_opt()'],['../structrnn__t.html#a536d667e7bc6f086620e41e9ee1bc92d',1,'rnn_t::train_opt()']]],
-  ['the_20vocabulary',['The Vocabulary',['../vocab.html',1,'index']]]
+  ['the_20example_20recipes',['The Example Recipes',['../examples.html',1,'index']]],
+  ['the_20connlm_20model',['The connLM Model',['../model.html',1,'index']]],
+  ['the_20network',['The Network',['../model_network.html',1,'model']]],
+  ['the_20component',['The Component',['../model_network_comp.html',1,'model_network']]],
+  ['the_20glue',['The Glue',['../model_network_comp_glue.html',1,'model_network_comp']]],
+  ['the_20layer',['The Layer',['../model_network_comp_layer.html',1,'model_network_comp']]],
+  ['the_20weight',['The Weight',['../model_network_comp_weight.html',1,'model_network_comp']]],
+  ['the_20output_20layer',['The Output Layer',['../model_network_output.html',1,'model_network']]],
+  ['the_20vocabulary',['The Vocabulary',['../model_vocab.html',1,'model']]],
+  ['tanh_5factivate',['tanh_activate',['../group__g__layer__tanh.html#ga09f2cfad3d16240636355c343c17ee46',1,'tanh_layer.h']]],
+  ['tanh_5fderiv',['tanh_deriv',['../group__g__layer__tanh.html#ga9d504bda0c1be505e5cc1373740d0562',1,'tanh_layer.h']]],
+  ['the_20testing_20framework_20in_20connlm',['The Testing Framework in connLM',['../testing.html',1,'index']]],
+  ['text_5ffile',['text_file',['../structreader__t.html#a67356b9cfa7d3c3cdd1261c596474b79',1,'reader_t']]],
+  ['tgt_5fpos',['tgt_pos',['../structsent__t.html#a59097c81986a789cf255826371ee736c',1,'sent_t']]],
+  ['thr_5fstat_5ft',['thr_stat_t',['../structthr__stat__t.html',1,'']]],
+  ['tid',['tid',['../structreader__t.html#a92e50e7d3d706a70d867773242d833dd',1,'reader_t']]],
+  ['to',['to',['../structlink__t.html#ab9bd1774bc520fb5be8d832a825fa4c5',1,'link_t']]],
+  ['train_5fopt',['train_opt',['../structcomponent__t.html#a1f0925d2751c0a09d94a7216e90870a4',1,'component_t']]],
+  ['the_20training_20procedure',['The Training Procedure',['../training.html',1,'index']]],
+  ['tree',['tree',['../structoutput__t.html#a568284af15cccc83de0aaf5c0adfe6e6',1,'output_t']]],
+  ['type',['type',['../structglue__impl__t.html#a08cb4b5778c02e5895001e4e9816b700',1,'glue_impl_t::type()'],['../structglue__t.html#aa9c457c53d372dfb164cc96feed442a9',1,'glue_t::type()'],['../structlayer__impl__t.html#a355f11419b4beeb64217a00532854ef0',1,'layer_impl_t::type()'],['../structlayer__t.html#a14356ebf4762843b027324c0cf05d617',1,'layer_t::type()'],['../structglue__updater__impl__t.html#a3500fe01c7ea05d2a74eff1877237f15',1,'glue_updater_impl_t::type()'],['../structwt__updater__t.html#a135a3914c5790c3ce7f5683c4936e387',1,'wt_updater_t::type()']]]
 ];

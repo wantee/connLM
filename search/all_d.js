@@ -1,19 +1,14 @@
 var searchData=
 [
   ['parameter',['Parameter',['../group__g__param.html',1,'']]],
-  ['param',['param',['../structconnlm__train__opt__t.html#a2b50fc0ed6c0490ca8c422964d12da86',1,'connlm_train_opt_t::param()'],['../structffnn__train__opt__t.html#a9cec24ac70b93ca9e8919bdbb1be56b1',1,'ffnn_train_opt_t::param()'],['../structlbl__train__opt__t.html#a8143c268121b9e36e3e8f026d526efac',1,'lbl_train_opt_t::param()'],['../structmaxent__train__opt__t.html#aa721e297cf3ad893c3330f37c8cbee1d',1,'maxent_train_opt_t::param()'],['../structrnn__train__opt__t.html#a2e5d3c9d91853581936c0490f01e2b90',1,'rnn_train_opt_t::param()']]],
-  ['param_5facc_5fwt',['param_acc_wt',['../group__g__param.html#ga667303378d7e193011e090b9b926291d',1,'param.h']]],
-  ['param_5facc_5fwt_5fminibatch',['param_acc_wt_minibatch',['../group__g__param.html#ga72fe152ee7f79c342d8f00e291dc657a',1,'param.h']]],
-  ['param_5farg_5fc',['param_arg_c',['../structmaxent__neuron__t.html#af8f14c8eaed26f8439c88c6f9cd6adba',1,'maxent_neuron_t']]],
-  ['param_5farg_5fclear',['param_arg_clear',['../group__g__param.html#ga171b6106b3e1d2fcee77baefea977466',1,'param.h']]],
-  ['param_5farg_5ft',['param_arg_t',['../structparam__arg__t.html',1,'']]],
-  ['param_5farg_5fw',['param_arg_w',['../structmaxent__neuron__t.html#aa47b9030d98357afeaa8e86cd0485e41',1,'maxent_neuron_t']]],
+  ['param',['param',['../structglue__t.html#aa3545338c1244030130b0c358f9fd08d',1,'glue_t::param()'],['../structwt__updater__t.html#a846446d23627fcea36ac2184a4e18e68',1,'wt_updater_t::param()']]],
   ['param_5fload',['param_load',['../group__g__param.html#gab498621a1e50e70afbdec5fad367d641',1,'param.h']]],
+  ['param_5fmap',['param_map',['../structoutput__t.html#aee96c36dbcece0597746703babbff2d7',1,'output_t']]],
+  ['param_5fshow_5fusage',['param_show_usage',['../group__g__param.html#ga0e365877d58a2f3e852d85f3249afe13',1,'param.h']]],
   ['param_5ft',['param_t',['../structparam__t.html',1,'']]],
-  ['param_5fupdate',['param_update',['../group__g__param.html#ga9bb6680d24c3e115b16e33989d790110',1,'param.h']]],
-  ['param_5fupdate_5fminibatch',['param_update_minibatch',['../group__g__param.html#gad1831f13e45221032208a67e05ad7e1d',1,'param.h']]],
-  ['prefix_5ffile',['prefix_file',['../structconnlm__gen__opt__t.html#a039d9df611d5a43cd826d216dc877467',1,'connlm_gen_opt_t']]],
-  ['print_5fsent_5fprob',['print_sent_prob',['../structconnlm__test__opt__t.html#aa83b45cd3088f9c26e33f107ce96b05d',1,'connlm_test_opt_t']]],
-  ['pt_5fc',['pt_c',['../structoutput__t.html#a44f8932823ff5bf24b4daa7adfc5a338',1,'output_t']]],
-  ['pt_5fw',['pt_w',['../structoutput__t.html#ae8b9d09583823247116aa9124cc65925',1,'output_t']]]
+  ['parse_5ftopo',['parse_topo',['../structglue__impl__t.html#a56047588ab9dd968e1f3ab2430aa2c57',1,'glue_impl_t::parse_topo()'],['../structlayer__impl__t.html#a7f5200ed60736d6a2016edf927a07c57',1,'layer_impl_t::parse_topo()']]],
+  ['paths',['paths',['../structoutput__t.html#a6897e78e6d43a343abfbca6dcb5763bf',1,'output_t']]],
+  ['prefix_5ffile',['prefix_file',['../structdriver__gen__opt__t.html#a7c6575d0a94a08cc6db685d93b224b40',1,'driver_gen_opt_t']]],
+  ['print_5fsent_5fprob',['print_sent_prob',['../structdriver__eval__opt__t.html#a39aba55cc395dfa742b8828e67d8a811',1,'driver_eval_opt_t']]],
+  ['print_5fsyms',['print_syms',['../structfst__converter__opt__t.html#ae17cf97604a890c24f339312e23581b8',1,'fst_converter_opt_t']]]
 ];

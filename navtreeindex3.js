@@ -1,0 +1,19 @@
+var NAVTREEINDEX3 =
+{
+"structwt__updater__t.html#a3d1ad5f9b3974ac102647d1252e899f4":[9,11,6,1,4],
+"structwt__updater__t.html#a83c3d1c301e4754e2eeafd13250401a6":[9,11,6,1,11],
+"structwt__updater__t.html#a846446d23627fcea36ac2184a4e18e68":[9,11,6,1,7],
+"structwt__updater__t.html#aad60623d36ff5cadf5ab8195d5bb4319":[9,11,6,1,8],
+"structwt__updater__t.html#abb81dc43ee91628ec90c32d85516a7dc":[9,11,6,1,2],
+"structwt__updater__t.html#abfd7a834d67e47d61462bc00049a09fb":[9,11,6,1,9],
+"structwt__updater__t.html#ad286c5c26b20400527b9af29577b1ea1":[9,11,6,1,6],
+"structwt__updater__t.html#af7728de1fd76da1918d3ec5a7e212680":[9,11,6,1,1],
+"tanh__layer_8h_source.html":[11,0,1,4],
+"testing.html":[7],
+"training.html":[5],
+"updater_8h_source.html":[11,0,2,6],
+"utils_8h_source.html":[11,0,15],
+"vocab_8h_source.html":[11,0,16],
+"weight_8h_source.html":[11,0,17],
+"wt__updater_8h_source.html":[11,0,2,7]
+};

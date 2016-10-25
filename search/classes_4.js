@@ -1,7 +1,8 @@
 var searchData=
 [
-  ['maxent_5fmodel_5fopt_5ft',['maxent_model_opt_t',['../structmaxent__model__opt__t.html',1,'']]],
-  ['maxent_5fneuron_5ft',['maxent_neuron_t',['../structmaxent__neuron__t.html',1,'']]],
-  ['maxent_5ft',['maxent_t',['../structmaxent__t.html',1,'']]],
-  ['maxent_5ftrain_5fopt_5ft',['maxent_train_opt_t',['../structmaxent__train__opt__t.html',1,'']]]
+  ['glue_5fimpl_5ft',['glue_impl_t',['../structglue__impl__t.html',1,'']]],
+  ['glue_5ft',['glue_t',['../structglue__t.html',1,'']]],
+  ['glue_5fupdater_5fimpl_5ft',['glue_updater_impl_t',['../structglue__updater__impl__t.html',1,'']]],
+  ['glue_5fupdater_5ft',['glue_updater_t',['../structglue__updater__t.html',1,'']]],
+  ['graph_5ft',['graph_t',['../structgraph__t.html',1,'']]]
 ];

@@ -1,16 +1,20 @@
 var searchData=
 [
-  ['e',['e',['../structhash__range__t.html#a4f1b52d1abd0116ccb66b9dbff401e18',1,'hash_range_t']]],
-  ['empty_5fegs',['empty_egs',['../structconnlm__t.html#a9e98e84854b3bae8c309270cc5582ba1',1,'connlm_t']]],
-  ['empty_5fegs_5flock',['empty_egs_lock',['../structconnlm__t.html#a880a8ddaf022844e04337126aa4f21a0',1,'connlm_t']]],
-  ['epoch_5fsize',['epoch_size',['../structconnlm__train__opt__t.html#a15ea00a8ee7fc305554f5f32add64067',1,'connlm_train_opt_t::epoch_size()'],['../structconnlm__test__opt__t.html#ada23e7920e628a6cedbf2322f414fea8',1,'connlm_test_opt_t::epoch_size()']]],
-  ['er_5fbptt_5fh',['er_bptt_h',['../structrnn__neuron__t.html#a533fb6573978a24edf5c7b8c28706747',1,'rnn_neuron_t']]],
-  ['er_5fcutoff',['er_cutoff',['../structrnn__train__opt__t.html#aafbcda535bba03a3cbfadd5c8b19f107',1,'rnn_train_opt_t']]],
-  ['er_5fh',['er_h',['../structrnn__neuron__t.html#aab0efdbc1b826ed77a923d7d509ffe6e',1,'rnn_neuron_t']]],
-  ['er_5fh_5fbuf',['er_h_buf',['../structrnn__neuron__t.html#acf147d7876a9444ac8df825b6b543a85',1,'rnn_neuron_t']]],
-  ['er_5fi_5fh',['er_i_h',['../structrnn__neuron__t.html#a5ddda405736e1ce4a3562bdc4dd3bf07',1,'rnn_neuron_t']]],
-  ['er_5fo_5fc',['er_o_c',['../structoutput__neuron__t.html#a77ee8a7f180e16757c9197bbe1b576fd',1,'output_neuron_t']]],
-  ['er_5fo_5fc_5fbuf',['er_o_c_buf',['../structrnn__neuron__t.html#a12eec76f5c03be3500d292aba6a5bb9b',1,'rnn_neuron_t']]],
-  ['er_5fo_5fw',['er_o_w',['../structoutput__neuron__t.html#abeaa482db16a5635f6a65e2a9e56c9b8',1,'output_neuron_t']]],
-  ['err',['err',['../structconnlm__t.html#a5e4f9da469280392ce4007551481fab2',1,'connlm_t']]]
+  ['emb_5fglue_5fcheck',['emb_glue_check',['../group__g__glue__emb.html#ga81a6c9859b1deae4dc43230e727f63c8',1,'emb_glue.h']]],
+  ['emb_5fglue_5finit_5fdata',['emb_glue_init_data',['../group__g__glue__emb.html#ga702d0e5b4b1ccb822bc37cea3d847439',1,'emb_glue.h']]],
+  ['emb_5fglue_5finit_5fwt_5fupdater',['emb_glue_init_wt_updater',['../group__g__glue__emb.html#ga66d66187efc0a64d9994615262e089c7',1,'emb_glue.h']]],
+  ['emb_5fglue_5fparse_5ftopo',['emb_glue_parse_topo',['../group__g__glue__emb.html#ga21c8653abfff889c8278ee416956aebe',1,'emb_glue.h']]],
+  ['emb_5fglue_5fupdater_5fbackprop',['emb_glue_updater_backprop',['../group__g__glue__updater__emb.html#ga692eb49f53308a6e4d295c13b7f773d1',1,'emb_glue_updater.h']]],
+  ['emb_5fglue_5fupdater_5fforward',['emb_glue_updater_forward',['../group__g__glue__updater__emb.html#gaa6ffcb3f243ea58c1e55f79b6e8cffc9',1,'emb_glue_updater.h']]],
+  ['empty_5fegs',['empty_egs',['../structreader__t.html#a8d359f8eaad18687e5cfd7e191104d73',1,'reader_t']]],
+  ['empty_5fegs_5flock',['empty_egs_lock',['../structreader__t.html#a294e78f26d3bf84dfa0dcebfe16032ac',1,'reader_t']]],
+  ['epoch_5fsize',['epoch_size',['../structreader__opt__t.html#a0c83d21c45777a86b7845873c0397575',1,'reader_opt_t']]],
+  ['er',['er',['../structlayer__updater__t.html#a3c44f63d4c18029fe895bd5eaa5b7430',1,'layer_updater_t::er()'],['../structout__updater__t.html#ab48d227422f835540cb9bd945d8062cb',1,'out_updater_t::er()']]],
+  ['er_5fbptt',['er_bptt',['../structbptt__updater__t.html#a171693b4ed803e14e188d53ba2c8c36e',1,'bptt_updater_t']]],
+  ['er_5fcutoff',['er_cutoff',['../structparam__t.html#a3730dd75accd4c1726325f59e263e9af',1,'param_t']]],
+  ['er_5fraw',['er_raw',['../structlayer__updater__t.html#af0b7b7f003f90b2640d81cf990689685',1,'layer_updater_t']]],
+  ['err',['err',['../structdriver__t.html#a11c0c3225e805189dbb588970fecf351',1,'driver_t::err()'],['../structfst__converter__t.html#ac9d58f03d09ab806af7d52420e5ab5c7',1,'fst_converter_t::err()'],['../structreader__t.html#a8f1d956aa8233d15b803d6f94b2725bb',1,'reader_t::err()']]],
+  ['eval_5fopt',['eval_opt',['../structdriver__t.html#a446468a28fa749ae8dd3e71b84464818',1,'driver_t']]],
+  ['extra',['extra',['../structglue__t.html#ab904839ef8a731ea0579656e0875ea00',1,'glue_t::extra()'],['../structlayer__t.html#a86fc03ccdba5b7ad4c0d7872466a54ce',1,'layer_t::extra()'],['../structglue__updater__t.html#a5eaf96bafb4beeac2f90239a994294d9',1,'glue_updater_t::extra()']]],
+  ['embedding_20glue',['Embedding Glue',['../group__g__glue__emb.html',1,'']]]
 ];

@@ -1,5 +1,5 @@
 var searchData=
 [
-  ['connlm',['connLM',['../index.html',1,'']]],
-  ['connlm_20i_2fo_20mechanisms',['ConnLM I/O mechanisms',['../io.html',1,'index']]]
+  ['command_20line_20tools_20in_20connlm',['Command Line Tools in connLM',['../cmd.html',1,'index']]],
+  ['connlm',['connLM',['../index.html',1,'']]]
 ];

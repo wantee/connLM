@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['rnn_20model',['RNN Model',['../group__g__rnn.html',1,'']]]
+  ['linear_20layer',['Linear Layer',['../group__g__layer__linear.html',1,'']]]
 ];

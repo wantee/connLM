@@ -1,6 +1,10 @@
 var searchData=
 [
-  ['test_5fopt',['test_opt',['../structconnlm__t.html#ace11a0861563ff06ff440c7ccac55d14',1,'connlm_t']]],
-  ['text_5ffile',['text_file',['../structconnlm__t.html#a6b92e27f53a638a23eb7316e47deba4d',1,'connlm_t']]],
-  ['train_5fopt',['train_opt',['../structconnlm__t.html#a3ff65308c94c91a3243a11daf0a9f6a4',1,'connlm_t::train_opt()'],['../structffnn__t.html#a9517616ed4f5f1a67f0a7b9d76e74e93',1,'ffnn_t::train_opt()'],['../structlbl__t.html#a2bb70f6f6206fc7437bbf87055569d88',1,'lbl_t::train_opt()'],['../structmaxent__t.html#a9ee494fd0ab65a30b5ba64701cc8766b',1,'maxent_t::train_opt()'],['../structrnn__t.html#a536d667e7bc6f086620e41e9ee1bc92d',1,'rnn_t::train_opt()']]]
+  ['text_5ffile',['text_file',['../structreader__t.html#a67356b9cfa7d3c3cdd1261c596474b79',1,'reader_t']]],
+  ['tgt_5fpos',['tgt_pos',['../structsent__t.html#a59097c81986a789cf255826371ee736c',1,'sent_t']]],
+  ['tid',['tid',['../structreader__t.html#a92e50e7d3d706a70d867773242d833dd',1,'reader_t']]],
+  ['to',['to',['../structlink__t.html#ab9bd1774bc520fb5be8d832a825fa4c5',1,'link_t']]],
+  ['train_5fopt',['train_opt',['../structcomponent__t.html#a1f0925d2751c0a09d94a7216e90870a4',1,'component_t']]],
+  ['tree',['tree',['../structoutput__t.html#a568284af15cccc83de0aaf5c0adfe6e6',1,'output_t']]],
+  ['type',['type',['../structglue__impl__t.html#a08cb4b5778c02e5895001e4e9816b700',1,'glue_impl_t::type()'],['../structglue__t.html#aa9c457c53d372dfb164cc96feed442a9',1,'glue_t::type()'],['../structlayer__impl__t.html#a355f11419b4beeb64217a00532854ef0',1,'layer_impl_t::type()'],['../structlayer__t.html#a14356ebf4762843b027324c0cf05d617',1,'layer_t::type()'],['../structglue__updater__impl__t.html#a3500fe01c7ea05d2a74eff1877237f15',1,'glue_updater_impl_t::type()'],['../structwt__updater__t.html#a135a3914c5790c3ce7f5683c4936e387',1,'wt_updater_t::type()']]]
 ];

@@ -33,7 +33,7 @@
 <table cellspacing="0" cellpadding="0">
  <tbody>
  <tr style="height: 56px;">
-  <td id="projectlogo"><img alt="Logo" src="connLMTextAndLogoSmall.png"/></td>
+  <td id="projectlogo"><img alt="Logo" src="connLMTextAndLogo.png"/></td>
   <td style="padding-left: 0.5em;">
    <div id="projectname" style="display:none">connLM
    </div>
@@ -113,19 +113,19 @@ $(document).ready(function(){initNavTree('param_8h_source.html','');});
 <div class="contents">
 <div class="fragment"><div class="line"><a name="l00001"></a><span class="lineno">    1</span>&#160;<span class="comment">/*</span></div>
 <div class="line"><a name="l00002"></a><span class="lineno">    2</span>&#160;<span class="comment"> * The MIT License (MIT)</span></div>
-<div class="line"><a name="l00003"></a><span class="lineno">    3</span>&#160;<span class="comment"> * </span></div>
+<div class="line"><a name="l00003"></a><span class="lineno">    3</span>&#160;<span class="comment"> *</span></div>
 <div class="line"><a name="l00004"></a><span class="lineno">    4</span>&#160;<span class="comment"> * Copyright (c) 2015 Wang Jian</span></div>
-<div class="line"><a name="l00005"></a><span class="lineno">    5</span>&#160;<span class="comment"> * </span></div>
+<div class="line"><a name="l00005"></a><span class="lineno">    5</span>&#160;<span class="comment"> *</span></div>
 <div class="line"><a name="l00006"></a><span class="lineno">    6</span>&#160;<span class="comment"> * Permission is hereby granted, free of charge, to any person obtaining a copy</span></div>
 <div class="line"><a name="l00007"></a><span class="lineno">    7</span>&#160;<span class="comment"> * of this software and associated documentation files (the &quot;Software&quot;), to deal</span></div>
 <div class="line"><a name="l00008"></a><span class="lineno">    8</span>&#160;<span class="comment"> * in the Software without restriction, including without limitation the rights</span></div>
 <div class="line"><a name="l00009"></a><span class="lineno">    9</span>&#160;<span class="comment"> * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell</span></div>
 <div class="line"><a name="l00010"></a><span class="lineno">   10</span>&#160;<span class="comment"> * copies of the Software, and to permit persons to whom the Software is</span></div>
 <div class="line"><a name="l00011"></a><span class="lineno">   11</span>&#160;<span class="comment"> * furnished to do so, subject to the following conditions:</span></div>
-<div class="line"><a name="l00012"></a><span class="lineno">   12</span>&#160;<span class="comment"> * </span></div>
+<div class="line"><a name="l00012"></a><span class="lineno">   12</span>&#160;<span class="comment"> *</span></div>
 <div class="line"><a name="l00013"></a><span class="lineno">   13</span>&#160;<span class="comment"> * The above copyright notice and this permission notice shall be included in all</span></div>
 <div class="line"><a name="l00014"></a><span class="lineno">   14</span>&#160;<span class="comment"> * copies or substantial portions of the Software.</span></div>
-<div class="line"><a name="l00015"></a><span class="lineno">   15</span>&#160;<span class="comment"> * </span></div>
+<div class="line"><a name="l00015"></a><span class="lineno">   15</span>&#160;<span class="comment"> *</span></div>
 <div class="line"><a name="l00016"></a><span class="lineno">   16</span>&#160;<span class="comment"> * THE SOFTWARE IS PROVIDED &quot;AS IS&quot;, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR</span></div>
 <div class="line"><a name="l00017"></a><span class="lineno">   17</span>&#160;<span class="comment"> * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,</span></div>
 <div class="line"><a name="l00018"></a><span class="lineno">   18</span>&#160;<span class="comment"> * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE</span></div>
@@ -135,71 +135,63 @@ $(document).ready(function(){initNavTree('param_8h_source.html','');});
 <div class="line"><a name="l00022"></a><span class="lineno">   22</span>&#160;<span class="comment"> * SOFTWARE.</span></div>
 <div class="line"><a name="l00023"></a><span class="lineno">   23</span>&#160;<span class="comment"> */</span></div>
 <div class="line"><a name="l00024"></a><span class="lineno">   24</span>&#160;</div>
-<div class="line"><a name="l00025"></a><span class="lineno">   25</span>&#160;<span class="preprocessor">#ifndef  _PARAM_H_</span></div>
-<div class="line"><a name="l00026"></a><span class="lineno">   26</span>&#160;<span class="preprocessor">#define  _PARAM_H_</span></div>
+<div class="line"><a name="l00025"></a><span class="lineno">   25</span>&#160;<span class="preprocessor">#ifndef  _CONNLM_PARAM_H_</span></div>
+<div class="line"><a name="l00026"></a><span class="lineno">   26</span>&#160;<span class="preprocessor">#define  _CONNLM_PARAM_H_</span></div>
 <div class="line"><a name="l00027"></a><span class="lineno">   27</span>&#160;</div>
 <div class="line"><a name="l00028"></a><span class="lineno">   28</span>&#160;<span class="preprocessor">#ifdef __cplusplus</span></div>
 <div class="line"><a name="l00029"></a><span class="lineno">   29</span>&#160;<span class="keyword">extern</span> <span class="stringliteral">&quot;C&quot;</span> {</div>
 <div class="line"><a name="l00030"></a><span class="lineno">   30</span>&#160;<span class="preprocessor">#endif</span></div>
 <div class="line"><a name="l00031"></a><span class="lineno">   31</span>&#160;</div>
-<div class="line"><a name="l00032"></a><span class="lineno">   32</span>&#160;<span class="preprocessor">#include &lt;st_opt.h&gt;</span></div>
+<div class="line"><a name="l00032"></a><span class="lineno">   32</span>&#160;<span class="preprocessor">#include &lt;stutils/st_opt.h&gt;</span></div>
 <div class="line"><a name="l00033"></a><span class="lineno">   33</span>&#160;</div>
-<div class="line"><a name="l00034"></a><span class="lineno">   34</span>&#160;<span class="preprocessor">#include &quot;config.h&quot;</span></div>
+<div class="line"><a name="l00034"></a><span class="lineno">   34</span>&#160;<span class="preprocessor">#include &lt;connlm/config.h&gt;</span></div>
 <div class="line"><a name="l00035"></a><span class="lineno">   35</span>&#160;</div>
 <div class="line"><a name="l00044"></a><span class="lineno"><a class="line" href="structparam__t.html">   44</a></span>&#160;<span class="keyword">typedef</span> <span class="keyword">struct </span>_param_t_ {</div>
 <div class="line"><a name="l00045"></a><span class="lineno"><a class="line" href="structparam__t.html#a664f28c5bfefe413adf7fa29e3fd6365">   45</a></span>&#160;    real_t <a class="code" href="structparam__t.html#a664f28c5bfefe413adf7fa29e3fd6365">learn_rate</a>; </div>
 <div class="line"><a name="l00046"></a><span class="lineno"><a class="line" href="structparam__t.html#ad83d07035bdca5333a370855e7fba842">   46</a></span>&#160;    real_t <a class="code" href="structparam__t.html#ad83d07035bdca5333a370855e7fba842">l1_penalty</a>; </div>
 <div class="line"><a name="l00047"></a><span class="lineno"><a class="line" href="structparam__t.html#a5741f83992fef9b08de7b265b97b8d88">   47</a></span>&#160;    real_t <a class="code" href="structparam__t.html#a5741f83992fef9b08de7b265b97b8d88">l2_penalty</a>; </div>
-<div class="line"><a name="l00048"></a><span class="lineno"><a class="line" href="structparam__t.html#ac2d4227abd4b17210a8b032cc21e3954">   48</a></span>&#160;    <span class="keywordtype">int</span> <a class="code" href="structparam__t.html#ac2d4227abd4b17210a8b032cc21e3954">l2_gap</a>; </div>
+<div class="line"><a name="l00048"></a><span class="lineno"><a class="line" href="structparam__t.html#af0b7070f8c86891cf1a0e5cbcf9c0c17">   48</a></span>&#160;    <span class="keywordtype">int</span> <a class="code" href="structparam__t.html#af0b7070f8c86891cf1a0e5cbcf9c0c17">l2_delay</a>; </div>
 <div class="line"><a name="l00049"></a><span class="lineno"><a class="line" href="structparam__t.html#ada2d53933fd9b7e546a09329cfd8c962">   49</a></span>&#160;    real_t <a class="code" href="structparam__t.html#ada2d53933fd9b7e546a09329cfd8c962">momentum</a>; </div>
 <div class="line"><a name="l00050"></a><span class="lineno"><a class="line" href="structparam__t.html#a5b43cd8951a73581f8217695ba8908e8">   50</a></span>&#160;    <span class="keywordtype">int</span> <a class="code" href="structparam__t.html#a5b43cd8951a73581f8217695ba8908e8">mini_batch</a>; </div>
-<div class="line"><a name="l00051"></a><span class="lineno">   51</span>&#160;} <a class="code" href="structparam__t.html">param_t</a>;</div>
-<div class="line"><a name="l00052"></a><span class="lineno">   52</span>&#160;</div>
-<div class="line"><a name="l00057"></a><span class="lineno"><a class="line" href="structparam__arg__t.html">   57</a></span>&#160;<span class="keyword">typedef</span> <span class="keyword">struct </span>_param_arg_t_ {</div>
-<div class="line"><a name="l00058"></a><span class="lineno"><a class="line" href="structparam__arg__t.html#a195baa62048d36c3442edff4b090200e">   58</a></span>&#160;    <span class="keywordtype">int</span> <a class="code" href="structparam__arg__t.html#a195baa62048d36c3442edff4b090200e">l2_step</a>; </div>
-<div class="line"><a name="l00059"></a><span class="lineno">   59</span>&#160;} <a class="code" href="structparam__arg__t.html">param_arg_t</a>;</div>
-<div class="line"><a name="l00060"></a><span class="lineno">   60</span>&#160;</div>
-<div class="line"><a name="l00066"></a><span class="lineno">   66</span>&#160;<span class="keywordtype">void</span> <a class="code" href="group__g__param.html#ga171b6106b3e1d2fcee77baefea977466">param_arg_clear</a>(<a class="code" href="structparam__arg__t.html">param_arg_t</a> *arg);</div>
-<div class="line"><a name="l00067"></a><span class="lineno">   67</span>&#160;</div>
-<div class="line"><a name="l00077"></a><span class="lineno">   77</span>&#160;<span class="keywordtype">int</span> <a class="code" href="group__g__param.html#gab498621a1e50e70afbdec5fad367d641">param_load</a>(<a class="code" href="structparam__t.html">param_t</a> *param, st_opt_t *opt, <span class="keyword">const</span> <span class="keywordtype">char</span> *sec_name,</div>
-<div class="line"><a name="l00078"></a><span class="lineno">   78</span>&#160;        <a class="code" href="structparam__t.html">param_t</a> *parent_param);</div>
-<div class="line"><a name="l00079"></a><span class="lineno">   79</span>&#160;</div>
-<div class="line"><a name="l00096"></a><span class="lineno">   96</span>&#160;<span class="keywordtype">void</span> <a class="code" href="group__g__param.html#ga667303378d7e193011e090b9b926291d">param_acc_wt</a>(real_t *wt, real_t *er, <span class="keywordtype">int</span> er_size, real_t *in,</div>
-<div class="line"><a name="l00097"></a><span class="lineno">   97</span>&#160;        <span class="keywordtype">int</span> in_size);</div>
-<div class="line"><a name="l00098"></a><span class="lineno">   98</span>&#160;</div>
-<div class="line"><a name="l00116"></a><span class="lineno">  116</span>&#160;<span class="keywordtype">void</span> <a class="code" href="group__g__param.html#ga9bb6680d24c3e115b16e33989d790110">param_update</a>(<a class="code" href="structparam__t.html">param_t</a> *param, <a class="code" href="structparam__arg__t.html">param_arg_t</a> *arg, <span class="keywordtype">bool</span> update_arg,</div>
-<div class="line"><a name="l00117"></a><span class="lineno">  117</span>&#160;        real_t *wt, real_t *er, real_t er_scale,</div>
-<div class="line"><a name="l00118"></a><span class="lineno">  118</span>&#160;        <span class="keywordtype">int</span> er_size, real_t *in, <span class="keywordtype">int</span> in_size);</div>
-<div class="line"><a name="l00119"></a><span class="lineno">  119</span>&#160;</div>
-<div class="line"><a name="l00120"></a><span class="lineno">  120</span>&#160;<span class="preprocessor">#ifdef _MINI_UPDATE_</span></div>
-<div class="line"><a name="l00121"></a><span class="lineno">  121</span>&#160;</div>
-<div class="line"><a name="l00130"></a><span class="lineno">  130</span>&#160;<span class="keywordtype">void</span> <a class="code" href="group__g__param.html#ga72fe152ee7f79c342d8f00e291dc657a">param_acc_wt_minibatch</a>(<span class="keywordtype">int</span> batch, real_t *wt, real_t *er, <span class="keywordtype">int</span> er_size,</div>
-<div class="line"><a name="l00131"></a><span class="lineno">  131</span>&#160;        real_t *in, <span class="keywordtype">int</span> in_size);</div>
-<div class="line"><a name="l00132"></a><span class="lineno">  132</span>&#160;</div>
-<div class="line"><a name="l00142"></a><span class="lineno">  142</span>&#160;<span class="keywordtype">void</span> <a class="code" href="group__g__param.html#gad1831f13e45221032208a67e05ad7e1d">param_update_minibatch</a>(<a class="code" href="structparam__t.html">param_t</a> *param, <a class="code" href="structparam__arg__t.html">param_arg_t</a> *arg,</div>
-<div class="line"><a name="l00143"></a><span class="lineno">  143</span>&#160;        <span class="keywordtype">bool</span> update_arg, <span class="keywordtype">int</span> batch, real_t *wt, real_t *er, real_t er_scale,</div>
-<div class="line"><a name="l00144"></a><span class="lineno">  144</span>&#160;        <span class="keywordtype">int</span> er_size, real_t *in, <span class="keywordtype">int</span> in_size);</div>
-<div class="line"><a name="l00145"></a><span class="lineno">  145</span>&#160;<span class="preprocessor">#endif</span></div>
-<div class="line"><a name="l00146"></a><span class="lineno">  146</span>&#160;</div>
-<div class="line"><a name="l00147"></a><span class="lineno">  147</span>&#160;<span class="preprocessor">#ifdef __cplusplus</span></div>
-<div class="line"><a name="l00148"></a><span class="lineno">  148</span>&#160;}</div>
-<div class="line"><a name="l00149"></a><span class="lineno">  149</span>&#160;<span class="preprocessor">#endif</span></div>
-<div class="line"><a name="l00150"></a><span class="lineno">  150</span>&#160;</div>
-<div class="line"><a name="l00151"></a><span class="lineno">  151</span>&#160;<span class="preprocessor">#endif</span></div>
-<div class="ttc" id="group__g__param_html_ga667303378d7e193011e090b9b926291d"><div class="ttname"><a href="group__g__param.html#ga667303378d7e193011e090b9b926291d">param_acc_wt</a></div><div class="ttdeci">void param_acc_wt(real_t *wt, real_t *er, int er_size, real_t *in, int in_size)</div><div class="ttdoc">Accumulate weights. </div></div>
+<div class="line"><a name="l00051"></a><span class="lineno"><a class="line" href="structparam__t.html#a429fdd82ae935ac7310d4304d6964ee0">   51</a></span>&#160;    <span class="keywordtype">int</span> <a class="code" href="structparam__t.html#a429fdd82ae935ac7310d4304d6964ee0">sync_size</a>; </div>
+<div class="line"><a name="l00052"></a><span class="lineno"><a class="line" href="structparam__t.html#a3730dd75accd4c1726325f59e263e9af">   52</a></span>&#160;    real_t <a class="code" href="structparam__t.html#a3730dd75accd4c1726325f59e263e9af">er_cutoff</a>; </div>
+<div class="line"><a name="l00053"></a><span class="lineno">   53</span>&#160;} <a class="code" href="structparam__t.html">param_t</a>;</div>
+<div class="line"><a name="l00054"></a><span class="lineno">   54</span>&#160;</div>
+<div class="line"><a name="l00064"></a><span class="lineno">   64</span>&#160;<span class="keywordtype">int</span> <a class="code" href="group__g__param.html#gab498621a1e50e70afbdec5fad367d641">param_load</a>(<a class="code" href="structparam__t.html">param_t</a> *param, st_opt_t *opt, <span class="keyword">const</span> <span class="keywordtype">char</span> *sec_name,</div>
+<div class="line"><a name="l00065"></a><span class="lineno">   65</span>&#160;        <a class="code" href="structparam__t.html">param_t</a> *parent_param);</div>
+<div class="line"><a name="l00066"></a><span class="lineno">   66</span>&#160;</div>
+<div class="line"><a name="l00071"></a><span class="lineno">   71</span>&#160;<span class="keywordtype">void</span> <a class="code" href="group__g__param.html#ga0e365877d58a2f3e852d85f3249afe13">param_show_usage</a>();</div>
+<div class="line"><a name="l00072"></a><span class="lineno">   72</span>&#160;</div>
+<div class="line"><a name="l00077"></a><span class="lineno"><a class="line" href="structbptt__opt__t.html">   77</a></span>&#160;<span class="keyword">typedef</span> <span class="keyword">struct </span>_bptt_opt_t_ {</div>
+<div class="line"><a name="l00078"></a><span class="lineno"><a class="line" href="structbptt__opt__t.html#aeca532a6d71654832eb77e06a3e03c7d">   78</a></span>&#160;    <span class="keywordtype">int</span> <a class="code" href="structbptt__opt__t.html#aeca532a6d71654832eb77e06a3e03c7d">bptt</a>; </div>
+<div class="line"><a name="l00079"></a><span class="lineno"><a class="line" href="structbptt__opt__t.html#ab06952856396ea06be2930602d51e4cf">   79</a></span>&#160;    <span class="keywordtype">int</span> <a class="code" href="structbptt__opt__t.html#ab06952856396ea06be2930602d51e4cf">bptt_delay</a>; </div>
+<div class="line"><a name="l00080"></a><span class="lineno">   80</span>&#160;} <a class="code" href="structbptt__opt__t.html">bptt_opt_t</a>;</div>
+<div class="line"><a name="l00081"></a><span class="lineno">   81</span>&#160;</div>
+<div class="line"><a name="l00091"></a><span class="lineno">   91</span>&#160;<span class="keywordtype">int</span> <a class="code" href="group__g__param.html#gac112dbbe9542f37b947f76ebf2f6fe83">bptt_opt_load</a>(<a class="code" href="structbptt__opt__t.html">bptt_opt_t</a> *bptt_opt, st_opt_t *opt, <span class="keyword">const</span> <span class="keywordtype">char</span> *sec_name,</div>
+<div class="line"><a name="l00092"></a><span class="lineno">   92</span>&#160;        <a class="code" href="structbptt__opt__t.html">bptt_opt_t</a> *parent_bptt_opt);</div>
+<div class="line"><a name="l00093"></a><span class="lineno">   93</span>&#160;</div>
+<div class="line"><a name="l00098"></a><span class="lineno">   98</span>&#160;<span class="keywordtype">void</span> <a class="code" href="group__g__param.html#ga062786e7b87037a69c1865ef894ad5f6">bptt_opt_show_usage</a>();</div>
+<div class="line"><a name="l00099"></a><span class="lineno">   99</span>&#160;</div>
+<div class="line"><a name="l00100"></a><span class="lineno">  100</span>&#160;<span class="preprocessor">#ifdef __cplusplus</span></div>
+<div class="line"><a name="l00101"></a><span class="lineno">  101</span>&#160;}</div>
+<div class="line"><a name="l00102"></a><span class="lineno">  102</span>&#160;<span class="preprocessor">#endif</span></div>
+<div class="line"><a name="l00103"></a><span class="lineno">  103</span>&#160;</div>
+<div class="line"><a name="l00104"></a><span class="lineno">  104</span>&#160;<span class="preprocessor">#endif</span></div>
+<div class="ttc" id="structparam__t_html_a429fdd82ae935ac7310d4304d6964ee0"><div class="ttname"><a href="structparam__t.html#a429fdd82ae935ac7310d4304d6964ee0">param_t::sync_size</a></div><div class="ttdeci">int sync_size</div><div class="ttdoc">if bigger than 0, sync weight for threads every sync_size steps. </div><div class="ttdef"><b>Definition:</b> param.h:51</div></div>
 <div class="ttc" id="structparam__t_html_a664f28c5bfefe413adf7fa29e3fd6365"><div class="ttname"><a href="structparam__t.html#a664f28c5bfefe413adf7fa29e3fd6365">param_t::learn_rate</a></div><div class="ttdeci">real_t learn_rate</div><div class="ttdoc">value of learning rate </div><div class="ttdef"><b>Definition:</b> param.h:45</div></div>
 <div class="ttc" id="group__g__param_html_gab498621a1e50e70afbdec5fad367d641"><div class="ttname"><a href="group__g__param.html#gab498621a1e50e70afbdec5fad367d641">param_load</a></div><div class="ttdeci">int param_load(param_t *param, st_opt_t *opt, const char *sec_name, param_t *parent_param)</div><div class="ttdoc">Load param option. </div></div>
+<div class="ttc" id="group__g__param_html_gac112dbbe9542f37b947f76ebf2f6fe83"><div class="ttname"><a href="group__g__param.html#gac112dbbe9542f37b947f76ebf2f6fe83">bptt_opt_load</a></div><div class="ttdeci">int bptt_opt_load(bptt_opt_t *bptt_opt, st_opt_t *opt, const char *sec_name, bptt_opt_t *parent_bptt_opt)</div><div class="ttdoc">Load BPTT option. </div></div>
+<div class="ttc" id="structbptt__opt__t_html_aeca532a6d71654832eb77e06a3e03c7d"><div class="ttname"><a href="structbptt__opt__t.html#aeca532a6d71654832eb77e06a3e03c7d">bptt_opt_t::bptt</a></div><div class="ttdeci">int bptt</div><div class="ttdoc">time steps for BPTT. </div><div class="ttdef"><b>Definition:</b> param.h:78</div></div>
+<div class="ttc" id="group__g__param_html_ga062786e7b87037a69c1865ef894ad5f6"><div class="ttname"><a href="group__g__param.html#ga062786e7b87037a69c1865ef894ad5f6">bptt_opt_show_usage</a></div><div class="ttdeci">void bptt_opt_show_usage()</div><div class="ttdoc">Show bptt_opt usage to stderr. </div></div>
 <div class="ttc" id="structparam__t_html"><div class="ttname"><a href="structparam__t.html">param_t</a></div><div class="ttdoc">Parameter. </div><div class="ttdef"><b>Definition:</b> param.h:44</div></div>
 <div class="ttc" id="structparam__t_html_ada2d53933fd9b7e546a09329cfd8c962"><div class="ttname"><a href="structparam__t.html#ada2d53933fd9b7e546a09329cfd8c962">param_t::momentum</a></div><div class="ttdeci">real_t momentum</div><div class="ttdoc">value of momentum </div><div class="ttdef"><b>Definition:</b> param.h:49</div></div>
-<div class="ttc" id="structparam__arg__t_html"><div class="ttname"><a href="structparam__arg__t.html">param_arg_t</a></div><div class="ttdoc">Arguments updated for one parameter. </div><div class="ttdef"><b>Definition:</b> param.h:57</div></div>
-<div class="ttc" id="structparam__arg__t_html_a195baa62048d36c3442edff4b090200e"><div class="ttname"><a href="structparam__arg__t.html#a195baa62048d36c3442edff4b090200e">param_arg_t::l2_step</a></div><div class="ttdeci">int l2_step</div><div class="ttdoc">step for L2 penalty </div><div class="ttdef"><b>Definition:</b> param.h:58</div></div>
-<div class="ttc" id="group__g__param_html_ga171b6106b3e1d2fcee77baefea977466"><div class="ttname"><a href="group__g__param.html#ga171b6106b3e1d2fcee77baefea977466">param_arg_clear</a></div><div class="ttdeci">void param_arg_clear(param_arg_t *arg)</div><div class="ttdoc">Clear parameter argument. </div></div>
-<div class="ttc" id="structparam__t_html_ac2d4227abd4b17210a8b032cc21e3954"><div class="ttname"><a href="structparam__t.html#ac2d4227abd4b17210a8b032cc21e3954">param_t::l2_gap</a></div><div class="ttdeci">int l2_gap</div><div class="ttdoc">applying L2 penalty every l2_gap words </div><div class="ttdef"><b>Definition:</b> param.h:48</div></div>
 <div class="ttc" id="structparam__t_html_ad83d07035bdca5333a370855e7fba842"><div class="ttname"><a href="structparam__t.html#ad83d07035bdca5333a370855e7fba842">param_t::l1_penalty</a></div><div class="ttdeci">real_t l1_penalty</div><div class="ttdoc">value of L1 penalty </div><div class="ttdef"><b>Definition:</b> param.h:46</div></div>
-<div class="ttc" id="group__g__param_html_ga72fe152ee7f79c342d8f00e291dc657a"><div class="ttname"><a href="group__g__param.html#ga72fe152ee7f79c342d8f00e291dc657a">param_acc_wt_minibatch</a></div><div class="ttdeci">void param_acc_wt_minibatch(int batch, real_t *wt, real_t *er, int er_size, real_t *in, int in_size)</div><div class="ttdoc">Accumulate weights with mini-batch. </div></div>
-<div class="ttc" id="group__g__param_html_gad1831f13e45221032208a67e05ad7e1d"><div class="ttname"><a href="group__g__param.html#gad1831f13e45221032208a67e05ad7e1d">param_update_minibatch</a></div><div class="ttdeci">void param_update_minibatch(param_t *param, param_arg_t *arg, bool update_arg, int batch, real_t *wt, real_t *er, real_t er_scale, int er_size, real_t *in, int in_size)</div><div class="ttdoc">Update weight with mini-batchbatch is the mini-batch size, other arguments are the same as param_upda...</div></div>
+<div class="ttc" id="structparam__t_html_a3730dd75accd4c1726325f59e263e9af"><div class="ttname"><a href="structparam__t.html#a3730dd75accd4c1726325f59e263e9af">param_t::er_cutoff</a></div><div class="ttdeci">real_t er_cutoff</div><div class="ttdoc">cutoff of error. </div><div class="ttdef"><b>Definition:</b> param.h:52</div></div>
+<div class="ttc" id="structbptt__opt__t_html_ab06952856396ea06be2930602d51e4cf"><div class="ttname"><a href="structbptt__opt__t.html#ab06952856396ea06be2930602d51e4cf">bptt_opt_t::bptt_delay</a></div><div class="ttdeci">int bptt_delay</div><div class="ttdoc">if bigger than 0, apply bptt for every bptt_delay steps. </div><div class="ttdef"><b>Definition:</b> param.h:79</div></div>
+<div class="ttc" id="structbptt__opt__t_html"><div class="ttname"><a href="structbptt__opt__t.html">bptt_opt_t</a></div><div class="ttdoc">BPTT options. </div><div class="ttdef"><b>Definition:</b> param.h:77</div></div>
+<div class="ttc" id="group__g__param_html_ga0e365877d58a2f3e852d85f3249afe13"><div class="ttname"><a href="group__g__param.html#ga0e365877d58a2f3e852d85f3249afe13">param_show_usage</a></div><div class="ttdeci">void param_show_usage()</div><div class="ttdoc">Show param usage to stderr. </div></div>
 <div class="ttc" id="structparam__t_html_a5741f83992fef9b08de7b265b97b8d88"><div class="ttname"><a href="structparam__t.html#a5741f83992fef9b08de7b265b97b8d88">param_t::l2_penalty</a></div><div class="ttdeci">real_t l2_penalty</div><div class="ttdoc">value of L2 penalty </div><div class="ttdef"><b>Definition:</b> param.h:47</div></div>
-<div class="ttc" id="group__g__param_html_ga9bb6680d24c3e115b16e33989d790110"><div class="ttname"><a href="group__g__param.html#ga9bb6680d24c3e115b16e33989d790110">param_update</a></div><div class="ttdeci">void param_update(param_t *param, param_arg_t *arg, bool update_arg, real_t *wt, real_t *er, real_t er_scale, int er_size, real_t *in, int in_size)</div><div class="ttdoc">Update weight using parameters. </div></div>
+<div class="ttc" id="structparam__t_html_af0b7070f8c86891cf1a0e5cbcf9c0c17"><div class="ttname"><a href="structparam__t.html#af0b7070f8c86891cf1a0e5cbcf9c0c17">param_t::l2_delay</a></div><div class="ttdeci">int l2_delay</div><div class="ttdoc">delayed step of applying L2 penalty </div><div class="ttdef"><b>Definition:</b> param.h:48</div></div>
 <div class="ttc" id="structparam__t_html_a5b43cd8951a73581f8217695ba8908e8"><div class="ttname"><a href="structparam__t.html#a5b43cd8951a73581f8217695ba8908e8">param_t::mini_batch</a></div><div class="ttdeci">int mini_batch</div><div class="ttdoc">size of mini-batch </div><div class="ttdef"><b>Definition:</b> param.h:50</div></div>
 </div><!-- fragment --></div><!-- contents -->
 </div><!-- doc-content -->
@@ -207,7 +199,7 @@ $(document).ready(function(){initNavTree('param_8h_source.html','');});
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><b>param.h</b></li>
-    <li class="footer">Generated on Wed Nov 11 2015 16:09:31 for connLM by
+    <li class="footer">Generated on Tue Oct 25 2016 22:48:46 for connLM by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.10 </li>
   </ul>

@@ -1,25 +1,7 @@
 var structconnlm__t =
 [
-    [ "empty_egs", "structconnlm__t.html#a9e98e84854b3bae8c309270cc5582ba1", null ],
-    [ "empty_egs_lock", "structconnlm__t.html#a880a8ddaf022844e04337126aa4f21a0", null ],
-    [ "err", "structconnlm__t.html#a5e4f9da469280392ce4007551481fab2", null ],
-    [ "ffnn", "structconnlm__t.html#a67e213aa4d46bcfb056445a4e5410a9f", null ],
-    [ "fp_debug", "structconnlm__t.html#aa610e9e6a2011624747f46a7f3d75def", null ],
-    [ "fp_debug_lock", "structconnlm__t.html#a67a37cbdc58fd1a53a7ed661927282c5", null ],
-    [ "fp_lock", "structconnlm__t.html#a72622c11849e3147167eb9d8f36011d0", null ],
-    [ "fp_log", "structconnlm__t.html#a8eddcb9d3461e61e31f4529769183ed9", null ],
-    [ "full_egs", "structconnlm__t.html#a5b6bbd66885f43f04b93d8c36c79a049", null ],
-    [ "full_egs_lock", "structconnlm__t.html#a77008d2830e1b8dc554dd15f8be30f2c", null ],
-    [ "gen_opt", "structconnlm__t.html#ac2f8c85648edb3b4cf06dcfc7682d352", null ],
-    [ "lbl", "structconnlm__t.html#aa21b31a4d089cde5dd0c529120ae680b", null ],
-    [ "maxent", "structconnlm__t.html#af5e89bdebab8b9b2aa98ca74570bf938", null ],
-    [ "model_opt", "structconnlm__t.html#ab9afa952c8f8d4efdf4aec468aa6764a", null ],
+    [ "comps", "structconnlm__t.html#a681c42a987c2811d0c8202418ed49927", null ],
+    [ "num_comp", "structconnlm__t.html#aa2b53cd9ffdea835958486763256221f", null ],
     [ "output", "structconnlm__t.html#acb30c474d8738764497837d6edca976e", null ],
-    [ "rnn", "structconnlm__t.html#a7d391f7fa33670624ea7af9d666023d2", null ],
-    [ "sem_empty", "structconnlm__t.html#a5b6c32a9a77bff13ad5c9841de9b9b82", null ],
-    [ "sem_full", "structconnlm__t.html#afdb39575efa6ff66fccd308338ff89d0", null ],
-    [ "test_opt", "structconnlm__t.html#ace11a0861563ff06ff440c7ccac55d14", null ],
-    [ "text_file", "structconnlm__t.html#a6b92e27f53a638a23eb7316e47deba4d", null ],
-    [ "train_opt", "structconnlm__t.html#a3ff65308c94c91a3243a11daf0a9f6a4", null ],
     [ "vocab", "structconnlm__t.html#a5ce1d69db833748652d0020d6e549739", null ]
 ];

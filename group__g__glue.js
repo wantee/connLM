@@ -1,0 +1,65 @@
+var group__g__glue =
+[
+    [ "Direct Glue", "group__g__glue__direct.html", "group__g__glue__direct" ],
+    [ "Embedding Glue", "group__g__glue__emb.html", "group__g__glue__emb" ],
+    [ "Full-Connected Glue", "group__g__glue__fc.html", "group__g__glue__fc" ],
+    [ "Output Glue", "group__g__glue__out.html", "group__g__glue__out" ],
+    [ "glue_impl_t", "structglue__impl__t.html", [
+      [ "check", "structglue__impl__t.html#a39c662889380b0c653eea98710e2b45b", null ],
+      [ "destroy", "structglue__impl__t.html#a00adb8541d712131edbb26c2b9da0df2", null ],
+      [ "draw_label", "structglue__impl__t.html#a922b45ace44cabdc1b172c695d7d7875", null ],
+      [ "dup", "structglue__impl__t.html#a34068b5c7d7913a6985ee2d4f459f0f6", null ],
+      [ "init", "structglue__impl__t.html#af1ec004f53aec63850652c40897b6911", null ],
+      [ "init_data", "structglue__impl__t.html#a93a376870ae787e89583d4379912727e", null ],
+      [ "init_wt_updater", "structglue__impl__t.html#ab2e8a29216f70a239d74ae80c3152dc4", null ],
+      [ "load_body", "structglue__impl__t.html#ad0ad98275fac9b3bc91b74d81b9c22ba", null ],
+      [ "load_header", "structglue__impl__t.html#ae6eddd4ff3c7aaabec5e0203f45cfc8f", null ],
+      [ "parse_topo", "structglue__impl__t.html#a56047588ab9dd968e1f3ab2430aa2c57", null ],
+      [ "save_body", "structglue__impl__t.html#ad77e6a0200a7203d9ea044c12a8c32d2", null ],
+      [ "save_header", "structglue__impl__t.html#afc051f35be62b47e68c9db167bad80f5", null ],
+      [ "type", "structglue__impl__t.html#a08cb4b5778c02e5895001e4e9816b700", null ]
+    ] ],
+    [ "glue_t", "structglue__t.html", [
+      [ "bptt_opt", "structglue__t.html#ab8005d5805e1b3c885af5fc4b9395d67", null ],
+      [ "extra", "structglue__t.html#ab904839ef8a731ea0579656e0875ea00", null ],
+      [ "impl", "structglue__t.html#ad9f0b6a6215a0e0bafaa7875e25b1035", null ],
+      [ "in_layer", "structglue__t.html#a7ad3b6c1d0cb743383d53aa60015a0de", null ],
+      [ "name", "structglue__t.html#a32d4a11fa90bacfc2eca41d5001af925", null ],
+      [ "out_layer", "structglue__t.html#a94a11d3073d28318ff40259936bf46f8", null ],
+      [ "param", "structglue__t.html#aa3545338c1244030130b0c358f9fd08d", null ],
+      [ "recur_type", "structglue__t.html#abd37a3b4b08d23540ba6d5ef443e23f4", null ],
+      [ "type", "structglue__t.html#aa9c457c53d372dfb164cc96feed442a9", null ],
+      [ "wt", "structglue__t.html#a154361c0f2e78a658f3e058a39428d63", null ]
+    ] ],
+    [ "glue_updater_impl_t", "structglue__updater__impl__t.html", [
+      [ "backprop", "structglue__updater__impl__t.html#a04142821c996da5795aaad8b8de4a1e5", null ],
+      [ "destroy", "structglue__updater__impl__t.html#a18c7a285a4fd4f442005a5862fd96566", null ],
+      [ "forward", "structglue__updater__impl__t.html#ab26f3f062c9f87652dc69260cb273a15", null ],
+      [ "forward_out", "structglue__updater__impl__t.html#a3a59fdf6b99bed44165d668fe034f34f", null ],
+      [ "forward_util_out", "structglue__updater__impl__t.html#addd70ab8e72088f284ff622f51d23fde", null ],
+      [ "init", "structglue__updater__impl__t.html#a1bb9587f6650083485acb5d567f06191", null ],
+      [ "setup", "structglue__updater__impl__t.html#afa377c31a8161b94da396fe499511478", null ],
+      [ "type", "structglue__updater__impl__t.html#a3500fe01c7ea05d2a74eff1877237f15", null ]
+    ] ],
+    [ "safe_glue_destroy", "group__g__glue.html#ga514bef805bc7e8aef2953ec6c58e8fef", null ],
+    [ "glue_recur_type_t", "group__g__glue.html#ga26831e8f9944ff1c155036264220bd51", [
+      [ "RECUR_NON", "group__g__glue.html#gga26831e8f9944ff1c155036264220bd51afde448090bf87ce844c6058c73cb700c", null ],
+      [ "RECUR_HEAD", "group__g__glue.html#gga26831e8f9944ff1c155036264220bd51a527922e567820b5afe574b0d98adb8b9", null ],
+      [ "RECUR_BODY", "group__g__glue.html#gga26831e8f9944ff1c155036264220bd51a9373398fa8334be5dcec6f0feecce93d", null ]
+    ] ],
+    [ "glue_backprop", "group__g__glue.html#ga8d7bb1dc6aad02038f8ad29033d623aa", null ],
+    [ "glue_check", "group__g__glue.html#ga434f6beae182acd708d5ea2947eb269a", null ],
+    [ "glue_destroy", "group__g__glue.html#ga361a84b256137c804a5f0ca010603e34", null ],
+    [ "glue_draw_label", "group__g__glue.html#ga6b5f5f75a7eab871fee9208abf3ab365", null ],
+    [ "glue_draw_label_one", "group__g__glue.html#ga9e35a21d1543c159632dddc772c47171", null ],
+    [ "glue_dup", "group__g__glue.html#ga022694f3ad8158b93b537da091d7d9b6", null ],
+    [ "glue_forward", "group__g__glue.html#ga899fdae3878eb7043530216cf5d890b3", null ],
+    [ "glue_init_data", "group__g__glue.html#ga49d700f47ffcb2a45ac4d0fe7bbcf10a", null ],
+    [ "glue_init_wt_updater", "group__g__glue.html#gaab64fe19e9115175e46a2ea22281b8b1", null ],
+    [ "glue_load_body", "group__g__glue.html#gacffa2c53d9746f67c31f031fd951e626", null ],
+    [ "glue_load_header", "group__g__glue.html#ga774612673229baf7345dda9d24713419", null ],
+    [ "glue_load_train_opt", "group__g__glue.html#ga4a1314dfafe96890b0fa78669750d742", null ],
+    [ "glue_parse_topo", "group__g__glue.html#gaec577eb438e93e792da017b7b0ca106a", null ],
+    [ "glue_save_body", "group__g__glue.html#ga4d26169423cd040c7556239b33934068", null ],
+    [ "glue_save_header", "group__g__glue.html#gafaa6fe372ec8a34b06ebd04e7abb1b07", null ]
+];

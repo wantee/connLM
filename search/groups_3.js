@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['maxent_20model',['MaxEnt Model',['../group__g__maxent.html',1,'']]]
+  ['full_2dconnected_20glue',['Full-Connected Glue',['../group__g__glue__fc.html',1,'']]]
 ];

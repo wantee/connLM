@@ -1,11 +1,26 @@
 var searchData=
 [
-  ['c2w_5fe',['c2w_e',['../structoutput__t.html#a00b1708d78efe8ddeb6fed4670041373',1,'output_t']]],
-  ['c2w_5fs',['c2w_s',['../structoutput__t.html#a8158d22bf9aae5458dfe46699035c865',1,'output_t']]],
+  ['cap_5fid',['cap_id',['../structwt__dirty__buf__t.html#af078cdfbb21bda8e66dbce3dcd2c35fd',1,'wt_dirty_buf_t']]],
+  ['cap_5fnode',['cap_node',['../structoutput__tree__t.html#a3b9d40e54c149f95c8de3c2d6c463daf',1,'output_tree_t']]],
+  ['cap_5frow',['cap_row',['../structconcat__mat__t.html#a27ca86bc71b510f4fa0d259c2104616a',1,'concat_mat_t']]],
+  ['cap_5fseg',['cap_seg',['../structwt__dirty__buf__t.html#adf44f47c6a1c138bab43271633117a46',1,'wt_dirty_buf_t']]],
+  ['cap_5fword',['cap_word',['../structinput__updater__t.html#ad9fa91c769abc6e5c5aad1f47e20df7d',1,'input_updater_t']]],
   ['capacity',['capacity',['../structconnlm__egs__t.html#ad13746ca08b7090c5cc527f3b4047b42',1,'connlm_egs_t']]],
-  ['class_5fhs',['class_hs',['../structoutput__opt__t.html#a696814b619013a065935e770f1df44b8',1,'output_opt_t']]],
-  ['class_5fsize',['class_size',['../structmaxent__t.html#ae165c04da7db726b2ef44d8cdae02c14',1,'maxent_t::class_size()'],['../structoutput__opt__t.html#a0be0b1e7c0c50ac79749443d7e78c243',1,'output_opt_t::class_size()'],['../structrnn__t.html#af25a40992a23ddfb71568d0f021c20c0',1,'rnn_t::class_size()']]],
+  ['check',['check',['../structglue__impl__t.html#a39c662889380b0c653eea98710e2b45b',1,'glue_impl_t']]],
+  ['children_5fe',['children_e',['../structoutput__tree__node__t.html#a59315f962ed0554d3a57846e3c47c33b',1,'output_tree_node_t']]],
+  ['children_5fs',['children_s',['../structoutput__tree__node__t.html#a7201289cc86412b2b72c8e557ad5f6d2',1,'output_tree_node_t']]],
   ['cnts',['cnts',['../structvocab__t.html#a584eb6d2e70c8a37f8889ba72aef54de',1,'vocab_t']]],
-  ['code_5fc',['code_c',['../structoutput__t.html#a2210f20969a58f96529a1a1f5538c5fe',1,'output_t']]],
-  ['code_5fw',['code_w',['../structoutput__t.html#a84846e52e68ec46cf8231e485cf2ff43',1,'output_t']]]
+  ['col',['col',['../structwt__updater__t.html#a27c0ba34686860394212718320872b66',1,'wt_updater_t::col()'],['../structconcat__mat__t.html#a5ed963d42e186a7650e976054e6994fa',1,'concat_mat_t::col()'],['../structweight__t.html#a6dd47ce07db24d873c71dd9d79e62a12',1,'weight_t::col()']]],
+  ['combine',['combine',['../structinput__t.html#a7b5edcf7249488e7998a3743cc95bb1e',1,'input_t']]],
+  ['comp',['comp',['../structcomp__updater__t.html#a012b7b75ec739ffe30b8b08b40888afa',1,'comp_updater_t']]],
+  ['comp_5fscale',['comp_scale',['../structcomponent__t.html#a77d2052afcba7a57fb3fc6e88be6ee4b',1,'component_t']]],
+  ['comp_5fupdaters',['comp_updaters',['../structupdater__t.html#a2f5e3e2aef8fc61b0e3b1eca2d900152',1,'updater_t']]],
+  ['comps',['comps',['../structconnlm__t.html#a681c42a987c2811d0c8202418ed49927',1,'connlm_t']]],
+  ['connlm',['connlm',['../structdriver__t.html#a5bac56337e1f8e5ce683d4beeac1c42e',1,'driver_t::connlm()'],['../structfst__converter__t.html#aeb486f02290bb9c4344a8f5967207081',1,'fst_converter_t::connlm()'],['../structupdater__t.html#a821220bad88498145dd19b40b14d27bc',1,'updater_t::connlm()']]],
+  ['context',['context',['../structinput__t.html#a7112b4c83eb7d1535ec58feaed15d854',1,'input_t']]],
+  ['converter_5fopt',['converter_opt',['../structfst__converter__t.html#a826fd24c4e96777ccf22bf674c87fd9b',1,'fst_converter_t']]],
+  ['ctx_5fleftmost',['ctx_leftmost',['../structinput__updater__t.html#aa4bbe0e7b3a7a3a0553907282540f1be',1,'input_updater_t']]],
+  ['ctx_5frightmost',['ctx_rightmost',['../structinput__updater__t.html#aadf2feba97dbbdbec54523b0bc31fb20',1,'input_updater_t']]],
+  ['cur_5fpos',['cur_pos',['../structinput__updater__t.html#a7f913a629e82bcadef87d646c26803fd',1,'input_updater_t']]],
+  ['cycles',['cycles',['../structgraph__t.html#a72039e844a4683dab72725e20bc744a9',1,'graph_t']]]
 ];

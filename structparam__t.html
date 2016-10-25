@@ -33,7 +33,7 @@
 <table cellspacing="0" cellpadding="0">
  <tbody>
  <tr style="height: 56px;">
-  <td id="projectlogo"><img alt="Logo" src="connLMTextAndLogoSmall.png"/></td>
+  <td id="projectlogo"><img alt="Logo" src="connLMTextAndLogo.png"/></td>
   <td style="padding-left: 0.5em;">
    <div id="projectname" style="display:none">connLM
    </div>
@@ -135,10 +135,10 @@ real_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="st
 real_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structparam__t.html#a5741f83992fef9b08de7b265b97b8d88">l2_penalty</a></td></tr>
 <tr class="memdesc:a5741f83992fef9b08de7b265b97b8d88"><td class="mdescLeft">&#160;</td><td class="mdescRight">value of L2 penalty <br /></td></tr>
 <tr class="separator:a5741f83992fef9b08de7b265b97b8d88"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ac2d4227abd4b17210a8b032cc21e3954"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ac2d4227abd4b17210a8b032cc21e3954"></a>
-int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structparam__t.html#ac2d4227abd4b17210a8b032cc21e3954">l2_gap</a></td></tr>
-<tr class="memdesc:ac2d4227abd4b17210a8b032cc21e3954"><td class="mdescLeft">&#160;</td><td class="mdescRight">applying L2 penalty every l2_gap words <br /></td></tr>
-<tr class="separator:ac2d4227abd4b17210a8b032cc21e3954"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af0b7070f8c86891cf1a0e5cbcf9c0c17"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="af0b7070f8c86891cf1a0e5cbcf9c0c17"></a>
+int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structparam__t.html#af0b7070f8c86891cf1a0e5cbcf9c0c17">l2_delay</a></td></tr>
+<tr class="memdesc:af0b7070f8c86891cf1a0e5cbcf9c0c17"><td class="mdescLeft">&#160;</td><td class="mdescRight">delayed step of applying L2 penalty <br /></td></tr>
+<tr class="separator:af0b7070f8c86891cf1a0e5cbcf9c0c17"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ada2d53933fd9b7e546a09329cfd8c962"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ada2d53933fd9b7e546a09329cfd8c962"></a>
 real_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structparam__t.html#ada2d53933fd9b7e546a09329cfd8c962">momentum</a></td></tr>
 <tr class="memdesc:ada2d53933fd9b7e546a09329cfd8c962"><td class="mdescLeft">&#160;</td><td class="mdescRight">value of momentum <br /></td></tr>
@@ -147,10 +147,45 @@ real_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="st
 int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structparam__t.html#a5b43cd8951a73581f8217695ba8908e8">mini_batch</a></td></tr>
 <tr class="memdesc:a5b43cd8951a73581f8217695ba8908e8"><td class="mdescLeft">&#160;</td><td class="mdescRight">size of mini-batch <br /></td></tr>
 <tr class="separator:a5b43cd8951a73581f8217695ba8908e8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a429fdd82ae935ac7310d4304d6964ee0"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structparam__t.html#a429fdd82ae935ac7310d4304d6964ee0">sync_size</a></td></tr>
+<tr class="memdesc:a429fdd82ae935ac7310d4304d6964ee0"><td class="mdescLeft">&#160;</td><td class="mdescRight">if bigger than 0, sync weight for threads every sync_size steps.  <a href="#a429fdd82ae935ac7310d4304d6964ee0">More...</a><br /></td></tr>
+<tr class="separator:a429fdd82ae935ac7310d4304d6964ee0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3730dd75accd4c1726325f59e263e9af"><td class="memItemLeft" align="right" valign="top">real_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structparam__t.html#a3730dd75accd4c1726325f59e263e9af">er_cutoff</a></td></tr>
+<tr class="memdesc:a3730dd75accd4c1726325f59e263e9af"><td class="mdescLeft">&#160;</td><td class="mdescRight">cutoff of error.  <a href="#a3730dd75accd4c1726325f59e263e9af">More...</a><br /></td></tr>
+<tr class="separator:a3730dd75accd4c1726325f59e263e9af"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Parameter. </p>
-</div><hr/>The documentation for this struct was generated from the following file:<ul>
+</div><h2 class="groupheader">Field Documentation</h2>
+<a class="anchor" id="a3730dd75accd4c1726325f59e263e9af"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">real_t param_t::er_cutoff</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>cutoff of error. </p>
+
+</div>
+</div>
+<a class="anchor" id="a429fdd82ae935ac7310d4304d6964ee0"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int param_t::sync_size</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>if bigger than 0, sync weight for threads every sync_size steps. </p>
+
+</div>
+</div>
+<hr/>The documentation for this struct was generated from the following file:<ul>
 <li><a class="el" href="param_8h_source.html">param.h</a></li>
 </ul>
 </div><!-- contents -->
@@ -159,7 +194,7 @@ int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="struc
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="structparam__t.html">param_t</a></li>
-    <li class="footer">Generated on Wed Nov 11 2015 16:09:31 for connLM by
+    <li class="footer">Generated on Tue Oct 25 2016 22:48:46 for connLM by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.10 </li>
   </ul>

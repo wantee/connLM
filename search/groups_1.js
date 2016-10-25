@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['ffnn_20model',['FFNN Model',['../group__g__ffnn.html',1,'']]]
+  ['direct_20glue',['Direct Glue',['../group__g__glue__direct.html',1,'']]]
 ];

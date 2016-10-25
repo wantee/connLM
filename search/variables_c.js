@@ -1,8 +1,12 @@
 var searchData=
 [
-  ['order',['order',['../structmaxent__model__opt__t.html#a94723c7092061d2a93ce098ea31c6132',1,'maxent_model_opt_t::order()'],['../structhash__hist__t.html#a3467fb2edd1bdf675da8b61579a1a8d9',1,'hash_hist_t::order()']]],
-  ['out_5flog_5fbase',['out_log_base',['../structconnlm__test__opt__t.html#a0673df33346cda5ca5389da88b3eb768',1,'connlm_test_opt_t']]],
-  ['output',['output',['../structconnlm__t.html#acb30c474d8738764497837d6edca976e',1,'connlm_t::output()'],['../structffnn__t.html#a45b377fdef3e3d9da61fc3b1374e9bb7',1,'ffnn_t::output()'],['../structlbl__t.html#a6dcf64d21b6c453a4d7b4194305b85e0',1,'lbl_t::output()'],['../structmaxent__t.html#af976c98311be2747b28a396097287549',1,'maxent_t::output()'],['../structrnn__t.html#ae92cba711c3c01788dbfc157095000e4',1,'rnn_t::output()']]],
-  ['output_5fopt',['output_opt',['../structconnlm__model__opt__t.html#a5229dff8fd57417b5e74a80710c7b8cd',1,'connlm_model_opt_t::output_opt()'],['../structoutput__t.html#a25a8ee731394d8b205ae7742c1397a3a',1,'output_t::output_opt()']]],
+  ['oovs',['oovs',['../structreader__t.html#a9b406002fdc32ae86020117e4afd2825',1,'reader_t']]],
+  ['opt',['opt',['../structreader__t.html#a7383a3df751d40339b91122e34da41ec',1,'reader_t']]],
+  ['ori_5fwt',['ori_wt',['../structwt__updater__t.html#ad286c5c26b20400527b9af29577b1ea1',1,'wt_updater_t']]],
+  ['out_5flayer',['out_layer',['../structglue__t.html#a94a11d3073d28318ff40259936bf46f8',1,'glue_t']]],
+  ['out_5flog_5fbase',['out_log_base',['../structdriver__eval__opt__t.html#a71df00149137cc6b9ea599394d14458b',1,'driver_eval_opt_t']]],
+  ['out_5fupdater',['out_updater',['../structcomp__updater__t.html#a26a058a0f8af5923c9f48108bc684f52',1,'comp_updater_t::out_updater()'],['../structupdater__t.html#aaa2f9c89c8895885ba16a48fc4152de0',1,'updater_t::out_updater()']]],
+  ['output',['output',['../structconnlm__t.html#acb30c474d8738764497837d6edca976e',1,'connlm_t::output()'],['../structout__updater__t.html#a0a7c84d6d760d8d8555f1256fc2de73a',1,'out_updater_t::output()']]],
+  ['output_5fopt',['output_opt',['../structoutput__t.html#a25a8ee731394d8b205ae7742c1397a3a',1,'output_t']]],
   ['output_5fsize',['output_size',['../structoutput__t.html#a8dadbf2b03d5cf2b1ee248be00c197bc',1,'output_t']]]
 ];
