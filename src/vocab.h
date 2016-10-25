@@ -34,7 +34,7 @@ extern "C" {
 
 #include <connlm/config.h>
 
-/** @defgroup g_vocab Vocab
+/** @defgroup g_vocab Vocabulary
  * Vocabulary maps a word string to a integer id and verse vice.
  * Also containing the counts of words used for constructing output layer.
  */
