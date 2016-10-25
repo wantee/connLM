@@ -72,4 +72,51 @@
 
   @section cmd_vocab The connlm-vocab
 
+  @c connlm-vocab is used for learning vocabulary from text source.
+  It reads in a text file and dumps out the vocabulary as a connLM model file.
+  Available options are:
+
+  @code{.sh}
+  Usage    : connlm-vocab [options] <text-file> <model-out>
+  e.g.:
+    connlm-vocab data/train exp/vocab.clm
+
+  Options  :
+    --config                   : config file (string, default = "")
+    --log-file                 : Log file (string, default = "/dev/stderr")
+    --log-level                : Log level (1-8) (int, default = 8)
+    --max-alphabet-size        : Maximum size of alphabet for vocab. (int, default = 1000000)
+    --max-vocab-size           : Maximum size of Vocabulary. 0 denotes no limit. (int, default = 0)
+    --max-word-num             : Maximum number of words used to learn vocab. 0 denotes no limit. (ulong, default = 0)
+    --min-count                : Mininum count for a word to be used in learning vocab. 0 denotes no limit. (int, default = 0)
+    --binary                   : Save file as binary format (bool, default = true)
+    --help                     : Print help (bool, default = false)
+
+  @endcode
+
+  @c \-\-max-alphabet-size restricts the hard limit size of vocabulary can be
+  learned, if the text source have too many words, this value have to be
+  increased.
+
+  When training large corpus, one would not like to learn the vocabulary
+  by going through the whole corpus. Thus, it provides the
+  @c \-\-max-word-num option, which controls the
+  maximum number of words in text source used to learn vocabulary.
+
+  @subsection cmd_vocab_limited Limited Vocabulary
+
+  The learning process can be finer controlled to support the usage of
+  limited vocabulary.
+
+  A manually procedure to limit vocabulary could be: replace
+  the out-of-vocabulary words to a special token, i.e.
+  @c \<unk\>, and then training with the processed data.
+
+  connLM comes with two different ways to avoid above preprocessing. First,
+  one can restrict the size of learned vocabulary explicitly by passing
+  the parameter with @c \-\-max-vocab-size option. Second, one can specify
+  a minimum occurrences for a word to be added to vocabulary, which is
+  accomplished by @c \-\-min-count option, i.e., any word occurs less than
+  min-count times will be ignored. In both methods, the remaining words
+  are the most frequent words.
 */
