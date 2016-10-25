@@ -32,10 +32,11 @@
 
   @section about_overview Overview of connLM
 
-  \image html connLMLogoLarge.png
+  @image html connLMLogo.png
 
-  A connLM model is a neural network, which consists of one or more components
-  and single output layer. All components end to the output layer.
+  As the above figure shown, a connLM model is a neural network,
+  which consists of one or more components
+  and a single output layer. All components end to the same output layer.
 
   Each component has one input layer. The input layer is one-hot vector,
   typically followed by a embedding layer.
