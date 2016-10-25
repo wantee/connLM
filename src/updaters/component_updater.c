@@ -606,23 +606,17 @@ int comp_updater_forward_out(comp_updater_t *comp_updater,
 {
     component_t *comp;
     glue_updater_t *glue_updater;
-    output_t *output;
 
-    output_node_id_t s, e;
     int g;
 
     ST_CHECK_PARAM(comp_updater == NULL, -1);
 
     comp = comp_updater->comp;
-    output = comp_updater->out_updater->output;
 
 #ifdef _CONNLM_TRACE_PROCEDURE_
     ST_TRACE("Forward-out: comp[%s], node["OUTPUT_NODE_FMT"]", comp->name,
             node);
 #endif
-
-    s = s_children(output->tree, node);
-    e = e_children(output->tree, node);
 
     for (g = 0; g < comp->num_glue; g++) {
         glue_updater = comp_updater->glue_updaters[comp->fwd_order[g]];
