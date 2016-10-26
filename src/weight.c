@@ -38,7 +38,8 @@ static const char *init_str[] = {
     "Undefined",
     "Constant",
     "Uniform",
-    "Gauss",
+    "Norm",
+    "Trunc_Norm",
 };
 
 static const char* init2str(wt_init_type_t m)
@@ -204,7 +205,11 @@ int wt_parse_topo(weight_t *wt, char *line, size_t line_len)
         if (wt->init_param == 0) {
             wt->init_param = 0.1;
         }
-    } else if (wt->init_type == WT_INIT_GAUSS) {
+    } else if (wt->init_type == WT_INIT_NORM) {
+        if (wt->init_param == 0) {
+            wt->init_param = 0.1;
+        }
+    } else if (wt->init_type == WT_INIT_TRUNC_NORM) {
         if (wt->init_param == 0) {
             wt->init_param = 0.1;
         }
@@ -532,9 +537,13 @@ int wt_init(weight_t *wt, int row, int col)
                 wt->mat[i] = st_random(-wt->init_param, wt->init_param);
             }
             break;
-        case WT_INIT_GAUSS:
+        case WT_INIT_NORM:
             for (i = 0; i < sz; i++) {
                 wt->mat[i] = st_normrand(0, wt->init_param);
+            }
+        case WT_INIT_TRUNC_NORM:
+            for (i = 0; i < sz; i++) {
+                wt->mat[i] = st_trunc_normrand(0, wt->init_param, 2.0);
             }
             break;
         default:

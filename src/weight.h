@@ -44,7 +44,8 @@ typedef enum _weight_init_type_t {
     WT_INIT_UNDEFINED = 0, /**< undefined. */
     WT_INIT_CONST, /**< constant(zero). */
     WT_INIT_UNIFORM, /**< uniform distribution. */
-    WT_INIT_GAUSS, /**< gaussian distribution. */
+    WT_INIT_NORM, /**< normal distribution. */
+    WT_INIT_TRUNC_NORM, /**< truncated normal distribution. */
 } wt_init_type_t;
 
 /**
