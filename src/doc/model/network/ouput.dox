@@ -1,7 +1,7 @@
 //
 // The MIT License (MIT)
 //
-// Copyright (c) 2015 Wang Jian
+// Copyright (c) 2016 Wang Jian
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -31,55 +31,97 @@
 
   An output layer must be generated before other components added.
 
-  @section model_network_output_usage Usage
-
   The related source code is in output.h. output_generate() can be called
-  to generate a output layer with specific options. During training,
-  output_loss() is used to get objective loss for output layer.
-  And output_get_prob() can be used to get word prob after forward pass.
+  to generate a output layer with specific options.
 
   The command line interface for generating output layer is
-  @c connlm-output, available options are:
+  @ref cmd_output "connlm-output".
 
-  @code{.sh}
-  $ connlm-output --help
-  Usage    : connlm-output [options] <model-in> <model-out>
+  @section model_network_output_process The Building Process
 
-  Options  :
-    --help                     : Print help (bool, default = false)
-    --log-file                 : Log file (string, default = "/dev/stderr")
-    --log-level                : Log level (1-8) (int, default = 8)
-    --class-size               : Size of class layer (int, default = 100)
-    --hs                       : Hierarchical softmax (bool, default = false)
-    --max-code-len             : Maximum length for code used by HS (int, default = 40)
-    --class-hs                 : Whether using HS for classes (bool, default = false)
-    --binary                   : Save file as binary format (bool, default = true)
-    --config                   : config file (string, default = "")
+  Output layer is a tree whose structure is based on counts of words in
+  vocabulary. The main goal is to make the frequent words with less
+  computations during the softmax summation, and the rare words with more
+  computations. Thus, the total computational complexity could be lower.
+
+  The output_opt_t can be used to control the building process of tree:
+
+  @code {.c}
+  typedef struct _output_opt_t_ {
+      output_method_t method; /**< constructing method. */
+      int max_depth; /**< maximum depth of tree. */
+      int max_branch; /**< maximum number of branches. */
+  } output_opt_t;
   @endcode
 
-  ConnLM supports three kind of output layer: 1-of-V vector, class based
-  factorization and hierarchical softmax.
+  @c method specifies which method to be applied to build the tree.
+  @c max_depth controls the maximum depth of tree, while @c max_branch
+  determines maximum number of branches for every internal node in the tree.
 
-  @c --class-size can be used to set the number of classes used in
-  class based factorization. If it is less or equal to zero, no class based
-  factorization will be applied.
+  There are two methods to build the tree, the Top-Down and the Bottom-Up. They
+  are different for the direction of tree building. Both will result a tree
+  with all words on leaf nodes.
 
-  @c --hs option determines whether to use hierarchical softmax.
-  @c --max-code-len and @c --class-hs give more fine control of HS.
-  @c --max-code-len is the maximum length of code used to build HS tree,
-  i.e., the maximum depth of the tree. The reason of such a option is for
-  convenient memory allocation, if it complains that max-code-len is too
-  small, one should enlarge this value. If @c --class-hs is set to be
-  true and @c --class-size is bigger than zero, it will also apply
-  HS on the class output layer.
+  For the Top-Down method, we first put all words in the root node of tree.
+  Then, the words within a node is split to @c max_branch subset, with the
+  total counts of every subset is roughly equal with each other. The subsets
+  are then became a node and added to the tree. The splitting process keeps
+  running until every leaf node of the tree contains only one word, or the
+  @c max_depth is met.
 
-  The class based factorization and HS can be applied in one output layer
-  simultaneously.  And if both of them are not used, @c connlm-output
-  will generate a 1-of-V vector output layer.
+  For the Bottom-Up method, in contrast, we will perform a merging process
+  similar with the algorithm to build a Huffman tree. All words, initially,
+  are placed on a leaf node of the tree. Then, we select
+  the @c max_branch nodes with largest count, and merge them as a new node. At
+  last, they will be merged to a single root node, or when we reach the
+  @c max_depth, we stop the merging and place a root node to connect all
+  remaining nodes.
 
-  Note that, there are some constraints on the using of HS:
+  Following are example of trees built by both methods from a small vocabulary.
 
-  -# with HS, the pre-output layer of all component models
-     must be the same size.
+  @dotfile output_topdown.dot "Simple output tree built from top-down"
 
+  @dotfile output_bottomup.dot "Simple output tree built from bottom-up"
+
+  @section model_network_output_norm The Normalization Method
+
+  Besides the structure, the other property for output layer is the
+  normalization method. This could be specified in the topology file together
+  with configuration of @ref model_network_comp_topo "other  components".
+  The normalization is performed on all children for every internal node.
+
+  The format for output normalization method in topology file is:
+
+  @code
+  <output>
+    property norm=softmax
+  </output>
+  @endcode
+
+  Currently, connLM only support the Softmax normalization. We may include some
+  sampling based normalization, e.g., NCE.
+
+  Since there would be more nodes in tree than words, in order to save space
+  and computation, we do not implement the softmax in the usual way. Recall
+  that the formula for softmax is
+
+  @f[
+    \Pr(Y = i) = \frac{e^{x_i}}{\sum_{k=1}^{K}{e^{x_k}}}
+  @f]
+
+  However, we also can see it as multinomial logit, by fixing the score of
+  Kth class to 1, i.e.,
+
+  @f[
+    \begin{aligned}
+    \Pr(Y = K) &= \frac{1}{1+\sum_{k=1}^{K-1}{e^{x_k}}} \\
+    \Pr(Y = i) &= \frac{e^{x_i}}{1+\sum_{k=1}^{K-1}{e^{x_k}}}, \forall i < K
+    \end{aligned}
+  @f]
+
+  In this way, for every internal nodes in the tree, we can save one vector
+  for both storage and computation. For a perfect binary tree with N leafs,
+  there will be (N - 1) non-leaf nodes. With the regular softmax, we will need
+  (2N - 2) vectors as weight, however, by applying the multi-logit, the demand
+  can be reduced by (N - 1), which is the half of the original.
 */
