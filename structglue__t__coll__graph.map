@@ -1,0 +1,8 @@
+<map id="glue_t" name="glue_t">
+<area shape="rect" id="node2" href="$structglue__impl__t.html" title="Implementation of a NNet glue. " alt="" coords="61,199,151,225"/>
+<area shape="rect" id="node3" href="$structwt__updater__t.html" title="Output updater. " alt="" coords="38,109,137,136"/>
+<area shape="rect" id="node4" href="$structwt__dirty__buf__t.html" title="Store the dirty part of weight. " alt="" coords="5,5,111,32"/>
+<area shape="rect" id="node5" href="$structparam__t.html" title="Parameter. " alt="" coords="156,5,227,32"/>
+<area shape="rect" id="node6" href="$structweight__t.html" title="NNet weight. " alt="" coords="250,199,322,225"/>
+<area shape="rect" id="node7" href="$structbptt__opt__t.html" title="BPTT options. " alt="" coords="347,199,428,225"/>
+</map>

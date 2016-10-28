@@ -24,6 +24,12 @@
 <script type="text/javascript">
   $(document).ready(function() { init_search(); });
 </script>
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    extensions: ["tex2jax.js"],
+    jax: ["input/TeX","output/HTML-CSS"],
+});
+</script><script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js"></script>
 <link href="doxygen.css" rel="stylesheet" type="text/css" />
 <link href="table.css" rel="stylesheet" type="text/css"/>
 </head>
@@ -135,7 +141,8 @@ Enumerations</h2></td></tr>
 <a class="el" href="group__g__weight.html#gga5e8f4548e57bf1f418a4b0d6c5dc3964af015f0b042e412ae97a565232f40a2c9">WT_INIT_CONST</a>, 
 <a class="el" href="group__g__weight.html#gga5e8f4548e57bf1f418a4b0d6c5dc3964a2d078268fcd0d9a7ab77ca83f609e29f">WT_INIT_UNIFORM</a>, 
 <br />
-&#160;&#160;<a class="el" href="group__g__weight.html#gga5e8f4548e57bf1f418a4b0d6c5dc3964a542ddf8f5b85a123162509f22995640e">WT_INIT_GAUSS</a>
+&#160;&#160;<a class="el" href="group__g__weight.html#gga5e8f4548e57bf1f418a4b0d6c5dc3964ac0f6f008073e743e1884a8f5ba1cc8a6">WT_INIT_NORM</a>, 
+<a class="el" href="group__g__weight.html#gga5e8f4548e57bf1f418a4b0d6c5dc3964a41aaad1aeaf0455c6ec01abb2e7d8c83">WT_INIT_TRUNC_NORM</a>
 <br />
  }<tr class="memdesc:ga5e8f4548e57bf1f418a4b0d6c5dc3964"><td class="mdescLeft">&#160;</td><td class="mdescRight">NNet weight init type.  <a href="group__g__weight.html#ga5e8f4548e57bf1f418a4b0d6c5dc3964">More...</a><br /></td></tr>
 <tr class="separator:ga5e8f4548e57bf1f418a4b0d6c5dc3964"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -227,8 +234,11 @@ Functions</h2></td></tr>
 <tr><td class="fieldname"><a class="anchor" id="gga5e8f4548e57bf1f418a4b0d6c5dc3964a2d078268fcd0d9a7ab77ca83f609e29f"></a>WT_INIT_UNIFORM&#160;</td><td class="fielddoc">
 <p>uniform distribution. </p>
 </td></tr>
-<tr><td class="fieldname"><a class="anchor" id="gga5e8f4548e57bf1f418a4b0d6c5dc3964a542ddf8f5b85a123162509f22995640e"></a>WT_INIT_GAUSS&#160;</td><td class="fielddoc">
-<p>gaussian distribution. </p>
+<tr><td class="fieldname"><a class="anchor" id="gga5e8f4548e57bf1f418a4b0d6c5dc3964ac0f6f008073e743e1884a8f5ba1cc8a6"></a>WT_INIT_NORM&#160;</td><td class="fielddoc">
+<p>normal distribution. </p>
+</td></tr>
+<tr><td class="fieldname"><a class="anchor" id="gga5e8f4548e57bf1f418a4b0d6c5dc3964a41aaad1aeaf0455c6ec01abb2e7d8c83"></a>WT_INIT_TRUNC_NORM&#160;</td><td class="fielddoc">
+<p>truncated normal distribution. </p>
 </td></tr>
 </table>
 
@@ -580,7 +590,7 @@ Functions</h2></td></tr>
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on Tue Oct 25 2016 22:48:46 for connLM by
+    <li class="footer">Generated on Fri Oct 28 2016 22:37:23 for connLM by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.10 </li>
   </ul>

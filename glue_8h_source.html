@@ -24,6 +24,12 @@
 <script type="text/javascript">
   $(document).ready(function() { init_search(); });
 </script>
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    extensions: ["tex2jax.js"],
+    jax: ["input/TeX","output/HTML-CSS"],
+});
+</script><script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js"></script>
 <link href="doxygen.css" rel="stylesheet" type="text/css" />
 <link href="table.css" rel="stylesheet" type="text/css"/>
 </head>
@@ -287,7 +293,7 @@ $(document).ready(function(){initNavTree('glue_8h_source.html','');});
 <div class="ttc" id="group__g__glue_html_ga26831e8f9944ff1c155036264220bd51"><div class="ttname"><a href="group__g__glue.html#ga26831e8f9944ff1c155036264220bd51">glue_recur_type_t</a></div><div class="ttdeci">glue_recur_type_t</div><div class="ttdoc">type of recurrent for a glue. </div><div class="ttdef"><b>Definition:</b> glue.h:99</div></div>
 <div class="ttc" id="group__g__glue_html_gaec577eb438e93e792da017b7b0ca106a"><div class="ttname"><a href="group__g__glue.html#gaec577eb438e93e792da017b7b0ca106a">glue_parse_topo</a></div><div class="ttdeci">glue_t * glue_parse_topo(const char *line, layer_t **layers, int n_layer, input_t *input, output_t *output)</div><div class="ttdoc">Parse a topo config line, and return a new glue. </div></div>
 <div class="ttc" id="structout__updater__t_html"><div class="ttname"><a href="structout__updater__t.html">out_updater_t</a></div><div class="ttdoc">Output layer updater. </div><div class="ttdef"><b>Definition:</b> output_updater.h:45</div></div>
-<div class="ttc" id="structweight__t_html"><div class="ttname"><a href="structweight__t.html">weight_t</a></div><div class="ttdoc">NNet weight. </div><div class="ttdef"><b>Definition:</b> weight.h:54</div></div>
+<div class="ttc" id="structweight__t_html"><div class="ttname"><a href="structweight__t.html">weight_t</a></div><div class="ttdoc">NNet weight. </div><div class="ttdef"><b>Definition:</b> weight.h:55</div></div>
 <div class="ttc" id="group__g__glue_html_gaab64fe19e9115175e46a2ea22281b8b1"><div class="ttname"><a href="group__g__glue.html#gaab64fe19e9115175e46a2ea22281b8b1">glue_init_wt_updater</a></div><div class="ttdeci">wt_updater_t * glue_init_wt_updater(glue_t *glue, param_t *param)</div><div class="ttdoc">Initialize wt_updater for glue. </div></div>
 <div class="ttc" id="structglue__t_html_aa3545338c1244030130b0c358f9fd08d"><div class="ttname"><a href="structglue__t.html#aa3545338c1244030130b0c358f9fd08d">glue_t::param</a></div><div class="ttdeci">param_t param</div><div class="ttdoc">updating parameters. </div><div class="ttdef"><b>Definition:</b> glue.h:118</div></div>
 <div class="ttc" id="structglue__t_html_ab8005d5805e1b3c885af5fc4b9395d67"><div class="ttname"><a href="structglue__t.html#ab8005d5805e1b3c885af5fc4b9395d67">glue_t::bptt_opt</a></div><div class="ttdeci">bptt_opt_t bptt_opt</div><div class="ttdoc">options for BPTT, only relevant with recur glue. </div><div class="ttdef"><b>Definition:</b> glue.h:115</div></div>
@@ -298,7 +304,7 @@ $(document).ready(function(){initNavTree('glue_8h_source.html','');});
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="dir_b07ae913f597e3944aed70f36f231ecc.html">glues</a></li><li class="navelem"><b>glue.h</b></li>
-    <li class="footer">Generated on Tue Oct 25 2016 22:48:46 for connLM by
+    <li class="footer">Generated on Fri Oct 28 2016 22:37:22 for connLM by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.10 </li>
   </ul>

@@ -24,6 +24,12 @@
 <script type="text/javascript">
   $(document).ready(function() { init_search(); });
 </script>
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    extensions: ["tex2jax.js"],
+    jax: ["input/TeX","output/HTML-CSS"],
+});
+</script><script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js"></script>
 <link href="doxygen.css" rel="stylesheet" type="text/css" />
 <link href="table.css" rel="stylesheet" type="text/css"/>
 </head>
@@ -106,10 +112,15 @@ $(document).ready(function(){initNavTree('model_network.html','');});
 <div class="title">The Network </div>  </div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock"><ul>
+<div class="textblock"><p>There is a single output layer with one or more components in a connLM network.</p>
+<p>The topology could be specified by a <code></code>.topo file.</p>
+<p>The output layer is structured as a tree, whose shape could be control by constructing method and the parameters.</p>
+<p>The internally structure of each component could be determined by the <a class="el" href="model_network_comp_layer.html">layers</a> and <a class="el" href="model_network_comp_glue.html">glues</a>.</p>
+<p>Finally, connLM toolkit also provide a command tool to draw the network. This can give user a intuition of what the network looks like, and be helpful for debugging topology file.</p>
+<ul>
+<li><a class="el" href="model_network_output.html">The Output Layer</a></li>
 <li><a class="el" href="model_network_topo.html">Network Topology</a></li>
 <li><a class="el" href="model_network_comp.html">The Component</a></li>
-<li><a class="el" href="model_network_output.html">The Output Layer</a></li>
 <li><a class="el" href="model_network_draw.html">Drawing the Network</a> </li>
 </ul>
 </div></div><!-- contents -->
@@ -118,7 +129,7 @@ $(document).ready(function(){initNavTree('model_network.html','');});
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="index.html">connLM</a></li><li class="navelem"><a class="el" href="model.html">The connLM Model</a></li>
-    <li class="footer">Generated on Tue Oct 25 2016 22:48:46 for connLM by
+    <li class="footer">Generated on Fri Oct 28 2016 22:37:22 for connLM by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.10 </li>
   </ul>

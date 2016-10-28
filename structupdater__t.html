@@ -24,6 +24,12 @@
 <script type="text/javascript">
   $(document).ready(function() { init_search(); });
 </script>
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    extensions: ["tex2jax.js"],
+    jax: ["input/TeX","output/HTML-CSS"],
+});
+</script><script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js"></script>
 <link href="doxygen.css" rel="stylesheet" type="text/css" />
 <link href="table.css" rel="stylesheet" type="text/css"/>
 </head>
@@ -120,6 +126,41 @@ $(document).ready(function(){initNavTree('structupdater__t.html','');});
  <a href="structupdater__t.html#details">More...</a></p>
 
 <p><code>#include &lt;<a class="el" href="updater_8h_source.html">updater.h</a>&gt;</code></p>
+<div class="dynheader">
+Collaboration diagram for updater_t:</div>
+<div class="dyncontent">
+<div class="center"><img src="structupdater__t__coll__graph.png" border="0" usemap="#updater__t_coll__map" alt="Collaboration graph"/></div>
+<map name="updater__t_coll__map" id="updater__t_coll__map">
+<area shape="rect" id="node2" href="structconnlm__t.html" title="connLM model. " alt="" coords="1255,485,1331,512"/>
+<area shape="rect" id="node3" href="structcomponent__t.html" title="NNet component. " alt="" coords="987,351,1085,377"/>
+<area shape="rect" id="node24" href="structcomp__updater__t.html" title="Component updater. " alt="" coords="1233,308,1352,335"/>
+<area shape="rect" id="node4" href="structinput__t.html" title="Input Layer. " alt="" coords="763,420,825,447"/>
+<area shape="rect" id="node5" href="structlayer__t.html" title="NNet hidden layer. " alt="" coords="763,319,825,345"/>
+<area shape="rect" id="node28" href="structlayer__updater__t.html" title="Layer updater. " alt="" coords="979,283,1093,309"/>
+<area shape="rect" id="node6" href="structlayer__impl__t.html" title="NNet hidden layer implementaion. " alt="" coords="505,344,599,371"/>
+<area shape="rect" id="node7" href="structglue__t.html" title="NNet glue. " alt="" coords="765,201,823,228"/>
+<area shape="rect" id="node25" href="structglue__updater__t.html" title="Glue updater. " alt="" coords="981,136,1091,163"/>
+<area shape="rect" id="node8" href="structglue__impl__t.html" title="Implementation of a NNet glue. " alt="" coords="507,179,597,205"/>
+<area shape="rect" id="node9" href="structwt__updater__t.html" title="Output updater. " alt="" coords="239,107,338,133"/>
+<area shape="rect" id="node27" href="structbptt__updater__t.html" title="BPTT updater. " alt="" coords="740,12,848,39"/>
+<area shape="rect" id="node10" href="structwt__dirty__buf__t.html" title="Store the dirty part of weight. " alt="" coords="5,107,111,133"/>
+<area shape="rect" id="node11" href="structparam__t.html" title="Parameter. " alt="" coords="23,200,93,227"/>
+<area shape="rect" id="node12" href="structweight__t.html" title="NNet weight. " alt="" coords="516,293,588,320"/>
+<area shape="rect" id="node13" href="structbptt__opt__t.html" title="BPTT options. " alt="" coords="511,120,593,147"/>
+<area shape="rect" id="node14" href="structcomp__train__opt__t.html" title="Parameters for training component. " alt="" coords="731,369,857,396"/>
+<area shape="rect" id="node15" href="structvocab__t.html" title="Vocab. " alt="" coords="1001,565,1071,592"/>
+<area shape="rect" id="node16" href="structvocab__opt__t.html" title="Parameters for Vocab. " alt="" coords="747,565,841,592"/>
+<area shape="rect" id="node17" href="structoutput__t.html" title="Output Layer. " alt="" coords="759,488,829,515"/>
+<area shape="rect" id="node22" href="structout__updater__t.html" title="Output layer updater. " alt="" coords="984,424,1088,451"/>
+<area shape="rect" id="node18" href="structoutput__opt__t.html" title="Parameters for output tree. " alt="" coords="504,437,600,464"/>
+<area shape="rect" id="node19" href="structoutput__tree__t.html" title="Output tree. " alt="" coords="502,488,602,515"/>
+<area shape="rect" id="node20" href="structoutput__tree__node__t.html" title="Output tree Node. " alt="" coords="220,488,357,515"/>
+<area shape="rect" id="node21" href="structoutput__path__t.html" title="Output tree path. " alt="" coords="500,539,604,565"/>
+<area shape="rect" id="node23" href="structinput__updater__t.html" title="Input updater. " alt="" coords="1235,536,1350,563"/>
+<area shape="rect" id="node26" href="structglue__updater__impl__t.html" title="Implementation of a NNet glue updater. " alt="" coords="723,113,865,140"/>
+<area shape="rect" id="node29" href="structsent__t.html" title="Buffer of a (partial) sentence with the position of target word. " alt="" coords="1263,587,1322,613"/>
+</map>
+<center><span class="legend">[<a target="top" href="graph_legend.html">legend</a>]</span></center></div>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-attribs"></a>
 Data Fields</h2></td></tr>
@@ -272,7 +313,7 @@ Data Fields</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="structupdater__t.html">updater_t</a></li>
-    <li class="footer">Generated on Tue Oct 25 2016 22:48:46 for connLM by
+    <li class="footer">Generated on Fri Oct 28 2016 22:37:23 for connLM by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.10 </li>
   </ul>

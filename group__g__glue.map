@@ -1,0 +1,6 @@
+<map id="NNet Glue" name="NNet Glue">
+<area shape="rect" id="node1" href="$group__g__glue__emb.html" title="Glue connects the input layer and a hidden layer. " alt="" coords="149,5,270,32"/>
+<area shape="rect" id="node2" href="$group__g__glue__fc.html" title="Glue fully connects two hidden layers. " alt="" coords="137,56,281,83"/>
+<area shape="rect" id="node3" href="$group__g__glue__direct.html" title="Glue directly connects the input layer and the output layer. " alt="" coords="165,107,254,133"/>
+<area shape="rect" id="node5" href="$group__g__glue__out.html" title="Glue connects a hidden layers and the output layer. " alt="" coords="163,157,256,184"/>
+</map>

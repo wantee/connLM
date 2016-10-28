@@ -32,7 +32,8 @@ var NAVTREE =
       [ "The Configurations and Options", "cmd.html#cmd_config", null ],
       [ "The connlm-vocab", "cmd.html#cmd_vocab", [
         [ "Limited Vocabulary", "cmd.html#cmd_vocab_limited", null ]
-      ] ]
+      ] ],
+      [ "The connlm-output", "cmd.html#cmd_output", null ]
     ] ],
     [ "The Testing Framework in connLM", "testing.html", null ],
     [ "Data Selection", "selection.html", [
@@ -63,9 +64,9 @@ var NAVTREE =
 var NAVTREEINDEX =
 [
 "about.html",
-"group__g__layer__sigmoid.html#ga5bfcb31bebb7895979f8c2a63d1118ad",
-"structconcat__mat__t.html#a27ca86bc71b510f4fa0d259c2104616a",
-"structwt__updater__t.html#a3d1ad5f9b3974ac102647d1252e899f4"
+"group__g__layer__sigmoid.html#ga44c4ca5c61364f4a676337c511208acd",
+"structcomponent__t.html#ac96d9e4b98711a3da8a45a67c7bfc2f3",
+"structwt__updater__t.html#a135a3914c5790c3ce7f5683c4936e387"
 ];
 
 var SYNCONMSG = 'click to disable panel synchronisation';

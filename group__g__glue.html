@@ -24,6 +24,12 @@
 <script type="text/javascript">
   $(document).ready(function() { init_search(); });
 </script>
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    extensions: ["tex2jax.js"],
+    jax: ["input/TeX","output/HTML-CSS"],
+});
+</script><script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js"></script>
 <link href="doxygen.css" rel="stylesheet" type="text/css" />
 <link href="table.css" rel="stylesheet" type="text/css"/>
 </head>
@@ -115,6 +121,18 @@ $(document).ready(function(){initNavTree('group__g__glue.html','');});
 
 <p>Glue to connect two layers.  
 <a href="#details">More...</a></p>
+<div class="dynheader">
+Collaboration diagram for NNet Glue:</div>
+<div class="dyncontent">
+<center><table><tr><td><img src="group__g__glue.png" border="0" alt="" usemap="#group____g____glue"/>
+<map name="group____g____glue" id="group____g____glue">
+<area shape="rect" id="node1" href="group__g__glue__emb.html" title="Glue connects the input layer and a hidden layer. " alt="" coords="149,5,270,32"/>
+<area shape="rect" id="node2" href="group__g__glue__fc.html" title="Glue fully connects two hidden layers. " alt="" coords="137,56,281,83"/>
+<area shape="rect" id="node3" href="group__g__glue__direct.html" title="Glue directly connects the input layer and the output layer. " alt="" coords="165,107,254,133"/>
+<area shape="rect" id="node5" href="group__g__glue__out.html" title="Glue connects a hidden layers and the output layer. " alt="" coords="163,157,256,184"/>
+</map>
+</td></tr></table></center>
+</div>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="groups"></a>
 Modules</h2></td></tr>
@@ -944,7 +962,7 @@ Functions</h2></td></tr>
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on Tue Oct 25 2016 22:48:46 for connLM by
+    <li class="footer">Generated on Fri Oct 28 2016 22:37:23 for connLM by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.10 </li>
   </ul>

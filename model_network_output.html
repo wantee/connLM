@@ -24,6 +24,12 @@
 <script type="text/javascript">
   $(document).ready(function() { init_search(); });
 </script>
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    extensions: ["tex2jax.js"],
+    jax: ["input/TeX","output/HTML-CSS"],
+});
+</script><script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js"></script>
 <link href="doxygen.css" rel="stylesheet" type="text/css" />
 <link href="table.css" rel="stylesheet" type="text/css"/>
 </head>
@@ -110,38 +116,59 @@ $(document).ready(function(){initNavTree('model_network_output.html','');});
 Introduction</h1>
 <p>A connLM model can only contain one output layer, which is shared by one or more component models.</p>
 <p>An output layer must be generated before other components added.</p>
-<h1><a class="anchor" id="model_network_output_usage"></a>
-Usage</h1>
-<p>The related source code is in <a class="el" href="output_8h_source.html">output.h</a>. <a class="el" href="group__g__output.html#ga91742671d4d03a5a6a29417c4e4d1456" title="Generate output tree with word counts. ">output_generate()</a> can be called to generate a output layer with specific options. During training, output_loss() is used to get objective loss for output layer. And output_get_prob() can be used to get word prob after forward pass.</p>
-<p>The command line interface for generating output layer is <code>connlm-output</code>, available options are:</p>
-<div class="fragment"><div class="line"><a name="l00001"></a><span class="lineno">    1</span>&#160;$ connlm-output --help</div>
-<div class="line"><a name="l00002"></a><span class="lineno">    2</span>&#160;Usage    : connlm-output [options] &lt;model-in&gt; &lt;model-out&gt;</div>
-<div class="line"><a name="l00003"></a><span class="lineno">    3</span>&#160;</div>
-<div class="line"><a name="l00004"></a><span class="lineno">    4</span>&#160;Options  :</div>
-<div class="line"><a name="l00005"></a><span class="lineno">    5</span>&#160;  --help                     : Print help (bool, default = false)</div>
-<div class="line"><a name="l00006"></a><span class="lineno">    6</span>&#160;  --log-file                 : Log file (string, default = &quot;/dev/stderr&quot;)</div>
-<div class="line"><a name="l00007"></a><span class="lineno">    7</span>&#160;  --log-level                : Log level (1-8) (int, default = 8)</div>
-<div class="line"><a name="l00008"></a><span class="lineno">    8</span>&#160;  --class-size               : Size of class layer (int, default = 100)</div>
-<div class="line"><a name="l00009"></a><span class="lineno">    9</span>&#160;  --hs                       : Hierarchical softmax (bool, default = false)</div>
-<div class="line"><a name="l00010"></a><span class="lineno">   10</span>&#160;  --max-code-len             : Maximum length for code used by HS (int, default = 40)</div>
-<div class="line"><a name="l00011"></a><span class="lineno">   11</span>&#160;  --class-hs                 : Whether using HS for classes (bool, default = false)</div>
-<div class="line"><a name="l00012"></a><span class="lineno">   12</span>&#160;  --binary                   : Save file as binary format (bool, default = true)</div>
-<div class="line"><a name="l00013"></a><span class="lineno">   13</span>&#160;  --config                   : config file (string, default = &quot;&quot;)</div>
-</div><!-- fragment --><p>ConnLM supports three kind of output layer: 1-of-V vector, class based factorization and hierarchical softmax.</p>
-<p><code>&ndash;class-size</code> can be used to set the number of classes used in class based factorization. If it is less or equal to zero, no class based factorization will be applied.</p>
-<p><code>&ndash;hs</code> option determines whether to use hierarchical softmax. <code>&ndash;max-code-len</code> and <code>&ndash;class-hs</code> give more fine control of HS. <code>&ndash;max-code-len</code> is the maximum length of code used to build HS tree, i.e., the maximum depth of the tree. The reason of such a option is for convenient memory allocation, if it complains that max-code-len is too small, one should enlarge this value. If <code>&ndash;class-hs</code> is set to be true and <code>&ndash;class-size</code> is bigger than zero, it will also apply HS on the class output layer.</p>
-<p>The class based factorization and HS can be applied in one output layer simultaneously. And if both of them are not used, <code>connlm-output</code> will generate a 1-of-V vector output layer.</p>
-<p>Note that, there are some constraints on the using of HS:</p>
-<ol type="1">
-<li>with HS, the pre-output layer of all component models must be the same size. </li>
-</ol>
+<p>The related source code is in <a class="el" href="output_8h_source.html">output.h</a>. <a class="el" href="group__g__output.html#ga91742671d4d03a5a6a29417c4e4d1456" title="Generate output tree with word counts. ">output_generate()</a> can be called to generate a output layer with specific options.</p>
+<p>The command line interface for generating output layer is <a class="el" href="cmd.html#cmd_output">connlm-output</a>.</p>
+<h1><a class="anchor" id="model_network_output_process"></a>
+The Building Process</h1>
+<p>Output layer is a tree whose structure is based on counts of words in vocabulary. The main goal is to make the frequent words with less computations during the softmax summation, and the rare words with more computations. Thus, the total computational complexity could be lower.</p>
+<p>The <a class="el" href="structoutput__opt__t.html" title="Parameters for output tree. ">output_opt_t</a> can be used to control the building process of tree:</p>
+<div class="fragment"><div class="line"><span class="keyword">typedef</span> <span class="keyword">struct </span>_output_opt_t_ {</div>
+<div class="line">    <a class="code" href="group__g__output.html#ga650276dff821cd16b390a89c12e57fde">output_method_t</a> method; </div>
+<div class="line">    <span class="keywordtype">int</span> max_depth; </div>
+<div class="line">    <span class="keywordtype">int</span> max_branch; </div>
+<div class="line">} <a class="code" href="structoutput__opt__t.html">output_opt_t</a>;</div>
+</div><!-- fragment --><p><code>method</code> specifies which method to be applied to build the tree. <code>max_depth</code> controls the maximum depth of tree, while <code>max_branch</code> determines maximum number of branches for every internal node in the tree.</p>
+<p>There are two methods to build the tree, the Top-Down and the Bottom-Up. They are different for the direction of tree building. Both will result a tree with all words on leaf nodes.</p>
+<p>For the Top-Down method, we first put all words in the root node of tree. Then, the words within a node is split to <code>max_branch</code> subset, with the total counts of every subset is roughly equal with each other. The subsets are then became a node and added to the tree. The splitting process keeps running until every leaf node of the tree contains only one word, or the <code>max_depth</code> is met.</p>
+<p>For the Bottom-Up method, in contrast, we will perform a merging process similar with the algorithm to build a Huffman tree. All words, initially, are placed on a leaf node of the tree. Then, we select the <code>max_branch</code> nodes with largest count, and merge them as a new node. At last, they will be merged to a single root node, or when we reach the <code>max_depth</code>, we stop the merging and place a root node to connect all remaining nodes.</p>
+<p>Following are example of trees built by both methods from a small vocabulary.</p>
+<p><div class="dotgraph">
+<img src="dot_output_topdown.png" alt="dot_output_topdown.png" border="0" usemap="#dot_output_topdown.map"/>
+<map name="dot_output_topdown.map" id="dot_output_topdown.map"></map>
+<div class="caption">
+Simple output tree built from top-down</div>
+</div>
+ <div class="dotgraph">
+<img src="dot_output_bottomup.png" alt="dot_output_bottomup.png" border="0" usemap="#dot_output_bottomup.map"/>
+<map name="dot_output_bottomup.map" id="dot_output_bottomup.map"></map>
+<div class="caption">
+Simple output tree built from bottom-up</div>
+</div>
+ </p>
+<h1><a class="anchor" id="model_network_output_norm"></a>
+The Normalization Method</h1>
+<p>Besides the structure, the other property for output layer is the normalization method. This could be specified in the topology file together with configuration of <a class="el" href="model_network_comp.html#model_network_comp_topo">other components</a>. The normalization is performed on all children for every internal node.</p>
+<p>The format for output normalization method in topology file is:</p>
+<div class="fragment"><div class="line">&lt;output&gt;</div>
+<div class="line">  <span class="keyword">property</span> norm=softmax</div>
+<div class="line">&lt;/output&gt;</div>
+</div><!-- fragment --><p>Currently, connLM only support the Softmax normalization. We may include some sampling based normalization, e.g., NCE.</p>
+<p>Since there would be more nodes in tree than words, in order to save space and computation, we do not implement the softmax in the usual way. Recall that the formula for softmax is</p>
+<p class="formulaDsp">
+\[ \Pr(Y = i) = \frac{e^{x_i}}{\sum_{k=1}^{K}{e^{x_k}}} \]
+</p>
+<p>However, we also can see it as multinomial logit, by fixing the score of Kth class to 1, i.e.,</p>
+<p class="formulaDsp">
+\[ \begin{aligned} \Pr(Y = K) &amp;= \frac{1}{1+\sum_{k=1}^{K-1}{e^{x_k}}} \\ \Pr(Y = i) &amp;= \frac{e^{x_i}}{1+\sum_{k=1}^{K-1}{e^{x_k}}}, \forall i &lt; K \end{aligned} \]
+</p>
+<p>In this way, for every internal nodes in the tree, we can save one vector for both storage and computation. For a perfect binary tree with N leafs, there will be (N - 1) non-leaf nodes. With the regular softmax, we will need (2N - 2) vectors as weight, however, by applying the multi-logit, the demand can be reduced by (N - 1), which is the half of the original. </p>
 </div></div><!-- contents -->
 </div><!-- doc-content -->
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="index.html">connLM</a></li><li class="navelem"><a class="el" href="model.html">The connLM Model</a></li><li class="navelem"><a class="el" href="model_network.html">The Network</a></li>
-    <li class="footer">Generated on Tue Oct 25 2016 22:48:46 for connLM by
+    <li class="footer">Generated on Fri Oct 28 2016 22:37:23 for connLM by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.10 </li>
   </ul>

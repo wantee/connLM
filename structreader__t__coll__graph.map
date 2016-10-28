@@ -1,0 +1,7 @@
+<map id="reader_t" name="reader_t">
+<area shape="rect" id="node2" href="$structthr__stat__t.html" title="Startistics for single thread. " alt="" coords="5,95,83,121"/>
+<area shape="rect" id="node3" href="$structvocab__t.html" title="Vocab. " alt="" coords="107,95,176,121"/>
+<area shape="rect" id="node4" href="$structvocab__opt__t.html" title="Parameters for Vocab. " alt="" coords="94,5,189,32"/>
+<area shape="rect" id="node5" href="$structconnlm__egs__t.html" title="A bunch of word. " alt="" coords="201,95,306,121"/>
+<area shape="rect" id="node6" href="$structreader__opt__t.html" title="Options for reader. " alt="" coords="330,95,427,121"/>
+</map>

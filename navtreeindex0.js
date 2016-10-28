@@ -13,6 +13,7 @@ var NAVTREEINDEX0 =
 "cmd.html":[6],
 "cmd.html#cmd_config":[6,1],
 "cmd.html#cmd_filter":[6,0],
+"cmd.html#cmd_output":[6,3],
 "cmd.html#cmd_vocab":[6,2],
 "cmd.html#cmd_vocab_limited":[6,2,0],
 "component_8h_source.html":[11,0,4],
@@ -62,8 +63,8 @@ var NAVTREEINDEX0 =
 "functions_t.html":[10,2,0,16],
 "functions_u.html":[10,2,0,17],
 "functions_v.html":[10,2,0,18],
-"functions_vars.html":[10,2,1,0],
 "functions_vars.html":[10,2,1],
+"functions_vars.html":[10,2,1,0],
 "functions_vars_b.html":[10,2,1,1],
 "functions_vars_c.html":[10,2,1,2],
 "functions_vars_d.html":[10,2,1,3],
@@ -248,6 +249,5 @@ var NAVTREEINDEX0 =
 "group__g__layer__relu.html#gadfcec3dafdfb2b0f1133024ab9d088fb":[9,7,1,0],
 "group__g__layer__relu.html#gae590c3713749872a3ba957bc6109b65e":[9,7,1,1],
 "group__g__layer__sigmoid.html":[9,7,2],
-"group__g__layer__sigmoid.html#ga2205b96091d0531c094b15ff7e1124ac":[9,7,2,5],
-"group__g__layer__sigmoid.html#ga44c4ca5c61364f4a676337c511208acd":[9,7,2,8]
+"group__g__layer__sigmoid.html#ga2205b96091d0531c094b15ff7e1124ac":[9,7,2,5]
 };

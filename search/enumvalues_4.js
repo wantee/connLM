@@ -1,7 +1,8 @@
 var searchData=
 [
   ['wt_5finit_5fconst',['WT_INIT_CONST',['../group__g__weight.html#gga5e8f4548e57bf1f418a4b0d6c5dc3964af015f0b042e412ae97a565232f40a2c9',1,'weight.h']]],
-  ['wt_5finit_5fgauss',['WT_INIT_GAUSS',['../group__g__weight.html#gga5e8f4548e57bf1f418a4b0d6c5dc3964a542ddf8f5b85a123162509f22995640e',1,'weight.h']]],
+  ['wt_5finit_5fnorm',['WT_INIT_NORM',['../group__g__weight.html#gga5e8f4548e57bf1f418a4b0d6c5dc3964ac0f6f008073e743e1884a8f5ba1cc8a6',1,'weight.h']]],
+  ['wt_5finit_5ftrunc_5fnorm',['WT_INIT_TRUNC_NORM',['../group__g__weight.html#gga5e8f4548e57bf1f418a4b0d6c5dc3964a41aaad1aeaf0455c6ec01abb2e7d8c83',1,'weight.h']]],
   ['wt_5finit_5fundefined',['WT_INIT_UNDEFINED',['../group__g__weight.html#gga5e8f4548e57bf1f418a4b0d6c5dc3964ac899dbcee0f6967c235cfb54cba6400d',1,'weight.h']]],
   ['wt_5finit_5funiform',['WT_INIT_UNIFORM',['../group__g__weight.html#gga5e8f4548e57bf1f418a4b0d6c5dc3964a2d078268fcd0d9a7ab77ca83f609e29f',1,'weight.h']]],
   ['wt_5finit_5funknown',['WT_INIT_UNKNOWN',['../group__g__weight.html#gga5e8f4548e57bf1f418a4b0d6c5dc3964ac6f700434de30359cb9beb694e931e0e',1,'weight.h']]],

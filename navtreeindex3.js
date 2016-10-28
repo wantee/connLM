@@ -1,5 +1,8 @@
 var NAVTREEINDEX3 =
 {
+"structwt__updater__t.html#a135a3914c5790c3ce7f5683c4936e387":[9,11,6,1,12],
+"structwt__updater__t.html#a27c0ba34686860394212718320872b66":[9,11,6,1,0],
+"structwt__updater__t.html#a39ec9b10d6150191e665f049812fcbbf":[9,11,6,1,10],
 "structwt__updater__t.html#a3d1ad5f9b3974ac102647d1252e899f4":[9,11,6,1,4],
 "structwt__updater__t.html#a83c3d1c301e4754e2eeafd13250401a6":[9,11,6,1,11],
 "structwt__updater__t.html#a846446d23627fcea36ac2184a4e18e68":[9,11,6,1,7],

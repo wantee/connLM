@@ -1,0 +1,6 @@
+<map id="NNet hidden layer" name="NNet hidden layer">
+<area shape="rect" id="node1" href="$group__g__layer__sigmoid.html" title="Hidden layer with sigmoid activation. " alt="" coords="205,5,312,32"/>
+<area shape="rect" id="node3" href="$group__g__layer__linear.html" title="Hidden layer with linear activation. " alt="" coords="211,56,307,83"/>
+<area shape="rect" id="node4" href="$group__g__layer__tanh.html" title="Hidden layer with tanh activation. " alt="" coords="190,107,327,149"/>
+<area shape="rect" id="node5" href="$group__g__layer__relu.html" title="Hidden layer with relu activation. " alt="" coords="183,173,335,200"/>
+</map>
