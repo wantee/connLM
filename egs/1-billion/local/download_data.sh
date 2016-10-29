@@ -37,7 +37,7 @@ fi
 
 if [ -f $data/$archive ]; then
   size=$(/bin/ls -l $data/$archive | awk '{print $5}')
-  if [ $archive_size != $size ]; then 
+  if [ $archive_size != $size ]; then
     echo "$0: removing existing file $data/$archive because its has wrong size"
     rm $data/$archive
   else
@@ -59,7 +59,7 @@ if [ ! -f $data/$archive ]; then
 fi
 
 #echo "$0: Un-tarring data."
-#( 
+#(
 #  cd $data && \
 #  if [ ! -d 1-billion-word-language-modeling-benchmark ]; then \
 #    git clone https://github.com/ciprian-chelba/1-billion-word-language-modeling-benchmark.git; \
@@ -76,7 +76,7 @@ fi
 #fi
 
 echo "$0: Generating corpus from data."
-( 
+(
   cd $data/1-billion-word-language-modeling-benchmark && \
   ./scripts/get-data.sh \
 #  && md5sum -c README.corpus_generation_checkpoints
