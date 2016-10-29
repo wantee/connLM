@@ -2,6 +2,7 @@
 
 if [ $# -lt 1 ]; then
   echo "Usage: $0 <corpus_dir>"
+  exit 1
 fi
 
 dir=$1
