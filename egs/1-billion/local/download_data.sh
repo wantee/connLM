@@ -66,25 +66,9 @@ if [ $? -ne 0 ]; then
     exit 1;
 fi
 
-echo "$0: Generating corpus from data."
-(
-  if [ ! -d 1-billion-word-language-modeling-benchmark ]; then \
-    git clone https://github.com/ciprian-chelba/1-billion-word-language-modeling-benchmark.git; \
-  fi && \
-  cd $data/1-billion-word-language-modeling-benchmark && \
-  ln -sf $data/$archive tar_archives/$archive && \
-  TMPDIR=$data ./scripts/get-data.sh \
-  && sed 's/  / /g' README.corpus_generation_checkpoints > checkpoints \
-  && md5sum -c checkpoints
-)
-if [ $? -ne 0 ]; then
-    echo "$0: error generating corpus."
-    exit 1;
-fi
-
 touch $data/.complete
 
-echo "$0: Successfully downloaded and generated corpus."
+echo "$0: Successfully downloaded and un-tar data."
 
 if $remove_archive; then
   echo "$0: removing $data/$archive file since --remove-archive option was supplied."

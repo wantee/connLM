@@ -56,8 +56,8 @@ fi
 
 . ../utils/parse_options.sh || exit 1
 
-if [ $# -gt 1 ] || ! shu-valid-range $1; then 
-  print_help 1>&2 
+if [ $# -gt 1 ] || ! shu-valid-range $1; then
+  print_help 1>&2
   exit 1
 fi
 
@@ -72,12 +72,10 @@ if shu-in-range $st $steps; then
 echo
 echo "Step $st: ${stepnames[$st]} ..."
 local/download_data.sh $data_url $data || exit 1
+local/prep_data.sh $data || exit 1
 
-data=`cd $data; pwd`
 if [ ! -f "$train_file" ]; then
   mkdir -p `dirname "$train_file"`
-#  cat $data/1-billion-word-language-modeling-benchmark/heldout-monolingual.tokenized.shuffled/news.en.heldout-0000[2-9]-of-00050 > $train_file || exit 1
-#  cat $data/1-billion-word-language-modeling-benchmark/heldout-monolingual.tokenized.shuffled/news.en.heldout-000[1-9]?-of-00050 >> $train_file || exit 1
   cat $data/1-billion-word-language-modeling-benchmark/training-monolingual.tokenized.shuffled/news.en-*-of-00100 >> $train_file || exit 1
 fi
 if [ ! -f "$valid_file" ]; then
