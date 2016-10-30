@@ -1,0 +1,9 @@
+- bias
+- LSTM
+  * elementwist multiply
+- momentum and L1 penalty
+- dropout
+- sampling-based normalization
+- minibach for forward pass
+- distributed training
+- flexible learning rate schedule
