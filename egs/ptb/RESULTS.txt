@@ -1,0 +1,7 @@
+Environment: AWS c3.4xlarge with 16vCPU @ 2.8GHz
+
+Model        Parameters         PPL    Speed(word/sec)
+========================================================
+MaxEnt       512M
+RNN          200                142    165k
+RNN+MaxEnt   200+512M
