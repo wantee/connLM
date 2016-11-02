@@ -1,7 +1,21 @@
 Environment: AWS c3.4xlarge with 16vCPU @ 2.8GHz
+BLAS: MKL
+Thread: 16
+Hyper-parameter: default
 
 Model        Parameters         PPL    Speed(word/sec)
 ========================================================
-MaxEnt       512M
+MaxEnt       4/128M
 RNN          200                142    165k
-RNN+MaxEnt   200+512M
+RNN+MaxEnt   200+4/128M
+
+Environment: Intel(R) Core(TM) i5-5200U CPU @ 2.20GHz
+BLAS: MKL
+Thread: 1
+Hyper-parameter: full-softmax(--max-depth=1) output layer
+
+Model        Parameters         PPL    Speed(word/sec)
+========================================================
+MaxEnt       4/128M             153    16.5k
+RNN          200                124    0.3k
+RNN+MaxEnt   200+4/128M         112    0.3k
