@@ -126,7 +126,8 @@ typedef struct _reader_t_ {
     vocab_t *vocab; /**< vocabulary. */
     int num_thrs; /**< number of working threads. */
 
-    connlm_egs_t *full_egs; /**< pool for egs filled with data. */
+    connlm_egs_t *full_egs_head; /**< head of pool for egs filled with data. */
+    connlm_egs_t *full_egs_tail; /**< head of pool for egs filled with data. */
     connlm_egs_t *empty_egs; /**< pool for egs with data consumed. */
     st_sem_t sem_full; /**< number of full egs. */
     st_sem_t sem_empty; /**< number of empty egs. */
@@ -200,10 +201,9 @@ int reader_wait(reader_t *reader);
  * Get and hold a egs in reading pool.
  * @ingroup g_reader
  * @param[in] reader reader.
- * @param[in] fifo hold egs in FIFO order.
  * @return NULL if there is no more data or any error.
  */
-connlm_egs_t* reader_hold_egs(reader_t *reader, bool fifo);
+connlm_egs_t* reader_hold_egs(reader_t *reader);
 
 /**
  * Relase a egs to reading pool.

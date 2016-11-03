@@ -238,7 +238,7 @@ void reader_destroy(reader_t *reader)
         return;
     }
 
-    p = reader->full_egs;
+    p = reader->full_egs_head;
     while (p != NULL) {
         q = p;
         p = p->next;
@@ -246,7 +246,8 @@ void reader_destroy(reader_t *reader)
         connlm_egs_destroy(q);
         safe_free(q);
     }
-    reader->full_egs = NULL;
+    reader->full_egs_head = NULL;
+    reader->full_egs_tail = NULL;
 
     p = reader->empty_egs;
     while (p != NULL) {
@@ -333,7 +334,8 @@ reader_t* reader_create(reader_opt_t *opt, int num_thrs,
     reader->text_file[MAX_DIR_LEN - 1] = '\0';
 
     pool_size = 2 * num_thrs;
-    reader->full_egs = NULL;
+    reader->full_egs_head = NULL;
+    reader->full_egs_tail = NULL;
     reader->empty_egs = NULL;;
     for (i = 0; i < pool_size; i++) {
         egs = (connlm_egs_t *)malloc(sizeof(connlm_egs_t));
@@ -563,8 +565,14 @@ static void* reader_read_thread(void *args)
             ST_WARNING("Failed to pthread_mutex_lock full_egs_lock.");
             goto ERR;
         }
-        egs_in_pool->next = reader->full_egs;
-        reader->full_egs = egs_in_pool;
+        egs_in_pool->next = NULL;
+        if (reader->full_egs_tail != NULL) {
+            reader->full_egs_tail->next = egs_in_pool;
+        }
+        reader->full_egs_tail = egs_in_pool;
+        if (reader->full_egs_head == NULL) {
+            reader->full_egs_head = egs_in_pool;
+        }
         //ST_DEBUG("IN: %p, %d", egs_in_pool, egs_in_pool->size);
         if (pthread_mutex_unlock(&reader->full_egs_lock) != 0) {
             ST_WARNING("Failed to pthread_mutex_unlock full_egs_lock.");
@@ -695,7 +703,7 @@ int reader_wait(reader_t *reader)
     return 0;
 }
 
-connlm_egs_t* reader_hold_egs(reader_t *reader, bool fifo)
+connlm_egs_t* reader_hold_egs(reader_t *reader)
 {
     connlm_egs_t *egs;
 
@@ -710,26 +718,12 @@ connlm_egs_t* reader_hold_egs(reader_t *reader, bool fifo)
         return NULL;
     }
 
-    if (reader->full_egs == NULL) {
-        egs = NULL;
-    } else {
-        if (fifo) {
-            connlm_egs_t *prev_egs = NULL;
-            egs = reader->full_egs;
-            while (egs->next != NULL) {
-                prev_egs = egs;
-                egs = egs->next;
-            }
-
-            if (prev_egs == NULL) {
-                reader->full_egs = NULL;
-            } else {
-                prev_egs->next = NULL;
-            }
-        } else {
-            egs = reader->full_egs;
-            reader->full_egs = reader->full_egs->next;
-        }
+    egs = reader->full_egs_head;
+    if (egs != NULL) {
+        reader->full_egs_head = egs->next;
+    }
+    if (egs == reader->full_egs_tail) {
+        reader->full_egs_tail = NULL;
     }
 
     if (pthread_mutex_unlock(&reader->full_egs_lock) != 0) {

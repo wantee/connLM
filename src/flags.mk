@@ -19,7 +19,7 @@ ifndef CONNLM_NO_OPT
   include ./blas.mk
   CFLAGS += -DNDEBUG
 else
-  CFLAGS += -O0 -D_DETERMINISTIC_
+  CFLAGS += -O0
 endif
 
 ifeq ($(shell uname -s),Darwin)

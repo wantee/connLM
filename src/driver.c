@@ -274,8 +274,6 @@ static void* driver_thread(void *args)
     double logp;
     double logp_sent;
 
-    bool fifo;
-
     struct timeval tts, tte;
     long ms;
 
@@ -292,15 +290,6 @@ static void* driver_thread(void *args)
 
     gettimeofday(&tts, NULL);
 
-#ifdef _DETERMINISTIC_
-    fifo = true;
-#else
-    if (driver->mode == DRIVER_EVAL && driver->n_thr == 1){
-        fifo = true;
-    } else {
-        fifo = false;
-    }
-#endif
     words = 0;
     sents = 0;
     logp = 0.0;
@@ -311,7 +300,7 @@ static void* driver_thread(void *args)
         }
 
         gettimeofday(&tts_wait, NULL);
-        egs = reader_hold_egs(reader, fifo);
+        egs = reader_hold_egs(reader);
         gettimeofday(&tte_wait, NULL);
 
         if (egs == NULL) { // finish
