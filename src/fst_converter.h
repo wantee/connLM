@@ -30,8 +30,7 @@ extern "C" {
 #endif
 
 #include <stdio.h>
-
-#include <stutils/st_semaphore.h>
+#include <pthread.h>
 
 #include <connlm/config.h>
 
@@ -72,6 +71,12 @@ typedef struct _fst_converter_t_ {
     int n_thr; /**< number of working threads. */
 
     int err; /**< error indicator. */
+
+    int n_fst_state; /**< number of states of FST. */
+    pthread_mutex_t state_lock; /**< lock for n_fst_state. */
+
+    st_block_cache_t *state_cache; /**< cache for internal state of model. */
+    int *state_map; /**< map fst_state to a model state. */
 
     fst_converter_opt_t converter_opt; /**< options. */
 } fst_converter_t;
