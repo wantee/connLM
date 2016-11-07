@@ -32,6 +32,8 @@ extern "C" {
 #include <stdio.h>
 #include <pthread.h>
 
+#include <stutils/st_block_cache.h>
+
 #include <connlm/config.h>
 
 #include "connlm.h"
@@ -76,7 +78,9 @@ typedef struct _fst_converter_t_ {
     pthread_mutex_t state_lock; /**< lock for n_fst_state. */
 
     st_block_cache_t *state_cache; /**< cache for internal state of model. */
-    int *state_map; /**< map fst_state to a model state. */
+    pthread_mutex_t cache_lock; /**< lock for state_cache. */
+    int *state_map; /**< map fst_state to a model state id. */
+    int state_map_capacity; /**< capacity of state_map. */
 
     fst_converter_opt_t converter_opt; /**< options. */
 } fst_converter_t;

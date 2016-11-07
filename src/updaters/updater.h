@@ -137,6 +137,25 @@ int updater_finalize(updater_t *updater);
  */
 int updater_sampling(updater_t *updater, bool startover);
 
+/**
+ * Get the size of state in updater.
+ * @ingroup g_updater
+ * @param[in] updater updater.
+ * @return state size of updater, -1 if any error.
+ */
+int updater_state_size(updater_t *updater);
+
+/**
+ * Dump the state of updater.
+ * @ingroup g_updater
+ * @param[in] updater updater.
+ * @param[out] state pointer to store the dumped state. Size of state
+ *             must be larger than or equal to the state_size returned
+ *             by updater_state_size.
+ * @return non-zero value if any error.
+ */
+int updater_dump_state(updater_t *updater, real_t *state);
+
 #ifdef __cplusplus
 }
 #endif
