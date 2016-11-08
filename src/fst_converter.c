@@ -38,11 +38,34 @@
 int fst_converter_load_opt(fst_converter_opt_t *converter_opt,
         st_opt_t *opt, const char *sec_name)
 {
+    char method_str[MAX_ST_CONF_LEN];
+    double d;
+
     ST_CHECK_PARAM(converter_opt == NULL || opt == NULL, -1);
 
     ST_OPT_SEC_GET_BOOL(opt, sec_name, "PRINT_SYMS",
             converter_opt->print_syms, false,
             "Print symbols instead of numbers, if true. ");
+
+    ST_OPT_SEC_GET_STR(opt, sec_name, "BACKOFF_METHOD",
+            method_str, MAX_ST_CONF_LEN, "Beam",
+            "Backoff method(Beam/Sampling)");
+    if (strcasecmp(method_str, "beam") == 0) {
+        converter_opt->bom = BOM_BEAM;
+
+        ST_OPT_SEC_GET_DOUBLE(opt, sec_name, "BEAM", d, 0.0,
+                "Threshold for beam.");
+        converter_opt->beam = (real_t)d;
+    } else if (strcasecmp(method_str, "sampling") == 0) {
+        converter_opt->bom = BOM_SAMPLING;
+
+        ST_OPT_SEC_GET_DOUBLE(opt, sec_name, "BOOST", d, 0.0,
+                "Boost probability for sampling.");
+        converter_opt->boost = (real_t)d;
+    } else {
+        ST_WARNING("Unknown backoff method[%s].", method_str);
+        goto ST_OPT_ERR;
+    }
 
     return 0;
 

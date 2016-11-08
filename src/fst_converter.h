@@ -44,11 +44,26 @@ extern "C" {
  */
 
 /**
+ * Type of back-off methods.
+ * @ingroup g_converter
+ */
+typedef enum _backoff_method_t_ {
+    BOM_UNKNOWN = -1, /**< Unknown method. */
+    BOM_BEAM = 0, /**< Beam method. */
+    BOM_SAMPLING = 1, /**< Sampling method. */
+} backoff_method_t;
+
+/**
  * Options for converter.
  * @ingroup g_converter
  */
 typedef struct _fst_converter_opt_t_ {
     bool print_syms; /**< print symbols instead of id, if true. */
+    backoff_method_t bom; /**< backoff method. */
+    union {
+        real_t beam; /**< threshold for beam method. */
+        real_t boost; /**< boost probability for sampling method. */
+    };
 } fst_converter_opt_t;
 
 /**
