@@ -89,12 +89,14 @@ void fst_converter_destroy(fst_converter_t *converter)
     safe_free(converter->updaters);
     converter->n_thr = 0;
 
-    (void)pthread_mutex_destroy(&converter->state_lock);
+    (void)pthread_mutex_destroy(&converter->n_fst_state_lock);
 
-    safe_st_block_cache_destroy(converter->state_cache);
-    (void)pthread_mutex_destroy(&converter->cache_lock);
-    safe_free(converter->state_map);
-    converter->state_map_capacity = 0;
+    safe_st_block_cache_destroy(converter->model_state_cache);
+    (void)pthread_mutex_destroy(&converter->model_state_cache_lock);
+
+    safe_free(converter->fst_state_infos);
+    (void)pthread_mutex_destroy(&converter->fst_state_info_lock);
+    converter->cap_infos = 0;
 }
 
 fst_converter_t* fst_converter_create(connlm_t *connlm, int n_thr,
@@ -104,6 +106,7 @@ fst_converter_t* fst_converter_create(connlm_t *connlm, int n_thr,
 
     int i;
     int state_size;
+    int count;
 
     ST_CHECK_PARAM(connlm == NULL || n_thr <= 0 || converter_opt == NULL, NULL);
 
@@ -133,28 +136,34 @@ fst_converter_t* fst_converter_create(connlm_t *connlm, int n_thr,
         }
     }
 
-    if (pthread_mutex_init(&converter->state_lock, NULL) != 0) {
-        ST_WARNING("Failed to pthread_mutex_init state_lock.");
+    if (pthread_mutex_init(&converter->n_fst_state_lock, NULL) != 0) {
+        ST_WARNING("Failed to pthread_mutex_init n_fst_state_lock.");
         goto ERR;
     }
+
+    count = (int)sqrt(connlm->vocab->vocab_size) * connlm->vocab->vocab_size;
 
     state_size = updater_state_size(converter->updaters[0]);
-    converter->state_cache = st_block_cache_create(sizeof(real_t) * state_size,
-            5 * connlm->vocab->vocab_size);
-    if (converter->state_cache == NULL) {
-        ST_WARNING("Failed to st_block_cache_create.");
+    converter->model_state_cache = st_block_cache_create(
+            sizeof(real_t) * state_size, 5 * count, count);
+    if (converter->model_state_cache == NULL) {
+        ST_WARNING("Failed to st_block_cache_create model_state_cache.");
         goto ERR;
     }
-    if (pthread_mutex_init(&converter->cache_lock, NULL) != 0) {
-        ST_WARNING("Failed to pthread_mutex_init cache_lock.");
+    if (pthread_mutex_init(&converter->model_state_cache_lock, NULL) != 0) {
+        ST_WARNING("Failed to pthread_mutex_init model_state_cache_lock.");
         goto ERR;
     }
 
-    converter->state_map_capacity = 5 * connlm->vocab->vocab_size;
-    converter->state_map = (int *)malloc(sizeof(int)
-            * converter->state_map_capacity);
-    if (converter->state_map == NULL) {
-        ST_WARNING("Failed to malloc state_map.");
+    converter->cap_infos = count;
+    converter->fst_state_infos = (fst_state_info_t *)malloc(
+            sizeof(fst_state_info_t) * count);
+    if (converter->fst_state_infos == NULL) {
+        ST_WARNING("Failed to st_block_cache_create fst_state_infos.");
+        goto ERR;
+    }
+    if (pthread_mutex_init(&converter->fst_state_info_lock, NULL) != 0) {
+        ST_WARNING("Failed to pthread_mutex_init fst_state_info_lock.");
         goto ERR;
     }
 
@@ -186,31 +195,62 @@ static int fst_converter_setup(fst_converter_t *converter)
     return 0;
 }
 
+static int fst_converter_maybe_realloc_infos(fst_converter_t *converter)
+{
+    int needed;
+    int ret;
+
+    ST_CHECK_PARAM(converter == NULL, -1);
+
+    if (pthread_mutex_lock(&converter->fst_state_info_lock) != 0) {
+        ST_WARNING("Failed to pthread_mutex_lock fst_state_info_lock.");
+        return -1;
+    }
+    if (converter->n_fst_state < converter->cap_infos) {
+        ret = 0;
+        goto RET;
+    }
+
+    needed = max(converter->cap_infos + converter->connlm->vocab->vocab_size,
+            converter->n_fst_state);
+
+    converter->fst_state_infos = realloc(converter->fst_state_infos,
+            sizeof(fst_state_info_t) * needed);
+    if (converter->fst_state_infos == NULL) {
+        ST_WARNING("Failed to realloc fst_state_infos.");
+        ret = -1;
+        goto RET;
+    }
+
+    ret = 0;
+RET:
+    if (pthread_mutex_unlock(&converter->fst_state_info_lock) != 0) {
+        ST_WARNING("Failed to pthread_mutex_lock fst_state_info_lock.");
+        return -1;
+    }
+
+    return ret;
+}
+
 static int fst_converter_add_state(fst_converter_t *converter)
 {
     int sid;
 
     ST_CHECK_PARAM(converter == NULL, -1);
 
-    if (pthread_mutex_lock(&converter->state_lock) != 0) {
-        ST_WARNING("Failed to pthread_mutex_lock state_lock.");
+    if (pthread_mutex_lock(&converter->n_fst_state_lock) != 0) {
+        ST_WARNING("Failed to pthread_mutex_lock n_fst_state_lock.");
         return -1;
     }
 
     sid = converter->n_fst_state++;
 
-    if (converter->n_fst_state >= converter->state_map_capacity) {
-        converter->state_map_capacity += 5*converter->connlm->vocab->vocab_size;
-        converter->state_map = (int *)realloc(converter->state_map, sizeof(int)
-                * converter->state_map_capacity);
-        if (converter->state_map == NULL) {
-            ST_WARNING("Failed to realloc state_map.");
-            return -1;
-        }
+    if (fst_converter_maybe_realloc_infos(converter) < 0) {
+        ST_WARNING("Failed to fst_converter_maybe_realloc_infos.");
+        return -1;
     }
-
-    if (pthread_mutex_unlock(&converter->state_lock) != 0) {
-        ST_WARNING("Failed to pthread_mutex_unlock state_lock.");
+    if (pthread_mutex_unlock(&converter->n_fst_state_lock) != 0) {
+        ST_WARNING("Failed to pthread_mutex_unlock n_fst_state_lock.");
         return -1;
     }
 
@@ -236,7 +276,32 @@ static int fst_converter_expand(fst_converter_t *converter, int tid, int sid)
 
     updater = converter->updaters[tid];
 
+#if 0
+    cache_id = -1; // get a new cache block
+    info = (real_t *)st_block_cache_fetch(converter->model_state_cache,
+            &cache_id);
+    if (info == NULL) {
+        ST_WARNING("Failed to st_block_cache_fetch.");
+        goto ERR;
+    }
     //forward(updater, state,
+    if (updater_dump_state(updater, state) < 0) {
+        ST_WARNING("Failed to updater_dump_state for <s> state.");
+        goto ERR;
+    }
+    sid = fst_converter_add_state(converter);
+    if (sid < 0) {
+        ST_WARNING("Failed to fst_converter_add_state.");
+        goto ERR;
+    }
+
+    if (fst_converter_print_arc(fst_fp, 0, sid, SENT_START_ID,
+            converter->converter_opt.print_syms
+                ? converter->connlm->vocab : NULL) < 0) {
+        ST_WARNING("Failed to fst_converter_print_arc for <s>.");
+        goto ERR;
+    }
+#endif
     return 0;
 }
 
@@ -274,7 +339,6 @@ int fst_converter_convert(fst_converter_t *converter, FILE *fst_fp)
 {
     converter_targs_t *targs = NULL;
     pthread_t *pts = NULL;
-    updater_t *updater;
     real_t *state;
     int sid;
     int cache_id;
@@ -313,28 +377,11 @@ int fst_converter_convert(fst_converter_t *converter, FILE *fst_fp)
         goto ERR;
     }
 
-    updater = converter->updaters[0];
-//    forward(updater, NULL, "<s>");
-    cache_id = -1; // get a new cache block
-    state = (real_t *)st_block_cache_fetch(converter->state_cache, &cache_id);
-    if (state == NULL) {
-        ST_WARNING("Failed to st_block_cache_get.");
-        goto ERR;
-    }
-    if (updater_dump_state(updater, state) < 0) {
-        ST_WARNING("Failed to updater_dump_state for <s> state.");
-        goto ERR;
-    }
-    sid = fst_converter_add_state(converter);
-    if (sid < 0) {
-        ST_WARNING("Failed to fst_converter_add_state.");
-        goto ERR;
-    }
-    converter->state_map[sid] = cache_id;
-    if (fst_converter_print_arc(fst_fp, 0, sid, SENT_START_ID,
-            converter->converter_opt.print_syms
-                ? converter->connlm->vocab : NULL) < 0) {
-        ST_WARNING("Failed to fst_converter_print_arc for <s>.");
+    converter->fst_state_infos[0].word_id = SENT_START_ID;
+    converter->fst_state_infos[0].model_state_id = -1;
+
+    if (fst_converter_expand(converter, 0, 0) < 0) {
+        ST_WARNING("Failed to fst_converter_expand init state.");
         goto ERR;
     }
 

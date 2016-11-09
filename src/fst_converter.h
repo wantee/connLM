@@ -78,6 +78,16 @@ int fst_converter_load_opt(fst_converter_opt_t *converter_opt,
         st_opt_t *opt, const char *sec_name);
 
 /**
+ * FST State info.
+ * Contain the information for fst state to be extended.
+ * @ingroup g_converter
+ */
+typedef struct _fst_state_info_t_ {
+    int word_id; /**< word id. */
+    int model_state_id; /**< model state id. */
+} fst_state_info_t;
+
+/**
  * FST Converter.
  * @ingroup g_converter
  */
@@ -90,12 +100,14 @@ typedef struct _fst_converter_t_ {
     int err; /**< error indicator. */
 
     int n_fst_state; /**< number of states of FST. */
-    pthread_mutex_t state_lock; /**< lock for n_fst_state. */
+    pthread_mutex_t n_fst_state_lock; /**< lock for n_fst_state. */
 
-    st_block_cache_t *state_cache; /**< cache for internal state of model. */
-    pthread_mutex_t cache_lock; /**< lock for state_cache. */
-    int *state_map; /**< map fst_state to a model state id. */
-    int state_map_capacity; /**< capacity of state_map. */
+    st_block_cache_t *model_state_cache; /**< cache for internal state of model. */
+    pthread_mutex_t model_state_cache_lock; /**< lock for model_state_cache. */
+
+    fst_state_info_t *fst_state_infos; /**< fst_state_info array indexed by fst state id. */
+    int cap_infos; /**< capacity of fst_state_infos. */
+    pthread_mutex_t fst_state_info_lock; /**< lock for fst_state_infos. */
 
     fst_converter_opt_t converter_opt; /**< options. */
 } fst_converter_t;
