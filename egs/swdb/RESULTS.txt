@@ -1,7 +1,7 @@
 Environment: Intel(R) Core(TM) i5-5200U CPU @ 2.20GHz
 BLAS: MKL
 Thread: 4
-Hyper-parameter: default
+config commit: 413a8ba5bfc9158f04896b1e0fb89ac611ec095a
 
 Model        Parameters         PPL    Speed(word/sec)
 ========================================================
@@ -12,10 +12,11 @@ RNN+MaxEnt   200+4/128M         73     61k
 Environment: Intel(R) Core(TM) i5-5200U CPU @ 2.20GHz
 BLAS: MKL
 Thread: 1
-Hyper-parameter: full-softmax(--max-depth=1) output layer
+config commit: 413a8ba5bfc9158f04896b1e0fb89ac611ec095a
+               with full-softmax(--max-depth=1) output layer
 
 Model        Parameters         PPL    Speed(word/sec)
 ========================================================
-MaxEnt       4/128M
-RNN          200
-RNN+MaxEnt   200+4/128M
+MaxEnt       4/128M             84     7.4k
+RNN          200                71     0.1k
+RNN+MaxEnt   200+4/128M         67     0.1k
