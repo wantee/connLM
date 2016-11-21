@@ -61,9 +61,10 @@ typedef struct _fst_converter_opt_t_ {
     bool print_syms; /**< print symbols instead of id, if true. */
     backoff_method_t bom; /**< backoff method. */
     union {
-        real_t beam; /**< threshold for beam method. */
-        real_t boost; /**< boost probability for sampling method. */
+        double beam; /**< threshold for beam method. */
+        double boost; /**< boost probability for sampling method. */
     };
+    unsigned int init_rand_seed; /**< initial random seed. */
 } fst_converter_opt_t;
 
 /**
@@ -108,6 +109,11 @@ typedef struct _fst_converter_t_ {
     fst_state_info_t *fst_state_infos; /**< fst_state_info array indexed by fst state id. */
     int cap_infos; /**< capacity of fst_state_infos. */
     pthread_mutex_t fst_state_info_lock; /**< lock for fst_state_infos. */
+
+    FILE *fst_fp; /**< output file pointer for fst file. */
+    pthread_mutex_t fst_fp_lock; /**< lock for fst_fp/ */
+
+    double *output_probs; /**< output probabilitys. */
 
     fst_converter_opt_t converter_opt; /**< options. */
 } fst_converter_t;
