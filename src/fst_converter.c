@@ -38,42 +38,150 @@
 #define FST_INIT_STATE 0
 #define FST_FINAL_STATE 1
 
-int fst_converter_load_opt(fst_converter_opt_t *converter_opt,
+#define get_vocab_size(conv) (conv)->connlm->vocab->vocab_size
+#define phi_id(conv) get_vocab_size(conv)
+
+typedef struct _fst_converter_args_t_ {
+    fst_conv_t *conv;
+    int tid;
+    int sid;
+
+    unsigned int rand_seed;
+    double *output_probs;
+    int *selected_words;
+} fst_conv_args_t;
+
+void fst_conv_args_destroy(fst_conv_args_t *args)
+{
+    if (args == NULL) {
+        return;
+    }
+
+    args->tid = -1;
+    args->rand_seed = 0;
+
+    safe_free(args->output_probs);
+    safe_free(args->selected_words);
+
+    args->conv = NULL;
+}
+
+int fst_conv_args_init(fst_conv_args_t *args,
+        fst_conv_t *conv, int tid)
+{
+    ST_CHECK_PARAM(args == NULL || conv == NULL, -1);
+
+    args->conv = conv;
+    args->tid = tid;
+    args->rand_seed = conv->conv_opt.init_rand_seed + tid;
+
+    args->output_probs = (double *)malloc(sizeof(double)
+            * get_vocab_size(conv));
+    if (args->output_probs == NULL) {
+        ST_WARNING("Failed to malloc output_probs.");
+        goto ERR;
+    }
+
+    args->selected_words = (int *)malloc(sizeof(int)
+            * get_vocab_size(conv));
+    if (args->selected_words == NULL) {
+        ST_WARNING("Failed to malloc selected_words.");
+        goto ERR;
+    }
+
+    return 0;
+
+ERR:
+    fst_conv_args_destroy(args);
+    return -1;
+}
+
+#define safe_fst_conv_args_list_destroy(ptr, n) do {\
+    if((ptr) != NULL) {\
+        fst_conv_args_list_destroy(ptr, n);\
+        safe_free(ptr);\
+        (ptr) = NULL;\
+    }\
+    } while(0)
+void fst_conv_args_list_destroy(fst_conv_args_t *args, int n)
+{
+    int i;
+
+    if (args == NULL || n <= 0) {
+        return;
+    }
+
+    for (i = 0; i < n; i++) {
+        fst_conv_args_destroy(args + i);
+    }
+}
+
+fst_conv_args_t* fst_conv_args_list_create(fst_conv_t *conv)
+{
+    fst_conv_args_t *args = NULL;
+
+    int i;
+
+    ST_CHECK_PARAM(conv == NULL, NULL);
+
+    args = (fst_conv_args_t *)malloc(sizeof(fst_conv_args_t)
+            * conv->n_thr);
+    if (args == NULL) {
+        ST_WARNING("Failed to malloc fst_conv_args_t");
+        goto ERR;
+    }
+    memset(args, 0, sizeof(fst_conv_args_t) * conv->n_thr);
+
+    for (i = 0; i < conv->n_thr; i++) {
+        if (fst_conv_args_init(args + i, conv, i) < 0) {
+            ST_WARNING("Failed to fst_conv_args_init[%d].", i);
+            goto ERR;
+        }
+    }
+
+    return args;
+
+ERR:
+    safe_fst_conv_args_list_destroy(args, conv->n_thr);
+    return NULL;
+}
+
+int fst_conv_load_opt(fst_conv_opt_t *conv_opt,
         st_opt_t *opt, const char *sec_name)
 {
     char method_str[MAX_ST_CONF_LEN];
 
-    ST_CHECK_PARAM(converter_opt == NULL || opt == NULL, -1);
+    ST_CHECK_PARAM(conv_opt == NULL || opt == NULL, -1);
 
     ST_OPT_SEC_GET_BOOL(opt, sec_name, "PRINT_SYMS",
-            converter_opt->print_syms, false,
+            conv_opt->print_syms, false,
             "Print symbols instead of numbers, if true. ");
 
     ST_OPT_SEC_GET_STR(opt, sec_name, "BACKOFF_METHOD",
             method_str, MAX_ST_CONF_LEN, "Beam",
             "Backoff method(Beam/Sampling)");
     if (strcasecmp(method_str, "beam") == 0) {
-        converter_opt->bom = BOM_BEAM;
+        conv_opt->bom = BOM_BEAM;
 
         ST_OPT_SEC_GET_DOUBLE(opt, sec_name, "BEAM",
-                converter_opt->beam, 0.0, "Threshold for beam.");
-        if (converter_opt->beam < 0.0) {
+                conv_opt->beam, 0.0, "Threshold for beam.");
+        if (conv_opt->beam < 0.0) {
             ST_WARNING("beam must be larger than or equal to zero.");
             goto ST_OPT_ERR;
         }
     } else if (strcasecmp(method_str, "sampling") == 0) {
-        converter_opt->bom = BOM_SAMPLING;
+        conv_opt->bom = BOM_SAMPLING;
 
         ST_OPT_SEC_GET_DOUBLE(opt, sec_name, "BOOST",
-                converter_opt->boost, 0.0,
+                conv_opt->boost, 0.0,
                 "Boost probability for sampling.");
-        if (converter_opt->boost < 0.0 || converter_opt->boost > 1.0) {
+        if (conv_opt->boost < 0.0 || conv_opt->boost > 1.0) {
             ST_WARNING("boost must be in [0, 1].");
             goto ST_OPT_ERR;
         }
 
         ST_OPT_SEC_GET_UINT(opt, sec_name, "INIT_RANDOM_SEED",
-                converter_opt->init_rand_seed, (unsigned int)time(NULL),
+                conv_opt->init_rand_seed, (unsigned int)time(NULL),
                 "Initial random seed, seed for each thread would be "
                 "incremented from this value. "
                 "Default is value of time(NULl).");
@@ -88,219 +196,250 @@ ST_OPT_ERR:
     return -1;
 }
 
-void fst_converter_destroy(fst_converter_t *converter)
+void fst_conv_destroy(fst_conv_t *conv)
 {
     int i;
 
-    if (converter == NULL) {
+    if (conv == NULL) {
         return;
     }
 
-    converter->connlm = NULL;
+    conv->connlm = NULL;
 
-    for(i = 0; i < converter->n_thr; i++) {
-        safe_updater_destroy(converter->updaters[i]);
+    for(i = 0; i < conv->n_thr; i++) {
+        safe_updater_destroy(conv->updaters[i]);
     }
-    safe_free(converter->updaters);
-    converter->n_thr = 0;
+    safe_free(conv->updaters);
+    conv->n_thr = 0;
 
-    (void)pthread_mutex_destroy(&converter->n_fst_state_lock);
+    (void)pthread_mutex_destroy(&conv->n_fst_state_lock);
 
-    safe_st_block_cache_destroy(converter->model_state_cache);
-    (void)pthread_mutex_destroy(&converter->model_state_cache_lock);
+    safe_st_block_cache_destroy(conv->model_state_cache);
+    (void)pthread_mutex_destroy(&conv->model_state_cache_lock);
 
-    safe_free(converter->fst_state_infos);
-    (void)pthread_mutex_destroy(&converter->fst_state_info_lock);
-    converter->cap_infos = 0;
+    safe_free(conv->fst_states);
+    (void)pthread_mutex_destroy(&conv->fst_state_lock);
+    conv->cap_fst_states = 0;
 
-    (void)pthread_mutex_destroy(&converter->fst_fp_lock);
-    converter->fst_fp = NULL;
+    (void)pthread_mutex_destroy(&conv->fst_fp_lock);
+    conv->fst_fp = NULL;
 }
 
-fst_converter_t* fst_converter_create(connlm_t *connlm, int n_thr,
-        fst_converter_opt_t *converter_opt)
+fst_conv_t* fst_conv_create(connlm_t *connlm, int n_thr,
+        fst_conv_opt_t *conv_opt)
 {
-    fst_converter_t *converter = NULL;
+    fst_conv_t *conv = NULL;
 
     int i;
     int state_size;
     int count;
 
-    ST_CHECK_PARAM(connlm == NULL || n_thr <= 0 || converter_opt == NULL, NULL);
+    ST_CHECK_PARAM(connlm == NULL || n_thr <= 0 || conv_opt == NULL, NULL);
 
-    converter = (fst_converter_t *)malloc(sizeof(fst_converter_t));
-    if (converter == NULL) {
+    if (strcasecmp(vocab_get_word(connlm->vocab, ANY_ID), ANY) != 0) {
+        ST_WARNING("vocab must contain <any> in order to convert to fst");
+        return NULL;
+    }
+
+    conv = (fst_conv_t *)malloc(sizeof(fst_conv_t));
+    if (conv == NULL) {
         ST_WARNING("Failed to malloc converter.");
         return NULL;
     }
-    memset(converter, 0, sizeof(fst_converter_t));
+    memset(conv, 0, sizeof(fst_conv_t));
 
-    converter->connlm = connlm;
-    converter->n_thr = n_thr;
-    converter->converter_opt = *converter_opt;
+    conv->connlm = connlm;
+    conv->n_thr = n_thr;
+    conv->conv_opt = *conv_opt;
 
-    converter->updaters = (updater_t **)malloc(sizeof(updater_t*)*n_thr);
-    if (converter->updaters == NULL) {
+    conv->updaters = (updater_t **)malloc(sizeof(updater_t*)*n_thr);
+    if (conv->updaters == NULL) {
         ST_WARNING("Failed to malloc updaters.");
         goto ERR;
     }
-    memset(converter->updaters, 0, sizeof(updater_t*) * n_thr);
+    memset(conv->updaters, 0, sizeof(updater_t*) * n_thr);
 
-    for (i = 0; i < converter->n_thr; i++) {
-        converter->updaters[i] = updater_create(connlm);
-        if (converter->updaters[i] == NULL) {
+    for (i = 0; i < conv->n_thr; i++) {
+        conv->updaters[i] = updater_create(connlm);
+        if (conv->updaters[i] == NULL) {
             ST_WARNING("Failed to malloc updater[%d].", i);
             goto ERR;
         }
     }
 
-    if (pthread_mutex_init(&converter->n_fst_state_lock, NULL) != 0) {
+    if (pthread_mutex_init(&conv->n_fst_state_lock, NULL) != 0) {
         ST_WARNING("Failed to pthread_mutex_init n_fst_state_lock.");
         goto ERR;
     }
 
-    count = (int)sqrt(connlm->vocab->vocab_size) * connlm->vocab->vocab_size;
+    count = (int)sqrt(get_vocab_size(conv)) * get_vocab_size(conv);
 
-    state_size = updater_state_size(converter->updaters[0]);
-    converter->model_state_cache = st_block_cache_create(
+    state_size = updater_state_size(conv->updaters[0]);
+    conv->model_state_cache = st_block_cache_create(
             sizeof(real_t) * state_size, 5 * count, count);
-    if (converter->model_state_cache == NULL) {
+    if (conv->model_state_cache == NULL) {
         ST_WARNING("Failed to st_block_cache_create model_state_cache.");
         goto ERR;
     }
-    if (pthread_mutex_init(&converter->model_state_cache_lock, NULL) != 0) {
+    if (pthread_mutex_init(&conv->model_state_cache_lock, NULL) != 0) {
         ST_WARNING("Failed to pthread_mutex_init model_state_cache_lock.");
         goto ERR;
     }
 
-    converter->cap_infos = count;
-    converter->fst_state_infos = (fst_state_info_t *)malloc(
-            sizeof(fst_state_info_t) * count);
-    if (converter->fst_state_infos == NULL) {
-        ST_WARNING("Failed to st_block_cache_create fst_state_infos.");
+    conv->cap_fst_states = count;
+    conv->fst_states = (fst_state_t *)malloc(sizeof(fst_state_t) * count);
+    if (conv->fst_states == NULL) {
+        ST_WARNING("Failed to st_block_cache_create fst_states.");
         goto ERR;
     }
-    if (pthread_mutex_init(&converter->fst_state_info_lock, NULL) != 0) {
-        ST_WARNING("Failed to pthread_mutex_init fst_state_info_lock.");
+    if (pthread_mutex_init(&conv->fst_state_lock, NULL) != 0) {
+        ST_WARNING("Failed to pthread_mutex_init fst_state_lock.");
         goto ERR;
     }
 
-    return converter;
+    return conv;
 
 ERR:
-    safe_fst_converter_destroy(converter);
+    safe_fst_conv_destroy(conv);
     return NULL;
 }
 
-static int fst_converter_setup(fst_converter_t *converter, FILE *fst_fp)
+static int fst_conv_setup(fst_conv_t *conv, FILE *fst_fp,
+        fst_conv_args_t **args)
 {
     int i;
 
-    ST_CHECK_PARAM(converter == NULL, -1);
+    ST_CHECK_PARAM(conv == NULL || fst_fp == NULL || args == NULL, -1);
 
-    converter->fst_fp = fst_fp;
+    conv->fst_fp = fst_fp;
 
-    if (pthread_mutex_init(&converter->fst_fp_lock, NULL) != 0) {
+    if (pthread_mutex_init(&conv->fst_fp_lock, NULL) != 0) {
         ST_WARNING("Failed to pthread_mutex_init fst_fp_lock.");
         return -1;
     }
 
-    if (connlm_setup(converter->connlm) < 0) {
+    if (connlm_setup(conv->connlm) < 0) {
         ST_WARNING("Failed to connlm_setup.");
         return -1;
     }
 
-    for (i = 0; i < converter->n_thr; i++) {
-        if (updater_setup(converter->updaters[i], false) < 0) {
+    for (i = 0; i < conv->n_thr; i++) {
+        if (updater_setup(conv->updaters[i], false) < 0) {
             ST_WARNING("Failed to updater_setup.");
             return -1;
         }
     }
 
+    *args = fst_conv_args_list_create(conv);
+    if (*args == NULL) {
+        ST_WARNING("Failed to fst_conv_args_list_create.");
+        return -1;
+    }
+
     return 0;
 }
 
-static int fst_converter_maybe_realloc_infos(fst_converter_t *converter)
+static int fst_conv_maybe_realloc_infos(fst_conv_t *conv)
 {
     int needed;
     int ret;
 
-    ST_CHECK_PARAM(converter == NULL, -1);
+    ST_CHECK_PARAM(conv == NULL, -1);
 
-    if (pthread_mutex_lock(&converter->fst_state_info_lock) != 0) {
-        ST_WARNING("Failed to pthread_mutex_lock fst_state_info_lock.");
+    if (pthread_mutex_lock(&conv->fst_state_lock) != 0) {
+        ST_WARNING("Failed to pthread_mutex_lock fst_state_lock.");
         return -1;
     }
-    if (converter->n_fst_state < converter->cap_infos) {
+    if (conv->n_fst_state < conv->cap_fst_states) {
         ret = 0;
         goto RET;
     }
 
-    needed = max(converter->cap_infos + converter->connlm->vocab->vocab_size,
-            converter->n_fst_state);
+    needed = max(conv->cap_fst_states + get_vocab_size(conv),
+            conv->n_fst_state);
 
-    converter->fst_state_infos = realloc(converter->fst_state_infos,
-            sizeof(fst_state_info_t) * needed);
-    if (converter->fst_state_infos == NULL) {
-        ST_WARNING("Failed to realloc fst_state_infos.");
+    conv->fst_states = realloc(conv->fst_states,
+            sizeof(fst_state_t) * needed);
+    if (conv->fst_states == NULL) {
+        ST_WARNING("Failed to realloc fst_states.");
         ret = -1;
         goto RET;
     }
 
     ret = 0;
 RET:
-    if (pthread_mutex_unlock(&converter->fst_state_info_lock) != 0) {
-        ST_WARNING("Failed to pthread_mutex_lock fst_state_info_lock.");
+    if (pthread_mutex_unlock(&conv->fst_state_lock) != 0) {
+        ST_WARNING("Failed to pthread_mutex_lock fst_state_lock.");
         return -1;
     }
 
     return ret;
 }
 
-static int fst_converter_add_state(fst_converter_t *converter)
+static int fst_conv_add_state(fst_conv_t *conv,
+        int word_id, int model_state_id)
 {
     int sid;
 
-    ST_CHECK_PARAM(converter == NULL, -1);
+    ST_CHECK_PARAM(conv == NULL, -1);
 
-    if (pthread_mutex_lock(&converter->n_fst_state_lock) != 0) {
+    if (pthread_mutex_lock(&conv->n_fst_state_lock) != 0) {
         ST_WARNING("Failed to pthread_mutex_lock n_fst_state_lock.");
         return -1;
     }
 
-    sid = converter->n_fst_state++;
+    sid = conv->n_fst_state++;
 
-    if (fst_converter_maybe_realloc_infos(converter) < 0) {
-        ST_WARNING("Failed to fst_converter_maybe_realloc_infos.");
+    if (fst_conv_maybe_realloc_infos(conv) < 0) {
+        ST_WARNING("Failed to fst_conv_maybe_realloc_infos.");
         return -1;
     }
-    if (pthread_mutex_unlock(&converter->n_fst_state_lock) != 0) {
+    if (pthread_mutex_unlock(&conv->n_fst_state_lock) != 0) {
         ST_WARNING("Failed to pthread_mutex_unlock n_fst_state_lock.");
         return -1;
     }
 
+    conv->fst_states[sid].word_id = word_id;
+    conv->fst_states[sid].model_state_id = model_state_id;
+
     return sid;
 }
 
-static int fst_converter_print_arc(fst_converter_t *converter,
-        int from, int to, int wid)
+static int fst_conv_print_arc(fst_conv_t *conv,
+        int from, int to, int wid, double weight)
 {
-    char *word;
+    char *ilab_str;
+    char *olab_str;
+    int ilab;
+    int olab;
     int ret;
 
-    if (pthread_mutex_lock(&converter->fst_fp_lock) != 0) {
+    if (pthread_mutex_lock(&conv->fst_fp_lock) != 0) {
         ST_WARNING("Failed to pthread_mutex_lock fst_fp_lock.");
         return -1;
     }
-    if (converter->converter_opt.print_syms) {
-        word = vocab_get_word(converter->connlm->vocab, wid);
-        ret = fprintf(converter->fst_fp, "%d\t%d\t%s\t%s\n", from, to,
-                word, word);
+    if (conv->conv_opt.print_syms) {
+        if (phi_id(conv) == wid) {
+            ilab_str = PHI;
+            olab_str = EPS;
+        } else {
+            ilab_str = vocab_get_word(conv->connlm->vocab, wid);
+            olab_str = ilab_str;
+        }
+        ret = fprintf(conv->fst_fp, "%d\t%d\t%s\t%s\t%f\n", from, to,
+                ilab_str, olab_str, (float)weight);
     } else {
-        ret = fprintf(converter->fst_fp, "%d\t%d\t%d\t%d\n", from, to,
-                wid, wid);
+        if (phi_id(conv) == wid) {
+            ilab = wid + 1; // reserver 0 for <eps>
+            olab = 0;
+        } else {
+            ilab = wid + 1; // reserver 0 for <eps>
+            olab = ilab;
+        }
+        ret = fprintf(conv->fst_fp, "%d\t%d\t%d\t%d\t%f\n", from, to,
+                ilab, olab, (float)weight);
     }
-    if (pthread_mutex_unlock(&converter->fst_fp_lock) != 0) {
+    if (pthread_mutex_unlock(&conv->fst_fp_lock) != 0) {
         ST_WARNING("Failed to pthread_mutex_lock fst_fp_lock.");
         return -1;
     }
@@ -331,7 +470,7 @@ static int boost_sampling(double *probs, int n_probs,
             }
         }
 
-        if (word == SENT_START_ID) { // FIXME: <any>
+        if (word == SENT_START_ID) {
             continue;
         }
 
@@ -341,26 +480,22 @@ static int boost_sampling(double *probs, int n_probs,
     return word;
 }
 
-static int select_word(fst_converter_t *converter, int last_word,
+static int select_word(fst_conv_t *conv, int last_word,
         double *output_probs, unsigned int *rand_seed)
 {
-    int vocab_size;
     int word;
 
-    ST_CHECK_PARAM(converter == NULL || last_word < -1, -1);
+    ST_CHECK_PARAM(conv == NULL || last_word < -1, -1);
 
-    vocab_size = converter->connlm->vocab->vocab_size;
-
-    switch (converter->converter_opt.bom) {
+    switch (conv->conv_opt.bom) {
         case BOM_BEAM:
             word = last_word + 1;
-            while (word < vocab_size) {
+            while (word < get_vocab_size(conv)) {
                 if (word == SENT_END_ID || word == SENT_START_ID) {
-                    // FIXME: <any>
                     continue;
                 }
                 if (output_probs[word] >= output_probs[SENT_END_ID]
-                        - converter->converter_opt.beam) {
+                        - conv->conv_opt.beam) {
                     return word;
                 }
                 ++word;
@@ -369,8 +504,8 @@ static int select_word(fst_converter_t *converter, int last_word,
             return SENT_END_ID;
             break;
         case BOM_SAMPLING:
-            return boost_sampling(output_probs, vocab_size,
-                    converter->converter_opt.boost, rand_seed);
+            return boost_sampling(output_probs, get_vocab_size(conv),
+                    conv->conv_opt.boost, rand_seed);
             break;
         default:
             ST_WARNING("Unkown backoff method");
@@ -380,38 +515,46 @@ static int select_word(fst_converter_t *converter, int last_word,
     return -1;
 }
 
-static int fst_converter_expand(fst_converter_t *converter,
-        int tid, int sid, double *output_probs, unsigned int *rand_seed)
+static int fst_conv_expand(fst_conv_t *conv, fst_conv_args_t *args)
 {
     updater_t *updater;
     real_t *state;
     real_t *new_state;
+    double *output_probs;
 
+    double backoff_prob;
+    int sid;
     int new_sid;
     int model_state_id;
     int word;
 
-    ST_CHECK_PARAM(converter == NULL || sid < 0, -1);
+    bool no_backoff;
+    bool expand_wildchar;
+    int i, n;
+    bool have_any;
 
-    updater = converter->updaters[tid];
+    ST_CHECK_PARAM(conv == NULL || args == NULL, -1);
 
-    if (converter->fst_state_infos[sid].model_state_id < 0) {
-        // <s> state
+    updater = conv->updaters[args->tid];
+    sid = args->sid;
+    output_probs = args->output_probs;
+
+    if (conv->fst_states[sid].model_state_id < 0) {
         state = NULL;
     } else {
-        state = (real_t *)st_block_cache_fetch(converter->model_state_cache,
-                &(converter->fst_state_infos[sid].model_state_id));
+        state = (real_t *)st_block_cache_fetch(conv->model_state_cache,
+                &(conv->fst_states[sid].model_state_id));
         if (state == NULL) {
             ST_WARNING("Failed to st_block_cache_fetch state.");
             return -1;
         }
     }
 
-    //forward(updater, state, converter->fst_state_infos[sid].word_id, -1)
+    //forward(updater, state, conv->fst_states[sid].word_id, -1)
 
     model_state_id = -1;
     new_state = (real_t *)st_block_cache_fetch(
-            converter->model_state_cache, &model_state_id);
+            conv->model_state_cache, &model_state_id);
     if (new_state == NULL) {
         ST_WARNING("Failed to st_block_cache_fetch new state.");
         return -1;
@@ -422,138 +565,247 @@ static int fst_converter_expand(fst_converter_t *converter,
         return -1;
     }
 
-    // converter->output_probs =
+    // conv->output_probs =
+    // logprob2prob(output_probs);
+    // distribute_prob(output_probs, SENT_START_ID);
 
-    word = -1;
-    while(true) {
-        word = select_word(converter, word, output_probs, rand_seed);
-        if (word < 0) {
-            ST_WARNING("Failed to select_word.");
-            return -1;
+    no_backoff = false;
+    expand_wildchar = false;
+    if (conv->fst_states[sid].word_id == ANY_ID) {
+        if(conv->fst_states[sid].parent == -1) { // no backoff
+            no_backoff = true;
         }
+        expand_wildchar = true;
+    }
 
-        new_sid = fst_converter_add_state(converter);
+    if (no_backoff) {
+        // expand <any> first, since other state may backoff to them.
+        word = ANY_ID;
+        new_sid = fst_conv_add_state(conv, word, model_state_id);
         if (new_sid < 0) {
-            ST_WARNING("Failed to fst_converter_add_state.");
-            return -1;
-        }
-        converter->fst_state_infos[new_sid].model_state_id = model_state_id;
-        converter->fst_state_infos[new_sid].word_id = word;
-
-        if (fst_converter_print_arc(converter, sid, new_sid, word) < 0) {
-            ST_WARNING("Failed to fst_converter_print_arc.");
+            ST_WARNING("Failed to fst_conv_add_state.");
             return -1;
         }
 
-        if (word == SENT_END_ID) {
-            break;
+        if (fst_conv_print_arc(conv, sid,
+                    new_sid, word, output_probs[word]) < 0) {
+            ST_WARNING("Failed to fst_conv_print_arc.");
+            return -1;
+        }
+
+        for (word = 0; word < get_vocab_size(conv); word++) {
+            if (word == ANY_ID || word == SENT_START_ID) {
+                continue;
+            }
+
+            if (word == SENT_END_ID) {
+                if (fst_conv_print_arc(conv, sid,
+                        FST_FINAL_STATE, word, output_probs[word]) < 0) {
+                    ST_WARNING("Failed to fst_conv_print_arc.");
+                    return -1;
+                }
+                continue;
+            }
+
+            new_sid = fst_conv_add_state(conv, word, model_state_id);
+            if (new_sid < 0) {
+                ST_WARNING("Failed to fst_conv_add_state.");
+                return -1;
+            }
+
+            if (fst_conv_print_arc(conv, sid,
+                        new_sid, word, output_probs[word]) < 0) {
+                ST_WARNING("Failed to fst_conv_print_arc.");
+                return -1;
+            }
+        }
+    } else if (expand_wildchar) {
+        word = -1;
+        n = 0;
+        have_any = false;
+        while(true) {
+            word = select_word(conv, word, output_probs,
+                    &args->rand_seed);
+            if (word < 0) {
+                ST_WARNING("Failed to select_word.");
+                return -1;
+            }
+            if (word == ANY_ID) {
+                have_any = true;
+            }
+
+            args->selected_words[n] = word;
+            n++;
+        }
+
+        if (!have_any) {
+            if (fst_conv_print_arc(conv, sid,
+                        FST_FINAL_STATE, SENT_END_ID,
+                        output_probs[SENT_END_ID]) < 0) {
+                ST_WARNING("Failed to fst_conv_print_arc.");
+                return -1;
+            }
+        } else {
+            // expand <any> first, since other state may backoff to them.
+            word = ANY_ID;
+            new_sid = fst_conv_add_state(conv, word,
+                    model_state_id);
+            if (new_sid < 0) {
+                ST_WARNING("Failed to fst_conv_add_state.");
+                return -1;
+            }
+
+            if (fst_conv_print_arc(conv, sid,
+                        new_sid, word, output_probs[word]) < 0) {
+                ST_WARNING("Failed to fst_conv_print_arc.");
+                return -1;
+            }
+
+            for (i = 0; i < n; i++) {
+                word = args->selected_words[i];
+                backoff_prob -= output_probs[word];
+
+                if (word == ANY_ID) {
+                    continue;
+                }
+
+                if (word == SENT_END_ID) {
+                    if (fst_conv_print_arc(conv, sid,
+                                FST_FINAL_STATE, word,
+                                output_probs[word]) < 0) {
+                        ST_WARNING("Failed to fst_conv_print_arc.");
+                        return -1;
+                    }
+                    break;
+                }
+
+                new_sid = fst_conv_add_state(conv, word,
+                        model_state_id);
+                if (new_sid < 0) {
+                    ST_WARNING("Failed to fst_conv_add_state.");
+                    return -1;
+                }
+
+                if (fst_conv_print_arc(conv, sid,
+                            new_sid, word, output_probs[word]) < 0) {
+                    ST_WARNING("Failed to fst_conv_print_arc.");
+                    return -1;
+                }
+            }
+        }
+    } else {
+        // distribute_prob(output_probs, ANY_ID);
+        backoff_prob = 1.0;
+        word = -1;
+        while(true) {
+            word = select_word(conv, word, output_probs,
+                    &args->rand_seed);
+            if (word < 0) {
+                ST_WARNING("Failed to select_word.");
+                return -1;
+            }
+            if (word == ANY_ID) {
+                continue;
+            }
+
+            backoff_prob -= output_probs[word];
+
+            if (word == SENT_END_ID) {
+                if (fst_conv_print_arc(conv, sid,
+                        FST_FINAL_STATE, word, output_probs[word]) < 0) {
+                    ST_WARNING("Failed to fst_conv_print_arc.");
+                    return -1;
+                }
+                break;
+            }
+
+            new_sid = fst_conv_add_state(conv, word,
+                    model_state_id);
+            if (new_sid < 0) {
+                ST_WARNING("Failed to fst_conv_add_state.");
+                return -1;
+            }
+
+            if (fst_conv_print_arc(conv, sid,
+                        new_sid, word, output_probs[word]) < 0) {
+                ST_WARNING("Failed to fst_conv_print_arc.");
+                return -1;
+            }
+        }
+    }
+
+    if (!no_backoff) {
+        //backoff
+        new_sid = fst_conv_find_backoff(conv, sid);
+        if (new_sid < 0) {
+            ST_WARNING("Failed to fst_conv_find_backoff.");
+            return -1;
+        }
+
+        if (fst_conv_print_arc(conv, sid, new_sid,
+                    phi_id(conv), backoff_prob) < 0) {
+            ST_WARNING("Failed to fst_conv_print_arc.");
+            return -1;
         }
     }
 
     return 0;
 }
 
-typedef struct fst_converter_thread_args_t_ {
-    fst_converter_t *converter;
-    int tid;
-    int sid;
-
-    unsigned int rand_seed;
-    double *output_probs;
-} converter_targs_t;
-
-static void* converter_worker(void *args)
+static void* conv_worker(void *args)
 {
-    converter_targs_t *targs;
-    fst_converter_t *converter;
+    fst_conv_args_t *cargs;
+    fst_conv_t *conv;
 
-    targs = (converter_targs_t *)args;
-    converter = targs->converter;
+    cargs = (fst_conv_args_t *)args;
+    conv = cargs->conv;
 
-    if (fst_converter_expand(converter, targs->tid, targs->sid,
-                targs->output_probs, &targs->rand_seed) < 0) {
-        ST_WARNING("Failed to fst_converter_expand.");
+    if (fst_conv_expand(conv, cargs) < 0) {
+        ST_WARNING("Failed to fst_conv_expand.");
         goto ERR;
     }
 
     return NULL;
 
 ERR:
-    converter->err = -1;
+    conv->err = -1;
 
     return NULL;
 }
 
-int fst_converter_convert(fst_converter_t *converter, FILE *fst_fp)
+int fst_conv_reset(fst_conv_t *conv, fst_conv_args_t *args)
 {
-    converter_targs_t *targs = NULL;
+    ST_CHECK_PARAM(conv == NULL, -1);
+
+    return 0;
+}
+
+int fst_conv_build_wildcard(fst_conv_t *conv, fst_conv_args_t *args)
+{
     pthread_t *pts = NULL;
     int sid;
     int i, n;
 
-    ST_CHECK_PARAM(converter == NULL || fst_fp == NULL, -1);
+    ST_CHECK_PARAM(conv == NULL || args == NULL, -1);
 
-    if (fst_converter_setup(converter, fst_fp) < 0) {
-        ST_WARNING("Failed to fst_converter_setup.");
-        goto ERR;
-    }
-
-    pts = (pthread_t *)malloc(sizeof(pthread_t) * converter->n_thr);
+    pts = (pthread_t *)malloc(sizeof(pthread_t) * conv->n_thr);
     if (pts == NULL) {
         ST_WARNING("Failed to malloc pts");
         goto ERR;
     }
 
-    targs = (converter_targs_t *)malloc(sizeof(converter_targs_t)
-            * converter->n_thr);
-    if (targs == NULL) {
-        ST_WARNING("Failed to malloc targs");
-        goto ERR;
-    }
-    memset(targs, 0, sizeof(converter_targs_t) * converter->n_thr);
-
-    for (i = 0; i < converter->n_thr; i++) {
-        targs[i].converter = converter;
-        targs[i].tid = i;
-
-        targs[i].output_probs = (double *)malloc(sizeof(double)
-                * converter->connlm->vocab->vocab_size);
-        if (targs[i].output_probs == NULL) {
-            ST_WARNING("Failed to malloc output_probs.");
-            goto ERR;
-        }
-        targs[i].rand_seed = converter->converter_opt.init_rand_seed + i;
-    }
-
-    if (fst_converter_add_state(converter) != FST_INIT_STATE) {
-        ST_WARNING("Failed to fst_converter_add_state init state.");
-        goto ERR;
-    }
-    if (fst_converter_add_state(converter) != FST_FINAL_STATE) {
-        ST_WARNING("Failed to fst_converter_add_state final state.");
-        goto ERR;
-    }
-
-    sid = fst_converter_add_state(converter);
+    sid = fst_conv_add_state(conv, ANY_ID, -1);
     if (sid < 0) {
-        ST_WARNING("Failed to fst_converter_add_state.");
+        ST_WARNING("Failed to fst_conv_add_state.");
         goto ERR;
     }
 
-    if (fst_converter_print_arc(converter, FST_INIT_STATE, sid,
-                SENT_START_ID) < 0) {
-        ST_WARNING("Failed to fst_converter_print_arc for <s>.");
-        goto ERR;
-    }
-    converter->fst_state_infos[sid].word_id = SENT_START_ID;
-    converter->fst_state_infos[sid].model_state_id = -1;
-
-    while (sid < converter->n_fst_state) {
-        for (n = 0; sid < converter->n_fst_state && n < converter->n_thr;
+    while (sid < conv->n_fst_state) {
+        for (n = 0; sid < conv->n_fst_state && n < conv->n_thr;
                 sid++, n++) {
-            targs[n].sid = sid;
-            if (pthread_create(pts + n, NULL, converter_worker,
-                        (void *)(targs + n)) != 0) {
+            args[n].sid = sid;
+            if (pthread_create(pts + n, NULL, conv_worker,
+                        (void *)(args + n)) != 0) {
                 ST_WARNING("Failed to pthread_create.");
                 goto ERR;
             }
@@ -566,29 +818,119 @@ int fst_converter_convert(fst_converter_t *converter, FILE *fst_fp)
             }
         }
 
-        if (converter->err != 0) {
+        if (conv->err != 0) {
             ST_WARNING("Error in worker threads");
             goto ERR;
         }
     }
 
     safe_free(pts);
-    if (targs != NULL) {
-        for (i = 0; i < converter->n_thr; i++) {
-            safe_free(targs[i].output_probs);
-        }
-        safe_free(targs);
-    }
     return 0;
 
 ERR:
 
     safe_free(pts);
-    if (targs != NULL) {
-        for (i = 0; i < converter->n_thr; i++) {
-            safe_free(targs[i].output_probs);
-        }
-        safe_free(targs);
+    return -1;
+}
+
+int fst_conv_build_normal(fst_conv_t *conv, fst_conv_args_t *args)
+{
+    pthread_t *pts = NULL;
+    int sid;
+    int i, n;
+
+    ST_CHECK_PARAM(conv == NULL || args == NULL, -1);
+
+    pts = (pthread_t *)malloc(sizeof(pthread_t) * conv->n_thr);
+    if (pts == NULL) {
+        ST_WARNING("Failed to malloc pts");
+        goto ERR;
     }
+
+    sid = fst_conv_add_state(conv, SENT_START_ID, -1);
+    if (sid < 0) {
+        ST_WARNING("Failed to fst_conv_add_state.");
+        goto ERR;
+    }
+
+    if (fst_conv_print_arc(conv, FST_INIT_STATE, sid,
+                SENT_START_ID, 0.0) < 0) {
+        ST_WARNING("Failed to fst_conv_print_arc for <s>.");
+        goto ERR;
+    }
+
+    while (sid < conv->n_fst_state) {
+        for (n = 0; sid < conv->n_fst_state && n < conv->n_thr;
+                sid++, n++) {
+            args[n].sid = sid;
+            if (pthread_create(pts + n, NULL, conv_worker,
+                        (void *)(args + n)) != 0) {
+                ST_WARNING("Failed to pthread_create.");
+                goto ERR;
+            }
+        }
+
+        for (i = 0; i < n; i++) {
+            if (pthread_join(pts[i], NULL) != 0) {
+                ST_WARNING("Falied to pthread_join.");
+                goto ERR;
+            }
+        }
+
+        if (conv->err != 0) {
+            ST_WARNING("Error in worker threads");
+            goto ERR;
+        }
+    }
+
+    safe_free(pts);
+    return 0;
+
+ERR:
+
+    safe_free(pts);
+    return -1;
+}
+
+int fst_conv_convert(fst_conv_t *conv, FILE *fst_fp)
+{
+    fst_conv_args_t *args = NULL;
+
+    ST_CHECK_PARAM(conv == NULL || fst_fp == NULL, -1);
+
+    if (fst_conv_setup(conv, fst_fp, &args) < 0) {
+        ST_WARNING("Failed to fst_conv_setup.");
+        goto ERR;
+    }
+
+    if (fst_conv_add_state(conv, -1, -1) != FST_INIT_STATE) {
+        ST_WARNING("Failed to fst_conv_add_state init state.");
+        goto ERR;
+    }
+    if (fst_conv_add_state(conv, -1, -1) != FST_FINAL_STATE) {
+        ST_WARNING("Failed to fst_conv_add_state final state.");
+        goto ERR;
+    }
+
+    if (fst_conv_build_wildcard(conv, args) < 0) {
+        ST_WARNING("Failed to fst_conv_build_wildcard.");
+        goto ERR;
+    }
+
+    if (fst_conv_reset(conv, args) < 0) {
+        ST_WARNING("Failed to fst_conv_reset.");
+        goto ERR;
+    }
+
+    if (fst_conv_build_normal(conv, args) < 0) {
+        ST_WARNING("Failed to fst_conv_build_normal.");
+        goto ERR;
+    }
+
+    safe_fst_conv_args_list_destroy(args, conv->n_thr);
+    return 0;
+
+ERR:
+    safe_fst_conv_args_list_destroy(args, conv->n_thr);
     return -1;
 }
