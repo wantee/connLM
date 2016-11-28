@@ -27,6 +27,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <math.h>
+#include <assert.h>
 
 #include <stutils/st_macro.h>
 #include <stutils/st_log.h>
@@ -342,7 +343,6 @@ static int fst_conv_setup(fst_conv_t *conv, FILE *fst_fp,
 
 static int fst_conv_maybe_realloc_infos(fst_conv_t *conv)
 {
-    int needed;
     int ret;
 
     ST_CHECK_PARAM(conv == NULL, -1);
@@ -356,11 +356,10 @@ static int fst_conv_maybe_realloc_infos(fst_conv_t *conv)
         goto RET;
     }
 
-    needed = max(conv->cap_fst_states + get_vocab_size(conv),
-            conv->n_fst_state);
+    conv->cap_fst_states = conv->n_fst_state + get_vocab_size(conv);
 
     conv->fst_states = realloc(conv->fst_states,
-            sizeof(fst_state_t) * needed);
+            sizeof(fst_state_t) * conv->cap_fst_states);
     if (conv->fst_states == NULL) {
         ST_WARNING("Failed to realloc fst_states.");
         ret = -1;
@@ -377,19 +376,20 @@ RET:
     return ret;
 }
 
-static int fst_conv_add_state(fst_conv_t *conv,
-        int word_id, int model_state_id)
+static int fst_conv_add_states(fst_conv_t *conv, int n, int parent)
 {
+    int i;
     int sid;
 
-    ST_CHECK_PARAM(conv == NULL, -1);
+    ST_CHECK_PARAM(conv == NULL || n < 0, -1);
 
     if (pthread_mutex_lock(&conv->n_fst_state_lock) != 0) {
         ST_WARNING("Failed to pthread_mutex_lock n_fst_state_lock.");
         return -1;
     }
 
-    sid = conv->n_fst_state++;
+    sid = conv->n_fst_state;
+    conv->n_fst_state += n;
 
     if (fst_conv_maybe_realloc_infos(conv) < 0) {
         ST_WARNING("Failed to fst_conv_maybe_realloc_infos.");
@@ -400,8 +400,11 @@ static int fst_conv_add_state(fst_conv_t *conv,
         return -1;
     }
 
-    conv->fst_states[sid].word_id = word_id;
-    conv->fst_states[sid].model_state_id = model_state_id;
+    for (i = sid; i < conv->n_fst_state; i++) {
+        conv->fst_states[sid].word_id = -1;
+        conv->fst_states[sid].parent = parent;
+        conv->fst_states[sid].model_state_id = -1;
+    }
 
     return sid;
 }
@@ -414,6 +417,8 @@ static int fst_conv_print_arc(fst_conv_t *conv,
     int ilab;
     int olab;
     int ret;
+
+    ST_CHECK_PARAM(conv == NULL || from < 0 || to < 0 || wid < 0, -1);
 
     if (pthread_mutex_lock(&conv->fst_fp_lock) != 0) {
         ST_WARNING("Failed to pthread_mutex_lock fst_fp_lock.");
@@ -562,6 +567,7 @@ static int fst_conv_expand(fst_conv_t *conv, fst_conv_args_t *args)
 
     double backoff_prob;
     int sid;
+    int new_sid;
     int to_sid;
     int model_state_id;
     int word;
@@ -616,6 +622,10 @@ static int fst_conv_expand(fst_conv_t *conv, fst_conv_args_t *args)
         expand_wildchar = true;
     }
 
+    if (!expand_wildchar) {
+        // distribute_prob(output_probs, ANY_ID);
+    }
+
     if (no_backoff) {
         n = 0;
         for (word = 0; word < get_vocab_size(conv); word++) {
@@ -653,34 +663,32 @@ static int fst_conv_expand(fst_conv_t *conv, fst_conv_args_t *args)
     }
 
     backoff_prob = 1.0;
-    if (expand_wildchar) {
-        if (!have_any) {
-            if (fst_conv_print_arc(conv, sid,
-                        FST_FINAL_STATE, SENT_END_ID,
-                        output_probs[SENT_END_ID]) < 0) {
-                ST_WARNING("Failed to fst_conv_print_arc.");
-                return -1;
-            }
-            backoff_prob -= output_probs[SENT_END_ID];
-            n = 0;
-        } else {
-            // expand <any> first, since other state may backoff to them.
-            word = ANY_ID;
-            to_sid = fst_conv_add_state(conv, word, model_state_id);
-            if (to_sid < 0) {
-                ST_WARNING("Failed to fst_conv_add_state.");
-                return -1;
-            }
+    if (expand_wildchar && !have_any) {
+        args->selected_words[0] = SENT_END_ID;
+        n = 1;
+    }
 
-            if (fst_conv_print_arc(conv, sid,
-                        to_sid, word, output_probs[word]) < 0) {
-                ST_WARNING("Failed to fst_conv_print_arc.");
-                return -1;
-            }
-            backoff_prob -= output_probs[ANY_ID];
+    // probability of <any> already distributed to other words
+    if (!expand_wildchar) assert(!have_any);
+
+    new_sid = fst_conv_add_states(conv, n - 1/* -1 for </s> */, sid);
+    if (new_sid < 0) {
+        ST_WARNING("Failed to fst_conv_add_states.");
+        return -1;
+    }
+
+    if (expand_wildchar && have_any) {
+        // expand <any> first, since other state may backoff to them.
+        word = ANY_ID;
+        to_sid = new_sid++;
+        conv->fst_states[to_sid].word_id = word;
+
+        if (fst_conv_print_arc(conv, sid,
+                    to_sid, word, output_probs[word]) < 0) {
+            ST_WARNING("Failed to fst_conv_print_arc.");
+            return -1;
         }
-    } else {
-        // distribute_prob(output_probs, ANY_ID);
+        backoff_prob -= output_probs[ANY_ID];
     }
 
     for (i = 0; i < n; i++) {
@@ -694,12 +702,8 @@ static int fst_conv_expand(fst_conv_t *conv, fst_conv_args_t *args)
         if (word == SENT_END_ID) {
             to_sid = FST_FINAL_STATE;
         } else {
-            to_sid = fst_conv_add_state(conv, word,
-                    model_state_id);
-            if (to_sid < 0) {
-                ST_WARNING("Failed to fst_conv_add_state.");
-                return -1;
-            }
+            to_sid = new_sid++;
+            conv->fst_states[to_sid].word_id = word;
         }
 
         if (fst_conv_print_arc(conv, sid,
@@ -769,11 +773,12 @@ static int fst_conv_build_wildcard(fst_conv_t *conv, fst_conv_args_t *args)
         goto ERR;
     }
 
-    sid = fst_conv_add_state(conv, ANY_ID, -1);
+    sid = fst_conv_add_states(conv, 1, -1);
     if (sid < 0) {
-        ST_WARNING("Failed to fst_conv_add_state.");
+        ST_WARNING("Failed to fst_conv_add_states for <any>.");
         goto ERR;
     }
+    conv->fst_states[sid].word_id = ANY_ID;
 
     while (sid < conv->n_fst_state) {
         for (n = 0; sid < conv->n_fst_state && n < conv->n_thr;
@@ -822,11 +827,12 @@ static int fst_conv_build_normal(fst_conv_t *conv, fst_conv_args_t *args)
         goto ERR;
     }
 
-    sid = fst_conv_add_state(conv, SENT_START_ID, -1);
+    sid = fst_conv_add_states(conv, 1, -1);
     if (sid < 0) {
-        ST_WARNING("Failed to fst_conv_add_state.");
+        ST_WARNING("Failed to fst_conv_add_states for <s>.");
         goto ERR;
     }
+    conv->fst_states[sid].word_id = SENT_START_ID;
 
     if (fst_conv_print_arc(conv, FST_INIT_STATE, sid,
                 SENT_START_ID, 0.0) < 0) {
@@ -878,14 +884,15 @@ int fst_conv_convert(fst_conv_t *conv, FILE *fst_fp)
         goto ERR;
     }
 
-    if (fst_conv_add_state(conv, -1, -1) != FST_INIT_STATE) {
-        ST_WARNING("Failed to fst_conv_add_state init state.");
+    if (fst_conv_add_states(conv, 1, -1) != FST_INIT_STATE) {
+        ST_WARNING("Failed to fst_conv_add_states init state.");
         goto ERR;
     }
-    if (fst_conv_add_state(conv, -1, -1) != FST_FINAL_STATE) {
-        ST_WARNING("Failed to fst_conv_add_state final state.");
+    if (fst_conv_add_states(conv, 1, -1) != FST_FINAL_STATE) {
+        ST_WARNING("Failed to fst_conv_add_states final state.");
         goto ERR;
     }
+    conv->fst_states[FST_FINAL_STATE].word_id = SENT_END_ID;
 
     if (fst_conv_build_wildcard(conv, args) < 0) {
         ST_WARNING("Failed to fst_conv_build_wildcard.");
