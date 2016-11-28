@@ -51,6 +51,8 @@ typedef struct _fst_converter_args_t_ {
     unsigned int rand_seed;
     double *output_probs;
     int *selected_words;
+
+    bool store_children;
 } fst_conv_args_t;
 
 static void fst_conv_args_destroy(fst_conv_args_t *args)
@@ -214,14 +216,13 @@ void fst_conv_destroy(fst_conv_t *conv)
     safe_free(conv->updaters);
     conv->n_thr = 0;
 
-    (void)pthread_mutex_destroy(&conv->n_fst_state_lock);
-
     safe_st_block_cache_destroy(conv->model_state_cache);
     (void)pthread_mutex_destroy(&conv->model_state_cache_lock);
 
     safe_free(conv->fst_states);
     (void)pthread_mutex_destroy(&conv->fst_state_lock);
     conv->cap_fst_states = 0;
+    conv->n_fst_state = 0;
 
     (void)pthread_mutex_destroy(&conv->fst_fp_lock);
     conv->fst_fp = NULL;
@@ -267,11 +268,6 @@ fst_conv_t* fst_conv_create(connlm_t *connlm, int n_thr,
             ST_WARNING("Failed to malloc updater[%d].", i);
             goto ERR;
         }
-    }
-
-    if (pthread_mutex_init(&conv->n_fst_state_lock, NULL) != 0) {
-        ST_WARNING("Failed to pthread_mutex_init n_fst_state_lock.");
-        goto ERR;
     }
 
     count = (int)sqrt(get_vocab_size(conv)) * get_vocab_size(conv);
@@ -341,19 +337,15 @@ static int fst_conv_setup(fst_conv_t *conv, FILE *fst_fp,
     return 0;
 }
 
-static int fst_conv_maybe_realloc_infos(fst_conv_t *conv)
+static int fst_conv_maybe_realloc_states(fst_conv_t *conv,
+        bool store_children)
 {
-    int ret;
+    int i;
 
     ST_CHECK_PARAM(conv == NULL, -1);
 
-    if (pthread_mutex_lock(&conv->fst_state_lock) != 0) {
-        ST_WARNING("Failed to pthread_mutex_lock fst_state_lock.");
-        return -1;
-    }
     if (conv->n_fst_state < conv->cap_fst_states) {
-        ret = 0;
-        goto RET;
+        return 0;
     }
 
     conv->cap_fst_states = conv->n_fst_state + get_vocab_size(conv);
@@ -362,41 +354,50 @@ static int fst_conv_maybe_realloc_infos(fst_conv_t *conv)
             sizeof(fst_state_t) * conv->cap_fst_states);
     if (conv->fst_states == NULL) {
         ST_WARNING("Failed to realloc fst_states.");
-        ret = -1;
-        goto RET;
-    }
-
-    ret = 0;
-RET:
-    if (pthread_mutex_unlock(&conv->fst_state_lock) != 0) {
-        ST_WARNING("Failed to pthread_mutex_lock fst_state_lock.");
         return -1;
     }
 
-    return ret;
+    if (store_children) {
+        conv->fst_children = realloc(conv->fst_children,
+                sizeof(fst_state_children_t) * conv->cap_fst_states);
+        if (conv->fst_children == NULL) {
+            ST_WARNING("Failed to realloc fst_children.");
+            return -1;
+        }
+        for (i = conv->n_fst_state; i < conv->cap_fst_states; i++) {
+            conv->fst_children[i].first_child = -1;
+            conv->fst_children[i].num_children = -1;
+        }
+    }
+
+    return 0;
 }
 
-static int fst_conv_add_states(fst_conv_t *conv, int n, int parent)
+static int fst_conv_add_states(fst_conv_t *conv, int n,
+        int parent, bool store_children)
 {
     int i;
     int sid;
 
+    int ret = 0;
+
     ST_CHECK_PARAM(conv == NULL || n < 0, -1);
 
-    if (pthread_mutex_lock(&conv->n_fst_state_lock) != 0) {
-        ST_WARNING("Failed to pthread_mutex_lock n_fst_state_lock.");
+    if (pthread_mutex_lock(&conv->fst_state_lock) != 0) {
+        ST_WARNING("Failed to pthread_mutex_lock fst_state_lock.");
         return -1;
     }
 
     sid = conv->n_fst_state;
     conv->n_fst_state += n;
 
-    if (fst_conv_maybe_realloc_infos(conv) < 0) {
-        ST_WARNING("Failed to fst_conv_maybe_realloc_infos.");
-        return -1;
+    if (fst_conv_maybe_realloc_states(conv, store_children) < 0) {
+        ST_WARNING("Failed to fst_conv_maybe_realloc_states.");
+        ret = -1;
+        goto RET;
     }
-    if (pthread_mutex_unlock(&conv->n_fst_state_lock) != 0) {
-        ST_WARNING("Failed to pthread_mutex_unlock n_fst_state_lock.");
+    if (pthread_mutex_unlock(&conv->fst_state_lock) != 0) {
+        ST_WARNING("Failed to pthread_mutex_unlock fst_state_lock.");
         return -1;
     }
 
@@ -406,7 +407,24 @@ static int fst_conv_add_states(fst_conv_t *conv, int n, int parent)
         conv->fst_states[sid].model_state_id = -1;
     }
 
+    if (store_children && parent > 0) {
+        if (conv->fst_children[parent].first_child != -1) {
+            ST_WARNING("duplicated parent[%d]", parent);
+            return -1;
+        }
+        conv->fst_children[parent].first_child = sid;
+        conv->fst_children[parent].num_children = n;
+    }
+
     return sid;
+
+RET:
+    if (pthread_mutex_unlock(&conv->fst_state_lock) != 0) {
+        ST_WARNING("Failed to pthread_mutex_unlock fst_state_lock.");
+        return -1;
+    }
+
+    return ret;
 }
 
 static int fst_conv_print_arc(fst_conv_t *conv,
@@ -680,7 +698,8 @@ static int fst_conv_expand(fst_conv_t *conv, fst_conv_args_t *args)
     // probability of <any> already distributed to other words
     if (!expand_wildchar) assert(!have_any);
 
-    new_sid = fst_conv_add_states(conv, n - 1/* -1 for </s> */, sid);
+    new_sid = fst_conv_add_states(conv, n - 1/* -1 for </s> */, sid,
+            args->store_children);
     if (new_sid < 0) {
         ST_WARNING("Failed to fst_conv_add_states.");
         return -1;
@@ -805,12 +824,16 @@ static int fst_conv_build_wildcard(fst_conv_t *conv, fst_conv_args_t *args)
         goto ERR;
     }
 
-    sid = fst_conv_add_states(conv, 1, -1);
+    sid = fst_conv_add_states(conv, 1, -1, true);
     if (sid < 0) {
         ST_WARNING("Failed to fst_conv_add_states for <any>.");
         goto ERR;
     }
     conv->fst_states[sid].word_id = ANY_ID;
+
+    for (i = 0; i < conv->n_thr; i++) {
+        args[i].store_children = true;
+    }
 
     while (sid < conv->n_fst_state) {
         for (n = 0; sid < conv->n_fst_state && n < conv->n_thr;
@@ -859,7 +882,7 @@ static int fst_conv_build_normal(fst_conv_t *conv, fst_conv_args_t *args)
         goto ERR;
     }
 
-    sid = fst_conv_add_states(conv, 1, -1);
+    sid = fst_conv_add_states(conv, 1, -1, false);
     if (sid < 0) {
         ST_WARNING("Failed to fst_conv_add_states for <s>.");
         goto ERR;
@@ -870,6 +893,10 @@ static int fst_conv_build_normal(fst_conv_t *conv, fst_conv_args_t *args)
                 SENT_START_ID, 0.0) < 0) {
         ST_WARNING("Failed to fst_conv_print_arc for <s>.");
         goto ERR;
+    }
+
+    for (i = 0; i < conv->n_thr; i++) {
+        args[i].store_children = false;
     }
 
     while (sid < conv->n_fst_state) {
@@ -916,11 +943,11 @@ int fst_conv_convert(fst_conv_t *conv, FILE *fst_fp)
         goto ERR;
     }
 
-    if (fst_conv_add_states(conv, 1, -1) != FST_INIT_STATE) {
+    if (fst_conv_add_states(conv, 1, -1, false) != FST_INIT_STATE) {
         ST_WARNING("Failed to fst_conv_add_states init state.");
         goto ERR;
     }
-    if (fst_conv_add_states(conv, 1, -1) != FST_FINAL_STATE) {
+    if (fst_conv_add_states(conv, 1, -1, false) != FST_FINAL_STATE) {
         ST_WARNING("Failed to fst_conv_add_states final state.");
         goto ERR;
     }

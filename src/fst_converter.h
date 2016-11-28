@@ -90,6 +90,15 @@ typedef struct _fst_state_t_ {
 } fst_state_t;
 
 /**
+ * children states of a FST State.
+ * @ingroup g_conv
+ */
+typedef struct _fst_state_children_t_ {
+    int first_child; /**< state id of first state. */
+    int num_children; /**< number of children. */
+} fst_state_children_t;
+
+/**
  * FST Converter.
  * @ingroup g_conv
  */
@@ -101,14 +110,13 @@ typedef struct _fst_converter_t_ {
 
     int err; /**< error indicator. */
 
-    int n_fst_state; /**< number of states of FST. */
-    pthread_mutex_t n_fst_state_lock; /**< lock for n_fst_state. */
-
     st_block_cache_t *model_state_cache; /**< cache for internal state of model. */
     pthread_mutex_t model_state_cache_lock; /**< lock for model_state_cache. */
 
-    fst_state_t *fst_states; /**< fst_state_info array indexed by fst state id. */
+    fst_state_t *fst_states; /**< states of FST indexed by fst state id. */
     int cap_fst_states; /**< capacity of fst_states. */
+    int n_fst_state; /**< number of states of FST. */
+    fst_state_children_t *fst_children; /**< children of fst states. */
     pthread_mutex_t fst_state_lock; /**< lock for fst_states. */
 
     FILE *fst_fp; /**< output file pointer for fst file. */
