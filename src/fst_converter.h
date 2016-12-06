@@ -117,6 +117,7 @@ typedef struct _fst_converter_t_ {
     int cap_fst_states; /**< capacity of fst_states. */
     int n_fst_state; /**< number of states of FST. */
     fst_state_children_t *fst_children; /**< children of fst states. */
+    int n_fst_children; /**< numberof fst state children. */
     pthread_mutex_t fst_state_lock; /**< lock for fst_states. */
 
     FILE *fst_fp; /**< output file pointer for fst file. */
