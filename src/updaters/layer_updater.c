@@ -288,3 +288,42 @@ int layer_updater_reset(layer_updater_t *layer_updater)
 
     return 0;
 }
+
+int layer_updater_state_size(layer_updater_t *layer_updater)
+{
+    ST_CHECK_PARAM(layer_updater == NULL, -1);
+
+    if (layer_updater->ac_state != NULL) {
+        return layer_updater->layer->size;
+    }
+
+    return 0;
+}
+
+int layer_updater_dump_state(layer_updater_t *layer_updater, real_t *state)
+{
+    size_t sz;
+
+    ST_CHECK_PARAM(layer_updater == NULL || state == NULL, -1);
+
+    if (layer_updater->ac_state != NULL) {
+        sz = sizeof(real_t) * layer_updater->layer->size;
+        memcpy(state, layer_updater->ac_state, sz);
+    }
+
+    return 0;
+}
+
+int layer_updater_feed_state(layer_updater_t *layer_updater, real_t *state)
+{
+    size_t sz;
+
+    ST_CHECK_PARAM(layer_updater == NULL || state == NULL, -1);
+
+    if (layer_updater->ac_state != NULL) {
+        sz = sizeof(real_t) * layer_updater->layer->size;
+        memcpy(layer_updater->ac_state, state, sz);
+    }
+
+    return 0;
+}

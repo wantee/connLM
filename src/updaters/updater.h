@@ -156,6 +156,17 @@ int updater_state_size(updater_t *updater);
  */
 int updater_dump_state(updater_t *updater, real_t *state);
 
+/**
+ * Feed the state of updater.
+ * @ingroup g_updater
+ * @param[in] updater updater.
+ * @param[in] state pointer to values to be fed into state. Size of state
+ *             must be larger than or equal to the state_size returned
+ *             by updater_state_size.
+ * @return non-zero value if any error.
+ */
+int updater_feed_state(updater_t *updater, real_t *state);
+
 #ifdef __cplusplus
 }
 #endif

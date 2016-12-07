@@ -743,7 +743,11 @@ static int fst_conv_expand(fst_conv_t *conv, fst_conv_args_t *args)
         }
     }
 
-    //forward(updater, state, conv->fst_states[sid].word_id, -1)
+    if (updater_feed_state(updater, state) < 0) {
+        ST_WARNING("Failed to updater_feed_state.");
+        return -1;
+    }
+    //forward(updater, conv->fst_states[sid].word_id, -1)
 
     if (conv->fst_states[sid].model_state_id >= 0) {
         if (st_block_cache_return(conv->model_state_cache,

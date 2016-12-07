@@ -153,6 +153,36 @@ int layer_updater_clear(layer_updater_t *layer_updater);
  */
 int layer_updater_reset(layer_updater_t *layer_updater);
 
+/**
+ * Get the size of state in layer_updater.
+ * @ingroup g_updater_layer
+ * @param[in] layer_updater layer_updater.
+ * @return state size of layer_updater, -1 if any error.
+ */
+int layer_updater_state_size(layer_updater_t *layer_updater);
+
+/**
+ * Dump the state of layer_updater.
+ * @ingroup g_updater_layer
+ * @param[in] layer_updater layer_updater.
+ * @param[out] state pointer to store the dumped state. Size of state
+ *             must be larger than or equal to the state_size returned
+ *             by layer_updater_state_size.
+ * @return non-zero value if any error.
+ */
+int layer_updater_dump_state(layer_updater_t *layer_updater, real_t *state);
+
+/**
+ * Fedd the state of layer_updater.
+ * @ingroup g_updater_layer
+ * @param[in] layer_updater layer_updater.
+ * @param[in] state pointer to values to be fed into state. Size of state
+ *             must be larger than or equal to the state_size returned
+ *             by layer_updater_state_size.
+ * @return non-zero value if any error.
+ */
+int layer_updater_feed_state(layer_updater_t *layer_updater, real_t *state);
+
 #ifdef __cplusplus
 }
 #endif
