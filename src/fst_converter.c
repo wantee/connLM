@@ -55,8 +55,9 @@ typedef struct _fst_converter_args_t_ {
 
     bool store_children;
 
-    int *state_hist;
-    int num_state_hist;
+    int *word_hist;
+    int cap_word_hist;
+    int num_word_hist;
 } fst_conv_args_t;
 
 static void fst_conv_args_destroy(fst_conv_args_t *args)
@@ -71,8 +72,9 @@ static void fst_conv_args_destroy(fst_conv_args_t *args)
     safe_free(args->output_probs);
     safe_free(args->selected_words);
 
-    safe_free(args->state_hist);
-    args->num_state_hist = 0;
+    safe_free(args->word_hist);
+    args->num_word_hist = 0;
+    args->cap_word_hist = 0;
 
     args->conv = NULL;
 }
@@ -100,10 +102,10 @@ static int fst_conv_args_init(fst_conv_args_t *args,
         goto ERR;
     }
 
-    args->num_state_hist = 32;
-    args->state_hist = (int *)malloc(sizeof(int) * args->num_state_hist);
-    if (args->state_hist == NULL) {
-        ST_WARNING("Failed to malloc state_hist");
+    args->cap_word_hist = 32;
+    args->word_hist = (int *)malloc(sizeof(int) * args->cap_word_hist);
+    if (args->word_hist == NULL) {
+        ST_WARNING("Failed to malloc word_hist");
         goto ERR;
     }
 
@@ -631,11 +633,37 @@ static int fst_conv_search_children(fst_conv_t *conv, int sid, int word_id)
     return -1;
 }
 
+static int fst_conv_find_word_hist(fst_conv_t *conv,
+        fst_conv_args_t *args, int sid)
+{
+    int p;
+
+    ST_CHECK_PARAM(conv == NULL || args == NULL, -1);
+
+    args->word_hist[0] = conv->fst_states[sid].word_id;
+    args->num_word_hist = 1;
+    p = conv->fst_states[sid].parent;
+    while (p != -1) {
+        if (args->num_word_hist >= args->cap_word_hist) {
+            args->word_hist = (int *)realloc(args->word_hist,
+                    sizeof(int) * (args->num_word_hist + 32));
+            if (args->word_hist == NULL) {
+                ST_WARNING("Failed to realloc word_hist");
+                return -1;
+            }
+            args->cap_word_hist = args->num_word_hist + 32;
+        }
+        args->word_hist[args->num_word_hist] = p;
+        args->num_word_hist++;
+        p = conv->fst_states[p].parent;
+    }
+
+    return 0;
+}
+
 static int fst_conv_find_backoff(fst_conv_t *conv, fst_conv_args_t *args,
         int sid)
 {
-    int p;
-    int n;
     int i, j;
     int backoff_sid;
 
@@ -645,36 +673,20 @@ static int fst_conv_find_backoff(fst_conv_t *conv, fst_conv_args_t *args,
         return conv->fst_states[sid].parent;
     }
 
-    args->state_hist[0] = conv->fst_states[sid].word_id;
-    n = 1;
-    p = conv->fst_states[sid].parent;
-    while (p != -1) {
-        if (n >= args->num_state_hist) {
-            args->state_hist = (int *)realloc(args->state_hist,
-                    sizeof(int) * (n + 32));
-            if (args->state_hist == NULL) {
-                ST_WARNING("Failed to realloc state_hist");
-                return -1;
-            }
-            args->num_state_hist = n + 32;
-        }
-        args->state_hist[n] = p;
-        n++;
-        p = conv->fst_states[p].parent;
-    }
+    // the word_hist should be filled at beginning of expand
 
     // turn a non-wildchar word to wildchar from ancient to recent
     // until we encounter a exsited backoff state.
-    for (i = n - 1; i >= 0; i--) {
-        if (args->state_hist[i] == ANY_ID) {
+    for (i = args->num_word_hist - 1; i >= 0; i--) {
+        if (args->word_hist[i] == ANY_ID) {
             continue;
         }
-        args->state_hist[i] = ANY_ID;
+        args->word_hist[i] = ANY_ID;
 
         backoff_sid = FST_BACKOFF_STATE;
-        for (j = n - 1; j >= 0; j--) {
+        for (j = args->num_word_hist - 1; j >= 0; j--) {
             backoff_sid = fst_conv_search_children(conv,
-                    backoff_sid, args->state_hist[j]);
+                    backoff_sid, args->word_hist[j]);
             if (backoff_sid < 0) {
                 break;
             }
@@ -688,7 +700,7 @@ static int fst_conv_find_backoff(fst_conv_t *conv, fst_conv_args_t *args,
     // do not find the backoff state with same length
     // try to shorten the history
     // assert (args->state[i] == ANY_ID) for all i
-    for (i = n - 1; i > 0; i--) {
+    for (i = args->num_word_hist - 1; i > 0; i--) {
         backoff_sid = FST_BACKOFF_STATE;
         for (j = 0; j < i - 1; j++) {
             backoff_sid = fst_conv_search_children(conv,
@@ -732,7 +744,7 @@ static int fst_conv_expand(fst_conv_t *conv, fst_conv_args_t *args)
     sid = args->sid;
     output_probs = args->output_probs;
 
-    if (conv->fst_states[sid].model_state_id < 0) {
+    if (conv->fst_states[sid].model_state_id >= 0) {
         state = NULL;
     } else {
         state = (real_t *)st_block_cache_read(conv->model_state_cache,
@@ -743,11 +755,16 @@ static int fst_conv_expand(fst_conv_t *conv, fst_conv_args_t *args)
         }
     }
 
-    if (updater_feed_state(updater, state) < 0) {
-        ST_WARNING("Failed to updater_feed_state.");
+    if (fst_conv_find_word_hist(conv, args, sid) < 0) {
+        ST_WARNING("Failed to fst_conv_find_word_hist");
         return -1;
     }
-    //forward(updater, conv->fst_states[sid].word_id, -1)
+
+    if (updater_step_with_state(updater, state, args->word_hist,
+                args->num_word_hist, output_probs) < 0) {
+        ST_WARNING("Failed to updater_step_with_state.");
+        return -1;
+    }
 
     if (conv->fst_states[sid].model_state_id >= 0) {
         if (st_block_cache_return(conv->model_state_cache,
@@ -771,7 +788,6 @@ static int fst_conv_expand(fst_conv_t *conv, fst_conv_args_t *args)
         return -1;
     }
 
-    // conv->output_probs =
     // logprob2prob(output_probs);
     // distribute_prob(output_probs, SENT_START_ID);
 

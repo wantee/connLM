@@ -92,15 +92,11 @@ static int updater_save_state(updater_t *updater)
     return 0;
 }
 
-static int updater_forward(updater_t *updater)
+static int updater_forward_comp(updater_t *updater)
 {
     int c;
 
     ST_CHECK_PARAM(updater == NULL, -1);
-
-#ifdef _CONNLM_TRACE_PROCEDURE_
-    ST_TRACE("Forward: word[%d]", tgt_word(updater));
-#endif
 
     for (c = 0; c < updater->connlm->num_comp; c++) {
         if (comp_updater_forward(updater->comp_updaters[c],
@@ -109,6 +105,22 @@ static int updater_forward(updater_t *updater)
                     updater->connlm->comps[c]->name);
             return -1;
         }
+    }
+
+    return 0;
+}
+
+static int updater_forward(updater_t *updater)
+{
+    ST_CHECK_PARAM(updater == NULL, -1);
+
+#ifdef _CONNLM_TRACE_PROCEDURE_
+    ST_TRACE("Forward: word[%d]", tgt_word(updater));
+#endif
+
+    if (updater_forward_comp(updater) < 0) {
+        ST_WARNING("Failed to updater_forward_comp.");
+        return -1;
     }
 
     if (out_updater_activate(updater->out_updater, tgt_word(updater),
@@ -610,6 +622,65 @@ int updater_feed_state(updater_t *updater, real_t *state)
             return -1;
         }
         total_size += size;
+    }
+
+    return 0;
+}
+
+static int updater_reinit(updater_t *updater)
+{
+    ST_CHECK_PARAM(updater == NULL, -1);
+
+    return 0;
+}
+
+static int updater_set_hist(updater_t *updater, int *hist, int num_hist)
+{
+    ST_CHECK_PARAM(updater == NULL || hist == NULL, -1);
+
+    return 0;
+}
+
+int updater_step_with_state(updater_t *updater, real_t *state,
+        int *hist, int num_hist, double *output_probs)
+{
+    ST_CHECK_PARAM(updater == NULL, -1);
+
+    if (updater_reinit(updater) < 0) {
+        ST_WARNING("updater_reinit.");
+        return -1;
+    }
+
+    if (hist != NULL && num_hist > 0) {
+        if (updater_set_hist(updater, hist, num_hist) < 0) {
+            ST_WARNING("Failed to updater_set_hist.");
+            return -1;
+        }
+    }
+
+    if (state != NULL) {
+        if (updater_feed_state(updater, state) < 0) {
+            ST_WARNING("Failed to updater_feed_state.");
+            return -1;
+        }
+    }
+
+    if (updater_forward_comp(updater) < 0) {
+        ST_WARNING("Failed to updater_forward_comp.");
+        return -1;
+    }
+
+    if (updater_save_state(updater) < 0) {
+        ST_WARNING("updater_save_state.");
+        return -1;
+    }
+
+    if (output_probs != NULL) {
+        if (out_updater_activate_all(updater->out_updater,
+                    output_probs) < 0) {
+            ST_WARNING("Failed to out_updater_activate_all.");
+            return -1;
+        }
     }
 
     return 0;

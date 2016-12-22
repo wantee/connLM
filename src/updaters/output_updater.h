@@ -143,6 +143,16 @@ int out_updater_finish(out_updater_t *out_updater);
 output_node_id_t out_updater_sample(out_updater_t *out_updater,
         output_node_id_t node);
 
+/**
+ * Activate a all words in output layer.
+ * @ingroup g_updater_output
+ * @param[in] out_updater the out_updater.
+ * @param[out] output_probs log-probs for all words.
+ * @return non-zero value if any error.
+ */
+int out_updater_activate_all(out_updater_t *out_updater,
+        double *output_probs);
+
 #ifdef __cplusplus
 }
 #endif

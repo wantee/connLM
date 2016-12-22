@@ -167,6 +167,19 @@ int updater_dump_state(updater_t *updater, real_t *state);
  */
 int updater_feed_state(updater_t *updater, real_t *state);
 
+/**
+ * Run one step with specified state and history.
+ * @ingroup g_updater
+ * @param[in] updater updater.
+ * @param[in] state state for model, from updater_dump_state.
+ * @param[in] hist word history.
+ * @param[in] num_hist number of word history.
+ * @param[out] output_probs log-probs for all words.
+ * @return non-zero value if any error.
+ */
+int updater_step_with_state(updater_t *updater, real_t *state,
+        int *hist, int num_hist, double *output_probs);
+
 #ifdef __cplusplus
 }
 #endif

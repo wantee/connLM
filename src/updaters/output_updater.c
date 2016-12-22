@@ -307,3 +307,11 @@ output_node_id_t out_updater_sample(out_updater_t *out_updater,
 
     return sampled;
 }
+
+int out_updater_activate_all(out_updater_t *out_updater,
+        double *output_probs)
+{
+    ST_CHECK_PARAM(out_updater == NULL || output_probs == NULL, -1);
+
+    return 0;
+}
