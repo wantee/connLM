@@ -1692,7 +1692,7 @@ ERR:
     return -1;
 }
 
-static int output_tree_bfs(output_tree_t *tree,
+int output_tree_bfs(output_tree_t *tree,
         int (*visitor)(output_tree_t *tree,
             output_node_id_t node, void *args), void *args)
 {

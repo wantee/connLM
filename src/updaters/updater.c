@@ -627,16 +627,67 @@ int updater_feed_state(updater_t *updater, real_t *state)
     return 0;
 }
 
-static int updater_reinit(updater_t *updater)
+static int updater_cleanup(updater_t *updater)
 {
+    int c;
+
     ST_CHECK_PARAM(updater == NULL, -1);
+
+    for (c = 0; c < updater->connlm->num_comp; c++) {
+        if (comp_updater_clear(updater->comp_updaters[c]) < 0) {
+            ST_WARNING("Failed to comp_updater_clear[%s].",
+                    updater->connlm->comps[c]->name);
+            return -1;
+        }
+    }
+
+    if (out_updater_clear_all(updater->out_updater) < 0) {
+        ST_WARNING("Failed to out_updater_clear_all.");
+        return -1;
+    }
 
     return 0;
 }
 
 static int updater_set_hist(updater_t *updater, int *hist, int num_hist)
 {
+    int i;
+
     ST_CHECK_PARAM(updater == NULL || hist == NULL, -1);
+
+    if (input_updater_clear(updater->input_updater) < 0) {
+        ST_WARNING("Failed to input_updater_clear.");
+        return -1;
+    }
+
+    if (updater_feed(updater, hist, num_hist) < 0) {
+        ST_WARNING("Failed to updater_feed.");
+        return -1;
+    }
+
+    for (i = 0; i < num_hist; i++) {
+        if (updater_move_input(updater) < 0) {
+            ST_WARNING("Failed to updater_move_input.");
+            return -1;
+        }
+    }
+
+    return 0;
+}
+
+int updater_setup_all(updater_t *updater)
+{
+    ST_CHECK_PARAM(updater == NULL, -1);
+
+    if (updater_setup(updater, false) < 0) {
+        ST_WARNING("Failed to updater_setup.");
+        return -1;
+    }
+
+    if (out_updater_init_all(updater->out_updater) < 0) {
+        ST_WARNING("Failed to out_updater_init_all.");
+        return -1;
+    }
 
     return 0;
 }
@@ -646,8 +697,8 @@ int updater_step_with_state(updater_t *updater, real_t *state,
 {
     ST_CHECK_PARAM(updater == NULL, -1);
 
-    if (updater_reinit(updater) < 0) {
-        ST_WARNING("updater_reinit.");
+    if (updater_cleanup(updater) < 0) {
+        ST_WARNING("updater_cleanup.");
         return -1;
     }
 

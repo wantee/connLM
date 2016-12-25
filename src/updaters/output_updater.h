@@ -47,6 +47,8 @@ typedef struct _output_updater_t_ {
 
     real_t *ac; /**< activation of output layer. */
     real_t *er; /**< error of output layer. */
+
+    double *node_probs; /**< buffer for probablity of nodes in output tree. */
 } out_updater_t;
 
 /**
@@ -142,6 +144,22 @@ int out_updater_finish(out_updater_t *out_updater);
  */
 output_node_id_t out_updater_sample(out_updater_t *out_updater,
         output_node_id_t node);
+
+/**
+ * Initialize output updater for activating all words in one step.
+ * @ingroup g_updater_output
+ * @param[in] out_updater the out_updater.
+ * @return non-zero value if any error.
+ */
+int out_updater_init_all(out_updater_t *out_updater);
+
+/**
+ * Clear buffer for all words.
+ * @ingroup g_updater_output
+ * @param[in] out_updater the out_updater.
+ * @return non-zero value if any error.
+ */
+int out_updater_clear_all(out_updater_t *out_updater);
 
 /**
  * Activate a all words in output layer.

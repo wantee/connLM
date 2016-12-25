@@ -115,6 +115,18 @@ static inline output_node_id_t output_tree_word2leaf(output_tree_t *tree,
 }
 
 /**
+ * Do BFS on a output tree.
+ * @ingroup g_output
+ * @param[in] tree the output tree.
+ * @param[in] visitor visitor callback called on every node in path.
+ * @param[in] args args passed to visitor.
+ * @return non-zero value if any error.
+ */
+int output_tree_bfs(output_tree_t *tree,
+        int (*visitor)(output_tree_t *tree,
+            output_node_id_t node, void *args), void *args);
+
+/**
  * Output tree path.
  * @ingroup g_output
  */

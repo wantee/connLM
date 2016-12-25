@@ -66,6 +66,18 @@ ERR:
     return NULL;
 }
 
+int input_updater_clear(input_updater_t *input_updater)
+{
+    ST_CHECK_PARAM(input_updater == NULL, -1);
+
+    input_updater->n_word = 0;
+    input_updater->cur_pos = 0;
+    input_updater->sent_head = -1;
+    input_updater->sent_tail = -1;
+
+    return 0;
+}
+
 int input_updater_setup(input_updater_t *input_updater, int ctx_leftmost,
         int ctx_rightmost)
 {

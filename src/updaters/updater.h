@@ -168,6 +168,14 @@ int updater_dump_state(updater_t *updater, real_t *state);
 int updater_feed_state(updater_t *updater, real_t *state);
 
 /**
+ * Setup updater for running with activating all words in one step.
+ * @ingroup g_updater
+ * @param[in] updater updater.
+ * @return non-zero value if any error.
+ */
+int updater_setup_all(updater_t *updater);
+
+/**
  * Run one step with specified state and history.
  * @ingroup g_updater
  * @param[in] updater updater.

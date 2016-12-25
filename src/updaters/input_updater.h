@@ -102,6 +102,14 @@ typedef struct _sentence_t_ {
 } sent_t;
 
 /**
+ * Clear input_updater.
+ * @ingroup g_updater_input
+ * @param[in] input_updater input_updater.
+ * @return non-zero value if any error.
+ */
+int input_updater_clear(input_updater_t *input_updater);
+
+/**
  * Feed input words to a input_updater.
  * @ingroup g_updater_input
  * @param[in] input_updater input_updater.
@@ -112,15 +120,6 @@ typedef struct _sentence_t_ {
  */
 int input_updater_feed(input_updater_t *input_updater, int *words, int n_word,
         sent_t *sent);
-
-/**
- * Initialise a sentence buffer for moving.
- * @ingroup g_updater_input
- * @param[in] input_updater input_updater.
- * @param[out] sent sentence buffer.
- * @return non-zero value if any error.
- */
-int input_updater_init(input_updater_t *input_updater, sent_t *sent);
 
 /**
  * Move forward a input word and return the sentence buffer.

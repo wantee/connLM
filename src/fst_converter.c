@@ -338,8 +338,8 @@ static int fst_conv_setup(fst_conv_t *conv, FILE *fst_fp,
     }
 
     for (i = 0; i < conv->n_thr; i++) {
-        if (updater_setup(conv->updaters[i], false) < 0) {
-            ST_WARNING("Failed to updater_setup.");
+        if (updater_setup_all(conv->updaters[i]) < 0) {
+            ST_WARNING("Failed to updater_setup_all.");
             return -1;
         }
     }
