@@ -49,7 +49,7 @@ static int unit_test_input_read_topo()
     fprintf(stderr, "    Case %d...", ncase++);
     ref = std_ref;
     input_test_mk_topo_line(line, MAX_LINE_LEN, &ref);
-    input = input_parse_topo(line, input_sz);
+    input = input_parse_topo(line, input_sz, false);
     if (input == NULL) {
         fprintf(stderr, "Failed\n");
         goto ERR;
