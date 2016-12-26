@@ -152,7 +152,7 @@ typedef enum _output_normalization_method_t_ {
 typedef struct _output_t_ {
     output_opt_t output_opt; /**< output tree options. */
 
-    int output_size; /**< size of output tree. */
+    int output_size; /**< size of output layer. */
     output_norm_t norm; /**< normalization method. */
 
     output_tree_t *tree; /**< output tree. */
@@ -177,7 +177,7 @@ int output_load_opt(output_opt_t *output_opt, st_opt_t *opt,
  * Create a output tree with options.
  * @ingroup g_output
  * @param[in] output_opt options.
- * @param[in] output_size size of output tree.
+ * @param[in] output_size size of output layer.
  * @return a new output tree.
  */
 output_t *output_create(output_opt_t *output_opt, int output_size);

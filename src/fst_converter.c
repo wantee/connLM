@@ -719,12 +719,41 @@ static int fst_conv_find_backoff(fst_conv_t *conv, fst_conv_args_t *args,
     return -1;
 }
 
+// This function distribute the probablity of id to all other words.
+static int distribute_prob(double *output_probs, int n, int id)
+{
+    double p;
+
+    int i;
+
+    ST_CHECK_PARAM(output_probs == NULL || id < 0 || id >= n, -1);
+
+    if (n <= 1) {
+        return 0;
+    }
+
+    p = output_probs[id];
+    if (p == 0.0) {
+        return 0;
+    }
+
+    p /= (n - 1);
+    for (i = 0; i < n; i++) {
+        output_probs[i] += p;
+    }
+
+    output_probs[id] = 0.0;
+
+    return 0;
+}
+
 static int fst_conv_expand(fst_conv_t *conv, fst_conv_args_t *args)
 {
     updater_t *updater;
     real_t *state;
     real_t *new_state;
     double *output_probs;
+    int output_size;
 
     double backoff_prob;
     int sid;
@@ -743,6 +772,7 @@ static int fst_conv_expand(fst_conv_t *conv, fst_conv_args_t *args)
     updater = conv->updaters[args->tid];
     sid = args->sid;
     output_probs = args->output_probs;
+    output_size = updater->out_updater->output->output_size;
 
     if (conv->fst_states[sid].model_state_id >= 0) {
         state = NULL;
@@ -788,8 +818,15 @@ static int fst_conv_expand(fst_conv_t *conv, fst_conv_args_t *args)
         return -1;
     }
 
-    // logprob2prob(output_probs);
-    // distribute_prob(output_probs, SENT_START_ID);
+    // logprob2prob
+    for (i = 0; i < output_size; i++) {
+        output_probs[i] = exp10(output_probs[i]);
+    }
+
+    if (distribute_prob(output_probs, output_size, SENT_START_ID) < 0) {
+        ST_WARNING("Failed to distribute_prob of bos");
+        return -1;
+    }
 
     no_backoff = false;
     expand_wildchar = false;
@@ -801,7 +838,10 @@ static int fst_conv_expand(fst_conv_t *conv, fst_conv_args_t *args)
     }
 
     if (!expand_wildchar) {
-        // distribute_prob(output_probs, ANY_ID);
+        if (distribute_prob(output_probs, output_size, ANY_ID) < 0) {
+            ST_WARNING("Failed to distribute_prob of wildchar");
+            return -1;
+        }
     }
 
     if (no_backoff) {
