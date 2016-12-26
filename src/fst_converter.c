@@ -255,7 +255,7 @@ fst_conv_t* fst_conv_create(connlm_t *connlm, int n_thr,
 
     ST_CHECK_PARAM(connlm == NULL || n_thr <= 0 || conv_opt == NULL, NULL);
 
-    if (strcasecmp(vocab_get_word(connlm->vocab, ANY_ID), ANY) != 0) {
+    if (!vocab_has_any(connlm->vocab)) {
         ST_WARNING("vocab must contain <any> in order to convert to fst");
         return NULL;
     }

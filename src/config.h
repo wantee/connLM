@@ -65,6 +65,7 @@ typedef unsigned long long hash_t;
 #define UNK "<unk>"
 #define UNK_ID 2
 #define ANY "<any>"
+// only valid when vocab_has_any
 #define ANY_ID 3
 
 #define EPS "<eps>"
