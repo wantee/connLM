@@ -75,7 +75,7 @@ bool emb_glue_check(glue_t *glue, layer_t **layers, int n_layer,
         return false;
     }
 
-    if (input->n_ctx > 1) {
+    if (input_n_words(input) > 1) {
         if (input->combine == IC_UNDEFINED) {
             ST_WARNING("emb glue: No combine specified in input.");
             return false;
@@ -87,9 +87,10 @@ bool emb_glue_check(glue_t *glue, layer_t **layers, int n_layer,
     }
 
     if (input->combine == IC_CONCAT) {
-        if (layers[glue->out_layer]->size % input->n_ctx != 0) {
+        if (layers[glue->out_layer]->size % input_n_words(input) != 0) {
             ST_WARNING("emb glue: can not apply CONCAT combination. "
-                    "hidden layer size can not divided by context number.");
+                    "hidden layer size can not divided by context number("
+                    "plus one for <any> if exists).");
             return false;
         }
     }
@@ -111,7 +112,7 @@ int emb_glue_init_data(glue_t *glue, input_t *input,
     }
 
     if (input->combine == IC_CONCAT) {
-        col = layers[glue->out_layer]->size / input->n_ctx;
+        col = layers[glue->out_layer]->size / input_n_words(input);
     } else {
         col = layers[glue->out_layer]->size;
     }

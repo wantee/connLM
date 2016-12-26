@@ -69,7 +69,7 @@ void input_destroy(input_t *input)
     input->n_ctx = 0;
 }
 
-input_t* input_parse_topo(const char *line, int input_size)
+input_t* input_parse_topo(const char *line, int input_size, bool has_any)
 {
     input_t *input = NULL;
 
@@ -100,6 +100,11 @@ input_t* input_parse_topo(const char *line, int input_size)
 
     safe_free(input->context);
     input->n_ctx = 0;
+    if (has_any) {
+        input->wildchar_scale = (real_t)1.0;
+    } else {
+        input->wildchar_scale = (real_t)0.0;
+    }
     while (p != NULL) {
         p = get_next_token(p, token);
         if (token[0] == '\0') {
@@ -131,6 +136,13 @@ input_t* input_parse_topo(const char *line, int input_size)
                         keyvalue + MAX_LINE_LEN);
                 goto ERR;
             }
+        } else if (strcasecmp("wildchar_scale", keyvalue) == 0) {
+            if (!has_any) {
+                ST_WARNING("wildchar_scale is invalid since <any> is "
+                           "not in the vocab");
+                goto ERR;
+            }
+            input->wildchar_scale = atof(keyvalue + MAX_LINE_LEN);
         } else {
             ST_WARNING("Unknown key/value[%s]", token);
         }
@@ -173,6 +185,7 @@ input_t* input_dup(input_t *in)
     memset(input, 0, sizeof(input_t));
 
     input->input_size = in->input_size;
+    input->wildchar_scale = in->wildchar_scale;
     input->combine = in->combine;
 
     input->context = (st_wt_int_t *)malloc(sizeof(st_wt_int_t)*in->n_ctx);
@@ -227,6 +240,7 @@ int input_load_header(input_t **input, int version,
     int c;
     int input_size;
     int n_ctx;
+    real_t scale = 0.0;
 
     ST_CHECK_PARAM((input == NULL && fo_info == NULL) || fp == NULL
             || binary == NULL, -1);
@@ -267,6 +281,12 @@ int input_load_header(input_t **input, int version,
             ST_WARNING("Failed to read combine.");
             return -1;
         }
+        if (version >= 5) {
+            if (fread(&scale, sizeof(real_t), 1, fp) != 1) {
+                ST_WARNING("Failed to read wildchar_scale.");
+                return -1;
+            }
+        }
     } else {
         if (st_readline(fp, "") != 0) {
             ST_WARNING("tag error.");
@@ -295,6 +315,12 @@ int input_load_header(input_t **input, int version,
             ST_WARNING("Unknown combine[%s]", sym);
             goto ERR;
         }
+        if (version >= 5) {
+            if (st_readline(fp, "Wildchar scale: "REAL_FMT, scale) != 1) {
+                ST_WARNING("Failed to parse wildchar_scale.");
+                goto ERR;
+            }
+        }
     }
 
     if (input != NULL) {
@@ -308,6 +334,7 @@ int input_load_header(input_t **input, int version,
         (*input)->input_size = input_size;
         (*input)->n_ctx = n_ctx;
         (*input)->combine = (input_combine_t)c;
+        (*input)->wildchar_scale = (real_t)scale;
     }
 
     if (fo_info != NULL) {
@@ -315,6 +342,7 @@ int input_load_header(input_t **input, int version,
         fprintf(fo_info, "Input size: %d\n", input_size);
         fprintf(fo_info, "Num context: %d\n", n_ctx);
         fprintf(fo_info, "Combine: %s\n", combine2str((input_combine_t)c));
+        fprintf(fo_info, "Wildchar scale: "REAL_FMT"\n", (real_t)scale);
     }
 
     return 0;
@@ -423,6 +451,10 @@ int input_save_header(input_t *input, FILE *fp, bool binary)
             ST_WARNING("Failed to write combine.");
             return -1;
         }
+        if (fwrite(&input->wildchar_scale, sizeof(real_t), 1, fp) != 1) {
+            ST_WARNING("Failed to write wildchar_scale.");
+            return -1;
+        }
     } else {
         if (fprintf(fp, "    \n<INPUT>\n") < 0) {
             ST_WARNING("Failed to fprintf header.");
@@ -439,6 +471,11 @@ int input_save_header(input_t *input, FILE *fp, bool binary)
         }
         if (fprintf(fp, "Combine: %s\n", combine2str(input->combine)) < 0) {
             ST_WARNING("Failed to fprintf combine.");
+            return -1;
+        }
+        if (fprintf(fp, "Wildchar scale: "REAL_FMT"\n",
+                    input->wildchar_scale) < 0) {
+            ST_WARNING("Failed to fprintf wildchar_scale.");
             return -1;
         }
     }

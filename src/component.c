@@ -267,7 +267,7 @@ ERR:
 }
 
 component_t *comp_init_from_topo(const char* topo_content,
-        output_t *output, int input_size)
+        output_t *output, int input_size, bool has_any)
 {
     component_t *comp = NULL;
 
@@ -341,7 +341,7 @@ component_t *comp_init_from_topo(const char* topo_content,
                 ST_WARNING("Too many input layers.");
                 goto ERR;
             }
-            comp->input = input_parse_topo(line, input_size);
+            comp->input = input_parse_topo(line, input_size, has_any);
             if (comp->input == NULL) {
                 ST_WARNING("Failed to input_parse_topo.");
                 goto ERR;

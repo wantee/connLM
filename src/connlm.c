@@ -152,7 +152,8 @@ int connlm_init(connlm_t *connlm, FILE *topo_fp)
                 goto ERR;
             }
             connlm->comps[connlm->num_comp] = comp_init_from_topo(content,
-                    connlm->output, connlm->vocab->vocab_size);
+                    connlm->output, connlm->vocab->vocab_size,
+                    vocab_has_any(connlm->vocab));
             if (connlm->comps[connlm->num_comp] == NULL) {
                 ST_WARNING("Failed to comp_init_from_topo.");
                 goto ERR;

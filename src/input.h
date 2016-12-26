@@ -58,6 +58,8 @@ typedef enum _input_combination_method_t_ {
  */
 typedef struct _input_t_ {
     int input_size; /**< size of input layer. */
+    real_t wildchar_scale; /**< scale for \<any\>,
+                                zero if \<any\> not exists */
 
     st_wt_int_t *context; /**< context for input layer. */
     int n_ctx; /**< number of contexts for input layer. */
@@ -97,9 +99,10 @@ input_t* input_dup(input_t *i);
  * @ingroup g_input
  * @param[in] line topo config line.
  * @param[in] input_size size of input layer.
+ * @param[in] has_any whether \<any\> exists in the vocab.
  * @return a new input layer or NULL if error.
  */
-input_t* input_parse_topo(const char *line, int input_size);
+input_t* input_parse_topo(const char *line, int input_size, bool has_any);
 
 #define INPUT_LAYER_NAME "input"
 
@@ -110,6 +113,15 @@ input_t* input_parse_topo(const char *line, int input_size);
  * @return layer for the input, else NULL.
  */
 layer_t* input_get_layer(input_t *input);
+
+/**
+ * Get the number of words for input layer
+ * @ingroup g_input
+ * @param[in] input the input layer.
+ * @return number of words.
+ */
+#define input_n_words(input) (((input)->wildchar_scale != 0.0) ? \
+                              ((input)->n_ctx + 1) : (input)->n_ctx)
 
 /**
  * Load input header and initialise a new input.
