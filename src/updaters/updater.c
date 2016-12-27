@@ -716,8 +716,8 @@ int updater_step_with_state(updater_t *updater, real_t *state,
         }
     }
 
-    if (updater_forward_comp(updater) < 0) {
-        ST_WARNING("Failed to updater_forward_comp.");
+    if (updater_forward_util_out(updater) < 0) {
+        ST_WARNING("Failed to updater_forward_util_out.");
         return -1;
     }
 
