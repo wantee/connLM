@@ -548,6 +548,7 @@ static int select_word(fst_conv_t *conv, int last_word,
             word = last_word + 1;
             while (word < get_vocab_size(conv)) {
                 if (word == SENT_END_ID || word == SENT_START_ID) {
+                    ++word;
                     continue;
                 }
                 if (output_probs[word] >= output_probs[SENT_END_ID]
@@ -576,7 +577,7 @@ static int sort_selected_words(backoff_method_t bom,
 {
     ST_CHECK_PARAM(selected_words == NULL, -1);
 
-    if (selected_words[n - 1] == SENT_END_ID) {
+    if (selected_words[n - 1] != SENT_END_ID) {
         ST_WARNING("The last word in selected_words should be " SENT_END);
         return -1;
     }
@@ -890,6 +891,10 @@ static int fst_conv_expand(fst_conv_t *conv, fst_conv_args_t *args)
 
             args->selected_words[n] = word;
             n++;
+
+            if (word == SENT_END_ID) {
+                break;
+            }
         }
 
         if (sort_selected_words(conv->conv_opt.bom,
