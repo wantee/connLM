@@ -111,7 +111,6 @@ typedef struct _fst_converter_t_ {
     int err; /**< error indicator. */
 
     st_block_cache_t *model_state_cache; /**< cache for internal state of model. */
-    pthread_mutex_t model_state_cache_lock; /**< lock for model_state_cache. */
 
     fst_state_t *fst_states; /**< states of FST indexed by fst state id. */
     int cap_fst_states; /**< capacity of fst_states. */

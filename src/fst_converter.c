@@ -233,7 +233,6 @@ void fst_conv_destroy(fst_conv_t *conv)
     conv->n_thr = 0;
 
     safe_st_block_cache_destroy(conv->model_state_cache);
-    (void)pthread_mutex_destroy(&conv->model_state_cache_lock);
 
     safe_free(conv->fst_states);
     (void)pthread_mutex_destroy(&conv->fst_state_lock);
@@ -334,10 +333,6 @@ static int fst_conv_setup(fst_conv_t *conv, FILE *fst_fp,
                 sizeof(real_t) * state_size, 5 * count, count);
         if (conv->model_state_cache == NULL) {
             ST_WARNING("Failed to st_block_cache_create model_state_cache.");
-            return -1;
-        }
-        if (pthread_mutex_init(&conv->model_state_cache_lock, NULL) != 0) {
-            ST_WARNING("Failed to pthread_mutex_init model_state_cache_lock.");
             return -1;
         }
     }
