@@ -355,17 +355,32 @@ static int fst_conv_maybe_realloc_states(fst_conv_t *conv,
         bool store_children)
 {
     int i;
+    int num_new_states;
 
     ST_CHECK_PARAM(conv == NULL, -1);
 
     if (conv->n_fst_state < conv->cap_fst_states) {
+        if (store_children && conv->fst_children == NULL) {
+            conv->fst_children = malloc(sizeof(fst_state_children_t)
+                    * conv->cap_fst_states);
+            if (conv->fst_children == NULL) {
+                ST_WARNING("Failed to realloc fst_children.");
+                return -1;
+            }
+            for (i = 0; i < conv->cap_fst_states; i++) {
+                conv->fst_children[i].first_child = -1;
+                conv->fst_children[i].num_children = -1;
+            }
+            conv->n_fst_children = conv->cap_fst_states;
+        }
+
         return 0;
     }
 
-    conv->cap_fst_states = conv->n_fst_state + get_vocab_size(conv);
+    num_new_states = conv->n_fst_state + get_vocab_size(conv);
 
     conv->fst_states = realloc(conv->fst_states,
-            sizeof(fst_state_t) * conv->cap_fst_states);
+            sizeof(fst_state_t) * num_new_states);
     if (conv->fst_states == NULL) {
         ST_WARNING("Failed to realloc fst_states.");
         return -1;
@@ -373,17 +388,19 @@ static int fst_conv_maybe_realloc_states(fst_conv_t *conv,
 
     if (store_children) {
         conv->fst_children = realloc(conv->fst_children,
-                sizeof(fst_state_children_t) * conv->cap_fst_states);
+                sizeof(fst_state_children_t) * num_new_states);
         if (conv->fst_children == NULL) {
             ST_WARNING("Failed to realloc fst_children.");
             return -1;
         }
-        for (i = conv->n_fst_state; i < conv->cap_fst_states; i++) {
+        for (i = conv->cap_fst_states; i < num_new_states; i++) {
             conv->fst_children[i].first_child = -1;
             conv->fst_children[i].num_children = -1;
         }
-        conv->n_fst_children = conv->cap_fst_states;
+        conv->n_fst_children = num_new_states;
     }
+
+    conv->cap_fst_states = num_new_states;
 
     return 0;
 }
