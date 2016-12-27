@@ -250,8 +250,6 @@ fst_conv_t* fst_conv_create(connlm_t *connlm, int n_thr,
     fst_conv_t *conv = NULL;
 
     int i;
-    int state_size;
-    int count;
 
     ST_CHECK_PARAM(connlm == NULL || n_thr <= 0 || conv_opt == NULL, NULL);
 
@@ -286,30 +284,6 @@ fst_conv_t* fst_conv_create(connlm_t *connlm, int n_thr,
         }
     }
 
-    count = (int)sqrt(get_vocab_size(conv)) * get_vocab_size(conv);
-
-    state_size = updater_state_size(conv->updaters[0]);
-    conv->model_state_cache = st_block_cache_create(
-            sizeof(real_t) * state_size, 5 * count, count);
-    if (conv->model_state_cache == NULL) {
-        ST_WARNING("Failed to st_block_cache_create model_state_cache.");
-        goto ERR;
-    }
-    if (pthread_mutex_init(&conv->model_state_cache_lock, NULL) != 0) {
-        ST_WARNING("Failed to pthread_mutex_init model_state_cache_lock.");
-        goto ERR;
-    }
-
-    conv->cap_fst_states = count;
-    conv->fst_states = (fst_state_t *)malloc(sizeof(fst_state_t) * count);
-    if (conv->fst_states == NULL) {
-        ST_WARNING("Failed to st_block_cache_create fst_states.");
-        goto ERR;
-    }
-    if (pthread_mutex_init(&conv->fst_state_lock, NULL) != 0) {
-        ST_WARNING("Failed to pthread_mutex_init fst_state_lock.");
-        goto ERR;
-    }
 
     return conv;
 
@@ -322,6 +296,8 @@ static int fst_conv_setup(fst_conv_t *conv, FILE *fst_fp,
         fst_conv_args_t **args)
 {
     int i;
+    int state_size;
+    int count;
 
     ST_CHECK_PARAM(conv == NULL || fst_fp == NULL || args == NULL, -1);
 
@@ -347,6 +323,33 @@ static int fst_conv_setup(fst_conv_t *conv, FILE *fst_fp,
     *args = fst_conv_args_list_create(conv);
     if (*args == NULL) {
         ST_WARNING("Failed to fst_conv_args_list_create.");
+        return -1;
+    }
+
+    count = (int)sqrt(get_vocab_size(conv)) * get_vocab_size(conv);
+
+    state_size = updater_state_size(conv->updaters[0]);
+    if (state_size > 0) {
+        conv->model_state_cache = st_block_cache_create(
+                sizeof(real_t) * state_size, 5 * count, count);
+        if (conv->model_state_cache == NULL) {
+            ST_WARNING("Failed to st_block_cache_create model_state_cache.");
+            return -1;
+        }
+        if (pthread_mutex_init(&conv->model_state_cache_lock, NULL) != 0) {
+            ST_WARNING("Failed to pthread_mutex_init model_state_cache_lock.");
+            return -1;
+        }
+    }
+
+    conv->cap_fst_states = count;
+    conv->fst_states = (fst_state_t *)malloc(sizeof(fst_state_t) * count);
+    if (conv->fst_states == NULL) {
+        ST_WARNING("Failed to st_block_cache_create fst_states.");
+        return -1;
+    }
+    if (pthread_mutex_init(&conv->fst_state_lock, NULL) != 0) {
+        ST_WARNING("Failed to pthread_mutex_init fst_state_lock.");
         return -1;
     }
 
@@ -759,7 +762,7 @@ static int fst_conv_expand(fst_conv_t *conv, fst_conv_args_t *args)
     int sid;
     int new_sid;
     int to_sid;
-    int model_state_id;
+    int model_state_id = -1;
     int word;
 
     int i, n;
@@ -774,15 +777,16 @@ static int fst_conv_expand(fst_conv_t *conv, fst_conv_args_t *args)
     output_probs = args->output_probs;
     output_size = updater->out_updater->output->output_size;
 
-    if (conv->fst_states[sid].model_state_id >= 0) {
-        state = NULL;
-    } else {
+    if (conv->model_state_cache != NULL
+            && conv->fst_states[sid].model_state_id >= 0) {
         state = (real_t *)st_block_cache_read(conv->model_state_cache,
                 conv->fst_states[sid].model_state_id);
         if (state == NULL) {
             ST_WARNING("Failed to st_block_cache_read state.");
             return -1;
         }
+    } else {
+        state = NULL;
     }
 
     if (fst_conv_find_word_hist(conv, args, sid) < 0) {
@@ -796,26 +800,28 @@ static int fst_conv_expand(fst_conv_t *conv, fst_conv_args_t *args)
         return -1;
     }
 
-    if (conv->fst_states[sid].model_state_id >= 0) {
-        if (st_block_cache_return(conv->model_state_cache,
-                    conv->fst_states[sid].model_state_id) < 0) {
-            ST_WARNING("Failed to st_block_cache_return.");
+    if (conv->model_state_cache != NULL) {
+        if (conv->fst_states[sid].model_state_id >= 0) {
+            if (st_block_cache_return(conv->model_state_cache,
+                        conv->fst_states[sid].model_state_id) < 0) {
+                ST_WARNING("Failed to st_block_cache_return.");
+                return -1;
+            }
+            conv->fst_states[sid].model_state_id = -1;
+        }
+
+        model_state_id = -1;
+        new_state = (real_t *)st_block_cache_fetch(conv->model_state_cache,
+                &model_state_id);
+        if (new_state == NULL) {
+            ST_WARNING("Failed to st_block_cache_fetch.");
             return -1;
         }
-        conv->fst_states[sid].model_state_id = -1;
-    }
 
-    model_state_id = -1;
-    new_state = (real_t *)st_block_cache_fetch(conv->model_state_cache,
-            &model_state_id);
-    if (new_state == NULL) {
-        ST_WARNING("Failed to st_block_cache_fetch.");
-        return -1;
-    }
-
-    if (updater_dump_state(updater, new_state) < 0) {
-        ST_WARNING("Failed to updater_dump_state.");
-        return -1;
+        if (updater_dump_state(updater, new_state) < 0) {
+            ST_WARNING("Failed to updater_dump_state.");
+            return -1;
+        }
     }
 
     // logprob2prob
@@ -844,6 +850,7 @@ static int fst_conv_expand(fst_conv_t *conv, fst_conv_args_t *args)
         }
     }
 
+    // select words
     if (no_backoff) {
         n = 0;
         for (word = 0; word < get_vocab_size(conv); word++) {
@@ -901,14 +908,16 @@ static int fst_conv_expand(fst_conv_t *conv, fst_conv_args_t *args)
         word = ANY_ID;
         to_sid = new_sid++;
         conv->fst_states[to_sid].word_id = word;
-        conv->fst_states[to_sid].model_state_id = model_state_id;
-        // hold state_cache
-        if (st_block_cache_fetch(conv->model_state_cache,
-                    &model_state_id) == NULL) {
-            ST_WARNING("Failed to st_block_cache_fetch.");
-            return -1;
+        if (conv->model_state_cache != NULL) {
+            conv->fst_states[to_sid].model_state_id = model_state_id;
+            // hold state_cache
+            if (st_block_cache_fetch(conv->model_state_cache,
+                        &model_state_id) == NULL) {
+                ST_WARNING("Failed to st_block_cache_fetch.");
+                return -1;
+            }
+            assert(conv->fst_states[to_sid].model_state_id == model_state_id);
         }
-        assert(conv->fst_states[to_sid].model_state_id == model_state_id);
 
         if (fst_conv_print_arc(conv, sid,
                     to_sid, word, output_probs[word]) < 0) {
@@ -931,15 +940,17 @@ static int fst_conv_expand(fst_conv_t *conv, fst_conv_args_t *args)
         } else {
             to_sid = new_sid++;
             conv->fst_states[to_sid].word_id = word;
-            conv->fst_states[to_sid].model_state_id = model_state_id;
-            // hold state_cache
-            if (st_block_cache_fetch(conv->model_state_cache,
-                        &model_state_id) == NULL) {
-                ST_WARNING("Failed to st_block_cache_fetch.");
-                return -1;
+            if (conv->model_state_cache != NULL) {
+                conv->fst_states[to_sid].model_state_id = model_state_id;
+                // hold state_cache
+                if (st_block_cache_fetch(conv->model_state_cache,
+                            &model_state_id) == NULL) {
+                    ST_WARNING("Failed to st_block_cache_fetch.");
+                    return -1;
+                }
+                assert(conv->fst_states[to_sid].model_state_id
+                        == model_state_id);
             }
-            assert(conv->fst_states[to_sid].model_state_id
-                    == model_state_id);
         }
 
         if (fst_conv_print_arc(conv, sid,
@@ -949,10 +960,12 @@ static int fst_conv_expand(fst_conv_t *conv, fst_conv_args_t *args)
         }
     }
 
-    if (st_block_cache_return(conv->model_state_cache,
-                model_state_id) < 0) {
-        ST_WARNING("Failed to st_block_cache_return.");
-        return -1;
+    if (conv->model_state_cache != NULL) {
+        if (st_block_cache_return(conv->model_state_cache,
+                    model_state_id) < 0) {
+            ST_WARNING("Failed to st_block_cache_return.");
+            return -1;
+        }
     }
 
     if (!no_backoff) {
