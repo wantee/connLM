@@ -221,7 +221,7 @@ static int driver_steps(driver_t *driver, int tid, double *logp,
         *logp += updater->logp;
         if (driver->fp_log != NULL
                     && driver->eval_opt.print_sent_prob) {
-            *logp_sent += logn10(updater->logp, driver->eval_opt.out_log_base);
+            *logp_sent += logn(updater->logp, driver->eval_opt.out_log_base);
         }
 
         if ((*logp != *logp) || (isinf(*logp))) {
@@ -233,7 +233,7 @@ static int driver_steps(driver_t *driver, int tid, double *logp,
         if (driver->fp_log != NULL
                 && (! driver->eval_opt.print_sent_prob)) {
             fprintf(driver->fp_log, "%d\t%.6f\t%s", word,
-                    logn10(updater->logp, driver->eval_opt.out_log_base),
+                    logn(updater->logp, driver->eval_opt.out_log_base),
                     vocab_get_word(updater->connlm->vocab, word));
 
             fprintf(driver->fp_log, "\n");
@@ -340,8 +340,8 @@ static void* driver_thread(void *args)
                 "LogP: %f, Entropy: %f, PPL: %f, "
                 "Time(cpu/wait): %.3fs(%.2f%%)/%.3fs(%.2f%%):%.3f",
                 tid, words, sents, words / ((double) ms / 1000.0),
-                logp, -logp / log10(2) / words,
-                exp10(-logp / (double) words),
+                logp, -logp / log(2) / words,
+                exp(-logp / (double) words),
                 (ms - ms_wait) / 1000.0, (ms - ms_wait) / (ms / 100.0),
                 ms_wait / 1000.0, ms_wait / (ms / 100.0),
                 TIMEDIFF(tts_wait, tte_wait) / 1000.0);
@@ -470,8 +470,8 @@ static int driver_do_run(driver_t *driver)
                 ", OOVs: " COUNT_FMT ", words/sec: %.1f", words, sents,
                 driver->reader->oovs, words / ((double) ms / 1000.0));
         ST_NOTICE("LogP: %f", logp);
-        ST_NOTICE("Entropy: %f", -logp / log10(2) / words);
-        ST_NOTICE("PPL: %f", exp10(-logp / (double) words));
+        ST_NOTICE("Entropy: %f", -logp / log(2) / words);
+        ST_NOTICE("PPL: %f", exp(-logp / (double) words));
     }
 
     if (driver->mode == DRIVER_EVAL) {
@@ -482,9 +482,9 @@ static int driver_do_run(driver_t *driver)
                     words, driver->reader->oovs);
             fprintf(driver->fp_log, "LogP: %f\n", logp);
             fprintf(driver->fp_log, "Entropy: %f\n",
-                    -logp / log10(2) / words);
+                    -logp / log(2) / words);
             fprintf(driver->fp_log, "PPL: %f\n",
-                    exp10(-logp / (double) words));
+                    exp(-logp / (double) words));
         }
     }
 

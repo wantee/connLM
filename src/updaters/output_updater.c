@@ -166,7 +166,7 @@ static int out_act_walker(output_t *output, output_node_id_t node,
         softmax(oaw_args->ac + child_s, child_e - child_s);
     }
 
-    oaw_args->logp += log10(oaw_args->ac[next_node]);
+    oaw_args->logp += log(oaw_args->ac[next_node]);
 
     return 0;
 }

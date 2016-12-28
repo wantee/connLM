@@ -622,8 +622,8 @@ static void* reader_read_thread(void *args)
                             ftell(text_fp) / (fsize / 100.0),
                             total_words, total_sents, reader->oovs,
                             total_words / ((double) ms / 1000.0),
-                            logp, -logp / log10(2) / total_words,
-                            exp10(-logp / (double) total_words),
+                            logp, -logp / log(2) / total_words,
+                            exp(-logp / (double) total_words),
                             ms / 1000.0);
                 } else {
                     ST_TRACE("Words: " COUNT_FMT ", Sentences: " COUNT_FMT
@@ -631,8 +631,8 @@ static void* reader_read_thread(void *args)
                             "LogP: %f, Entropy: %f, PPL: %f, Time: %.3fs",
                             total_words, total_sents, reader->oovs,
                             total_words / ((double) ms / 1000.0),
-                            logp, -logp / log10(2) / total_words,
-                            exp10(-logp / (double) total_words),
+                            logp, -logp / log(2) / total_words,
+                            exp(-logp / (double) total_words),
                             ms / 1000.0);
                 }
             }
