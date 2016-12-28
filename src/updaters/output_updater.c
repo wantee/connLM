@@ -341,7 +341,7 @@ static int output_tree_bfs_trav_activate_all(output_tree_t *tree,
             softmax(oaa_args->ac + child_s, child_e - child_s);
         }
         for (ch = child_s; ch < child_e; ch++) {
-            oaa_args->node_probs[ch] += log10(oaa_args->ac[ch]);
+            oaa_args->node_probs[ch] += log(oaa_args->ac[ch]);
         }
     }
 

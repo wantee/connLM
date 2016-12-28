@@ -839,7 +839,7 @@ static int fst_conv_expand(fst_conv_t *conv, fst_conv_args_t *args)
 
     // logprob2prob
     for (i = 0; i < output_size; i++) {
-        output_probs[i] = exp10(output_probs[i]);
+        output_probs[i] = exp(output_probs[i]);
     }
 
     if (distribute_prob(output_probs, output_size, SENT_START_ID) < 0) {
