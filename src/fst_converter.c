@@ -434,9 +434,9 @@ static int fst_conv_add_states(fst_conv_t *conv, int n,
     }
 
     for (i = sid; i < conv->n_fst_state; i++) {
-        conv->fst_states[sid].word_id = -1;
-        conv->fst_states[sid].parent = parent;
-        conv->fst_states[sid].model_state_id = -1;
+        conv->fst_states[i].word_id = -1;
+        conv->fst_states[i].parent = parent;
+        conv->fst_states[i].model_state_id = -1;
     }
 
     if (store_children && parent > 0) {
@@ -659,7 +659,7 @@ static int fst_conv_find_word_hist(fst_conv_t *conv,
     args->word_hist[0] = conv->fst_states[sid].word_id;
     args->num_word_hist = 1;
     p = conv->fst_states[sid].parent;
-    while (p != -1) {
+    while (p != -1 && conv->fst_states[p].word_id != -1 /* init state */) {
         if (args->num_word_hist >= args->cap_word_hist) {
             args->word_hist = (int *)realloc(args->word_hist,
                     sizeof(int) * (args->num_word_hist + 32));
@@ -669,7 +669,7 @@ static int fst_conv_find_word_hist(fst_conv_t *conv,
             }
             args->cap_word_hist = args->num_word_hist + 32;
         }
-        args->word_hist[args->num_word_hist] = p;
+        args->word_hist[args->num_word_hist] = conv->fst_states[p].word_id;
         args->num_word_hist++;
         p = conv->fst_states[p].parent;
     }
