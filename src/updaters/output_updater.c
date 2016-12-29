@@ -324,6 +324,7 @@ static int output_tree_bfs_trav_activate_all(output_tree_t *tree,
     output_node_id_t child_e;
     output_node_id_t ch;
     int word;
+    double parent_logp;
 
     ST_CHECK_PARAM(tree == NULL || args == NULL, -1);
 
@@ -340,8 +341,9 @@ static int output_tree_bfs_trav_activate_all(output_tree_t *tree,
             oaa_args->ac[child_e - 1] = 0;
             softmax(oaa_args->ac + child_s, child_e - child_s);
         }
+        parent_logp = oaa_args->node_probs[node];
         for (ch = child_s; ch < child_e; ch++) {
-            oaa_args->node_probs[ch] += log(oaa_args->ac[ch]);
+            oaa_args->node_probs[ch] = parent_logp + log(oaa_args->ac[ch]);
         }
     }
 
@@ -374,8 +376,7 @@ int out_updater_activate_all(out_updater_t *out_updater,
     oaa_args.ac = out_updater->ac;
     oaa_args.norm = out_updater->output->norm;
 
-    memset(oaa_args.node_probs, 0,
-            sizeof(double) * out_updater->output->tree->num_node);
+    oaa_args.node_probs[out_updater->output->tree->root] = 0.0;
     if (output_tree_bfs(out_updater->output->tree,
                 output_tree_bfs_trav_activate_all,
                 &oaa_args) < 0) {
