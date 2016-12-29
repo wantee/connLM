@@ -692,6 +692,45 @@ int updater_setup_all(updater_t *updater)
     return 0;
 }
 
+static int output_tree_bfs_trav_forward_all(output_tree_t *tree,
+        output_node_id_t node, void *args)
+{
+    updater_t *updater;
+    int c;
+
+    ST_CHECK_PARAM(tree == NULL || args == NULL, -1);
+
+    updater = (updater_t *)args;
+
+    if (is_leaf(tree, node)) {
+        return 0;
+    }
+
+    for (c = 0; c < updater->connlm->num_comp; c++) {
+        if (comp_updater_forward_out(updater->comp_updaters[c], node) < 0) {
+            ST_WARNING("Failed to comp_updater_forward[%s].",
+                    updater->connlm->comps[c]->name);
+            return -1;
+        }
+    }
+
+    return 0;
+}
+
+static int updater_forward_out_all(updater_t *updater)
+{
+    ST_CHECK_PARAM(updater == NULL, -1);
+
+    if (output_tree_bfs(updater->out_updater->output->tree,
+                output_tree_bfs_trav_forward_all,
+                updater) < 0) {
+        ST_WARNING("Failed to output_tree_bfs.");
+        return -1;
+    }
+
+    return 0;
+}
+
 int updater_step_with_state(updater_t *updater, real_t *state,
         int *hist, int num_hist, double *output_probs)
 {
@@ -718,6 +757,11 @@ int updater_step_with_state(updater_t *updater, real_t *state,
 
     if (updater_forward_util_out(updater) < 0) {
         ST_WARNING("Failed to updater_forward_util_out.");
+        return -1;
+    }
+
+    if (updater_forward_out_all(updater) < 0) {
+        ST_WARNING("Failed to updater_forward_out_all.");
         return -1;
     }
 
