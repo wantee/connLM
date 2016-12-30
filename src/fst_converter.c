@@ -283,6 +283,10 @@ fst_conv_t* fst_conv_create(connlm_t *connlm, int n_thr,
         }
     }
 
+    if (conv->updaters[0]->input_updater->ctx_rightmost > 0) {
+        ST_WARNING("Can not converting: future words in input context.");
+        return NULL;
+    }
 
     return conv;
 
@@ -335,6 +339,9 @@ static int fst_conv_setup(fst_conv_t *conv, FILE *fst_fp,
             ST_WARNING("Failed to st_block_cache_create model_state_cache.");
             return -1;
         }
+    } else {
+        ST_WARNING("Converting with stateless model could "
+                "probably not stop.");
     }
 
     conv->cap_fst_states = count;
