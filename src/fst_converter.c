@@ -525,7 +525,9 @@ static int boost_sampling(double *probs, int n_probs,
             if (word == SENT_END_ID) {
                 p += probs[word] + boost_value;
             } else {
-                p += probs[word] - boost_value / (n_probs - 1);
+                if (probs[word] - boost_value / (n_probs - 1) > 0.0) {
+                    p += probs[word] - boost_value / (n_probs - 1);
+                }
             }
 
             if (p >= u) {
