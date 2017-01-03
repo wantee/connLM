@@ -89,7 +89,7 @@ void show_usage(const char *module_name)
     connlm_show_usage(module_name,
             "Convert connLM Model to WFST",
             "<model> <fst-file>",
-            "exp/final.clm data/final.txt",
+            "exp/final.clm exp/g.txt",
             g_cmd_opt, NULL);
 }
 
