@@ -58,7 +58,7 @@ typedef enum _input_combination_method_t_ {
  */
 typedef struct _input_t_ {
     int input_size; /**< size of input layer. */
-    real_t wildchar_scale; /**< scale for \<any\>,
+    real_t wildcard_scale; /**< scale for \<any\>,
                                 zero if \<any\> not exists */
 
     st_wt_int_t *context; /**< context for input layer. */
@@ -120,7 +120,7 @@ layer_t* input_get_layer(input_t *input);
  * @param[in] input the input layer.
  * @return number of words.
  */
-#define input_n_words(input) (((input)->wildchar_scale != 0.0) ? \
+#define input_n_words(input) (((input)->wildcard_scale != 0.0) ? \
                               ((input)->n_ctx + 1) : (input)->n_ctx)
 
 /**

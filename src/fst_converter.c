@@ -767,7 +767,7 @@ static int fst_conv_find_backoff(fst_conv_t *conv, fst_conv_args_t *args,
 
     // the word_hist should be filled at beginning of expand
 
-    // turn a non-wildchar word to wildchar from ancient to recent
+    // turn a non-wildcard word to wildcard from ancient to recent
     // until we encounter a exsited backoff state.
     for (i = args->num_word_hist - 1; i >= 0; i--) {
         if (args->word_hist[i] == ANY_ID) {
@@ -856,7 +856,7 @@ static int fst_conv_expand(fst_conv_t *conv, fst_conv_args_t *args)
 
     int i, n;
     bool no_backoff;
-    bool expand_wildchar;
+    bool expand_wildcard;
     bool have_any;
 
     ST_CHECK_PARAM(conv == NULL || args == NULL, -1);
@@ -927,17 +927,17 @@ static int fst_conv_expand(fst_conv_t *conv, fst_conv_args_t *args)
     }
 
     no_backoff = false;
-    expand_wildchar = false;
+    expand_wildcard = false;
     if (conv->fst_states[sid].word_id == ANY_ID) {
         if(conv->fst_states[sid].parent == -1) { // no backoff
             no_backoff = true;
         }
-        expand_wildchar = true;
+        expand_wildcard = true;
     }
 
-    if (!expand_wildchar) {
+    if (!expand_wildcard) {
         if (distribute_prob(output_probs, output_size, ANY_ID) < 0) {
-            ST_WARNING("Failed to distribute_prob of wildchar");
+            ST_WARNING("Failed to distribute_prob of wildcard");
             return -1;
         }
     }
@@ -984,13 +984,13 @@ static int fst_conv_expand(fst_conv_t *conv, fst_conv_args_t *args)
     }
 
     backoff_prob = 1.0;
-    if (expand_wildchar && !have_any) {
+    if (expand_wildcard && !have_any) {
         args->selected_words[0] = SENT_END_ID;
         n = 1;
     }
 
     // probability of <any> already distributed to other words
-    if (!expand_wildchar) assert(!have_any);
+    if (!expand_wildcard) assert(!have_any);
 
     new_sid = fst_conv_add_states(conv, n - 1/* -1 for </s> */, sid,
             args->store_children);
@@ -999,7 +999,7 @@ static int fst_conv_expand(fst_conv_t *conv, fst_conv_args_t *args)
         return -1;
     }
 
-    if (expand_wildchar && have_any) {
+    if (expand_wildcard && have_any) {
         // expand <any> first, since other state may backoff to them.
         word = ANY_ID;
         to_sid = new_sid++;
@@ -1282,6 +1282,7 @@ int fst_conv_convert(fst_conv_t *conv, FILE *fst_fp)
         return -1;
     }
 
+    ST_TRACE("Building wildcard subfst...")
     if (fst_conv_build_wildcard(conv, args) < 0) {
         ST_WARNING("Failed to fst_conv_build_wildcard.");
         goto ERR;
@@ -1292,6 +1293,7 @@ int fst_conv_convert(fst_conv_t *conv, FILE *fst_fp)
         goto ERR;
     }
 
+    ST_TRACE("Building normal subfst...")
     if (fst_conv_build_normal(conv, args) < 0) {
         ST_WARNING("Failed to fst_conv_build_normal.");
         goto ERR;

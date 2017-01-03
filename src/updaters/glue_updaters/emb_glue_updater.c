@@ -56,8 +56,8 @@ int emb_glue_updater_forward(glue_updater_t *glue_updater,
 
     switch (input->combine) {
         case IC_SUM:
-            if (input->wildchar_scale != 0.0) {
-                scale = input->wildchar_scale;
+            if (input->wildcard_scale != 0.0) {
+                scale = input->wildcard_scale;
                 j = ANY_ID * col;
                 for (b = 0; b < col; b++, j++) {
                     out_layer_updater->ac[b] += scale * wt[j];
@@ -78,8 +78,8 @@ int emb_glue_updater_forward(glue_updater_t *glue_updater,
         case IC_AVG:
             for (b = 0; b < col; b++) {
                 ac = 0;
-                if (input->wildchar_scale != 0.0) {
-                    scale = input->wildchar_scale;
+                if (input->wildcard_scale != 0.0) {
+                    scale = input->wildcard_scale;
                     j = ANY_ID * col + b;
                     ac += scale * wt[j];
                 }
@@ -96,8 +96,8 @@ int emb_glue_updater_forward(glue_updater_t *glue_updater,
             }
             break;
         case IC_CONCAT:
-            if (input->wildchar_scale != 0.0) {
-                scale = input->wildchar_scale;
+            if (input->wildcard_scale != 0.0) {
+                scale = input->wildcard_scale;
                 j = ANY_ID * col;
                 for (b = 0; b < col; b++, j++) {
                     out_layer_updater->ac[b] += scale * wt[j];
@@ -144,8 +144,8 @@ int emb_glue_updater_backprop(glue_updater_t *glue_updater,
     input = comp_updater->comp->input;
 
     if (input->combine == IC_CONCAT) {
-        if (input->wildchar_scale != 0.0) {
-            in_idx.w = input->wildchar_scale;
+        if (input->wildcard_scale != 0.0) {
+            in_idx.w = input->wildcard_scale;
             in_idx.i = ANY_ID;
             if (wt_update(glue_updater->wt_updater, NULL, -1,
                         out_er,
@@ -172,8 +172,8 @@ int emb_glue_updater_backprop(glue_updater_t *glue_updater,
             }
         }
     } else {
-        if (input->wildchar_scale != 0.0) {
-            in_idx.w = input->wildchar_scale;
+        if (input->wildcard_scale != 0.0) {
+            in_idx.w = input->wildcard_scale;
             in_idx.i = ANY_ID;
             if (wt_update(glue_updater->wt_updater, NULL, -1,
                         out_er, 1.0, NULL, 1.0, &in_idx) < 0) {
