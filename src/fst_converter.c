@@ -490,7 +490,7 @@ static int fst_conv_print_arc(fst_conv_t *conv,
             olab_str = ilab_str;
         }
         ret = fprintf(conv->fst_fp, "%d\t%d\t%s\t%s\t%f\n", from, to,
-                ilab_str, olab_str, (float)weight);
+                ilab_str, olab_str, (float)log(weight));
     } else {
         if (phi_id(conv) == wid) {
             ilab = wid + 1; // reserver 0 for <eps>
@@ -500,7 +500,7 @@ static int fst_conv_print_arc(fst_conv_t *conv,
             olab = ilab;
         }
         ret = fprintf(conv->fst_fp, "%d\t%d\t%d\t%d\t%f\n", from, to,
-                ilab, olab, (float)weight);
+                ilab, olab, (float)log(weight));
     }
     if (pthread_mutex_unlock(&conv->fst_fp_lock) != 0) {
         ST_WARNING("Failed to pthread_mutex_lock fst_fp_lock.");
