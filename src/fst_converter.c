@@ -37,6 +37,8 @@
 
 #include "fst_converter.h"
 
+#define FST_CONV_LOG_STEP 10000
+
 #define FST_INIT_STATE 0
 #define FST_FINAL_STATE 1
 #define FST_BACKOFF_STATE 2
@@ -478,6 +480,11 @@ static int fst_conv_add_states(fst_conv_t *conv, int n,
         conv->fst_children[parent].num_children = n;
     }
 
+    if (conv->n_fst_state % FST_CONV_LOG_STEP == 0) {
+        ST_TRACE("Building states: %d, max gram: %d", conv->n_fst_state,
+                conv->max_gram);
+    }
+
     return sid;
 
 RET:
@@ -875,6 +882,9 @@ static int fst_conv_expand(fst_conv_t *conv, fst_conv_args_t *args)
         ST_WARNING("Failed to fst_conv_find_word_hist");
         return -1;
     }
+    if (args->num_word_hist + 1 > conv->max_gram) {
+        conv->max_gram = args->num_word_hist + 1;
+    }
 
     if (updater_step_with_state(updater, state, args->word_hist,
                 args->num_word_hist, output_probs) < 0) {
@@ -1135,6 +1145,7 @@ static int fst_conv_build_wildcard(fst_conv_t *conv, fst_conv_args_t *args)
         ST_WARNING("Failed to fst_conv_print_ssyms.");
         return -1;
     }
+    conv->max_gram = 1;
 
     for (i = 0; i < conv->n_thr; i++) {
         args[i].store_children = true;

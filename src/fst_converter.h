@@ -126,6 +126,8 @@ typedef struct _fst_converter_t_ {
     FILE *ssyms_fp; /**< output file pointer for state symbols file. */
     pthread_mutex_t ssyms_fp_lock; /**< lock for ssyms_fp. */
 
+    int max_gram; /**< max order of gram for the fst. */
+
     fst_conv_opt_t conv_opt; /**< options. */
 } fst_conv_t;
 
