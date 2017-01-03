@@ -175,7 +175,11 @@ int fst_conv_load_opt(fst_conv_opt_t *conv_opt,
 
     ST_OPT_SEC_GET_BOOL(opt, sec_name, "PRINT_SYMS",
             conv_opt->print_syms, false,
-            "Print symbols instead of numbers, if true. ");
+            "Print symbols instead of numbers, if true.");
+
+    ST_OPT_SEC_GET_STR(opt, sec_name, "OUTPUT_SSYMS_FILE",
+            conv_opt->output_ssyms_file, MAX_DIR_LEN, "",
+            "File to be written out state symbols(for debug), if true.");
 
     ST_OPT_SEC_GET_STR(opt, sec_name, "BACKOFF_METHOD",
             method_str, MAX_ST_CONF_LEN, "Beam",
@@ -241,6 +245,11 @@ void fst_conv_destroy(fst_conv_t *conv)
 
     (void)pthread_mutex_destroy(&conv->fst_fp_lock);
     conv->fst_fp = NULL;
+
+    if (conv->ssyms_fp != NULL) {
+        safe_fclose(conv->ssyms_fp);
+        (void)pthread_mutex_destroy(&conv->ssyms_fp_lock);
+    }
 }
 
 fst_conv_t* fst_conv_create(connlm_t *connlm, int n_thr,
@@ -309,6 +318,20 @@ static int fst_conv_setup(fst_conv_t *conv, FILE *fst_fp,
     if (pthread_mutex_init(&conv->fst_fp_lock, NULL) != 0) {
         ST_WARNING("Failed to pthread_mutex_init fst_fp_lock.");
         return -1;
+    }
+
+    if (conv->conv_opt.output_ssyms_file[0] != '\0') {
+        conv->ssyms_fp = st_fopen(conv->conv_opt.output_ssyms_file, "w");
+        if (conv->ssyms_fp == NULL) {
+            ST_WARNING("Failed to st_fopen ssyms file[%s]",
+                    conv->conv_opt.output_ssyms_file);
+            return -1;
+        }
+
+        if (pthread_mutex_init(&conv->ssyms_fp_lock, NULL) != 0) {
+            ST_WARNING("Failed to pthread_mutex_init ssyms_fp_lock.");
+            return -1;
+        }
     }
 
     if (connlm_setup(conv->connlm) < 0) {
@@ -460,6 +483,43 @@ static int fst_conv_add_states(fst_conv_t *conv, int n,
 RET:
     if (pthread_mutex_unlock(&conv->fst_state_lock) != 0) {
         ST_WARNING("Failed to pthread_mutex_unlock fst_state_lock.");
+        return -1;
+    }
+
+    return ret;
+}
+
+static int fst_conv_print_ssyms(fst_conv_t *conv, int sid,
+        int *word_hist, int num_word_hist, int wid)
+{
+    int i;
+    int ret = 0;
+
+    ST_CHECK_PARAM(conv == NULL, -1);
+
+    if (conv->ssyms_fp == NULL) {
+        return 0;
+    }
+
+    if (pthread_mutex_lock(&conv->ssyms_fp_lock) != 0) {
+        ST_WARNING("Failed to pthread_mutex_lock ssyms_fp_lock.");
+        return -1;
+    }
+    fprintf(conv->ssyms_fp, "%d\t", sid);
+    if (word_hist != NULL) {
+        for (i = num_word_hist - 1; i >= 0; i--) {
+            fprintf(conv->ssyms_fp, "%s:",
+                    vocab_get_word(conv->connlm->vocab, word_hist[i]));
+        }
+    }
+    if (wid >= 0) {
+        fprintf(conv->ssyms_fp, "%s",
+                vocab_get_word(conv->connlm->vocab, wid));
+    }
+    fprintf(conv->ssyms_fp, "\n");
+
+    if (pthread_mutex_unlock(&conv->ssyms_fp_lock) != 0) {
+        ST_WARNING("Failed to pthread_mutex_unlock ssyms_fp_lock.");
         return -1;
     }
 
@@ -945,11 +1005,18 @@ static int fst_conv_expand(fst_conv_t *conv, fst_conv_args_t *args)
             assert(conv->fst_states[to_sid].model_state_id == model_state_id);
         }
 
+        if (fst_conv_print_ssyms(conv, to_sid, args->word_hist,
+                    args->num_word_hist, word) < 0) {
+            ST_WARNING("Failed to fst_conv_print_ssyms.");
+            return -1;
+        }
+
         if (fst_conv_print_arc(conv, sid,
                     to_sid, word, output_probs[word]) < 0) {
             ST_WARNING("Failed to fst_conv_print_arc.");
             return -1;
         }
+
         backoff_prob -= output_probs[ANY_ID];
     }
 
@@ -976,6 +1043,12 @@ static int fst_conv_expand(fst_conv_t *conv, fst_conv_args_t *args)
                 }
                 assert(conv->fst_states[to_sid].model_state_id
                         == model_state_id);
+            }
+
+            if (fst_conv_print_ssyms(conv, to_sid, args->word_hist,
+                        args->num_word_hist, word) < 0) {
+                ST_WARNING("Failed to fst_conv_print_ssyms.");
+                return -1;
             }
         }
 
@@ -1060,6 +1133,10 @@ static int fst_conv_build_wildcard(fst_conv_t *conv, fst_conv_args_t *args)
         goto ERR;
     }
     conv->fst_states[sid].word_id = ANY_ID;
+    if (fst_conv_print_ssyms(conv, sid, NULL, 0, ANY_ID) < 0) {
+        ST_WARNING("Failed to fst_conv_print_ssyms.");
+        return -1;
+    }
 
     for (i = 0; i < conv->n_thr; i++) {
         args[i].store_children = true;
@@ -1118,6 +1195,10 @@ static int fst_conv_build_normal(fst_conv_t *conv, fst_conv_args_t *args)
         goto ERR;
     }
     conv->fst_states[sid].word_id = SENT_START_ID;
+    if (fst_conv_print_ssyms(conv, sid, NULL, 0, SENT_START_ID) < 0) {
+        ST_WARNING("Failed to fst_conv_print_ssyms.");
+        return -1;
+    }
 
     if (fst_conv_print_arc(conv, FST_INIT_STATE, sid,
                 SENT_START_ID, 0.0) < 0) {
@@ -1182,6 +1263,15 @@ int fst_conv_convert(fst_conv_t *conv, FILE *fst_fp)
         goto ERR;
     }
     conv->fst_states[FST_FINAL_STATE].word_id = SENT_END_ID;
+    if (fst_conv_print_ssyms(conv, FST_INIT_STATE, NULL, 0,  -1) < 0) {
+        ST_WARNING("Failed to fst_conv_print_ssyms.");
+        return -1;
+    }
+    if (fst_conv_print_ssyms(conv, FST_FINAL_STATE, NULL, 0,
+                SENT_END_ID) < 0) {
+        ST_WARNING("Failed to fst_conv_print_ssyms.");
+        return -1;
+    }
 
     if (fst_conv_build_wildcard(conv, args) < 0) {
         ST_WARNING("Failed to fst_conv_build_wildcard.");
