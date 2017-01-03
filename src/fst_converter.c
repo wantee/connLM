@@ -1016,8 +1016,6 @@ static int fst_conv_expand(fst_conv_t *conv, fst_conv_args_t *args)
             ST_WARNING("Failed to fst_conv_print_arc.");
             return -1;
         }
-
-        backoff_prob -= output_probs[ANY_ID];
     }
 
     for (i = 0; i < n; i++) {
