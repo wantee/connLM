@@ -45,6 +45,7 @@
 
 #define get_vocab_size(conv) (conv)->connlm->vocab->vocab_size
 #define phi_id(conv) get_vocab_size(conv)
+#define any_id(conv) get_vocab_size(conv) + 1
 
 typedef struct _fst_converter_args_t_ {
     fst_conv_t *conv;
@@ -497,6 +498,15 @@ RET:
     return ret;
 }
 
+static char* fst_conv_get_word(fst_conv_t *conv, int wid)
+{
+    if (wid == any_id(conv)) {
+        return ANY;
+    } else {
+        return vocab_get_word(conv->connlm->vocab, wid);
+    }
+}
+
 static int fst_conv_print_ssyms(fst_conv_t *conv, int sid,
         int *word_hist, int num_word_hist, int wid)
 {
@@ -517,12 +527,11 @@ static int fst_conv_print_ssyms(fst_conv_t *conv, int sid,
     if (word_hist != NULL) {
         for (i = num_word_hist - 1; i >= 0; i--) {
             fprintf(conv->ssyms_fp, "%s:",
-                    vocab_get_word(conv->connlm->vocab, word_hist[i]));
+                    fst_conv_get_word(conv, word_hist[i]));
         }
     }
     if (wid >= 0) {
-        fprintf(conv->ssyms_fp, "%s",
-                vocab_get_word(conv->connlm->vocab, wid));
+        fprintf(conv->ssyms_fp, "%s", fst_conv_get_word(conv, wid));
     }
     fprintf(conv->ssyms_fp, "\n");
 
@@ -697,14 +706,14 @@ static int fst_conv_search_children(fst_conv_t *conv, int sid, int word_id)
     }
 
     ch = conv->fst_children[sid].first_child;
-    if (word_id == ANY_ID) {
+    if (word_id == any_id(conv)) {
         if (conv->fst_states[ch].word_id == word_id) {
             return ch;
         }
         return -1;
     }
 
-    if (conv->fst_states[ch].word_id == ANY_ID) {
+    if (conv->fst_states[ch].word_id == any_id(conv)) {
         l = ch + 1;
         h = l + conv->fst_children[sid].num_children - 2;
     } else {
@@ -762,7 +771,7 @@ static int fst_conv_find_backoff(fst_conv_t *conv, fst_conv_args_t *args,
 
     ST_CHECK_PARAM(conv == NULL || args == NULL || sid < 0, -1);
 
-    if (conv->fst_states[sid].word_id == ANY_ID) {
+    if (conv->fst_states[sid].word_id == any_id(conv)) {
         return conv->fst_states[sid].parent;
     }
 
@@ -771,10 +780,10 @@ static int fst_conv_find_backoff(fst_conv_t *conv, fst_conv_args_t *args,
     // turn a non-wildcard word to wildcard from ancient to recent
     // until we encounter a exsited backoff state.
     for (i = args->num_word_hist - 1; i >= 0; i--) {
-        if (args->word_hist[i] == ANY_ID) {
+        if (args->word_hist[i] == any_id(conv)) {
             continue;
         }
-        args->word_hist[i] = ANY_ID;
+        args->word_hist[i] = any_id(conv);
 
         backoff_sid = FST_BACKOFF_STATE;
         for (j = args->num_word_hist - 1; j >= 0; j--) {
@@ -797,7 +806,7 @@ static int fst_conv_find_backoff(fst_conv_t *conv, fst_conv_args_t *args,
         backoff_sid = FST_BACKOFF_STATE;
         for (j = 0; j < i - 1; j++) {
             backoff_sid = fst_conv_search_children(conv,
-                    backoff_sid, ANY_ID);
+                    backoff_sid, any_id(conv));
             if (backoff_sid < 0) {
                 break;
             }
@@ -857,8 +866,6 @@ static int fst_conv_expand(fst_conv_t *conv, fst_conv_args_t *args)
 
     int i, n;
     bool no_backoff;
-    bool expand_wildcard;
-    bool have_any;
 
     ST_CHECK_PARAM(conv == NULL || args == NULL, -1);
 
@@ -928,18 +935,9 @@ static int fst_conv_expand(fst_conv_t *conv, fst_conv_args_t *args)
     }
 
     no_backoff = false;
-    expand_wildcard = false;
-    if (conv->fst_states[sid].word_id == ANY_ID) {
+    if (conv->fst_states[sid].word_id == any_id(conv)) {
         if(conv->fst_states[sid].parent == -1) { // no backoff
             no_backoff = true;
-        }
-        expand_wildcard = true;
-    }
-
-    if (!expand_wildcard) {
-        if (distribute_prob(output_probs, output_size, ANY_ID) < 0) {
-            ST_WARNING("Failed to distribute_prob of wildcard");
-            return -1;
         }
     }
 
@@ -953,9 +951,7 @@ static int fst_conv_expand(fst_conv_t *conv, fst_conv_args_t *args)
             args->selected_words[n] = word;
             n++;
         }
-        have_any = true;
     } else {
-        have_any = false;
         n = 0;
         word = -1;
         while(true) {
@@ -964,9 +960,6 @@ static int fst_conv_expand(fst_conv_t *conv, fst_conv_args_t *args)
             if (word < 0) {
                 ST_WARNING("Failed to select_word.");
                 return -1;
-            }
-            if (word == ANY_ID) {
-                have_any = true;
             }
 
             args->selected_words[n] = word;
@@ -985,13 +978,6 @@ static int fst_conv_expand(fst_conv_t *conv, fst_conv_args_t *args)
     }
 
     backoff_prob = 1.0;
-    if (expand_wildcard && !have_any) {
-        args->selected_words[0] = SENT_END_ID;
-        n = 1;
-    }
-
-    // probability of <any> already distributed to other words
-    if (!expand_wildcard) assert(!have_any);
 
     new_sid = fst_conv_add_states(conv, n - 1/* -1 for </s> */, sid,
             args->store_children);
@@ -1000,42 +986,9 @@ static int fst_conv_expand(fst_conv_t *conv, fst_conv_args_t *args)
         return -1;
     }
 
-    if (expand_wildcard && have_any) {
-        // expand <any> first, since other state may backoff to them.
-        word = ANY_ID;
-        to_sid = new_sid++;
-        conv->fst_states[to_sid].word_id = word;
-        if (conv->model_state_cache != NULL) {
-            conv->fst_states[to_sid].model_state_id = model_state_id;
-            // hold state_cache
-            if (st_block_cache_fetch(conv->model_state_cache,
-                        &model_state_id) == NULL) {
-                ST_WARNING("Failed to st_block_cache_fetch.");
-                return -1;
-            }
-            assert(conv->fst_states[to_sid].model_state_id == model_state_id);
-        }
-
-        if (fst_conv_print_ssyms(conv, to_sid, args->word_hist,
-                    args->num_word_hist, word) < 0) {
-            ST_WARNING("Failed to fst_conv_print_ssyms.");
-            return -1;
-        }
-
-        if (fst_conv_print_arc(conv, sid,
-                    to_sid, word, output_probs[word]) < 0) {
-            ST_WARNING("Failed to fst_conv_print_arc.");
-            return -1;
-        }
-    }
-
     for (i = 0; i < n; i++) {
         word = args->selected_words[i];
         backoff_prob -= output_probs[word];
-
-        if (word == ANY_ID) {
-            continue;
-        }
 
         if (word == SENT_END_ID) {
             to_sid = FST_FINAL_STATE;
@@ -1141,8 +1094,8 @@ static int fst_conv_build_wildcard(fst_conv_t *conv, fst_conv_args_t *args)
         ST_WARNING("Failed to fst_conv_add_states for <any>.");
         goto ERR;
     }
-    conv->fst_states[sid].word_id = ANY_ID;
-    if (fst_conv_print_ssyms(conv, sid, NULL, 0, ANY_ID) < 0) {
+    conv->fst_states[sid].word_id = any_id(conv);
+    if (fst_conv_print_ssyms(conv, sid, NULL, 0, any_id(conv)) < 0) {
         ST_WARNING("Failed to fst_conv_print_ssyms.");
         return -1;
     }
