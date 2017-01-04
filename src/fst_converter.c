@@ -263,8 +263,9 @@ fst_conv_t* fst_conv_create(connlm_t *connlm, int n_thr,
 
     ST_CHECK_PARAM(connlm == NULL || n_thr <= 0 || conv_opt == NULL, NULL);
 
-    if (!vocab_has_any(connlm->vocab)) {
-        ST_WARNING("vocab must contain <any> in order to convert to fst");
+    if (connlm_generate_wildcard_wt(connlm) < 0) {
+        ST_WARNING("Could NOT convert to FST: "
+                "failed to generate weight for wildcard.");
         return NULL;
     }
 

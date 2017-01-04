@@ -152,8 +152,7 @@ int connlm_init(connlm_t *connlm, FILE *topo_fp)
                 goto ERR;
             }
             connlm->comps[connlm->num_comp] = comp_init_from_topo(content,
-                    connlm->output, connlm->vocab->vocab_size,
-                    vocab_has_any(connlm->vocab));
+                    connlm->output, connlm->vocab->vocab_size);
             if (connlm->comps[connlm->num_comp] == NULL) {
                 ST_WARNING("Failed to comp_init_from_topo.");
                 goto ERR;
@@ -908,6 +907,13 @@ int connlm_add_comp(connlm_t *connlm, component_t *comp)
     strncpy(connlm->comps[connlm->num_comp]->name, name, MAX_NAME_LEN);
     connlm->comps[connlm->num_comp]->name[MAX_NAME_LEN - 1] = '\0';
     connlm->num_comp++;
+
+    return 0;
+}
+
+int connlm_generate_wildcard_wt(connlm_t *connlm)
+{
+    ST_CHECK_PARAM(connlm == NULL, -1);
 
     return 0;
 }

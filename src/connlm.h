@@ -184,6 +184,14 @@ int connlm_setup(connlm_t *connlm);
  */
 int connlm_add_comp(connlm_t *connlm, component_t *comp);
 
+/**
+ * Generate weight for wildcard symbol.
+ * @ingroup g_connlm
+ * @param[in] connlm connlm model.
+ * @return non-zero value if any error.
+ */
+int connlm_generate_wildcard_wt(connlm_t *connlm);
+
 #ifdef __cplusplus
 }
 #endif

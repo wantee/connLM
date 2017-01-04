@@ -47,7 +47,6 @@ extern "C" {
  */
 typedef struct _vocab_opt_t_ {
     int max_alphabet_size; /**< max size of alphabet. */
-    bool add_any; /**< whether to add \<any\> in vocab. */
 } vocab_opt_t;
 
 /**
@@ -220,14 +219,6 @@ int vocab_add_word(vocab_t *vocab, const char* word);
  * @return true, if equal, false otherwise.
  */
 bool vocab_equal(vocab_t *vocab1, vocab_t *vocab2);
-
-/**
- * Determine whether a vocab contains \<any\>.
- * @ingroup g_vocab
- * @param[in] vocab the vocab.
- */
-#define vocab_has_any(vocab) (strcasecmp(vocab_get_word(vocab, ANY_ID), \
-                                         ANY) == 0)
 
 #ifdef __cplusplus
 }

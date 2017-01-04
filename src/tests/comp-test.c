@@ -74,7 +74,7 @@ static int unit_test_comp_read_topo()
     fprintf(stderr, "    Case %d...", ncase++);
     ref = std_ref;
     comp_test_mk_topo_lines(lines, MAX_LINE_LEN * 5, &ref, id);
-    comp = comp_init_from_topo(lines, output, input_size, false);
+    comp = comp_init_from_topo(lines, output, input_size);
     if (comp == NULL) {
         fprintf(stderr, "Failed\n");
         goto ERR;

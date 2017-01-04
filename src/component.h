@@ -105,11 +105,10 @@ component_t* comp_dup(component_t *c);
  * @param[in] topo_content content for component in a topology file.
  * @param[in] output output layer for component.
  * @param[in] input_size size of input layer.
- * @param[in] has_any whether \<any\> exists in the vocab.
  * @return component initialised, NULL if any error.
  */
 component_t *comp_init_from_topo(const char* topo_content,
-        output_t *output, int input_size, bool has_any);
+        output_t *output, int input_size);
 
 /**
  * Load component train option.

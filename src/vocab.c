@@ -48,9 +48,6 @@ int vocab_load_opt(vocab_opt_t *vocab_opt, st_opt_t *opt,
         vocab_opt->max_alphabet_size, 1000000,
         "Maximum size of alphabet for vocab.");
 
-    ST_OPT_SEC_GET_BOOL(opt, sec_name, "ADD_ANY", vocab_opt->add_any,
-            false, "Whether to add <any> in vocab");
-
     return 0;
 
 ST_OPT_ERR:
@@ -93,13 +90,6 @@ vocab_t *vocab_create(vocab_opt_t *vocab_opt)
     if (st_alphabet_add_label(vocab->alphabet, UNK) != UNK_ID) {
         ST_WARNING("Failed to add unk[%s].", UNK);
         goto ERR;
-    }
-
-    if (vocab_opt->add_any) {
-        if (st_alphabet_add_label(vocab->alphabet, ANY) != ANY_ID) {
-            ST_WARNING("Failed to add any[%s].", ANY);
-            goto ERR;
-        }
     }
 
     return vocab;
@@ -620,10 +610,6 @@ int vocab_learn(vocab_t *vocab, FILE *fp, vocab_learn_opt_t *lr_opt)
     word_infos[UNK_ID].cnt = 0;
     word_infos[SENT_START_ID].id = SENT_START_ID;
     word_infos[SENT_START_ID].cnt = 0;
-    if (vocab_has_any(vocab)) {
-        word_infos[ANY_ID].id = ANY_ID;
-        word_infos[ANY_ID].cnt = 0;
-    }
 
     words = 0;
     while (1) {
@@ -654,12 +640,6 @@ int vocab_learn(vocab_t *vocab, FILE *fp, vocab_learn_opt_t *lr_opt)
         if (lr_opt->max_word_num > 0 && words >= lr_opt->max_word_num) {
             break;
         }
-    }
-
-    if (vocab_has_any(vocab)) {
-        // this will ensure <any> to be the first word after sorting,
-        // so that it won't be pruned.
-        word_infos[ANY_ID].cnt = words;
     }
 
     if (vocab_sort(vocab, word_infos, lr_opt) < 0) {
