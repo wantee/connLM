@@ -639,7 +639,7 @@ static int select_word(fst_conv_t *conv, int last_word,
                     continue;
                 }
                 if (output_probs[word] >= output_probs[SENT_END_ID]
-                        - conv->conv_opt.beam) {
+                        + conv->conv_opt.beam) {
                     return word;
                 }
                 ++word;
