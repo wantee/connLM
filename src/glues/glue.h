@@ -90,6 +90,8 @@ typedef struct _glue_implementation_t_ {
     wt_updater_t* (*init_wt_updater)(glue_t *glue,
             param_t *param); /**< init wt_updater for glue.*/
 
+    int (*generate_wildcard_repr)(glue_t *glue); /**< generate repr for wildcard. */
+
 } glue_impl_t;
 
 /**
@@ -117,6 +119,7 @@ typedef struct _glue_t_ {
     weight_t *wt; /**< weight matrix. */
     param_t param; /**< updating parameters. */
 
+    real_t *wildcard_repr; /**< representation for wildcard symbol. */
     glue_impl_t *impl; /**< implementation for glue. */
     void *extra; /**< hook to store extra data. */
 } glue_t;
@@ -301,6 +304,14 @@ int glue_forward(glue_t *glue, comp_updater_t *comp_updater,
  */
 int glue_backprop(glue_t *glue, comp_updater_t *comp_updater,
         out_updater_t *out_updater);
+
+/**
+ * Generate representation for wildcard symbol.
+ * @ingroup g_glue
+ * @param[in] glue glue.
+ * @return non-zero value if any error.
+ */
+int glue_generate_wildcard_repr(glue_t *glue);
 
 #ifdef __cplusplus
 }

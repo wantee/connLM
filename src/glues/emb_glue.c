@@ -148,3 +148,32 @@ ERR:
     safe_wt_updater_destroy(wt_updater);
     return NULL;
 }
+
+int emb_glue_generate_wildcard_repr(glue_t *glue)
+{
+    int i, j;
+
+    ST_CHECK_PARAM(glue == NULL, NULL);
+
+    if (strcasecmp(glue->type, EMB_GLUE_NAME) != 0) {
+        ST_WARNING("Not a emb glue. [%s]", glue->type);
+        return -1;
+    }
+
+    glue->wildcard_repr = (real_t *)malloc(sizeof(real_t) * glue->wt->col);
+    if (glue->wildcard_repr == NULL) {
+        ST_WARNING("Failed to mallco wildcard_repr.");
+        return -1;
+    }
+
+    // use the mean of embedding of all words (except </s>) as the repr
+    for (j = 0; j < glue->wt->col; j++) {
+        glue->wildcard_repr[j] = 0;
+        for (i = 0; i < glue->wt->row; i++) {
+            glue->wildcard_repr[j] += glue->wt->mat[i * glue->wt->col + j];
+        }
+        glue->wildcard_repr[j] /= glue->wt->row;
+    }
+
+    return 0;
+}

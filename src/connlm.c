@@ -911,9 +911,19 @@ int connlm_add_comp(connlm_t *connlm, component_t *comp)
     return 0;
 }
 
-int connlm_generate_wildcard_wt(connlm_t *connlm)
+int connlm_generate_wildcard_repr(connlm_t *connlm)
 {
+    int c;
+
     ST_CHECK_PARAM(connlm == NULL, -1);
+
+    for (c = 0; c < connlm->num_comp; c++) {
+        if (comp_generate_wildcard_repr(connlm->comps[c]) < 0) {
+            ST_WARNING("Failed to comp_generate_wildcard_repr for [%s].",
+                    connlm->comps[c]->name);
+            return -1;
+        }
+    }
 
     return 0;
 }

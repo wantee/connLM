@@ -1004,3 +1004,20 @@ int comp_draw(component_t *comp, FILE *fp, bool verbose)
 
     return 0;
 }
+
+int comp_generate_wildcard_repr(component_t *comp)
+{
+    int g;
+
+    ST_CHECK_PARAM(comp == NULL, -1);
+
+    for (g = 0; g < comp->num_glue; g++) {
+        if (glue_generate_wildcard_repr(comp->glues[g]) < 0) {
+            ST_WARNING("Failed to glue_generate_wildcard_repr for glue[%s]",
+                    comp->glues[g]->name);
+            return -1;
+        }
+    }
+
+    return 0;
+}

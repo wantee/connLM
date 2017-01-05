@@ -196,6 +196,14 @@ char* comp_input_nodename(component_t *comp, char *nodename,
  */
 int comp_draw(component_t *comp, FILE *fp, bool verbose);
 
+/**
+ * Generate representation for wildcard symbol.
+ * @ingroup g_component
+ * @param[in] comp component.
+ * @return non-zero value if any error.
+ */
+int comp_generate_wildcard_repr(component_t *comp);
+
 #ifdef __cplusplus
 }
 #endif
