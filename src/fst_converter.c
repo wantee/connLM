@@ -481,8 +481,10 @@ static int fst_conv_add_states(fst_conv_t *conv, int n,
         conv->fst_children[parent].num_children = n;
     }
 
-    if (conv->n_fst_state % FST_CONV_LOG_STEP == 0) {
-        ST_TRACE("Building states: %d, max gram: %d", conv->n_fst_state,
+    if ((conv->n_fst_state - n) / FST_CONV_LOG_STEP !=
+            conv->n_fst_state / FST_CONV_LOG_STEP) {
+        ST_TRACE("Building states: %d, max gram: %d",
+                conv->n_fst_state / FST_CONV_LOG_STEP * FST_CONV_LOG_STEP,
                 conv->max_gram);
     }
 
