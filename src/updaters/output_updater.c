@@ -42,6 +42,8 @@ void out_updater_destroy(out_updater_t *out_updater)
     safe_st_aligned_free(out_updater->er);
 
     out_updater->output = NULL;
+
+    safe_output_tree_bfs_aux_destroy(out_updater->bfs_aux);
 }
 
 out_updater_t* out_updater_create(output_t *output)
@@ -361,6 +363,12 @@ int out_updater_init_all(out_updater_t *out_updater)
         return -1;
     }
 
+    out_updater->bfs_aux = output_tree_bfs_aux_create(out_updater->output->tree);
+    if (out_updater->bfs_aux == NULL) {
+        ST_WARNING("Failed to output_tree_bfs_aux_create.");
+        return -1;
+    }
+
     return 0;
 }
 
@@ -378,6 +386,7 @@ int out_updater_activate_all(out_updater_t *out_updater,
 
     oaa_args.node_probs[out_updater->output->tree->root] = 0.0;
     if (output_tree_bfs(out_updater->output->tree,
+                out_updater->bfs_aux,
                 output_tree_bfs_trav_activate_all,
                 &oaa_args) < 0) {
         ST_WARNING("Failed to output_tree_bfs.");

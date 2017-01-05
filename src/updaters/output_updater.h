@@ -49,6 +49,7 @@ typedef struct _output_updater_t_ {
     real_t *er; /**< error of output layer. */
 
     double *node_probs; /**< buffer for probablity of nodes in output tree. */
+    output_tree_bfs_aux_t *bfs_aux; /**< aux for output tree BFS. */
 } out_updater_t;
 
 /**

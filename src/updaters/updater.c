@@ -722,6 +722,7 @@ static int updater_forward_out_all(updater_t *updater)
     ST_CHECK_PARAM(updater == NULL, -1);
 
     if (output_tree_bfs(updater->out_updater->output->tree,
+                updater->out_updater->bfs_aux,
                 output_tree_bfs_trav_forward_all,
                 updater) < 0) {
         ST_WARNING("Failed to output_tree_bfs.");
