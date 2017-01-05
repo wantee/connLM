@@ -153,7 +153,7 @@ int emb_glue_generate_wildcard_repr(glue_t *glue)
 {
     int i, j;
 
-    ST_CHECK_PARAM(glue == NULL, NULL);
+    ST_CHECK_PARAM(glue == NULL, -1);
 
     if (strcasecmp(glue->type, EMB_GLUE_NAME) != 0) {
         ST_WARNING("Not a emb glue. [%s]", glue->type);
@@ -170,9 +170,12 @@ int emb_glue_generate_wildcard_repr(glue_t *glue)
     for (j = 0; j < glue->wt->col; j++) {
         glue->wildcard_repr[j] = 0;
         for (i = 0; i < glue->wt->row; i++) {
+            if (i == SENT_END_ID) {
+                continue;
+            }
             glue->wildcard_repr[j] += glue->wt->mat[i * glue->wt->col + j];
         }
-        glue->wildcard_repr[j] /= glue->wt->row;
+        glue->wildcard_repr[j] /= (glue->wt->row - 1);
     }
 
     return 0;

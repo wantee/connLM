@@ -44,7 +44,7 @@ static glue_impl_t GLUE_IMPL[] = {
         direct_glue_parse_topo, direct_glue_check, direct_glue_draw_label,
         direct_glue_load_header, NULL, direct_glue_save_header, NULL,
         direct_glue_init_data, direct_glue_init_wt_updater,
-        NULL},
+        direct_glue_generate_wildcard_repr},
     {FC_GLUE_NAME, NULL, NULL, NULL,
         fc_glue_parse_topo, fc_glue_check, NULL,
         NULL, NULL, NULL, NULL,

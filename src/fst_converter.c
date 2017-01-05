@@ -45,7 +45,6 @@
 
 #define get_vocab_size(conv) (conv)->connlm->vocab->vocab_size
 #define phi_id(conv) get_vocab_size(conv)
-#define any_id(conv) get_vocab_size(conv) + 1
 
 typedef struct _fst_converter_args_t_ {
     fst_conv_t *conv;
@@ -500,7 +499,7 @@ RET:
 
 static char* fst_conv_get_word(fst_conv_t *conv, int wid)
 {
-    if (wid == any_id(conv)) {
+    if (wid == ANY_ID) {
         return ANY;
     } else {
         return vocab_get_word(conv->connlm->vocab, wid);
@@ -706,14 +705,14 @@ static int fst_conv_search_children(fst_conv_t *conv, int sid, int word_id)
     }
 
     ch = conv->fst_children[sid].first_child;
-    if (word_id == any_id(conv)) {
+    if (word_id == ANY_ID) {
         if (conv->fst_states[ch].word_id == word_id) {
             return ch;
         }
         return -1;
     }
 
-    if (conv->fst_states[ch].word_id == any_id(conv)) {
+    if (conv->fst_states[ch].word_id == ANY_ID) {
         l = ch + 1;
         h = l + conv->fst_children[sid].num_children - 2;
     } else {
@@ -906,7 +905,7 @@ static int fst_conv_expand(fst_conv_t *conv, fst_conv_args_t *args)
     }
 
     no_backoff = false;
-    if (conv->fst_states[sid].word_id == any_id(conv)) {
+    if (conv->fst_states[sid].word_id == ANY_ID) {
         if(conv->fst_states[sid].parent == -1) { // no backoff
             no_backoff = true;
         }
@@ -1065,8 +1064,8 @@ static int fst_conv_build_wildcard(fst_conv_t *conv, fst_conv_args_t *args)
         ST_WARNING("Failed to fst_conv_add_states for <any>.");
         goto ERR;
     }
-    conv->fst_states[sid].word_id = any_id(conv);
-    if (fst_conv_print_ssyms(conv, sid, NULL, 0, any_id(conv)) < 0) {
+    conv->fst_states[sid].word_id = ANY_ID;
+    if (fst_conv_print_ssyms(conv, sid, NULL, 0, ANY_ID) < 0) {
         ST_WARNING("Failed to fst_conv_print_ssyms.");
         return -1;
     }
