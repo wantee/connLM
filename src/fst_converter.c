@@ -503,8 +503,10 @@ static char* fst_conv_get_word(fst_conv_t *conv, int wid)
 {
     if (wid == ANY_ID) {
         return ANY;
-    } else {
+    } else if (wid >= 0) {
         return vocab_get_word(conv->connlm->vocab, wid);
+    } else {
+        return "";
     }
 }
 
@@ -531,9 +533,7 @@ static int fst_conv_print_ssyms(fst_conv_t *conv, int sid,
                     fst_conv_get_word(conv, word_hist[i]));
         }
     }
-    if (wid >= 0) {
-        fprintf(conv->ssyms_fp, "%s", fst_conv_get_word(conv, wid));
-    }
+    fprintf(conv->ssyms_fp, "%s", fst_conv_get_word(conv, wid));
     fprintf(conv->ssyms_fp, "\n");
 
     if (pthread_mutex_unlock(&conv->ssyms_fp_lock) != 0) {
