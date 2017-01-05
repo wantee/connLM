@@ -349,13 +349,20 @@ ERR:
 
 int wt_load_body(weight_t *wt, int version, FILE *fp, bool binary)
 {
+    char name[MAX_NAME_LEN];
     int n;
-    int i;
+    int i, j, col;
     int sz;
+
+    char *line = NULL;
+    size_t line_sz = 0;
+    bool err;
+    const char *p;
+    char token[MAX_NAME_LEN];
 
     ST_CHECK_PARAM(wt == NULL || fp == NULL, -1);
 
-    if (version < 3) {
+    if (version < 5) {
         ST_WARNING("Too old version of connlm file");
         return -1;
     }
@@ -394,10 +401,28 @@ int wt_load_body(weight_t *wt, int version, FILE *fp, bool binary)
             ST_WARNING("body flag error.");
             goto ERR;
         }
-        for (i = 0; i < sz; i++) {
-            if (st_readline(fp, REAL_FMT, wt->mat + i) != 1) {
+        if (st_readline(fp, "%"xSTR(MAX_NAME_LEN)"s", name) != 1) {
+            ST_WARNING("name error.");
+            goto ERR;
+        }
+
+        if (wt->col <= 0) {
+            col = 1;
+        } else {
+            col = wt->col;
+        }
+        for (i = 0; i < wt->row; i++) {
+            if (st_fgets(&line, &line_sz, fp, &err) == NULL || err) {
                 ST_WARNING("Failed to parse mat[%d].", i);
-                goto ERR;
+            }
+            p = line;
+            for (j = 0; j < col; j++) {
+                p = get_next_token(p, token);
+                if (p == NULL
+                        || sscanf(token, REAL_FMT, wt->mat+i*col+j) != 1) {
+                    ST_WARNING("Failed to parse mat[%d, %d].", i, j);
+                    goto ERR;
+                }
             }
         }
     }
@@ -465,10 +490,10 @@ int wt_save_header(weight_t *wt, FILE *fp, bool binary)
     return 0;
 }
 
-int wt_save_body(weight_t *wt, FILE *fp, bool binary)
+int wt_save_body(weight_t *wt, FILE *fp, bool binary, char *name)
 {
     int n;
-    int i;
+    int i, j, col;
     int sz;
 
     ST_CHECK_PARAM(fp == NULL, -1);
@@ -498,10 +523,25 @@ int wt_save_body(weight_t *wt, FILE *fp, bool binary)
             ST_WARNING("Failed to fprintf header.");
             return -1;
         }
+        if (fprintf(fp, "%s\n", name != NULL ? name : "") < 0) {
+            ST_WARNING("Failed to fprintf name.");
+            return -1;
+        }
 
-        for (i = 0; i < sz; i++) {
-            if (fprintf(fp, REAL_FMT"\n", wt->mat[i]) < 0) {
-                ST_WARNING("Failed to fprintf mat.");
+        if (wt->col <= 0) {
+            col = 1;
+        } else {
+            col = wt->col;
+        }
+        for (i = 0; i < wt->row; i++) {
+            for (j = 0; j < col - 1; j++) {
+                if (fprintf(fp, REAL_FMT" ", wt->mat[i*col + j]) < 0) {
+                    ST_WARNING("Failed to fprintf mat[%d,%d].", i, j);
+                    return -1;
+                }
+            }
+            if (fprintf(fp, REAL_FMT"\n", wt->mat[i*col + j]) < 0) {
+                ST_WARNING("Failed to fprintf mat[%d/%d].", i, j);
                 return -1;
             }
         }

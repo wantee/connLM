@@ -469,7 +469,7 @@ int glue_load_body(glue_t *glue, int version, FILE *fp, bool binary)
 
     ST_CHECK_PARAM(glue == NULL || fp == NULL, -1);
 
-    if (version < 3) {
+    if (version < 5) {
         ST_WARNING("Too old version of connlm file");
         return -1;
     }
@@ -605,7 +605,7 @@ int glue_save_body(glue_t *glue, FILE *fp, bool binary)
         }
     }
 
-    if (wt_save_body(glue->wt, fp, binary) < 0) {
+    if (wt_save_body(glue->wt, fp, binary, glue->name) < 0) {
         ST_WARNING("Failed to wt_save_body.");
         return -1;
     }
