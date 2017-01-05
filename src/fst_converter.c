@@ -763,6 +763,8 @@ static int fst_conv_find_word_hist(fst_conv_t *conv,
     return 0;
 }
 
+// the word_hist should be filled before this function
+// and the word_hist may be CHANGED after this function
 static int fst_conv_find_backoff(fst_conv_t *conv, fst_conv_args_t *args,
         int sid)
 {
@@ -771,22 +773,9 @@ static int fst_conv_find_backoff(fst_conv_t *conv, fst_conv_args_t *args,
 
     ST_CHECK_PARAM(conv == NULL || args == NULL || sid < 0, -1);
 
-    if (conv->fst_states[sid].word_id == any_id(conv)) {
-        return conv->fst_states[sid].parent;
-    }
-
-    // the word_hist should be filled at beginning of expand
-
-    // turn a non-wildcard word to wildcard from ancient to recent
-    // until we encounter a exsited backoff state.
-    for (i = args->num_word_hist - 1; i >= 0; i--) {
-        if (args->word_hist[i] == any_id(conv)) {
-            continue;
-        }
-        args->word_hist[i] = any_id(conv);
-
+    for (i = args->num_word_hist - 2; i >= 0; i--) {
         backoff_sid = FST_BACKOFF_STATE;
-        for (j = args->num_word_hist - 1; j >= 0; j--) {
+        for (j = i; j >= 0; j--) {
             backoff_sid = fst_conv_search_children(conv,
                     backoff_sid, args->word_hist[j]);
             if (backoff_sid < 0) {
@@ -799,26 +788,8 @@ static int fst_conv_find_backoff(fst_conv_t *conv, fst_conv_args_t *args,
         }
     }
 
-    // do not find the backoff state with same length
-    // try to shorten the history
-    // assert (args->state[i] == ANY_ID) for all i
-    for (i = args->num_word_hist - 1; i > 0; i--) {
-        backoff_sid = FST_BACKOFF_STATE;
-        for (j = 0; j < i - 1; j++) {
-            backoff_sid = fst_conv_search_children(conv,
-                    backoff_sid, any_id(conv));
-            if (backoff_sid < 0) {
-                break;
-            }
-        }
-
-        if (backoff_sid >= 0) {
-            return backoff_sid;
-        }
-    }
-
-    ST_WARNING("Do not find a backoff state");
-    return -1;
+    // high order backoff state not found, just return the unigram backoff state.
+    return FST_BACKOFF_STATE;
 }
 
 // This function distribute the probablity of id to all other words.
