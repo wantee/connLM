@@ -948,6 +948,12 @@ static int fst_conv_expand(fst_conv_t *conv, fst_conv_args_t *args)
             if (word == SENT_END_ID) {
                 break;
             }
+
+            // avoid selecting the same word next time
+            if (distribute_prob(output_probs, output_size, word) < 0) {
+                ST_WARNING("Failed to distribute_prob of word[%d]", word);
+                return -1;
+            }
         }
 
         if (sort_selected_words(conv->conv_opt.bom,
