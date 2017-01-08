@@ -1117,7 +1117,7 @@ static int fst_conv_build_normal(fst_conv_t *conv, fst_conv_args_t *args)
     }
 
     if (fst_conv_print_arc(conv, FST_INIT_STATE, sid,
-                SENT_START_ID, 0.0) < 0) {
+                SENT_START_ID, 1.0) < 0) {
         ST_WARNING("Failed to fst_conv_print_arc for <s>.");
         goto ERR;
     }
