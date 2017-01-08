@@ -801,34 +801,6 @@ static int fst_conv_find_backoff(fst_conv_t *conv, fst_conv_args_t *args,
     return FST_BACKOFF_STATE;
 }
 
-// This function distribute the probablity of id to all other words.
-static int distribute_prob(double *output_probs, int n, int id)
-{
-    double p;
-
-    int i;
-
-    ST_CHECK_PARAM(output_probs == NULL || id < 0 || id >= n, -1);
-
-    if (n <= 1) {
-        return 0;
-    }
-
-    p = output_probs[id];
-    if (p == 0.0) {
-        return 0;
-    }
-
-    p /= (n - 1);
-    for (i = 0; i < n; i++) {
-        output_probs[i] += p;
-    }
-
-    output_probs[id] = 0.0;
-
-    return 0;
-}
-
 static int fst_conv_expand(fst_conv_t *conv, fst_conv_args_t *args)
 {
     updater_t *updater;
@@ -909,10 +881,8 @@ static int fst_conv_expand(fst_conv_t *conv, fst_conv_args_t *args)
         output_probs[i] = exp(output_probs[i]);
     }
 
-    if (distribute_prob(output_probs, output_size, SENT_START_ID) < 0) {
-        ST_WARNING("Failed to distribute_prob of bos");
-        return -1;
-    }
+    // clear <s>
+    output_probs[SENT_START_ID] = 0.0;
 
     no_backoff = false;
     if (conv->fst_states[sid].word_id == ANY_ID) {
@@ -950,10 +920,7 @@ static int fst_conv_expand(fst_conv_t *conv, fst_conv_args_t *args)
             }
 
             // avoid selecting the same word next time
-            if (distribute_prob(output_probs, output_size, word) < 0) {
-                ST_WARNING("Failed to distribute_prob of word[%d]", word);
-                return -1;
-            }
+            output_probs[word] = 0.0;
         }
 
         if (sort_selected_words(conv->conv_opt.bom,
