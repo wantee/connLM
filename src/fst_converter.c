@@ -183,6 +183,10 @@ int fst_conv_load_opt(fst_conv_opt_t *conv_opt,
             conv_opt->output_ssyms_file, MAX_DIR_LEN, "",
             "File to be written out state symbols(for debug), if true.");
 
+    ST_OPT_SEC_GET_BOOL(opt, sec_name, "OUTPUT_UNK",
+            conv_opt->output_unk, false,
+            "output <unk> in FST, if true.");
+
     ST_OPT_SEC_GET_STR(opt, sec_name, "BACKOFF_METHOD",
             method_str, MAX_ST_CONF_LEN, "Beam",
             "Backoff method(Beam/Sampling)");
@@ -898,6 +902,10 @@ static int fst_conv_expand(fst_conv_t *conv, fst_conv_args_t *args)
 
     // clear <s>
     output_probs[SENT_START_ID] = 0.0;
+
+    if (! conv->conv_opt.output_unk) {
+        output_probs[UNK_ID] = 0.0;
+    }
 
     no_backoff = false;
     if (conv->fst_states[sid].word_id == ANY_ID) {
