@@ -613,10 +613,6 @@ static int boost_sampling(double *probs, int n_probs,
             }
         }
 
-        if (word == SENT_START_ID) {
-            continue;
-        }
-
         break;
     }
 
@@ -634,7 +630,7 @@ static int select_word(fst_conv_t *conv, int last_word,
         case BOM_BEAM:
             word = last_word + 1;
             while (word < get_vocab_size(conv)) {
-                if (word == SENT_END_ID || word == SENT_START_ID) {
+                if (word == SENT_END_ID) {
                     ++word;
                     continue;
                 }
@@ -895,7 +891,7 @@ static int fst_conv_expand(fst_conv_t *conv, fst_conv_args_t *args)
     if (no_backoff) {
         n = 0;
         for (word = 0; word < get_vocab_size(conv); word++) {
-            if (word == SENT_START_ID) {
+            if (output_probs[word] <= 0.0) {
                 continue;
             }
             args->selected_words[n] = word;
