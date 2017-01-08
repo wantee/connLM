@@ -528,7 +528,7 @@ static int fst_conv_print_ssyms(fst_conv_t *conv, int sid,
     }
     fprintf(conv->ssyms_fp, "%d\t", sid);
     if (word_hist != NULL) {
-        for (i = num_word_hist - 1; i >= 0; i--) {
+        for (i = 0; i < num_word_hist; i++) {
             fprintf(conv->ssyms_fp, "%s:",
                     fst_conv_get_word(conv, word_hist[i]));
         }
@@ -740,6 +740,7 @@ static int fst_conv_find_word_hist(fst_conv_t *conv,
         fst_conv_args_t *args, int sid)
 {
     int p;
+    int i;
 
     ST_CHECK_PARAM(conv == NULL || args == NULL, -1);
 
@@ -761,6 +762,13 @@ static int fst_conv_find_word_hist(fst_conv_t *conv,
         p = conv->fst_states[p].parent;
     }
 
+    // reverse the array
+    for (i = 0; i < args->num_word_hist / 2; i++) {
+        p = args->word_hist[i];
+        args->word_hist[i] = args->word_hist[args->num_word_hist - 1 - i];
+        args->word_hist[args->num_word_hist - 1 - i] = p;
+    }
+
     return 0;
 }
 
@@ -774,9 +782,9 @@ static int fst_conv_find_backoff(fst_conv_t *conv, fst_conv_args_t *args,
 
     ST_CHECK_PARAM(conv == NULL || args == NULL || sid < 0, -1);
 
-    for (i = args->num_word_hist - 2; i >= 0; i--) {
+    for (i = 1; i < args->num_word_hist; i++) {
         backoff_sid = FST_BACKOFF_STATE;
-        for (j = i; j >= 0; j--) {
+        for (j = i; j < args->num_word_hist; j++) {
             backoff_sid = fst_conv_search_children(conv,
                     backoff_sid, args->word_hist[j]);
             if (backoff_sid < 0) {
