@@ -571,10 +571,10 @@ static int fst_conv_print_arc(fst_conv_t *conv,
                 ilab_str, olab_str, (float)log(weight));
     } else {
         if (phi_id(conv) == wid) {
-            ilab = wid + 1; // reserver 0 for <eps>
+            ilab = wid + 1; // reserve 0 for <eps>
             olab = 0;
         } else {
-            ilab = wid + 1; // reserver 0 for <eps>
+            ilab = wid + 1; // reserve 0 for <eps>
             olab = ilab;
         }
         ret = fprintf(conv->fst_fp, "%d\t%d\t%d\t%d\t%f\n", from, to,
@@ -588,12 +588,15 @@ static int fst_conv_print_arc(fst_conv_t *conv,
     return ret;
 }
 
+// probs contains the probability for all words,
+// a negtive prob represents the word has been selected in the past.
 static int boost_sampling(double *probs, int n_probs,
         double boost_value, unsigned int *rand_seed)
 {
     int word;
 
     double u, p;
+    double word_prob;
 
     while (true) {
         u = st_random_r(0, 1, rand_seed);
@@ -603,14 +606,30 @@ static int boost_sampling(double *probs, int n_probs,
             if (word == SENT_END_ID) {
                 p += probs[word] + boost_value;
             } else {
-                if (probs[word] - boost_value / (n_probs - 1) > 0.0) {
-                    p += probs[word] - boost_value / (n_probs - 1);
+                word_prob = probs[word];
+                if (word_prob < 0.0) {
+                    word_prob = -word_prob;
+                }
+                if (word_prob - boost_value / (n_probs - 1) > 0.0) {
+                    p += word_prob - boost_value / (n_probs - 1);
                 }
             }
 
             if (p >= u) {
                 break;
             }
+        }
+
+        if (word >= n_probs) {
+            // no word was selected
+            ST_WARNING("Something went wrong. total probs of all words "
+                       "is too small(<%f)", u);
+            return -1;
+        }
+
+        // skip the duplicated words
+        if (probs[word] < 0) {
+            continue;
         }
 
         break;
@@ -916,14 +935,19 @@ static int fst_conv_expand(fst_conv_t *conv, fst_conv_args_t *args)
             args->selected_words[n] = word;
             n++;
 
+            // avoid selecting the same word next time
+            output_probs[word] = -output_probs[word];
+
             if (word == SENT_END_ID) {
                 break;
             }
-
-            // avoid selecting the same word next time
-            output_probs[word] = 0.0;
         }
 
+        // recover probs for selected words
+        for (i = 0; i < n; i++) {
+            word = args->selected_words[i];
+            output_probs[word] = -output_probs[word];
+        }
         if (sort_selected_words(conv->conv_opt.bom,
                     args->selected_words, n) < 0) {
             ST_WARNING("Failed to sort_selected_words.");
