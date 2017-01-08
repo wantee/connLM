@@ -889,6 +889,11 @@ static int fst_conv_expand(fst_conv_t *conv, fst_conv_args_t *args)
 
     // select words
     if (no_backoff) {
+        // do not need to expand </s> for the backoff state,
+        // since every state in FST must contain a arc with </s>,
+        // no one would backoff when encounter a </s>.
+        output_probs[SENT_END_ID] = 0.0;
+
         n = 0;
         for (word = 0; word < get_vocab_size(conv); word++) {
             if (output_probs[word] <= 0.0) {
