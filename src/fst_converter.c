@@ -1156,6 +1156,7 @@ static int fst_conv_build_normal(fst_conv_t *conv, fst_conv_args_t *args)
         ST_WARNING("Failed to fst_conv_print_arc for <s>.");
         goto ERR;
     }
+    conv->max_gram = 1;
 
     for (i = 0; i < conv->n_thr; i++) {
         args[i].store_children = false;
@@ -1199,6 +1200,9 @@ int fst_conv_convert(fst_conv_t *conv, FILE *fst_fp)
     FILE *fp = NULL;
     fst_conv_args_t *args = NULL;
 
+    int num_state;
+    int max_gram;
+
     ST_CHECK_PARAM(conv == NULL || fst_fp == NULL, -1);
 
     if (fst_conv_setup(conv, fst_fp, &args) < 0) {
@@ -1230,6 +1234,10 @@ int fst_conv_convert(fst_conv_t *conv, FILE *fst_fp)
         ST_WARNING("Failed to fst_conv_build_wildcard.");
         goto ERR;
     }
+    ST_NOTICE("Total states in wildcard subFST: %d (max_gram = %d).",
+            conv->n_fst_state, conv->max_gram);
+    num_state = conv->n_fst_state;
+    max_gram = conv->max_gram;
 
     if (fst_conv_reset(conv, args) < 0) {
         ST_WARNING("Failed to fst_conv_reset.");
@@ -1241,6 +1249,11 @@ int fst_conv_convert(fst_conv_t *conv, FILE *fst_fp)
         ST_WARNING("Failed to fst_conv_build_normal.");
         goto ERR;
     }
+    ST_NOTICE("Total states in normal subFST: %d (max_gram = %d).",
+            conv->n_fst_state - num_state, conv->max_gram);
+    max_gram = max(max_gram, conv->max_gram);
+    ST_NOTICE("Total states in FST: %d (max_gram = %d).",
+            conv->n_fst_state, max_gram);
 
     safe_fst_conv_args_list_destroy(args, conv->n_thr);
 
