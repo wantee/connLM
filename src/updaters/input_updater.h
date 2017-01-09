@@ -130,6 +130,15 @@ int input_updater_feed(input_updater_t *input_updater, int *words, int n_word,
  */
 int input_updater_move(input_updater_t *input_updater, sent_t *sent);
 
+/**
+ * Move forward input word to the end and return the sentence buffer.
+ * @ingroup g_updater_input
+ * @param[in] input_updater input_updater.
+ * @param[out] sent sentence buffer.
+ * @return non-zero value if any error.
+ */
+int input_updater_move_to_end(input_updater_t *input_updater, sent_t *sent);
+
 #ifdef __cplusplus
 }
 #endif

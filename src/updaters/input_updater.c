@@ -227,3 +227,17 @@ int input_updater_move(input_updater_t *input_updater, sent_t *sent)
 
     return 0;
 }
+
+int input_updater_move_to_end(input_updater_t *input_updater, sent_t *sent)
+{
+    ST_CHECK_PARAM(input_updater == NULL, -1);
+
+    input_updater->cur_pos = input_updater->n_word;
+
+    if (input_updater_update_sent(input_updater, sent) < 0) {
+        ST_WARNING("Failed to input_updater_update_sent.");
+        return -1;
+    }
+
+    return 0;
+}

@@ -651,8 +651,6 @@ static int updater_cleanup(updater_t *updater)
 
 static int updater_set_hist(updater_t *updater, int *hist, int num_hist)
 {
-    int i;
-
     ST_CHECK_PARAM(updater == NULL || hist == NULL, -1);
 
     if (input_updater_clear(updater->input_updater) < 0) {
@@ -665,11 +663,10 @@ static int updater_set_hist(updater_t *updater, int *hist, int num_hist)
         return -1;
     }
 
-    for (i = 0; i < num_hist; i++) {
-        if (updater_move_input(updater) < 0) {
-            ST_WARNING("Failed to updater_move_input.");
-            return -1;
-        }
+    if (input_updater_move_to_end(updater->input_updater,
+                &updater->sent) < 0) {
+        ST_WARNING("Failed to input_updater_move_to_end.");
+        return -1;
     }
 
     return 0;
