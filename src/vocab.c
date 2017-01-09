@@ -699,3 +699,23 @@ bool vocab_equal(vocab_t *vocab1, vocab_t *vocab2)
 
     return true;
 }
+
+int vocab_save_syms(vocab_t *vocab, FILE *fp, bool add_eps)
+{
+    int i;
+    int id;
+
+    ST_CHECK_PARAM(vocab == NULL || fp == NULL, -1);
+
+    id = 0;
+    if (add_eps) {
+        fprintf(fp, "%s\t%d\n", EPS, id);
+        id++;
+    }
+    for (i = 0; i < vocab->vocab_size; i++) {
+        fprintf(fp, "%s\t%d\n", vocab_get_word(vocab, i), id);
+        id++;
+    }
+
+    return 0;
+}

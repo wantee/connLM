@@ -177,15 +177,19 @@ int fst_conv_load_opt(fst_conv_opt_t *conv_opt,
 
     ST_OPT_SEC_GET_BOOL(opt, sec_name, "PRINT_SYMS",
             conv_opt->print_syms, false,
-            "Print symbols instead of numbers, if true.");
-
-    ST_OPT_SEC_GET_STR(opt, sec_name, "OUTPUT_SSYMS_FILE",
-            conv_opt->output_ssyms_file, MAX_DIR_LEN, "",
-            "File to be written out state symbols(for debug), if true.");
+            "Print symbols instead of ids in FST, if true.");
 
     ST_OPT_SEC_GET_BOOL(opt, sec_name, "OUTPUT_UNK",
             conv_opt->output_unk, false,
             "output <unk> in FST, if true.");
+
+    ST_OPT_SEC_GET_STR(opt, sec_name, "WORD_SYMS_FILE",
+            conv_opt->word_syms_file, MAX_DIR_LEN, "",
+            "File to be written out word symbols.");
+
+    ST_OPT_SEC_GET_STR(opt, sec_name, "STATE_SYMS_FILE",
+            conv_opt->state_syms_file, MAX_DIR_LEN, "",
+            "File to be written out state symbols(for debug).");
 
     ST_OPT_SEC_GET_STR(opt, sec_name, "BACKOFF_METHOD",
             method_str, MAX_ST_CONF_LEN, "Beam",
@@ -327,11 +331,11 @@ static int fst_conv_setup(fst_conv_t *conv, FILE *fst_fp,
         return -1;
     }
 
-    if (conv->conv_opt.output_ssyms_file[0] != '\0') {
-        conv->ssyms_fp = st_fopen(conv->conv_opt.output_ssyms_file, "w");
+    if (conv->conv_opt.state_syms_file[0] != '\0') {
+        conv->ssyms_fp = st_fopen(conv->conv_opt.state_syms_file, "w");
         if (conv->ssyms_fp == NULL) {
-            ST_WARNING("Failed to st_fopen ssyms file[%s]",
-                    conv->conv_opt.output_ssyms_file);
+            ST_WARNING("Failed to st_fopen state syms file[%s]",
+                    conv->conv_opt.state_syms_file);
             return -1;
         }
 
@@ -1194,6 +1198,7 @@ ERR:
 
 int fst_conv_convert(fst_conv_t *conv, FILE *fst_fp)
 {
+    FILE *fp = NULL;
     fst_conv_args_t *args = NULL;
 
     ST_CHECK_PARAM(conv == NULL || fst_fp == NULL, -1);
@@ -1240,9 +1245,27 @@ int fst_conv_convert(fst_conv_t *conv, FILE *fst_fp)
     }
 
     safe_fst_conv_args_list_destroy(args, conv->n_thr);
+
+    if (conv->conv_opt.word_syms_file[0] != '\0') {
+        fp = st_fopen(conv->conv_opt.word_syms_file, "w");
+        if (fp == NULL) {
+            ST_WARNING("Failed to st_fopen word syms file[%s]",
+                    conv->conv_opt.word_syms_file);
+            goto ERR;
+        }
+        if (vocab_save_syms(conv->connlm->vocab, fp, true) < 0) {
+            ST_WARNING("Failed to vocab_save_syms to file[%s]",
+                    conv->conv_opt.word_syms_file);
+            goto ERR;
+        }
+        fprintf(fp, "%s\t%d\n", PHI, phi_id(conv) + 1);
+        safe_fclose(fp);
+    }
+
     return 0;
 
 ERR:
     safe_fst_conv_args_list_destroy(args, conv->n_thr);
+    safe_fclose(fp);
     return -1;
 }

@@ -58,9 +58,11 @@ typedef enum _backoff_method_t_ {
  * @ingroup g_conv
  */
 typedef struct _fst_converter_opt_t_ {
-    bool print_syms; /**< print symbols instead of id, if true. */
-    char output_ssyms_file[MAX_DIR_LEN]; /**< state symbols file. */
-    bool output_unk; /**< output <unk> in FST, if true. */
+    bool print_syms; /**< print symbols instead of id in FST, if true. */
+    bool output_unk; /**< output \<unk\> in FST, if true. */
+
+    char word_syms_file[MAX_DIR_LEN]; /**< word symbols file. */
+    char state_syms_file[MAX_DIR_LEN]; /**< state symbols file. */
     backoff_method_t bom; /**< backoff method. */
     union {
         double beam; /**< threshold for beam method. */
