@@ -44,14 +44,14 @@ extern "C" {
  */
 
 /**
- * Type of back-off methods.
+ * Type of word selection method
  * @ingroup g_conv
  */
-typedef enum _backoff_method_t_ {
-    BOM_UNKNOWN = -1, /**< Unknown method. */
-    BOM_BEAM = 0, /**< Beam method. */
-    BOM_SAMPLING = 1, /**< Sampling method. */
-} backoff_method_t;
+typedef enum _word_selection_method_t_ {
+    WSM_UNKNOWN = -1, /**< Unknown method. */
+    WSM_DEFAULT = 0, /**< Default method. */
+    WSM_SAMPLING = 1, /**< Sampling method. */
+} ws_method_t;
 
 /**
  * Options for converter.
@@ -63,11 +63,8 @@ typedef struct _fst_converter_opt_t_ {
 
     char word_syms_file[MAX_DIR_LEN]; /**< word symbols file. */
     char state_syms_file[MAX_DIR_LEN]; /**< state symbols file. */
-    backoff_method_t bom; /**< backoff method. */
-    union {
-        double beam; /**< threshold for beam method. */
-        double boost; /**< boost probability for sampling method. */
-    };
+    ws_method_t wsm; /**< word selection method. */
+    double boost; /**< boost probability for \</s\> during word selection. */
     unsigned int init_rand_seed; /**< initial random seed. */
 } fst_conv_opt_t;
 

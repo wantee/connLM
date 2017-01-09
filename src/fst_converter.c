@@ -191,28 +191,13 @@ int fst_conv_load_opt(fst_conv_opt_t *conv_opt,
             conv_opt->state_syms_file, MAX_DIR_LEN, "",
             "File to be written out state symbols(for debug).");
 
-    ST_OPT_SEC_GET_STR(opt, sec_name, "BACKOFF_METHOD",
-            method_str, MAX_ST_CONF_LEN, "Beam",
-            "Backoff method(Beam/Sampling)");
-    if (strcasecmp(method_str, "beam") == 0) {
-        conv_opt->bom = BOM_BEAM;
-
-        ST_OPT_SEC_GET_DOUBLE(opt, sec_name, "BEAM",
-                conv_opt->beam, 0.0, "Threshold for beam.");
-        if (conv_opt->beam < 0.0) {
-            ST_WARNING("beam must be larger than or equal to zero.");
-            goto ST_OPT_ERR;
-        }
+    ST_OPT_SEC_GET_STR(opt, sec_name, "WORD_SELECTION_METHOD",
+            method_str, MAX_ST_CONF_LEN, "Default",
+            "Word selection method(Default/Sampling)");
+    if (strcasecmp(method_str, "default") == 0) {
+        conv_opt->wsm = WSM_DEFAULT;
     } else if (strcasecmp(method_str, "sampling") == 0) {
-        conv_opt->bom = BOM_SAMPLING;
-
-        ST_OPT_SEC_GET_DOUBLE(opt, sec_name, "BOOST",
-                conv_opt->boost, 0.0,
-                "Boost probability for sampling.");
-        if (conv_opt->boost < 0.0 || conv_opt->boost > 1.0) {
-            ST_WARNING("boost must be in [0, 1].");
-            goto ST_OPT_ERR;
-        }
+        conv_opt->wsm = WSM_SAMPLING;
 
         ST_OPT_SEC_GET_UINT(opt, sec_name, "INIT_RANDOM_SEED",
                 conv_opt->init_rand_seed, (unsigned int)time(NULL),
@@ -220,7 +205,15 @@ int fst_conv_load_opt(fst_conv_opt_t *conv_opt,
                 "incremented from this value. "
                 "Default is value of time(NULl).");
     } else {
-        ST_WARNING("Unknown backoff method[%s].", method_str);
+        ST_WARNING("Unknown word selection method[%s].", method_str);
+        goto ST_OPT_ERR;
+    }
+
+    ST_OPT_SEC_GET_DOUBLE(opt, sec_name, "BOOST",
+            conv_opt->boost, 0.0,
+            "Boost probability for </s> during word selection.");
+    if (conv_opt->boost < 0.0 || conv_opt->boost > 1.0) {
+        ST_WARNING("boost must be in [0, 1].");
         goto ST_OPT_ERR;
     }
 
@@ -631,7 +624,7 @@ static int boost_sampling(double *probs, int n_probs,
         if (word >= n_probs) {
             // no word was selected
             ST_WARNING("Something went wrong. total probs of all words "
-                       "is too small(<%f)", u);
+                       "is too small(%f<%f)", p, u);
             return -1;
         }
 
@@ -653,8 +646,8 @@ static int select_word(fst_conv_t *conv, int last_word,
 
     ST_CHECK_PARAM(conv == NULL || last_word < -1, -1);
 
-    switch (conv->conv_opt.bom) {
-        case BOM_BEAM:
+    switch (conv->conv_opt.wsm) {
+        case WSM_DEFAULT:
             word = last_word + 1;
             while (word < get_vocab_size(conv)) {
                 if (word == SENT_END_ID) {
@@ -662,7 +655,7 @@ static int select_word(fst_conv_t *conv, int last_word,
                     continue;
                 }
                 if (output_probs[word] >= output_probs[SENT_END_ID]
-                        + conv->conv_opt.beam) {
+                        + conv->conv_opt.boost) {
                     return word;
                 }
                 ++word;
@@ -670,19 +663,19 @@ static int select_word(fst_conv_t *conv, int last_word,
 
             return SENT_END_ID;
             break;
-        case BOM_SAMPLING:
+        case WSM_SAMPLING:
             return boost_sampling(output_probs, get_vocab_size(conv),
                     conv->conv_opt.boost, rand_seed);
             break;
         default:
-            ST_WARNING("Unkown backoff method");
+            ST_WARNING("Unkown word selection method");
             return -1;
     }
 
     return -1;
 }
 
-static int sort_selected_words(backoff_method_t bom,
+static int sort_selected_words(ws_method_t wsm,
         int *selected_words, int n)
 {
     ST_CHECK_PARAM(selected_words == NULL, -1);
@@ -692,8 +685,8 @@ static int sort_selected_words(backoff_method_t bom,
         return -1;
     }
 
-    switch (bom) {
-        case BOM_BEAM:
+    switch (wsm) {
+        case WSM_DEFAULT:
             /* only need to reorder the </s> */
             n--;
             if (st_int_insert(selected_words, n + 1, &n, SENT_END_ID) < 0) {
@@ -701,11 +694,11 @@ static int sort_selected_words(backoff_method_t bom,
                 return -1;
             }
             break;
-        case BOM_SAMPLING:
+        case WSM_SAMPLING:
             st_int_sort(selected_words, n);
             break;
         default:
-            ST_WARNING("Unkown backoff method");
+            ST_WARNING("Unkown word selection method");
             return -1;
     }
 
@@ -963,7 +956,7 @@ static int fst_conv_expand(fst_conv_t *conv, fst_conv_args_t *args)
             word = args->selected_words[i];
             output_probs[word] = -output_probs[word];
         }
-        if (sort_selected_words(conv->conv_opt.bom,
+        if (sort_selected_words(conv->conv_opt.wsm,
                     args->selected_words, n) < 0) {
             ST_WARNING("Failed to sort_selected_words.");
             return -1;
