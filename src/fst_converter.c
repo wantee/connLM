@@ -722,7 +722,7 @@ static int fst_conv_search_children(fst_conv_t *conv, int sid, int word_id)
     if (sid >= conv->n_fst_children) {
         ST_WARNING("invalid sid for search arcs[%d] "
                 ">= n_fst_children[%d]", sid, conv->n_fst_children);
-        return -1;
+        return -2;
     }
 
     if (conv->fst_children[sid].num_children <= 0) {
@@ -810,7 +810,10 @@ static int fst_conv_find_backoff(fst_conv_t *conv, fst_conv_args_t *args,
         for (j = i; j < args->num_word_hist; j++) {
             backoff_sid = fst_conv_search_children(conv,
                     backoff_sid, args->word_hist[j]);
-            if (backoff_sid < 0) {
+            if (backoff_sid < -1) {
+                ST_WARNING("Failed to fst_conv_search_children.");
+                return -1;
+            } else if (backoff_sid < 0) { // not found
                 break;
             }
         }
