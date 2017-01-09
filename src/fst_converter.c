@@ -640,7 +640,7 @@ static int boost_sampling(double *probs, int n_probs,
 }
 
 static int select_word(fst_conv_t *conv, int last_word,
-        double *output_probs, unsigned int *rand_seed)
+        double *output_probs, double boost, unsigned int *rand_seed)
 {
     int word;
 
@@ -655,7 +655,7 @@ static int select_word(fst_conv_t *conv, int last_word,
                     continue;
                 }
                 if (output_probs[word] >= output_probs[SENT_END_ID]
-                        + conv->conv_opt.boost) {
+                        + boost) {
                     return word;
                 }
                 ++word;
@@ -665,7 +665,7 @@ static int select_word(fst_conv_t *conv, int last_word,
             break;
         case WSM_SAMPLING:
             return boost_sampling(output_probs, get_vocab_size(conv),
-                    conv->conv_opt.boost, rand_seed);
+                    boost, rand_seed);
             break;
         default:
             ST_WARNING("Unkown word selection method");
@@ -826,6 +826,7 @@ static int fst_conv_expand(fst_conv_t *conv, fst_conv_args_t *args)
     real_t *state;
     real_t *new_state;
     double *output_probs;
+    double boost;
     int output_size;
 
     double backoff_prob;
@@ -864,6 +865,7 @@ static int fst_conv_expand(fst_conv_t *conv, fst_conv_args_t *args)
     if (args->num_word_hist + 1 > conv->max_gram) {
         conv->max_gram = args->num_word_hist + 1;
     }
+    boost = conv->conv_opt.boost * sqrt(args->num_word_hist);
 
     if (updater_step_with_state(updater, state, args->word_hist,
                 args->num_word_hist, output_probs) < 0) {
@@ -933,7 +935,7 @@ static int fst_conv_expand(fst_conv_t *conv, fst_conv_args_t *args)
         n = 0;
         word = -1;
         while(true) {
-            word = select_word(conv, word, output_probs,
+            word = select_word(conv, word, output_probs, boost,
                     &args->rand_seed);
             if (word < 0) {
                 ST_WARNING("Failed to select_word.");
