@@ -710,7 +710,7 @@ static int fst_conv_search_children(fst_conv_t *conv, int sid, int word_id)
     int ch;
     int l, h;
 
-    ST_CHECK_PARAM(conv == NULL || sid < 0 || word_id < 0, -1);
+    ST_CHECK_PARAM(conv == NULL || sid < 0 || word_id < 0, -2);
 
     if (sid >= conv->n_fst_children) {
         ST_WARNING("invalid sid for search arcs[%d] "
