@@ -217,6 +217,14 @@ int fst_conv_load_opt(fst_conv_opt_t *conv_opt,
         goto ST_OPT_ERR;
     }
 
+    ST_OPT_SEC_GET_DOUBLE(opt, sec_name, "BOOST_POWER",
+            conv_opt->boost_power, 0.0,
+            "power to the num-gram for boost value. "
+            "e.g. cur_boost = boost * pow(num_grams, boost_power).");
+    if (conv_opt->boost <= 0.0) {
+        ST_WARNING("boost_power normally should be larger than zero.");
+    }
+
     return 0;
 
 ST_OPT_ERR:
@@ -865,7 +873,8 @@ static int fst_conv_expand(fst_conv_t *conv, fst_conv_args_t *args)
     if (args->num_word_hist + 1 > conv->max_gram) {
         conv->max_gram = args->num_word_hist + 1;
     }
-    boost = conv->conv_opt.boost * sqrt(args->num_word_hist);
+    boost = conv->conv_opt.boost * pow(args->num_word_hist,
+            conv->conv_opt.boost_power);
 
     if (updater_step_with_state(updater, state, args->word_hist,
                 args->num_word_hist, output_probs) < 0) {

@@ -64,7 +64,9 @@ typedef struct _fst_converter_opt_t_ {
     char word_syms_file[MAX_DIR_LEN]; /**< word symbols file. */
     char state_syms_file[MAX_DIR_LEN]; /**< state symbols file. */
     ws_method_t wsm; /**< word selection method. */
-    double boost; /**< boost probability for \</s\> during word selection. */
+    double boost; /**< initial boost for \</s\> during word selection. */
+    double boost_power; /**< power to the num-gram for boost value.
+                         e.g. cur_boost = boost * pow(num_grams, boost_power).*/
     unsigned int init_rand_seed; /**< initial random seed. */
 } fst_conv_opt_t;
 
