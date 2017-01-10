@@ -162,11 +162,14 @@ static int input_updater_update_sent(input_updater_t *input_updater,
 
     sent->words = input_updater->words + input_updater->sent_head;
     sent->n_word = input_updater->sent_tail - input_updater->sent_head;
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wstrict-overflow"
     if (input_updater->cur_pos < input_updater->n_word - 1
          && input_updater->words[input_updater->cur_pos] == SENT_START_ID) {
         // we never use <s> as target word, since P(<s>) should be equal to 1
         input_updater->cur_pos++;
     }
+#pragma GCC diagnostic pop
     sent->tgt_pos = input_updater->cur_pos - input_updater->sent_head;
 
     return 0;
@@ -228,6 +231,8 @@ int input_updater_move(input_updater_t *input_updater, sent_t *sent)
     return 0;
 }
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wstrict-overflow"
 int input_updater_move_to_end(input_updater_t *input_updater, sent_t *sent)
 {
     ST_CHECK_PARAM(input_updater == NULL, -1);
@@ -241,3 +246,4 @@ int input_updater_move_to_end(input_updater_t *input_updater, sent_t *sent)
 
     return 0;
 }
+#pragma GCC diagnostic pop
