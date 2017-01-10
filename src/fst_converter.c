@@ -836,7 +836,12 @@ static int fst_conv_find_backoff(fst_conv_t *conv, fst_conv_args_t *args,
 
     ST_CHECK_PARAM(conv == NULL || args == NULL || sid < 0, -1);
 
-    for (i = 1; i < args->num_word_hist; i++) {
+    if (args->word_hist[0] == ANY_ID) {
+        i = 2; // <any>XYZ -> <any>YZ -> <any>Z
+    } else {
+        i = 1; // ABCD -> <any>BCD -> <any>CD -> <any>D
+    }
+    for (; i < args->num_word_hist; i++) {
         backoff_sid = FST_BACKOFF_STATE;
         for (j = i; j < args->num_word_hist; j++) {
             backoff_sid = fst_conv_search_children(conv,
