@@ -592,7 +592,7 @@ static int fst_conv_print_arc(fst_conv_t *conv,
             olab_str = ilab_str;
         }
         if (fprintf(conv->fst_fp, "%d\t%d\t%s\t%s\t%f\n", from, to,
-                ilab_str, olab_str, (float)log(weight)) < 0) {
+                ilab_str, olab_str, -(float)log(weight)) < 0) {
             ST_WARNING("Failed to write out fst.(disk full?)");
             goto UNLOCK_AND_ERR;
         }
@@ -605,7 +605,7 @@ static int fst_conv_print_arc(fst_conv_t *conv,
             olab = ilab;
         }
         if (fprintf(conv->fst_fp, "%d\t%d\t%d\t%d\t%f\n", from, to,
-                ilab, olab, (float)log(weight)) < 0) {
+                ilab, olab, -(float)log(weight)) < 0) {
             ST_WARNING("Failed to write out fst.(disk full?)");
             goto UNLOCK_AND_ERR;
         }
