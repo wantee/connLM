@@ -524,7 +524,6 @@ static int fst_conv_print_ssyms(fst_conv_t *conv, int sid,
         int *word_hist, int num_word_hist, int wid)
 {
     int i;
-    int ret = 0;
 
     ST_CHECK_PARAM(conv == NULL, -1);
 
@@ -536,22 +535,38 @@ static int fst_conv_print_ssyms(fst_conv_t *conv, int sid,
         ST_WARNING("Failed to pthread_mutex_lock ssyms_fp_lock.");
         return -1;
     }
-    fprintf(conv->ssyms_fp, "%d\t", sid);
+    if (fprintf(conv->ssyms_fp, "%d\t", sid) < 0) {
+        ST_WARNING("Failed to write ssyms.(disk full?)");
+        goto UNLOCK_AND_ERR;
+    }
     if (word_hist != NULL) {
         for (i = 0; i < num_word_hist; i++) {
-            fprintf(conv->ssyms_fp, "%s:",
-                    fst_conv_get_word(conv, word_hist[i]));
+            if (fprintf(conv->ssyms_fp, "%s:",
+                    fst_conv_get_word(conv, word_hist[i])) < 0) {
+                ST_WARNING("Failed to write ssyms.(disk full?)");
+                goto UNLOCK_AND_ERR;
+            }
         }
     }
-    fprintf(conv->ssyms_fp, "%s", fst_conv_get_word(conv, wid));
-    fprintf(conv->ssyms_fp, "\n");
+    if (fprintf(conv->ssyms_fp, "%s\n", fst_conv_get_word(conv, wid)) < 0) {
+        ST_WARNING("Failed to write ssyms.(disk full?)");
+        goto UNLOCK_AND_ERR;
+    }
 
     if (pthread_mutex_unlock(&conv->ssyms_fp_lock) != 0) {
         ST_WARNING("Failed to pthread_mutex_unlock ssyms_fp_lock.");
         return -1;
     }
 
-    return ret;
+    return 0;
+
+UNLOCK_AND_ERR:
+    if (pthread_mutex_unlock(&conv->ssyms_fp_lock) != 0) {
+        ST_WARNING("Failed to pthread_mutex_unlock ssyms_fp_lock.");
+        return -1;
+    }
+
+    return -1;
 }
 
 static int fst_conv_print_arc(fst_conv_t *conv,
@@ -561,7 +576,6 @@ static int fst_conv_print_arc(fst_conv_t *conv,
     char *olab_str;
     int ilab;
     int olab;
-    int ret;
 
     ST_CHECK_PARAM(conv == NULL || from < 0 || to < 0 || wid < 0, -1);
 
@@ -577,8 +591,11 @@ static int fst_conv_print_arc(fst_conv_t *conv,
             ilab_str = vocab_get_word(conv->connlm->vocab, wid);
             olab_str = ilab_str;
         }
-        ret = fprintf(conv->fst_fp, "%d\t%d\t%s\t%s\t%f\n", from, to,
-                ilab_str, olab_str, (float)log(weight));
+        if (fprintf(conv->fst_fp, "%d\t%d\t%s\t%s\t%f\n", from, to,
+                ilab_str, olab_str, (float)log(weight)) < 0) {
+            ST_WARNING("Failed to write out fst.(disk full?)");
+            goto UNLOCK_AND_ERR;
+        }
     } else {
         if (phi_id(conv) == wid) {
             ilab = wid + 1; // reserve 0 for <eps>
@@ -587,15 +604,27 @@ static int fst_conv_print_arc(fst_conv_t *conv,
             ilab = wid + 1; // reserve 0 for <eps>
             olab = ilab;
         }
-        ret = fprintf(conv->fst_fp, "%d\t%d\t%d\t%d\t%f\n", from, to,
-                ilab, olab, (float)log(weight));
+        if (fprintf(conv->fst_fp, "%d\t%d\t%d\t%d\t%f\n", from, to,
+                ilab, olab, (float)log(weight)) < 0) {
+            ST_WARNING("Failed to write out fst.(disk full?)");
+            goto UNLOCK_AND_ERR;
+        }
     }
     if (pthread_mutex_unlock(&conv->fst_fp_lock) != 0) {
         ST_WARNING("Failed to pthread_mutex_lock fst_fp_lock.");
         return -1;
     }
 
-    return ret;
+    return 0;
+
+UNLOCK_AND_ERR:
+    if (pthread_mutex_unlock(&conv->fst_fp_lock) != 0) {
+        ST_WARNING("Failed to pthread_mutex_lock fst_fp_lock.");
+        return -1;
+    }
+
+    return -1;
+
 }
 
 // probs contains the probability for all words,
@@ -1228,17 +1257,17 @@ int fst_conv_convert(fst_conv_t *conv, FILE *fst_fp)
 
     if (fst_conv_print_ssyms(conv, FST_INIT_STATE, NULL, 0,  -1) < 0) {
         ST_WARNING("Failed to fst_conv_print_ssyms.");
-        return -1;
+        goto ERR;
     }
     if (fst_conv_print_ssyms(conv, FST_FINAL_STATE, NULL, 0,
                 SENT_END_ID) < 0) {
         ST_WARNING("Failed to fst_conv_print_ssyms.");
-        return -1;
+        goto ERR;
     }
     if (fst_conv_print_ssyms(conv, FST_SENT_START_STATE, NULL, 0,
                 SENT_START_ID) < 0) {
         ST_WARNING("Failed to fst_conv_print_ssyms.");
-        return -1;
+        goto ERR;
     }
 
     if (fst_conv_print_arc(conv, FST_INIT_STATE, FST_SENT_START_STATE,
@@ -1248,8 +1277,8 @@ int fst_conv_convert(fst_conv_t *conv, FILE *fst_fp)
     }
 
     if (fprintf(conv->fst_fp, "%d\n", FST_FINAL_STATE) < 0) {
-        ST_WARNING("Failed to print final_state");
-        return -1;
+        ST_WARNING("Failed to print final_state.(disk full?)");
+        goto ERR;
     }
 
     ST_TRACE("Building wildcard subfst...")
@@ -1292,7 +1321,10 @@ int fst_conv_convert(fst_conv_t *conv, FILE *fst_fp)
                     conv->conv_opt.word_syms_file);
             goto ERR;
         }
-        fprintf(fp, "%s\t%d\n", PHI, phi_id(conv) + 1);
+        if (fprintf(fp, "%s\t%d\n", PHI, phi_id(conv) + 1) < 0) {
+            ST_WARNING("Failed to write out %s.(disk full?)", PHI);
+            goto ERR;
+        }
         safe_fclose(fp);
     }
 
