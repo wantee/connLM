@@ -41,7 +41,8 @@
 
 #define FST_INIT_STATE 0
 #define FST_FINAL_STATE 1
-#define FST_BACKOFF_STATE 2
+#define FST_SENT_START_STATE 2
+#define FST_BACKOFF_STATE 3
 
 #define get_vocab_size(conv) (conv)->connlm->vocab->vocab_size
 #define phi_id(conv) get_vocab_size(conv)
@@ -1041,7 +1042,7 @@ static int fst_conv_expand(fst_conv_t *conv, fst_conv_args_t *args)
         }
     }
 
-    return 0;
+    return new_sid;
 }
 
 static void* conv_worker(void *args)
@@ -1149,26 +1150,17 @@ static int fst_conv_build_normal(fst_conv_t *conv, fst_conv_args_t *args)
         goto ERR;
     }
 
-    sid = fst_conv_add_states(conv, 1, -1, false);
-    if (sid < 0) {
-        ST_WARNING("Failed to fst_conv_add_states for <s>.");
-        goto ERR;
-    }
-    conv->fst_states[sid].word_id = SENT_START_ID;
-    if (fst_conv_print_ssyms(conv, sid, NULL, 0, SENT_START_ID) < 0) {
-        ST_WARNING("Failed to fst_conv_print_ssyms.");
-        return -1;
-    }
-
-    if (fst_conv_print_arc(conv, FST_INIT_STATE, sid,
-                SENT_START_ID, 1.0) < 0) {
-        ST_WARNING("Failed to fst_conv_print_arc for <s>.");
-        goto ERR;
-    }
     conv->max_gram = 1;
 
     for (i = 0; i < conv->n_thr; i++) {
         args[i].store_children = false;
+    }
+
+    args[0].sid = FST_SENT_START_STATE;
+    sid = fst_conv_expand(conv, args + 0);
+    if (sid < 0) {
+        ST_WARNING("Failed to fst_conv_expand <s>.");
+        goto ERR;
     }
 
     while (sid < conv->n_fst_state) {
@@ -1228,6 +1220,12 @@ int fst_conv_convert(fst_conv_t *conv, FILE *fst_fp)
         goto ERR;
     }
     conv->fst_states[FST_FINAL_STATE].word_id = SENT_END_ID;
+    if (fst_conv_add_states(conv, 1, -1, false) != FST_SENT_START_STATE) {
+        ST_WARNING("Failed to fst_conv_add_states for <s>.");
+        goto ERR;
+    }
+    conv->fst_states[FST_SENT_START_STATE].word_id = SENT_START_ID;
+
     if (fst_conv_print_ssyms(conv, FST_INIT_STATE, NULL, 0,  -1) < 0) {
         ST_WARNING("Failed to fst_conv_print_ssyms.");
         return -1;
@@ -1235,6 +1233,22 @@ int fst_conv_convert(fst_conv_t *conv, FILE *fst_fp)
     if (fst_conv_print_ssyms(conv, FST_FINAL_STATE, NULL, 0,
                 SENT_END_ID) < 0) {
         ST_WARNING("Failed to fst_conv_print_ssyms.");
+        return -1;
+    }
+    if (fst_conv_print_ssyms(conv, FST_SENT_START_STATE, NULL, 0,
+                SENT_START_ID) < 0) {
+        ST_WARNING("Failed to fst_conv_print_ssyms.");
+        return -1;
+    }
+
+    if (fst_conv_print_arc(conv, FST_INIT_STATE, FST_SENT_START_STATE,
+                SENT_START_ID, 1.0) < 0) {
+        ST_WARNING("Failed to fst_conv_print_arc for <s>.");
+        goto ERR;
+    }
+
+    if (fprintf(conv->fst_fp, "%d\n", FST_FINAL_STATE) < 0) {
+        ST_WARNING("Failed to print final_state");
         return -1;
     }
 
