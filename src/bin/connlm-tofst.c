@@ -89,8 +89,9 @@ void show_usage(const char *module_name)
     connlm_show_usage(module_name,
             "Convert connLM Model to WFST",
             "<model> <fst-file>",
+            "--boost=0.006 --boost-power=0.5 --words-syms-file=exp/words.txt "
             "exp/final.clm exp/g.txt",
-            g_cmd_opt, NULL);
+      g_cmd_opt, NULL);
 }
 
 int main(int argc, const char *argv[])
