@@ -903,10 +903,10 @@ static int fst_conv_expand(fst_conv_t *conv, fst_conv_args_t *args)
     }
 
     // clear <s>
-    output_probs[SENT_START_ID] = 0.0;
+    output_probs[SENT_START_ID] = -output_probs[SENT_START_ID];
 
     if (! conv->conv_opt.output_unk) {
-        output_probs[UNK_ID] = 0.0;
+        output_probs[UNK_ID] = -output_probs[UNK_ID];
     }
 
     no_backoff = false;
