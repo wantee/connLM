@@ -874,7 +874,7 @@ static int fst_conv_expand(fst_conv_t *conv, fst_conv_args_t *args)
 
     double backoff_prob;
     int sid;
-    int new_sid;
+    int new_sid, ret_sid;
     int to_sid;
     int model_state_id = -1;
     int word;
@@ -1017,6 +1017,7 @@ static int fst_conv_expand(fst_conv_t *conv, fst_conv_args_t *args)
         ST_WARNING("Failed to fst_conv_add_states.");
         return -1;
     }
+    ret_sid = new_sid;
 
     for (i = 0; i < n; i++) {
         word = args->selected_words[i];
@@ -1076,7 +1077,7 @@ static int fst_conv_expand(fst_conv_t *conv, fst_conv_args_t *args)
         }
     }
 
-    return new_sid;
+    return ret_sid;
 }
 
 static void* conv_worker(void *args)
