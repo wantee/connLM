@@ -32,8 +32,6 @@
 #include <stutils/st_log.h>
 #include <stutils/st_io.h>
 #include <stutils/st_string.h>
-#include <stutils/st_queue.h>
-#include <stutils/st_stack.h>
 
 #include "utils.h"
 #include "output.h"
@@ -1601,39 +1599,72 @@ ERR:
     return -1;
 }
 
-static int output_tree_dfs(output_tree_t *tree,
-        int (*visitor)(output_tree_t *tree, output_node_id_t node,
-            st_stack_t* stack, void *args), void *args)
+output_tree_dfs_aux_t* output_tree_dfs_aux_create(output_tree_t *tree)
 {
-    st_stack_t *node_stack = NULL;
-    output_node_id_t *child_in_stack = NULL; /* current child in the stack for every node*/
+    output_tree_dfs_aux_t *dfs_aux = NULL;
 
-    void *tmp;
-    output_node_id_t node, child;
+    ST_CHECK_PARAM(tree == NULL, NULL);
 
-    ST_CHECK_PARAM(tree == NULL || visitor == NULL, -1);
+    dfs_aux = (output_tree_dfs_aux_t *)malloc(sizeof(output_tree_dfs_aux_t));
+    if (dfs_aux == NULL) {
+        ST_WARNING("Failed to malloc dfs_aux.");
+        goto ERR;
+    }
+    memset(dfs_aux, 0, sizeof(output_tree_dfs_aux_t));
 
-    node_stack = st_stack_create(tree->num_node);
-    if(node_stack == NULL) {
+    dfs_aux->node_stack = st_stack_create(tree->num_node);
+    if(dfs_aux->node_stack == NULL) {
         ST_WARNING("Failed to create node_stack.");
         goto ERR;
     }
 
-    child_in_stack = (output_node_id_t *)malloc(
+    dfs_aux->child_in_stack = (output_node_id_t *)malloc(
             sizeof(output_node_id_t)*tree->num_node);
-    if(child_in_stack == NULL) {
+    if(dfs_aux->child_in_stack == NULL) {
         ST_WARNING("Failed to malloc child_in_stack.");
         goto ERR;
     }
+
+    return dfs_aux;
+ERR:
+    safe_output_tree_dfs_aux_destroy(dfs_aux);
+    return NULL;
+}
+
+void output_tree_dfs_aux_destroy(output_tree_dfs_aux_t* dfs_aux)
+{
+    if (dfs_aux == NULL) {
+        return;
+    }
+
+    safe_st_stack_destroy(dfs_aux->node_stack);
+    safe_free(dfs_aux->child_in_stack);
+}
+
+int output_tree_dfs(output_tree_t *tree, output_tree_dfs_aux_t *dfs_aux,
+        int (*visitor)(output_tree_t *tree, output_node_id_t node,
+            st_stack_t* stack, void *args), void *args)
+{
+    st_stack_t *node_stack;
+    output_node_id_t *child_in_stack;
+
+    void *tmp;
+    output_node_id_t node, child;
+
+    ST_CHECK_PARAM(tree == NULL || dfs_aux == NULL || visitor == NULL, -1);
+
+    node_stack = dfs_aux->node_stack;
+    child_in_stack = dfs_aux->child_in_stack;
+
     for (node = 0; node < tree->num_node; node++) {
         child_in_stack[node] = OUTPUT_NODE_NONE;
     }
-
     st_stack_clear(node_stack);
+
     if(st_stack_push(node_stack, (void *)(long)tree->root)
             != ST_STACK_OK) {
         ST_WARNING("Failed to st_stack_push root");
-        goto ERR;
+        return -1;
     }
 
 #ifdef _OUTPUT_DEBUG_
@@ -1643,7 +1674,7 @@ static int output_tree_dfs(output_tree_t *tree,
     while(!st_stack_empty(node_stack)) {
         if(st_stack_top(node_stack, &tmp) != ST_STACK_OK) {
             ST_WARNING("Failed to st_stack_top.");
-            goto ERR;
+            return -1;
         }
         node = (output_node_id_t)(long)tmp;
 
@@ -1652,14 +1683,14 @@ static int output_tree_dfs(output_tree_t *tree,
                     && child_in_stack[node] >= e_children(tree, node))) {
             if(st_stack_pop(node_stack, &tmp) != ST_STACK_OK) {
                 ST_WARNING("Failed to st_stack_pop.");
-                goto ERR;
+                return -1;
             }
 #ifdef _OUTPUT_DEBUG_
             ST_DEBUG("POP: " OUTPUT_NODE_FMT, node);
 #endif
             if(visitor(tree, node, node_stack, args) < 0) {
                 ST_WARNING("Failed to visitor.");
-                goto ERR;
+                return -1;
             }
             continue;
         }
@@ -1674,7 +1705,7 @@ static int output_tree_dfs(output_tree_t *tree,
             if(st_stack_push(node_stack, (void *)(long)child)
                     != ST_STACK_OK) {
                 ST_WARNING("Failed to st_stack_push child");
-                goto ERR;
+                return -1;
             }
 #ifdef _OUTPUT_DEBUG_
             ST_DEBUG("PUSH: " OUTPUT_NODE_FMT, child);
@@ -1682,66 +1713,84 @@ static int output_tree_dfs(output_tree_t *tree,
         }
     }
 
-    safe_st_stack_destroy(node_stack);
-    safe_free(child_in_stack);
     return 0;
-
-ERR:
-    safe_st_stack_destroy(node_stack);
-    safe_free(child_in_stack);
-    return -1;
 }
 
-static int output_tree_bfs(output_tree_t *tree,
-        int (*visitor)(output_tree_t *tree,
-            output_node_id_t node, void *args), void *args)
+output_tree_bfs_aux_t* output_tree_bfs_aux_create(output_tree_t *tree)
 {
-    st_queue_t *node_queue = NULL;
+    output_tree_bfs_aux_t *bfs_aux = NULL;
 
-    void *tmp;
-    output_node_id_t node, child;
+    ST_CHECK_PARAM(tree == NULL, NULL);
 
-    ST_CHECK_PARAM(tree == NULL || visitor == NULL, -1);
+    bfs_aux = (output_tree_bfs_aux_t *)malloc(sizeof(output_tree_bfs_aux_t));
+    if (bfs_aux == NULL) {
+        ST_WARNING("Failed to malloc bfs_aux.");
+        goto ERR;
+    }
+    memset(bfs_aux, 0, sizeof(output_tree_bfs_aux_t));
 
-    node_queue = st_queue_create(tree->num_node);
-    if(node_queue == NULL) {
+    bfs_aux->node_queue = st_queue_create(tree->num_node);
+    if(bfs_aux->node_queue == NULL) {
         ST_WARNING("Failed to create node_queue.");
         goto ERR;
     }
 
+    return bfs_aux;
+ERR:
+    safe_output_tree_bfs_aux_destroy(bfs_aux);
+    return NULL;
+}
+
+void output_tree_bfs_aux_destroy(output_tree_bfs_aux_t* bfs_aux)
+{
+    if (bfs_aux == NULL) {
+        return;
+    }
+
+    safe_st_queue_destroy(bfs_aux->node_queue);
+}
+
+int output_tree_bfs(output_tree_t *tree, output_tree_bfs_aux_t *bfs_aux,
+        int (*visitor)(output_tree_t *tree,
+            output_node_id_t node, void *args), void *args)
+{
+    st_queue_t *node_queue;
+
+    void *tmp;
+    output_node_id_t node, child;
+
+    ST_CHECK_PARAM(tree == NULL || bfs_aux == NULL || visitor == NULL, -1);
+
+    node_queue = bfs_aux->node_queue;
     st_queue_clear(node_queue);
+
     if(st_enqueue(node_queue, (void *)(long)tree->root) != ST_QUEUE_OK) {
         ST_WARNING("Failed to st_enqueue root");
-        goto ERR;
+        return -1;
     }
 
     while(!st_queue_empty(node_queue)) {
         if(st_dequeue(node_queue, &tmp) != ST_QUEUE_OK) {
             ST_WARNING("Failed to st_dequeue.");
-            goto ERR;
+            return -1;
         }
         node = (output_node_id_t)(long)tmp;
 
         if(visitor(tree, node, args) < 0) {
             ST_WARNING("Failed to visitor.");
-            goto ERR;
+            return -1;
         }
 
         for (child = s_children(tree, node);
                 child < e_children(tree, node); ++child) {
             if(st_enqueue(node_queue, (void *)(long)child) != ST_QUEUE_OK) {
                 ST_WARNING("Failed to st_enqueue child");
-                goto ERR;
+                return -1;
             }
         }
     }
 
-    safe_st_queue_destroy(node_queue);
     return 0;
-
-ERR:
-    safe_st_queue_destroy(node_queue);
-    return -1;
 }
 
 static int output_tree_dfs_trav_gen_path(output_tree_t *tree,
@@ -1802,6 +1851,7 @@ ERR:
 
 static int output_generate_path(output_t *output)
 {
+    output_tree_dfs_aux_t *dfs_aux = NULL;
     size_t sz;
 
     ST_CHECK_PARAM(output == NULL || output->tree == NULL, -1);
@@ -1814,16 +1864,26 @@ static int output_generate_path(output_t *output)
     }
     memset(output->paths, 0, sz);
 
-    if (output_tree_dfs(output->tree, output_tree_dfs_trav_gen_path,
+    dfs_aux = output_tree_dfs_aux_create(output->tree);
+    if (dfs_aux == NULL) {
+        ST_WARNING("Failed to output_tree_dfs_aux_create.");
+        goto ERR;
+    }
+
+    if (output_tree_dfs(output->tree, dfs_aux,
+                output_tree_dfs_trav_gen_path,
                 output) < 0) {
         ST_WARNING("Failed to output_tree_dfs.");
         goto ERR;
     }
 
+    safe_output_tree_dfs_aux_destroy(dfs_aux);
+
     return 0;
 
 ERR:
     safe_free(output->paths);
+    safe_output_tree_dfs_aux_destroy(dfs_aux);
     return -1;
 }
 
@@ -1861,6 +1921,7 @@ static int output_tree_bfs_trav_gen_param_map(output_tree_t *tree,
 
 static int output_generate_param_map(output_t *output)
 {
+    output_tree_bfs_aux_t *bfs_aux = NULL;
     output_gen_param_map_args_t ogpm_args;
     size_t sz;
 
@@ -1880,9 +1941,15 @@ static int output_generate_param_map(output_t *output)
     }
     memset(output->param_map, 0, sz);
 
+    bfs_aux = output_tree_bfs_aux_create(output->tree);
+    if (bfs_aux == NULL) {
+        ST_WARNING("Failed to output_tree_bfs_aux_create.");
+        goto ERR;
+    }
     ogpm_args.param_map = output->param_map;
     ogpm_args.acc = 0;
-    if (output_tree_bfs(output->tree, output_tree_bfs_trav_gen_param_map,
+    if (output_tree_bfs(output->tree, bfs_aux,
+                output_tree_bfs_trav_gen_param_map,
                 &ogpm_args) < 0) {
         ST_WARNING("Failed to output_tree_bfs.");
         goto ERR;
@@ -1899,10 +1966,12 @@ static int output_generate_param_map(output_t *output)
     }
 #endif
 
+    safe_output_tree_bfs_aux_destroy(bfs_aux);
     return 0;
 
 ERR:
     safe_free(output->param_map);
+    safe_output_tree_bfs_aux_destroy(bfs_aux);
     return -1;
 }
 
@@ -2363,6 +2432,7 @@ int output_draw(output_t *output, FILE *fp, count_t *word_cnts,
         st_alphabet_t *vocab)
 {
     char sym[MAX_SYM_LEN];
+    output_tree_dfs_aux_t *dfs_aux = NULL;
     int i;
     output_node_id_t m, n;
 
@@ -2371,7 +2441,7 @@ int output_draw(output_t *output, FILE *fp, count_t *word_cnts,
     if (output->paths == NULL) {
         if (output_generate_path(output) < 0) {
             ST_WARNING("Failed to output_generate_path.");
-            return -1;
+            goto ERR;
         }
     }
 
@@ -2426,15 +2496,28 @@ int output_draw(output_t *output, FILE *fp, count_t *word_cnts,
     }
     fprintf(fp, "\n");
 
-    if (output_tree_dfs(output->tree, output_tree_dfs_trav_draw, fp) < 0) {
-        ST_WARNING("Failed to output_tree_dfs.");
-        return -1;
+    dfs_aux = output_tree_dfs_aux_create(output->tree);
+    if (dfs_aux == NULL) {
+        ST_WARNING("Failed to output_tree_dfs_aux_create.");
+        goto ERR;
     }
+
+    if (output_tree_dfs(output->tree, dfs_aux,
+                output_tree_dfs_trav_draw, fp) < 0) {
+        ST_WARNING("Failed to output_tree_dfs.");
+        goto ERR;
+    }
+
+    safe_output_tree_dfs_aux_destroy(dfs_aux);
 
     fprintf(fp, "  }\n");
     fprintf(fp, "}\n");
 
     return 0;
+
+ERR:
+    safe_output_tree_dfs_aux_destroy(dfs_aux);
+    return -1;
 }
 
 layer_t* output_get_layer(output_t *output)

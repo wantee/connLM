@@ -40,7 +40,7 @@ bool g_binary;
 int g_num_thr;
 
 st_opt_t *g_cmd_opt;
-fst_converter_opt_t g_converter_opt;
+fst_conv_opt_t g_conv_opt;
 
 int connlm_tofst_parse_opt(int *argc, const char *argv[])
 {
@@ -68,8 +68,8 @@ int connlm_tofst_parse_opt(int *argc, const char *argv[])
         goto ST_OPT_ERR;
     }
 
-    if (fst_converter_load_opt(&g_converter_opt, g_cmd_opt, NULL) < 0) {
-        ST_WARNING("Failed to fst_converter_load_opt");
+    if (fst_conv_load_opt(&g_conv_opt, g_cmd_opt, NULL) < 0) {
+        ST_WARNING("Failed to fst_conv_load_opt");
         goto ST_OPT_ERR;
     }
 
@@ -89,8 +89,9 @@ void show_usage(const char *module_name)
     connlm_show_usage(module_name,
             "Convert connLM Model to WFST",
             "<model> <fst-file>",
-            "exp/final.clm data/final.txt",
-            g_cmd_opt, NULL);
+            "--boost=0.006 --boost-power=0.5 --words-syms-file=exp/words.txt "
+            "exp/final.clm exp/g.txt",
+      g_cmd_opt, NULL);
 }
 
 int main(int argc, const char *argv[])
@@ -98,7 +99,7 @@ int main(int argc, const char *argv[])
     char args[1024] = "";
     FILE *fp = NULL;
     connlm_t *connlm = NULL;
-    fst_converter_t *converter = NULL;
+    fst_conv_t *conv = NULL;
     int ret;
 
     (void)st_escape_args(argc, argv, args, 1024);
@@ -138,9 +139,9 @@ int main(int argc, const char *argv[])
     }
     safe_st_fclose(fp);
 
-    converter = fst_converter_create(connlm, g_num_thr, &g_converter_opt);
-    if (converter == NULL) {
-        ST_WARNING("Failed to fst_converter_create.");
+    conv = fst_conv_create(connlm, g_num_thr, &g_conv_opt);
+    if (conv == NULL) {
+        ST_WARNING("Failed to fst_conv_create.");
         goto ERR;
     }
 
@@ -150,15 +151,15 @@ int main(int argc, const char *argv[])
         goto ERR;
     }
 
-    if (fst_converter_convert(converter, fp) < 0) {
-        ST_WARNING("Failed to fst_converter_convert.");
+    if (fst_conv_convert(conv, fp) < 0) {
+        ST_WARNING("Failed to fst_conv_convert.");
         goto ERR;
     }
 
     safe_st_fclose(fp);
 
     safe_st_opt_destroy(g_cmd_opt);
-    safe_fst_converter_destroy(converter);
+    safe_fst_conv_destroy(conv);
     safe_connlm_destroy(connlm);
 
     st_log_close(0);
@@ -169,7 +170,7 @@ ERR:
     safe_st_fclose(fp);
 
     safe_st_opt_destroy(g_cmd_opt);
-    safe_fst_converter_destroy(converter);
+    safe_fst_conv_destroy(conv);
     safe_connlm_destroy(connlm);
 
     st_log_close(1);

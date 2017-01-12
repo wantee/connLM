@@ -137,6 +137,57 @@ int updater_finalize(updater_t *updater);
  */
 int updater_sampling(updater_t *updater, bool startover);
 
+/**
+ * Get the size of state in updater.
+ * @ingroup g_updater
+ * @param[in] updater updater.
+ * @return state size of updater, -1 if any error.
+ */
+int updater_state_size(updater_t *updater);
+
+/**
+ * Dump the state of updater.
+ * @ingroup g_updater
+ * @param[in] updater updater.
+ * @param[out] state pointer to store the dumped state. Size of state
+ *             must be larger than or equal to the state_size returned
+ *             by updater_state_size.
+ * @return non-zero value if any error.
+ */
+int updater_dump_state(updater_t *updater, real_t *state);
+
+/**
+ * Feed the state of updater.
+ * @ingroup g_updater
+ * @param[in] updater updater.
+ * @param[in] state pointer to values to be fed into state. Size of state
+ *             must be larger than or equal to the state_size returned
+ *             by updater_state_size.
+ * @return non-zero value if any error.
+ */
+int updater_feed_state(updater_t *updater, real_t *state);
+
+/**
+ * Setup updater for running with activating all words in one step.
+ * @ingroup g_updater
+ * @param[in] updater updater.
+ * @return non-zero value if any error.
+ */
+int updater_setup_all(updater_t *updater);
+
+/**
+ * Run one step with specified state and history.
+ * @ingroup g_updater
+ * @param[in] updater updater.
+ * @param[in] state state for model, from updater_dump_state.
+ * @param[in] hist word history.
+ * @param[in] num_hist number of word history.
+ * @param[out] output_probs log-probs for all words.
+ * @return non-zero value if any error.
+ */
+int updater_step_with_state(updater_t *updater, real_t *state,
+        int *hist, int num_hist, double *output_probs);
+
 #ifdef __cplusplus
 }
 #endif

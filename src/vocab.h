@@ -29,6 +29,8 @@
 extern "C" {
 #endif
 
+#include <string.h>
+
 #include <stutils/st_opt.h>
 #include <stutils/st_alphabet.h>
 
@@ -217,6 +219,16 @@ int vocab_add_word(vocab_t *vocab, const char* word);
  * @return true, if equal, false otherwise.
  */
 bool vocab_equal(vocab_t *vocab1, vocab_t *vocab2);
+
+/**
+ * Save vocab to symbols table.
+ * @ingroup g_vocab
+ * @param[in] vocab the vocab.
+ * @param[in] fp file pointer to be printed out.
+ * @param[in] add_eps whether to add \<eps\>(as 0).
+ * @return non-zero value if any error.
+ */
+int vocab_save_syms(vocab_t *vocab, FILE *fp, bool add_eps);
 
 #ifdef __cplusplus
 }

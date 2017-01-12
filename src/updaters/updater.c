@@ -92,15 +92,11 @@ static int updater_save_state(updater_t *updater)
     return 0;
 }
 
-static int updater_forward(updater_t *updater)
+static int updater_forward_comp(updater_t *updater)
 {
     int c;
 
     ST_CHECK_PARAM(updater == NULL, -1);
-
-#ifdef _CONNLM_TRACE_PROCEDURE_
-    ST_TRACE("Forward: word[%d]", tgt_word(updater));
-#endif
 
     for (c = 0; c < updater->connlm->num_comp; c++) {
         if (comp_updater_forward(updater->comp_updaters[c],
@@ -109,6 +105,22 @@ static int updater_forward(updater_t *updater)
                     updater->connlm->comps[c]->name);
             return -1;
         }
+    }
+
+    return 0;
+}
+
+static int updater_forward(updater_t *updater)
+{
+    ST_CHECK_PARAM(updater == NULL, -1);
+
+#ifdef _CONNLM_TRACE_PROCEDURE_
+    ST_TRACE("Forward: word[%d]", tgt_word(updater));
+#endif
+
+    if (updater_forward_comp(updater) < 0) {
+        ST_WARNING("Failed to updater_forward_comp.");
+        return -1;
     }
 
     if (out_updater_activate(updater->out_updater, tgt_word(updater),
@@ -533,4 +545,236 @@ int updater_sampling(updater_t *updater, bool startover)
     }
 
     return word;
+}
+
+int updater_state_size(updater_t *updater)
+{
+    int c;
+    int size;
+    int total_size;
+
+    ST_CHECK_PARAM(updater == NULL, -1);
+
+    total_size = 0;
+    for (c = 0; c < updater->connlm->num_comp; c++) {
+        size = comp_updater_state_size(updater->comp_updaters[c]);
+        if (size < 0) {
+            ST_WARNING("Failed to comp_updater_state_size[%s].",
+                    updater->connlm->comps[c]->name);
+            return -1;
+        }
+        total_size += size;
+    }
+
+    return total_size;
+}
+
+int updater_dump_state(updater_t *updater, real_t *state)
+{
+    int c;
+    int size;
+    int total_size;
+
+    ST_CHECK_PARAM(updater == NULL || state == NULL, -1);
+
+    total_size = 0;
+    for (c = 0; c < updater->connlm->num_comp; c++) {
+        size = comp_updater_state_size(updater->comp_updaters[c]);
+        if (size < 0) {
+            ST_WARNING("Failed to comp_updater_state_size[%s].",
+                    updater->connlm->comps[c]->name);
+            return -1;
+        }
+
+        if (comp_updater_dump_state(updater->comp_updaters[c],
+                    state + total_size) < 0) {
+            ST_WARNING("Failed to comp_updater_dump_state[%s].",
+                    updater->connlm->comps[c]->name);
+            return -1;
+        }
+        total_size += size;
+    }
+
+    return 0;
+}
+
+int updater_feed_state(updater_t *updater, real_t *state)
+{
+    int c;
+    int size;
+    int total_size;
+
+    ST_CHECK_PARAM(updater == NULL || state == NULL, -1);
+
+    total_size = 0;
+    for (c = 0; c < updater->connlm->num_comp; c++) {
+        size = comp_updater_state_size(updater->comp_updaters[c]);
+        if (size < 0) {
+            ST_WARNING("Failed to comp_updater_state_size[%s].",
+                    updater->connlm->comps[c]->name);
+            return -1;
+        }
+
+        if (comp_updater_feed_state(updater->comp_updaters[c],
+                    state + total_size) < 0) {
+            ST_WARNING("Failed to comp_updater_feed_state[%s].",
+                    updater->connlm->comps[c]->name);
+            return -1;
+        }
+        total_size += size;
+    }
+
+    return 0;
+}
+
+static int updater_cleanup(updater_t *updater)
+{
+    int c;
+
+    ST_CHECK_PARAM(updater == NULL, -1);
+
+    for (c = 0; c < updater->connlm->num_comp; c++) {
+        if (comp_updater_clear(updater->comp_updaters[c]) < 0) {
+            ST_WARNING("Failed to comp_updater_clear[%s].",
+                    updater->connlm->comps[c]->name);
+            return -1;
+        }
+    }
+
+    if (out_updater_clear_all(updater->out_updater) < 0) {
+        ST_WARNING("Failed to out_updater_clear_all.");
+        return -1;
+    }
+
+    return 0;
+}
+
+static int updater_set_hist(updater_t *updater, int *hist, int num_hist)
+{
+    ST_CHECK_PARAM(updater == NULL || hist == NULL, -1);
+
+    if (input_updater_clear(updater->input_updater) < 0) {
+        ST_WARNING("Failed to input_updater_clear.");
+        return -1;
+    }
+
+    if (updater_feed(updater, hist, num_hist) < 0) {
+        ST_WARNING("Failed to updater_feed.");
+        return -1;
+    }
+
+    if (input_updater_move_to_end(updater->input_updater,
+                &updater->sent) < 0) {
+        ST_WARNING("Failed to input_updater_move_to_end.");
+        return -1;
+    }
+
+    return 0;
+}
+
+int updater_setup_all(updater_t *updater)
+{
+    ST_CHECK_PARAM(updater == NULL, -1);
+
+    if (updater_setup(updater, false) < 0) {
+        ST_WARNING("Failed to updater_setup.");
+        return -1;
+    }
+
+    if (out_updater_init_all(updater->out_updater) < 0) {
+        ST_WARNING("Failed to out_updater_init_all.");
+        return -1;
+    }
+
+    return 0;
+}
+
+static int output_tree_bfs_trav_forward_all(output_tree_t *tree,
+        output_node_id_t node, void *args)
+{
+    updater_t *updater;
+    int c;
+
+    ST_CHECK_PARAM(tree == NULL || args == NULL, -1);
+
+    updater = (updater_t *)args;
+
+    if (is_leaf(tree, node)) {
+        return 0;
+    }
+
+    for (c = 0; c < updater->connlm->num_comp; c++) {
+        if (comp_updater_forward_out(updater->comp_updaters[c], node) < 0) {
+            ST_WARNING("Failed to comp_updater_forward[%s].",
+                    updater->connlm->comps[c]->name);
+            return -1;
+        }
+    }
+
+    return 0;
+}
+
+static int updater_forward_out_all(updater_t *updater)
+{
+    ST_CHECK_PARAM(updater == NULL, -1);
+
+    if (output_tree_bfs(updater->out_updater->output->tree,
+                updater->out_updater->bfs_aux,
+                output_tree_bfs_trav_forward_all,
+                updater) < 0) {
+        ST_WARNING("Failed to output_tree_bfs.");
+        return -1;
+    }
+
+    return 0;
+}
+
+int updater_step_with_state(updater_t *updater, real_t *state,
+        int *hist, int num_hist, double *output_probs)
+{
+    ST_CHECK_PARAM(updater == NULL, -1);
+
+    if (updater_cleanup(updater) < 0) {
+        ST_WARNING("updater_cleanup.");
+        return -1;
+    }
+
+    if (hist != NULL && num_hist > 0) {
+        if (updater_set_hist(updater, hist, num_hist) < 0) {
+            ST_WARNING("Failed to updater_set_hist.");
+            return -1;
+        }
+    }
+
+    if (state != NULL) {
+        if (updater_feed_state(updater, state) < 0) {
+            ST_WARNING("Failed to updater_feed_state.");
+            return -1;
+        }
+    }
+
+    if (updater_forward_util_out(updater) < 0) {
+        ST_WARNING("Failed to updater_forward_util_out.");
+        return -1;
+    }
+
+    if (updater_forward_out_all(updater) < 0) {
+        ST_WARNING("Failed to updater_forward_out_all.");
+        return -1;
+    }
+
+    if (updater_save_state(updater) < 0) {
+        ST_WARNING("updater_save_state.");
+        return -1;
+    }
+
+    if (output_probs != NULL) {
+        if (out_updater_activate_all(updater->out_updater,
+                    output_probs) < 0) {
+            ST_WARNING("Failed to out_updater_activate_all.");
+            return -1;
+        }
+    }
+
+    return 0;
 }

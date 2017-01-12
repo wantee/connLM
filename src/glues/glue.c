@@ -43,19 +43,23 @@ static glue_impl_t GLUE_IMPL[] = {
     {DIRECT_GLUE_NAME, direct_glue_init, direct_glue_destroy, direct_glue_dup,
         direct_glue_parse_topo, direct_glue_check, direct_glue_draw_label,
         direct_glue_load_header, NULL, direct_glue_save_header, NULL,
-        direct_glue_init_data, direct_glue_init_wt_updater},
+        direct_glue_init_data, direct_glue_init_wt_updater,
+        direct_glue_generate_wildcard_repr},
     {FC_GLUE_NAME, NULL, NULL, NULL,
         fc_glue_parse_topo, fc_glue_check, NULL,
         NULL, NULL, NULL, NULL,
-        fc_glue_init_data, fc_glue_init_wt_updater},
+        fc_glue_init_data, fc_glue_init_wt_updater,
+        NULL},
     {EMB_GLUE_NAME, NULL, NULL, NULL,
         emb_glue_parse_topo, emb_glue_check, NULL,
         NULL, NULL, NULL, NULL,
-        emb_glue_init_data, emb_glue_init_wt_updater},
+        emb_glue_init_data, emb_glue_init_wt_updater,
+        emb_glue_generate_wildcard_repr},
     {OUT_GLUE_NAME, NULL, NULL, NULL,
         out_glue_parse_topo, out_glue_check, NULL,
         NULL, NULL, NULL, NULL,
-        out_glue_init_data, out_glue_init_wt_updater},
+        out_glue_init_data, out_glue_init_wt_updater,
+        NULL},
 };
 
 static glue_impl_t* glue_get_impl(const char *type)
@@ -101,6 +105,8 @@ void glue_destroy(glue_t *glue)
     glue->in_layer = -1;
     glue->out_layer = -1;
     safe_wt_destroy(glue->wt);
+
+    safe_free(glue->wildcard_repr);
 }
 
 bool glue_check(glue_t *glue)
@@ -463,7 +469,7 @@ int glue_load_body(glue_t *glue, int version, FILE *fp, bool binary)
 
     ST_CHECK_PARAM(glue == NULL || fp == NULL, -1);
 
-    if (version < 3) {
+    if (version < 5) {
         ST_WARNING("Too old version of connlm file");
         return -1;
     }
@@ -599,7 +605,7 @@ int glue_save_body(glue_t *glue, FILE *fp, bool binary)
         }
     }
 
-    if (wt_save_body(glue->wt, fp, binary) < 0) {
+    if (wt_save_body(glue->wt, fp, binary, glue->name) < 0) {
         ST_WARNING("Failed to wt_save_body.");
         return -1;
     }
@@ -710,4 +716,18 @@ int glue_load_train_opt(glue_t *glue, st_opt_t *opt, const char *sec_name,
 
 ST_OPT_ERR:
     return -1;
+}
+
+int glue_generate_wildcard_repr(glue_t *glue)
+{
+    ST_CHECK_PARAM(glue == NULL, -1);
+
+    if (glue->impl != NULL && glue->impl->generate_wildcard_repr != NULL) {
+        if (glue->impl->generate_wildcard_repr(glue) < 0) {
+            ST_WARNING("Failed to generate_wildcard_repr for glue impl.");
+            return -1;
+        }
+    }
+
+    return 0;
 }

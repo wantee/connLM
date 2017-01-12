@@ -37,7 +37,7 @@ extern "C" {
 
 #define exp10(a) pow(10.0, a)
 
-#define logn(a, base) ((base) == 0) ? log(a) : (log(a) / log(base))
+#define logn(loga, base) ((base) == 0) ? (loga) : ((loga) / log(base))
 #define logn10(log10a, base) ((base) == 0) ? (log10a / M_LOG10E) : (log10a / log10(base))
 
 void matXvec(real_t *dst, real_t *mat, real_t *vec,

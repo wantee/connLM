@@ -42,6 +42,9 @@ void out_updater_destroy(out_updater_t *out_updater)
     safe_st_aligned_free(out_updater->er);
 
     out_updater->output = NULL;
+
+    safe_free(out_updater->node_probs);
+    safe_output_tree_bfs_aux_destroy(out_updater->bfs_aux);
 }
 
 out_updater_t* out_updater_create(output_t *output)
@@ -306,4 +309,104 @@ output_node_id_t out_updater_sample(out_updater_t *out_updater,
     }
 
     return sampled;
+}
+
+typedef struct _output_activate_all_args_t_ {
+    double *node_probs;
+    double *word_probs;
+    real_t *ac;
+    output_norm_t norm;
+} output_activate_all_args_t;
+
+static int output_tree_bfs_trav_activate_all(output_tree_t *tree,
+        output_node_id_t node, void *args)
+{
+    output_activate_all_args_t *oaa_args;
+
+    output_node_id_t child_s;
+    output_node_id_t child_e;
+    output_node_id_t ch;
+    int word;
+    double parent_logp;
+
+    ST_CHECK_PARAM(tree == NULL || args == NULL, -1);
+
+    oaa_args = (output_activate_all_args_t *)args;
+
+    child_s = s_children(tree, node);
+    child_e = e_children(tree, node);
+
+    if (child_s >= child_e) {
+        word = output_tree_leaf2word(tree, node);
+        oaa_args->word_probs[word] = oaa_args->node_probs[node];
+    } else {
+        if (oaa_args->norm == ON_SOFTMAX) {
+            oaa_args->ac[child_e - 1] = 0;
+            softmax(oaa_args->ac + child_s, child_e - child_s);
+        }
+        parent_logp = oaa_args->node_probs[node];
+        for (ch = child_s; ch < child_e; ch++) {
+            oaa_args->node_probs[ch] = parent_logp + log(oaa_args->ac[ch]);
+        }
+    }
+
+    return 0;
+}
+
+int out_updater_init_all(out_updater_t *out_updater)
+{
+    ST_CHECK_PARAM(out_updater == NULL, -1);
+
+    out_updater->node_probs = (double *)malloc(sizeof(double)
+            * out_updater->output->tree->num_node);
+    if (out_updater->node_probs == NULL) {
+        ST_WARNING("Failed to malloc node_probs.");
+        return -1;
+    }
+
+    out_updater->bfs_aux = output_tree_bfs_aux_create(out_updater->output->tree);
+    if (out_updater->bfs_aux == NULL) {
+        ST_WARNING("Failed to output_tree_bfs_aux_create.");
+        return -1;
+    }
+
+    return 0;
+}
+
+int out_updater_activate_all(out_updater_t *out_updater,
+        double *output_probs)
+{
+    output_activate_all_args_t oaa_args;
+
+    ST_CHECK_PARAM(out_updater == NULL || output_probs == NULL, -1);
+
+    oaa_args.node_probs = out_updater->node_probs;
+    oaa_args.word_probs = output_probs;
+    oaa_args.ac = out_updater->ac;
+    oaa_args.norm = out_updater->output->norm;
+
+    oaa_args.node_probs[out_updater->output->tree->root] = 0.0;
+    if (output_tree_bfs(out_updater->output->tree,
+                out_updater->bfs_aux,
+                output_tree_bfs_trav_activate_all,
+                &oaa_args) < 0) {
+        ST_WARNING("Failed to output_tree_bfs.");
+        return -1;
+    }
+
+    return 0;
+}
+
+int out_updater_clear_all(out_updater_t *out_updater)
+{
+    ST_CHECK_PARAM(out_updater == NULL, -1);
+
+    memset(out_updater->ac, 0, sizeof(real_t)
+            * out_updater->output->tree->num_node);
+    if (out_updater->er != NULL) {
+        memset(out_updater->er, 0, sizeof(real_t)
+                * out_updater->output->tree->num_node);
+    }
+
+    return 0;
 }

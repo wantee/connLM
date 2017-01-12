@@ -144,11 +144,12 @@ int wt_save_header(weight_t *wt, FILE *fp, bool binary);
  * @param[in] wt wt to be saved.
  * @param[in] fp file stream saved to.
  * @param[in] binary whether to use binary format.
+ * @param[in] name name of the weight.
  * @see wt_save_header
  * @see wt_load_header, wt_load_body
  * @return non-zero value if any error.
  */
-int wt_save_body(weight_t *wt, FILE *fp, bool binary);
+int wt_save_body(weight_t *wt, FILE *fp, bool binary, char *name);
 
 /**
  * Initialise weight.

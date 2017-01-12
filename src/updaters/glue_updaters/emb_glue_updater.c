@@ -51,7 +51,6 @@ int emb_glue_updater_forward(glue_updater_t *glue_updater,
     glue = glue_updater->glue;
     input = comp_updater->comp->input;
     out_layer_updater = comp_updater->layer_updaters[glue->out_layer];
-    wt = glue_updater->wt_updater->wt;
     col = glue->wt->col;
 
     switch (input->combine) {
@@ -62,7 +61,13 @@ int emb_glue_updater_forward(glue_updater_t *glue_updater,
                     continue;
                 }
                 scale = input->context[a].w;
-                j = input_sent->words[i] * col;
+                if (input_sent->words[i] == ANY_ID) {
+                    wt = glue->wildcard_repr;
+                    j = 0;
+                } else {
+                    wt = glue_updater->wt_updater->wt;
+                    j = input_sent->words[i] * col;
+                }
                 for (b = 0; b < col; b++, j++) {
                     out_layer_updater->ac[b] += scale * wt[j];
                 }
@@ -77,7 +82,13 @@ int emb_glue_updater_forward(glue_updater_t *glue_updater,
                         continue;
                     }
                     scale = input->context[a].w;
-                    j = input_sent->words[i] * col + b;
+                    if (input_sent->words[i] == ANY_ID) {
+                        wt = glue->wildcard_repr;
+                        j = b;
+                    } else {
+                        wt = glue_updater->wt_updater->wt;
+                        j = input_sent->words[i] * col + b;
+                    }
                     ac += scale * wt[j];
                 }
                 out_layer_updater->ac[b] += ac / input->n_ctx;
@@ -90,7 +101,13 @@ int emb_glue_updater_forward(glue_updater_t *glue_updater,
                     continue;
                 }
                 scale = input->context[a].w;
-                j = input_sent->words[i] * col;
+                if (input_sent->words[i] == ANY_ID) {
+                    wt = glue->wildcard_repr;
+                    j = 0;
+                } else {
+                    wt = glue_updater->wt_updater->wt;
+                    j = input_sent->words[i] * col;
+                }
                 for (b = a * col; b < (a + 1) * col; b++, j++) {
                     out_layer_updater->ac[b] += scale * wt[j];
                 }
@@ -119,6 +136,8 @@ int emb_glue_updater_backprop(glue_updater_t *glue_updater,
 
     glue = glue_updater->glue;
     input = comp_updater->comp->input;
+
+    // backprop words should not contain <any>
 
     if (input->combine == IC_CONCAT) {
         for (a = 0; a < input->n_ctx; a++) {

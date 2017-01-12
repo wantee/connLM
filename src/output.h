@@ -32,6 +32,8 @@ extern "C" {
 #include <stutils/st_opt.h>
 #include <stutils/st_int.h>
 #include <stutils/st_alphabet.h>
+#include <stutils/st_queue.h>
+#include <stutils/st_stack.h>
 
 #include <connlm/config.h>
 
@@ -115,6 +117,101 @@ static inline output_node_id_t output_tree_word2leaf(output_tree_t *tree,
 }
 
 /**
+ * aux data for output tree BFS.
+ * @ingroup g_output
+ */
+typedef struct _output_tree_bfs_aux_t_ {
+    st_queue_t *node_queue; /**< queue for tree node. */
+} output_tree_bfs_aux_t;
+
+/**
+ * Create a output tree bfs aux.
+ * @ingroup g_output
+ * @param[in] tree output tree.
+ * @return a new output tree bfs aux.
+ */
+output_tree_bfs_aux_t *output_tree_bfs_aux_create(output_tree_t *tree);
+/**
+ * Destroy a output tree bfs aux and set the pointer to NULL.
+ * @ingroup g_output
+ * @param[in] ptr pointer to output_tree_bfs_aux_t.
+ */
+#define safe_output_tree_bfs_aux_destroy(ptr) do {\
+    if((ptr) != NULL) {\
+        output_tree_bfs_aux_destroy(ptr);\
+        safe_free(ptr);\
+        (ptr) = NULL;\
+    }\
+    } while(0)
+/**
+ * Destroy a output tree bfs aux.
+ * @ingroup g_output
+ * @param[in] bfs_aux output tree bfs aux to be destroyed.
+ */
+void output_tree_bfs_aux_destroy(output_tree_bfs_aux_t *bfs_aux);
+
+/**
+ * Do BFS on a output tree.
+ * @ingroup g_output
+ * @param[in] tree the output tree.
+ * @param[in] bfs_aux aux for bfs.
+ * @param[in] visitor visitor callback called on every node in path.
+ * @param[in] args args passed to visitor.
+ * @return non-zero value if any error.
+ */
+int output_tree_bfs(output_tree_t *tree, output_tree_bfs_aux_t *bfs_aux,
+        int (*visitor)(output_tree_t *tree,
+            output_node_id_t node, void *args), void *args);
+
+/**
+ * aux data for output tree DFS.
+ * @ingroup g_output
+ */
+typedef struct _output_tree_dfs_aux_t_ {
+    st_stack_t *node_stack; /**< stack for tree node. */
+    output_node_id_t *child_in_stack; /**< current child in the stack for every node*/
+} output_tree_dfs_aux_t;
+
+/**
+ * Create a output tree dfs aux.
+ * @ingroup g_output
+ * @param[in] tree output tree.
+ * @return a new output tree dfs aux.
+ */
+output_tree_dfs_aux_t *output_tree_dfs_aux_create(output_tree_t *tree);
+/**
+ * Destroy a output tree dfs aux and set the pointer to NULL.
+ * @ingroup g_output
+ * @param[in] ptr pointer to output_tree_dfs_aux_t.
+ */
+#define safe_output_tree_dfs_aux_destroy(ptr) do {\
+    if((ptr) != NULL) {\
+        output_tree_dfs_aux_destroy(ptr);\
+        safe_free(ptr);\
+        (ptr) = NULL;\
+    }\
+    } while(0)
+/**
+ * Destroy a output tree dfs aux.
+ * @ingroup g_output
+ * @param[in] dfs_aux output tree dfs aux to be destroyed.
+ */
+void output_tree_dfs_aux_destroy(output_tree_dfs_aux_t *dfs_aux);
+
+/**
+ * Do DFS on a output tree.
+ * @ingroup g_output
+ * @param[in] tree the output tree.
+ * @param[in] dfs_aux aux for dfs.
+ * @param[in] visitor visitor callback called on every node in path.
+ * @param[in] args args passed to visitor.
+ * @return non-zero value if any error.
+ */
+int output_tree_dfs(output_tree_t *tree, output_tree_dfs_aux_t *dfs_aux,
+        int (*visitor)(output_tree_t *tree, output_node_id_t node,
+            st_stack_t* stack, void *args), void *args);
+
+/**
  * Output tree path.
  * @ingroup g_output
  */
@@ -140,7 +237,7 @@ typedef enum _output_normalization_method_t_ {
 typedef struct _output_t_ {
     output_opt_t output_opt; /**< output tree options. */
 
-    int output_size; /**< size of output tree. */
+    int output_size; /**< size of output layer. */
     output_norm_t norm; /**< normalization method. */
 
     output_tree_t *tree; /**< output tree. */
@@ -165,7 +262,7 @@ int output_load_opt(output_opt_t *output_opt, st_opt_t *opt,
  * Create a output tree with options.
  * @ingroup g_output
  * @param[in] output_opt options.
- * @param[in] output_size size of output tree.
+ * @param[in] output_size size of output layer.
  * @return a new output tree.
  */
 output_t *output_create(output_opt_t *output_opt, int output_size);

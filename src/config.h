@@ -31,7 +31,7 @@ extern "C" {
 
 #define CONNLM_VERSION   "2.0.0"
 
-#define CONNLM_FILE_VERSION   4
+#define CONNLM_FILE_VERSION   5
 
 #define CONNLM_GIT_COMMIT "0"
 
@@ -64,6 +64,11 @@ typedef unsigned long long hash_t;
 #define SENT_START_ID 1
 #define UNK "<unk>"
 #define UNK_ID 2
+#define ANY "<any>"
+#define ANY_ID -100
+
+#define EPS "<eps>"
+#define PHI "#phi"
 
 #ifdef __cplusplus
 }

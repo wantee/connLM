@@ -629,3 +629,81 @@ int comp_updater_forward_out(comp_updater_t *comp_updater,
 
     return 0;
 }
+
+int comp_updater_state_size(comp_updater_t *comp_updater)
+{
+    int i;
+    int size;
+    int total_size;
+
+    ST_CHECK_PARAM(comp_updater == NULL, -1);
+
+    total_size = 0;
+    for (i = 2; i < comp_updater->comp->num_layer; i++) {
+        size = layer_updater_state_size(comp_updater->layer_updaters[i]);
+        if (size < 0) {
+            ST_WARNING("Failed to layer_updater_state_size.[%s]",
+                    comp_updater->comp->layers[i]->name);
+            return -1;
+        }
+        total_size += size;
+    }
+
+    return total_size;
+}
+
+int comp_updater_dump_state(comp_updater_t *comp_updater, real_t *state)
+{
+    int i;
+    int size;
+    int total_size;
+
+    ST_CHECK_PARAM(comp_updater == NULL || state == NULL, -1);
+
+    total_size = 0;
+    for (i = 2; i < comp_updater->comp->num_layer; i++) {
+        size = layer_updater_state_size(comp_updater->layer_updaters[i]);
+        if (size < 0) {
+            ST_WARNING("Failed to layer_updater_state_size.[%s]",
+                    comp_updater->comp->layers[i]->name);
+            return -1;
+        }
+        if (layer_updater_dump_state(comp_updater->layer_updaters[i],
+                    state + total_size) < 0) {
+            ST_WARNING("Failed to layer_updater_dump_state.[%s]",
+                    comp_updater->comp->layers[i]->name);
+            return -1;
+        }
+        total_size += size;
+    }
+
+    return 0;
+}
+
+int comp_updater_feed_state(comp_updater_t *comp_updater, real_t *state)
+{
+    int i;
+    int size;
+    int total_size;
+
+    ST_CHECK_PARAM(comp_updater == NULL || state == NULL, -1);
+
+    total_size = 0;
+    for (i = 2; i < comp_updater->comp->num_layer; i++) {
+        size = layer_updater_state_size(comp_updater->layer_updaters[i]);
+        if (size < 0) {
+            ST_WARNING("Failed to layer_updater_state_size.[%s]",
+                    comp_updater->comp->layers[i]->name);
+            return -1;
+        }
+        if (layer_updater_feed_state(comp_updater->layer_updaters[i],
+                    state + total_size) < 0) {
+            ST_WARNING("Failed to layer_updater_feed_state.[%s]",
+                    comp_updater->comp->layers[i]->name);
+            return -1;
+        }
+        total_size += size;
+    }
+
+    return 0;
+}

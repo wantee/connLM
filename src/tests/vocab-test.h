@@ -45,6 +45,7 @@ vocab_t* vocab_test_new()
     char word[16];
     int i;
 
+    memset(&vocab_opt, 0, sizeof(vocab_opt_t));
     vocab_opt.max_alphabet_size = VOCAB_TEST_SIZE + 10;
     vocab = vocab_create(&vocab_opt);
     assert(vocab != NULL);
