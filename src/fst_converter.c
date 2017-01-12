@@ -397,7 +397,7 @@ static int fst_conv_setup(fst_conv_t *conv, FILE *fst_fp,
     return 0;
 }
 
-static int fst_conv_maybe_realloc_states(fst_conv_t *conv,
+static int fst_conv_realloc_states(fst_conv_t *conv, int num_extra,
         bool store_children)
 {
     int i;
@@ -405,25 +405,7 @@ static int fst_conv_maybe_realloc_states(fst_conv_t *conv,
 
     ST_CHECK_PARAM(conv == NULL, -1);
 
-    if (conv->n_fst_state < conv->cap_fst_states) {
-        if (store_children && conv->fst_children == NULL) {
-            conv->fst_children = malloc(sizeof(fst_state_children_t)
-                    * conv->cap_fst_states);
-            if (conv->fst_children == NULL) {
-                ST_WARNING("Failed to realloc fst_children.");
-                return -1;
-            }
-            for (i = 0; i < conv->cap_fst_states; i++) {
-                conv->fst_children[i].first_child = -1;
-                conv->fst_children[i].num_children = -1;
-            }
-            conv->n_fst_children = conv->cap_fst_states;
-        }
-
-        return 0;
-    }
-
-    num_new_states = conv->n_fst_state + get_vocab_size(conv);
+    num_new_states = conv->cap_fst_states + num_extra;
 
     conv->fst_states = realloc(conv->fst_states,
             sizeof(fst_state_t) * num_new_states);
@@ -466,14 +448,15 @@ static int fst_conv_add_states(fst_conv_t *conv, int n,
         return -1;
     }
 
-    sid = conv->n_fst_state;
-    conv->n_fst_state += n;
-
-    if (fst_conv_maybe_realloc_states(conv, store_children) < 0) {
-        ST_WARNING("Failed to fst_conv_maybe_realloc_states.");
+    if (conv->n_fst_state + n > conv->cap_fst_states) {
+        ST_WARNING("fst_states overflow");
         ret = -1;
         goto RET;
     }
+
+    sid = conv->n_fst_state;
+    conv->n_fst_state += n;
+
     if (pthread_mutex_unlock(&conv->fst_state_lock) != 0) {
         ST_WARNING("Failed to pthread_mutex_unlock fst_state_lock.");
         return -1;
@@ -1119,6 +1102,7 @@ static int fst_conv_build_wildcard(fst_conv_t *conv, fst_conv_args_t *args)
     pthread_t *pts = NULL;
     int sid;
     int i, n;
+    int num_states_needed;
 
     ST_CHECK_PARAM(conv == NULL || args == NULL, -1);
 
@@ -1144,7 +1128,28 @@ static int fst_conv_build_wildcard(fst_conv_t *conv, fst_conv_args_t *args)
         args[i].store_children = true;
     }
 
+    conv->fst_children = malloc(sizeof(fst_state_children_t)
+            * conv->cap_fst_states);
+    if (conv->fst_children == NULL) {
+        ST_WARNING("Failed to realloc fst_children.");
+        return -1;
+    }
+    for (i = 0; i < conv->cap_fst_states; i++) {
+        conv->fst_children[i].first_child = -1;
+        conv->fst_children[i].num_children = -1;
+    }
+    conv->n_fst_children = conv->cap_fst_states;
+
+    // maximum possible number of states could be expaned
+    num_states_needed = conv->n_thr * get_vocab_size(conv);
     while (sid < conv->n_fst_state) {
+        if (conv->n_fst_state + num_states_needed > conv->cap_fst_states) {
+            if (fst_conv_realloc_states(conv, num_states_needed, true) < 0) {
+                ST_WARNING("Failed to fst_conv_realloc_states.");
+                goto ERR;
+            }
+        }
+
         for (n = 0; sid < conv->n_fst_state && n < conv->n_thr;
                 sid++, n++) {
             args[n].sid = sid;
@@ -1182,6 +1187,7 @@ static int fst_conv_build_normal(fst_conv_t *conv, fst_conv_args_t *args)
     pthread_t *pts = NULL;
     int sid;
     int i, n;
+    int num_states_needed;
 
     ST_CHECK_PARAM(conv == NULL || args == NULL, -1);
 
@@ -1204,7 +1210,16 @@ static int fst_conv_build_normal(fst_conv_t *conv, fst_conv_args_t *args)
         goto ERR;
     }
 
+    // maximum possible number of states could be expaned
+    num_states_needed = conv->n_thr * get_vocab_size(conv);
     while (sid < conv->n_fst_state) {
+        if (conv->n_fst_state + num_states_needed > conv->cap_fst_states) {
+            if (fst_conv_realloc_states(conv, num_states_needed, false) < 0) {
+                ST_WARNING("Failed to fst_conv_realloc_states.");
+                goto ERR;
+            }
+        }
+
         for (n = 0; sid < conv->n_fst_state && n < conv->n_thr;
                 sid++, n++) {
             args[n].sid = sid;
