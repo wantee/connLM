@@ -255,6 +255,9 @@ void fst_conv_destroy(fst_conv_t *conv)
     conv->cap_fst_states = 0;
     conv->n_fst_state = 0;
 
+    safe_free(conv->fst_children);
+    conv->n_fst_children = 0;
+
     (void)pthread_mutex_destroy(&conv->fst_fp_lock);
     conv->fst_fp = NULL;
 
@@ -827,7 +830,6 @@ static int fst_conv_find_word_hist(fst_conv_t *conv,
 }
 
 // the word_hist should be filled before this function
-// and the word_hist may be CHANGED after this function
 static int fst_conv_find_backoff(fst_conv_t *conv, fst_conv_args_t *args,
         int sid)
 {

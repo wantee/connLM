@@ -43,6 +43,7 @@ void out_updater_destroy(out_updater_t *out_updater)
 
     out_updater->output = NULL;
 
+    safe_free(out_updater->node_probs);
     safe_output_tree_bfs_aux_destroy(out_updater->bfs_aux);
 }
 
