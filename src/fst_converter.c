@@ -479,7 +479,7 @@ static int fst_conv_add_states(fst_conv_t *conv, int n,
         return -1;
     }
 
-    for (i = sid; i < conv->n_fst_state; i++) {
+    for (i = sid; i < sid + n; i++) {
         conv->fst_states[i].word_id = -1;
         conv->fst_states[i].parent = parent;
         conv->fst_states[i].model_state_id = -1;
@@ -494,10 +494,9 @@ static int fst_conv_add_states(fst_conv_t *conv, int n,
         conv->fst_children[parent].num_children = n;
     }
 
-    if ((conv->n_fst_state - n) / FST_CONV_LOG_STEP !=
-            conv->n_fst_state / FST_CONV_LOG_STEP) {
+    if (sid / FST_CONV_LOG_STEP != (sid + n) / FST_CONV_LOG_STEP) {
         ST_TRACE("Building states: %d, max gram: %d",
-                conv->n_fst_state / FST_CONV_LOG_STEP * FST_CONV_LOG_STEP,
+                sid / FST_CONV_LOG_STEP * FST_CONV_LOG_STEP,
                 conv->max_gram);
     }
 
@@ -964,11 +963,6 @@ static int fst_conv_expand(fst_conv_t *conv, fst_conv_args_t *args)
 
     // select words
     if (no_backoff) {
-        // do not need to expand </s> for the backoff state,
-        // since every state in FST must contain a arc with </s>,
-        // no one would backoff when encounter a </s>.
-        output_probs[SENT_END_ID] = 0.0;
-
         n = 0;
         for (word = 0; word < get_vocab_size(conv); word++) {
             if (output_probs[word] <= 0.0) {
@@ -987,6 +981,8 @@ static int fst_conv_expand(fst_conv_t *conv, fst_conv_args_t *args)
                 ST_WARNING("Failed to select_word.");
                 return -1;
             }
+
+            assert(n < get_vocab_size(conv));
 
             args->selected_words[n] = word;
             n++;
@@ -1026,9 +1022,17 @@ static int fst_conv_expand(fst_conv_t *conv, fst_conv_args_t *args)
         backoff_prob -= output_probs[word];
 
         if (word == SENT_END_ID) {
+            if (no_backoff) {
+                // do not need to expand </s> for the backoff state,
+                // since every state in FST must contain a arc with </s>,
+                // no one would backoff when encounter a </s>.
+                continue;
+            }
+
             to_sid = FST_FINAL_STATE;
         } else {
             to_sid = new_sid++;
+            assert(to_sid < ret_sid + n - 1);
             conv->fst_states[to_sid].word_id = word;
             if (conv->model_state_cache != NULL) {
                 conv->fst_states[to_sid].model_state_id = model_state_id;
