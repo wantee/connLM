@@ -55,8 +55,8 @@ typedef struct _glue_updater_implementation_t_ {
             bool backprop); /**< setup glue updater.*/
 
     int (*forward)(glue_updater_t *glue_updater,
-            comp_updater_t *comp_updater,
-            sent_t *input_sent, real_t *in_ac); /**< forward glue updater.*/
+            comp_updater_t *comp_updater, sent_t *input_sent,
+            real_t *in_ac, real_t *out_ac); /**< forward glue updater.*/
 
     int (*backprop)(glue_updater_t *glue_updater,
             comp_updater_t *comp_updater,
@@ -65,11 +65,11 @@ typedef struct _glue_updater_implementation_t_ {
 
     int (*forward_util_out)(glue_updater_t *glue_updater,
             comp_updater_t *comp_updater, sent_t *input_sent,
-            real_t *in_ac); /**< forward_util_out glue updater.*/
+            real_t *in_ac, real_t *out_ac); /**< forward_util_out glue updater.*/
 
     int (*forward_out)(glue_updater_t *glue_updater,
             comp_updater_t *comp_updater, output_node_id_t node,
-            real_t *in_ac); /**< forward_out glue updater.*/
+            real_t *in_ac, real_t *out_ac); /**< forward_out glue updater.*/
 
 } glue_updater_impl_t;
 

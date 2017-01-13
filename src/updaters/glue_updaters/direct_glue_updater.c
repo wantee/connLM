@@ -377,7 +377,8 @@ static int direct_compute_hash(glue_updater_t *glue_updater,
 }
 
 int direct_glue_updater_forward(glue_updater_t *glue_updater,
-        comp_updater_t *comp_updater, sent_t *input_sent, real_t *in_ac)
+        comp_updater_t *comp_updater, sent_t *input_sent,
+        real_t* in_ac, real_t *out_ac)
 {
     dgu_data_t *data;
     out_updater_t *out_updater;
@@ -386,7 +387,7 @@ int direct_glue_updater_forward(glue_updater_t *glue_updater,
     int a;
 
     ST_CHECK_PARAM(glue_updater == NULL || comp_updater == NULL
-            || input_sent == NULL, -1);
+            || input_sent == NULL || out_ac == NULL, -1);
 
     data = (dgu_data_t *)glue_updater->extra;
     out_updater = comp_updater->out_updater;
@@ -397,7 +398,7 @@ int direct_glue_updater_forward(glue_updater_t *glue_updater,
         return -1;
     }
 
-    dw_args.out_ac = out_updater->ac;
+    dw_args.out_ac = out_ac;
     dw_args.comp_scale = comp_updater->comp->comp_scale;
     dw_args.wt_updater = glue_updater->wt_updater;
     for (a = 0; a < data->hash_order; a++) {
@@ -481,7 +482,8 @@ int direct_glue_updater_backprop(glue_updater_t *glue_updater,
 }
 
 int direct_glue_updater_forward_util_out(glue_updater_t *glue_updater,
-        comp_updater_t *comp_updater, sent_t *input_sent, real_t *in_ac)
+        comp_updater_t *comp_updater, sent_t *input_sent,
+        real_t* in_ac, real_t* out_ac)
 {
     if (direct_compute_hash(glue_updater, comp_updater, input_sent) < 0) {
         ST_WARNING("Failed to direct_compute_hash.");
@@ -492,7 +494,8 @@ int direct_glue_updater_forward_util_out(glue_updater_t *glue_updater,
 }
 
 int direct_glue_updater_forward_out(glue_updater_t *glue_updater,
-        comp_updater_t *comp_updater, output_node_id_t node, real_t *in_ac)
+        comp_updater_t *comp_updater, output_node_id_t node,
+        real_t* in_ac, real_t *out_ac)
 {
     dgu_data_t *data;
     out_updater_t *out_updater;
@@ -506,7 +509,7 @@ int direct_glue_updater_forward_out(glue_updater_t *glue_updater,
     output_node_id_t ch, child_s, child_e;
 
     ST_CHECK_PARAM(glue_updater == NULL || comp_updater == NULL
-            || node == OUTPUT_NODE_NONE, -1);
+            || node == OUTPUT_NODE_NONE || out_ac == NULL, -1);
 
     data = (dgu_data_t *)glue_updater->extra;
     out_updater = comp_updater->out_updater;
@@ -532,14 +535,14 @@ int direct_glue_updater_forward_out(glue_updater_t *glue_updater,
 
             if (h + child_e - child_s - 1 > hash_sz) {
                 for (ch = child_s; h < hash_sz; ch++, h++) {
-                    out_updater->ac[ch] += scale * hash_wt[h];
+                    out_ac[ch] += scale * hash_wt[h];
                 }
                 for (h = 0; ch < child_e - 1; ch++, h++) {
-                    out_updater->ac[ch] += scale * hash_wt[h];
+                    out_ac[ch] += scale * hash_wt[h];
                 }
             } else {
                 for (ch = child_s; ch < child_e - 1; ch++, h++) {
-                    out_updater->ac[ch] += scale * hash_wt[h];
+                    out_ac[ch] += scale * hash_wt[h];
                 }
             }
         }

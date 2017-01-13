@@ -35,22 +35,21 @@
 #include "emb_glue_updater.h"
 
 int emb_glue_updater_forward(glue_updater_t *glue_updater,
-        comp_updater_t *comp_updater, sent_t *input_sent, real_t *in_ac)
+        comp_updater_t *comp_updater, sent_t *input_sent,
+        real_t* in_ac, real_t *out_ac)
 {
     glue_t *glue;
     input_t *input;
-    layer_updater_t *out_layer_updater;
     real_t *wt;
 
     int a, b, i, j, col;
     real_t scale, ac;
 
     ST_CHECK_PARAM(glue_updater == NULL || comp_updater == NULL
-            || input_sent == NULL, -1);
+            || input_sent == NULL || out_ac == NULL, -1);
 
     glue = glue_updater->glue;
     input = comp_updater->comp->input;
-    out_layer_updater = comp_updater->layer_updaters[glue->out_layer];
     col = glue->wt->col;
 
     switch (input->combine) {
@@ -69,7 +68,7 @@ int emb_glue_updater_forward(glue_updater_t *glue_updater,
                     j = input_sent->words[i] * col;
                 }
                 for (b = 0; b < col; b++, j++) {
-                    out_layer_updater->ac[b] += scale * wt[j];
+                    out_ac[b] += scale * wt[j];
                 }
             }
             break;
@@ -91,7 +90,7 @@ int emb_glue_updater_forward(glue_updater_t *glue_updater,
                     }
                     ac += scale * wt[j];
                 }
-                out_layer_updater->ac[b] += ac / input->n_ctx;
+                out_ac[b] += ac / input->n_ctx;
             }
             break;
         case IC_CONCAT:
@@ -109,7 +108,7 @@ int emb_glue_updater_forward(glue_updater_t *glue_updater,
                     j = input_sent->words[i] * col;
                 }
                 for (b = a * col; b < (a + 1) * col; b++, j++) {
-                    out_layer_updater->ac[b] += scale * wt[j];
+                    out_ac[b] += scale * wt[j];
                 }
             }
             break;
