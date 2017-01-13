@@ -371,6 +371,12 @@ int emb_glue_load_header(void **extra, int version,
             ST_WARNING("Failed to parse index method.");
             goto ERR;
         }
+        sym[MAX_LINE_LEN - 1] = '\0';
+        i = (int)str2index(sym);
+        if (i == (int)EI_UNKNOWN) {
+            ST_WARNING("Unknown index method[%s]", sym);
+            goto ERR;
+        }
         if (st_readline(fp, "Num vectors: %d", &num_vecs) != 1) {
             ST_WARNING("Failed to parse num_vecs.");
             goto ERR;
