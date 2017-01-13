@@ -517,6 +517,14 @@ int emb_glue_generate_wildcard_repr(glue_t *glue)
 
     data = (emb_glue_data_t *)glue->extra;
     if (data->index_method == EI_POS) {
+        // we do not need wildcard_repr, just create a empty array to pass
+        // the check done by component.
+        glue->wildcard_repr = (real_t *)malloc(sizeof(real_t));
+        if (glue->wildcard_repr == NULL) {
+            ST_WARNING("Failed to mallco wildcard_repr.");
+            return -1;
+        }
+
         return 0;
     }
 
