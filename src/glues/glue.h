@@ -112,7 +112,11 @@ typedef struct _glue_t_ {
     char name[MAX_NAME_LEN]; /**< glue name. */
     char type[MAX_NAME_LEN]; /**< glue type. */
     int in_layer; /**< input layer id. */
+    int in_offset; /**< offset of input layer. */
+    int in_length; /**< lenght of input layer. */
     int out_layer; /**< output layer id. */
+    int out_offset; /**< offset of output layer. */
+    int out_length; /**< lenght of output layer. */
     glue_recur_type_t recur_type; /**< recur_type of this glue. */
     bptt_opt_t bptt_opt; /**< options for BPTT, only relevant with recur glue. */
 
@@ -167,10 +171,15 @@ glue_t* glue_parse_topo(const char *line, layer_t **layers,
 /**
  * Check a glue after loading from topo line.
  * @ingroup g_glue
- * @param[in] glue the loaded glue.
+ * @param[in] glue the glue.
+ * @param[in] layers named layers.
+ * @param[in] n_layer number of named layers.
+ * @param[in] input input layer.
+ * @param[in] output output layer.
  * @return true if OK, else false
  */
-bool glue_check(glue_t *glue);
+bool glue_check(glue_t *glue, layer_t **layers,
+        int n_layer, input_t *input, output_t *output);
 
 /**
  * Load glue header and initialise a new glue.

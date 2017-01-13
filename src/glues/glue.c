@@ -103,13 +103,18 @@ void glue_destroy(glue_t *glue)
     glue->extra = NULL;
 
     glue->in_layer = -1;
+    glue->in_offset = -1;
+    glue->in_length = -1;
     glue->out_layer = -1;
+    glue->out_offset = -1;
+    glue->out_length = -1;
     safe_wt_destroy(glue->wt);
 
     safe_free(glue->wildcard_repr);
 }
 
-bool glue_check(glue_t *glue)
+bool glue_check(glue_t *glue, layer_t **layers,
+        int n_layer, input_t *input, output_t *output)
 {
     ST_CHECK_PARAM(glue == NULL, false);
 
@@ -119,6 +124,29 @@ bool glue_check(glue_t *glue)
     }
     if (glue->out_layer < 0) {
         ST_WARNING("No out layer found.");
+        return false;
+    }
+
+    if (glue->in_offset < 0) {
+        glue->in_offset = 0;
+    }
+    if (glue->in_length < 0) {
+        glue->in_length = layers[glue->in_layer]->size - glue->in_offset;
+    }
+
+    if (glue->in_offset + glue->in_length > layers[glue->in_layer]->size) {
+        ST_WARNING("in_length must less than in layer size.");
+        return false;
+    }
+
+    if (glue->out_offset < 0) {
+        glue->out_offset = 0;
+    }
+    if (glue->out_length < 0) {
+        glue->out_length = layers[glue->out_layer]->size - glue->out_offset;
+    }
+    if (glue->out_offset + glue->out_length > layers[glue->out_layer]->size) {
+        ST_WARNING("out_length must less than out layer size.");
         return false;
     }
 
@@ -152,7 +180,11 @@ glue_t* glue_parse_topo(const char *line, layer_t **layers,
     }
 
     glue->in_layer = -1;
+    glue->in_offset = -1;
+    glue->in_length = -1;
     glue->out_layer = -1;
+    glue->out_offset = -1;
+    glue->out_length = -1;
     untouch_topo[0] = '\0';
     while (p != NULL) {
         p = get_next_token(p, token);
@@ -193,6 +225,28 @@ glue_t* glue_parse_topo(const char *line, layer_t **layers,
                         keyvalue + MAX_LINE_LEN);
                 goto ERR;
             }
+        } else if (strcasecmp("in_offset", keyvalue) == 0) {
+            if (glue->in_offset >= 0) {
+                ST_WARNING("Duplicated in-offset.");
+                goto ERR;
+            }
+            glue->in_offset = atoi(keyvalue + MAX_LINE_LEN);
+            if (glue->in_offset < 0) {
+                ST_WARNING("Illegal in-offset value[%s].",
+                        keyvalue + MAX_LINE_LEN);
+                goto ERR;
+            }
+        } else if (strcasecmp("in_length", keyvalue) == 0) {
+            if (glue->in_length >= 0) {
+                ST_WARNING("Duplicated in-length.");
+                goto ERR;
+            }
+            glue->in_length = atoi(keyvalue + MAX_LINE_LEN);
+            if (glue->in_length <= 0) {
+                ST_WARNING("Illegal in-length value[%s].",
+                        keyvalue + MAX_LINE_LEN);
+                goto ERR;
+            }
         } else if (strcasecmp("out", keyvalue) == 0) {
             if (glue->out_layer >= 0) {
                 ST_WARNING("Duplicated out-layer.");
@@ -202,6 +256,28 @@ glue_t* glue_parse_topo(const char *line, layer_t **layers,
                     keyvalue + MAX_LINE_LEN);
             if (glue->out_layer < 0) {
                 ST_WARNING("No layer named [%s] is found.",
+                        keyvalue + MAX_LINE_LEN);
+                goto ERR;
+            }
+        } else if (strcasecmp("out_offset", keyvalue) == 0) {
+            if (glue->out_offset >= 0) {
+                ST_WARNING("Duplicated out-offset.");
+                goto ERR;
+            }
+            glue->out_offset = atoi(keyvalue + MAX_LINE_LEN);
+            if (glue->out_offset < 0) {
+                ST_WARNING("Illegal out-offset value[%s].",
+                        keyvalue + MAX_LINE_LEN);
+                goto ERR;
+            }
+        } else if (strcasecmp("out_length", keyvalue) == 0) {
+            if (glue->out_length >= 0) {
+                ST_WARNING("Duplicated out-length.");
+                goto ERR;
+            }
+            glue->out_length = atoi(keyvalue + MAX_LINE_LEN);
+            if (glue->out_length <= 0) {
+                ST_WARNING("Illegal out-length value[%s].",
                         keyvalue + MAX_LINE_LEN);
                 goto ERR;
             }
@@ -232,7 +308,7 @@ glue_t* glue_parse_topo(const char *line, layer_t **layers,
         goto ERR;
     }
 
-    if (!glue_check(glue)) {
+    if (!glue_check(glue, layers, n_layer, input, output)) {
         ST_WARNING("Failed to glue_check.");
         return false;
     }
@@ -321,7 +397,11 @@ int glue_load_header(glue_t **glue, int version,
     char name[MAX_NAME_LEN];
     char type[MAX_NAME_LEN];
     int in_layer;
+    int in_offset;
+    int in_length;
     int out_layer;
+    int out_offset;
+    int out_length;
 
     glue_impl_t *impl;
     bool b;
@@ -329,7 +409,7 @@ int glue_load_header(glue_t **glue, int version,
     ST_CHECK_PARAM((glue == NULL && fo_info == NULL) || fp == NULL
             || binary == NULL, -1);
 
-    if (version < 3) {
+    if (version < 6) {
         ST_WARNING("Too old version of connlm file");
         return -1;
     }
@@ -367,8 +447,24 @@ int glue_load_header(glue_t **glue, int version,
             ST_WARNING("Failed to read in_layer.");
             return -1;
         }
+        if (fread(&in_offset, sizeof(int), 1, fp) != 1) {
+            ST_WARNING("Failed to read in_offset.");
+            return -1;
+        }
+        if (fread(&in_length, sizeof(int), 1, fp) != 1) {
+            ST_WARNING("Failed to read in_length.");
+            return -1;
+        }
         if (fread(&out_layer, sizeof(int), 1, fp) != 1) {
             ST_WARNING("Failed to read out_layer.");
+            return -1;
+        }
+        if (fread(&out_offset, sizeof(int), 1, fp) != 1) {
+            ST_WARNING("Failed to read out_offset.");
+            return -1;
+        }
+        if (fread(&out_length, sizeof(int), 1, fp) != 1) {
+            ST_WARNING("Failed to read out_length.");
             return -1;
         }
     } else {
@@ -396,8 +492,24 @@ int glue_load_header(glue_t **glue, int version,
             ST_WARNING("Failed to parse in_layer.");
             goto ERR;
         }
+        if (st_readline(fp, "In layer offset: %d", &in_offset) != 1) {
+            ST_WARNING("Failed to parse in_offset.");
+            goto ERR;
+        }
+        if (st_readline(fp, "In layer length: %d", &in_length) != 1) {
+            ST_WARNING("Failed to parse in_length.");
+            goto ERR;
+        }
         if (st_readline(fp, "Out layer: %d", &out_layer) != 1) {
             ST_WARNING("Failed to parse out_layer.");
+            goto ERR;
+        }
+        if (st_readline(fp, "Out layer offset: %d", &out_offset) != 1) {
+            ST_WARNING("Failed to parse out_offset.");
+            goto ERR;
+        }
+        if (st_readline(fp, "Out layer length: %d", &out_length) != 1) {
+            ST_WARNING("Failed to parse out_length.");
             goto ERR;
         }
     }
@@ -419,7 +531,11 @@ int glue_load_header(glue_t **glue, int version,
         strcpy((*glue)->name, name);
         strcpy((*glue)->type, type);
         (*glue)->in_layer = in_layer;
+        (*glue)->in_offset = in_offset;
+        (*glue)->in_length = in_length;
         (*glue)->out_layer = out_layer;
+        (*glue)->out_offset = out_offset;
+        (*glue)->out_length = out_length;
         (*glue)->impl = impl;
     }
 
@@ -427,7 +543,11 @@ int glue_load_header(glue_t **glue, int version,
         fprintf(fo_info, "\n<GLUE>:%s\n", name);
         fprintf(fo_info, "Type: %s\n", type);
         fprintf(fo_info, "in layer: %d\n", in_layer);
+        fprintf(fo_info, "in offset: %d\n", in_offset);
+        fprintf(fo_info, "in length: %d\n", in_length);
         fprintf(fo_info, "out layer: %d\n", out_layer);
+        fprintf(fo_info, "out offset: %d\n", out_offset);
+        fprintf(fo_info, "out length: %d\n", out_length);
     }
 
     if (wt_load_header(glue != NULL ? &((*glue)->wt) : NULL,
@@ -543,8 +663,24 @@ int glue_save_header(glue_t *glue, FILE *fp, bool binary)
             ST_WARNING("Failed to write in_layer.");
             return -1;
         }
+        if (fwrite(&glue->in_offset, sizeof(int), 1, fp) != 1) {
+            ST_WARNING("Failed to write in_offset.");
+            return -1;
+        }
+        if (fwrite(&glue->in_length, sizeof(int), 1, fp) != 1) {
+            ST_WARNING("Failed to write in_length.");
+            return -1;
+        }
         if (fwrite(&glue->out_layer, sizeof(int), 1, fp) != 1) {
             ST_WARNING("Failed to write out_layer.");
+            return -1;
+        }
+        if (fwrite(&glue->out_offset, sizeof(int), 1, fp) != 1) {
+            ST_WARNING("Failed to write out_offset.");
+            return -1;
+        }
+        if (fwrite(&glue->out_length, sizeof(int), 1, fp) != 1) {
+            ST_WARNING("Failed to write out_length.");
             return -1;
         }
     } else {
@@ -565,8 +701,24 @@ int glue_save_header(glue_t *glue, FILE *fp, bool binary)
             ST_WARNING("Failed to fprintf in_layer.");
             return -1;
         }
+        if (fprintf(fp, "In layer offset: %d\n", glue->in_offset) < 0) {
+            ST_WARNING("Failed to fprintf in_offset.");
+            return -1;
+        }
+        if (fprintf(fp, "In layer length: %d\n", glue->in_length) < 0) {
+            ST_WARNING("Failed to fprintf in_length.");
+            return -1;
+        }
         if (fprintf(fp, "Out layer: %d\n", glue->out_layer) < 0) {
             ST_WARNING("Failed to fprintf out_layer.");
+            return -1;
+        }
+        if (fprintf(fp, "Out layer offset: %d\n", glue->out_offset) < 0) {
+            ST_WARNING("Failed to fprintf out_offset.");
+            return -1;
+        }
+        if (fprintf(fp, "Out layer length: %d\n", glue->out_length) < 0) {
+            ST_WARNING("Failed to fprintf out_length.");
             return -1;
         }
     }
@@ -628,7 +780,9 @@ char* glue_draw_label(glue_t *glue, char *label, size_t label_len,
     ST_CHECK_PARAM(glue == NULL || label == NULL, NULL);
 
     if (verbose) {
-        snprintf(label, label_len, "%s/type=%s", glue->name, glue->type);
+        snprintf(label, label_len, "%s/type=%s,in=(%d,%d),out=(%d,%d)",
+                glue->name, glue->type, glue->in_offset, glue->in_length,
+                glue->out_offset, glue->out_length);
         if (glue->impl != NULL && glue->impl->draw_label != NULL) {
             strncat(label, glue->impl->draw_label(glue, buf, MAX_LINE_LEN),
                     label_len - strlen(label) - 1);
