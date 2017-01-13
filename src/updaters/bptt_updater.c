@@ -83,7 +83,7 @@ bptt_updater_t* bptt_updater_create(component_t *comp, int cycle_id)
     bptt_delay = bptt_updater->bptt_opt.bptt_delay;
     param = comp->glues[g]->param;
 
-    bptt_updater->num_glue = comp->glue_cycles[cycle_id][1];
+    bptt_updater->num_glue = comp->glue_cycles[cycle_id][0];
 
     sz = sizeof(real_t *) * (bptt_updater->num_glue + 1);
     bptt_updater->ac_bptt = (real_t **)malloc(sz);

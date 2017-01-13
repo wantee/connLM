@@ -421,7 +421,8 @@ int input_save_header(input_t *input, FILE *fp, bool binary)
             ST_WARNING("Failed to write n_ctx.");
             return -1;
         }
-        if (fwrite(&input->combine, sizeof(int), 1, fp) != 1) {
+        n = (int)input->combine;
+        if (fwrite(&n, sizeof(int), 1, fp) != 1) {
             ST_WARNING("Failed to write combine.");
             return -1;
         }

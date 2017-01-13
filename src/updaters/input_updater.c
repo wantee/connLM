@@ -182,8 +182,10 @@ int input_updater_feed(input_updater_t *input_updater, int *words, int n_word,
 
     ST_CHECK_PARAM(input_updater == NULL || words == NULL, -1);
 
-    // drop words already done
-    drop = input_updater->cur_pos - input_updater->ctx_leftmost;
+    // drop words already done, but keep current sentence
+    // in order to calculate word position within the sentence.
+    drop = min(input_updater->cur_pos - input_updater->ctx_leftmost,
+            input_updater->sent_head);
     if (drop > 0) {
         memmove(input_updater->words, input_updater->words + drop,
                 sizeof(int) * (input_updater->n_word - drop));

@@ -2535,6 +2535,7 @@ layer_t* output_get_layer(output_t *output)
 
     strncat(layer->name, OUTPUT_LAYER_NAME, MAX_NAME_LEN - 1);
     strncat(layer->type, OUTPUT_LAYER_NAME, MAX_NAME_LEN - 1);
+    layer->size = output->tree->num_node;
 
     return layer;
 ERR:

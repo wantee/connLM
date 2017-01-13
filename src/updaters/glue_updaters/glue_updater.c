@@ -140,7 +140,7 @@ int glue_updater_setup(glue_updater_t *glue_updater,
     if (glue_updater->impl != NULL && glue_updater->impl->setup != NULL) {
         if (glue_updater->impl->setup(glue_updater,
                     comp_updater, backprop) < 0) {
-            ST_WARNING("Failed to glue_updater->impl->forward.[%s]",
+            ST_WARNING("Failed to glue_updater->impl->setup.[%s]",
                     glue_updater->glue->name);
             goto ERR;
         }
@@ -182,6 +182,7 @@ int glue_updater_forward(glue_updater_t *glue_updater,
     glue_t *glue;
     layer_updater_t **layer_updaters;
     real_t *in_ac;
+    real_t *out_ac;
     int lid;
 
     ST_CHECK_PARAM(glue_updater == NULL || comp_updater == NULL, -1);
@@ -198,20 +199,25 @@ int glue_updater_forward(glue_updater_t *glue_updater,
     lid = glue->in_layer;
     if (lid >= 2) { // Ignore input & output layer
         if (glue->recur_type == RECUR_HEAD) {
-            in_ac = layer_updaters[lid]->ac_state;
+            in_ac = layer_updaters[lid]->ac_state + glue->in_offset;
         } else {
             if (layer_updater_activate(layer_updaters[lid]) < 0) {
                 ST_WARNING("Failed to layer_activate.[%s]",
                         comp_updater->comp->layers[lid]->name);
                 return -1;
             }
-            in_ac = layer_updaters[lid]->ac;
+            in_ac = layer_updaters[lid]->ac + glue->in_offset;
         }
+    }
+    if (glue->out_layer == 0) { // output layer
+        out_ac = comp_updater->out_updater->ac + glue->out_offset;
+    } else {
+        out_ac = layer_updaters[glue->out_layer]->ac + glue->out_offset;
     }
 
     if (glue_updater->impl != NULL && glue_updater->impl->forward != NULL) {
         if (glue_updater->impl->forward(glue_updater, comp_updater,
-                    input_sent, in_ac) < 0) {
+                    input_sent, in_ac, out_ac) < 0) {
             ST_WARNING("Failed to glue_updater->impl->forward.[%s]",
                     glue->name);
             return -1;
@@ -253,14 +259,14 @@ int glue_updater_backprop(glue_updater_t *glue_updater,
     if (glue_updater->impl != NULL && glue_updater->impl->backprop != NULL) {
         if (glue->in_layer >= 2) { // Ignore input layer
             if (glue->recur_type != RECUR_HEAD) {
-                in_ac = layer_updaters[glue->in_layer]->ac;
-                in_er = layer_updaters[glue->in_layer]->er;
+                in_ac = layer_updaters[glue->in_layer]->ac + glue->in_offset;
+                in_er = layer_updaters[glue->in_layer]->er + glue->in_offset;
             }
         }
         if (out_lid == 0) { // output layer
-            out_er = comp_updater->out_updater->er;
+            out_er = comp_updater->out_updater->er + glue->out_offset;
         } else {
-            out_er = layer_updaters[out_lid]->er;
+            out_er = layer_updaters[out_lid]->er + glue->out_offset;
         }
         if (glue_updater->impl->backprop(glue_updater, comp_updater,
                     input_sent, in_ac, out_er, in_er) < 0) {
@@ -302,6 +308,7 @@ int glue_updater_forward_util_out(glue_updater_t *glue_updater,
     glue_t *glue;
     layer_updater_t **layer_updaters;
     real_t *in_ac;
+    real_t *out_ac;
     int lid;
 
     ST_CHECK_PARAM(glue_updater == NULL || comp_updater == NULL, -1);
@@ -318,21 +325,26 @@ int glue_updater_forward_util_out(glue_updater_t *glue_updater,
     in_ac = NULL;
     if (lid >= 2) { // Ignore input & output layer
         if (glue->recur_type == RECUR_HEAD) {
-            in_ac = layer_updaters[lid]->ac_state;
+            in_ac = layer_updaters[lid]->ac_state + glue->in_offset;
         } else {
             if (layer_updater_activate(layer_updaters[lid]) < 0) {
                 ST_WARNING("Failed to layer_activate.[%s]",
                         comp_updater->comp->layers[lid]->name);
                 return -1;
             }
-            in_ac = layer_updaters[lid]->ac;
+            in_ac = layer_updaters[lid]->ac + glue->in_offset;
         }
+    }
+    if (glue->out_layer == 0) { // output layer
+        out_ac = comp_updater->out_updater->ac + glue->out_offset;
+    } else {
+        out_ac = layer_updaters[glue->out_layer]->ac + glue->out_offset;
     }
 
     if (glue_updater->impl != NULL
             && glue_updater->impl->forward_util_out != NULL) {
         if (glue_updater->impl->forward_util_out(glue_updater, comp_updater,
-                    input_sent, in_ac) < 0) {
+                    input_sent, in_ac, out_ac) < 0) {
             ST_WARNING("Failed to glue_updater->impl->forward_util_out.[%s]",
                     glue->name);
             return -1;
@@ -346,12 +358,16 @@ int glue_updater_forward_out(glue_updater_t *glue_updater,
         comp_updater_t *comp_updater, output_node_id_t node)
 {
     glue_t *glue;
+    layer_updater_t **layer_updaters;
+
     real_t *in_ac;
+    real_t *out_ac;
     int lid;
 
     ST_CHECK_PARAM(glue_updater == NULL || comp_updater == NULL, -1);
 
     glue = glue_updater->glue;
+    layer_updaters = comp_updater->layer_updaters;
 
 #ifdef _CONNLM_TRACE_PROCEDURE_
     ST_TRACE("Forward-out: glue[%s]", glue->name);
@@ -362,13 +378,18 @@ int glue_updater_forward_out(glue_updater_t *glue_updater,
         lid = glue->in_layer;
         if (lid >= 2) { // Ignore input & output layer
             if (glue->recur_type == RECUR_HEAD) {
-                in_ac = comp_updater->layer_updaters[glue->in_layer]->ac_state;
+                in_ac = layer_updaters[lid]->ac_state + glue->in_offset;
             } else {
-                in_ac = comp_updater->layer_updaters[glue->in_layer]->ac;
+                in_ac = layer_updaters[lid]->ac + glue->in_offset;
             }
         }
+        if (glue->out_layer == 0) { // output layer
+            out_ac = comp_updater->out_updater->ac + glue->out_offset;
+        } else {
+            out_ac = layer_updaters[glue->out_layer]->ac + glue->out_offset;
+        }
         if (glue_updater->impl->forward_out(glue_updater, comp_updater,
-                    node, in_ac) < 0) {
+                    node, in_ac, out_ac) < 0) {
             ST_WARNING("Failed to glue_updater->impl->forward_out.[%s]",
                     glue->name);
             return -1;
