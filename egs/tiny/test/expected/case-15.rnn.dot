@@ -23,7 +23,7 @@ digraph network {
     layer_rnn_hidden4 [label="hidden4/type=sigmoid,size=16"];
 
     node[shape=circle];
-    glue_rnn_emb [label="emb/type=emb,in=(0,3722),out=(0,16)\n0"];
+    glue_rnn_emb [label="emb/type=emb,in=(0,3722),out=(0,16),index=Word,num_vecs=3722\n0"];
     input_rnn -> glue_rnn_emb [label=""];
     glue_rnn_emb -> layer_rnn_hidden1 [label=""];
 
