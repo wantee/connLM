@@ -67,6 +67,9 @@ typedef struct _fst_converter_opt_t_ {
     double boost; /**< initial boost for \</s\> during word selection. */
     double boost_power; /**< power to the num-gram for boost value.
                          e.g. cur_boost = boost * pow(num_grams, boost_power).*/
+    double wildcard_boost; /**< initial boost for wildcard subFST. */
+    double wildcard_boost_power; /**< boost power for wildcard subFST. */
+
     unsigned int init_rand_seed; /**< initial random seed. */
 } fst_conv_opt_t;
 

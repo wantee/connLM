@@ -57,6 +57,8 @@ typedef struct _fst_converter_args_t_ {
     int *selected_words;
 
     bool store_children;
+    double boost;
+    double boost_power;
 
     int *word_hist;
     int cap_word_hist;
@@ -226,6 +228,20 @@ int fst_conv_load_opt(fst_conv_opt_t *conv_opt,
         ST_WARNING("boost_power normally should be larger than zero.");
     }
 
+    ST_OPT_SEC_GET_DOUBLE(opt, sec_name, "WILDCARD_BOOST",
+            conv_opt->wildcard_boost, 0.0,
+            "Boost probability for wildcard subFST.");
+    if (conv_opt->wildcard_boost < 0.0 || conv_opt->wildcard_boost > 1.0) {
+        ST_WARNING("boost must be in [0, 1].");
+        goto ST_OPT_ERR;
+    }
+
+    ST_OPT_SEC_GET_DOUBLE(opt, sec_name, "WILDCARD_BOOST_POWER",
+            conv_opt->wildcard_boost_power, 0.0,
+            "boost power for the wildcard subFST.");
+    if (conv_opt->wildcard_boost <= 0.0) {
+        ST_WARNING("boost_power normally should be larger than zero.");
+    }
     return 0;
 
 ST_OPT_ERR:
@@ -893,8 +909,7 @@ static int fst_conv_expand(fst_conv_t *conv, fst_conv_args_t *args)
     if (args->num_word_hist + 1 > conv->max_gram) {
         conv->max_gram = args->num_word_hist + 1;
     }
-    boost = conv->conv_opt.boost * pow(args->num_word_hist,
-            conv->conv_opt.boost_power);
+    boost = args->boost * pow(args->num_word_hist, args->boost_power);
 
     if (updater_step_with_state(updater, state, args->word_hist,
                 args->num_word_hist, output_probs) < 0) {
@@ -1127,6 +1142,8 @@ static int fst_conv_build_wildcard(fst_conv_t *conv, fst_conv_args_t *args)
 
     for (i = 0; i < conv->n_thr; i++) {
         args[i].store_children = true;
+        args[i].boost = conv->conv_opt.wildcard_boost;
+        args[i].boost_power = conv->conv_opt.wildcard_boost_power;
     }
 
     conv->fst_children = malloc(sizeof(fst_state_children_t)
@@ -1202,6 +1219,8 @@ static int fst_conv_build_normal(fst_conv_t *conv, fst_conv_args_t *args)
 
     for (i = 0; i < conv->n_thr; i++) {
         args[i].store_children = false;
+        args[i].boost = conv->conv_opt.boost;
+        args[i].boost_power = conv->conv_opt.boost_power;
     }
 
     args[0].sid = FST_SENT_START_STATE;
