@@ -478,9 +478,10 @@ static int fst_conv_add_states(fst_conv_t *conv, int n,
     }
 
     if (sid / FST_CONV_LOG_STEP != (sid + n) / FST_CONV_LOG_STEP) {
-        ST_TRACE("Building states: %d, max gram: %d",
+        ST_TRACE("Building states: %d, max gram: %d, "
+                "states to be expaned: %d",
                 sid / FST_CONV_LOG_STEP * FST_CONV_LOG_STEP,
-                conv->max_gram);
+                conv->max_gram, sid + n - parent);
     }
 
     return sid;
