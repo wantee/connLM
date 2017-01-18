@@ -224,7 +224,7 @@ int fst_conv_load_opt(fst_conv_opt_t *conv_opt,
             conv_opt->boost_power, 0.0,
             "power to the num-gram for boost value. "
             "e.g. cur_boost = boost * pow(num_grams, boost_power).");
-    if (conv_opt->boost <= 0.0) {
+    if (conv_opt->boost_power <= 0.0) {
         ST_WARNING("boost_power normally should be larger than zero.");
     }
 
@@ -239,7 +239,7 @@ int fst_conv_load_opt(fst_conv_opt_t *conv_opt,
     ST_OPT_SEC_GET_DOUBLE(opt, sec_name, "WILDCARD_BOOST_POWER",
             conv_opt->wildcard_boost_power, 0.0,
             "boost power for the wildcard subFST.");
-    if (conv_opt->wildcard_boost <= 0.0) {
+    if (conv_opt->wildcard_boost_power <= 0.0) {
         ST_WARNING("boost_power normally should be larger than zero.");
     }
     return 0;
