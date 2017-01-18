@@ -633,6 +633,16 @@ static int updater_cleanup(updater_t *updater)
 
     ST_CHECK_PARAM(updater == NULL, -1);
 
+    if (input_updater_clear(updater->input_updater) < 0) {
+        ST_WARNING("Failed to input_updater_clear.");
+        return -1;
+    }
+
+    if (updater_reset(updater) < 0) {
+        ST_WARNING("Failed to updater_reset.");
+        return -1;
+    }
+
     for (c = 0; c < updater->connlm->num_comp; c++) {
         if (comp_updater_clear(updater->comp_updaters[c]) < 0) {
             ST_WARNING("Failed to comp_updater_clear[%s].",
@@ -652,11 +662,6 @@ static int updater_cleanup(updater_t *updater)
 static int updater_set_hist(updater_t *updater, int *hist, int num_hist)
 {
     ST_CHECK_PARAM(updater == NULL || hist == NULL, -1);
-
-    if (input_updater_clear(updater->input_updater) < 0) {
-        ST_WARNING("Failed to input_updater_clear.");
-        return -1;
-    }
 
     if (updater_feed(updater, hist, num_hist) < 0) {
         ST_WARNING("Failed to updater_feed.");
