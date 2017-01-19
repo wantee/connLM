@@ -579,7 +579,7 @@ static int driver_gen(driver_t *driver)
 
         word = -1;
         while (word != SENT_END_ID) {
-            word = updater_sampling(updater, first);
+            word = updater_sampling(updater);
             if (word < 0) {
                 ST_WARNING("Failed to updater_sampling.");
                 goto ERR;

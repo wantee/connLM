@@ -44,6 +44,8 @@
 #define FST_SENT_START_STATE 2
 #define FST_BACKOFF_STATE 3
 
+#define SENT_START_ID -99
+
 #define get_vocab_size(conv) (conv)->connlm->vocab->vocab_size
 #define phi_id(conv) get_vocab_size(conv)
 
@@ -515,6 +517,8 @@ static char* fst_conv_get_word(fst_conv_t *conv, int wid)
 {
     if (wid == ANY_ID) {
         return ANY;
+    } else if (wid == SENT_START_ID) {
+        return SENT_START;
     } else if (wid >= 0) {
         return vocab_get_word(conv->connlm->vocab, wid);
     } else {
@@ -600,10 +604,10 @@ static int fst_conv_print_arc(fst_conv_t *conv,
         }
     } else {
         if (phi_id(conv) == wid) {
-            ilab = wid + 1; // reserve 0 for <eps>
+            ilab = wid + 2; // reserve <eps> and <s>
             olab = 0;
         } else {
-            ilab = wid + 1; // reserve 0 for <eps>
+            ilab = wid + 2; // reserve <eps> and <s>
             olab = ilab;
         }
         if (fprintf(conv->fst_fp, "%d\t%d\t%d\t%d\t%f\n", from, to,
@@ -945,9 +949,6 @@ static int fst_conv_expand(fst_conv_t *conv, fst_conv_args_t *args)
     for (i = 0; i < output_size; i++) {
         output_probs[i] = exp(output_probs[i]);
     }
-
-    // clear <s>
-    output_probs[SENT_START_ID] = -output_probs[SENT_START_ID];
 
     if (! conv->conv_opt.output_unk) {
         output_probs[UNK_ID] = -output_probs[UNK_ID];
