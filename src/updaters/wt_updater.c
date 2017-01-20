@@ -454,8 +454,8 @@ static int wt_updater_flush(wt_updater_t *wt_updater, real_t* dst_wt,
                         dst_wt[i] += src_wt[i] - ori_wt[i];
                     }
                     i = dirty->ids[a] * col;
-                    memcpy(src_wt + i, dst_wt + i, sizeof(int) * col);
-                    memcpy(ori_wt + i, src_wt + i, sizeof(int) * col);
+                    memcpy(src_wt + i, dst_wt + i, sizeof(real_t) * col);
+                    memcpy(ori_wt + i, src_wt + i, sizeof(real_t) * col);
                 }
             }
             break;
