@@ -243,23 +243,30 @@ static int direct_get_hash_neg(hash_t *hash, hash_t init_val,
 {
     int a;
     int b;
+    int word;
 
     // assert all context[i].i < 0
     for (a = n_ctx - 1; a >= 0; a--) {
-        if (tgt_pos + context[a].i < 0) {
+        if (tgt_pos + context[a].i < -1) {
             return n_ctx - a - 1;
         }
-        if (words[tgt_pos + context[a].i] < 0
-                || words[tgt_pos + context[a].i] == UNK_ID) {
-            // if OOV was in history, do not use
-            // this N-gram feature and higher orders
-            return n_ctx - a - 1;
+        if (tgt_pos + context[a].i >= 0) {
+            if (words[tgt_pos + context[a].i] < 0
+                    || words[tgt_pos + context[a].i] == UNK_ID) {
+                // if OOV was in history, do not use
+                // this N-gram feature and higher orders
+                return n_ctx - a - 1;
+            }
         }
 
         hash[n_ctx - a - 1] = init_val;
         for (b = n_ctx - 1; b >= a; b--) {
-            hash[n_ctx - a - 1] += P[n_ctx - a - 1][b - a]
-                * (hash_t)(words[tgt_pos + context[b].i] + 1);
+            if (tgt_pos + context[b].i >= 0) {
+                word = words[tgt_pos + context[b].i];
+            } else {
+                word = 0; // <s>
+            }
+            hash[n_ctx - a - 1] += P[n_ctx - a - 1][b - a]*(hash_t)(word + 1);
         }
     }
 
