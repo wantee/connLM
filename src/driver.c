@@ -619,10 +619,12 @@ static int driver_gen(driver_t *driver)
             ", words/sec: %.1f", n_word, n_sent,
             n_word / ((double) ms / 1000));
 
+    connlm_egs_destroy(&egs);
     safe_fclose(text_fp);
     return 0;
 
 ERR:
+    connlm_egs_destroy(&egs);
     safe_fclose(text_fp);
     return -1;
 }
