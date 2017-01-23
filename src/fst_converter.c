@@ -965,7 +965,8 @@ static int fst_conv_expand(fst_conv_t *conv, fst_conv_args_t *args)
     }
 
     no_backoff = false;
-    if (conv->fst_states[sid].word_id == ANY_ID) {
+    if (conv->fst_states[sid].word_id == SENT_START_ID
+            || conv->fst_states[sid].word_id == ANY_ID) {
         no_backoff = true;
     }
 
