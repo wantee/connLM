@@ -625,6 +625,10 @@ static int updater_cleanup(updater_t *updater)
         return -1;
     }
 
+    updater->sent.tgt_pos = 0;
+    updater->sent.words = 0;
+    updater->sent.n_word = 0;
+
     for (c = 0; c < updater->connlm->num_comp; c++) {
         if (comp_updater_clear(updater->comp_updaters[c]) < 0) {
             ST_WARNING("Failed to comp_updater_clear[%s].",
