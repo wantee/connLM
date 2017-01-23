@@ -1033,3 +1033,14 @@ int comp_generate_wildcard_repr(component_t *comp)
 
     return 0;
 }
+
+void comp_sanity_check(component_t *comp)
+{
+    int g;
+
+    ST_CHECK_PARAM_VOID(comp == NULL);
+
+    for (g = 0; g < comp->num_glue; g++) {
+        glue_sanity_check(comp->glues[g]);
+    }
+}

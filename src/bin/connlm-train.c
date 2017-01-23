@@ -203,6 +203,8 @@ int main(int argc, const char *argv[])
     safe_driver_destroy(driver);
     safe_reader_destroy(reader);
 
+    connlm_sanity_check(connlm);
+
     fp = st_fopen(argv[3], "wb");
     if (fp == NULL) {
         ST_WARNING("Failed to st_fopen. [%s]", argv[3]);

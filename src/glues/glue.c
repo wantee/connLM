@@ -885,3 +885,12 @@ int glue_generate_wildcard_repr(glue_t *glue)
 
     return 0;
 }
+
+void glue_sanity_check(glue_t *glue)
+{
+    ST_CHECK_PARAM_VOID(glue == NULL);
+
+    if (glue->wt != NULL) {
+        wt_sanity_check(glue->wt, glue->name);
+    }
+}

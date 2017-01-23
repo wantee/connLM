@@ -192,6 +192,13 @@ int connlm_add_comp(connlm_t *connlm, component_t *comp);
  */
 int connlm_generate_wildcard_repr(connlm_t *connlm);
 
+/**
+ * Do sanity check on a component and print warnings.
+ * @ingroup g_connlm
+ * @param[in] connlm connlm model.
+ */
+void connlm_sanity_check(connlm_t *connlm);
+
 #ifdef __cplusplus
 }
 #endif

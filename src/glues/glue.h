@@ -322,6 +322,13 @@ int glue_backprop(glue_t *glue, comp_updater_t *comp_updater,
  */
 int glue_generate_wildcard_repr(glue_t *glue);
 
+/**
+ * Do sanity check on a glue and print warnings.
+ * @ingroup g_glue
+ * @param[in] glue glue
+ */
+void glue_sanity_check(glue_t *glue);
+
 #ifdef __cplusplus
 }
 #endif
