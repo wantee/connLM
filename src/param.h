@@ -71,6 +71,15 @@ int param_load(param_t *param, st_opt_t *opt, const char *sec_name,
 void param_show_usage();
 
 /**
+ * Check param equality.
+ * @ingroup g_param
+ * @param[in] param1 the first param.
+ * @param[in] param2 the second param.
+ * @return true if they are equal, otherwise false
+ */
+bool param_equal(param_t *param1, param_t *param2);
+
+/**
  * BPTT options.
  * @ingroup g_param
  */
@@ -96,6 +105,15 @@ int bptt_opt_load(bptt_opt_t *bptt_opt, st_opt_t *opt, const char *sec_name,
  * @ingroup g_param
  */
 void bptt_opt_show_usage();
+
+/**
+ * Check bptt_opt equality.
+ * @ingroup g_param
+ * @param[in] bptt_opt1 the first bptt_opt.
+ * @param[in] bptt_opt2 the second bptt_opt.
+ * @return true if they are equal, otherwise false
+ */
+bool bptt_opt_equal(bptt_opt_t *bptt_opt1, bptt_opt_t *bptt_opt2);
 
 #ifdef __cplusplus
 }

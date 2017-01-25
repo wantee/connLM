@@ -168,7 +168,8 @@ int comp_updater_setup(comp_updater_t *comp_updater, bool backprop)
                 goto ERR;
             }
             for (i = 0; i < comp->num_glue_cycle; i++) {
-                comp_updater->bptt_updaters[i] = bptt_updater_create(comp, i);
+                comp_updater->bptt_updaters[i] = bptt_updater_create(comp, i,
+                        comp_updater->glue_updaters);
                 if (comp_updater->bptt_updaters[i] == NULL) {
                     ST_WARNING("Failed to bptt_updater_create.[%d][%s]", i,
                             comp->glues[comp->glue_cycles[i][1]]->name);
@@ -391,6 +392,12 @@ static int comp_updater_bptt(comp_updater_t *comp_updater, bool clear)
                 }
             }
 
+            bptt_updater->num_er_bptt = 0;
+        }
+    }
+
+    if (comp_updater->bptt_step % bptt_delay == 0 || clear) {
+        for (i = 0; i < comp->num_glue_cycle; i++) {
             for (j = 1; j <= comp->glue_cycles[i][0]; j++) {
                 wt_updater = bptt_updater->wt_updaters[j];
                 if (wt_flush(wt_updater, false) < 0) {
@@ -398,8 +405,6 @@ static int comp_updater_bptt(comp_updater_t *comp_updater, bool clear)
                     return -1;
                 }
             }
-
-            bptt_updater->num_er_bptt = 0;
         }
     }
 

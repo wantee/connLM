@@ -259,8 +259,11 @@ int glue_updater_backprop(glue_updater_t *glue_updater,
     if (glue_updater->impl != NULL && glue_updater->impl->backprop != NULL) {
         if (glue->in_layer >= 2) { // Ignore input layer
             if (glue->recur_type != RECUR_HEAD) {
-                in_ac = layer_updaters[glue->in_layer]->ac + glue->in_offset;
                 in_er = layer_updaters[glue->in_layer]->er + glue->in_offset;
+            }
+            if (glue->recur_type == RECUR_NON) {
+                // recur glues will be updated in bptt_updater
+                in_ac = layer_updaters[glue->in_layer]->ac + glue->in_offset;
             }
         }
         if (out_lid == 0) { // output layer
@@ -275,7 +278,7 @@ int glue_updater_backprop(glue_updater_t *glue_updater,
             return -1;
         }
 
-        if (glue->recur_type != RECUR_HEAD) {
+        if (glue->recur_type == RECUR_NON) {
             if (wt_flush(glue_updater->wt_updater, false) < 0) {
                 ST_WARNING("Failed to wt_flush.");
                 return -1;
