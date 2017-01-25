@@ -550,7 +550,7 @@ static int driver_gen(driver_t *driver)
 
             if (egs.size > 1) {
                 printf("[");
-                for (i = 1; i < egs.size - 1; i++) {
+                for (i = 0; i < egs.size - 1; i++) {
                     printf("%s", vocab_get_word(vocab, egs.words[i]));
                     if (i < egs.size - 2) {
                         printf(" ");
@@ -579,7 +579,7 @@ static int driver_gen(driver_t *driver)
 
         word = -1;
         while (word != SENT_END_ID) {
-            word = updater_sampling(updater, first);
+            word = updater_sampling(updater);
             if (word < 0) {
                 ST_WARNING("Failed to updater_sampling.");
                 goto ERR;
@@ -619,10 +619,12 @@ static int driver_gen(driver_t *driver)
             ", words/sec: %.1f", n_word, n_sent,
             n_word / ((double) ms / 1000));
 
+    connlm_egs_destroy(&egs);
     safe_fclose(text_fp);
     return 0;
 
 ERR:
+    connlm_egs_destroy(&egs);
     safe_fclose(text_fp);
     return -1;
 }

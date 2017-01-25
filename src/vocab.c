@@ -80,11 +80,6 @@ vocab_t *vocab_create(vocab_opt_t *vocab_opt)
         goto ERR;
     }
 
-    if (st_alphabet_add_label(vocab->alphabet, SENT_START) != SENT_START_ID) {
-        ST_WARNING("Failed to add sent_start[%s].", SENT_START);
-        goto ERR;
-    }
-
     // <unk> must be the last special word, since we will use 'UNK_ID + 1'
     // in sorting vocab
     if (st_alphabet_add_label(vocab->alphabet, UNK) != UNK_ID) {
@@ -608,8 +603,6 @@ int vocab_learn(vocab_t *vocab, FILE *fp, vocab_learn_opt_t *lr_opt)
     word_infos[SENT_END_ID].cnt = 0;
     word_infos[UNK_ID].id = UNK_ID;
     word_infos[UNK_ID].cnt = 0;
-    word_infos[SENT_START_ID].id = SENT_START_ID;
-    word_infos[SENT_START_ID].cnt = 0;
 
     words = 0;
     while (1) {
@@ -712,6 +705,8 @@ int vocab_save_syms(vocab_t *vocab, FILE *fp, bool add_eps)
         fprintf(fp, "%s\t%d\n", EPS, id);
         id++;
     }
+    fprintf(fp, "%s\t%d\n", SENT_START, id);
+    id++;
     for (i = 0; i < vocab->vocab_size; i++) {
         fprintf(fp, "%s\t%d\n", vocab_get_word(vocab, i), id);
         id++;

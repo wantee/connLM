@@ -268,7 +268,7 @@ output_node_id_t out_updater_sample(out_updater_t *out_updater,
                 break;
             }
             word = output_tree_leaf2word(output->tree, sampled);
-            if (word != UNK_ID && word != SENT_START_ID) {
+            if (word != UNK_ID) {
                 break;
             }
         }
@@ -300,7 +300,7 @@ output_node_id_t out_updater_sample(out_updater_t *out_updater,
 
         if (is_leaf(output->tree, sampled)) {
             word = output_tree_leaf2word(output->tree, sampled);
-            if (word == UNK_ID || word == SENT_START_ID) {
+            if (word == UNK_ID) {
                 continue;
             }
         }

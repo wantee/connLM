@@ -340,11 +340,6 @@ bool updater_steppable(updater_t *updater)
         return false;
     }
 
-    if (sent->words[sent->tgt_pos] == SENT_START_ID) {
-        // wait for more data fed in
-        return false;
-    }
-
     if (sent->tgt_pos + updater->input_updater->ctx_rightmost < sent->n_word) {
         return true;
     }
@@ -353,7 +348,7 @@ bool updater_steppable(updater_t *updater)
         return sent->tgt_pos < sent->n_word;
     }
 
-    // if the sentence if over, we step to the end
+    // if the sentence is over, we step to the end
     return (sent->words[sent->n_word - 1] == SENT_END_ID);
 }
 
@@ -482,7 +477,7 @@ static int updater_sample_out(updater_t *updater)
     return output_tree_leaf2word(output->tree, node);
 }
 
-int updater_sampling(updater_t *updater, bool startover)
+int updater_sampling(updater_t *updater)
 {
     int word;
 
@@ -491,19 +486,6 @@ int updater_sampling(updater_t *updater, bool startover)
 #ifdef _CONNLM_TRACE_PROCEDURE_
     ST_TRACE("Sampling");
 #endif
-
-    if (startover) { // feed with <s>
-        word = SENT_START_ID;
-        if (updater_feed(updater, &word, 1) < 0) {
-            ST_WARNING("Failed to updater_feed.");
-            return -1;
-        }
-
-        if (updater_move_input(updater) < 0) {
-            ST_WARNING("Failed to updater_move_input.");
-            return -1;
-        }
-    }
 
     if (updater_forward_util_out(updater) < 0) {
         ST_WARNING("Failed to updater_forward_util_out.");
@@ -642,6 +624,10 @@ static int updater_cleanup(updater_t *updater)
         ST_WARNING("Failed to updater_reset.");
         return -1;
     }
+
+    updater->sent.tgt_pos = 0;
+    updater->sent.words = 0;
+    updater->sent.n_word = 0;
 
     for (c = 0; c < updater->connlm->num_comp; c++) {
         if (comp_updater_clear(updater->comp_updaters[c]) < 0) {
