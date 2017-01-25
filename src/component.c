@@ -499,15 +499,25 @@ int comp_load_train_opt(component_t *comp, st_opt_t *opt, const char *sec_name,
     for (c = 0; c < comp->num_glue_cycle; c++) {
         g = comp->glue_cycles[c][1]; // RECUR_HEAD
         bptt_opt = comp->glues[g]->bptt_opt;
+        param = comp->glues[g]->param;
         for (i = 2; i <= comp->glue_cycles[c][0]; i++) {
             g = comp->glue_cycles[c][i];
-            // there may be some glue which is in multiple cycles,
-            // we set the maximum value for them
-            if (bptt_opt.bptt > comp->glues[g]->bptt_opt.bptt) {
-                comp->glues[g]->bptt_opt.bptt = bptt_opt.bptt;
-            }
-            if (bptt_opt.bptt_delay > comp->glues[g]->bptt_opt.bptt_delay) {
-                comp->glues[g]->bptt_opt.bptt_delay = bptt_opt.bptt_delay;
+            if (comp->glues[g]->bptt_opt.bptt > 0) {
+                // bptt already be set, which implies this glue lies on
+                // multiple cycles
+                if (!bptt_opt_equal(&comp->glues[g]->bptt_opt, &bptt_opt)) {
+                    ST_WARNING("recur glue[%s] in multiple cycles must have "
+                            "same bptt hyperparames.", comp->glues[g]);
+                    goto ST_OPT_ERR;
+                }
+                if (!param_equal(&comp->glues[g]->param, &param)) {
+                    ST_WARNING("recur glue[%s] in multiple cycles must have "
+                            "same hyperparames.", comp->glues[g]);
+                    goto ST_OPT_ERR;
+                }
+            } else {
+                comp->glues[g]->param = param;
+                comp->glues[g]->bptt_opt= bptt_opt;
             }
         }
     }
@@ -1032,4 +1042,15 @@ int comp_generate_wildcard_repr(component_t *comp)
     }
 
     return 0;
+}
+
+void comp_sanity_check(component_t *comp)
+{
+    int g;
+
+    ST_CHECK_PARAM_VOID(comp == NULL);
+
+    for (g = 0; g < comp->num_glue; g++) {
+        glue_sanity_check(comp->glues[g]);
+    }
 }

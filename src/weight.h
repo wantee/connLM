@@ -161,6 +161,14 @@ int wt_save_body(weight_t *wt, FILE *fp, bool binary, char *name);
  */
 int wt_init(weight_t *wt, int row, int col);
 
+/**
+ * Do sanity check on a weight and print warnings.
+ * @ingroup g_weight
+ * @param[in] wt the weight
+ * @param[in] name name of the weight
+ */
+void wt_sanity_check(weight_t *wt, const char *name);
+
 #ifdef __cplusplus
 }
 #endif

@@ -204,6 +204,13 @@ int comp_draw(component_t *comp, FILE *fp, bool verbose);
  */
 int comp_generate_wildcard_repr(component_t *comp);
 
+/**
+ * Do sanity check on a component and print warnings.
+ * @ingroup g_component
+ * @param[in] comp component
+ */
+void comp_sanity_check(component_t *comp);
+
 #ifdef __cplusplus
 }
 #endif

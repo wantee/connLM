@@ -597,3 +597,28 @@ ERR:
     safe_st_aligned_free(wt->mat);
     return -1;
 }
+
+void wt_sanity_check(weight_t *wt, const char *name)
+{
+    int n;
+    int i, sz;
+
+    ST_CHECK_PARAM_VOID(wt == NULL);
+
+    sz = wt->row;
+    if (wt->col > 0) {
+        sz *= wt->col;
+    }
+
+    n = 0;
+    for (i = 0; i < sz; i++) {
+        if (wt->mat[i] >= 100 || wt->mat[i] <= -100) {
+            n++;
+        }
+    }
+
+    if (n > 0) {
+        ST_WARNING("There are %d extraordinary values in weight of [%s]",
+                n, name);
+    }
+}

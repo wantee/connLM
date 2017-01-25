@@ -28,6 +28,7 @@
 #include <stutils/st_log.h>
 #include <stutils/st_mem.h>
 
+#include "param.h"
 #include "bptt_updater.h"
 
 void bptt_updater_destroy(bptt_updater_t *bptt_updater)
@@ -53,14 +54,12 @@ void bptt_updater_destroy(bptt_updater_t *bptt_updater)
     }
 
     if (bptt_updater->wt_updaters != NULL) {
-        for (i = 1; i <= bptt_updater->num_glue; i++) {
-            safe_wt_updater_destroy(bptt_updater->wt_updaters[i]);
-        }
         safe_free(bptt_updater->wt_updaters);
     }
 }
 
-bptt_updater_t* bptt_updater_create(component_t *comp, int cycle_id)
+bptt_updater_t* bptt_updater_create(component_t *comp, int cycle_id,
+        glue_updater_t **glue_updaters)
 {
     param_t param;
     bptt_updater_t *bptt_updater = NULL;
@@ -136,14 +135,7 @@ bptt_updater_t* bptt_updater_create(component_t *comp, int cycle_id)
         }
         memset(bptt_updater->er_bptt[i], 0, sz);
 
-        // FIXME: when sync_size > 0, the wt_updaters for the same glue
-        // in the cycle could be *Non-Synchronized*, which may lead to
-        // worse performance.
-        bptt_updater->wt_updaters[i] = glue_init_wt_updater(glue, &param);
-        if (bptt_updater->wt_updaters[i] == NULL) {
-            ST_WARNING("Failed to init_wt_updater[%s].", glue->name);
-            goto ERR;
-        }
+        bptt_updater->wt_updaters[i] = glue_updaters[g]->wt_updater;
     }
 
     return bptt_updater;

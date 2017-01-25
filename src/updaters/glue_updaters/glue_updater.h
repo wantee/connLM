@@ -32,6 +32,7 @@ extern "C" {
 #include <connlm/config.h>
 
 #include "glues/glue.h"
+#include "updaters/input_updater.h"
 #include "updaters/wt_updater.h"
 
 /** @defgroup g_updater_glue Updater for Glue

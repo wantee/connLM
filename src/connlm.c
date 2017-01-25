@@ -927,3 +927,14 @@ int connlm_generate_wildcard_repr(connlm_t *connlm)
 
     return 0;
 }
+
+void connlm_sanity_check(connlm_t *connlm)
+{
+    int c;
+
+    ST_CHECK_PARAM_VOID(connlm == NULL);
+
+    for (c = 0; c < connlm->num_comp; c++) {
+        comp_sanity_check(connlm->comps[c]);
+    }
+}
