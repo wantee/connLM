@@ -294,7 +294,7 @@ fst_conv_t* fst_conv_create(connlm_t *connlm, int n_thr,
 
     ST_CHECK_PARAM(connlm == NULL || n_thr <= 0 || conv_opt == NULL, NULL);
 
-    if (connlm_generate_wildcard_repr(connlm) < 0) {
+    if (connlm_generate_wildcard_repr(connlm, connlm->vocab->cnts) < 0) {
         ST_WARNING("Could NOT convert to FST: "
                 "failed to generate representation for wildcard.");
         return NULL;

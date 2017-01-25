@@ -188,9 +188,10 @@ int connlm_add_comp(connlm_t *connlm, component_t *comp);
  * Generate representation for wildcard symbol.
  * @ingroup g_connlm
  * @param[in] connlm connlm model.
+ * @param[in] word_cnts counts of all words.
  * @return non-zero value if any error.
  */
-int connlm_generate_wildcard_repr(connlm_t *connlm);
+int connlm_generate_wildcard_repr(connlm_t *connlm, count_t *word_cnts);
 
 /**
  * Do sanity check on a component and print warnings.

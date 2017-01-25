@@ -167,9 +167,10 @@ wt_updater_t* emb_glue_init_wt_updater(glue_t *glue, param_t *param);
  * Generate representation for wildcard symbol.
  * @ingroup g_glue_emb
  * @param[in] glue glue.
+ * @param[in] word_cnts counts of all words.
  * @return non-zero value if any error.
  */
-int emb_glue_generate_wildcard_repr(glue_t *glue);
+int emb_glue_generate_wildcard_repr(glue_t *glue, count_t *word_cnts);
 
 #ifdef __cplusplus
 }

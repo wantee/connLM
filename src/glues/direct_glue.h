@@ -151,7 +151,7 @@ int direct_glue_init_data(glue_t *glue, input_t *input,
  * @param[in] glue glue.
  * @return non-zero value if any error.
  */
-int direct_glue_generate_wildcard_repr(glue_t *glue);
+int direct_glue_generate_wildcard_repr(glue_t *glue, count_t *word_cnts);
 
 #ifdef __cplusplus
 }

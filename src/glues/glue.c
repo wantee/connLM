@@ -872,12 +872,12 @@ ST_OPT_ERR:
     return -1;
 }
 
-int glue_generate_wildcard_repr(glue_t *glue)
+int glue_generate_wildcard_repr(glue_t *glue, count_t *word_cnts)
 {
     ST_CHECK_PARAM(glue == NULL, -1);
 
     if (glue->impl != NULL && glue->impl->generate_wildcard_repr != NULL) {
-        if (glue->impl->generate_wildcard_repr(glue) < 0) {
+        if (glue->impl->generate_wildcard_repr(glue, word_cnts) < 0) {
             ST_WARNING("Failed to generate_wildcard_repr for glue impl.");
             return -1;
         }

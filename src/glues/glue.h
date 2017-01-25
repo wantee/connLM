@@ -90,7 +90,8 @@ typedef struct _glue_implementation_t_ {
     wt_updater_t* (*init_wt_updater)(glue_t *glue,
             param_t *param); /**< init wt_updater for glue.*/
 
-    int (*generate_wildcard_repr)(glue_t *glue); /**< generate repr for wildcard. */
+    int (*generate_wildcard_repr)(glue_t *glue,
+            count_t *word_cnts); /**< generate repr for wildcard. */
 
 } glue_impl_t;
 
@@ -318,9 +319,10 @@ int glue_backprop(glue_t *glue, comp_updater_t *comp_updater,
  * Generate representation for wildcard symbol.
  * @ingroup g_glue
  * @param[in] glue glue.
+ * @param[in] word_cnts counts of all words.
  * @return non-zero value if any error.
  */
-int glue_generate_wildcard_repr(glue_t *glue);
+int glue_generate_wildcard_repr(glue_t *glue, count_t *word_cnts);
 
 /**
  * Do sanity check on a glue and print warnings.

@@ -509,16 +509,21 @@ ERR:
     return NULL;
 }
 
-int emb_glue_generate_wildcard_repr(glue_t *glue)
+int emb_glue_generate_wildcard_repr(glue_t *glue, count_t *word_cnts)
 {
     emb_glue_data_t *data;
+    real_t *word_weights = NULL;
+    real_t sum;
+
+    int num_words;
+    int emb_size;
     int i, j;
 
-    ST_CHECK_PARAM(glue == NULL, -1);
+    ST_CHECK_PARAM(glue == NULL || word_cnts == NULL, -1);
 
     if (strcasecmp(glue->type, EMB_GLUE_NAME) != 0) {
         ST_WARNING("Not a emb glue. [%s]", glue->type);
-        return -1;
+        goto ERR;
     }
 
     data = (emb_glue_data_t *)glue->extra;
@@ -528,29 +533,52 @@ int emb_glue_generate_wildcard_repr(glue_t *glue)
         glue->wildcard_repr = (real_t *)malloc(sizeof(real_t));
         if (glue->wildcard_repr == NULL) {
             ST_WARNING("Failed to mallco wildcard_repr.");
-            return -1;
+            goto ERR;
         }
 
         return 0;
     }
 
-    glue->wildcard_repr = (real_t *)malloc(sizeof(real_t) * glue->wt->col);
+    num_words = glue->wt->row;
+    emb_size = glue->wt->col;
+
+    glue->wildcard_repr = (real_t *)malloc(sizeof(real_t) * emb_size);
     if (glue->wildcard_repr == NULL) {
         ST_WARNING("Failed to mallco wildcard_repr.");
-        return -1;
+        goto ERR;
     }
 
-    // use the mean of embedding of all words (except </s>) as the repr
-    for (j = 0; j < glue->wt->col; j++) {
-        glue->wildcard_repr[j] = 0;
-        for (i = 0; i < glue->wt->row; i++) {
-            if (i == SENT_END_ID) {
-                continue;
-            }
-            glue->wildcard_repr[j] += glue->wt->mat[i * glue->wt->col + j];
-        }
-        glue->wildcard_repr[j] /= (glue->wt->row - 1);
+    word_weights = (real_t *)malloc(sizeof(real_t) * num_words);
+    if (word_weights == NULL) {
+        ST_WARNING("Failed to mallco word_weights.");
+        goto ERR;
     }
+
+    // use the weighted mean of embedding of all words (except <s>) as the repr
+    sum = 0;
+    for (i = 1; i < num_words; i++) {
+        sum += word_cnts[i];
+    }
+
+    for (i = 1; i < num_words; i++) {
+        word_weights[i] = word_cnts[i] / sum;
+    }
+
+    for (j = 0; j < emb_size; j++) {
+        glue->wildcard_repr[j] = 0;
+        for (i = 1; i < num_words; i++) {
+            glue->wildcard_repr[j] += word_weights[i]
+                * glue->wt->mat[i * emb_size + j];
+        }
+    }
+
+    safe_free(word_weights);
 
     return 0;
+
+ERR:
+    safe_free(glue->wildcard_repr);
+    safe_free(word_weights);
+
+    return -1;
 }

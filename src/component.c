@@ -1015,14 +1015,14 @@ int comp_draw(component_t *comp, FILE *fp, bool verbose)
     return 0;
 }
 
-int comp_generate_wildcard_repr(component_t *comp)
+int comp_generate_wildcard_repr(component_t *comp, count_t *word_cnts)
 {
     int g;
 
     ST_CHECK_PARAM(comp == NULL, -1);
 
     for (g = 0; g < comp->num_glue; g++) {
-        if (glue_generate_wildcard_repr(comp->glues[g]) < 0) {
+        if (glue_generate_wildcard_repr(comp->glues[g], word_cnts) < 0) {
             ST_WARNING("Failed to glue_generate_wildcard_repr for glue[%s]",
                     comp->glues[g]->name);
             return -1;
