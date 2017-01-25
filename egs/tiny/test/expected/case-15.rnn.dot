@@ -8,7 +8,7 @@ digraph network {
     node [shape=plaintext, style=solid];
     edge [style=invis];
 
-    legend [label="# Compnoent: 1\lVocab size: 3722\lCycle #0: recur3 -> ff3 -> ff2\lCycle #1: recur4 -> ff3\lCycle #2: recur2 -> ff2 -> ff1\lCycle #3: recur5 -> ff2\lCycle #4: recur1\l"];
+    legend [label="# Compnoent: 1\lVocab size: 3721\lCycle #0: recur3 -> ff3 -> ff2\lCycle #1: recur4 -> ff3\lCycle #2: recur2 -> ff2 -> ff1\lCycle #3: recur5 -> ff2\lCycle #4: recur1\l"];
   }
 
   subgraph cluster_structure {
@@ -16,14 +16,14 @@ digraph network {
 
     output [shape=triangle, orientation=180];
     node[shape=box,fixedsize=false];
-    input_rnn [label="rnn/size=3722,ctx={-1:1},combine=Concat"];
+    input_rnn [label="rnn/size=3721,ctx={-1:1},combine=Concat"];
     layer_rnn_hidden1 [label="hidden1/type=sigmoid,size=16"];
     layer_rnn_hidden2 [label="hidden2/type=sigmoid,size=16"];
     layer_rnn_hidden3 [label="hidden3/type=sigmoid,size=16"];
     layer_rnn_hidden4 [label="hidden4/type=sigmoid,size=16"];
 
     node[shape=circle];
-    glue_rnn_emb [label="emb/type=emb,in=(0,3722),out=(0,16),index=Word,num_vecs=3722\n0"];
+    glue_rnn_emb [label="emb/type=emb,in=(0,3721),out=(0,16),index=Word,num_vecs=3721\n0"];
     input_rnn -> glue_rnn_emb [label=""];
     glue_rnn_emb -> layer_rnn_hidden1 [label=""];
 
@@ -91,7 +91,7 @@ digraph network {
     node[color=black,fontcolor=black];
     edge[color=black];
 
-    glue_rnn_out [label="out/type=out,in=(0,16),out=(0,3823)\n9"];
+    glue_rnn_out [label="out/type=out,in=(0,16),out=(0,3822)\n9"];
     layer_rnn_hidden4 -> glue_rnn_out [label=""];
     glue_rnn_out -> output [label=""];
 
