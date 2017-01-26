@@ -773,21 +773,8 @@ static int fst_conv_search_children(fst_conv_t *conv, int sid, int word_id)
         return -1;
     }
 
-    ch = conv->fst_children[sid].first_child;
-    if (word_id == ANY_ID) {
-        if (conv->fst_states[ch].word_id == word_id) {
-            return ch;
-        }
-        return -1;
-    }
-
-    if (conv->fst_states[ch].word_id == ANY_ID) {
-        l = ch + 1;
-        h = l + conv->fst_children[sid].num_children - 2;
-    } else {
-        l = ch;
-        h = l + conv->fst_children[sid].num_children - 1;
-    }
+    l = conv->fst_children[sid].first_child;
+    h = l + conv->fst_children[sid].num_children - 1;
 
     while (l <= h) {
         ch = (l + h) / 2;
