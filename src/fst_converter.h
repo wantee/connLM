@@ -122,6 +122,10 @@ typedef struct _fst_converter_t_ {
     int cap_fst_states; /**< capacity of fst_states. */
     int n_fst_state; /**< number of states of FST. */
     fst_state_children_t *fst_children; /**< children of fst states. */
+    real_t* in_probs; /**< probability on the arc pointed to a state. */
+    real_t* final_probs; /**< probability from a state to final state. */
+    int* backoff_states; /**< backoff state of a state. */
+    real_t * bows; /**< backoff weight of a state. */
     int n_fst_children; /**< numberof fst state children. */
     pthread_mutex_t fst_state_lock; /**< lock for fst_states. */
 

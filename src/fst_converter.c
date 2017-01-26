@@ -274,6 +274,10 @@ void fst_conv_destroy(fst_conv_t *conv)
     conv->n_fst_state = 0;
 
     safe_free(conv->fst_children);
+    safe_free(conv->in_probs);
+    safe_free(conv->final_probs);
+    safe_free(conv->backoff_states);
+    safe_free(conv->bows);
     conv->n_fst_children = 0;
 
     (void)pthread_mutex_destroy(&conv->fst_fp_lock);
@@ -443,6 +447,35 @@ static int fst_conv_realloc_states(fst_conv_t *conv, int num_extra,
             conv->fst_children[i].first_child = -1;
             conv->fst_children[i].num_children = -1;
         }
+        conv->in_probs = realloc(conv->in_probs,
+                sizeof(real_t) * num_new_states);
+        if (conv->in_probs == NULL) {
+            ST_WARNING("Failed to realloc in_probs.");
+            return -1;
+        }
+        conv->final_probs = realloc(conv->final_probs,
+                sizeof(real_t) * num_new_states);
+        if (conv->final_probs == NULL) {
+            ST_WARNING("Failed to realloc final_probs.");
+            return -1;
+        }
+        conv->backoff_states = realloc(conv->backoff_states,
+                sizeof(int) * num_new_states);
+        if (conv->backoff_states == NULL) {
+            ST_WARNING("Failed to realloc backoff_states.");
+            return -1;
+        }
+        conv->bows = realloc(conv->bows, sizeof(real_t) * num_new_states);
+        if (conv->bows == NULL) {
+            ST_WARNING("Failed to realloc bows.");
+            return -1;
+        }
+        for (i = conv->cap_fst_states; i < num_new_states; i++) {
+            conv->in_probs[i] = 0.0;
+            conv->final_probs[i] = 0.0;
+            conv->bows[i] = 0.0;
+            conv->backoff_states[i] = -1;
+        }
         conv->n_fst_children = num_new_states;
     }
 
@@ -584,6 +617,30 @@ static int fst_conv_print_arc(fst_conv_t *conv,
     int olab;
 
     ST_CHECK_PARAM(conv == NULL || from < 0 || to < 0, -1);
+
+    if (to == FST_FINAL_STATE) {
+        if (from < conv->n_fst_children) {
+            if (conv->final_probs[from] != 0.0) {
+                ST_WARNING("state[%d] has multiple final probs.", from);
+                return -1;
+            }
+            conv->final_probs[from] = (real_t)weight;
+        }
+    } else if (wid == phi_id(conv)) {
+        if (from < conv->n_fst_children) {
+            if (conv->bows[from] != 0.0) {
+                ST_WARNING("state[%d] has multiple bows.", from);
+                return -1;
+            }
+            conv->bows[from] = (real_t)weight;
+        }
+    } else if (to < conv->n_fst_children) {
+        if (conv->in_probs[to] != 0.0) {
+            ST_WARNING("state[%d] has multiple in_probs.", to);
+            return -1;
+        }
+        conv->in_probs[to] = (real_t)weight;
+    }
 
     if (pthread_mutex_lock(&conv->fst_fp_lock) != 0) {
         ST_WARNING("Failed to pthread_mutex_lock fst_fp_lock.");
@@ -826,27 +883,26 @@ static int fst_conv_find_word_hist(fst_conv_t *conv,
     return 0;
 }
 
-// the word_hist should be filled before this function
-static int fst_conv_find_backoff(fst_conv_t *conv, fst_conv_args_t *args,
-        int sid)
+static int fst_conv_find_backoff(fst_conv_t *conv, int *word_hist,
+        int num_word_hist, int sid)
 {
     int i, j;
     int backoff_sid;
 
-    ST_CHECK_PARAM(conv == NULL || args == NULL || sid < 0, -1);
+    ST_CHECK_PARAM(conv == NULL || word_hist == NULL || sid < 0, -1);
 
-    assert(args->word_hist[0] == SENT_START_ID);
+    assert(word_hist[0] == SENT_START_ID);
 
-    if (args->word_hist[1] == ANY_ID) {
+    if (word_hist[1] == ANY_ID) {
         i = 3; // <s><any>XYZ -> <s><any>YZ -> <s><any>Z
     } else {
         i = 2; // <s>ABCD -> <s><any>BCD -> <s><any>CD -> <s><any>D
     }
-    for (; i < args->num_word_hist; i++) {
+    for (; i < num_word_hist; i++) {
         backoff_sid = FST_BACKOFF_STATE;
-        for (j = i; j < args->num_word_hist; j++) {
+        for (j = i; j < num_word_hist; j++) {
             backoff_sid = fst_conv_search_children(conv,
-                    backoff_sid, args->word_hist[j]);
+                    backoff_sid, word_hist[j]);
             if (backoff_sid < -1) {
                 ST_WARNING("Failed to fst_conv_search_children.");
                 return -1;
@@ -864,6 +920,64 @@ static int fst_conv_find_backoff(fst_conv_t *conv, fst_conv_args_t *args,
     return FST_BACKOFF_STATE;
 }
 
+// This function finds the prob for <word> from <sid>,
+// backing-off if needed
+static int fst_conv_get_prob(fst_conv_t *conv, int sid, int word, double *prob)
+{
+    int ch;
+
+    ST_CHECK_PARAM(conv == NULL || sid < 0 || word < 0 || prob == NULL, -1);
+
+    *prob = 0.0;
+
+    if (sid >= conv->n_fst_children) {
+        ST_WARNING("Can not get prob for state[%d], "
+                "since its children are not stored.", sid);
+        return -1;
+    }
+
+    if (word == SENT_END_ID) {
+        if (conv->final_probs[sid] <= 0.0) {
+            ST_WARNING("state[%d]'s sent_end_prob is not valid[%f]",
+                    sid, conv->final_probs[sid]);
+        }
+        *prob += log(conv->final_probs[sid]);
+    } else {
+        while (true) {
+            ch = fst_conv_search_children(conv, sid, word);
+            if (ch < -1) {
+                ST_WARNING("Failed to fst_conv_search_children.");
+                return -1;
+            } else if (ch >= 0) { // found
+                if (conv->in_probs[ch] <= 0.0) {
+                    ST_WARNING("state[%d]'s in_prob is not valid[%f]",
+                            ch, conv->in_probs[ch]);
+                }
+                *prob += log(conv->in_probs[ch]);
+                break;
+            }
+
+            // backoff
+            if (conv->backoff_states[sid] < 0) {
+                ST_WARNING("state[%d] has no backoff arc", sid);
+                return -1;
+            }
+
+            if (conv->bows[sid] == 0.0) {
+                ST_WARNING("state[%d]'s backoff_prob is not valid[%f]",
+                        sid, conv->bows[sid]);
+            }
+            *prob += log(conv->bows[sid]);
+
+            sid = conv->backoff_states[sid];
+        }
+    }
+
+    *prob = exp(*prob);
+
+    return 0;
+}
+
 static int fst_conv_expand(fst_conv_t *conv, fst_conv_args_t *args)
 {
     updater_t *updater;
@@ -873,7 +987,10 @@ static int fst_conv_expand(fst_conv_t *conv, fst_conv_args_t *args)
     double boost;
     int output_size;
 
+    double nominator;
+    double denominator;
     double backoff_prob;
+    int backoff_sid;
     int sid;
     int new_sid, ret_sid;
     int to_sid;
@@ -1001,9 +1118,26 @@ static int fst_conv_expand(fst_conv_t *conv, fst_conv_args_t *args)
             ST_WARNING("Failed to sort_selected_words.");
             return -1;
         }
+
+        backoff_sid = fst_conv_find_backoff(conv, args->word_hist,
+                args->num_word_hist, sid);
+        if (backoff_sid < 0) {
+            ST_WARNING("Failed to fst_conv_find_backoff.");
+            return -1;
+        }
+
+        if (sid < conv->n_fst_children) {
+            if (conv->backoff_states[sid] >= 0) {
+                ST_WARNING("state[%d] has multiple backoff states.", sid);
+                return -1;
+            }
+            conv->backoff_states[sid] = backoff_sid;
+        }
+
+        nominator = 1.0;
+        denominator = 1.0;
     }
 
-    backoff_prob = 1.0;
 
     new_sid = fst_conv_add_states(conv, n - 1/* -1 for </s> */, sid,
             args->store_children);
@@ -1015,16 +1149,17 @@ static int fst_conv_expand(fst_conv_t *conv, fst_conv_args_t *args)
 
     for (i = 0; i < n; i++) {
         word = args->selected_words[i];
-        backoff_prob -= output_probs[word];
+
+        if (!no_backoff) {
+            nominator -= output_probs[word];
+            if (fst_conv_get_prob(conv, backoff_sid, word, &backoff_prob) < 0) {
+                ST_WARNING("Failed to fst_conv_get_prob.");
+                return -1;
+            }
+            denominator -= backoff_prob;
+        }
 
         if (word == SENT_END_ID) {
-            if (no_backoff) {
-                // do not need to expand </s> for the backoff state,
-                // since every state in FST must contain a arc with </s>,
-                // no one would backoff when encounter a </s>.
-                continue;
-            }
-
             to_sid = FST_FINAL_STATE;
         } else {
             to_sid = new_sid++;
@@ -1065,15 +1200,17 @@ static int fst_conv_expand(fst_conv_t *conv, fst_conv_args_t *args)
     }
 
     if (!no_backoff) {
-        //backoff
-        to_sid = fst_conv_find_backoff(conv, args, sid);
-        if (to_sid < 0) {
-            ST_WARNING("Failed to fst_conv_find_backoff.");
+        if (nominator < 0.0 || nominator > 1.0) {
+            ST_WARNING("nominator is invalid[%f]", nominator);
+            return -1;
+        }
+        if (denominator < 0.0 || denominator > 1.0) {
+            ST_WARNING("denominator is invalid[%f]", denominator);
             return -1;
         }
 
-        if (fst_conv_print_arc(conv, sid, to_sid,
-                    phi_id(conv), backoff_prob) < 0) {
+        if (fst_conv_print_arc(conv, sid, backoff_sid,
+                    phi_id(conv), nominator / denominator) < 0) {
             ST_WARNING("Failed to fst_conv_print_arc.");
             return -1;
         }
@@ -1181,6 +1318,32 @@ static int fst_conv_build_wildcard(fst_conv_t *conv, fst_conv_args_t *args)
     for (i = 0; i < conv->cap_fst_states; i++) {
         conv->fst_children[i].first_child = -1;
         conv->fst_children[i].num_children = -1;
+    }
+    conv->in_probs = malloc(sizeof(real_t) * conv->cap_fst_states);
+    if (conv->in_probs == NULL) {
+        ST_WARNING("Failed to realloc in_probs.");
+        return -1;
+    }
+    conv->final_probs = malloc(sizeof(real_t) * conv->cap_fst_states);
+    if (conv->final_probs == NULL) {
+        ST_WARNING("Failed to realloc final_probs.");
+        return -1;
+    }
+    conv->backoff_states = malloc(sizeof(int) * conv->cap_fst_states);
+    if (conv->backoff_states == NULL) {
+        ST_WARNING("Failed to realloc backoff_states.");
+        return -1;
+    }
+    conv->bows = malloc(sizeof(real_t) * conv->cap_fst_states);
+    if (conv->bows == NULL) {
+        ST_WARNING("Failed to realloc bows.");
+        return -1;
+    }
+    for (i = 0; i < conv->cap_fst_states; i++) {
+        conv->in_probs[i] = 0.0;
+        conv->final_probs[i] = 0.0;
+        conv->bows[i] = 0.0;
+        conv->backoff_states[i] = -1;
     }
     conv->n_fst_children = conv->cap_fst_states;
 
