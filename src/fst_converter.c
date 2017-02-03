@@ -533,7 +533,8 @@ static int fst_conv_add_states(fst_conv_t *conv, int n,
         ST_TRACE("Building states: %d, max gram: %d, "
                 "states to be expaned: %d",
                 sid / FST_CONV_LOG_STEP * FST_CONV_LOG_STEP,
-                conv->max_gram, sid + n - parent);
+                conv->max_gram,
+                (parent == FST_SENT_START_STATE) ? n : sid + n - parent);
     }
 
     return sid;
