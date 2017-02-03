@@ -996,7 +996,7 @@ static int fst_conv_expand(fst_conv_t *conv, fst_conv_args_t *args)
     int sid;
     int new_sid, ret_sid;
     int to_sid;
-    int model_state_id = -1;
+    bcache_id_t model_state_id = -1;
     int word;
 
     int i, n;
@@ -1258,7 +1258,7 @@ static int fst_conv_build_wildcard(fst_conv_t *conv, fst_conv_args_t *args)
 
     updater_t *updater;
     real_t *new_state;
-    int model_state_id;
+    bcache_id_t model_state_id;
 
     ST_CHECK_PARAM(conv == NULL || args == NULL, -1);
 

@@ -91,7 +91,7 @@ int fst_conv_load_opt(fst_conv_opt_t *conv_opt,
  */
 typedef struct _fst_state_t_ {
     int word_id; /**< word id. */
-    int model_state_id; /**< model state id. */
+    bcache_id_t model_state_id; /**< model state id. */
     int parent; /**< parent state id of fst state. */
 } fst_state_t;
 
