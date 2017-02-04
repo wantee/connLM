@@ -28,6 +28,13 @@ print(' '.join(sys.argv), file=sys.stderr)
 
 args = parser.parse_args()
 
+BOS = "<s>"
+EOS = "</s>"
+ANY = "<any>"
+PHI = "#phi"
+
+ANY_ID = -100
+
 # load word syms
 vocab = {}
 with open(args.word_syms, "r") as f:
@@ -37,9 +44,10 @@ with open(args.word_syms, "r") as f:
     fields = line.split()
     assert len(fields) == 2
     assert fields[0] != "<any>"
+    assert fields[0] not in vocab
     vocab[fields[0]] = int(fields[1])
 
-vocab["<any>"] = -100
+vocab[ANY] = ANY_ID
 
 # load state syms
 ssyms = []
@@ -55,27 +63,119 @@ with open(args.state_syms, "r") as f:
 
     if len(fields) == 1:
       sid += 1
+      ssyms.append([])
       continue
 
     ssyms.append(map(lambda x: int(vocab[x]), fields[1].split(":")))
     sid += 1
 
+class Arc:
+  def __init__(self, source, to, ilab, olab, weight):
+    self.source = source
+    self.to = to
+    self.ilab = ilab
+    self.olab = olab
+    self.weight = weight
+
+    assert (self.ilab == vocab[PHI] and self.olab == 0) \
+           or (self.ilab == self.olab)
+
+  def __str__(self):
+    return "%d -> %d (%d:%d/%f)" % (self.source, self.to, self.ilab,
+                                    self.olab, self.weight)
+
+class FST:
+  def __init__(self):
+    self.init_sid = -1
+    self.final_sid = -1
+    self.any_sid = -1
+    self.states = []
+
+  def load(self, fst_file):
+    with open(fst_file, "r") as f:
+      for line in f:
+        if line.strip() == '':
+          continue
+
+        fields = line.split()
+        assert len(fields) == 1 or len(fields) == 5
+
+        if len(fields) == 1:
+          assert self.final_sid == -1
+          self.final_sid = int(fields[0])
+          continue
+
+        arc = Arc(int(fields[0]), int(fields[1]), int(fields[2]),
+                  int(fields[3]), float(fields[4]))
+        if self.init_sid == -1:
+          self.init_sid = arc.source
+        elif self.any_sid == -1: # the second arc must be from <any> state
+          self.any_sid = arc.source
+
+        while len(self.states) <= arc.source:
+          self.states.append([])
+        self.states[arc.source].append(arc)
+
+  def __str__(self):
+    s = "Init: %d\n" % (self.init_sid)
+    s += "Final: %d\n" % (self.final_sid)
+    s += "Any: %d\n" % (self.any_sid)
+    s += "#state: %d\n" % (len(self.states))
+    s += "#arc: %d\n" % (reduce(lambda x, y: x + len(y), self.states, 0))
+
+    return s
+
+  def reverse(self, drop_backoff=True):
+    rfst = FST()
+
+    rfst.init_sid = self.final_sid
+    rfst.final_sid = self.init_sid
+    rfst.any_sid = self.any_sid
+
+    rfst.states = [[] for i in xrange(len(self.states))]
+    for state in self.states:
+      for arc in state:
+        if drop_backoff and arc.ilab == vocab[PHI]:
+          continue
+        rarc = Arc(arc.to, arc.source, arc.ilab, arc.olab, arc.weight)
+        rfst.states[rarc.source].append(rarc)
+
+    if drop_backoff:
+      for sid, state in enumerate(rfst.states):
+        if sid == rfst.final_sid or sid == rfst.any_sid:
+          assert len(state) == 0
+        elif sid != rfst.init_sid:
+          # all state except init and final should have only one child
+          assert len(state) == 1
+
+    return rfst
+
 # load FST
-#with open(args.fst_txt, "r") as f:
-#  for line in f:
-#    if line.strip() == '':
-#      continue
-#
-#    fields = line.split()
-#    assert len(fields) == 1 || len(fields) == 5
-#
-#    sid = int(fields[0])
-#
-#    if len(fields) == 1:
-#      final_state = sid
-#      continue
-#
-#    if sid == START or sid == ANY:
+fst = FST()
+fst.load(args.fst_txt)
+#print(fst)
+
+# check ssyms
+rfst = fst.reverse()
+#print(rfst)
+for sid, syms in enumerate(ssyms):
+  if sid == rfst.init_sid:
+    assert syms == [vocab[EOS]]
+    continue
+
+  rsyms = []
+  s = sid
+  while len(rfst.states[s]) > 0:
+    arc = rfst.states[s][0]
+    rsyms.append(arc.ilab)
+    s = arc.to
+  if s == rfst.any_sid:
+    rsyms.append(ANY_ID)
+    rsyms.append(vocab[BOS])
+  rsyms.reverse()
+  assert rsyms == syms
+
+#    if arc.from == START or arc.from == ANY:
 #      assert len(arcs) == len(vocab) - 2
 #      assert [ arc[2] for arc in arcs ] == range(len(arcs))
 #    else:
