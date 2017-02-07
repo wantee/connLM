@@ -121,6 +121,11 @@ class FST:
           self.states.append([])
         self.states[arc.source].append(arc)
 
+    assert self.init_sid != -1
+    assert self.start_sid != -1
+    assert self.any_sid != -1
+    assert self.final_sid != -1
+
   def num_states(self):
     return len(self.states)
 
@@ -200,6 +205,9 @@ class FST:
       assert rfst.num_arcs() == self.num_arcs() - self.num_states() + 4
     else:
       assert rfst.num_arcs() == self.num_arcs()
+
+    # every state except (init, final) should have one </s> arcs
+    assert len(rfst.states[rfst.init_sid]) == self.num_states() - 2
 
     return rfst
 
