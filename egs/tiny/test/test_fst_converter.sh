@@ -23,7 +23,7 @@ function tofst()
 {
   out_dir=$1
   print_syms=$2
-  connlm-tofst --log-file="$out_dir/fst.converter.log" \
+  connlm-tofst --log-file="$out_dir/log/fst.converter.log" \
                --num-thread=1 --output-unk=true \
                --wildcard-boost=0.005 --wildcard-boost-power=0.75 \
                --boost=0.007 --boost-power=0.8 \
@@ -46,12 +46,27 @@ if [ $? -ne 0 ]; then
 fi
 
 echo "Checking FST..."
-../utils/check-fst.py --fst-converter-log="$dir/num/fst.converter.log" \
-                      --num-prob-sents=10 \
-                      "$dir/num/words.txt" "$dir/num/g.ssyms" "$dir/num/g.txt"
+grep -v '<any>' "$dir/num/g.ssyms" | awk '{print $2}' | \
+     perl -e 'use List::Util qw/shuffle/; print shuffle <>;' | \
+     head -n 100 | tr ':' ' ' | cut -d' ' -f2- > "$dir/num/sents.txt"
 if [ $? -ne 0 ]; then
   shu-err " [ERROR]"
+  exit 1
+fi
+
+connlm-eval --log-file="$dir/num/log/eval.log" \
+            "$exp_dir/final.clm" "$dir/num/sents.txt" "$dir/num/sents.prob"
+if [ $? -ne 0 ]; then
+  shu-err "connlm-eval failed "
+  shu-err " [ERROR]"
+  exit 1
+fi
+
+../utils/check-fst.py --sent-prob="$dir/num/sents.prob" \
+                      "$dir/num/words.txt" "$dir/num/g.ssyms" "$dir/num/g.txt"
+if [ $? -ne 0 ]; then
   shu-err "check-fst.py failed"
+  shu-err " [ERROR]"
   exit 1
 fi
 
