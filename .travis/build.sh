@@ -45,6 +45,11 @@ if [ $TRAVIS_BRANCH == 'master' ] || [ $TRAVIS_BRANCH == 'develop' ]; then
     echo "Testing MaxEnt~RNN related cases"
     (cd egs/tiny; shu-testing 27-30);
   fi
+
+  if [ $CASE -eq 9 ]; then
+    echo "Testing FST converter related cases"
+    (cd egs/tiny; shu-testing 31);
+  fi
 elif [ $TRAVIS_BRANCH == 'legacy' ]; then
   if [ $CASE -eq 2 ]; then
     make -C src test
