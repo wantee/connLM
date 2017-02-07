@@ -33,3 +33,5 @@ blas.mk
 
 !src/bin/
 .replace_revision.sh
+
+*.pyc
