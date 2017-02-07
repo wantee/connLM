@@ -48,6 +48,13 @@ if [ $TRAVIS_BRANCH == 'master' ] || [ $TRAVIS_BRANCH == 'develop' ]; then
 
   if [ $CASE -eq 9 ]; then
     echo "Testing FST converter related cases"
+    # install numpy on travis
+    if [ "$CI" == "true" ] && [ "$TRAVIS" == "true" ]; then
+      wget http://repo.continuum.io/miniconda/Miniconda2-latest-Linux-x86_64.sh -O miniconda.sh || exit 1
+      chmod +x miniconda.sh && ./miniconda.sh -b -p /home/travis/mc || exit 1
+      export PATH=/home/travis/mc/bin:$PATH
+      conda install --yes numpy>=1.7.0 || exit 1
+    fi
     (cd egs/tiny; shu-testing 31);
   fi
 elif [ $TRAVIS_BRANCH == 'legacy' ]; then
