@@ -95,7 +95,8 @@ class FST:
     self.any_sid = -1
     self.states = []
 
-    self.ilab_sorted = False
+    self._ilab_sorted = False
+    self._logp_cache = None
 
   def load(self, fst_file):
     with open(fst_file, "r") as f:
@@ -150,13 +151,13 @@ class FST:
     return s
 
   def sort_ilab(self):
-    if self.ilab_sorted:
+    if self._ilab_sorted:
       return
 
     for state in self.states:
       state.sort(key=lambda arc: arc.ilab)
 
-    self.ilab_sorted = True
+    self._ilab_sorted = True
 
   def get_backoff_arc(self, sid):
     # the last arc must be backoff
@@ -165,7 +166,7 @@ class FST:
     return arc
 
   def find_arc(self, sid, word):
-    assert self.ilab_sorted == True
+    assert self._ilab_sorted == True
 
     arcs = self.states[sid]
     lo = 0
@@ -199,16 +200,26 @@ class FST:
 
     return path
 
+  def create_logp_cache(self):
+    self._logp_cache = np.zeros((fst.num_states(), len(vocab)))
+
   def get_word_logp(self, sid, word):
+    if not self._logp_cache is None and self._logp_cache[sid, word] != 0.0:
+      return self._logp_cache[sid, word]
+
     arc = self.find_arc(sid, word)
     if not arc is None:
-      return -arc.weight
+      logp = -arc.weight
+    else:
+      # backoff
+      logp = 0.0
+      backoff_arc = self.get_backoff_arc(sid)
+      logp += -backoff_arc.weight
+      logp += self.get_word_logp(backoff_arc.to, word)
 
-    # backoff
-    logp = 0.0
-    backoff_arc = self.get_backoff_arc(sid)
-    logp += -backoff_arc.weight
-    logp += self.get_word_logp(backoff_arc.to, word)
+    if not self._logp_cache is None:
+      assert logp != 0.0
+      self._logp_cache[sid, word] = logp
 
     return logp
 
@@ -319,6 +330,7 @@ for sid, state in enumerate(fst.states):
 
 print("  Checking bows...")
 fst.sort_ilab()
+fst.create_logp_cache()
 for (sid, state) in enumerate(fst.states):
   if sid == fst.init_sid:
     assert len(state) == 1
@@ -335,6 +347,6 @@ for (sid, state) in enumerate(fst.states):
     logp = fst.get_word_logp(sid, vocab[word])
     total_logp = np.logaddexp(total_logp, logp)
 
-  assert np.isclose(total_logp, 0.0, atol=1e-6)
+  assert np.isclose(total_logp, 0.0, atol=1e-5)
 
 print("Finish to validate FST.", file=sys.stderr)
