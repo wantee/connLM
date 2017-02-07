@@ -64,7 +64,7 @@ with open(args.state_syms, "r") as f:
 print("  Loading FST...")
 fst = cf.FST(vocab)
 fst.load(args.fst_txt)
-#print(fst)
+print(fst)
 
 print("  Checking ssyms...")
 rfst = fst.reverse()

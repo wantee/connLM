@@ -27,8 +27,8 @@ function tofst()
 
   connlm-tofst --log-file="$out_dir/log/fst.converter.log" \
                --num-thread=$nt --output-unk=true \
-               --wildcard-boost=0.005 --wildcard-boost-power=0.75 \
-               --boost=0.007 --boost-power=0.8 \
+               --wildcard-boost=0.02 --wildcard-boost-power=0.75 \
+               --boost=0.025 --boost-power=0.8 \
                --word-syms-file="$out_dir/words.txt" \
                --state-syms-file="$out_dir/g.ssyms" \
                --print-syms=$2 \
