@@ -51,7 +51,8 @@ class FST:
 
         arc = Arc(int(fields[0]), int(fields[1]), int(fields[2]),
                   int(fields[3]), float(fields[4]))
-        assert (arc.ilab == arc.olab) or \
+        if not self._vocab is None:
+          assert (arc.ilab == arc.olab) or \
                (arc.ilab == self._vocab[PHI] and arc.olab == self._vocab[EPS])
 
         if self.init_sid == -1:
