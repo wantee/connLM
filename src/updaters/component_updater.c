@@ -396,8 +396,13 @@ static int comp_updater_bptt(comp_updater_t *comp_updater, bool clear)
         }
     }
 
-    if (comp_updater->bptt_step % bptt_delay == 0 || clear) {
-        for (i = 0; i < comp->num_glue_cycle; i++) {
+    for (i = 0; i < comp->num_glue_cycle; i++) {
+        g = comp->glue_cycles[i][1];
+        bptt = comp->glues[g]->bptt_opt.bptt;
+        bptt_delay = comp->glues[g]->bptt_opt.bptt_delay;
+        bptt_updater = comp_updater->bptt_updaters[i];
+
+        if (comp_updater->bptt_step % bptt_delay == 0 || clear) {
             for (j = 1; j <= comp->glue_cycles[i][0]; j++) {
                 wt_updater = bptt_updater->wt_updaters[j];
                 if (wt_flush(wt_updater, false) < 0) {
