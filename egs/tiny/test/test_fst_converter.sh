@@ -43,7 +43,7 @@ function mapfst()
 {
   out_dir=$1
 
-  ../utils/renumber-fst.py "$out_dir/g.txt" "$out_dir/g.state.map"
+  ../utils/fst/renumber-fst.py "$out_dir/g.txt" "$out_dir/g.state.map"
   if [ $? -ne 0 ]; then
     shu-err "renumber-fst in [$out_dir] failed."
     return 1
@@ -89,7 +89,7 @@ if [ $? -ne 0 ]; then
   exit 1
 fi
 
-../utils/check-fst.py --sent-prob="$dir/num/sents.prob" \
+../utils/fst/check-fst.py --sent-prob="$dir/num/sents.prob" \
                       "$dir/num/words.txt" "$dir/num/g.ssyms" "$dir/num/g.txt"
 if [ $? -ne 0 ]; then
   shu-err "check-fst.py failed"
