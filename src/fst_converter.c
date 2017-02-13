@@ -214,6 +214,13 @@ int fst_conv_load_opt(fst_conv_opt_t *conv_opt,
         goto ST_OPT_ERR;
     }
 
+    ST_OPT_SEC_GET_INT(opt, sec_name, "MAX_GRAM", conv_opt->max_gram, 0,
+        "Maximum gram to be expaned(no limits if less than or equal to 0).");
+    if (conv_opt->max_gram > 0 && conv_opt->max_gram <= 2) {
+        ST_WARNING("MAX_GRAM must be larger than 2.");
+        goto ST_OPT_ERR;
+    }
+
     ST_OPT_SEC_GET_DOUBLE(opt, sec_name, "BOOST",
             conv_opt->boost, 0.0,
             "Boost probability for </s> during word selection.");
@@ -1025,9 +1032,11 @@ static int fst_conv_expand(fst_conv_t *conv, fst_conv_args_t *args)
         ST_WARNING("Failed to fst_conv_find_word_hist");
         return -1;
     }
+
     if (args->num_word_hist + 1 > conv->max_gram) {
         conv->max_gram = args->num_word_hist + 1;
     }
+
     boost = args->boost * pow(args->num_word_hist, args->boost_power);
 
     // do not feed wordhist with the leading <s>
@@ -1087,38 +1096,44 @@ static int fst_conv_expand(fst_conv_t *conv, fst_conv_args_t *args)
             n++;
         }
     } else {
-        n = 0;
-        word = -1;
-        while(true) {
-            word = select_word(conv, word, output_probs, boost,
-                    &args->rand_seed);
-            if (word < 0) {
-                ST_WARNING("Failed to select_word.");
+        if (conv->conv_opt.max_gram > 0
+                && args->num_word_hist + 1 >= conv->conv_opt.max_gram) {
+            n = 1;
+            args->selected_words[0] = SENT_END_ID;
+        } else {
+            n = 0;
+            word = -1;
+            while(true) {
+                word = select_word(conv, word, output_probs, boost,
+                        &args->rand_seed);
+                if (word < 0) {
+                    ST_WARNING("Failed to select_word.");
+                    return -1;
+                }
+
+                assert(n < get_vocab_size(conv));
+
+                args->selected_words[n] = word;
+                n++;
+
+                // avoid selecting the same word next time
+                output_probs[word] = -output_probs[word];
+
+                if (word == SENT_END_ID) {
+                    break;
+                }
+            }
+
+            // recover probs for selected words
+            for (i = 0; i < n; i++) {
+                word = args->selected_words[i];
+                output_probs[word] = -output_probs[word];
+            }
+            if (sort_selected_words(conv->conv_opt.wsm,
+                        args->selected_words, n) < 0) {
+                ST_WARNING("Failed to sort_selected_words.");
                 return -1;
             }
-
-            assert(n < get_vocab_size(conv));
-
-            args->selected_words[n] = word;
-            n++;
-
-            // avoid selecting the same word next time
-            output_probs[word] = -output_probs[word];
-
-            if (word == SENT_END_ID) {
-                break;
-            }
-        }
-
-        // recover probs for selected words
-        for (i = 0; i < n; i++) {
-            word = args->selected_words[i];
-            output_probs[word] = -output_probs[word];
-        }
-        if (sort_selected_words(conv->conv_opt.wsm,
-                    args->selected_words, n) < 0) {
-            ST_WARNING("Failed to sort_selected_words.");
-            return -1;
         }
 
         backoff_sid = fst_conv_find_backoff(conv, args->word_hist,
