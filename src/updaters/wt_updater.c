@@ -342,6 +342,7 @@ static int wt_updater_flush(wt_updater_t *wt_updater, real_t* dst_wt,
             if (dirty->buf_er != NULL) {
                 lr = wt_updater->param.learn_rate;
                 lr *= dirty->er_scale * dirty->in_scale;
+                lr /= dirty->buf_er[0].n_row;
                 l2 = get_l2(wt_updater);
 
                 if (dirty->buf_er[0].n_row > 0) {
