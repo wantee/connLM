@@ -78,7 +78,7 @@ void wt_updater_destroy(wt_updater_t *wt_updater)
     }
     wt_updater->shared_wt = NULL;
     safe_st_aligned_free(wt_updater->ori_wt);
-    safe_st_aligned_free(wt_updater->delta_wt);
+    safe_st_aligned_free(wt_updater->shadow_wt);
     wt_updater->row = -1;
     wt_updater->col = -1;
 
@@ -174,13 +174,13 @@ int wt_updater_init(wt_updater_t *wt_updater)
     }
 
     if (wt_updater->param.mini_batch > 0) {
-        safe_st_aligned_free(wt_updater->delta_wt);
-        wt_updater->delta_wt = st_aligned_malloc(sz, ALIGN_SIZE);
-        if (wt_updater->delta_wt == NULL) {
-            ST_WARNING("Failed to malloc delta_wt.");
+        safe_st_aligned_free(wt_updater->shadow_wt);
+        wt_updater->shadow_wt = st_aligned_malloc(sz, ALIGN_SIZE);
+        if (wt_updater->shadow_wt == NULL) {
+            ST_WARNING("Failed to malloc shadow_wt.");
             goto ERR;
         }
-        memset(wt_updater->delta_wt, 0, sz);
+        memset(wt_updater->shadow_wt, 0, sz);
     }
 
     if (wt_updater->type == WT_UT_FULL) {
@@ -776,7 +776,7 @@ int wt_update(wt_updater_t *wt_updater,
 #endif
 
     if (wt_updater->param.mini_batch > 0) {
-        wt = wt_updater->delta_wt;
+        wt = wt_updater->shadow_wt;
     } else {
         wt = wt_updater->wt;
     }
@@ -831,7 +831,7 @@ int wt_flush(wt_updater_t *wt_updater, bool force)
             }
 
             if (wt_updater_flush(wt_updater, wt_updater->wt,
-                        wt_updater->delta_wt, &wt_updater->mini_dirty,
+                        wt_updater->shadow_wt, &wt_updater->mini_dirty,
                         NULL) < 0) {
                 ST_WARNING("Failed to wt_updater_flush for minibatch.");
                 return -1;

@@ -85,7 +85,7 @@ typedef struct _weight_updater_t_ {
     real_t *shared_wt; /**< shared weight maxtrix for all updaters. */
     real_t *wt; /**< local weight maxtrix of this updater. */
     real_t *ori_wt; /**< origin weight maxtrix for sync. */
-    real_t *delta_wt; /**< delta weight maxtrix for mini-batch. */
+    real_t *shadow_wt; /**< shadow weight maxtrix for mini-batch. */
     int row; /**< row of weight maxtrix. */
     int col; /**< col of weight maxtrix. */
     wt_update_type_t type; /**< updating type. */
