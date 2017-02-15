@@ -100,8 +100,13 @@ int param_load(param_t *param, st_opt_t *opt, const char *sec_name,
 
     ST_OPT_SEC_GET_DOUBLE(opt, sec_name, "MOMENTUM", d,
             (double)param->momentum,
-            "Momentum");
+            "Momentum. Note: to make the 'effective' learning rate remains "
+            "the same, the learning rate will be multiplied by (1-momentum)");
     param->momentum = (real_t)d;
+
+    if (param->momentum != 0.0) {
+        param->learn_rate *= (1.0 - param->momentum);
+    }
 
     ST_OPT_SEC_GET_INT(opt, sec_name, "MINI_BATCH", param->mini_batch,
             param->mini_batch,
