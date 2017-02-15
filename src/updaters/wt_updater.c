@@ -88,6 +88,9 @@ void wt_updater_destroy(wt_updater_t *wt_updater)
     safe_free(wt_updater->segs);
     wt_updater->n_seg = 0;
 
+    safe_st_aligned_free(wt_updater->delta_wt);
+    safe_st_aligned_free(wt_updater->prev_delta_wt);
+
     wt_updater_clear(wt_updater);
 }
 
@@ -198,6 +201,24 @@ int wt_updater_init(wt_updater_t *wt_updater)
         }
     }
 
+    if (wt_updater->param.momentum != 0.0) {
+        safe_st_aligned_free(wt_updater->delta_wt);
+        wt_updater->delta_wt = st_aligned_malloc(sz, ALIGN_SIZE);
+        if (wt_updater->delta_wt == NULL) {
+            ST_WARNING("Failed to malloc delta_wt.");
+            goto ERR;
+        }
+        memset(wt_updater->delta_wt, 0, sz);
+
+        safe_st_aligned_free(wt_updater->prev_delta_wt);
+        wt_updater->prev_delta_wt = st_aligned_malloc(sz, ALIGN_SIZE);
+        if (wt_updater->prev_delta_wt == NULL) {
+            ST_WARNING("Failed to malloc prev_delta_wt.");
+            goto ERR;
+        }
+        memset(wt_updater->prev_delta_wt, 0, sz);
+    }
+
     return 0;
 
 ERR:
@@ -257,6 +278,7 @@ int wt_updater_set_segs(wt_updater_t *wt_updater, st_int_seg_t *segs, int n_seg)
             goto ERR;
         }
     }
+
     return 0;
 
 ERR:
@@ -317,34 +339,54 @@ static int wt_updater_flush(wt_updater_t *wt_updater, real_t* dst_wt,
         real_t *src_wt, wt_dirty_buf_t *dirty, real_t *ori_wt)
 {
     st_int_seg_t *seg;
+    real_t *prev_delta_wt;
     int row, col;
-    int sz, i, a, j;
+    int sz, idx, i, a, j;
+
     real_t lr, l2;
+    real_t momentum;
 
     row = wt_updater->row;
     col = wt_updater->col;
 
     switch (wt_updater->type) {
         case WT_UT_FULL:
+            if (col > 0) {
+                sz = row * col;
+            } else {
+                sz = row;
+            }
+
             if (dirty->buf_er != NULL) {
+                // batch update
                 lr = wt_updater->param.learn_rate;
                 lr *= dirty->er_scale * dirty->in_scale;
                 lr /= dirty->buf_er[0].n_row;
                 l2 = get_l2(wt_updater);
+                momentum = wt_updater->param.momentum;
+                prev_delta_wt = wt_updater->prev_delta_wt;
 
                 if (dirty->buf_er[0].n_row > 0) {
                     matXmat(src_wt, dirty->buf_er[0].val,
                             dirty->buf_in[0].val, row, col,
                             dirty->buf_er[0].n_row,
                             lr, 1.0 - l2);
+
+                    if (momentum != 0.0) {
+                        for (i = 0; i < sz; i++) {
+                            src_wt[i] += momentum * prev_delta_wt[i];
+                        }
+                        if (ori_wt == NULL) {
+                            memcpy(prev_delta_wt, src_wt, sz * sizeof(real_t));
+                        } else {
+                            for (i = 0; i < sz; i++) {
+                                prev_delta_wt[i] = src_wt[i] - ori_wt[i];
+                            }
+                        }
+                    }
                 }
             }
 
-            if (col > 0) {
-                sz = row * col;
-            } else {
-                sz = row;
-            }
             if (ori_wt == NULL) {
                 for (i = 0; i < sz; i++) {
                     dst_wt[i] += src_wt[i];
@@ -361,18 +403,43 @@ static int wt_updater_flush(wt_updater_t *wt_updater, real_t* dst_wt,
 
         case WT_UT_SEG:
             if (dirty->buf_er != NULL) {
+                // batch update
                 lr = wt_updater->param.learn_rate;
                 lr *= dirty->er_scale * dirty->in_scale;
                 l2 = get_l2(wt_updater);
+                momentum = wt_updater->param.momentum;
+                prev_delta_wt = wt_updater->prev_delta_wt;
 
                 for (a = 0; a < dirty->n_id; a++) {
-                    i = dirty->ids[a];
-                    seg = wt_updater->segs + i;
-                    if (dirty->buf_er[i].n_row > 0) {
-                        matXmat(src_wt + seg->s * col, dirty->buf_er[i].val,
-                                dirty->buf_in[i].val, seg->n, col,
-                                dirty->buf_er[i].n_row,
+                    idx = dirty->ids[a];
+                    seg = wt_updater->segs + idx;
+                    if (dirty->buf_er[idx].n_row > 0) {
+                        matXmat(src_wt + seg->s * col, dirty->buf_er[idx].val,
+                                dirty->buf_in[idx].val, seg->n, col,
+                                dirty->buf_er[idx].n_row,
                                 lr, 1.0 - l2);
+
+                        if (momentum != 0.0) {
+                            for (i = seg->s; i < seg->s + seg->n; i++) {
+                                for (j = 0; j < col; j++) {
+                                    src_wt[i * col + j] += momentum *
+                                        prev_delta_wt[i * col + j];
+                                }
+                            }
+                            if (ori_wt == NULL) {
+                                memcpy(prev_delta_wt + seg->s * col,
+                                        src_wt + seg->s * col,
+                                        seg->n * col * sizeof(real_t));
+                            } else {
+                                for (i = seg->s; i < seg->s + seg->n; i++) {
+                                    for (j = 0; j < col; j++) {
+                                        prev_delta_wt[i * col + j] =
+                                            src_wt[i * col + j]
+                                            - ori_wt[i * col + j];
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -461,8 +528,12 @@ static int wt_updater_acc_wt(wt_updater_t *wt_updater,
         real_t *er, real_t er_scale,
         real_t *in, real_t in_scale, st_wt_int_t *in_idx)
 {
+    real_t *delta_wt;
+    real_t *prev_delta_wt;
+
     real_t lr;
     real_t l2;
+    real_t momentum;
 
     int row, col;
 
@@ -475,21 +546,62 @@ static int wt_updater_acc_wt(wt_updater_t *wt_updater,
     col = wt_updater->col;
 
     l2 = get_l2(wt_updater);
+    momentum = wt_updater->param.momentum;
+
+    delta_wt = wt_updater->delta_wt;
+    prev_delta_wt = wt_updater->prev_delta_wt;
 
     switch (wt_updater->type) {
         case WT_UT_PART:
             // Hash-based weight
             // needed: row_seg, er
-            if (row_seg->s + row_seg->n > row) {
-                for (j = 0, i = row_seg->s; i < row; j++, i++) {
-                    wt[i] += lr * er[j] - l2 * wt[i];
+            if (momentum != 0.0) {
+                if (row_seg->s + row_seg->n > row) {
+                    for (j = 0, i = row_seg->s; i < row; j++, i++) {
+                        delta_wt[i] = lr * er[j] - l2 * wt[i]
+                            + momentum * prev_delta_wt[i];
+                    }
+                    for (i = 0; j < row_seg->n; j++, i++) {
+                        delta_wt[i] = lr * er[j] - l2 * wt[i]
+                            + momentum * prev_delta_wt[i];
+                    }
+                } else {
+                    for (j = 0, i = row_seg->s; j < row_seg->n; j++, i++) {
+                        delta_wt[i] = lr * er[j] - l2 * wt[i]
+                            + momentum * prev_delta_wt[i];
+                    }
                 }
-                for (i = 0; j < row_seg->n; j++, i++) {
-                    wt[i] += lr * er[j] - l2 * wt[i];
+
+                if (row_seg->s + row_seg->n > row) {
+                    for (j = 0, i = row_seg->s; i < row; j++, i++) {
+                        wt[i] += delta_wt[i];
+                        prev_delta_wt[i] = delta_wt[i];
+                        delta_wt[i] = 0.0;
+                    }
+                    for (i = 0; j < row_seg->n; j++, i++) {
+                        wt[i] += delta_wt[i];
+                        prev_delta_wt[i] = delta_wt[i];
+                        delta_wt[i] = 0.0;
+                    }
+                } else {
+                    for (j = 0, i = row_seg->s; j < row_seg->n; j++, i++) {
+                        wt[i] += delta_wt[i];
+                        prev_delta_wt[i] = delta_wt[i];
+                        delta_wt[i] = 0.0;
+                    }
                 }
             } else {
-                for (j = 0, i = row_seg->s; j < row_seg->n; j++, i++) {
-                    wt[i] += lr * er[j] - l2 * wt[i];
+                if (row_seg->s + row_seg->n > row) {
+                    for (j = 0, i = row_seg->s; i < row; j++, i++) {
+                        wt[i] += lr * er[j] - l2 * wt[i];
+                    }
+                    for (i = 0; j < row_seg->n; j++, i++) {
+                        wt[i] += lr * er[j] - l2 * wt[i];
+                    }
+                } else {
+                    for (j = 0, i = row_seg->s; j < row_seg->n; j++, i++) {
+                        wt[i] += lr * er[j] - l2 * wt[i];
+                    }
                 }
             }
             break;
@@ -498,8 +610,21 @@ static int wt_updater_acc_wt(wt_updater_t *wt_updater,
             // needed: in_idx, er
             i = in_idx->i * col;
             scale = lr * in_idx->w;
-            for (j = 0; j < col; j++, i++) {
-                wt[i] += scale * er[j] - l2 * wt[i];
+            if (momentum != 0.0) {
+                for (j = 0; j < col; j++, i++) {
+                    delta_wt[i] = scale * er[j] - l2 * wt[i]
+                            + momentum * prev_delta_wt[i];
+                }
+                i = in_idx->i * col;
+                for (j = 0; j < col; j++, i++) {
+                    wt[i] += delta_wt[i];
+                    prev_delta_wt[i] = delta_wt[i];
+                    delta_wt[i] = 0.0;
+                }
+            } else {
+                for (j = 0; j < col; j++, i++) {
+                    wt[i] += scale * er[j] - l2 * wt[i];
+                }
             }
             break;
         case WT_UT_SEG:
@@ -524,8 +649,21 @@ static int wt_updater_acc_wt(wt_updater_t *wt_updater,
                         row_seg_id);
                 return -1;
             }
-            matXmat(wt + row_start * col, er, in, row_end - row_start, col, 1,
-                    lr, 1.0 - l2);
+            if (momentum != 0.0) {
+                matXmat(delta_wt + row_start * col, er, in,
+                        row_end - row_start, col, 1, lr, 1.0 - l2);
+                for (i = row_start * col; i < row_end * col; i++) {
+                    delta_wt[i] += momentum * prev_delta_wt[i];
+                }
+                for (i = row_start * col; i < row_end * col; i++) {
+                    wt[i] += delta_wt[i];
+                    prev_delta_wt[i] = delta_wt[i];
+                    delta_wt[i] = 0.0;
+                }
+            } else {
+                matXmat(wt + row_start * col, er, in, row_end - row_start,
+                        col, 1, lr, 1.0 - l2);
+            }
             break;
         default:
             ST_WARNING("Unknown updating type[%d].", wt_updater->type);

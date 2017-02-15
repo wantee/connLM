@@ -98,6 +98,9 @@ typedef struct _weight_updater_t_ {
 
     wt_dirty_buf_t mini_dirty; /**< dirty buffer for mini-batch. */
     wt_dirty_buf_t sync_dirty; /**< dirty buffer for sync. */
+
+    real_t *delta_wt; /**< buffer for delta weight. */
+    real_t *prev_delta_wt; /**< buffer for previous delta weight. */
 } wt_updater_t;
 
 /**
