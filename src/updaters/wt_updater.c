@@ -48,7 +48,6 @@ void wt_dirty_destroy(wt_dirty_buf_t *dirty)
     dirty->cap_id = 0;
     dirty->n_id = 0;
 
-#ifdef _BATCH_UPDATE_
     if (dirty->buf_er != NULL) {
         int i;
         for (i = 0; i < dirty->n_buf; i++) {
@@ -64,7 +63,6 @@ void wt_dirty_destroy(wt_dirty_buf_t *dirty)
         safe_free(dirty->buf_in);
     }
     dirty->n_buf = 0;
-#endif
 }
 
 void wt_updater_destroy(wt_updater_t *wt_updater)
@@ -93,7 +91,6 @@ void wt_updater_destroy(wt_updater_t *wt_updater)
     wt_updater_clear(wt_updater);
 }
 
-#ifdef _BATCH_UPDATE_
 int dirty_set_segs(wt_dirty_buf_t *dirty, int col,
         st_int_seg_t *segs, int  n_seg)
 {
@@ -138,7 +135,6 @@ ERR:
     dirty->n_buf = 0;
     return -1;
 }
-#endif
 
 int wt_updater_init(wt_updater_t *wt_updater)
 {
@@ -187,7 +183,6 @@ int wt_updater_init(wt_updater_t *wt_updater)
         memset(wt_updater->delta_wt, 0, sz);
     }
 
-#ifdef _BATCH_UPDATE_
     if (wt_updater->type == WT_UT_FULL) {
         st_int_seg_t seg;
 
@@ -202,7 +197,6 @@ int wt_updater_init(wt_updater_t *wt_updater)
             }
         }
     }
-#endif
 
     return 0;
 
@@ -256,7 +250,6 @@ int wt_updater_set_segs(wt_updater_t *wt_updater, st_int_seg_t *segs, int n_seg)
     memcpy(wt_updater->segs, segs, sizeof(st_int_seg_t) * n_seg);
     wt_updater->n_seg = n_seg;
 
-#ifdef _BATCH_UPDATE_
     if (wt_updater->param.mini_batch > 0) {
         if (dirty_set_segs(&wt_updater->mini_dirty, wt_updater->col,
                     segs, n_seg) < 0) {
@@ -264,7 +257,6 @@ int wt_updater_set_segs(wt_updater_t *wt_updater, st_int_seg_t *segs, int n_seg)
             goto ERR;
         }
     }
-#endif
     return 0;
 
 ERR:
@@ -274,7 +266,6 @@ ERR:
 
 void wt_dirty_clear(wt_dirty_buf_t *dirty)
 {
-#ifdef _BATCH_UPDATE_
     if (dirty->buf_in != NULL) {
         int i;
         if (dirty->n_id > 0) {
@@ -301,7 +292,6 @@ void wt_dirty_clear(wt_dirty_buf_t *dirty)
         }
         dirty->er_scale = 0.0;
     }
-#endif
 
     dirty->n_seg = 0;
     dirty->n_id = 0;
@@ -329,16 +319,13 @@ static int wt_updater_flush(wt_updater_t *wt_updater, real_t* dst_wt,
     st_int_seg_t *seg;
     int row, col;
     int sz, i, a, j;
-#ifdef _BATCH_UPDATE_
     real_t lr, l2;
-#endif
 
     row = wt_updater->row;
     col = wt_updater->col;
 
     switch (wt_updater->type) {
         case WT_UT_FULL:
-#ifdef _BATCH_UPDATE_
             if (dirty->buf_er != NULL) {
                 lr = wt_updater->param.learn_rate;
                 lr *= dirty->er_scale * dirty->in_scale;
@@ -352,7 +339,7 @@ static int wt_updater_flush(wt_updater_t *wt_updater, real_t* dst_wt,
                             lr, 1.0 - l2);
                 }
             }
-#endif
+
             if (col > 0) {
                 sz = row * col;
             } else {
@@ -373,7 +360,6 @@ static int wt_updater_flush(wt_updater_t *wt_updater, real_t* dst_wt,
             break;
 
         case WT_UT_SEG:
-#ifdef _BATCH_UPDATE_
             if (dirty->buf_er != NULL) {
                 lr = wt_updater->param.learn_rate;
                 lr *= dirty->er_scale * dirty->in_scale;
@@ -390,7 +376,7 @@ static int wt_updater_flush(wt_updater_t *wt_updater, real_t* dst_wt,
                     }
                 }
             }
-#endif
+
             if (ori_wt == NULL) {
                 for (a = 0; a < dirty->n_id; a++) {
                     seg = wt_updater->segs + dirty->ids[a];
@@ -521,11 +507,10 @@ static int wt_updater_acc_wt(wt_updater_t *wt_updater,
             /* FALL THROUGH */
         case WT_UT_FULL:
             // needed: in, er
-#ifdef _BATCH_UPDATE_
             if (wt_updater->param.mini_batch > 0) {
                 break; /* Do nothing. */
             }
-#endif
+
             if (wt_updater->type == WT_UT_FULL) {
                 row_start = 0;
                 row_end = row;
@@ -558,7 +543,6 @@ static int wt_updater_dirty(wt_updater_t *wt_updater, wt_dirty_buf_t *dirty,
 
     switch (wt_updater->type) {
         case WT_UT_FULL:
-#ifdef _BATCH_UPDATE_
             if (dirty->buf_er != NULL) {
                 if (dirty->er_scale == 0.0) {
                     dirty->er_scale = er_scale;
@@ -584,7 +568,6 @@ static int wt_updater_dirty(wt_updater_t *wt_updater, wt_dirty_buf_t *dirty,
                     return -1;
                 }
             }
-#endif
             break;
         case WT_UT_PART:
             if (dirty->n_seg >= dirty->cap_seg) {
@@ -634,7 +617,6 @@ static int wt_updater_dirty(wt_updater_t *wt_updater, wt_dirty_buf_t *dirty,
                 ST_WARNING("Failed to st_int_insert.");
                 return -1;
             }
-#ifdef _BATCH_UPDATE_
             if (dirty->buf_er != NULL) {
                 if (dirty->er_scale == 0.0) {
                     dirty->er_scale = er_scale;
@@ -660,7 +642,6 @@ static int wt_updater_dirty(wt_updater_t *wt_updater, wt_dirty_buf_t *dirty,
                     return -1;
                 }
             }
-#endif
             break;
         default:
             ST_WARNING("Unknown updating type[%d].", wt_updater->type);
@@ -678,7 +659,6 @@ static int wt_updater_dirty_cpy(wt_updater_t *wt_updater,
 
     switch (wt_updater->type) {
         case WT_UT_FULL:
-#ifdef _BATCH_UPDATE_
             if (dst->buf_er != NULL) {
                 if (dst->er_scale == 0.0) {
                     dst->er_scale = src->er_scale;
@@ -702,7 +682,6 @@ static int wt_updater_dirty_cpy(wt_updater_t *wt_updater,
                     return -1;
                 }
             }
-#endif
             break;
         case WT_UT_PART:
             if (dst->n_seg + src->n_seg > dst->cap_seg) {
@@ -728,7 +707,6 @@ static int wt_updater_dirty_cpy(wt_updater_t *wt_updater,
             }
             break;
         case WT_UT_SEG:
-#ifdef _BATCH_UPDATE_
             if (dst->buf_er != NULL) {
                 if (dst->er_scale == 0.0) {
                     dst->er_scale = src->er_scale;
@@ -756,7 +734,6 @@ static int wt_updater_dirty_cpy(wt_updater_t *wt_updater,
                     }
                 }
             }
-#endif
             /* FALL THROUGH */
         case WT_UT_ONE_SHOT:
             if (dst->n_id + src->n_id > dst->cap_id) {

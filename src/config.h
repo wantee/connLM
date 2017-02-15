@@ -56,8 +56,6 @@ typedef unsigned long long hash_t;
 
 #define ALIGN_SIZE 128
 
-#define _BATCH_UPDATE_
-
 #define SENT_END "</s>"
 #define SENT_END_ID 0
 #define SENT_START "<s>"

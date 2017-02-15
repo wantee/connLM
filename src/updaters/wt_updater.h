@@ -68,13 +68,11 @@ typedef struct _weight_dirty_buffer_t_ {
     int cap_id; /**< capacity of ids. */
     int n_id; /**< size of ids. */
 
-#ifdef _BATCH_UPDATE_
     concat_mat_t *buf_in; /**< buffer for in_ac. sized by n_id and cap_id. */
     real_t in_scale; /**< scale of in_ac. */
     concat_mat_t *buf_er; /**< buffer for out_er. sized by n_id and cap_id. */
     real_t er_scale; /**< scale of out_er. */
     int n_buf;
-#endif
 } wt_dirty_buf_t;
 
 /**
