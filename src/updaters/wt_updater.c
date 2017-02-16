@@ -89,7 +89,6 @@ void wt_updater_destroy(wt_updater_t *wt_updater)
     wt_updater->n_seg = 0;
 
     safe_st_aligned_free(wt_updater->delta_wt);
-    safe_st_aligned_free(wt_updater->prev_delta_wt);
 
     wt_updater_clear(wt_updater);
 }
@@ -209,14 +208,6 @@ int wt_updater_init(wt_updater_t *wt_updater)
             goto ERR;
         }
         memset(wt_updater->delta_wt, 0, sz);
-
-        safe_st_aligned_free(wt_updater->prev_delta_wt);
-        wt_updater->prev_delta_wt = st_aligned_malloc(sz, ALIGN_SIZE);
-        if (wt_updater->prev_delta_wt == NULL) {
-            ST_WARNING("Failed to malloc prev_delta_wt.");
-            goto ERR;
-        }
-        memset(wt_updater->prev_delta_wt, 0, sz);
     }
 
     return 0;
@@ -339,7 +330,7 @@ static int wt_updater_flush(wt_updater_t *wt_updater, real_t* dst_wt,
         real_t *src_wt, wt_dirty_buf_t *dirty, real_t *ori_wt)
 {
     st_int_seg_t *seg;
-    real_t *prev_delta_wt;
+    real_t *delta_wt;
     int row, col;
     int sz, idx, i, a, j;
 
@@ -364,7 +355,7 @@ static int wt_updater_flush(wt_updater_t *wt_updater, real_t* dst_wt,
                 lr /= dirty->buf_er[0].n_row;
                 l2 = get_l2(wt_updater);
                 momentum = wt_updater->param.momentum;
-                prev_delta_wt = wt_updater->prev_delta_wt;
+                delta_wt = wt_updater->delta_wt;
 
                 if (dirty->buf_er[0].n_row > 0) {
                     matXmat(src_wt, dirty->buf_er[0].val,
@@ -374,13 +365,13 @@ static int wt_updater_flush(wt_updater_t *wt_updater, real_t* dst_wt,
 
                     if (momentum != 0.0) {
                         for (i = 0; i < sz; i++) {
-                            src_wt[i] += momentum * prev_delta_wt[i];
+                            src_wt[i] += momentum * delta_wt[i];
                         }
                         if (ori_wt == NULL) {
-                            memcpy(prev_delta_wt, src_wt, sz * sizeof(real_t));
+                            memcpy(delta_wt, src_wt, sz * sizeof(real_t));
                         } else {
                             for (i = 0; i < sz; i++) {
-                                prev_delta_wt[i] = src_wt[i] - ori_wt[i];
+                                delta_wt[i] = src_wt[i] - ori_wt[i];
                             }
                         }
                     }
@@ -408,7 +399,7 @@ static int wt_updater_flush(wt_updater_t *wt_updater, real_t* dst_wt,
                 lr *= dirty->er_scale * dirty->in_scale;
                 l2 = get_l2(wt_updater);
                 momentum = wt_updater->param.momentum;
-                prev_delta_wt = wt_updater->prev_delta_wt;
+                delta_wt = wt_updater->delta_wt;
 
                 for (a = 0; a < dirty->n_id; a++) {
                     idx = dirty->ids[a];
@@ -423,17 +414,17 @@ static int wt_updater_flush(wt_updater_t *wt_updater, real_t* dst_wt,
                             for (i = seg->s; i < seg->s + seg->n; i++) {
                                 for (j = 0; j < col; j++) {
                                     src_wt[i * col + j] += momentum *
-                                        prev_delta_wt[i * col + j];
+                                        delta_wt[i * col + j];
                                 }
                             }
                             if (ori_wt == NULL) {
-                                memcpy(prev_delta_wt + seg->s * col,
+                                memcpy(delta_wt + seg->s * col,
                                         src_wt + seg->s * col,
                                         seg->n * col * sizeof(real_t));
                             } else {
                                 for (i = seg->s; i < seg->s + seg->n; i++) {
                                     for (j = 0; j < col; j++) {
-                                        prev_delta_wt[i * col + j] =
+                                        delta_wt[i * col + j] =
                                             src_wt[i * col + j]
                                             - ori_wt[i * col + j];
                                     }
@@ -529,7 +520,6 @@ static int wt_updater_acc_wt(wt_updater_t *wt_updater,
         real_t *in, real_t in_scale, st_wt_int_t *in_idx)
 {
     real_t *delta_wt;
-    real_t *prev_delta_wt;
 
     real_t lr;
     real_t l2;
@@ -549,7 +539,6 @@ static int wt_updater_acc_wt(wt_updater_t *wt_updater,
     momentum = wt_updater->param.momentum;
 
     delta_wt = wt_updater->delta_wt;
-    prev_delta_wt = wt_updater->prev_delta_wt;
 
     switch (wt_updater->type) {
         case WT_UT_PART:
@@ -559,35 +548,29 @@ static int wt_updater_acc_wt(wt_updater_t *wt_updater,
                 if (row_seg->s + row_seg->n > row) {
                     for (j = 0, i = row_seg->s; i < row; j++, i++) {
                         delta_wt[i] = lr * er[j] - l2 * wt[i]
-                            + momentum * prev_delta_wt[i];
+                            + momentum * delta_wt[i];
                     }
                     for (i = 0; j < row_seg->n; j++, i++) {
                         delta_wt[i] = lr * er[j] - l2 * wt[i]
-                            + momentum * prev_delta_wt[i];
+                            + momentum * delta_wt[i];
                     }
                 } else {
                     for (j = 0, i = row_seg->s; j < row_seg->n; j++, i++) {
                         delta_wt[i] = lr * er[j] - l2 * wt[i]
-                            + momentum * prev_delta_wt[i];
+                            + momentum * delta_wt[i];
                     }
                 }
 
                 if (row_seg->s + row_seg->n > row) {
                     for (j = 0, i = row_seg->s; i < row; j++, i++) {
                         wt[i] += delta_wt[i];
-                        prev_delta_wt[i] = delta_wt[i];
-                        delta_wt[i] = 0.0;
                     }
                     for (i = 0; j < row_seg->n; j++, i++) {
                         wt[i] += delta_wt[i];
-                        prev_delta_wt[i] = delta_wt[i];
-                        delta_wt[i] = 0.0;
                     }
                 } else {
                     for (j = 0, i = row_seg->s; j < row_seg->n; j++, i++) {
                         wt[i] += delta_wt[i];
-                        prev_delta_wt[i] = delta_wt[i];
-                        delta_wt[i] = 0.0;
                     }
                 }
             } else {
@@ -613,13 +596,11 @@ static int wt_updater_acc_wt(wt_updater_t *wt_updater,
             if (momentum != 0.0) {
                 for (j = 0; j < col; j++, i++) {
                     delta_wt[i] = scale * er[j] - l2 * wt[i]
-                            + momentum * prev_delta_wt[i];
+                            + momentum * delta_wt[i];
                 }
                 i = in_idx->i * col;
                 for (j = 0; j < col; j++, i++) {
                     wt[i] += delta_wt[i];
-                    prev_delta_wt[i] = delta_wt[i];
-                    delta_wt[i] = 0.0;
                 }
             } else {
                 for (j = 0; j < col; j++, i++) {
@@ -651,14 +632,9 @@ static int wt_updater_acc_wt(wt_updater_t *wt_updater,
             }
             if (momentum != 0.0) {
                 matXmat(delta_wt + row_start * col, er, in,
-                        row_end - row_start, col, 1, lr, 1.0 - l2);
+                        row_end - row_start, col, 1, lr, momentum);
                 for (i = row_start * col; i < row_end * col; i++) {
-                    delta_wt[i] += momentum * prev_delta_wt[i];
-                }
-                for (i = row_start * col; i < row_end * col; i++) {
-                    wt[i] += delta_wt[i];
-                    prev_delta_wt[i] = delta_wt[i];
-                    delta_wt[i] = 0.0;
+                    wt[i] += delta_wt[i] - l2 * wt[i];
                 }
             } else {
                 matXmat(wt + row_start * col, er, in, row_end - row_start,
