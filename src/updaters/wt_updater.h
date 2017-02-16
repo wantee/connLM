@@ -72,7 +72,9 @@ typedef struct _weight_dirty_buffer_t_ {
     real_t in_scale; /**< scale of in_ac. */
     concat_mat_t *buf_er; /**< buffer for out_er. sized by n_id and cap_id. */
     real_t er_scale; /**< scale of out_er. */
-    int n_buf;
+    int n_buf; /**< number of buffers. */
+
+    real_t *buf_grad; /**< buffer for gradient. sized as weight matrix. */
 } wt_dirty_buf_t;
 
 /**
@@ -85,7 +87,7 @@ typedef struct _weight_updater_t_ {
     real_t *shared_wt; /**< shared weight maxtrix for all updaters. */
     real_t *wt; /**< local weight maxtrix of this updater. */
     real_t *ori_wt; /**< origin weight maxtrix for sync. */
-    real_t *shadow_wt; /**< shadow weight maxtrix for mini-batch. */
+    real_t *delta_wt; /**< buffer for delta weight. used by momentum. */
     int row; /**< row of weight maxtrix. */
     int col; /**< col of weight maxtrix. */
     wt_update_type_t type; /**< updating type. */
@@ -98,8 +100,6 @@ typedef struct _weight_updater_t_ {
 
     wt_dirty_buf_t mini_dirty; /**< dirty buffer for mini-batch. */
     wt_dirty_buf_t sync_dirty; /**< dirty buffer for sync. */
-
-    real_t *delta_wt; /**< buffer for delta weight. */
 } wt_updater_t;
 
 /**
