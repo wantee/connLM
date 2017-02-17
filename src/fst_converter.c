@@ -715,6 +715,28 @@ UNLOCK_AND_ERR:
 
 }
 
+static int select_words_baseline(fst_conv_t *conv, double *output_probs,
+        int *selected_words, int *num_selected,
+        double boost, unsigned int *rand_seed)
+{
+    int word;
+    int n;
+
+    ST_CHECK_PARAM(conv == NULL || output_probs == NULL
+            || selected_words == NULL || num_selected == NULL, -1);
+
+    n = 0;
+    for (word = 0; word < get_vocab_size(conv); word++) {
+        if (word == SENT_END_ID
+                || output_probs[word] >= output_probs[SENT_END_ID] + boost) {
+            selected_words[n++] = word;
+        }
+    }
+    *num_selected = n;
+
+    return 0;
+}
+
 // probs contains the probability for all words,
 // a negtive prob represents the word has been selected in the past.
 static int boost_sampling(double *probs, int n_probs,
@@ -765,63 +787,90 @@ static int boost_sampling(double *probs, int n_probs,
     return word;
 }
 
-static int select_word(fst_conv_t *conv, int last_word,
-        double *output_probs, double boost, unsigned int *rand_seed)
+static int select_words_sampling(fst_conv_t *conv, double *output_probs,
+        int *selected_words, int *num_selected,
+        double boost, unsigned int *rand_seed)
 {
     int word;
+    int n;
 
-    ST_CHECK_PARAM(conv == NULL || last_word < -1, -1);
+    int i;
+
+    ST_CHECK_PARAM(conv == NULL || output_probs == NULL
+            || selected_words == NULL || num_selected == NULL, -1);
+
+    n = 0;
+    word = -1;
+    while(true) {
+        word = boost_sampling(output_probs, get_vocab_size(conv),
+                boost, rand_seed);
+        if (word < 0) {
+            ST_WARNING("Failed to boost_sampling.");
+            return -1;
+        }
+
+        assert(n < get_vocab_size(conv));
+
+        selected_words[n] = word;
+        n++;
+
+        // avoid selecting the same word next time
+        output_probs[word] = -output_probs[word];
+
+        if (word == SENT_END_ID) {
+            break;
+        }
+    }
+    *num_selected = n;
+
+    // recover probs for selected words
+    for (i = 0; i < n; i++) {
+        word = selected_words[i];
+        output_probs[word] = -output_probs[word];
+    }
+
+    st_int_sort(selected_words, n);
+
+    return 0;
+}
+
+static int select_words_majority(fst_conv_t *conv, double *output_probs,
+        int *selected_words, int *num_selected,
+        double threshold, unsigned int *rand_seed)
+{
+    ST_CHECK_PARAM(conv == NULL || output_probs == NULL
+            || selected_words == NULL || num_selected == NULL, -1);
+
+    return 0;
+}
+
+static int select_words(fst_conv_t *conv, double *output_probs,
+        int *selected_words, int *num_selected,
+        double param, unsigned int *rand_seed)
+{
+    ST_CHECK_PARAM(conv == NULL, -1);
 
     switch (conv->conv_opt.wsm) {
         case WSM_BASELINE:
-            word = last_word + 1;
-            while (word < get_vocab_size(conv)) {
-                if (word == SENT_END_ID) {
-                    ++word;
-                    continue;
-                }
-                if (output_probs[word] >= output_probs[SENT_END_ID]
-                        + boost) {
-                    return word;
-                }
-                ++word;
-            }
-
-            return SENT_END_ID;
-            break;
-        case WSM_SAMPLING:
-            return boost_sampling(output_probs, get_vocab_size(conv),
-                    boost, rand_seed);
-            break;
-        default:
-            ST_WARNING("Unkown word selection method");
-            return -1;
-    }
-
-    return -1;
-}
-
-static int sort_selected_words(ws_method_t wsm,
-        int *selected_words, int n)
-{
-    ST_CHECK_PARAM(selected_words == NULL, -1);
-
-    if (selected_words[n - 1] != SENT_END_ID) {
-        ST_WARNING("The last word in selected_words should be " SENT_END);
-        return -1;
-    }
-
-    switch (wsm) {
-        case WSM_BASELINE:
-            /* only need to reorder the </s> */
-            n--;
-            if (st_int_insert(selected_words, n + 1, &n, SENT_END_ID) < 0) {
-                ST_WARNING("Failed to st_int_insert.");
+            if (select_words_baseline(conv, output_probs,
+                    selected_words, num_selected, param, rand_seed) < 0) {
+                ST_WARNING("Failed to select_words_baseline.");
                 return -1;
             }
             break;
         case WSM_SAMPLING:
-            st_int_sort(selected_words, n);
+            if (select_words_sampling(conv, output_probs,
+                    selected_words, num_selected, param, rand_seed) < 0) {
+                ST_WARNING("Failed to select_words_sampling.");
+                return -1;
+            }
+            break;
+        case WSM_MAJORITY:
+            if (select_words_majority(conv, output_probs,
+                    selected_words, num_selected, param, rand_seed) < 0) {
+                ST_WARNING("Failed to select_words_majority.");
+                return -1;
+            }
             break;
         default:
             ST_WARNING("Unkown word selection method");
@@ -1095,8 +1144,8 @@ static int fst_conv_expand(fst_conv_t *conv, fst_conv_args_t *args)
     }
 
     // select words
+    n = 0;
     if (no_backoff) {
-        n = 0;
         for (word = 0; word < get_vocab_size(conv); word++) {
             if (output_probs[word] <= 0.0) {
                 continue;
@@ -1110,39 +1159,13 @@ static int fst_conv_expand(fst_conv_t *conv, fst_conv_args_t *args)
             n = 1;
             args->selected_words[0] = SENT_END_ID;
         } else {
-            n = 0;
-            word = -1;
-            while(true) {
-                word = select_word(conv, word, output_probs, boost,
-                        &args->rand_seed);
-                if (word < 0) {
-                    ST_WARNING("Failed to select_word.");
-                    return -1;
-                }
-
-                assert(n < get_vocab_size(conv));
-
-                args->selected_words[n] = word;
-                n++;
-
-                // avoid selecting the same word next time
-                output_probs[word] = -output_probs[word];
-
-                if (word == SENT_END_ID) {
-                    break;
-                }
-            }
-
-            // recover probs for selected words
-            for (i = 0; i < n; i++) {
-                word = args->selected_words[i];
-                output_probs[word] = -output_probs[word];
-            }
-            if (sort_selected_words(conv->conv_opt.wsm,
-                        args->selected_words, n) < 0) {
-                ST_WARNING("Failed to sort_selected_words.");
+            if (select_words(conv, output_probs, args->selected_words, &n,
+                        boost, &args->rand_seed) < 0) {
+                ST_WARNING("Failed to select_words.");
                 return -1;
             }
+
+            assert(n < get_vocab_size(conv));
         }
 
         backoff_sid = fst_conv_find_backoff(conv, args->word_hist,

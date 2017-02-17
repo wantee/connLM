@@ -64,7 +64,7 @@ typedef struct _fst_converter_opt_t_ {
 
     char word_syms_file[MAX_DIR_LEN]; /**< word symbols file. */
     char state_syms_file[MAX_DIR_LEN]; /**< state symbols file. */
-    int max_gram; /** maximum gram to be expaned. */
+    int max_gram; /**< maximum gram to be expaned. */
     ws_method_t wsm; /**< word selection method. */
     double boost; /**< initial boost for \</s\> during word selection. */
     double boost_power; /**< power to the num-gram for boost value.
