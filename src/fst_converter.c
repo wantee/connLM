@@ -197,21 +197,68 @@ int fst_conv_load_opt(fst_conv_opt_t *conv_opt,
             "File to be written out state symbols(for debug).");
 
     ST_OPT_SEC_GET_STR(opt, sec_name, "WORD_SELECTION_METHOD",
-            method_str, MAX_ST_CONF_LEN, "Default",
-            "Word selection method(Default/Sampling)");
-    if (strcasecmp(method_str, "default") == 0) {
-        conv_opt->wsm = WSM_DEFAULT;
+            method_str, MAX_ST_CONF_LEN, "Baseline",
+            "Word selection method(Baseline/Sampling)");
+    if (strcasecmp(method_str, "baseline") == 0) {
+        conv_opt->wsm = WSM_BASELINE;
     } else if (strcasecmp(method_str, "sampling") == 0) {
         conv_opt->wsm = WSM_SAMPLING;
-
-        ST_OPT_SEC_GET_UINT(opt, sec_name, "INIT_RANDOM_SEED",
-                conv_opt->init_rand_seed, (unsigned int)time(NULL),
-                "Initial random seed, seed for each thread would be "
-                "incremented from this value. "
-                "Default is value of time(NULl).");
+    } else if (strcasecmp(method_str, "Majority") == 0) {
+        conv_opt->wsm = WSM_MAJORITY;
     } else {
         ST_WARNING("Unknown word selection method[%s].", method_str);
         goto ST_OPT_ERR;
+    }
+
+    switch (conv_opt->wsm) {
+        case WSM_SAMPLING:
+            ST_OPT_SEC_GET_UINT(opt, sec_name, "INIT_RANDOM_SEED",
+                    conv_opt->init_rand_seed, (unsigned int)time(NULL),
+                    "Initial random seed, seed for each thread would be "
+                    "incremented from this value. "
+                    "Default is value of time(NULl).");
+            /* FALL THROUGH */
+        case WSM_BASELINE:
+            ST_OPT_SEC_GET_DOUBLE(opt, sec_name, "BOOST",
+                    conv_opt->boost, 0.0,
+                    "Boost probability for </s> during word selection.");
+            if (conv_opt->boost < 0.0 || conv_opt->boost > 1.0) {
+                ST_WARNING("boost must be in [0, 1].");
+                goto ST_OPT_ERR;
+            }
+
+            ST_OPT_SEC_GET_DOUBLE(opt, sec_name, "BOOST_POWER",
+                    conv_opt->boost_power, 0.0,
+                    "power to the num-gram for boost value. "
+                    "e.g. cur_boost = boost * pow(num_grams, boost_power).");
+            if (conv_opt->boost_power <= 0.0) {
+                ST_WARNING("boost_power normally should be larger than zero.");
+            }
+
+            ST_OPT_SEC_GET_DOUBLE(opt, sec_name, "WILDCARD_BOOST",
+                    conv_opt->wildcard_boost, 0.0,
+                    "Boost probability for wildcard subFST.");
+            if (conv_opt->wildcard_boost < 0.0 || conv_opt->wildcard_boost > 1.0) {
+                ST_WARNING("boost must be in [0, 1].");
+                goto ST_OPT_ERR;
+            }
+
+            ST_OPT_SEC_GET_DOUBLE(opt, sec_name, "WILDCARD_BOOST_POWER",
+                    conv_opt->wildcard_boost_power, 0.0,
+                    "boost power for the wildcard subFST.");
+            if (conv_opt->wildcard_boost_power <= 0.0) {
+                ST_WARNING("boost_power normally should be larger than zero.");
+            }
+            break;
+
+        case WSM_MAJORITY:
+            ST_OPT_SEC_GET_DOUBLE(opt, sec_name, "THRESHOLD",
+                    conv_opt->threshold, 0.5,
+                    "Select the words with total probability larger than "
+                    "this threshold.");
+            break;
+        default:
+            break;
     }
 
     ST_OPT_SEC_GET_INT(opt, sec_name, "MAX_GRAM", conv_opt->max_gram, 0,
@@ -221,36 +268,6 @@ int fst_conv_load_opt(fst_conv_opt_t *conv_opt,
         goto ST_OPT_ERR;
     }
 
-    ST_OPT_SEC_GET_DOUBLE(opt, sec_name, "BOOST",
-            conv_opt->boost, 0.0,
-            "Boost probability for </s> during word selection.");
-    if (conv_opt->boost < 0.0 || conv_opt->boost > 1.0) {
-        ST_WARNING("boost must be in [0, 1].");
-        goto ST_OPT_ERR;
-    }
-
-    ST_OPT_SEC_GET_DOUBLE(opt, sec_name, "BOOST_POWER",
-            conv_opt->boost_power, 0.0,
-            "power to the num-gram for boost value. "
-            "e.g. cur_boost = boost * pow(num_grams, boost_power).");
-    if (conv_opt->boost_power <= 0.0) {
-        ST_WARNING("boost_power normally should be larger than zero.");
-    }
-
-    ST_OPT_SEC_GET_DOUBLE(opt, sec_name, "WILDCARD_BOOST",
-            conv_opt->wildcard_boost, 0.0,
-            "Boost probability for wildcard subFST.");
-    if (conv_opt->wildcard_boost < 0.0 || conv_opt->wildcard_boost > 1.0) {
-        ST_WARNING("boost must be in [0, 1].");
-        goto ST_OPT_ERR;
-    }
-
-    ST_OPT_SEC_GET_DOUBLE(opt, sec_name, "WILDCARD_BOOST_POWER",
-            conv_opt->wildcard_boost_power, 0.0,
-            "boost power for the wildcard subFST.");
-    if (conv_opt->wildcard_boost_power <= 0.0) {
-        ST_WARNING("boost_power normally should be larger than zero.");
-    }
     return 0;
 
 ST_OPT_ERR:
@@ -756,7 +773,7 @@ static int select_word(fst_conv_t *conv, int last_word,
     ST_CHECK_PARAM(conv == NULL || last_word < -1, -1);
 
     switch (conv->conv_opt.wsm) {
-        case WSM_DEFAULT:
+        case WSM_BASELINE:
             word = last_word + 1;
             while (word < get_vocab_size(conv)) {
                 if (word == SENT_END_ID) {
@@ -795,7 +812,7 @@ static int sort_selected_words(ws_method_t wsm,
     }
 
     switch (wsm) {
-        case WSM_DEFAULT:
+        case WSM_BASELINE:
             /* only need to reorder the </s> */
             n--;
             if (st_int_insert(selected_words, n + 1, &n, SENT_END_ID) < 0) {
