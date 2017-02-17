@@ -536,14 +536,6 @@ static int fst_conv_add_states(fst_conv_t *conv, int n,
         conv->fst_children[parent].num_children = n;
     }
 
-    if (sid / FST_CONV_LOG_STEP != (sid + n) / FST_CONV_LOG_STEP) {
-        ST_TRACE("Building states: %d, max gram: %d, "
-                "states to be expaned: %d",
-                sid / FST_CONV_LOG_STEP * FST_CONV_LOG_STEP,
-                conv->max_gram,
-                (parent == FST_SENT_START_STATE) ? n : sid + n - parent);
-    }
-
     return sid;
 
 RET:
@@ -1231,6 +1223,13 @@ static int fst_conv_expand(fst_conv_t *conv, fst_conv_args_t *args)
             ST_WARNING("Failed to fst_conv_print_arc.");
             return -1;
         }
+    }
+
+    if (sid % FST_CONV_LOG_STEP == 0) {
+        ST_TRACE("Expanded states: %d, max gram: %d, states to be expaned: %d",
+                sid, conv->max_gram,
+                (sid == FST_SENT_START_STATE) ? conv->n_fst_state - ret_sid
+                                              : conv->n_fst_state - sid);
     }
 
     return ret_sid;
