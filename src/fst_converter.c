@@ -102,8 +102,7 @@ static int fst_conv_args_init(fst_conv_args_t *args,
         goto ERR;
     }
 
-    args->selected_words = (int *)malloc(sizeof(int)
-            * get_vocab_size(conv));
+    args->selected_words = (int *)malloc(sizeof(int) * get_vocab_size(conv));
     if (args->selected_words == NULL) {
         ST_WARNING("Failed to malloc selected_words.");
         goto ERR;
@@ -256,6 +255,18 @@ int fst_conv_load_opt(fst_conv_opt_t *conv_opt,
                     conv_opt->threshold, 0.5,
                     "Select the words with total probability larger than "
                     "this threshold.");
+            if (conv_opt->threshold < 0.0 || conv_opt->threshold > 1.0) {
+                ST_WARNING("threshold must be in [0, 1].");
+                goto ST_OPT_ERR;
+            }
+
+            ST_OPT_SEC_GET_DOUBLE(opt, sec_name, "WILDCARD_THRESHOLD",
+                    conv_opt->wildcard_threshold, 0.5,
+                    "threhold for wildcard subFST.");
+            if (conv_opt->wildcard_threshold < 0.0 || conv_opt->wildcard_threshold > 1.0) {
+                ST_WARNING("wildcard_threshold must be in [0, 1].");
+                goto ST_OPT_ERR;
+            }
             break;
         default:
             break;
@@ -834,12 +845,67 @@ static int select_words_sampling(fst_conv_t *conv, double *output_probs,
     return 0;
 }
 
+static int prob_cmp(const void *elem1, const void *elem2, void *args)
+{
+    double prob1, prob2;
+    double *output_probs;
+
+    output_probs = (double *)args;
+
+    prob1 = output_probs[*((int *)elem1)];
+    prob2 = output_probs[*((int *)elem2)];
+
+    if (prob1 < prob2) {
+        return 1;
+    } else if (prob1 > prob2) {
+        return -1;
+    }
+
+    return 0;
+}
+
 static int select_words_majority(fst_conv_t *conv, double *output_probs,
         int *selected_words, int *num_selected,
         double threshold, unsigned int *rand_seed)
 {
+    int n;
+
+    double acc;
+    int i;
+    bool has_eos;
+
     ST_CHECK_PARAM(conv == NULL || output_probs == NULL
             || selected_words == NULL || num_selected == NULL, -1);
+
+    for (i = 0; i < get_vocab_size(conv); i++) {
+        selected_words[i] = i;
+    }
+
+    st_qsort(selected_words, get_vocab_size(conv), sizeof(int),
+            prob_cmp, (void *)output_probs);
+
+    acc = 0.0;
+    n = 0;
+    has_eos = false;
+    for (i = 0; i < get_vocab_size(conv); i++) {
+        acc += output_probs[selected_words[i]];
+        if (selected_words[i] == SENT_END_ID) {
+            has_eos = true;
+        }
+        n++;
+        if (acc >= threshold) {
+            break;
+        }
+    }
+
+    if (! has_eos) {
+        selected_words[n] = SENT_END_ID;
+        n++;
+    }
+
+    st_int_sort(selected_words, n);
+
+    *num_selected = n;
 
     return 0;
 }
@@ -1361,8 +1427,13 @@ static int fst_conv_build_wildcard(fst_conv_t *conv, fst_conv_args_t *args)
 
     for (i = 0; i < conv->n_thr; i++) {
         args[i].store_children = true;
-        args[i].boost = conv->conv_opt.wildcard_boost;
-        args[i].boost_power = conv->conv_opt.wildcard_boost_power;
+        if (conv->conv_opt.wsm == WSM_MAJORITY) {
+            args[i].boost = conv->conv_opt.wildcard_threshold;
+            args[i].boost_power = 0.0;
+        } else {
+            args[i].boost = conv->conv_opt.wildcard_boost;
+            args[i].boost_power = conv->conv_opt.wildcard_boost_power;
+        }
     }
 
     conv->fst_children = malloc(sizeof(fst_state_children_t)
@@ -1464,8 +1535,13 @@ static int fst_conv_build_normal(fst_conv_t *conv, fst_conv_args_t *args)
 
     for (i = 0; i < conv->n_thr; i++) {
         args[i].store_children = false;
-        args[i].boost = conv->conv_opt.boost;
-        args[i].boost_power = conv->conv_opt.boost_power;
+        if (conv->conv_opt.wsm == WSM_MAJORITY) {
+            args[i].boost = conv->conv_opt.threshold;
+            args[i].boost_power = 0.0;
+        } else {
+            args[i].boost = conv->conv_opt.boost;
+            args[i].boost_power = conv->conv_opt.boost_power;
+        }
     }
 
     args[0].sid = FST_SENT_START_STATE;
