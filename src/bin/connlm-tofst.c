@@ -90,8 +90,9 @@ void show_usage(const char *module_name)
             "Convert connLM Model to WFST",
             "<model> <fst-file>",
             "--wildcard-boost=0.006 --wildcard-boost-power=0.5 "
-            "--boost=0.004 --boost-power=0.8 --word-syms-file=exp/words.txt "
-            "exp/final.clm exp/g.txt",
+            "--boost=0.004 --boost-power=0.8 "
+            "--word-syms-file=exp/fst/words.txt "
+            "exp/final.clm exp/fst/g.txt",
       g_cmd_opt, NULL);
 }
 

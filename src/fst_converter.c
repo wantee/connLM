@@ -102,8 +102,7 @@ static int fst_conv_args_init(fst_conv_args_t *args,
         goto ERR;
     }
 
-    args->selected_words = (int *)malloc(sizeof(int)
-            * get_vocab_size(conv));
+    args->selected_words = (int *)malloc(sizeof(int) * get_vocab_size(conv));
     if (args->selected_words == NULL) {
         ST_WARNING("Failed to malloc selected_words.");
         goto ERR;
@@ -197,53 +196,89 @@ int fst_conv_load_opt(fst_conv_opt_t *conv_opt,
             "File to be written out state symbols(for debug).");
 
     ST_OPT_SEC_GET_STR(opt, sec_name, "WORD_SELECTION_METHOD",
-            method_str, MAX_ST_CONF_LEN, "Default",
-            "Word selection method(Default/Sampling)");
-    if (strcasecmp(method_str, "default") == 0) {
-        conv_opt->wsm = WSM_DEFAULT;
+            method_str, MAX_ST_CONF_LEN, "Baseline",
+            "Word selection method(Baseline/Sampling)");
+    if (strcasecmp(method_str, "baseline") == 0) {
+        conv_opt->wsm = WSM_BASELINE;
     } else if (strcasecmp(method_str, "sampling") == 0) {
         conv_opt->wsm = WSM_SAMPLING;
-
-        ST_OPT_SEC_GET_UINT(opt, sec_name, "INIT_RANDOM_SEED",
-                conv_opt->init_rand_seed, (unsigned int)time(NULL),
-                "Initial random seed, seed for each thread would be "
-                "incremented from this value. "
-                "Default is value of time(NULl).");
+    } else if (strcasecmp(method_str, "Majority") == 0) {
+        conv_opt->wsm = WSM_MAJORITY;
     } else {
         ST_WARNING("Unknown word selection method[%s].", method_str);
         goto ST_OPT_ERR;
     }
 
-    ST_OPT_SEC_GET_DOUBLE(opt, sec_name, "BOOST",
-            conv_opt->boost, 0.0,
-            "Boost probability for </s> during word selection.");
-    if (conv_opt->boost < 0.0 || conv_opt->boost > 1.0) {
-        ST_WARNING("boost must be in [0, 1].");
+    switch (conv_opt->wsm) {
+        case WSM_SAMPLING:
+            ST_OPT_SEC_GET_UINT(opt, sec_name, "INIT_RANDOM_SEED",
+                    conv_opt->init_rand_seed, (unsigned int)time(NULL),
+                    "Initial random seed, seed for each thread would be "
+                    "incremented from this value. "
+                    "Default is value of time(NULl).");
+            /* FALL THROUGH */
+        case WSM_BASELINE:
+            ST_OPT_SEC_GET_DOUBLE(opt, sec_name, "BOOST",
+                    conv_opt->boost, 0.0,
+                    "Boost probability for </s> during word selection.");
+            if (conv_opt->boost < 0.0 || conv_opt->boost > 1.0) {
+                ST_WARNING("boost must be in [0, 1].");
+                goto ST_OPT_ERR;
+            }
+
+            ST_OPT_SEC_GET_DOUBLE(opt, sec_name, "BOOST_POWER",
+                    conv_opt->boost_power, 0.0,
+                    "power to the num-gram for boost value. "
+                    "e.g. cur_boost = boost * pow(num_grams, boost_power).");
+            if (conv_opt->boost_power <= 0.0) {
+                ST_WARNING("boost_power normally should be larger than zero.");
+            }
+
+            ST_OPT_SEC_GET_DOUBLE(opt, sec_name, "WILDCARD_BOOST",
+                    conv_opt->wildcard_boost, 0.0,
+                    "Boost probability for wildcard subFST.");
+            if (conv_opt->wildcard_boost < 0.0 || conv_opt->wildcard_boost > 1.0) {
+                ST_WARNING("boost must be in [0, 1].");
+                goto ST_OPT_ERR;
+            }
+
+            ST_OPT_SEC_GET_DOUBLE(opt, sec_name, "WILDCARD_BOOST_POWER",
+                    conv_opt->wildcard_boost_power, 0.0,
+                    "boost power for the wildcard subFST.");
+            if (conv_opt->wildcard_boost_power <= 0.0) {
+                ST_WARNING("boost_power normally should be larger than zero.");
+            }
+            break;
+
+        case WSM_MAJORITY:
+            ST_OPT_SEC_GET_DOUBLE(opt, sec_name, "THRESHOLD",
+                    conv_opt->threshold, 0.5,
+                    "Select the words with total probability larger than "
+                    "this threshold.");
+            if (conv_opt->threshold < 0.0 || conv_opt->threshold > 1.0) {
+                ST_WARNING("threshold must be in [0, 1].");
+                goto ST_OPT_ERR;
+            }
+
+            ST_OPT_SEC_GET_DOUBLE(opt, sec_name, "WILDCARD_THRESHOLD",
+                    conv_opt->wildcard_threshold, 0.5,
+                    "threhold for wildcard subFST.");
+            if (conv_opt->wildcard_threshold < 0.0 || conv_opt->wildcard_threshold > 1.0) {
+                ST_WARNING("wildcard_threshold must be in [0, 1].");
+                goto ST_OPT_ERR;
+            }
+            break;
+        default:
+            break;
+    }
+
+    ST_OPT_SEC_GET_INT(opt, sec_name, "MAX_GRAM", conv_opt->max_gram, 0,
+        "Maximum gram to be expaned(no limits if less than or equal to 0).");
+    if (conv_opt->max_gram > 0 && conv_opt->max_gram <= 2) {
+        ST_WARNING("MAX_GRAM must be larger than 2.");
         goto ST_OPT_ERR;
     }
 
-    ST_OPT_SEC_GET_DOUBLE(opt, sec_name, "BOOST_POWER",
-            conv_opt->boost_power, 0.0,
-            "power to the num-gram for boost value. "
-            "e.g. cur_boost = boost * pow(num_grams, boost_power).");
-    if (conv_opt->boost_power <= 0.0) {
-        ST_WARNING("boost_power normally should be larger than zero.");
-    }
-
-    ST_OPT_SEC_GET_DOUBLE(opt, sec_name, "WILDCARD_BOOST",
-            conv_opt->wildcard_boost, 0.0,
-            "Boost probability for wildcard subFST.");
-    if (conv_opt->wildcard_boost < 0.0 || conv_opt->wildcard_boost > 1.0) {
-        ST_WARNING("boost must be in [0, 1].");
-        goto ST_OPT_ERR;
-    }
-
-    ST_OPT_SEC_GET_DOUBLE(opt, sec_name, "WILDCARD_BOOST_POWER",
-            conv_opt->wildcard_boost_power, 0.0,
-            "boost power for the wildcard subFST.");
-    if (conv_opt->wildcard_boost_power <= 0.0) {
-        ST_WARNING("boost_power normally should be larger than zero.");
-    }
     return 0;
 
 ST_OPT_ERR:
@@ -529,14 +564,6 @@ static int fst_conv_add_states(fst_conv_t *conv, int n,
         conv->fst_children[parent].num_children = n;
     }
 
-    if (sid / FST_CONV_LOG_STEP != (sid + n) / FST_CONV_LOG_STEP) {
-        ST_TRACE("Building states: %d, max gram: %d, "
-                "states to be expaned: %d",
-                sid / FST_CONV_LOG_STEP * FST_CONV_LOG_STEP,
-                conv->max_gram,
-                (parent == FST_SENT_START_STATE) ? n : sid + n - parent);
-    }
-
     return sid;
 
 RET:
@@ -699,6 +726,28 @@ UNLOCK_AND_ERR:
 
 }
 
+static int select_words_baseline(fst_conv_t *conv, double *output_probs,
+        int *selected_words, int *num_selected,
+        double boost, unsigned int *rand_seed)
+{
+    int word;
+    int n;
+
+    ST_CHECK_PARAM(conv == NULL || output_probs == NULL
+            || selected_words == NULL || num_selected == NULL, -1);
+
+    n = 0;
+    for (word = 0; word < get_vocab_size(conv); word++) {
+        if (word == SENT_END_ID
+                || output_probs[word] >= output_probs[SENT_END_ID] + boost) {
+            selected_words[n++] = word;
+        }
+    }
+    *num_selected = n;
+
+    return 0;
+}
+
 // probs contains the probability for all words,
 // a negtive prob represents the word has been selected in the past.
 static int boost_sampling(double *probs, int n_probs,
@@ -749,63 +798,145 @@ static int boost_sampling(double *probs, int n_probs,
     return word;
 }
 
-static int select_word(fst_conv_t *conv, int last_word,
-        double *output_probs, double boost, unsigned int *rand_seed)
+static int select_words_sampling(fst_conv_t *conv, double *output_probs,
+        int *selected_words, int *num_selected,
+        double boost, unsigned int *rand_seed)
 {
     int word;
+    int n;
 
-    ST_CHECK_PARAM(conv == NULL || last_word < -1, -1);
+    int i;
 
-    switch (conv->conv_opt.wsm) {
-        case WSM_DEFAULT:
-            word = last_word + 1;
-            while (word < get_vocab_size(conv)) {
-                if (word == SENT_END_ID) {
-                    ++word;
-                    continue;
-                }
-                if (output_probs[word] >= output_probs[SENT_END_ID]
-                        + boost) {
-                    return word;
-                }
-                ++word;
-            }
+    ST_CHECK_PARAM(conv == NULL || output_probs == NULL
+            || selected_words == NULL || num_selected == NULL, -1);
 
-            return SENT_END_ID;
-            break;
-        case WSM_SAMPLING:
-            return boost_sampling(output_probs, get_vocab_size(conv),
-                    boost, rand_seed);
-            break;
-        default:
-            ST_WARNING("Unkown word selection method");
+    n = 0;
+    word = -1;
+    while(true) {
+        word = boost_sampling(output_probs, get_vocab_size(conv),
+                boost, rand_seed);
+        if (word < 0) {
+            ST_WARNING("Failed to boost_sampling.");
             return -1;
+        }
+
+        assert(n < get_vocab_size(conv));
+
+        selected_words[n] = word;
+        n++;
+
+        // avoid selecting the same word next time
+        output_probs[word] = -output_probs[word];
+
+        if (word == SENT_END_ID) {
+            break;
+        }
+    }
+    *num_selected = n;
+
+    // recover probs for selected words
+    for (i = 0; i < n; i++) {
+        word = selected_words[i];
+        output_probs[word] = -output_probs[word];
     }
 
-    return -1;
+    st_int_sort(selected_words, n);
+
+    return 0;
 }
 
-static int sort_selected_words(ws_method_t wsm,
-        int *selected_words, int n)
+static int prob_cmp(const void *elem1, const void *elem2, void *args)
 {
-    ST_CHECK_PARAM(selected_words == NULL, -1);
+    double prob1, prob2;
+    double *output_probs;
 
-    if (selected_words[n - 1] != SENT_END_ID) {
-        ST_WARNING("The last word in selected_words should be " SENT_END);
+    output_probs = (double *)args;
+
+    prob1 = output_probs[*((int *)elem1)];
+    prob2 = output_probs[*((int *)elem2)];
+
+    if (prob1 < prob2) {
+        return 1;
+    } else if (prob1 > prob2) {
         return -1;
     }
 
-    switch (wsm) {
-        case WSM_DEFAULT:
-            /* only need to reorder the </s> */
-            n--;
-            if (st_int_insert(selected_words, n + 1, &n, SENT_END_ID) < 0) {
-                ST_WARNING("Failed to st_int_insert.");
+    return 0;
+}
+
+static int select_words_majority(fst_conv_t *conv, double *output_probs,
+        int *selected_words, int *num_selected,
+        double threshold, unsigned int *rand_seed)
+{
+    int n;
+
+    double acc;
+    int i;
+    bool has_eos;
+
+    ST_CHECK_PARAM(conv == NULL || output_probs == NULL
+            || selected_words == NULL || num_selected == NULL, -1);
+
+    for (i = 0; i < get_vocab_size(conv); i++) {
+        selected_words[i] = i;
+    }
+
+    st_qsort(selected_words, get_vocab_size(conv), sizeof(int),
+            prob_cmp, (void *)output_probs);
+
+    acc = 0.0;
+    n = 0;
+    has_eos = false;
+    for (i = 0; i < get_vocab_size(conv); i++) {
+        acc += output_probs[selected_words[i]];
+        if (selected_words[i] == SENT_END_ID) {
+            has_eos = true;
+        }
+        n++;
+        if (acc >= threshold) {
+            break;
+        }
+    }
+
+    if (! has_eos) {
+        selected_words[n] = SENT_END_ID;
+        n++;
+    }
+
+    st_int_sort(selected_words, n);
+
+    *num_selected = n;
+
+    return 0;
+}
+
+static int select_words(fst_conv_t *conv, double *output_probs,
+        int *selected_words, int *num_selected,
+        double param, unsigned int *rand_seed)
+{
+    ST_CHECK_PARAM(conv == NULL, -1);
+
+    switch (conv->conv_opt.wsm) {
+        case WSM_BASELINE:
+            if (select_words_baseline(conv, output_probs,
+                    selected_words, num_selected, param, rand_seed) < 0) {
+                ST_WARNING("Failed to select_words_baseline.");
                 return -1;
             }
             break;
         case WSM_SAMPLING:
-            st_int_sort(selected_words, n);
+            if (select_words_sampling(conv, output_probs,
+                    selected_words, num_selected, param, rand_seed) < 0) {
+                ST_WARNING("Failed to select_words_sampling.");
+                return -1;
+            }
+            break;
+        case WSM_MAJORITY:
+            if (select_words_majority(conv, output_probs,
+                    selected_words, num_selected, param, rand_seed) < 0) {
+                ST_WARNING("Failed to select_words_majority.");
+                return -1;
+            }
             break;
         default:
             ST_WARNING("Unkown word selection method");
@@ -1025,9 +1156,11 @@ static int fst_conv_expand(fst_conv_t *conv, fst_conv_args_t *args)
         ST_WARNING("Failed to fst_conv_find_word_hist");
         return -1;
     }
+
     if (args->num_word_hist + 1 > conv->max_gram) {
         conv->max_gram = args->num_word_hist + 1;
     }
+
     boost = args->boost * pow(args->num_word_hist, args->boost_power);
 
     // do not feed wordhist with the leading <s>
@@ -1077,8 +1210,8 @@ static int fst_conv_expand(fst_conv_t *conv, fst_conv_args_t *args)
     }
 
     // select words
+    n = 0;
     if (no_backoff) {
-        n = 0;
         for (word = 0; word < get_vocab_size(conv); word++) {
             if (output_probs[word] <= 0.0) {
                 continue;
@@ -1087,38 +1220,18 @@ static int fst_conv_expand(fst_conv_t *conv, fst_conv_args_t *args)
             n++;
         }
     } else {
-        n = 0;
-        word = -1;
-        while(true) {
-            word = select_word(conv, word, output_probs, boost,
-                    &args->rand_seed);
-            if (word < 0) {
-                ST_WARNING("Failed to select_word.");
+        if (conv->conv_opt.max_gram > 0
+                && args->num_word_hist + 1 >= conv->conv_opt.max_gram) {
+            n = 1;
+            args->selected_words[0] = SENT_END_ID;
+        } else {
+            if (select_words(conv, output_probs, args->selected_words, &n,
+                        boost, &args->rand_seed) < 0) {
+                ST_WARNING("Failed to select_words.");
                 return -1;
             }
 
             assert(n < get_vocab_size(conv));
-
-            args->selected_words[n] = word;
-            n++;
-
-            // avoid selecting the same word next time
-            output_probs[word] = -output_probs[word];
-
-            if (word == SENT_END_ID) {
-                break;
-            }
-        }
-
-        // recover probs for selected words
-        for (i = 0; i < n; i++) {
-            word = args->selected_words[i];
-            output_probs[word] = -output_probs[word];
-        }
-        if (sort_selected_words(conv->conv_opt.wsm,
-                    args->selected_words, n) < 0) {
-            ST_WARNING("Failed to sort_selected_words.");
-            return -1;
         }
 
         backoff_sid = fst_conv_find_backoff(conv, args->word_hist,
@@ -1218,6 +1331,13 @@ static int fst_conv_expand(fst_conv_t *conv, fst_conv_args_t *args)
         }
     }
 
+    if (sid % FST_CONV_LOG_STEP == 0) {
+        ST_TRACE("Expanded states: %d, max gram: %d, states to be expaned: %d",
+                sid, conv->max_gram,
+                (sid == FST_SENT_START_STATE) ? conv->n_fst_state - ret_sid
+                                              : conv->n_fst_state - sid);
+    }
+
     return ret_sid;
 }
 
@@ -1307,8 +1427,13 @@ static int fst_conv_build_wildcard(fst_conv_t *conv, fst_conv_args_t *args)
 
     for (i = 0; i < conv->n_thr; i++) {
         args[i].store_children = true;
-        args[i].boost = conv->conv_opt.wildcard_boost;
-        args[i].boost_power = conv->conv_opt.wildcard_boost_power;
+        if (conv->conv_opt.wsm == WSM_MAJORITY) {
+            args[i].boost = conv->conv_opt.wildcard_threshold;
+            args[i].boost_power = 0.0;
+        } else {
+            args[i].boost = conv->conv_opt.wildcard_boost;
+            args[i].boost_power = conv->conv_opt.wildcard_boost_power;
+        }
     }
 
     conv->fst_children = malloc(sizeof(fst_state_children_t)
@@ -1410,8 +1535,13 @@ static int fst_conv_build_normal(fst_conv_t *conv, fst_conv_args_t *args)
 
     for (i = 0; i < conv->n_thr; i++) {
         args[i].store_children = false;
-        args[i].boost = conv->conv_opt.boost;
-        args[i].boost_power = conv->conv_opt.boost_power;
+        if (conv->conv_opt.wsm == WSM_MAJORITY) {
+            args[i].boost = conv->conv_opt.threshold;
+            args[i].boost_power = 0.0;
+        } else {
+            args[i].boost = conv->conv_opt.boost;
+            args[i].boost_power = conv->conv_opt.boost_power;
+        }
     }
 
     args[0].sid = FST_SENT_START_STATE;

@@ -49,8 +49,9 @@ extern "C" {
  */
 typedef enum _word_selection_method_t_ {
     WSM_UNKNOWN = -1, /**< Unknown method. */
-    WSM_DEFAULT = 0, /**< Default method. */
-    WSM_SAMPLING = 1, /**< Sampling method. */
+    WSM_BASELINE = 0, /**< Baseline method. Select words with probabilty larger than \</s\>. */
+    WSM_SAMPLING = 1, /**< Sampling method. Sample words until meeting \</s\>. */
+    WSM_MAJORITY = 2, /**< Majority method. Select words with total probabilty larger than a threshold. */
 } ws_method_t;
 
 /**
@@ -63,12 +64,15 @@ typedef struct _fst_converter_opt_t_ {
 
     char word_syms_file[MAX_DIR_LEN]; /**< word symbols file. */
     char state_syms_file[MAX_DIR_LEN]; /**< state symbols file. */
+    int max_gram; /**< maximum gram to be expaned. */
     ws_method_t wsm; /**< word selection method. */
     double boost; /**< initial boost for \</s\> during word selection. */
     double boost_power; /**< power to the num-gram for boost value.
                          e.g. cur_boost = boost * pow(num_grams, boost_power).*/
     double wildcard_boost; /**< initial boost for wildcard subFST. */
     double wildcard_boost_power; /**< boost power for wildcard subFST. */
+    double threshold; /**< Threshold for majority. */
+    double wildcard_threshold; /**< Threshold for majority of wildcard subFST. */
 
     unsigned int init_rand_seed; /**< initial random seed. */
 } fst_conv_opt_t;
