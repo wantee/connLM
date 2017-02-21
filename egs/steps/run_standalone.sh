@@ -17,7 +17,7 @@ function print_help()
   echo "options: "
   echo "     --train-thr <threads>    # default: 1."
   echo "     --eval-thr <threads>     # default: 1."
-  echo "     --stage <stags>          # default: \"\"."
+  echo "     --stage <stages>         # default: \"\"."
   echo "     --start-halving-impr <value>         # default: 0.003, improvement starting halving"
   echo "     --end-halving-impr <value>           # default: 0.0003, improvement ending halving"
 }

@@ -709,6 +709,7 @@ static int fst_conv_print_arc(fst_conv_t *conv,
             goto UNLOCK_AND_ERR;
         }
     }
+    conv->num_arcs++;
     if (pthread_mutex_unlock(&conv->fst_fp_lock) != 0) {
         ST_WARNING("Failed to pthread_mutex_lock fst_fp_lock.");
         return -1;
@@ -1601,6 +1602,7 @@ int fst_conv_convert(fst_conv_t *conv, FILE *fst_fp)
     struct timeval tt0, tt1, tt2;
 
     int num_state;
+    int num_arcs;
     int max_gram;
 
     ST_CHECK_PARAM(conv == NULL || fst_fp == NULL, -1);
@@ -1659,10 +1661,11 @@ int fst_conv_convert(fst_conv_t *conv, FILE *fst_fp)
     }
     gettimeofday(&tt1, NULL);
     ST_NOTICE("Total states in wildcard subFST: %d (max_gram = %d). "
-            "Elapsed time: %.3fs.",
-            conv->n_fst_state, conv->max_gram,
+            "Total arcs: %d. Elapsed time: %.3fs.",
+            conv->n_fst_state, conv->max_gram, conv->num_arcs,
             TIMEDIFF(tt0, tt1) / 1000.0);
     num_state = conv->n_fst_state;
+    num_arcs = conv->num_arcs;
     max_gram = conv->max_gram;
 
     if (fst_conv_reset(conv, args) < 0) {
@@ -1678,13 +1681,14 @@ int fst_conv_convert(fst_conv_t *conv, FILE *fst_fp)
     }
     gettimeofday(&tt2, NULL);
     ST_NOTICE("Total states in normal subFST: %d (max_gram = %d). "
-            "Elapsed time: %.3fs.",
+            "Total arcs: %d, Elapsed time: %.3fs.",
             conv->n_fst_state - num_state, conv->max_gram,
+            conv->num_arcs - num_arcs,
             TIMEDIFF(tt1, tt2) / 1000.0);
     max_gram = max(max_gram, conv->max_gram);
     ST_NOTICE("Total states in FST: %d (max_gram = %d). "
-            "Elapsed time: %.3fs.",
-            conv->n_fst_state, max_gram,
+            "Total arcs: %d, Elapsed time: %.3fs.",
+            conv->n_fst_state, max_gram, conv->num_arcs,
             TIMEDIFF(tt0, tt2) / 1000.0);
 
     safe_fst_conv_args_list_destroy(args, conv->n_thr);
