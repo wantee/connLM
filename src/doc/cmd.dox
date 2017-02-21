@@ -70,6 +70,27 @@
   The low level I/O in connLM use the
   <a href="https://github.com/wantee/stutils">stutils</a> library.
 
+  All command line tools provide @c \-\-config option to specify a
+  configuration file (note that option passed by command line would override
+  the value in configuration file), @c \-\-log-file and @c \-\-log-level
+  options to specify logging file location and logging level. For all tools
+  that will save a model, one can pass @c \-\-binary to control whether to
+  save the model in binary format.
+
+  User could get the help message of a command line tool by typing the name
+  of command line and @c \-\-help option or just typing the name. Note that,
+  there are some options are only valid or have different default values,
+  when a related 'switch' option is set to a different value. One could make it
+  show the 'hidden' option or default values by typing the command line with
+  the 'switch' option set by the desired value and leave other option not set.
+  For example, by default, typing @c connlm-output would show the default
+  values for @c \-\-max-depth and @c \-\-max-branch for 'TopDown' method,
+  however, if the command line is
+  @code{.sh}
+  connlm-output --help --method=BottomUp
+  @endcode
+  The two default values for 'BottomUp' would be shown.
+
   @section cmd_vocab The connlm-vocab
 
   @c connlm-vocab is used for learning vocabulary from text source.

@@ -709,6 +709,7 @@ static int fst_conv_print_arc(fst_conv_t *conv,
             goto UNLOCK_AND_ERR;
         }
     }
+    conv->num_arcs++;
     if (pthread_mutex_unlock(&conv->fst_fp_lock) != 0) {
         ST_WARNING("Failed to pthread_mutex_lock fst_fp_lock.");
         return -1;
@@ -1161,79 +1162,11 @@ static int fst_conv_expand(fst_conv_t *conv, fst_conv_args_t *args)
         conv->max_gram = args->num_word_hist + 1;
     }
 
-    boost = args->boost * pow(args->num_word_hist, args->boost_power);
-
-    // do not feed wordhist with the leading <s>
-    if (updater_step_with_state(updater, state, args->word_hist + 1,
-                args->num_word_hist - 1, output_probs) < 0) {
-        ST_WARNING("Failed to updater_step_with_state.");
-        return -1;
-    }
-
-    if (conv->model_state_cache != NULL) {
-        if (conv->fst_states[sid].model_state_id >= 0) {
-            if (st_block_cache_return(conv->model_state_cache,
-                        conv->fst_states[sid].model_state_id) < 0) {
-                ST_WARNING("Failed to st_block_cache_return.");
-                return -1;
-            }
-            conv->fst_states[sid].model_state_id = -1;
-        }
-
-        model_state_id = -1;
-        new_state = (real_t *)st_block_cache_fetch(conv->model_state_cache,
-                &model_state_id);
-        if (new_state == NULL) {
-            ST_WARNING("Failed to st_block_cache_fetch.");
-            return -1;
-        }
-
-        if (updater_dump_state(updater, new_state) < 0) {
-            ST_WARNING("Failed to updater_dump_state.");
-            return -1;
-        }
-    }
-
-    // logprob2prob
-    for (i = 0; i < output_size; i++) {
-        output_probs[i] = exp(output_probs[i]);
-    }
-
-    if (! conv->conv_opt.output_unk) {
-        output_probs[UNK_ID] = -output_probs[UNK_ID];
-    }
-
     no_backoff = false;
     if (conv->fst_states[sid].word_id == SENT_START_ID
             || conv->fst_states[sid].word_id == ANY_ID) {
         no_backoff = true;
-    }
-
-    // select words
-    n = 0;
-    if (no_backoff) {
-        for (word = 0; word < get_vocab_size(conv); word++) {
-            if (output_probs[word] <= 0.0) {
-                continue;
-            }
-            args->selected_words[n] = word;
-            n++;
-        }
     } else {
-        if (conv->conv_opt.max_gram > 0
-                && args->num_word_hist + 1 >= conv->conv_opt.max_gram) {
-            n = 1;
-            args->selected_words[0] = SENT_END_ID;
-        } else {
-            if (select_words(conv, output_probs, args->selected_words, &n,
-                        boost, &args->rand_seed) < 0) {
-                ST_WARNING("Failed to select_words.");
-                return -1;
-            }
-
-            assert(n < get_vocab_size(conv));
-        }
-
         backoff_sid = fst_conv_find_backoff(conv, args->word_hist,
                 args->num_word_hist, sid);
         if (backoff_sid < 0) {
@@ -1253,64 +1186,131 @@ static int fst_conv_expand(fst_conv_t *conv, fst_conv_args_t *args)
         denominator = 1.0;
     }
 
+    if (conv->conv_opt.max_gram > 0
+            && args->num_word_hist + 1 >= conv->conv_opt.max_gram) {
+        ret_sid = sid;
+    } else {
+        boost = args->boost * pow(args->num_word_hist, args->boost_power);
 
-    new_sid = fst_conv_add_states(conv, n - 1/* -1 for </s> */, sid,
-            args->store_children);
-    if (new_sid < 0) {
-        ST_WARNING("Failed to fst_conv_add_states.");
-        return -1;
-    }
-    ret_sid = new_sid;
-
-    for (i = 0; i < n; i++) {
-        word = args->selected_words[i];
-
-        if (!no_backoff) {
-            nominator -= output_probs[word];
-            if (fst_conv_get_prob(conv, backoff_sid, word, &backoff_prob) < 0) {
-                ST_WARNING("Failed to fst_conv_get_prob.");
-                return -1;
-            }
-            denominator -= backoff_prob;
+        // do not feed wordhist with the leading <s>
+        if (updater_step_with_state(updater, state, args->word_hist + 1,
+                    args->num_word_hist - 1, output_probs) < 0) {
+            ST_WARNING("Failed to updater_step_with_state.");
+            return -1;
         }
 
-        if (word == SENT_END_ID) {
-            to_sid = FST_FINAL_STATE;
-        } else {
-            to_sid = new_sid++;
-            assert(to_sid < ret_sid + n - 1);
-            conv->fst_states[to_sid].word_id = word;
-            if (conv->model_state_cache != NULL) {
-                conv->fst_states[to_sid].model_state_id = model_state_id;
-                // hold state_cache
-                if (st_block_cache_fetch(conv->model_state_cache,
-                            &model_state_id) == NULL) {
-                    ST_WARNING("Failed to st_block_cache_fetch.");
+        if (conv->model_state_cache != NULL) {
+            if (conv->fst_states[sid].model_state_id >= 0) {
+                if (st_block_cache_return(conv->model_state_cache,
+                            conv->fst_states[sid].model_state_id) < 0) {
+                    ST_WARNING("Failed to st_block_cache_return.");
                     return -1;
                 }
-                assert(conv->fst_states[to_sid].model_state_id
-                        == model_state_id);
+                conv->fst_states[sid].model_state_id = -1;
             }
 
-            if (fst_conv_print_ssyms(conv, to_sid, args->word_hist,
-                        args->num_word_hist, word) < 0) {
-                ST_WARNING("Failed to fst_conv_print_ssyms.");
+            model_state_id = -1;
+            new_state = (real_t *)st_block_cache_fetch(conv->model_state_cache,
+                    &model_state_id);
+            if (new_state == NULL) {
+                ST_WARNING("Failed to st_block_cache_fetch.");
+                return -1;
+            }
+
+            if (updater_dump_state(updater, new_state) < 0) {
+                ST_WARNING("Failed to updater_dump_state.");
                 return -1;
             }
         }
 
-        if (fst_conv_print_arc(conv, sid,
-                    to_sid, word, output_probs[word]) < 0) {
-            ST_WARNING("Failed to fst_conv_print_arc.");
+        // logprob2prob
+        for (i = 0; i < output_size; i++) {
+            output_probs[i] = exp(output_probs[i]);
+        }
+
+        if (! conv->conv_opt.output_unk) {
+            output_probs[UNK_ID] = -output_probs[UNK_ID];
+        }
+
+        // select words
+        n = 0;
+        if (no_backoff) {
+            for (word = 0; word < get_vocab_size(conv); word++) {
+                if (output_probs[word] <= 0.0) {
+                    continue;
+                }
+                args->selected_words[n] = word;
+                n++;
+            }
+        } else {
+            if (select_words(conv, output_probs, args->selected_words, &n,
+                        boost, &args->rand_seed) < 0) {
+                ST_WARNING("Failed to select_words.");
+                return -1;
+            }
+
+            assert(n < get_vocab_size(conv));
+        }
+
+
+        new_sid = fst_conv_add_states(conv, n - 1/* -1 for </s> */, sid,
+                args->store_children);
+        if (new_sid < 0) {
+            ST_WARNING("Failed to fst_conv_add_states.");
             return -1;
         }
-    }
+        ret_sid = new_sid;
 
-    if (conv->model_state_cache != NULL) {
-        if (st_block_cache_return(conv->model_state_cache,
-                    model_state_id) < 0) {
-            ST_WARNING("Failed to st_block_cache_return.");
-            return -1;
+        for (i = 0; i < n; i++) {
+            word = args->selected_words[i];
+
+            if (!no_backoff) {
+                nominator -= output_probs[word];
+                if (fst_conv_get_prob(conv, backoff_sid, word, &backoff_prob) < 0) {
+                    ST_WARNING("Failed to fst_conv_get_prob.");
+                    return -1;
+                }
+                denominator -= backoff_prob;
+            }
+
+            if (word == SENT_END_ID) {
+                to_sid = FST_FINAL_STATE;
+            } else {
+                to_sid = new_sid++;
+                assert(to_sid < ret_sid + n - 1);
+                conv->fst_states[to_sid].word_id = word;
+                if (conv->model_state_cache != NULL) {
+                    conv->fst_states[to_sid].model_state_id = model_state_id;
+                    // hold state_cache
+                    if (st_block_cache_fetch(conv->model_state_cache,
+                                &model_state_id) == NULL) {
+                        ST_WARNING("Failed to st_block_cache_fetch.");
+                        return -1;
+                    }
+                    assert(conv->fst_states[to_sid].model_state_id
+                            == model_state_id);
+                }
+
+                if (fst_conv_print_ssyms(conv, to_sid, args->word_hist,
+                            args->num_word_hist, word) < 0) {
+                    ST_WARNING("Failed to fst_conv_print_ssyms.");
+                    return -1;
+                }
+            }
+
+            if (fst_conv_print_arc(conv, sid,
+                        to_sid, word, output_probs[word]) < 0) {
+                ST_WARNING("Failed to fst_conv_print_arc.");
+                return -1;
+            }
+        }
+
+        if (conv->model_state_cache != NULL) {
+            if (st_block_cache_return(conv->model_state_cache,
+                        model_state_id) < 0) {
+                ST_WARNING("Failed to st_block_cache_return.");
+                return -1;
+            }
         }
     }
 
@@ -1601,6 +1601,7 @@ int fst_conv_convert(fst_conv_t *conv, FILE *fst_fp)
     struct timeval tt0, tt1, tt2;
 
     int num_state;
+    int num_arcs;
     int max_gram;
 
     ST_CHECK_PARAM(conv == NULL || fst_fp == NULL, -1);
@@ -1659,10 +1660,11 @@ int fst_conv_convert(fst_conv_t *conv, FILE *fst_fp)
     }
     gettimeofday(&tt1, NULL);
     ST_NOTICE("Total states in wildcard subFST: %d (max_gram = %d). "
-            "Elapsed time: %.3fs.",
-            conv->n_fst_state, conv->max_gram,
+            "Total arcs: %d. Elapsed time: %.3fs.",
+            conv->n_fst_state, conv->max_gram, conv->num_arcs,
             TIMEDIFF(tt0, tt1) / 1000.0);
     num_state = conv->n_fst_state;
+    num_arcs = conv->num_arcs;
     max_gram = conv->max_gram;
 
     if (fst_conv_reset(conv, args) < 0) {
@@ -1678,13 +1680,14 @@ int fst_conv_convert(fst_conv_t *conv, FILE *fst_fp)
     }
     gettimeofday(&tt2, NULL);
     ST_NOTICE("Total states in normal subFST: %d (max_gram = %d). "
-            "Elapsed time: %.3fs.",
+            "Total arcs: %d, Elapsed time: %.3fs.",
             conv->n_fst_state - num_state, conv->max_gram,
+            conv->num_arcs - num_arcs,
             TIMEDIFF(tt1, tt2) / 1000.0);
     max_gram = max(max_gram, conv->max_gram);
     ST_NOTICE("Total states in FST: %d (max_gram = %d). "
-            "Elapsed time: %.3fs.",
-            conv->n_fst_state, max_gram,
+            "Total arcs: %d, Elapsed time: %.3fs.",
+            conv->n_fst_state, max_gram, conv->num_arcs,
             TIMEDIFF(tt0, tt2) / 1000.0);
 
     safe_fst_conv_args_list_destroy(args, conv->n_thr);

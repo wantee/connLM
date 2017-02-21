@@ -140,6 +140,7 @@ typedef struct _fst_converter_t_ {
     pthread_mutex_t ssyms_fp_lock; /**< lock for ssyms_fp. */
 
     int max_gram; /**< max order of gram for the fst. */
+    int num_arcs; /**< number of arcs in fst. */
 
     fst_conv_opt_t conv_opt; /**< options. */
 } fst_conv_t;
