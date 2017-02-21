@@ -3,8 +3,8 @@ Step 1: Learn Vocab ...
 ../steps/learn_vocab.sh --config-file test/tmp/case-26/exp/conf/vocab.conf ./data/train test/tmp/case-26/exp
 ../steps/learn_vocab.sh: Learning vocab test/tmp/case-26/exp/vocab.clm from ./data/train
 =================================
-Words:  81350
-Vocab size:  3721
+Words: 81350
+Vocab size: 3721
 =================================
 ../steps/learn_vocab.sh: Elapse time: 1s
 
@@ -17,35 +17,35 @@ Step 7: Train RNN+MaxEnt model ...
 ../steps/run_standalone.sh: Stage 2 --- Training model...
 ../steps/train_model.sh --train-config test/tmp/case-26/exp/conf/rnn+maxent/train.conf --eval-config test/tmp/case-26/exp/conf/eval.conf --train-threads 1 --eval-threads 1 --start-halving-impr 0.003 --end-halving-impr 0.0003 ./data/train ./data/valid test/tmp/case-26/exp/rnn+maxent
 Prerun Valid Entropy: 8.858427
-ITERATION 01: LR(maxent^direct=0.05 rnn^emb=0.3 rnn^out=0.05 rnn^recur=0.3), TrEnt 6.822681, W/s 18.6k, CVEnt: 6.823265
+ITERATION 01: LR(maxent^direct=0.05 rnn^emb=0.3 rnn^out=0.05 rnn^recur=0.3), TrEnt 6.822681, W/s 18.7k, CVEnt: 6.823265
 nnet accepted (01.clm)
-ITERATION 02: LR(maxent^direct=0.05 rnn^emb=0.3 rnn^out=0.05 rnn^recur=0.3), TrEnt 6.360855, W/s 18.4k, CVEnt: 6.731847
+ITERATION 02: LR(maxent^direct=0.05 rnn^emb=0.3 rnn^out=0.05 rnn^recur=0.3), TrEnt 6.360855, W/s 18.9k, CVEnt: 6.731847
 nnet accepted (02.clm)
-ITERATION 03: LR(maxent^direct=0.05 rnn^emb=0.3 rnn^out=0.05 rnn^recur=0.3), TrEnt 6.122696, W/s 18.7k, CVEnt: 6.744518
+ITERATION 03: LR(maxent^direct=0.05 rnn^emb=0.3 rnn^out=0.05 rnn^recur=0.3), TrEnt 6.122696, W/s 18.9k, CVEnt: 6.744518
 nnet rejected (03.clm)
-ITERATION 04: LR(maxent^direct=0.025 rnn^emb=0.15 rnn^out=0.025 rnn^recur=0.15), TrEnt 6.000243, W/s 18.7k, CVEnt: 6.627272
+ITERATION 04: LR(maxent^direct=0.025 rnn^emb=0.15 rnn^out=0.025 rnn^recur=0.15), TrEnt 6.000243, W/s 18.8k, CVEnt: 6.627272
 nnet accepted (04.clm)
-ITERATION 05: LR(maxent^direct=0.0125 rnn^emb=0.075 rnn^out=0.0125 rnn^recur=0.075), TrEnt 5.833066, W/s 18.6k, CVEnt: 6.549124
+ITERATION 05: LR(maxent^direct=0.0125 rnn^emb=0.075 rnn^out=0.0125 rnn^recur=0.075), TrEnt 5.833066, W/s 18.9k, CVEnt: 6.549124
 nnet accepted (05.clm)
-ITERATION 06: LR(maxent^direct=0.00625 rnn^emb=0.0375 rnn^out=0.00625 rnn^recur=0.0375), TrEnt 5.751603, W/s 18.6k, CVEnt: 6.511179
+ITERATION 06: LR(maxent^direct=0.00625 rnn^emb=0.0375 rnn^out=0.00625 rnn^recur=0.0375), TrEnt 5.751603, W/s 18.8k, CVEnt: 6.511179
 nnet accepted (06.clm)
-ITERATION 07: LR(maxent^direct=0.003125 rnn^emb=0.01875 rnn^out=0.003125 rnn^recur=0.01875), TrEnt 5.711523, W/s 18.0k, CVEnt: 6.485633
+ITERATION 07: LR(maxent^direct=0.003125 rnn^emb=0.01875 rnn^out=0.003125 rnn^recur=0.01875), TrEnt 5.711523, W/s 18.8k, CVEnt: 6.485633
 nnet accepted (07.clm)
-ITERATION 08: LR(maxent^direct=0.0015625 rnn^emb=0.009375 rnn^out=0.0015625 rnn^recur=0.009375), TrEnt 5.691402, W/s 17.8k, CVEnt: 6.477255
+ITERATION 08: LR(maxent^direct=0.0015625 rnn^emb=0.009375 rnn^out=0.0015625 rnn^recur=0.009375), TrEnt 5.691402, W/s 18.8k, CVEnt: 6.477255
 nnet accepted (08.clm)
-ITERATION 09: LR(maxent^direct=0.00078125 rnn^emb=0.0046875 rnn^out=0.00078125 rnn^recur=0.0046875), TrEnt 5.680194, W/s 16.3k, CVEnt: 6.475420
+ITERATION 09: LR(maxent^direct=0.00078125 rnn^emb=0.0046875 rnn^out=0.00078125 rnn^recur=0.0046875), TrEnt 5.680194, W/s 18.9k, CVEnt: 6.475420
 nnet accepted (09.clm)
 ../steps/train_model.sh: finished, too small rel. improvement .0002832990
 ../steps/train_model.sh: Succeeded training the Neural Network : test/tmp/case-26/exp/rnn+maxent/final.clm
-../steps/train_model.sh: Elapse time: 43s
-../steps/train_model.sh: Effective speed: 17.0k words/sec
+../steps/train_model.sh: Elapse time: 41s
+../steps/train_model.sh: Effective speed: 17.8k words/sec
 ../steps/run_standalone.sh: Stage 3 --- Testing model...
 ../steps/eval_model.sh --config-file test/tmp/case-26/exp/conf/eval.conf --eval-threads 1 test/tmp/case-26/exp/rnn+maxent ./data/test
 ../steps/eval_model.sh: Evaluating model test/tmp/case-26/exp/rnn+maxent/final.clm ...
 =================================
 Eval Entropy: 6.364238
 Eval PPL: 82.380918
-Eval Speed: 81.7k words/sec
+Eval Speed: 103.6k words/sec
 =================================
-../steps/eval_model.sh: Elapse time: 0s
-../steps/run_standalone.sh: Elapse time: 43s
+../steps/eval_model.sh: Elapse time: 1s
+../steps/run_standalone.sh: Elapse time: 42s

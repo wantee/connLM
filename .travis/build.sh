@@ -57,6 +57,11 @@ if [ $TRAVIS_BRANCH == 'master' ] || [ $TRAVIS_BRANCH == 'develop' ]; then
     fi
     (cd egs/tiny; shu-testing 31);
   fi
+
+  if [ $CASE -eq 10 ]; then
+    echo "Testing convert_to_fst related cases"
+    (cd egs/tiny; shu-testing 32);
+  fi
 elif [ $TRAVIS_BRANCH == 'legacy' ]; then
   if [ $CASE -eq 2 ]; then
     make -C src test

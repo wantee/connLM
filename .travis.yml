@@ -30,6 +30,7 @@ env:
     - CASE=7
     - CASE=8
     - CASE=9
+    - CASE=10
 script:
   - .travis/build.sh
 notifications:
