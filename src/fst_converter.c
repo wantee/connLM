@@ -197,7 +197,7 @@ int fst_conv_load_opt(fst_conv_opt_t *conv_opt,
 
     ST_OPT_SEC_GET_STR(opt, sec_name, "WORD_SELECTION_METHOD",
             method_str, MAX_ST_CONF_LEN, "Baseline",
-            "Word selection method(Baseline/Sampling)");
+            "Word selection method(Baseline/Sampling/Majority)");
     if (strcasecmp(method_str, "baseline") == 0) {
         conv_opt->wsm = WSM_BASELINE;
     } else if (strcasecmp(method_str, "sampling") == 0) {
