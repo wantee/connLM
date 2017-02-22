@@ -43,7 +43,7 @@ mkdir -p "$dir/log"
 log_file=${log_file:-"$dir/log/tofst.log"}
 opts="--num-thread=$num_thr"
 if $output_ssyms; then
-  opts="--state-syms-file=$dir/g.ssyms $opt"
+  opts+=" --state-syms-file=$dir/g.ssyms"
 fi
 connlm-tofst --config="$conf/tofst.conf" --log-file="$log_file" \
              $opts \
