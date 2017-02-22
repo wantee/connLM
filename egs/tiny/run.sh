@@ -83,7 +83,7 @@ do
           ${model} $conf_dir $exp_dir \
           $train_file $valid_file $test_file || exit 1;
     elif [[ "$model" == *"#" ]]; then
-      model=${model::-1}
+      model=${model%?}
       ../steps/convert_to_fst.sh --num-thr $tofst_thr \
           ${model} $conf_dir $exp_dir || exit 1;
     else
