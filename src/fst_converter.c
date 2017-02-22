@@ -59,8 +59,8 @@ typedef struct _fst_converter_args_t_ {
     int *selected_words;
 
     bool store_children;
-    double boost;
-    double boost_power;
+    double ws_arg;
+    double ws_arg_power;
 
     int *word_hist;
     int cap_word_hist;
@@ -176,6 +176,8 @@ int fst_conv_load_opt(fst_conv_opt_t *conv_opt,
         st_opt_t *opt, const char *sec_name)
 {
     char method_str[MAX_ST_CONF_LEN];
+    double def_ws_arg = 0.0;
+    double def_ws_arg_power = 0.0;
 
     ST_CHECK_PARAM(conv_opt == NULL || opt == NULL, -1);
 
@@ -196,7 +198,7 @@ int fst_conv_load_opt(fst_conv_opt_t *conv_opt,
             "File to be written out state symbols(for debug).");
 
     ST_OPT_SEC_GET_STR(opt, sec_name, "WORD_SELECTION_METHOD",
-            method_str, MAX_ST_CONF_LEN, "Baseline",
+            method_str, MAX_ST_CONF_LEN, "Majority",
             "Word selection method(Baseline/Sampling/Majority)");
     if (strcasecmp(method_str, "baseline") == 0) {
         conv_opt->wsm = WSM_BASELINE;
@@ -211,69 +213,52 @@ int fst_conv_load_opt(fst_conv_opt_t *conv_opt,
 
     switch (conv_opt->wsm) {
         case WSM_SAMPLING:
-            ST_OPT_SEC_GET_UINT(opt, sec_name, "INIT_RANDOM_SEED",
-                    conv_opt->init_rand_seed, (unsigned int)time(NULL),
-                    "Initial random seed, seed for each thread would be "
-                    "incremented from this value. "
-                    "Default is value of time(NULl).");
             /* FALL THROUGH */
         case WSM_BASELINE:
-            ST_OPT_SEC_GET_DOUBLE(opt, sec_name, "BOOST",
-                    conv_opt->boost, 0.0,
-                    "Boost probability for </s> during word selection.");
-            if (conv_opt->boost < 0.0 || conv_opt->boost > 1.0) {
-                ST_WARNING("boost must be in [0, 1].");
-                goto ST_OPT_ERR;
-            }
-
-            ST_OPT_SEC_GET_DOUBLE(opt, sec_name, "BOOST_POWER",
-                    conv_opt->boost_power, 0.0,
-                    "power to the num-gram for boost value. "
-                    "e.g. cur_boost = boost * pow(num_grams, boost_power).");
-            if (conv_opt->boost_power <= 0.0) {
-                ST_WARNING("boost_power normally should be larger than zero.");
-            }
-
-            ST_OPT_SEC_GET_DOUBLE(opt, sec_name, "WILDCARD_BOOST",
-                    conv_opt->wildcard_boost, 0.0,
-                    "Boost probability for wildcard subFST.");
-            if (conv_opt->wildcard_boost < 0.0 || conv_opt->wildcard_boost > 1.0) {
-                ST_WARNING("boost must be in [0, 1].");
-                goto ST_OPT_ERR;
-            }
-
-            ST_OPT_SEC_GET_DOUBLE(opt, sec_name, "WILDCARD_BOOST_POWER",
-                    conv_opt->wildcard_boost_power, 0.0,
-                    "boost power for the wildcard subFST.");
-            if (conv_opt->wildcard_boost_power <= 0.0) {
-                ST_WARNING("boost_power normally should be larger than zero.");
-            }
+            def_ws_arg = 0.0;
+            def_ws_arg_power = 0.0;
             break;
 
         case WSM_MAJORITY:
-            ST_OPT_SEC_GET_DOUBLE(opt, sec_name, "THRESHOLD",
-                    conv_opt->threshold, 0.5,
-                    "Select the words with total probability larger than "
-                    "this threshold.");
-            if (conv_opt->threshold < 0.0 || conv_opt->threshold > 1.0) {
-                ST_WARNING("threshold must be in [0, 1].");
-                goto ST_OPT_ERR;
-            }
-
-            ST_OPT_SEC_GET_DOUBLE(opt, sec_name, "WILDCARD_THRESHOLD",
-                    conv_opt->wildcard_threshold, 0.5,
-                    "threhold for wildcard subFST.");
-            if (conv_opt->wildcard_threshold < 0.0 || conv_opt->wildcard_threshold > 1.0) {
-                ST_WARNING("wildcard_threshold must be in [0, 1].");
-                goto ST_OPT_ERR;
-            }
+            def_ws_arg = 0.5;
+            def_ws_arg_power = 0.0;
             break;
+
         default:
             break;
     }
 
+    ST_OPT_SEC_GET_DOUBLE(opt, sec_name, "WS_ARG",
+            conv_opt->ws_arg, def_ws_arg,
+            "Arg for word selection, would be interpreted as"
+            "boost for </s> if WORD_SELECTION_METHOD is Baseline or Sampling, "
+            "otherwise, as threshold for accumulated probabilty.");
+
+    ST_OPT_SEC_GET_DOUBLE(opt, sec_name, "WS_ARG_POWER",
+            conv_opt->ws_arg_power, def_ws_arg_power,
+            "power to the history length for ws_arg. "
+            "e.g. cur_ws_arg = ws_arg * pow(hist_len, ws_arg_power).");
+
+    ST_OPT_SEC_GET_DOUBLE(opt, sec_name, "WILDCARD_WS_ARG",
+            conv_opt->wildcard_ws_arg, conv_opt->ws_arg,
+            "WS_ARG for wildcard subFST. would be same ws_arg, "
+            "if not specified");
+
+    ST_OPT_SEC_GET_DOUBLE(opt, sec_name, "WILDCARD_WS_ARG_POWER",
+            conv_opt->wildcard_ws_arg_power, conv_opt->ws_arg_power,
+            "WS_ARG_POWER for wildcard subFST. would be the same ws_arg_power, "
+            "if not specified");
+
+    if (conv_opt->wsm) {
+        ST_OPT_SEC_GET_UINT(opt, sec_name, "INIT_RANDOM_SEED",
+                conv_opt->init_rand_seed, (unsigned int)time(NULL),
+                "Initial random seed, seed for each thread would be "
+                "incremented from this value. "
+                "Default is value of time(NULl).");
+    }
+
     ST_OPT_SEC_GET_INT(opt, sec_name, "MAX_GRAM", conv_opt->max_gram, 0,
-        "Maximum gram to be expaned(no limits if less than or equal to 0).");
+            "Maximum gram to be expaned(no limits if less than or equal to 0).");
     if (conv_opt->max_gram > 0 && conv_opt->max_gram <= 2) {
         ST_WARNING("MAX_GRAM must be larger than 2.");
         goto ST_OPT_ERR;
@@ -1118,7 +1103,7 @@ static int fst_conv_expand(fst_conv_t *conv, fst_conv_args_t *args)
     real_t *state;
     real_t *new_state;
     double *output_probs;
-    double boost;
+    double ws_arg;
     int output_size;
 
     double nominator;
@@ -1190,7 +1175,7 @@ static int fst_conv_expand(fst_conv_t *conv, fst_conv_args_t *args)
             && args->num_word_hist + 1 >= conv->conv_opt.max_gram) {
         ret_sid = sid;
     } else {
-        boost = args->boost * pow(args->num_word_hist, args->boost_power);
+        ws_arg = args->ws_arg * pow(args->num_word_hist, args->ws_arg_power);
 
         // do not feed wordhist with the leading <s>
         if (updater_step_with_state(updater, state, args->word_hist + 1,
@@ -1244,7 +1229,7 @@ static int fst_conv_expand(fst_conv_t *conv, fst_conv_args_t *args)
             }
         } else {
             if (select_words(conv, output_probs, args->selected_words, &n,
-                        boost, &args->rand_seed) < 0) {
+                        ws_arg, &args->rand_seed) < 0) {
                 ST_WARNING("Failed to select_words.");
                 return -1;
             }
@@ -1427,13 +1412,8 @@ static int fst_conv_build_wildcard(fst_conv_t *conv, fst_conv_args_t *args)
 
     for (i = 0; i < conv->n_thr; i++) {
         args[i].store_children = true;
-        if (conv->conv_opt.wsm == WSM_MAJORITY) {
-            args[i].boost = conv->conv_opt.wildcard_threshold;
-            args[i].boost_power = 0.0;
-        } else {
-            args[i].boost = conv->conv_opt.wildcard_boost;
-            args[i].boost_power = conv->conv_opt.wildcard_boost_power;
-        }
+        args[i].ws_arg = conv->conv_opt.wildcard_ws_arg;
+        args[i].ws_arg_power = conv->conv_opt.wildcard_ws_arg_power;
     }
 
     conv->fst_children = malloc(sizeof(fst_state_children_t)
@@ -1535,13 +1515,8 @@ static int fst_conv_build_normal(fst_conv_t *conv, fst_conv_args_t *args)
 
     for (i = 0; i < conv->n_thr; i++) {
         args[i].store_children = false;
-        if (conv->conv_opt.wsm == WSM_MAJORITY) {
-            args[i].boost = conv->conv_opt.threshold;
-            args[i].boost_power = 0.0;
-        } else {
-            args[i].boost = conv->conv_opt.boost;
-            args[i].boost_power = conv->conv_opt.boost_power;
-        }
+        args[i].ws_arg = conv->conv_opt.ws_arg;
+        args[i].ws_arg_power = conv->conv_opt.ws_arg_power;
     }
 
     args[0].sid = FST_SENT_START_STATE;

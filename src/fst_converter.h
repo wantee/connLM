@@ -66,13 +66,13 @@ typedef struct _fst_converter_opt_t_ {
     char state_syms_file[MAX_DIR_LEN]; /**< state symbols file. */
     int max_gram; /**< maximum gram to be expaned. */
     ws_method_t wsm; /**< word selection method. */
-    double boost; /**< initial boost for \</s\> during word selection. */
-    double boost_power; /**< power to the num-gram for boost value.
-                         e.g. cur_boost = boost * pow(num_grams, boost_power).*/
-    double wildcard_boost; /**< initial boost for wildcard subFST. */
-    double wildcard_boost_power; /**< boost power for wildcard subFST. */
-    double threshold; /**< Threshold for majority. */
-    double wildcard_threshold; /**< Threshold for majority of wildcard subFST. */
+    double ws_arg; /**< arg for word selection, would be interpreted as
+                      boost for \</s\> if wsm is Baseline or Sampling,
+                      otherwise, as threshold for accumulated probabilty. */
+    double ws_arg_power; /**< power to the history length for ws_arg.
+                     e.g. cur_ws_arg = ws_arg * pow(hist_len, ws_arg_power).*/
+    double wildcard_ws_arg; /**< ws_arg for wildcard subFST. */
+    double wildcard_ws_arg_power; /**< ws_arg_power for wildcard subFST. */
 
     unsigned int init_rand_seed; /**< initial random seed. */
 } fst_conv_opt_t;
