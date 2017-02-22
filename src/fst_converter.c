@@ -1143,10 +1143,6 @@ static int fst_conv_expand(fst_conv_t *conv, fst_conv_args_t *args)
         return -1;
     }
 
-    if (args->num_word_hist + 1 > conv->max_gram) {
-        conv->max_gram = args->num_word_hist + 1;
-    }
-
     no_backoff = false;
     if (conv->fst_states[sid].word_id == SENT_START_ID
             || conv->fst_states[sid].word_id == ANY_ID) {
@@ -1172,7 +1168,7 @@ static int fst_conv_expand(fst_conv_t *conv, fst_conv_args_t *args)
     }
 
     if (conv->conv_opt.max_gram > 0
-            && args->num_word_hist + 1 >= conv->conv_opt.max_gram) {
+            && args->num_word_hist >= conv->conv_opt.max_gram) {
         ret_sid = sid;
     } else {
         ws_arg = args->ws_arg * pow(args->num_word_hist, args->ws_arg_power);
@@ -1296,6 +1292,10 @@ static int fst_conv_expand(fst_conv_t *conv, fst_conv_args_t *args)
                 ST_WARNING("Failed to st_block_cache_return.");
                 return -1;
             }
+        }
+
+        if (args->num_word_hist + 1 > conv->max_gram) {
+            conv->max_gram = args->num_word_hist + 1;
         }
     }
 
