@@ -13,8 +13,8 @@ vocab_file=./data/vocab
 conf_dir=./conf/
 exp_dir=./exp/
 
-tr_thr=4
-eval_thr=4
+tr_thr=16
+eval_thr=16
 
 realtype="float"
 
