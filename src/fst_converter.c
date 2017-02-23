@@ -1103,7 +1103,7 @@ static int fst_conv_expand(fst_conv_t *conv, fst_conv_args_t *args)
     real_t *state;
     real_t *new_state;
     double *output_probs;
-    double ws_arg;
+    double ws_arg = 0.0;
     int output_size;
 
     double nominator;
@@ -1171,8 +1171,6 @@ static int fst_conv_expand(fst_conv_t *conv, fst_conv_args_t *args)
             && args->num_word_hist >= conv->conv_opt.max_gram) {
         ret_sid = sid;
     } else {
-        ws_arg = args->ws_arg * pow(args->num_word_hist, args->ws_arg_power);
-
         // do not feed wordhist with the leading <s>
         if (updater_step_with_state(updater, state, args->word_hist + 1,
                     args->num_word_hist - 1, output_probs) < 0) {
@@ -1224,6 +1222,14 @@ static int fst_conv_expand(fst_conv_t *conv, fst_conv_args_t *args)
                 n++;
             }
         } else {
+            assert(args->num_word_hist > 1);
+
+            if (args->word_hist[1] == ANY_ID) {
+                ws_arg = args->ws_arg * pow((args->num_word_hist - 2), args->ws_arg_power);
+            } else {
+                ws_arg = args->ws_arg * pow((args->num_word_hist - 1), args->ws_arg_power);
+            }
+
             if (select_words(conv, output_probs, args->selected_words, &n,
                         ws_arg, &args->rand_seed) < 0) {
                 ST_WARNING("Failed to select_words.");
@@ -1296,6 +1302,7 @@ static int fst_conv_expand(fst_conv_t *conv, fst_conv_args_t *args)
 
         if (args->num_word_hist + 1 > conv->max_gram) {
             conv->max_gram = args->num_word_hist + 1;
+            ST_TRACE("Num-grams: %d, ws-arg: %g", conv->max_gram, ws_arg);
         }
     }
 
@@ -1384,7 +1391,7 @@ static int fst_conv_build_wildcard(fst_conv_t *conv, fst_conv_args_t *args)
         ST_WARNING("Failed to fst_conv_print_ssyms.");
         return -1;
     }
-    conv->max_gram = 1;
+    conv->max_gram = 2;
 
     // dump state for backoff state
     updater = conv->updaters[0];
