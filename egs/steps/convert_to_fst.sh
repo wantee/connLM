@@ -60,6 +60,13 @@ echo "#arcs: $num_arcs"
 max_gram=`../utils/get_value.sh "max_gram" $log_file`
 echo "max-gram: $max_gram"
 
+
+for i in `seq $max_gram`; do
+  num_gram_wildcard=`../utils/get_value.sh "${i}-grams in wildcard subFST" $log_file`
+  num_gram=`../utils/get_value.sh "${i}-grams in normal subFST" $log_file`
+  echo "#${i}-gram: $num_gram_wildcard + $num_gram = `expr $num_gram_wildcard + $num_gram`"
+done
+
 echo "================================="
 
 ../utils/check_log.sh -b "$begin_date" $log_file.wf

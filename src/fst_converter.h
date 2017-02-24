@@ -141,6 +141,8 @@ typedef struct _fst_converter_t_ {
 
     int max_gram; /**< max order of gram for the fst. */
     int num_arcs; /**< number of arcs in fst. */
+    int *num_grams; /**< number of grams per order. */
+    int max_order; /**< max_order of num_grams. */
 
     fst_conv_opt_t conv_opt; /**< options. */
 } fst_conv_t;

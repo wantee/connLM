@@ -623,12 +623,14 @@ UNLOCK_AND_ERR:
 }
 
 static int fst_conv_print_arc(fst_conv_t *conv,
-        int from, int to, int wid, double weight)
+        int from, int to, int wid, double weight, int order)
 {
     char *ilab_str;
     char *olab_str;
     int ilab;
     int olab;
+
+    int i;
 
     ST_CHECK_PARAM(conv == NULL || from < 0 || to < 0, -1);
 
@@ -695,6 +697,22 @@ static int fst_conv_print_arc(fst_conv_t *conv,
         }
     }
     conv->num_arcs++;
+
+    if (order > 0) {
+        if (order > conv->max_order) {
+            conv->num_grams = (int *)realloc(conv->num_grams, sizeof(int) * order);
+            if (conv->num_grams == NULL) {
+                ST_WARNING("Failed to realloc num_grams.");
+                goto UNLOCK_AND_ERR;
+            }
+            for (i = conv->max_order; i < order; i++) {
+                conv->num_grams[i] = 0;
+            }
+            conv->max_order = order;
+        }
+        conv->num_grams[order - 1] += 1;
+    }
+
     if (pthread_mutex_unlock(&conv->fst_fp_lock) != 0) {
         ST_WARNING("Failed to pthread_mutex_lock fst_fp_lock.");
         return -1;
@@ -1285,8 +1303,8 @@ static int fst_conv_expand(fst_conv_t *conv, fst_conv_args_t *args)
                 }
             }
 
-            if (fst_conv_print_arc(conv, sid,
-                        to_sid, word, output_probs[word]) < 0) {
+            if (fst_conv_print_arc(conv, sid, to_sid, word,
+                        output_probs[word], args->num_word_hist + 1) < 0) {
                 ST_WARNING("Failed to fst_conv_print_arc.");
                 return -1;
             }
@@ -1317,7 +1335,7 @@ static int fst_conv_expand(fst_conv_t *conv, fst_conv_args_t *args)
         }
 
         if (fst_conv_print_arc(conv, sid, backoff_sid,
-                    phi_id(conv), nominator / denominator) < 0) {
+                    phi_id(conv), nominator / denominator, -1) < 0) {
             ST_WARNING("Failed to fst_conv_print_arc.");
             return -1;
         }
@@ -1586,6 +1604,8 @@ int fst_conv_convert(fst_conv_t *conv, FILE *fst_fp)
     int num_arcs;
     int max_gram;
 
+    int i;
+
     ST_CHECK_PARAM(conv == NULL || fst_fp == NULL, -1);
 
     if (fst_conv_setup(conv, fst_fp, &args) < 0) {
@@ -1624,7 +1644,7 @@ int fst_conv_convert(fst_conv_t *conv, FILE *fst_fp)
     }
 
     if (fst_conv_print_arc(conv, FST_INIT_STATE, FST_SENT_START_STATE,
-                SENT_START_ID, 1.0) < 0) {
+                SENT_START_ID, 1.0, 1) < 0) {
         ST_WARNING("Failed to fst_conv_print_arc for <s>.");
         goto ERR;
     }
@@ -1649,6 +1669,12 @@ int fst_conv_convert(fst_conv_t *conv, FILE *fst_fp)
     num_arcs = conv->num_arcs;
     max_gram = conv->max_gram;
 
+    for (i = 0; i < conv->max_order; i++) {
+        ST_TRACE("%d-grams in wildcard subFST: %d", (i + 1),
+                conv->num_grams[i]);
+        conv->num_grams[i] = 0;
+    }
+
     if (fst_conv_reset(conv, args) < 0) {
         ST_WARNING("Failed to fst_conv_reset.");
         goto ERR;
@@ -1667,6 +1693,11 @@ int fst_conv_convert(fst_conv_t *conv, FILE *fst_fp)
             conv->num_arcs - num_arcs,
             TIMEDIFF(tt1, tt2) / 1000.0);
     max_gram = max(max_gram, conv->max_gram);
+    for (i = 0; i < conv->max_order; i++) {
+        ST_TRACE("%d-grams in normal subFST: %d", (i + 1),
+                conv->num_grams[i]);
+        conv->num_grams[i] = 0;
+    }
     ST_NOTICE("Total states in FST: %d (max_gram = %d). "
             "Total arcs: %d, Elapsed time: %.3fs.",
             conv->n_fst_state, max_gram, conv->num_arcs,
