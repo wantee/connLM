@@ -29,7 +29,7 @@ fi
 
 part_ok=false
 list="dev-clean test-clean dev-other test-other train-clean-100 train-clean-360 train-other-500"
-for x in $list; do 
+for x in $list; do
   if [ "$part" == $x ]; then part_ok=true; fi
 done
 if ! $part_ok; then
@@ -75,16 +75,13 @@ if [ ! -f $data/$part.tar.gz ]; then
   full_url=$url/$part.tar.gz
   echo "$0: downloading data from $full_url.  This may take some time, please be patient."
 
-  cd $data
-  if ! wget --no-check-certificate $full_url; then
+  if ! wget -P $data --no-check-certificate $full_url; then
     echo "$0: error executing wget $full_url"
     exit 1;
   fi
 fi
 
-cd $data
-
-if ! tar -xvzf $part.tar.gz; then
+if ! tar -xvzf $data/$part.tar.gz -C $data; then
   echo "$0: error un-tarring archive $data/$part.tar.gz"
   exit 1;
 fi
