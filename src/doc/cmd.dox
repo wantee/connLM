@@ -106,6 +106,7 @@
     --config                   : config file (string, default = "")
     --log-file                 : Log file (string, default = "/dev/stderr")
     --log-level                : Log level (1-8) (int, default = 8)
+    --wordlist                 : File name of wordlist. (string, default = "")
     --max-alphabet-size        : Maximum size of alphabet for vocab. (int, default = 1000000)
     --max-vocab-size           : Maximum size of Vocabulary. 0 denotes no limit. (int, default = 0)
     --max-word-num             : Maximum number of words used to learn vocab. 0 denotes no limit. (ulong, default = 0)
@@ -114,6 +115,9 @@
     --help                     : Print help (bool, default = false)
 
   @endcode
+
+  Two predefined words (\</s\> and \<unk\>) will be added to the vocabulary
+  automatically.
 
   @c \-\-max-alphabet-size restricts the hard limit size of vocabulary can be
   learned, if the text source have too many words, this value have to be
@@ -140,6 +144,14 @@
   accomplished by @c \-\-min-count option, i.e., any word occurs less than
   min-count times will be ignored. In both methods, the remaining words
   are the most frequent words.
+
+  @subsection cmd_vocab_fixed Fixed Vocabulary
+
+  The user could also force this command to use a predefined word list as
+  vocabulary, passed by @c \-\-wordlist option. Since it is necessary for
+  connLM toolkit to know the occurrence count for every words,
+  @c connlm-vocab still need to go through some text corpus to accumulate
+  the occurrences.
 
   @section cmd_output The connlm-output
 

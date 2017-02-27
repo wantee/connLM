@@ -32,6 +32,7 @@
 #include <stutils/st_log.h>
 #include <stutils/st_io.h>
 #include <stutils/st_utils.h>
+#include <stutils/st_string.h>
 
 #include "vocab.h"
 
@@ -44,13 +45,72 @@ int vocab_load_opt(vocab_opt_t *vocab_opt, st_opt_t *opt,
 
     memset(vocab_opt, 0, sizeof(vocab_opt_t));
 
-    ST_OPT_SEC_GET_INT(opt, sec_name, "MAX_ALPHABET_SIZE",
-        vocab_opt->max_alphabet_size, 1000000,
-        "Maximum size of alphabet for vocab.");
+    ST_OPT_SEC_GET_STR(opt, sec_name, "WORDLIST",
+        vocab_opt->wordlist, MAX_DIR_LEN, "", "File name of wordlist.");
+
+    if (vocab_opt->wordlist[0] == '\0') {
+        ST_OPT_SEC_GET_INT(opt, sec_name, "MAX_ALPHABET_SIZE",
+                vocab_opt->max_alphabet_size, 1000000,
+                "Maximum size of alphabet for vocab.");
+    }
 
     return 0;
 
 ST_OPT_ERR:
+    return -1;
+}
+
+static int vocab_load_wordlist(vocab_t *vocab)
+{
+    FILE *fp = NULL;
+    char *line = NULL;
+    size_t line_sz = 0;
+
+    bool err;
+
+    ST_CHECK_PARAM(vocab == NULL, -1);
+
+    fp = st_fopen(vocab->vocab_opt.wordlist, "r");
+    if (fp == NULL) {
+        ST_WARNING("Failed to open wordlist[%s].", vocab->vocab_opt.wordlist);
+        goto ERR;
+    }
+
+    err = false;
+    while (st_fgets(&line, &line_sz, fp, &err)) {
+        remove_newline(line);
+
+        if (line[0] == '\0') {
+            continue;
+        }
+
+        if (strchr(line, ' ') != NULL || strchr(line, '\t') != NULL) {
+            ST_WARNING("words should not contain whitespaces, line[%s]", line);
+            goto ERR;
+        }
+
+        if (strcasecmp(line, SENT_END) == 0 || strcasecmp(line, UNK) == 0) {
+            continue;
+        }
+
+        if (vocab_add_word(vocab, line) < 0) {
+            ST_WARNING("Failed to vocab_add_word.");
+            goto ERR;
+        }
+    }
+
+    safe_fclose(fp);
+    safe_free(line);
+
+    if (err) {
+        return -1;
+    }
+
+    return 0;
+
+ERR:
+    safe_fclose(fp);
+    safe_free(line);
     return -1;
 }
 
@@ -69,7 +129,18 @@ vocab_t *vocab_create(vocab_opt_t *vocab_opt)
 
     vocab->vocab_opt = *vocab_opt;
 
-    vocab->alphabet = st_alphabet_create(vocab_opt->max_alphabet_size);
+    if (vocab->vocab_opt.wordlist[0] != '\0') {
+        vocab->vocab_opt.max_alphabet_size = (int)st_count_lines(
+                vocab->vocab_opt.wordlist);
+        if (vocab->vocab_opt.max_alphabet_size < 0) {
+            ST_WARNING("Failed to st_count_lines for wordlist[%s].",
+                    vocab->vocab_opt.wordlist);
+            goto ERR;
+        }
+        vocab->vocab_opt.max_alphabet_size += 2; /* for </s> and <unk> */
+    }
+
+    vocab->alphabet = st_alphabet_create(vocab->vocab_opt.max_alphabet_size);
     if (vocab->alphabet == NULL) {
         ST_WARNING("Failed to st_alphabet_create.");
         goto ERR;
@@ -87,6 +158,12 @@ vocab_t *vocab_create(vocab_opt_t *vocab_opt)
         goto ERR;
     }
 
+    if (vocab->vocab_opt.wordlist[0] != '\0') {
+        if (vocab_load_wordlist(vocab) < 0) {
+            ST_WARNING("Failed to st_vocab_load_wordlist.");
+            goto ERR;
+        }
+    }
     return vocab;
 
   ERR:
@@ -596,13 +673,11 @@ int vocab_learn(vocab_t *vocab, FILE *fp, vocab_learn_opt_t *lr_opt)
         ST_WARNING("Failed to malloc word_infos.");
         goto ERR;
     }
-    memset(word_infos, 0, sizeof(word_info_t)*
-            vocab->vocab_opt.max_alphabet_size);
 
-    word_infos[SENT_END_ID].id = SENT_END_ID;
-    word_infos[SENT_END_ID].cnt = 0;
-    word_infos[UNK_ID].id = UNK_ID;
-    word_infos[UNK_ID].cnt = 0;
+    for (id = 0; id < vocab->vocab_opt.max_alphabet_size; id++) {
+        word_infos[id].id = id;
+        word_infos[id].cnt = 0;
+    }
 
     words = 0;
     while (1) {
@@ -617,17 +692,17 @@ int vocab_learn(vocab_t *vocab, FILE *fp, vocab_learn_opt_t *lr_opt)
 
         id = vocab_get_id(vocab, word);
         if (id == -1) {
-            id = vocab_add_word(vocab, word);
-            if (id < 0) {
-                ST_WARNING("Failed to vocab_add_word.");
-                goto ERR;
+            if (vocab->vocab_opt.wordlist[0] != '\0') {
+                id = UNK_ID;
+            } else {
+                id = vocab_add_word(vocab, word);
+                if (id < 0) {
+                    ST_WARNING("Failed to vocab_add_word.");
+                    goto ERR;
+                }
             }
-
-            word_infos[id].id = id;
-            word_infos[id].cnt = 1;
-        } else {
-            word_infos[id].cnt++;
         }
+        word_infos[id].cnt++;
 
         words++;
         if (lr_opt->max_word_num > 0 && words >= lr_opt->max_word_num) {

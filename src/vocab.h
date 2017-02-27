@@ -46,6 +46,7 @@ extern "C" {
  * @ingroup g_vocab
  */
 typedef struct _vocab_opt_t_ {
+    char wordlist[MAX_DIR_LEN]; /**< file name of word list. */
     int max_alphabet_size; /**< max size of alphabet. */
 } vocab_opt_t;
 
