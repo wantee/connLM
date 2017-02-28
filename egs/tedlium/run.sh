@@ -8,7 +8,7 @@ data_url=http://cantabresearch.com/cantab-TEDLIUM.tar.bz2
 train_file=./data/train
 valid_file=./data/valid
 test_file=./data/test
-vocab_file=./data/vocab
+wordlist=./data/wordlist
 
 conf_dir=./conf/
 exp_dir=./exp/
@@ -81,6 +81,8 @@ mkdir -p `dirname "$test_file"`
 valid_file=$(cd `dirname $valid_file`; pwd)/`basename $valid_file`
 ln -sf $valid_file $test_file || exit 1
 
+awk '{print $1}' $data/cantab-TEDLIUM/cantab-TEDLIUM.dct | sort | uniq | \
+      grep -v "<s>" > $wordlist || exit 1
 fi
 ((st++))
 
@@ -88,7 +90,7 @@ if shu-in-range $st $steps; then
 echo
 echo "Step $st: ${stepnames[$st]} ..."
 ../steps/learn_vocab.sh --config-file $conf_dir/vocab.conf \
-    $train_file $exp_dir || exit 1;
+    --wordlist $wordlist $train_file $exp_dir || exit 1;
 fi
 ((st++))
 
