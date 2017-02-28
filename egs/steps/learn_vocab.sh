@@ -39,10 +39,10 @@ mkdir -p $dir
 
 echo "$0: Learning vocab $model_file from $train_file"
 opts="--log-file=$log_file"
-if [ -n $config_file ]; then
+if [ -n "$config_file" ]; then
   opts+=" --config=$config_file"
 fi
-if [ -n $wordlist ]; then
+if [ -n "$wordlist" ]; then
   opts+=" --wordlist=$wordlist"
 fi
 shu-run connlm-vocab $opts $train_file $model_file || exit 1;
