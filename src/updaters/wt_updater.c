@@ -320,6 +320,15 @@ void wt_updater_clear(wt_updater_t *wt_updater)
     wt_dirty_clear(&wt_updater->sync_dirty);
 }
 
+static inline real_t get_lr(param_t *param)
+{
+    if (param->momentum != 0.0) {
+        return param->learn_rate * (1.0 - param->momentum);
+    } else {
+        return param->learn_rate;
+    }
+}
+
 static inline real_t get_l2(wt_updater_t *wt_updater)
 {
     if (wt_updater->param.l2_delay > 0
@@ -350,7 +359,7 @@ static int wt_updater_mini_update(wt_updater_t *wt_updater)
     row = wt_updater->row;
     col = wt_updater->col;
 
-    lr = wt_updater->param.learn_rate;
+    lr = get_lr(&(wt_updater->param));
     lr *= dirty->er_scale * dirty->in_scale;
     l2 = get_l2(wt_updater);
     momentum = wt_updater->param.momentum;
@@ -563,7 +572,7 @@ static int wt_updater_update(wt_updater_t *wt_updater,
     int i, j, row_start, row_end;
     real_t scale;
 
-    lr = wt_updater->param.learn_rate;
+    lr = get_lr(&(wt_updater->param));
     lr *= er_scale * in_scale;
     row = wt_updater->row;
     col = wt_updater->col;
