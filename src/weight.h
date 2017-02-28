@@ -46,6 +46,7 @@ typedef enum _weight_init_type_t {
     WT_INIT_UNIFORM, /**< uniform distribution. */
     WT_INIT_NORM, /**< normal distribution. */
     WT_INIT_TRUNC_NORM, /**< truncated normal distribution. */
+    WT_INIT_IDENTITY, /**< indentity matrix. */
 } wt_init_type_t;
 
 /**

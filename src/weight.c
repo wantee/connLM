@@ -40,6 +40,7 @@ static const char *init_str[] = {
     "Uniform",
     "Norm",
     "Trunc_Norm",
+    "Identity",
 };
 
 static const char* init2str(wt_init_type_t m)
@@ -212,6 +213,10 @@ int wt_parse_topo(weight_t *wt, char *line, size_t line_len)
     } else if (wt->init_type == WT_INIT_TRUNC_NORM) {
         if (wt->init_param == 0) {
             wt->init_param = 0.1;
+        }
+    } else if (wt->init_type == WT_INIT_IDENTITY) {
+        if (wt->init_param == 0) {
+            wt->init_param = 1.0;
         }
     }
 
@@ -583,6 +588,18 @@ int wt_init(weight_t *wt, int row, int col)
             }
         case WT_INIT_TRUNC_NORM:
             for (i = 0; i < sz; i++) {
+                wt->mat[i] = 0;
+            }
+            for (i = 0; i < wt->row; i++) {
+                wt->mat[i * wt->col + i] = wt->init_param;
+            }
+            break;
+        case WT_INIT_IDENTITY:
+            if (wt->row != wt->col) {
+                ST_WARNING("Identity initialization: row and col must be equal.");
+                goto ERR;
+            }
+            for (i = 0; i < wt->row; i++) {
                 wt->mat[i] = st_trunc_normrand(0, wt->init_param, 2.0);
             }
             break;
