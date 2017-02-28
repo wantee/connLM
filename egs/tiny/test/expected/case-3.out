@@ -13,43 +13,37 @@ Step 2: Train MaxEnt model ...
 ../steps/run_standalone.sh: Stage 1 --- Initialising model...
 ../steps/init_model.sh --init-config-file test/tmp/case-3/exp/conf/maxent/init.conf --output-config-file test/tmp/case-3/exp/conf/maxent/output.conf test/tmp/case-3/exp/vocab.clm test/tmp/case-3/exp/conf/maxent/topo test/tmp/case-3/exp/maxent
 ../steps/init_model.sh: Initializing model test/tmp/case-3/exp/vocab.clm to test/tmp/case-3/exp/maxent/init.clm ...
-../steps/init_model.sh: Elapse time: 0s
+../steps/init_model.sh: Elapse time: 1s
 ../steps/run_standalone.sh: Stage 2 --- Training model...
 ../steps/train_model.sh --train-config test/tmp/case-3/exp/conf/maxent/train.conf --eval-config test/tmp/case-3/exp/conf/eval.conf --train-threads 1 --eval-threads 1 --start-halving-impr 0.003 --end-halving-impr 0.0003 ./data/train ./data/valid test/tmp/case-3/exp/maxent
 Prerun Valid Entropy: 8.857732
-ITERATION 01: LR(maxent^direct=0.05), TrEnt 7.035865, W/s 139.2k, CVEnt: 7.004505
+ITERATION 01: LR(maxent^direct=0.6), TrEnt 7.059629, W/s 125.7k, CVEnt: 7.143938
 nnet accepted (01.clm)
-ITERATION 02: LR(maxent^direct=0.05), TrEnt 6.577586, W/s 155.8k, CVEnt: 6.897888
-nnet accepted (02.clm)
-ITERATION 03: LR(maxent^direct=0.05), TrEnt 6.344107, W/s 154.6k, CVEnt: 6.875659
+ITERATION 02: LR(maxent^direct=0.6), TrEnt 6.374659, W/s 130.3k, CVEnt: 7.174972
+nnet rejected (02.clm)
+ITERATION 03: LR(maxent^direct=0.3), TrEnt 6.126145, W/s 133.9k, CVEnt: 6.922445
 nnet accepted (03.clm)
-ITERATION 04: LR(maxent^direct=0.05), TrEnt 6.165333, W/s 151.1k, CVEnt: 6.817167
+ITERATION 04: LR(maxent^direct=0.15), TrEnt 5.787955, W/s 132.0k, CVEnt: 6.759243
 nnet accepted (04.clm)
-ITERATION 05: LR(maxent^direct=0.05), TrEnt 6.016704, W/s 138.0k, CVEnt: 6.778631
+ITERATION 05: LR(maxent^direct=0.075), TrEnt 5.635285, W/s 131.3k, CVEnt: 6.666174
 nnet accepted (05.clm)
-ITERATION 06: LR(maxent^direct=0.05), TrEnt 5.887772, W/s 147.0k, CVEnt: 6.758434
+ITERATION 06: LR(maxent^direct=0.0375), TrEnt 5.568782, W/s 130.9k, CVEnt: 6.632310
 nnet accepted (06.clm)
-ITERATION 07: LR(maxent^direct=0.025), TrEnt 5.759941, W/s 141.9k, CVEnt: 6.722789
+ITERATION 07: LR(maxent^direct=0.01875), TrEnt 5.550322, W/s 131.6k, CVEnt: 6.599611
 nnet accepted (07.clm)
-ITERATION 08: LR(maxent^direct=0.0125), TrEnt 5.697099, W/s 153.7k, CVEnt: 6.713560
-nnet accepted (08.clm)
-ITERATION 09: LR(maxent^direct=0.00625), TrEnt 5.666534, W/s 155.2k, CVEnt: 6.708411
-nnet accepted (09.clm)
-ITERATION 10: LR(maxent^direct=0.003125), TrEnt 5.651699, W/s 155.2k, CVEnt: 6.699541
-nnet accepted (10.clm)
-ITERATION 11: LR(maxent^direct=0.0015625), TrEnt 5.644387, W/s 153.7k, CVEnt: 6.697974
-nnet accepted (11.clm)
-../steps/train_model.sh: finished, too small rel. improvement .0002338966
+ITERATION 08: LR(maxent^direct=0.009375), TrEnt 5.566799, W/s 132.4k, CVEnt: 6.613414
+nnet rejected (08.clm)
+../steps/train_model.sh: finished, too small rel. improvement 0
 ../steps/train_model.sh: Succeeded training the Neural Network : test/tmp/case-3/exp/maxent/final.clm
-../steps/train_model.sh: Elapse time: 9s
-../steps/train_model.sh: Effective speed: 99.4k words/sec
+../steps/train_model.sh: Elapse time: 6s
+../steps/train_model.sh: Effective speed: 108.4k words/sec
 ../steps/run_standalone.sh: Stage 3 --- Testing model...
 ../steps/eval_model.sh --config-file test/tmp/case-3/exp/conf/eval.conf --eval-threads 1 test/tmp/case-3/exp/maxent ./data/test
 ../steps/eval_model.sh: Evaluating model test/tmp/case-3/exp/maxent/final.clm ...
 =================================
-Eval Entropy: 6.584881
-Eval PPL: 95.994593
-Eval Speed: 236.0k words/sec
+Eval Entropy: 6.550122
+Eval PPL: 93.709413
+Eval Speed: 223.6k words/sec
 =================================
-../steps/eval_model.sh: Elapse time: 0s
-../steps/run_standalone.sh: Elapse time: 9s
+../steps/eval_model.sh: Elapse time: 1s
+../steps/run_standalone.sh: Elapse time: 8s
