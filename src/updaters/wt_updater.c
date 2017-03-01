@@ -63,6 +63,8 @@ void wt_dirty_destroy(wt_dirty_buf_t *dirty)
         safe_free(dirty->buf_in);
     }
     dirty->n_buf = 0;
+
+    safe_free(dirty->buf_grad);
 }
 
 void wt_updater_destroy(wt_updater_t *wt_updater)
