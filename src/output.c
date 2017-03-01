@@ -1496,10 +1496,13 @@ static int output_gen_bu_huffman2tree(output_t *output,
         goto ERR;
     }
 #ifdef _OUTPUT_DEBUG_
-    ST_DEBUG("NodeMap: ");
-    for (output_node_id_t n = 0; n < huffman->num_node; n++) {
-        ST_DEBUG(OUTPUT_NODE_FMT" -> "OUTPUT_NODE_FMT,
-                 n, renum.nodemap[n]);
+    {
+        output_node_id_t n;
+        ST_DEBUG("NodeMap: ");
+        for (n = 0; n < huffman->num_node; n++) {
+            ST_DEBUG(OUTPUT_NODE_FMT" -> "OUTPUT_NODE_FMT,
+                    n, renum.nodemap[n]);
+        }
     }
 #endif
 
@@ -1576,13 +1579,16 @@ static int output_gen_bu(output_t *output, count_t *word_cnts)
     }
 
 #ifdef _OUTPUT_DEBUG_
-    ST_DEBUG("Built Huffman Tree. Nodes: "OUTPUT_NODE_FMT, huffman->num_node);
-    ST_DEBUG("Root: "OUTPUT_NODE_FMT, huffman->root);
-    for (output_node_id_t n = 0; n < huffman->num_node; n++) {
-        ST_DEBUG("Node: "OUTPUT_NODE_FMT", Child: "OUTPUT_NODE_FMT
-                 "/"OUTPUT_NODE_FMT":"OUTPUT_NODE_FMT"/"OUTPUT_NODE_FMT, n,
-                 s_children(huffman, n)[0], e_children(huffman, n)[0],
-                 s_children(huffman, n)[1], e_children(huffman, n)[1]);
+    {
+        output_node_id_t n;
+        ST_DEBUG("Built Huffman Tree. Nodes: "OUTPUT_NODE_FMT, huffman->num_node);
+        ST_DEBUG("Root: "OUTPUT_NODE_FMT, huffman->root);
+        for (n = 0; n < huffman->num_node; n++) {
+            ST_DEBUG("Node: "OUTPUT_NODE_FMT", Child: "OUTPUT_NODE_FMT
+                    "/"OUTPUT_NODE_FMT":"OUTPUT_NODE_FMT"/"OUTPUT_NODE_FMT, n,
+                    s_children(huffman, n)[0], e_children(huffman, n)[0],
+                    s_children(huffman, n)[1], e_children(huffman, n)[1]);
+        }
     }
 #endif
 
@@ -2016,11 +2022,14 @@ output_t* output_generate(output_opt_t *output_opt, count_t *word_cnts,
     ST_NOTICE("Built Tree. Nodes: "OUTPUT_NODE_FMT, output->tree->num_node);
 
 #ifdef _OUTPUT_DEBUG_
-    ST_DEBUG("Root: "OUTPUT_NODE_FMT, output->tree->root);
-    for (output_node_id_t n = 0; n < output->tree->num_node; n++) {
-        ST_DEBUG("Node: "OUTPUT_NODE_FMT", Child: "OUTPUT_NODE_FMT
-                 "/"OUTPUT_NODE_FMT, n,
-                 s_children(output->tree, n), e_children(output->tree, n));
+    {
+        output_node_id_t n;
+        ST_DEBUG("Root: "OUTPUT_NODE_FMT, output->tree->root);
+        for (n = 0; n < output->tree->num_node; n++) {
+            ST_DEBUG("Node: "OUTPUT_NODE_FMT", Child: "OUTPUT_NODE_FMT
+                    "/"OUTPUT_NODE_FMT, n,
+                    s_children(output->tree, n), e_children(output->tree, n));
+        }
     }
 #endif
 
