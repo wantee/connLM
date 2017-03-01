@@ -1,10 +1,10 @@
 Environment: AWS c4.4xlarge with 16vCPU @ 2.90GHz
 BLAS: MKL
 Thread: 16
-config commit: 4b2b2429e8431b86319d3ba64f61f7b7361de30e
+config commit: f467bf42dcf161703316619c2d9913bc5acfdef3
 
 Model        Parameters         PPL    Speed(word/sec)
 ========================================================
-MaxEnt       4/128M             166    2300k
-RNN          200                128     310k
-RNN+MaxEnt   200+4/128M         111     370k
+MaxEnt       4/128M             165    1100k
+RNN          200                140     120k
+RNN+MaxEnt   200+4/128M         132     103k
