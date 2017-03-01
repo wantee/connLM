@@ -10,8 +10,8 @@ Init: 0
 Final: 1
 Start: 2
 Any: 3
-#state: 9310
-#arc: 27921
+#state: 8386
+#arc: 25149
 
   Checking ssyms...
   Checking backoff arc...

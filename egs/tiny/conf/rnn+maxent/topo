@@ -13,6 +13,6 @@ input context=-1
 layer name=hidden size=15 type=tanh
 
 glue name=emb type=emb in=input out=hidden
-glue name=recur type=fc in=hidden out=hidden
+glue name=recur type=fc in=hidden out=hidden init=identity init_param=0.5
 glue name=out type=out in=hidden out=output
 </component>
