@@ -588,10 +588,7 @@ int wt_init(weight_t *wt, int row, int col)
             }
         case WT_INIT_TRUNC_NORM:
             for (i = 0; i < sz; i++) {
-                wt->mat[i] = 0;
-            }
-            for (i = 0; i < wt->row; i++) {
-                wt->mat[i * wt->col + i] = wt->init_param;
+                wt->mat[i] = st_trunc_normrand(0, wt->init_param, 2.0);
             }
             break;
         case WT_INIT_IDENTITY:
@@ -599,8 +596,11 @@ int wt_init(weight_t *wt, int row, int col)
                 ST_WARNING("Identity initialization: row and col must be equal.");
                 goto ERR;
             }
+            for (i = 0; i < sz; i++) {
+                wt->mat[i] = 0;
+            }
             for (i = 0; i < wt->row; i++) {
-                wt->mat[i] = st_trunc_normrand(0, wt->init_param, 2.0);
+                wt->mat[i * wt->col + i] = wt->init_param;
             }
             break;
         default:
