@@ -11,12 +11,12 @@ Vocab size: 3721
 Step 9: Convert RNN to WFST ...
 ../steps/convert_to_fst.sh --num-thr 4 rnn test/tmp/case-32/exp/conf test/tmp/case-32/exp
 =================================
-#states: 1479505
-#arcs: 2989921
+#states: 2347229
+#arcs: 4729588
 max-gram: 4
 #1-gram: 1 + 0 = 1
 #2-gram: 0 + 3721 = 3721
-#3-gram: 3721 + 27196 = 30917
-#4-gram: 1136208 + 339573 = 1475781
+#3-gram: 3721 + 31415 = 35136
+#4-gram: 1509588 + 833917 = 2343505
 =================================
-../steps/convert_to_fst.sh: Elapse time: 34s
+../steps/convert_to_fst.sh: Elapse time: 47s
