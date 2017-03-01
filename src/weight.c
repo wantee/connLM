@@ -68,6 +68,7 @@ void wt_destroy(weight_t *wt)
     }
 
     safe_st_aligned_free(wt->mat);
+    safe_st_aligned_free(wt->bias);
     wt->row = 0;
     wt->col = 0;
 }
@@ -89,6 +90,15 @@ static int wt_alloc(weight_t *wt, int row, int col)
         ST_WARNING("Failed to st_aligned_malloc mat.");
         goto ERR;
     }
+
+    if (! isinf(wt->init_bias)) {
+        wt->bias = st_aligned_malloc(row * sizeof(real_t), ALIGN_SIZE);
+        if (wt->bias == NULL) {
+            ST_WARNING("Failed to st_aligned_malloc bias.");
+            goto ERR;
+        }
+    }
+
     wt->row = row;
     wt->col = col;
 
@@ -96,6 +106,7 @@ static int wt_alloc(weight_t *wt, int row, int col)
 
 ERR:
     safe_st_aligned_free(wt->mat);
+    safe_st_aligned_free(wt->bias);
     wt->row = 0;
     wt->col = 0;
     return -1;
@@ -115,6 +126,10 @@ weight_t* wt_dup(weight_t *src)
     }
     memset(dst, 0, sizeof(weight_t));
 
+    dst->init_type = src->init_type;
+    dst->init_param = src->init_param;
+    dst->init_bias = src->init_bias;
+
     if (wt_alloc(dst, src->row, src->col) < 0) {
         ST_WARNING("Failed to wt_alloc.");
         goto ERR;
@@ -127,8 +142,9 @@ weight_t* wt_dup(weight_t *src)
 
     memcpy(dst->mat, src->mat, sz);
 
-    dst->init_type = src->init_type;
-    dst->init_param = src->init_param;
+    if (src->bias != NULL) {
+        memcpy(dst->bias, src->bias, sizeof(real_t) * src->row);
+    }
 
     return dst;
 
@@ -149,6 +165,7 @@ int wt_parse_topo(weight_t *wt, char *line, size_t line_len)
 
     wt->init_type = WT_INIT_UNKNOWN;
     wt->init_param = NAN;
+    wt->init_bias = NAN;
 
     p = line;
     untouch_topo[0] = '\0';
@@ -179,6 +196,17 @@ int wt_parse_topo(weight_t *wt, char *line, size_t line_len)
                 goto ERR;
             }
             wt->init_param = atof(keyvalue + MAX_LINE_LEN);
+        } else if (strcasecmp("bias", keyvalue) == 0) {
+            if (! isnan(wt->init_bias)) {
+               ST_WARNING("Duplicated bias tag");
+                goto ERR;
+            }
+
+            if (strcasecmp(keyvalue + MAX_LINE_LEN, "None") == 0) {
+                wt->init_bias = INFINITY;
+            } else {
+                wt->init_bias = atof(keyvalue + MAX_LINE_LEN);
+            }
         } else {
             strncpy(untouch_topo + strlen(untouch_topo), token,
                     MAX_LINE_LEN - strlen(untouch_topo));
@@ -231,6 +259,10 @@ int wt_parse_topo(weight_t *wt, char *line, size_t line_len)
         }
     }
 
+    if (isnan(wt->init_bias)) {
+        wt->init_bias = 0.0;
+    }
+
     strncpy(line, untouch_topo, line_len);
     line[line_len - 1] = '\0';
 
@@ -253,6 +285,7 @@ int wt_load_header(weight_t **wt, int version,
     int col;
     int i;
     real_t init_param;
+    real_t init_bias = INFINITY;
 
     ST_CHECK_PARAM((wt == NULL && fo_info == NULL) || fp == NULL
             || binary == NULL, -1);
@@ -297,6 +330,12 @@ int wt_load_header(weight_t **wt, int version,
             ST_WARNING("Failed to read init_param.");
             goto ERR;
         }
+        if (version >= 8) {
+            if (fread(&init_bias, sizeof(real_t), 1, fp) != 1) {
+                ST_WARNING("Failed to read init_bias.");
+                goto ERR;
+            }
+        }
     } else {
         if (st_readline(fp, "") != 0) {
             ST_WARNING("tag error.");
@@ -330,6 +369,19 @@ int wt_load_header(weight_t **wt, int version,
             ST_WARNING("Failed to parse init param.");
             goto ERR;
         }
+
+        if (version >= 8) {
+            if (st_readline(fp, "Bias: %"xSTR(MAX_LINE_LEN)"s", sym) != 1) {
+                ST_WARNING("Failed to parse init.");
+                goto ERR;
+            }
+            sym[MAX_LINE_LEN - 1] = '\0';
+            if (strcasecmp(sym, "none") == 0) {
+                init_bias = INFINITY;
+            } else {
+                init_bias = atof(sym);
+            }
+        }
     }
 
     if (wt != NULL) {
@@ -344,6 +396,7 @@ int wt_load_header(weight_t **wt, int version,
         (*wt)->col = col;
         (*wt)->init_type = (wt_init_type_t)i;
         (*wt)->init_param = init_param;
+        (*wt)->init_bias = init_bias;
     }
 
     if (fo_info != NULL) {
@@ -352,6 +405,11 @@ int wt_load_header(weight_t **wt, int version,
         fprintf(fo_info, "Col: %d\n", col);
         fprintf(fo_info, "Init: %s\n", init2str((wt_init_type_t)i));
         fprintf(fo_info, "Init param: %g\n", init_param);
+        if (isinf(init_bias)) {
+            fprintf(fo_info, "Bias : None\n");
+        } else {
+            fprintf(fo_info, "Bias : %g\n", init_bias);
+        }
     }
 
     return 0;
@@ -412,6 +470,13 @@ int wt_load_body(weight_t *wt, int version, FILE *fp, bool binary)
             ST_WARNING("Failed to read mat.");
             goto ERR;
         }
+
+        if (wt->bias != NULL) {
+            if (fread(wt->bias, sizeof(real_t), wt->row, fp) != wt->row) {
+                ST_WARNING("Failed to read bias.");
+                goto ERR;
+            }
+        }
     } else {
         if (st_readline(fp, "<WEIGHT-DATA>") != 0) {
             ST_WARNING("body flag error.");
@@ -437,6 +502,19 @@ int wt_load_body(weight_t *wt, int version, FILE *fp, bool binary)
                 if (p == NULL
                         || sscanf(token, REAL_FMT, wt->mat+i*col+j) != 1) {
                     ST_WARNING("Failed to parse mat[%d, %d].", i, j);
+                    goto ERR;
+                }
+            }
+        }
+        if (wt->bias != NULL) {
+            if (st_fgets(&line, &line_sz, fp, &err) == NULL || err) {
+                ST_WARNING("Failed to parse bias[%d].", i);
+            }
+            p = line;
+            for (i = 0; i < wt->row; i++) {
+                p = get_next_token(p, token);
+                if (p == NULL || sscanf(token, REAL_FMT, wt->bias + i) != 1) {
+                    ST_WARNING("Failed to parse bias[%d].", i);
                     goto ERR;
                 }
             }
@@ -479,6 +557,11 @@ int wt_save_header(weight_t *wt, FILE *fp, bool binary)
             ST_WARNING("Failed to write init_param.");
             return -1;
         }
+
+        if (fwrite(&wt->init_bias, sizeof(real_t), 1, fp) != 1) {
+            ST_WARNING("Failed to write init_bias.");
+            return -1;
+        }
     } else {
         if (fprintf(fp, "    \n<WEIGHT>\n") < 0) {
             ST_WARNING("Failed to fprintf header.");
@@ -499,6 +582,10 @@ int wt_save_header(weight_t *wt, FILE *fp, bool binary)
         }
         if (fprintf(fp, "Init param: %f\n", wt->init_param) < 0) {
             ST_WARNING("Failed to fprintf init param.");
+            return -1;
+        }
+        if (fprintf(fp, "Bias: %f\n", wt->init_bias) < 0) {
+            ST_WARNING("Failed to fprintf init bias.");
             return -1;
         }
     }
@@ -534,6 +621,12 @@ int wt_save_body(weight_t *wt, FILE *fp, bool binary, char *name)
             ST_WARNING("Failed to write mat.");
             return -1;
         }
+        if (wt->bias != NULL) {
+            if (fwrite(wt->bias, sizeof(real_t), wt->row, fp) != wt->row) {
+                ST_WARNING("Failed to write bias.");
+                return -1;
+            }
+        }
     } else {
         if (fprintf(fp, "<WEIGHT-DATA>\n") < 0) {
             ST_WARNING("Failed to fprintf header.");
@@ -561,6 +654,18 @@ int wt_save_body(weight_t *wt, FILE *fp, bool binary, char *name)
                 return -1;
             }
         }
+        if (wt->bias != NULL) {
+            for (i = 0; i < wt->row - 1; i++) {
+                if (fprintf(fp, REAL_FMT" ", wt->bias[i]) < 0) {
+                    ST_WARNING("Failed to fprintf bias[%d].", i);
+                    return -1;
+                }
+            }
+            if (fprintf(fp, REAL_FMT"\n", wt->bias[i]) < 0) {
+                ST_WARNING("Failed to fprintf bias[%d].", i);
+                return -1;
+            }
+        }
     }
 
     return 0;
@@ -575,7 +680,7 @@ int wt_init(weight_t *wt, int row, int col)
 
     if (wt_alloc(wt, row, col) < 0) {
         ST_WARNING("Failed to wt_alloc.");
-        goto ERR;
+        return -1;
     }
 
     sz = wt->row;
@@ -605,7 +710,7 @@ int wt_init(weight_t *wt, int row, int col)
         case WT_INIT_IDENTITY:
             if (wt->row != wt->col) {
                 ST_WARNING("Identity initialization: row and col must be equal.");
-                goto ERR;
+                return -1;
             }
             for (i = 0; i < sz; i++) {
                 wt->mat[i] = 0;
@@ -616,14 +721,16 @@ int wt_init(weight_t *wt, int row, int col)
             break;
         default:
             ST_WARNING("Unknown init type[%d]", wt->init_type);
-            goto ERR;
+            return -1;
+    }
+
+    if (wt->bias != NULL) {
+        for (i = 0; i < wt->row; i++) {
+            wt->bias[i] = wt->init_bias;
+        }
     }
 
     return 0;
-
-ERR:
-    safe_st_aligned_free(wt->mat);
-    return -1;
 }
 
 void wt_sanity_check(weight_t *wt, const char *name)
@@ -648,5 +755,19 @@ void wt_sanity_check(weight_t *wt, const char *name)
     if (n > 0) {
         ST_WARNING("There are %d extraordinary values in weight of [%s]",
                 n, name);
+    }
+
+    if (wt->bias != NULL) {
+        n = 0;
+        for (i = 0; i < wt->row; i++) {
+            if (wt->bias[i] >= 100 || wt->bias[i] <= -100) {
+                n++;
+            }
+        }
+
+        if (n > 0) {
+            ST_WARNING("There are %d extraordinary values in bias of [%s]",
+                    n, name);
+        }
     }
 }
