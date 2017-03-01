@@ -148,7 +148,7 @@ int wt_parse_topo(weight_t *wt, char *line, size_t line_len)
     ST_CHECK_PARAM(wt == NULL || line == NULL, -1);
 
     wt->init_type = WT_INIT_UNKNOWN;
-    wt->init_param = 0;
+    wt->init_param = NAN;
 
     p = line;
     untouch_topo[0] = '\0';
@@ -174,15 +174,11 @@ int wt_parse_topo(weight_t *wt, char *line, size_t line_len)
                 goto ERR;
             }
         } else if (strcasecmp("init_param", keyvalue) == 0) {
-            if (wt->init_param != 0) {
+            if (! isnan(wt->init_param)) {
                 ST_WARNING("Duplicated init_param tag");
                 goto ERR;
             }
             wt->init_param = atof(keyvalue + MAX_LINE_LEN);
-            if (wt->init_param <= 0) {
-                ST_WARNING("Error init_param[%g]", wt->init_param);
-                goto ERR;
-            }
         } else {
             strncpy(untouch_topo + strlen(untouch_topo), token,
                     MAX_LINE_LEN - strlen(untouch_topo));
@@ -198,24 +194,39 @@ int wt_parse_topo(weight_t *wt, char *line, size_t line_len)
     }
 
     if (wt->init_type == WT_INIT_CONST) {
-        if (wt->init_param != 0) {
+        if (isnan(wt->init_param)) {
+            wt->init_param = 0;
+        }
+        if (wt->init_param != 0.0) {
             ST_WARNING("WT_INIT_CONST should be 0.0.");
             wt->init_param = 0;
         }
     } else if (wt->init_type == WT_INIT_UNIFORM) {
-        if (wt->init_param == 0) {
+        if (isnan(wt->init_param)) {
             wt->init_param = 0.1;
+        }
+        if (wt->init_param <= 0) {
+            ST_WARNING("Error init_param[%g]", wt->init_param);
+            goto ERR;
         }
     } else if (wt->init_type == WT_INIT_NORM) {
-        if (wt->init_param == 0) {
+        if (isnan(wt->init_param)) {
             wt->init_param = 0.1;
+        }
+        if (wt->init_param <= 0) {
+            ST_WARNING("Error init_param[%g]", wt->init_param);
+            goto ERR;
         }
     } else if (wt->init_type == WT_INIT_TRUNC_NORM) {
-        if (wt->init_param == 0) {
+        if (isnan(wt->init_param)) {
             wt->init_param = 0.1;
         }
+        if (wt->init_param <= 0) {
+            ST_WARNING("Error init_param[%g]", wt->init_param);
+            goto ERR;
+        }
     } else if (wt->init_type == WT_INIT_IDENTITY) {
-        if (wt->init_param == 0) {
+        if (isnan(wt->init_param)) {
             wt->init_param = 1.0;
         }
     }
