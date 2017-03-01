@@ -3,9 +3,9 @@ property name=rnn
 
 input context=-1
 
-layer name=hidden size=200 type=tanh
+layer name=hidden size=200 type=relu
 
 glue name=emb type=emb in=input out=hidden init=uniform init_param=0.1
-glue name=recur type=fc in=hidden out=hidden init=trunc_norm init_param=0.001
+glue name=recur type=fc in=hidden out=hidden init=identity
 glue name=out type=out in=hidden out=output init=trunc_norm init_param=0.01
 </component>
