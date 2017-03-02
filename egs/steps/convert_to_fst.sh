@@ -64,6 +64,8 @@ echo "max-gram: $max_gram"
 for i in `seq $max_gram`; do
   num_gram_wildcard=`../utils/get_value.sh "${i}-grams in wildcard subFST" $log_file`
   num_gram=`../utils/get_value.sh "${i}-grams in normal subFST" $log_file`
+  num_gram_wildcard=${num_gram_wildcard:-0}
+  num_gram=${num_gram:-0}
   echo "#${i}-gram: $num_gram_wildcard + $num_gram = `expr $num_gram_wildcard + $num_gram`"
 done
 

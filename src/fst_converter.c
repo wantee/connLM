@@ -65,6 +65,10 @@ typedef struct _fst_converter_args_t_ {
     int *word_hist;
     int cap_word_hist;
     int num_word_hist;
+
+    int max_gram;
+    int num_arcs;
+    int *num_grams;
 } fst_conv_args_t;
 
 static void fst_conv_args_destroy(fst_conv_args_t *args)
@@ -82,6 +86,8 @@ static void fst_conv_args_destroy(fst_conv_args_t *args)
     safe_free(args->word_hist);
     args->num_word_hist = 0;
     args->cap_word_hist = 0;
+
+    safe_free(args->num_grams);
 
     args->conv = NULL;
 }
@@ -623,14 +629,12 @@ UNLOCK_AND_ERR:
 }
 
 static int fst_conv_print_arc(fst_conv_t *conv,
-        int from, int to, int wid, double weight, int order)
+        int from, int to, int wid, double weight)
 {
     char *ilab_str;
     char *olab_str;
     int ilab;
     int olab;
-
-    int i;
 
     ST_CHECK_PARAM(conv == NULL || from < 0 || to < 0, -1);
 
@@ -695,22 +699,6 @@ static int fst_conv_print_arc(fst_conv_t *conv,
             ST_WARNING("Failed to write out fst.(disk full?)");
             goto UNLOCK_AND_ERR;
         }
-    }
-    conv->num_arcs++;
-
-    if (order > 0) {
-        if (order > conv->max_order) {
-            conv->num_grams = (int *)realloc(conv->num_grams, sizeof(int) * order);
-            if (conv->num_grams == NULL) {
-                ST_WARNING("Failed to realloc num_grams.");
-                goto UNLOCK_AND_ERR;
-            }
-            for (i = conv->max_order; i < order; i++) {
-                conv->num_grams[i] = 0;
-            }
-            conv->max_order = order;
-        }
-        conv->num_grams[order - 1] += 1;
     }
 
     if (pthread_mutex_unlock(&conv->fst_fp_lock) != 0) {
@@ -1134,7 +1122,7 @@ static int fst_conv_expand(fst_conv_t *conv, fst_conv_args_t *args)
     bcache_id_t model_state_id = -1;
     int word;
 
-    int i, n;
+    int i, n, o;
     bool no_backoff;
 
     ST_CHECK_PARAM(conv == NULL || args == NULL, -1);
@@ -1304,10 +1292,25 @@ static int fst_conv_expand(fst_conv_t *conv, fst_conv_args_t *args)
             }
 
             if (fst_conv_print_arc(conv, sid, to_sid, word,
-                        output_probs[word], args->num_word_hist + 1) < 0) {
+                        output_probs[word]) < 0) {
                 ST_WARNING("Failed to fst_conv_print_arc.");
                 return -1;
             }
+
+            args->num_arcs++;
+            if (args->num_word_hist + 1 > args->max_gram) {
+                args->num_grams = (int *)realloc(args->num_grams,
+                        sizeof(int) * (args->num_word_hist + 1));
+                if (args->num_grams == NULL) {
+                    ST_WARNING("Failed to realloc num_grams.");
+                    return -1;
+                }
+                for (o = args->max_gram; o < args->num_word_hist + 1; o++) {
+                    args->num_grams[o] = 0;
+                }
+                args->max_gram = args->num_word_hist + 1;
+            }
+            args->num_grams[args->num_word_hist] += 1;
         }
 
         if (conv->model_state_cache != NULL) {
@@ -1316,11 +1319,6 @@ static int fst_conv_expand(fst_conv_t *conv, fst_conv_args_t *args)
                 ST_WARNING("Failed to st_block_cache_return.");
                 return -1;
             }
-        }
-
-        if (args->num_word_hist + 1 > conv->max_gram) {
-            conv->max_gram = args->num_word_hist + 1;
-            ST_TRACE("Num-grams: %d, ws-arg: %g", conv->max_gram, ws_arg);
         }
     }
 
@@ -1335,15 +1333,17 @@ static int fst_conv_expand(fst_conv_t *conv, fst_conv_args_t *args)
         }
 
         if (fst_conv_print_arc(conv, sid, backoff_sid,
-                    phi_id(conv), nominator / denominator, -1) < 0) {
+                    phi_id(conv), nominator / denominator) < 0) {
             ST_WARNING("Failed to fst_conv_print_arc.");
             return -1;
         }
+
+        args->num_arcs++;
     }
 
     if (sid % FST_CONV_LOG_STEP == 0) {
         ST_TRACE("Expanded states: %d, max gram: %d, states to be expaned: %d",
-                sid, conv->max_gram,
+                sid, args->max_gram,
                 (sid == FST_SENT_START_STATE) ? conv->n_fst_state - ret_sid
                                               : conv->n_fst_state - sid);
     }
@@ -1409,7 +1409,6 @@ static int fst_conv_build_wildcard(fst_conv_t *conv, fst_conv_args_t *args)
         ST_WARNING("Failed to fst_conv_print_ssyms.");
         return -1;
     }
-    conv->max_gram = 2;
 
     // dump state for backoff state
     updater = conv->updaters[0];
@@ -1444,7 +1443,7 @@ static int fst_conv_build_wildcard(fst_conv_t *conv, fst_conv_args_t *args)
     conv->fst_children = malloc(sizeof(fst_state_children_t)
             * conv->cap_fst_states);
     if (conv->fst_children == NULL) {
-        ST_WARNING("Failed to realloc fst_children.");
+        ST_WARNING("Failed to malloc fst_children.");
         return -1;
     }
     for (i = 0; i < conv->cap_fst_states; i++) {
@@ -1453,22 +1452,22 @@ static int fst_conv_build_wildcard(fst_conv_t *conv, fst_conv_args_t *args)
     }
     conv->in_probs = malloc(sizeof(real_t) * conv->cap_fst_states);
     if (conv->in_probs == NULL) {
-        ST_WARNING("Failed to realloc in_probs.");
+        ST_WARNING("Failed to malloc in_probs.");
         return -1;
     }
     conv->final_probs = malloc(sizeof(real_t) * conv->cap_fst_states);
     if (conv->final_probs == NULL) {
-        ST_WARNING("Failed to realloc final_probs.");
+        ST_WARNING("Failed to malloc final_probs.");
         return -1;
     }
     conv->backoff_states = malloc(sizeof(int) * conv->cap_fst_states);
     if (conv->backoff_states == NULL) {
-        ST_WARNING("Failed to realloc backoff_states.");
+        ST_WARNING("Failed to malloc backoff_states.");
         return -1;
     }
     conv->bows = malloc(sizeof(real_t) * conv->cap_fst_states);
     if (conv->bows == NULL) {
-        ST_WARNING("Failed to realloc bows.");
+        ST_WARNING("Failed to malloc bows.");
         return -1;
     }
     for (i = 0; i < conv->cap_fst_states; i++) {
@@ -1536,8 +1535,6 @@ static int fst_conv_build_normal(fst_conv_t *conv, fst_conv_args_t *args)
         goto ERR;
     }
 
-    conv->max_gram = 1;
-
     for (i = 0; i < conv->n_thr; i++) {
         args[i].store_children = false;
         args[i].ws_arg = conv->conv_opt.ws_arg;
@@ -1593,6 +1590,33 @@ ERR:
     return -1;
 }
 
+static int get_total_arcs(fst_conv_args_t *args, int n)
+{
+    int i;
+    int num_arcs = 0;
+
+    for (i = 0; i < n; i++) {
+        num_arcs += args[i].num_arcs;
+    }
+
+    return num_arcs;
+}
+
+static int get_max_gram(fst_conv_args_t *args, int n)
+{
+    int i;
+
+    int max_gram = 0;
+
+    for (i = 0; i < n; i++) {
+        if (args[i].max_gram > max_gram) {
+            max_gram = args[i].max_gram;
+        }
+    }
+
+    return max_gram;
+}
+
 int fst_conv_convert(fst_conv_t *conv, FILE *fst_fp)
 {
     FILE *fp = NULL;
@@ -1603,8 +1627,9 @@ int fst_conv_convert(fst_conv_t *conv, FILE *fst_fp)
     int num_state;
     int num_arcs;
     int max_gram;
+    int num_grams;
 
-    int i;
+    int i, o;
 
     ST_CHECK_PARAM(conv == NULL || fst_fp == NULL, -1);
 
@@ -1644,7 +1669,7 @@ int fst_conv_convert(fst_conv_t *conv, FILE *fst_fp)
     }
 
     if (fst_conv_print_arc(conv, FST_INIT_STATE, FST_SENT_START_STATE,
-                SENT_START_ID, 1.0, 1) < 0) {
+                SENT_START_ID, 1.0) < 0) {
         ST_WARNING("Failed to fst_conv_print_arc for <s>.");
         goto ERR;
     }
@@ -1661,18 +1686,24 @@ int fst_conv_convert(fst_conv_t *conv, FILE *fst_fp)
         goto ERR;
     }
     gettimeofday(&tt1, NULL);
+    num_state = conv->n_fst_state;
+    num_arcs = get_total_arcs(args, conv->n_thr);
+    max_gram = get_max_gram(args, conv->n_thr);
     ST_NOTICE("Total states in wildcard subFST: %d (max_gram = %d). "
             "Total arcs: %d. Elapsed time: %.3fs.",
-            conv->n_fst_state, conv->max_gram, conv->num_arcs,
+            conv->n_fst_state, max_gram, num_arcs,
             TIMEDIFF(tt0, tt1) / 1000.0);
-    num_state = conv->n_fst_state;
-    num_arcs = conv->num_arcs;
-    max_gram = conv->max_gram;
 
-    for (i = 0; i < conv->max_order; i++) {
-        ST_TRACE("%d-grams in wildcard subFST: %d", (i + 1),
-                conv->num_grams[i]);
-        conv->num_grams[i] = 0;
+    for (o = 0; o < max_gram; o++) {
+        num_grams = 0;
+        for (i = 0; i < conv->n_thr; i++) {
+            num_grams += args[i].num_grams[o];
+        }
+        ST_TRACE("%d-grams in wildcard subFST: %d", (o + 1), num_grams);
+    }
+    for (i = 0; i < conv->n_thr; i++) {
+        safe_free(args[i].num_grams);
+        args[i].max_gram = 0;
     }
 
     if (fst_conv_reset(conv, args) < 0) {
@@ -1689,18 +1720,24 @@ int fst_conv_convert(fst_conv_t *conv, FILE *fst_fp)
     gettimeofday(&tt2, NULL);
     ST_NOTICE("Total states in normal subFST: %d (max_gram = %d). "
             "Total arcs: %d, Elapsed time: %.3fs.",
-            conv->n_fst_state - num_state, conv->max_gram,
-            conv->num_arcs - num_arcs,
+            conv->n_fst_state - num_state, get_max_gram(args, conv->n_thr),
+            get_total_arcs(args, conv->n_thr) - num_arcs + 1/* <s> arc */,
             TIMEDIFF(tt1, tt2) / 1000.0);
-    max_gram = max(max_gram, conv->max_gram);
-    for (i = 0; i < conv->max_order; i++) {
-        ST_TRACE("%d-grams in normal subFST: %d", (i + 1),
-                conv->num_grams[i]);
-        conv->num_grams[i] = 0;
+    for (o = 0; o < max_gram; o++) {
+        num_grams = 0;
+        for (i = 0; i < conv->n_thr; i++) {
+            num_grams += args[i].num_grams[o];
+        }
+        if (o == 0) {
+            num_grams += 1; /* <s> gram */
+        }
+        ST_TRACE("%d-grams in normal subFST: %d", (o + 1), num_grams);
     }
+
     ST_NOTICE("Total states in FST: %d (max_gram = %d). "
             "Total arcs: %d, Elapsed time: %.3fs.",
-            conv->n_fst_state, max_gram, conv->num_arcs,
+            conv->n_fst_state, max(max_gram, get_max_gram(args, conv->n_thr)),
+            get_total_arcs(args, conv->n_thr) + 1/* <s> arc*/,
             TIMEDIFF(tt0, tt2) / 1000.0);
 
     safe_fst_conv_args_list_destroy(args, conv->n_thr);
