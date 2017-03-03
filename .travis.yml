@@ -8,7 +8,7 @@ addons:
     - bc
     - gdb
 compiler:
-  - clang
+#  - clang
   - gcc
 install:
   - cd src; ./autogen.sh; cd -
