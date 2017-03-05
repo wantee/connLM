@@ -1,12 +1,14 @@
 language: c
-sudo: required
+sudo: false
+# need to set this if wishing to dump core files
+#sudo: required
 addons:
   apt:
     packages:
     - bc
     - gdb
 compiler:
-  - clang
+#  - clang
   - gcc
 install:
   - cd src; ./autogen.sh; cd -
@@ -20,17 +22,18 @@ after_failure:
 env:
   global:
     - CONNLM_NO_OPT=1
-    - CFLAGS=-mno-avx
+# need to set this if sudo: required
+#    - CFLAGS=-mno-avx
   matrix:
-#    - CASE=1
-#    - CASE=2
-#    - CASE=3
-#    - CASE=4
-#    - CASE=5
-#    - CASE=6
-#    - CASE=7
-#    - CASE=8
-#    - CASE=9
+    - CASE=1
+    - CASE=2
+    - CASE=3
+    - CASE=4
+    - CASE=5
+    - CASE=6
+    - CASE=7
+    - CASE=8
+    - CASE=9
     - CASE=10
 script:
   - .travis/build.sh
