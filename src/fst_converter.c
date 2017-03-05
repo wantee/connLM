@@ -28,6 +28,7 @@
 #include <unistd.h>
 #include <math.h>
 #include <assert.h>
+#include <limits.h>
 
 #include <stutils/st_macro.h>
 #include <stutils/st_log.h>
@@ -69,6 +70,7 @@ typedef struct _fst_converter_args_t_ {
     int max_gram;
     int num_arcs;
     int *num_grams;
+    int *start_sids; /* start sid for every gram. */
 } fst_conv_args_t;
 
 static void fst_conv_args_destroy(fst_conv_args_t *args)
@@ -88,6 +90,7 @@ static void fst_conv_args_destroy(fst_conv_args_t *args)
     args->cap_word_hist = 0;
 
     safe_free(args->num_grams);
+    safe_free(args->start_sids);
 
     args->conv = NULL;
 }
@@ -176,6 +179,51 @@ static fst_conv_args_t* fst_conv_args_list_create(fst_conv_t *conv)
 ERR:
     safe_fst_conv_args_list_destroy(args, conv->n_thr);
     return NULL;
+}
+
+static int get_total_arcs(fst_conv_args_t *args, int n)
+{
+    int i;
+    int num_arcs = 0;
+
+    for (i = 0; i < n; i++) {
+        num_arcs += args[i].num_arcs;
+    }
+
+    return num_arcs;
+}
+
+static int get_max_gram(fst_conv_args_t *args, int n)
+{
+    int i;
+
+    int max_gram = 0;
+
+    for (i = 0; i < n; i++) {
+        if (args[i].max_gram > max_gram) {
+            max_gram = args[i].max_gram;
+        }
+    }
+
+    return max_gram;
+}
+
+static int get_start_sid(fst_conv_args_t *args, int n, int order)
+{
+    int start_sid = INT_MAX;
+
+    int i;
+
+    for (i = 0; i < n; i++) {
+        if (order > args[i].max_gram) {
+            continue;
+        }
+        if (args[i].start_sids[order - 1] < start_sid) {
+            start_sid = args[i].start_sids[order - 1];
+        }
+    }
+
+    return start_sid;
 }
 
 int fst_conv_load_opt(fst_conv_opt_t *conv_opt,
@@ -1305,10 +1353,20 @@ static int fst_conv_expand(fst_conv_t *conv, fst_conv_args_t *args)
                     ST_WARNING("Failed to realloc num_grams.");
                     return -1;
                 }
+
+                args->start_sids = (int *)realloc(args->start_sids,
+                        sizeof(int) * (args->num_word_hist + 1));
+                if (args->start_sids == NULL) {
+                    ST_WARNING("Failed to realloc start_sids.");
+                    return -1;
+                }
+
                 for (o = args->max_gram; o < args->num_word_hist + 1; o++) {
                     args->num_grams[o] = 0;
+                    args->start_sids[o] = 0;
                 }
                 args->max_gram = args->num_word_hist + 1;
+                args->start_sids[args->num_word_hist] = ret_sid;
             }
             args->num_grams[args->num_word_hist] += 1;
         }
@@ -1386,6 +1444,8 @@ static int fst_conv_build_wildcard(fst_conv_t *conv, fst_conv_args_t *args)
     int i, n;
     int num_states_needed;
     int n_states;
+    int cur_gram;
+    int start_sid;
 
     updater_t *updater;
     real_t *new_state;
@@ -1479,6 +1539,7 @@ static int fst_conv_build_wildcard(fst_conv_t *conv, fst_conv_args_t *args)
     }
     conv->n_fst_children = conv->cap_fst_states;
 
+    cur_gram = 2;
     // maximum possible number of states could be expaned
     num_states_needed = conv->n_thr * get_vocab_size(conv);
     while (sid < conv->n_fst_state) {
@@ -1490,6 +1551,14 @@ static int fst_conv_build_wildcard(fst_conv_t *conv, fst_conv_args_t *args)
         }
 
         n_states = conv->n_fst_state;
+
+        // following lines ensure we expend order by order
+        start_sid = get_start_sid(args, conv->n_thr, cur_gram + 1);
+        if (sid + conv->n_thr > start_sid) {
+            n_states = start_sid;
+            cur_gram++;
+        }
+
         for (n = 0; sid < n_states && n < conv->n_thr; sid++, n++) {
             args[n].sid = sid;
             if (pthread_create(pts + n, NULL, conv_worker,
@@ -1528,6 +1597,8 @@ static int fst_conv_build_normal(fst_conv_t *conv, fst_conv_args_t *args)
     int i, n;
     int num_states_needed;
     int n_states;
+    int cur_gram;
+    int start_sid;
 
     ST_CHECK_PARAM(conv == NULL || args == NULL, -1);
 
@@ -1550,6 +1621,7 @@ static int fst_conv_build_normal(fst_conv_t *conv, fst_conv_args_t *args)
         goto ERR;
     }
 
+    cur_gram = 1;
     // maximum possible number of states could be expaned
     num_states_needed = conv->n_thr * get_vocab_size(conv);
     while (sid < conv->n_fst_state) {
@@ -1561,6 +1633,14 @@ static int fst_conv_build_normal(fst_conv_t *conv, fst_conv_args_t *args)
         }
 
         n_states = conv->n_fst_state;
+
+        // following lines ensure we expend order by order
+        start_sid = get_start_sid(args, conv->n_thr, cur_gram + 1);
+        if (sid + conv->n_thr > start_sid) {
+            n_states = start_sid;
+            cur_gram++;
+        }
+
         for (n = 0; sid < n_states && n < conv->n_thr; sid++, n++) {
             args[n].sid = sid;
             if (pthread_create(pts + n, NULL, conv_worker,
@@ -1590,33 +1670,6 @@ ERR:
 
     safe_free(pts);
     return -1;
-}
-
-static int get_total_arcs(fst_conv_args_t *args, int n)
-{
-    int i;
-    int num_arcs = 0;
-
-    for (i = 0; i < n; i++) {
-        num_arcs += args[i].num_arcs;
-    }
-
-    return num_arcs;
-}
-
-static int get_max_gram(fst_conv_args_t *args, int n)
-{
-    int i;
-
-    int max_gram = 0;
-
-    for (i = 0; i < n; i++) {
-        if (args[i].max_gram > max_gram) {
-            max_gram = args[i].max_gram;
-        }
-    }
-
-    return max_gram;
 }
 
 int fst_conv_convert(fst_conv_t *conv, FILE *fst_fp)
