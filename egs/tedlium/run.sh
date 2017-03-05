@@ -77,9 +77,6 @@ tail -n +$num_dev_sentences < $data/cantab-TEDLIUM/cantab-TEDLIUM.txt \
 mkdir -p `dirname "$valid_file"`
 head -n $num_dev_sentences < $data/cantab-TEDLIUM/cantab-TEDLIUM.txt \
        | sed 's/ <\/s>//g'  > $valid_file || exit 1
-mkdir -p `dirname "$test_file"`
-valid_file=$(cd `dirname $valid_file`; pwd)/`basename $valid_file`
-ln -sf $valid_file $test_file || exit 1
 
 awk '{print $1}' $data/cantab-TEDLIUM/cantab-TEDLIUM.dct | sort | uniq | \
       grep -v "<s>" > $wordlist || exit 1
