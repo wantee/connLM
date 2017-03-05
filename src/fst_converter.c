@@ -1385,6 +1385,7 @@ static int fst_conv_build_wildcard(fst_conv_t *conv, fst_conv_args_t *args)
     int sid;
     int i, n;
     int num_states_needed;
+    int n_states;
 
     updater_t *updater;
     real_t *new_state;
@@ -1488,8 +1489,8 @@ static int fst_conv_build_wildcard(fst_conv_t *conv, fst_conv_args_t *args)
             }
         }
 
-        for (n = 0; sid < conv->n_fst_state && n < conv->n_thr;
-                sid++, n++) {
+        n_states = conv->n_fst_state;
+        for (n = 0; sid < n_states && n < conv->n_thr; sid++, n++) {
             args[n].sid = sid;
             if (pthread_create(pts + n, NULL, conv_worker,
                         (void *)(args + n)) != 0) {
@@ -1526,6 +1527,7 @@ static int fst_conv_build_normal(fst_conv_t *conv, fst_conv_args_t *args)
     int sid;
     int i, n;
     int num_states_needed;
+    int n_states;
 
     ST_CHECK_PARAM(conv == NULL || args == NULL, -1);
 
@@ -1558,8 +1560,8 @@ static int fst_conv_build_normal(fst_conv_t *conv, fst_conv_args_t *args)
             }
         }
 
-        for (n = 0; sid < conv->n_fst_state && n < conv->n_thr;
-                sid++, n++) {
+        n_states = conv->n_fst_state;
+        for (n = 0; sid < n_states && n < conv->n_thr; sid++, n++) {
             args[n].sid = sid;
             if (pthread_create(pts + n, NULL, conv_worker,
                         (void *)(args + n)) != 0) {
