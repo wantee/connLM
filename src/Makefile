@@ -38,7 +38,8 @@ INCS = utils.h \
        updaters/glue_updaters/out_glue_updater.h \
        updaters/wt_updater.h \
        updaters/bptt_updater.h \
-       fst_converter.h
+       fst_converter.h \
+       bloom_filter.h
 
 SRCS = utils.c \
        param.c \
@@ -73,7 +74,8 @@ SRCS = utils.c \
        updaters/glue_updaters/out_glue_updater.c \
        updaters/wt_updater.c \
        updaters/bptt_updater.c \
-       fst_converter.c
+       fst_converter.c \
+       bloom_filter.c
 
 BINS = bin/connlm-train \
        bin/connlm-eval \
@@ -85,7 +87,8 @@ BINS = bin/connlm-train \
        bin/connlm-gen \
        bin/connlm-draw \
        bin/connlm-tofst \
-       bin/connlm-merge
+       bin/connlm-merge \
+       bin/bloom-filter-build
 
 #TESTS = tests/maxent-test
 TESTS = tests/utils-test \
