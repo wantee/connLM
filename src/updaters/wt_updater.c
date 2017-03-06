@@ -203,14 +203,16 @@ int wt_updater_init(wt_updater_t *wt_updater)
         case WT_UT_ONE_SHOT:
             /* FALL THROUGH */
         case WT_UT_PART:
-            safe_free(wt_updater->mini_dirty.buf_grad);
+            if (wt_updater->param.mini_batch > 0) {
+                safe_free(wt_updater->mini_dirty.buf_grad);
 
-            wt_updater->mini_dirty.buf_grad = (real_t *)malloc(sz);
-            if (wt_updater->mini_dirty.buf_grad == NULL) {
-                ST_WARNING("Failed to mallco buf_grad.");
-                goto ERR;
+                wt_updater->mini_dirty.buf_grad = (real_t *)malloc(sz);
+                if (wt_updater->mini_dirty.buf_grad == NULL) {
+                    ST_WARNING("Failed to mallco buf_grad.");
+                    goto ERR;
+                }
+                memset(wt_updater->mini_dirty.buf_grad, 0, sz);
             }
-            memset(wt_updater->mini_dirty.buf_grad, 0, sz);
             break;
         default:
             break;
