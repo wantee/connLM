@@ -116,6 +116,15 @@ bloom_filter_t* bloom_filter_load(FILE *fp);
 int bloom_filter_save(bloom_filter_t *blm_flt, FILE *fp, bool binary);
 
 /**
+ * Print info of a bloom filter file stream.
+ * @ingroup g_bloom_filter
+ * @param[in] model_fp file stream read from.
+ * @param[in] fo file stream print info to.
+ * @return non-zero value if any error.
+ */
+int bloom_filter_print_info(FILE *model_fp, FILE *fo);
+
+/**
  * Add an ngram a bloom filter.
  * @ingroup g_bloom_filter
  * @param[in] blm_flt the bloom filter.

@@ -88,7 +88,8 @@ BINS = bin/connlm-train \
        bin/connlm-draw \
        bin/connlm-tofst \
        bin/connlm-merge \
-       bin/bloom-filter-build
+       bin/bloom-filter-build \
+       bin/bloom-filter-info
 
 #TESTS = tests/maxent-test
 TESTS = tests/utils-test \
