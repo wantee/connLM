@@ -37,7 +37,6 @@
 #include <connlm/bloom_filter.h>
 
 bool g_binary;
-int g_num_thr;
 
 st_opt_t *g_cmd_opt;
 bloom_filter_opt_t g_blm_flt_opt;
@@ -73,9 +72,6 @@ int bloom_filter_parse_opt(int *argc, const char *argv[])
         goto ST_OPT_ERR;
     }
 
-    ST_OPT_GET_INT(g_cmd_opt, "NUM_THREAD", g_num_thr, 1,
-            "Number of working threads");
-
     ST_OPT_GET_BOOL(g_cmd_opt, "help", b, false, "Print help");
 
     return (b ? 1 : 0);
@@ -88,8 +84,8 @@ void show_usage(const char *module_name)
 {
     connlm_show_usage(module_name,
             "Build N-gram Bloom Filter",
-            "<text-file> <model-out>",
-            "data/train exp/train.blmflt",
+            "<vocab> <text-file> <model-out>",
+            "exp/vocab.clm data/train exp/train.blmflt",
             g_cmd_opt, NULL);
 }
 
@@ -97,6 +93,7 @@ int main(int argc, const char *argv[])
 {
     char args[1024] = "";
     FILE *fp = NULL;
+    connlm_t *connlm = NULL;
     bloom_filter_t *blm_flt = NULL;
     int ret;
 
@@ -115,36 +112,51 @@ int main(int argc, const char *argv[])
                 CONNLM_GIT_COMMIT, connlm_revision());
     }
 
-    if (argc < 3) {
+    if (argc < 4) {
         show_usage(argv[0]);
         goto ERR;
     }
 
     ST_CLEAN("Command-line: %s", args);
     st_opt_show(g_cmd_opt, "Bloom Filter Build Options");
-    ST_CLEAN("Text: %s, Model-out: %s", argv[1], argv[2]);
+    ST_CLEAN("Vocab: %s, Text: %s, Model-out: %s", argv[1], argv[2], argv[3]);
 
-    blm_flt = bloom_filter_create(&g_blm_flt_opt);
+    fp = st_fopen(argv[1], "rb");
+    if (fp == NULL) {
+        ST_WARNING("Failed to st_fopen vocab[%s]", argv[1]);
+        goto ERR;
+    }
+
+    connlm = connlm_load(fp);
+    if (connlm == NULL) {
+        ST_WARNING("Failed to connlm_load from [%s]", argv[1]);
+        goto ERR;
+    }
+    safe_st_fclose(fp);
+
+    blm_flt = bloom_filter_create(&g_blm_flt_opt, connlm->vocab);
     if (blm_flt == NULL) {
         ST_WARNING("Failed to bloom_filter_create.");
         goto ERR;
     }
 
-    fp = st_fopen(argv[1], "rb");
+    safe_connlm_destroy(connlm);
+
+    fp = st_fopen(argv[2], "rb");
     if (fp == NULL) {
-        ST_WARNING("Failed to st_fopen. [%s]", argv[1]);
+        ST_WARNING("Failed to st_fopen text file[%s].", argv[2]);
         goto ERR;
     }
 
-    if (bloom_filter_build(blm_flt, g_num_thr, fp) < 0) {
+    if (bloom_filter_build(blm_flt, fp) < 0) {
         ST_WARNING("Failed to bloom_filter_build.");
         goto ERR;
     }
     safe_st_fclose(fp);
 
-    fp = st_fopen(argv[2], "wb");
+    fp = st_fopen(argv[3], "wb");
     if (fp == NULL) {
-        ST_WARNING("Failed to st_fopen. [%s]", argv[2]);
+        ST_WARNING("Failed to st_fopen out model file[%s]", argv[3]);
         goto ERR;
     }
 
@@ -164,6 +176,7 @@ int main(int argc, const char *argv[])
 
 ERR:
     safe_st_fclose(fp);
+    safe_connlm_destroy(connlm);
 
     safe_st_opt_destroy(g_cmd_opt);
     safe_bloom_filter_destroy(blm_flt);

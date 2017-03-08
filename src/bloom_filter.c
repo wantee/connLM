@@ -34,6 +34,7 @@
 #include <stutils/st_io.h>
 #include <stutils/st_string.h>
 
+#include "reader.h"
 #include "bloom_filter.h"
 
 static const int BLOOM_FILTER_MAGIC_NUM = 626140498 + 50;
@@ -60,6 +61,13 @@ int bloom_filter_load_opt(bloom_filter_opt_t *blm_flt_opt,
         goto ST_OPT_ERR;
     }
 
+    ST_OPT_SEC_GET_INT(opt, sec_name, "MAX_GRAM", blm_flt_opt->max_gram, 5,
+            "max order of grams. no limits, if less than or equal to zero.");
+
+    ST_OPT_SEC_GET_BOOL(opt, sec_name, "FULL_CONTEXT",
+            blm_flt_opt->full_context, false,
+            "Compute only grams begins with <s>, if false.");
+
     return 0;
 
 ST_OPT_ERR:
@@ -73,13 +81,16 @@ void bloom_filter_destroy(bloom_filter_t *blm_flt)
     }
 
     safe_free(blm_flt->cells);
+
+    safe_vocab_destroy(blm_flt->vocab);
 }
 
-bloom_filter_t* bloom_filter_create(bloom_filter_opt_t *blm_flt_opt)
+bloom_filter_t* bloom_filter_create(bloom_filter_opt_t *blm_flt_opt,
+        vocab_t *vocab)
 {
     bloom_filter_t *blm_flt = NULL;
 
-    ST_CHECK_PARAM(blm_flt_opt == NULL, NULL);
+    ST_CHECK_PARAM(blm_flt_opt == NULL || vocab == NULL, NULL);
 
     blm_flt = (bloom_filter_t *)malloc(sizeof(bloom_filter_t));
     if (blm_flt == NULL) {
@@ -89,6 +100,8 @@ bloom_filter_t* bloom_filter_create(bloom_filter_opt_t *blm_flt_opt)
     memset(blm_flt, 0, sizeof(bloom_filter_t));
 
     blm_flt->blm_flt_opt = *blm_flt_opt;
+
+    blm_flt->vocab = vocab_dup(vocab);
 
     blm_flt->blm_flt_opt.capacity = blm_flt_opt->capacity;
     blm_flt->cells = (char *)malloc(BITNSLOTS(blm_flt->blm_flt_opt.capacity));
@@ -108,6 +121,7 @@ ERR:
 static int bloom_filter_load_header(bloom_filter_t *blm_flt,
         FILE *fp, bool *binary, FILE *fo_info)
 {
+    char sym[MAX_LINE_LEN];
     union {
         char str[4];
         int magic_num;
@@ -116,6 +130,8 @@ static int bloom_filter_load_header(bloom_filter_t *blm_flt,
     int version;
     size_t capacity;
     int num_hash;
+    int max_gram;
+    bool full_context;
 
     ST_CHECK_PARAM((blm_flt == NULL && fo_info == NULL) || fp == NULL
             || binary == NULL, -1);
@@ -155,6 +171,16 @@ static int bloom_filter_load_header(bloom_filter_t *blm_flt,
             ST_WARNING("Failed to read num_hash.");
             return -1;
         }
+
+        if (fread(&max_gram, sizeof(int), 1, fp) != 1) {
+            ST_WARNING("Failed to read max_gram.");
+            return -1;
+        }
+
+        if (fread(&full_context, sizeof(bool), 1, fp) != 1) {
+            ST_WARNING("Failed to read full_context.");
+            return -1;
+        }
     } else {
         if (st_readline(fp, "    ") != 0) {
             ST_WARNING("flag error.");
@@ -185,11 +211,26 @@ static int bloom_filter_load_header(bloom_filter_t *blm_flt,
             ST_WARNING("Failed to parse num_hash.[%d]", num_hash);
             return -1;
         }
+
+        if (st_readline(fp, "Max Gram: %d", &max_gram) != 1) {
+            ST_WARNING("Failed to parse max_gram.[%d]", max_gram);
+            return -1;
+        }
+
+        if (st_readline(fp, "Full Context: %"xSTR(MAX_LINE_LEN)"s",
+                    sym) != 1) {
+            ST_WARNING("Failed to parse full_context.[%s]", sym);
+            return -1;
+        }
+        sym[MAX_LINE_LEN - 1] = '\0';
+        full_context = str2bool(sym);
     }
 
     if (blm_flt != NULL) {
         blm_flt->blm_flt_opt.capacity = capacity;
         blm_flt->blm_flt_opt.num_hash = num_hash;
+        blm_flt->blm_flt_opt.max_gram = max_gram;
+        blm_flt->blm_flt_opt.full_context = full_context;
     }
 
     if (fo_info != NULL) {
@@ -197,6 +238,8 @@ static int bloom_filter_load_header(bloom_filter_t *blm_flt,
         fprintf(fo_info, "Version: %d\n", version);
         fprintf(fo_info, "Capacity: %zu\n", capacity);
         fprintf(fo_info, "Num Hash: %d\n", num_hash);
+        fprintf(fo_info, "Max Gram: %d\n", max_gram);
+        fprintf(fo_info, "Full Context: %s\n", bool2str(full_context));
     }
 
     return version;
@@ -300,6 +343,16 @@ static int bloom_filter_save_header(bloom_filter_t *blm_flt, FILE *fp,
             ST_WARNING("Failed to write num_hash.");
             return -1;
         }
+
+        if (fwrite(&blm_flt->blm_flt_opt.max_gram, sizeof(int), 1, fp) != 1) {
+            ST_WARNING("Failed to write max_gram.");
+            return -1;
+        }
+
+        if (fwrite(&blm_flt->blm_flt_opt.full_context, sizeof(bool), 1, fp) != 1) {
+            ST_WARNING("Failed to write full_context.");
+            return -1;
+        }
     } else {
         if (fprintf(fp, "    \n<BLOOM_FILTER>\n") < 0) {
             ST_WARNING("Failed to fprintf header.");
@@ -317,6 +370,17 @@ static int bloom_filter_save_header(bloom_filter_t *blm_flt, FILE *fp,
 
         if (fprintf(fp, "Num Hash: %d\n", blm_flt->blm_flt_opt.num_hash) < 0) {
             ST_WARNING("Failed to fprintf num_hash.");
+            return -1;
+        }
+
+        if (fprintf(fp, "Max Gram: %d\n", blm_flt->blm_flt_opt.max_gram) < 0) {
+            ST_WARNING("Failed to fprintf max_gram.");
+            return -1;
+        }
+
+        if (fprintf(fp, "Full Context: %s\n",
+                    bool2str(blm_flt->blm_flt_opt.full_context)) < 0) {
+            ST_WARNING("Failed to fprintf full_context.");
             return -1;
         }
     }
@@ -436,23 +500,98 @@ int bloom_filter_print_info(FILE *fp, FILE *fo_info)
     return 0;
 }
 
-int bloom_filter_add(bloom_filter_t *blm_flt, int *words, int n)
+int bloom_filter_add(bloom_filter_t *blm_flt, int *words, int n,
+        bool prepend_bos)
 {
-    ST_CHECK_PARAM(blm_flt == NULL || words == NULL || n < 0, -1);
+    ST_CHECK_PARAM(blm_flt == NULL, -1);
+
+    if (words == NULL || n <= 0) {
+        if (prepend_bos) {
+            return 0;
+        } else {
+            ST_WARNING("Should not add empty gram.");
+            return -1;
+        }
+    }
+
+    // TODO: deal with SENT_START_ID for hash
 
     return 0;
 }
 
-int bloom_filter_lookup(bloom_filter_t *blm_flt, int *words, int n)
+bool bloom_filter_lookup(bloom_filter_t *blm_flt, int *words, int n,
+        bool prepend_bos)
 {
-    ST_CHECK_PARAM(blm_flt == NULL || words == NULL || n < 0, -1);
+    ST_CHECK_PARAM(blm_flt == NULL, false);
 
-    return 0;
+    if (words == NULL || n <= 0) {
+        // unigram <s> will always be true.
+        return prepend_bos;
+    }
+
+    return false;
 }
 
-int bloom_filter_build(bloom_filter_t *blm_flt, int n_thr, FILE *text_fp)
+#define EPOCH_SIZE 1000
+
+int bloom_filter_build(bloom_filter_t *blm_flt, FILE *text_fp)
 {
-    ST_CHECK_PARAM(blm_flt == NULL || n_thr < 0 || text_fp == NULL, -1);
+    connlm_egs_t egs = {
+        .words = NULL,
+        .size = 0,
+        .capacity = 0,
+    };
+
+    int max_gram;
+    bool full_context;
+
+    int pos;
+    int start;
+
+    ST_CHECK_PARAM(blm_flt == NULL || text_fp == NULL, -1);
+
+    max_gram = blm_flt->blm_flt_opt.max_gram;
+    full_context = blm_flt->blm_flt_opt.full_context;
+
+    while (!feof(text_fp)) {
+        if (connlm_egs_read(&egs, NULL, EPOCH_SIZE,
+                    text_fp, blm_flt->vocab, NULL) < 0) {
+            ST_WARNING("Failed to connlm_egs_read.");
+            goto ERR;
+        }
+
+        for (pos = 0; pos < egs.size; pos++) {
+            if (pos == 0 || egs.words[pos - 1] == SENT_END_ID) {
+                start = pos;
+            }
+
+            // TODO: deal with max_gram
+            // TODO: deal with full_context
+#if 0
+            order = pos - start + 1 + 1/* <s> */;
+            if (max_gram > 0) {
+                order = min(order, max_gram);
+            }
+
+            if (order <= 0) {
+                continue;
+            }
+
+            if (bloom_filter_add(blm_flt, egs.words + start, order,
+                        true) < 0) {
+                ST_WARNING("Failed to bloom_filter_add.");
+                goto ERR;
+            }
+#endif
+        }
+    }
+
+    connlm_egs_destroy(&egs);
 
     return 0;
+
+ERR:
+    connlm_egs_destroy(&egs);
+
+    return -1;
 }

@@ -95,11 +95,11 @@ void connlm_egs_destroy(connlm_egs_t *egs);
  * Read words into egs.
  * @ingroup g_reader
  * @param[in] egs connlm_egs.
- * @param[out] sent_ends postion of \</s\>s.
+ * @param[out] sent_ends contains postion of \</s\>s, if not NULL.
  * @param[in] epoch_size number sents read one time.
  * @param[in] text_fp text file.
  * @param[in] vocab vocab.
- * @param[out] oovs number of oovs.
+ * @param[out] oovs number of oovs, if not NULL.
  * @return non-zero value if any error.
  */
 int connlm_egs_read(connlm_egs_t *egs, int *sent_ends,
