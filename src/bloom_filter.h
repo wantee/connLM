@@ -49,7 +49,7 @@ typedef struct _bloom_filtererter_opt_t_ {
     int num_hash; /**< number of hash functions. */
 
     int max_gram; /**< max order of grams. no limits, if less than or equal to zero. */
-    bool full_context; /**< compute only grams begins with <s>, if false. */
+    bool full_context; /**< compute only grams begins with \<s\>, if false. */
 } bloom_filter_opt_t;
 
 /**
