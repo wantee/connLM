@@ -30,7 +30,6 @@ extern "C" {
 #endif
 
 #include <stdio.h>
-#include <pthread.h>
 
 #include <connlm/config.h>
 
@@ -44,7 +43,7 @@ extern "C" {
  * Options for bloom_filter.
  * @ingroup g_bloom_filter
  */
-typedef struct _bloom_filtererter_opt_t_ {
+typedef struct _bloom_filter_opt_t_ {
     size_t capacity; /**< number of bits in this filter. */
     int num_hash; /**< number of hash functions. */
 

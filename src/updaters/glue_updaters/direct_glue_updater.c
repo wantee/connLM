@@ -392,6 +392,10 @@ int direct_glue_updater_forward(glue_updater_t *glue_updater,
     data = (dgu_data_t *)glue_updater->extra;
     out_updater = comp_updater->out_updater;
 
+    // TODO: instead of computing hash here in advance,
+    //       move this function inside direct_forward_walker
+    //       with node_id as init_val, so that we can get different
+    //       hash value on different tree nodes.
     if (direct_compute_hash(glue_updater, comp_updater,
                 input_sent) < 0) {
         ST_WARNING("Failed to direct_compute_hash.");
