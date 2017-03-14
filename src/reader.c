@@ -84,6 +84,10 @@ static int connlm_egs_print(FILE *fp, pthread_mutex_t *fp_lock,
         fprintf(fp, "<EGS>: ");
         while (egs->words[i] != SENT_END_ID && i < egs->size) {
             word = egs->words[i];
+            if (vocab != NULL && word == vocab_get_id(vocab, SENT_START)) {
+                i++;
+                continue;
+            }
 
             if (vocab != NULL) {
                 fprintf(fp, "%s", vocab_get_word(vocab, word));
@@ -132,6 +136,15 @@ int connlm_egs_read(connlm_egs_t *egs, int *sent_ends,
         if (line[0] == '\0') {
             continue;
         }
+
+        if (egs->size >= egs->capacity - 1) {
+            if (connlm_egs_ensure(egs, egs->capacity + NUM_WORD_PER_SENT) < 0) {
+                ST_WARNING("Failed to connlm_egs_ensure. ");
+                goto ERR;
+            }
+        }
+        egs->words[egs->size] = vocab_get_id(vocab, SENT_START);
+        egs->size++;
 
         p = line;
         i = 0;
@@ -479,7 +492,7 @@ static void* reader_read_thread(void *args)
 
         reader->oovs += oovs;
         reader->sents += num_sents;
-        reader->words += egs.size;
+        reader->words += egs.size - num_sents; // Do not accumulate <s
 
 #ifdef _TIME_PROF_
         gettimeofday(&tts_shuf, NULL);

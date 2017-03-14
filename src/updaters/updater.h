@@ -132,9 +132,10 @@ int updater_finalize(updater_t *updater);
  * Sampling a word.
  * @ingroup g_updater
  * @param[in] updater updater.
+ * @param[in] startover if true, feed \<s\> before sampling.
  * @return the sampled word, -1 if any error.
  */
-int updater_sampling(updater_t *updater);
+int updater_sampling(updater_t *updater, bool startover);
 
 /**
  * Get the size of state in updater.

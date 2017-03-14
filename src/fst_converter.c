@@ -45,10 +45,9 @@
 #define FST_SENT_START_STATE 2
 #define FST_BACKOFF_STATE 3
 
-#define SENT_START_ID -99
-
 #define get_vocab_size(conv) (conv)->connlm->vocab->vocab_size
-#define phi_id(conv) get_vocab_size(conv) + 1
+#define phi_id(conv) get_vocab_size(conv)
+#define bos_id(conv) vocab_get_id((conv)->connlm->vocab, SENT_START)
 
 typedef struct _fst_converter_args_t_ {
     fst_conv_t *conv;
@@ -618,8 +617,6 @@ static char* fst_conv_get_word(fst_conv_t *conv, int wid)
 {
     if (wid == ANY_ID) {
         return ANY;
-    } else if (wid == SENT_START_ID) {
-        return SENT_START;
     } else if (wid >= 0) {
         return vocab_get_word(conv->connlm->vocab, wid);
     } else {
@@ -684,7 +681,7 @@ static int fst_conv_print_arc(fst_conv_t *conv,
     int ilab;
     int olab;
 
-    ST_CHECK_PARAM(conv == NULL || from < 0 || to < 0, -1);
+    ST_CHECK_PARAM(conv == NULL || from < 0 || to < 0 || wid < 0, -1);
 
     if (to == FST_FINAL_STATE) {
         if (from < conv->n_fst_children) {
@@ -715,10 +712,7 @@ static int fst_conv_print_arc(fst_conv_t *conv,
         return -1;
     }
     if (conv->conv_opt.print_syms) {
-        if (wid == SENT_START_ID) {
-            ilab_str = SENT_START;
-            olab_str = SENT_START;
-        } else if (phi_id(conv) == wid) {
+        if (phi_id(conv) == wid) {
             ilab_str = PHI;
             olab_str = EPS;
         } else {
@@ -731,14 +725,10 @@ static int fst_conv_print_arc(fst_conv_t *conv,
             goto UNLOCK_AND_ERR;
         }
     } else {
-        if (wid == SENT_START_ID) {
-            ilab = 1; // reserve <eps>
-            olab = ilab;
-        } else if (phi_id(conv) == wid) {
-            ilab = wid + 1; // reserve <eps>
+        ilab = wid + 1; // reserve <eps>
+        if (phi_id(conv) == wid) {
             olab = 0;
         } else {
-            ilab = wid + 2; // reserve <eps> and <s>
             olab = ilab;
         }
 
@@ -1064,7 +1054,7 @@ static int fst_conv_find_backoff(fst_conv_t *conv, int *word_hist,
 
     ST_CHECK_PARAM(conv == NULL || word_hist == NULL || sid < 0, -1);
 
-    assert(word_hist[0] == SENT_START_ID);
+    assert(word_hist[0] == bos_id(conv));
 
     if (word_hist[1] == ANY_ID) {
         i = 3; // <s><any>XYZ -> <s><any>YZ -> <s><any>Z
@@ -1198,7 +1188,7 @@ static int fst_conv_expand(fst_conv_t *conv, fst_conv_args_t *args)
     }
 
     no_backoff = false;
-    if (conv->fst_states[sid].word_id == SENT_START_ID
+    if (conv->fst_states[sid].word_id == bos_id(conv)
             || conv->fst_states[sid].word_id == ANY_ID) {
         no_backoff = true;
     } else {
@@ -1225,9 +1215,8 @@ static int fst_conv_expand(fst_conv_t *conv, fst_conv_args_t *args)
             && args->num_word_hist >= conv->conv_opt.max_gram) {
         ret_sid = sid;
     } else {
-        // do not feed wordhist with the leading <s>
-        if (updater_step_with_state(updater, state, args->word_hist + 1,
-                    args->num_word_hist - 1, output_probs) < 0) {
+        if (updater_step_with_state(updater, state, args->word_hist,
+                    args->num_word_hist, output_probs) < 0) {
             ST_WARNING("Failed to updater_step_with_state.");
             return -1;
         }
@@ -1706,7 +1695,7 @@ int fst_conv_convert(fst_conv_t *conv, FILE *fst_fp)
         ST_WARNING("Failed to fst_conv_add_states for <s>.");
         goto ERR;
     }
-    conv->fst_states[FST_SENT_START_STATE].word_id = SENT_START_ID;
+    conv->fst_states[FST_SENT_START_STATE].word_id = bos_id(conv);
 
     if (fst_conv_print_ssyms(conv, FST_INIT_STATE, NULL, 0,  -1) < 0) {
         ST_WARNING("Failed to fst_conv_print_ssyms.");
@@ -1718,13 +1707,13 @@ int fst_conv_convert(fst_conv_t *conv, FILE *fst_fp)
         goto ERR;
     }
     if (fst_conv_print_ssyms(conv, FST_SENT_START_STATE, NULL, 0,
-                SENT_START_ID) < 0) {
+                bos_id(conv)) < 0) {
         ST_WARNING("Failed to fst_conv_print_ssyms.");
         goto ERR;
     }
 
     if (fst_conv_print_arc(conv, FST_INIT_STATE, FST_SENT_START_STATE,
-                SENT_START_ID, 1.0) < 0) {
+                bos_id(conv), 1.0) < 0) {
         ST_WARNING("Failed to fst_conv_print_arc for <s>.");
         goto ERR;
     }

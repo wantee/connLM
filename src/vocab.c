@@ -89,7 +89,8 @@ static int vocab_load_wordlist(vocab_t *vocab)
             goto ERR;
         }
 
-        if (strcasecmp(line, SENT_END) == 0 || strcasecmp(line, UNK) == 0) {
+        if (strcasecmp(line, SENT_END) == 0 || strcasecmp(line, UNK) == 0
+                || strcasecmp(line, SENT_START) == 0) {
             continue;
         }
 
@@ -546,6 +547,7 @@ static int vocab_sort(vocab_t *vocab, word_info_t *word_infos,
         word_infos[UNK_ID].cnt += word_infos[a].cnt;
     }
 
+    vocab->vocab_size += 1/* <s> */;
     cnts = (count_t *)malloc(sizeof(count_t)*vocab->vocab_size);
     if (cnts == NULL) {
         ST_WARNING("Failed to malloc cnts");
@@ -558,7 +560,7 @@ static int vocab_sort(vocab_t *vocab, word_info_t *word_infos,
         goto ERR;
     }
 
-    for (a = 0; a < vocab->vocab_size; a++) {
+    for (a = 0; a < vocab->vocab_size - 1; a++) {
         word = st_alphabet_get_label(vocab->alphabet, word_infos[a].id);
         if (word == NULL) {
             ST_WARNING("Failed to st_alphabet_get_label[%d].",
@@ -572,6 +574,11 @@ static int vocab_sort(vocab_t *vocab, word_info_t *word_infos,
         }
         cnts[a] = word_infos[a].cnt;
     }
+    if (st_alphabet_add_label(alphabet, SENT_START) != a) {
+        ST_WARNING("Failed to st_alphabet_add_label[%d/%s].", a, SENT_START);
+        goto ERR;
+    }
+    cnts[a] = 0;
 
     safe_st_alphabet_destroy(vocab->alphabet);
     vocab->alphabet = alphabet;
@@ -780,8 +787,6 @@ int vocab_save_syms(vocab_t *vocab, FILE *fp, bool add_eps)
         fprintf(fp, "%s\t%d\n", EPS, id);
         id++;
     }
-    fprintf(fp, "%s\t%d\n", SENT_START, id);
-    id++;
     for (i = 0; i < vocab->vocab_size; i++) {
         fprintf(fp, "%s\t%d\n", vocab_get_word(vocab, i), id);
         id++;

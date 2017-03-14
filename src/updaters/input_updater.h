@@ -41,6 +41,7 @@ extern "C" {
  * @ingroup g_updater_input
  */
 typedef struct _input_updater_t_ {
+    int bos_id; /**< word id of SENT_START. */
     int ctx_leftmost; /**< leftmost for all input contexts. */
     int ctx_rightmost; /**< rightmost for all input contexts. */
 
@@ -75,9 +76,10 @@ void input_updater_destroy(input_updater_t *input_updater);
 /**
  * Create a input_updater.
  * @ingroup g_updater_input
+ * @param[in] bos_id word id of SENT_START.
  * @return input_updater on success, otherwise NULL.
  */
-input_updater_t* input_updater_create();
+input_updater_t* input_updater_create(int bos_id);
 
 /**
  * Setup input_updater for running.

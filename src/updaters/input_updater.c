@@ -48,7 +48,7 @@ void input_updater_destroy(input_updater_t *input_updater)
     input_updater->sent_tail = -1;
 }
 
-input_updater_t* input_updater_create()
+input_updater_t* input_updater_create(int bos_id)
 {
     input_updater_t *input_updater = NULL;
 
@@ -58,6 +58,8 @@ input_updater_t* input_updater_create()
         goto ERR;
     }
     memset(input_updater, 0, sizeof(input_updater_t));
+
+    input_updater->bos_id = bos_id;
 
     return input_updater;
 
@@ -158,6 +160,12 @@ static int input_updater_update_sent(input_updater_t *input_updater,
                 break;
             }
         }
+    }
+
+    if (input_updater->cur_pos < input_updater->n_word
+            && input_updater->words[input_updater->cur_pos] == input_updater->bos_id) {
+        // we never use <s> as target word, since P(<s>) should be equal to 1
+        input_updater->cur_pos++;
     }
 
     sent->words = input_updater->words + input_updater->sent_head;
