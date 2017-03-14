@@ -4,19 +4,19 @@ Step 1: Learn Vocab ...
 ../steps/learn_vocab.sh: Learning vocab test/tmp/case-32/exp/vocab.clm from ./data/train
 =================================
 Words: 81350
-Vocab size: 3721
+Vocab size: 3722
 =================================
 ../steps/learn_vocab.sh: Elapse time: 0s
 
 Step 9: Convert RNN to WFST ...
 ../steps/convert_to_fst.sh --num-thr 4 rnn test/tmp/case-32/exp/conf test/tmp/case-32/exp
 =================================
-#states: 2347229
-#arcs: 4729588
+#states: 6738997
+#arcs: 13516377
 max-gram: 4
 #1-gram: 0 + 1 = 1
 #2-gram: 0 + 3721 = 3721
-#3-gram: 3721 + 31415 = 35136
-#4-gram: 1509588 + 833917 = 2343505
+#3-gram: 3721 + 34668 = 38389
+#4-gram: 6235203 + 500070 = 6735273
 =================================
-../steps/convert_to_fst.sh: Elapse time: 29s
+../steps/convert_to_fst.sh: Elapse time: 4m52s
