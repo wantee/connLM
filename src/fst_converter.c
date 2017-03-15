@@ -45,6 +45,7 @@
 #define FST_SENT_START_STATE 2
 #define FST_BACKOFF_STATE 3
 
+#define get_output_size(conv) (conv)->connlm->output->output_size
 #define get_vocab_size(conv) (conv)->connlm->vocab->vocab_size
 #define phi_id(conv) get_vocab_size(conv)
 #define bos_id(conv) vocab_get_id((conv)->connlm->vocab, SENT_START)
@@ -104,13 +105,13 @@ static int fst_conv_args_init(fst_conv_args_t *args,
     args->rand_seed = conv->conv_opt.init_rand_seed + tid;
 
     args->output_probs = (double *)malloc(sizeof(double)
-            * get_vocab_size(conv));
+            * get_output_size(conv));
     if (args->output_probs == NULL) {
         ST_WARNING("Failed to malloc output_probs.");
         goto ERR;
     }
 
-    args->selected_words = (int *)malloc(sizeof(int) * get_vocab_size(conv));
+    args->selected_words = (int *)malloc(sizeof(int) * get_output_size(conv));
     if (args->selected_words == NULL) {
         ST_WARNING("Failed to malloc selected_words.");
         goto ERR;
@@ -463,13 +464,13 @@ static int fst_conv_setup(fst_conv_t *conv, FILE *fst_fp,
         return -1;
     }
 
-    count = (int)sqrt(get_vocab_size(conv)) * get_vocab_size(conv);
+    count = (int)sqrt(get_output_size(conv)) * get_output_size(conv);
 
     state_size = updater_state_size(conv->updaters[0]);
     if (state_size > 0) {
         conv->model_state_cache = st_block_cache_create(
-                sizeof(real_t) * state_size, get_vocab_size(conv),
-                get_vocab_size(conv));
+                sizeof(real_t) * state_size, get_output_size(conv),
+                get_output_size(conv));
         if (conv->model_state_cache == NULL) {
             ST_WARNING("Failed to st_block_cache_create model_state_cache.");
             return -1;
@@ -767,7 +768,7 @@ static int select_words_baseline(fst_conv_t *conv, double *output_probs,
             || selected_words == NULL || num_selected == NULL, -1);
 
     n = 0;
-    for (word = 0; word < get_vocab_size(conv); word++) {
+    for (word = 0; word < get_output_size(conv); word++) {
         if (word == SENT_END_ID
                 || output_probs[word] >= output_probs[SENT_END_ID] + boost) {
             selected_words[n++] = word;
@@ -843,14 +844,14 @@ static int select_words_sampling(fst_conv_t *conv, double *output_probs,
     n = 0;
     word = -1;
     while(true) {
-        word = boost_sampling(output_probs, get_vocab_size(conv),
+        word = boost_sampling(output_probs, get_output_size(conv),
                 boost, rand_seed);
         if (word < 0) {
             ST_WARNING("Failed to boost_sampling.");
             return -1;
         }
 
-        assert(n < get_vocab_size(conv));
+        assert(n < get_output_size(conv));
 
         selected_words[n] = word;
         n++;
@@ -907,17 +908,17 @@ static int select_words_majority(fst_conv_t *conv, double *output_probs,
     ST_CHECK_PARAM(conv == NULL || output_probs == NULL
             || selected_words == NULL || num_selected == NULL, -1);
 
-    for (i = 0; i < get_vocab_size(conv); i++) {
+    for (i = 0; i < get_output_size(conv); i++) {
         selected_words[i] = i;
     }
 
-    st_qsort(selected_words, get_vocab_size(conv), sizeof(int),
+    st_qsort(selected_words, get_output_size(conv), sizeof(int),
             prob_cmp, (void *)output_probs);
 
     acc = 0.0;
     n = 0;
     has_eos = false;
-    for (i = 0; i < get_vocab_size(conv); i++) {
+    for (i = 0; i < get_output_size(conv); i++) {
         acc += output_probs[selected_words[i]];
         if (selected_words[i] == SENT_END_ID) {
             has_eos = true;
@@ -1257,7 +1258,7 @@ static int fst_conv_expand(fst_conv_t *conv, fst_conv_args_t *args)
         // select words
         n = 0;
         if (no_backoff) {
-            for (word = 0; word < get_vocab_size(conv); word++) {
+            for (word = 0; word < get_output_size(conv); word++) {
                 if (output_probs[word] <= 0.0) {
                     continue;
                 }
@@ -1279,7 +1280,7 @@ static int fst_conv_expand(fst_conv_t *conv, fst_conv_args_t *args)
                 return -1;
             }
 
-            assert(n < get_vocab_size(conv));
+            assert(n < get_output_size(conv));
         }
 
 
@@ -1530,7 +1531,7 @@ static int fst_conv_build_wildcard(fst_conv_t *conv, fst_conv_args_t *args)
 
     cur_gram = 2;
     // maximum possible number of states could be expaned
-    num_states_needed = conv->n_thr * get_vocab_size(conv);
+    num_states_needed = conv->n_thr * get_output_size(conv);
     while (sid < conv->n_fst_state) {
         if (conv->n_fst_state + num_states_needed > conv->cap_fst_states) {
             if (fst_conv_realloc_states(conv, num_states_needed, true) < 0) {
@@ -1612,7 +1613,7 @@ static int fst_conv_build_normal(fst_conv_t *conv, fst_conv_args_t *args)
 
     cur_gram = 1;
     // maximum possible number of states could be expaned
-    num_states_needed = conv->n_thr * get_vocab_size(conv);
+    num_states_needed = conv->n_thr * get_output_size(conv);
     while (sid < conv->n_fst_state) {
         if (conv->n_fst_state + num_states_needed > conv->cap_fst_states) {
             if (fst_conv_realloc_states(conv, num_states_needed, false) < 0) {
