@@ -218,7 +218,8 @@ updater_t* updater_create(connlm_t *connlm)
 
     updater->connlm = connlm;
 
-    updater->input_updater = input_updater_create();
+    updater->input_updater = input_updater_create(
+            vocab_get_id(connlm->vocab, SENT_START));
     if (updater->input_updater == NULL) {
         ST_WARNING("Failed to out_updater_create.");
         goto ERR;
@@ -477,7 +478,7 @@ static int updater_sample_out(updater_t *updater)
     return output_tree_leaf2word(output->tree, node);
 }
 
-int updater_sampling(updater_t *updater)
+int updater_sampling(updater_t *updater, bool startover)
 {
     int word;
 
@@ -486,6 +487,14 @@ int updater_sampling(updater_t *updater)
 #ifdef _CONNLM_TRACE_PROCEDURE_
     ST_TRACE("Sampling");
 #endif
+
+    if (startover) { // feed with <s>
+        word = vocab_get_id(updater->connlm->vocab, SENT_START);
+        if (updater_feed(updater, &word, 1) < 0) {
+            ST_WARNING("Failed to updater_feed.");
+            return -1;
+        }
+    }
 
     if (updater_forward_util_out(updater) < 0) {
         ST_WARNING("Failed to updater_forward_util_out.");

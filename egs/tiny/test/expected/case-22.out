@@ -4,9 +4,9 @@ Step 1: Learn Vocab ...
 ../steps/learn_vocab.sh: Learning vocab test/tmp/case-22/exp/vocab.clm from ./data/train
 =================================
 Words: 81350
-Vocab size: 3721
+Vocab size: 3722
 =================================
-../steps/learn_vocab.sh: Elapse time: 1s
+../steps/learn_vocab.sh: Elapse time: 0s
 
 Step 6: Train crossing RNN model ...
 ../steps/run_standalone.sh --train-thr 1 --eval-thr 1 crossing-rnn test/tmp/case-22/exp/conf test/tmp/case-22/exp ./data/train ./data/valid ./data/test
@@ -16,44 +16,38 @@ Step 6: Train crossing RNN model ...
 ../steps/init_model.sh: Elapse time: 0s
 ../steps/run_standalone.sh: Stage 2 --- Training model...
 ../steps/train_model.sh --train-config test/tmp/case-22/exp/conf/crossing-rnn/train.conf --eval-config test/tmp/case-22/exp/conf/eval.conf --train-threads 1 --eval-threads 1 --start-halving-impr 0.003 --end-halving-impr 0.0003 ./data/train ./data/valid test/tmp/case-22/exp/crossing-rnn
-Prerun Valid Entropy: 8.858188
-ITERATION 01: LR(rnn^emb=0.1 rnn^ff=0.1 rnn^out=0.1 rnn^recur=0.0008), TrEnt 7.296000, W/s 19.5k, CVEnt: 7.115999
+Prerun Valid Entropy: 8.857341
+ITERATION 01: LR(rnn^emb=0.1 rnn^ff=0.1 rnn^out=0.1 rnn^recur=0.0008), TrEnt 7.290885, W/s 17.3k, CVEnt: 7.121536
 nnet accepted (01.clm)
-ITERATION 02: LR(rnn^emb=0.1 rnn^ff=0.1 rnn^out=0.1 rnn^recur=0.0008), TrEnt 6.825783, W/s 19.1k, CVEnt: 7.046517
+ITERATION 02: LR(rnn^emb=0.1 rnn^ff=0.1 rnn^out=0.1 rnn^recur=0.0008), TrEnt 6.831944, W/s 17.0k, CVEnt: 7.020811
 nnet accepted (02.clm)
-ITERATION 03: LR(rnn^emb=0.1 rnn^ff=0.1 rnn^out=0.1 rnn^recur=0.0008), TrEnt 6.688418, W/s 19.4k, CVEnt: 6.938333
+ITERATION 03: LR(rnn^emb=0.1 rnn^ff=0.1 rnn^out=0.1 rnn^recur=0.0008), TrEnt 6.689794, W/s 16.9k, CVEnt: 6.916170
 nnet accepted (03.clm)
-ITERATION 04: LR(rnn^emb=0.1 rnn^ff=0.1 rnn^out=0.1 rnn^recur=0.0008), TrEnt 6.613394, W/s 19.4k, CVEnt: 6.912683
+ITERATION 04: LR(rnn^emb=0.1 rnn^ff=0.1 rnn^out=0.1 rnn^recur=0.0008), TrEnt 6.614107, W/s 17.0k, CVEnt: 6.911305
 nnet accepted (04.clm)
-ITERATION 05: LR(rnn^emb=0.1 rnn^ff=0.1 rnn^out=0.1 rnn^recur=0.0008), TrEnt 6.560988, W/s 19.4k, CVEnt: 6.879659
+ITERATION 05: LR(rnn^emb=0.05 rnn^ff=0.05 rnn^out=0.05 rnn^recur=0.0004), TrEnt 6.492340, W/s 17.3k, CVEnt: 6.808136
 nnet accepted (05.clm)
-ITERATION 06: LR(rnn^emb=0.1 rnn^ff=0.1 rnn^out=0.1 rnn^recur=0.0008), TrEnt 6.517099, W/s 19.2k, CVEnt: 6.957484
-nnet rejected (06.clm)
-ITERATION 07: LR(rnn^emb=0.05 rnn^ff=0.05 rnn^out=0.05 rnn^recur=0.0004), TrEnt 6.427235, W/s 19.3k, CVEnt: 6.809278
+ITERATION 06: LR(rnn^emb=0.025 rnn^ff=0.025 rnn^out=0.025 rnn^recur=0.0002), TrEnt 6.419284, W/s 17.0k, CVEnt: 6.749059
+nnet accepted (06.clm)
+ITERATION 07: LR(rnn^emb=0.0125 rnn^ff=0.0125 rnn^out=0.0125 rnn^recur=0.0001), TrEnt 6.377404, W/s 17.2k, CVEnt: 6.710388
 nnet accepted (07.clm)
-ITERATION 08: LR(rnn^emb=0.025 rnn^ff=0.025 rnn^out=0.025 rnn^recur=0.0002), TrEnt 6.349722, W/s 19.4k, CVEnt: 6.759513
+ITERATION 08: LR(rnn^emb=0.00625 rnn^ff=0.00625 rnn^out=0.00625 rnn^recur=5e-05), TrEnt 6.355645, W/s 17.2k, CVEnt: 6.698508
 nnet accepted (08.clm)
-ITERATION 09: LR(rnn^emb=0.0125 rnn^ff=0.0125 rnn^out=0.0125 rnn^recur=0.0001), TrEnt 6.308429, W/s 19.4k, CVEnt: 6.737208
+ITERATION 09: LR(rnn^emb=0.003125 rnn^ff=0.003125 rnn^out=0.003125 rnn^recur=2.5e-05), TrEnt 6.344223, W/s 17.3k, CVEnt: 6.692016
 nnet accepted (09.clm)
-ITERATION 10: LR(rnn^emb=0.00625 rnn^ff=0.00625 rnn^out=0.00625 rnn^recur=5e-05), TrEnt 6.286500, W/s 19.4k, CVEnt: 6.725937
+ITERATION 10: LR(rnn^emb=0.0015625 rnn^ff=0.0015625 rnn^out=0.0015625 rnn^recur=1.25e-05), TrEnt 6.338561, W/s 17.2k, CVEnt: 6.690711
 nnet accepted (10.clm)
-ITERATION 11: LR(rnn^emb=0.003125 rnn^ff=0.003125 rnn^out=0.003125 rnn^recur=2.5e-05), TrEnt 6.275023, W/s 19.5k, CVEnt: 6.717318
-nnet accepted (11.clm)
-ITERATION 12: LR(rnn^emb=0.0015625 rnn^ff=0.0015625 rnn^out=0.0015625 rnn^recur=1.25e-05), TrEnt 6.269234, W/s 19.4k, CVEnt: 6.712998
-nnet accepted (12.clm)
-ITERATION 13: LR(rnn^emb=0.00078125 rnn^ff=0.00078125 rnn^out=0.00078125 rnn^recur=6.25e-06), TrEnt 6.266160, W/s 17.6k, CVEnt: 6.712963
-nnet accepted (13.clm)
-../steps/train_model.sh: finished, too small rel. improvement .0000052137
+../steps/train_model.sh: finished, too small rel. improvement .0001950084
 ../steps/train_model.sh: Succeeded training the Neural Network : test/tmp/case-22/exp/crossing-rnn/final.clm
-../steps/train_model.sh: Elapse time: 57s
-../steps/train_model.sh: Effective speed: 18.5k words/sec
+../steps/train_model.sh: Elapse time: 51s
+../steps/train_model.sh: Effective speed: 15.9k words/sec
 ../steps/run_standalone.sh: Stage 3 --- Testing model...
 ../steps/eval_model.sh --config-file test/tmp/case-22/exp/conf/eval.conf --eval-threads 1 test/tmp/case-22/exp/crossing-rnn ./data/test
 ../steps/eval_model.sh: Evaluating model test/tmp/case-22/exp/crossing-rnn/final.clm ...
 =================================
-Eval Entropy: 6.613209
-Eval PPL: 97.898076
-Eval Speed: 108.9k words/sec
+Eval Entropy: 6.625349
+Eval PPL: 98.725361
+Eval Speed: 73.8k words/sec
 =================================
-../steps/eval_model.sh: Elapse time: 1s
-../steps/run_standalone.sh: Elapse time: 58s
+../steps/eval_model.sh: Elapse time: 0s
+../steps/run_standalone.sh: Elapse time: 52s

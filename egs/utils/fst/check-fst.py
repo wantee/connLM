@@ -97,7 +97,7 @@ for sid, state in enumerate(fst.states):
   if sid == fst.start_sid or sid == fst.any_sid:
     # no backoff
     assert len(state) == len(vocab) - 4 # <eps>, <s>, #phi, <any>
-    assert [ arc.ilab for arc in state ] == range(2, 2 + len(state))
+    assert [ arc.ilab for arc in state ] == range(1, 1 + len(state))
     continue
 
   if sid == fst.final_sid:
@@ -145,7 +145,7 @@ if args.sent_prob != '':
       line = line.strip()
       fields = line.split("\t")
       if len(fields) == 3:
-        assert int(fields[0]) == vocab[fields[2]] - 2
+        assert int(fields[0]) == vocab[fields[2]] - 1
         sent.append(vocab[fields[2]])
         logprobs.append(float(fields[1]))
         if fields[2] == cf.EOS:

@@ -259,14 +259,6 @@ int output_load_opt(output_opt_t *output_opt, st_opt_t *opt,
         const char *sec_name);
 
 /**
- * Create a output tree with options.
- * @ingroup g_output
- * @param[in] output_opt options.
- * @param[in] output_size size of output layer.
- * @return a new output tree.
- */
-output_t *output_create(output_opt_t *output_opt, int output_size);
-/**
  * Destroy a output tree and set the pointer to NULL.
  * @ingroup g_output
  * @param[in] ptr pointer to output_t.

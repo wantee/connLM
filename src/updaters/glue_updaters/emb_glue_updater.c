@@ -59,17 +59,14 @@ int emb_glue_updater_forward(glue_updater_t *glue_updater,
         case IC_SUM:
             for (a = 0; a < input->n_ctx; a++) {
                 pos = input_sent->tgt_pos + input->context[a].i;
-                if (pos < -1 || pos >= input_sent->n_word) {
+                if (pos < 0 || pos >= input_sent->n_word) {
                     continue;
                 }
                 scale = input->context[a].w;
 
                 switch (data->index_method) {
                     case EI_WORD:
-                        if (pos == -1) { // <s>
-                            wt = glue_updater->wt_updater->wt;
-                            j = 0 * col;
-                        } else if (input_sent->words[pos] == ANY_ID) {
+                        if (input_sent->words[pos] == ANY_ID) {
                             wt = glue->wildcard_repr;
                             j = 0;
                         } else {
@@ -79,10 +76,10 @@ int emb_glue_updater_forward(glue_updater_t *glue_updater,
                         break;
                     case EI_POS:
                         wt = glue_updater->wt_updater->wt;
-                        if (pos + 1 >= data->num_vecs) {
+                        if (pos >= data->num_vecs) {
                             j = (data->num_vecs - 1) * col;
                         } else {
-                            j = (pos + 1) * col;
+                            j = pos * col;
                         }
                         break;
                     default:
@@ -101,17 +98,14 @@ int emb_glue_updater_forward(glue_updater_t *glue_updater,
                 ac = 0;
                 for (a = 0; a < input->n_ctx; a++) {
                     pos = input_sent->tgt_pos + input->context[a].i;
-                    if (pos < -1 || pos >= input_sent->n_word) {
+                    if (pos < 0 || pos >= input_sent->n_word) {
                         continue;
                     }
                     scale = input->context[a].w;
 
                     switch (data->index_method) {
                         case EI_WORD:
-                            if (pos == -1) { // <s>
-                                wt = glue_updater->wt_updater->wt;
-                                j = 0 * col + b;
-                            } else if (input_sent->words[pos] == ANY_ID) {
+                            if (input_sent->words[pos] == ANY_ID) {
                                 wt = glue->wildcard_repr;
                                 j = b;
                             } else {
@@ -121,10 +115,10 @@ int emb_glue_updater_forward(glue_updater_t *glue_updater,
                             break;
                         case EI_POS:
                             wt = glue_updater->wt_updater->wt;
-                            if (pos + 1 >= data->num_vecs) {
+                            if (pos >= data->num_vecs) {
                                 j = (data->num_vecs - 1) * col + b;
                             } else {
-                                j = (pos + 1) * col + b;
+                                j = pos * col + b;
                             }
                             break;
                         default:
@@ -141,17 +135,14 @@ int emb_glue_updater_forward(glue_updater_t *glue_updater,
         case IC_CONCAT:
             for (a = 0; a < input->n_ctx; a++) {
                 pos = input_sent->tgt_pos + input->context[a].i;
-                if (pos < -1 || pos >= input_sent->n_word) {
+                if (pos < 0 || pos >= input_sent->n_word) {
                     continue;
                 }
                 scale = input->context[a].w;
 
                 switch (data->index_method) {
                     case EI_WORD:
-                        if (pos == -1) { // <s>
-                            wt = glue_updater->wt_updater->wt;
-                            j = 0 * col;
-                        } else if (input_sent->words[pos] == ANY_ID) {
+                        if (input_sent->words[pos] == ANY_ID) {
                             wt = glue->wildcard_repr;
                             j = 0;
                         } else {
@@ -161,10 +152,10 @@ int emb_glue_updater_forward(glue_updater_t *glue_updater,
                         break;
                     case EI_POS:
                         wt = glue_updater->wt_updater->wt;
-                        if (pos + 1 >= data->num_vecs) {
+                        if (pos >= data->num_vecs) {
                             j = (data->num_vecs - 1) * col;
                         } else {
-                            j = (pos + 1) * col;
+                            j = pos * col;
                         }
                         break;
                     default:
@@ -210,23 +201,19 @@ int emb_glue_updater_backprop(glue_updater_t *glue_updater,
     if (input->combine == IC_CONCAT) {
         for (a = 0; a < input->n_ctx; a++) {
             pos = input_sent->tgt_pos + input->context[a].i;
-            if (pos < -1 || pos >= input_sent->n_word) {
+            if (pos < 0 || pos >= input_sent->n_word) {
                 continue;
             }
             in_idx.w = input->context[a].w;
             switch (data->index_method) {
                 case EI_WORD:
-                    if (pos == -1) { // <s>
-                        in_idx.i = 0;
-                    } else {
-                        in_idx.i = input_sent->words[pos];
-                    }
+                    in_idx.i = input_sent->words[pos];
                     break;
                 case EI_POS:
-                    if (pos + 1 >= data->num_vecs) {
+                    if (pos >= data->num_vecs) {
                         in_idx.i = data->num_vecs - 1;
                     } else {
-                        in_idx.i = pos + 1;
+                        in_idx.i = pos;
                     }
                     break;
                 default:
@@ -244,23 +231,19 @@ int emb_glue_updater_backprop(glue_updater_t *glue_updater,
     } else {
         for (a = 0; a < input->n_ctx; a++) {
             pos = input_sent->tgt_pos + input->context[a].i;
-            if (pos < -1 || pos >= input_sent->n_word) {
+            if (pos < 0 || pos >= input_sent->n_word) {
                 continue;
             }
             in_idx.w = input->context[a].w;
             switch (data->index_method) {
                 case EI_WORD:
-                    if (pos == -1) { // <s>
-                        in_idx.i = 0;
-                    } else {
-                        in_idx.i = input_sent->words[pos];
-                    }
+                    in_idx.i = input_sent->words[pos];
                     break;
                 case EI_POS:
-                    if (pos + 1 >= data->num_vecs) {
+                    if (pos >= data->num_vecs) {
                         in_idx.i = data->num_vecs - 1;
                     } else {
-                        in_idx.i = pos + 1;
+                        in_idx.i = pos;
                     }
                     break;
                 default:
