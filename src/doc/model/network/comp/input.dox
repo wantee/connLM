@@ -1,0 +1,57 @@
+//
+// The MIT License (MIT)
+//
+// Copyright (c) 2017 Wang Jian
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in all
+// copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+
+/**
+  @page model_network_comp_input The Input Layer
+
+  @section model_network_comp_input_intro Introduction
+
+  The input layer specify how we choose words in a sentence and use them
+  as the input to the network.
+
+  @section model_network_comp_input_topo Topology Configurations
+
+  The @c input tag have following properties:
+
+  - @c context -- whose value should be a list of integers separated by commas.
+    This values denote the relative position with target word, negative values
+    are on the left (history), whilst the positives are on the right (future).
+    E.g. for a 5-gram input, context=-4,-3,-2,-1, or one can also set a
+    skip-gram input with context=-4,-2. Since our model should be able to
+    predict current target word, 0 can not be in the context.
+
+  - @c combine -- this specify how will the context words be combined into a
+    single vector as input for the model. There are three methods: sum, avg
+    and concat, which means take the summation of all context words, take
+    the average value of all context words and concatenate the context
+    words to a longer vector.
+
+  NOTE that, when input layer is followed by a direct_glue, the meaning of
+  these properties will be different. The @c context is to specify the
+  n-gram features fed into Maximum Entropy model and @c combine would be
+  invalidated. Therefore, when context=-4,-3,-2,-1, it actually means we
+  will use 4 n-gram features as input. This is bit of confusing, hopefully
+  this would be changed until we figure out a better way to specify the
+  n-gram feature for Maximum Entropy model.
+
+*/
