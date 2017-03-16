@@ -25,8 +25,6 @@
 #ifndef  _CONNLM_CONFIG_H_
 #define  _CONNLM_CONFIG_H_
 
-#include <stdint.h>
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -52,9 +50,6 @@ extern "C" {
 typedef unsigned long count_t;
 #define COUNT_FMT "%lu"
 #define COUNT_MAX ((count_t)-1)
-
-typedef uint64_t hash_t;
-#define HASH_FMT "%llu"
 
 #define ALIGN_SIZE 128
 

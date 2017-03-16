@@ -30,6 +30,7 @@ extern "C" {
 #endif
 
 #include <stdio.h>
+#include <stdint.h>
 
 #include <connlm/config.h>
 
@@ -39,12 +40,15 @@ extern "C" {
  * A Hash function for n-gram.
  */
 
+typedef uint64_t hash_t;
+#define HASH_FMT "%llu"
+
 /**
  * N-gram Hash
  * @ingroup g_ngram_hash
  */
 typedef struct _ngram_hash_t_ {
-    unsigned int *P; /* coefficients of hash function.  the function is
+    unsigned int *P; /**< coefficients of hash function, which is like
                          P0 + P0 * P1 * w1 + P0 * P1 * P2 * w2 + ... */
     int *context; /**< context of ngram. */
     int ctx_len; /**< length of context. */
@@ -72,7 +76,7 @@ void ngram_hash_destroy(ngram_hash_t *nghash);
 /**
  * Create a ngram hash.
  * @ingroup g_ngram_hash
- * @param[in] context context of ngram.
+ * @param[in] ctx context of ngram.
  * @param[in] ctx_len length of context.
  * @return ngram_hash on success, otherwise NULL.
  */
@@ -82,14 +86,14 @@ ngram_hash_t* ngram_hash_create(int *ctx, int ctx_len);
  * Add an ngram a ngram hash.
  * @ingroup g_ngram_hash
  * @param[in] nghash the ngram hash.
- * @param[in] words words in ngram.
- * @param[in] n number of words.
- * @param[in] tgt_pos position of target word in words.
- * @param[in] prepend_bos whether to prepend a bos to the words.
+ * @param[in] sent words in a sentence.
+ * @param[in] sent_len number of words in a sentence.
+ * @param[in] tgt_pos position of target word in sentence.
+ * @param[in] init_val seed of hash.
  * @return non-zero value if any error.
  */
-uint64_t ngram_hash(ngram_hash_t *nghash, int *words, int n, int tgt_pos,
-        bool prepend_bos);
+hash_t ngram_hash(ngram_hash_t *nghash, int *sent, int sent_len,
+        int tgt_pos, hash_t init_val);
 
 #ifdef __cplusplus
 }

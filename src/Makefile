@@ -39,7 +39,8 @@ INCS = utils.h \
        updaters/wt_updater.h \
        updaters/bptt_updater.h \
        fst_converter.h \
-       bloom_filter.h
+       bloom_filter.h \
+       ngram_hash.h
 
 SRCS = utils.c \
        param.c \
@@ -75,7 +76,8 @@ SRCS = utils.c \
        updaters/wt_updater.c \
        updaters/bptt_updater.c \
        fst_converter.c \
-       bloom_filter.c
+       bloom_filter.c \
+       ngram_hash.c
 
 BINS = bin/connlm-train \
        bin/connlm-eval \

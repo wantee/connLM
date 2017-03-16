@@ -41,18 +41,14 @@ const unsigned int PRIMES[] = {
 
 const unsigned int PRIMES_SIZE = sizeof(PRIMES) / sizeof(PRIMES[0]);
 
-void ngram_hash_destroy(ngram_hash_t *nghash);
+void ngram_hash_destroy(ngram_hash_t *nghash)
 {
-    int i;
-
     if (nghash == NULL) {
         return;
     }
-    for (i = 0; i < nghash->n_ctx; i++) {
-        safe_free(nghash->P[i]);
-    }
     safe_free(nghash->P);
-    nghash->n_ctx = 0;
+    safe_free(nghash->context);
+    nghash->ctx_len = 0;
 }
 
 ngram_hash_t* ngram_hash_create(int *ctx, int ctx_len)
@@ -69,6 +65,12 @@ ngram_hash_t* ngram_hash_create(int *ctx, int ctx_len)
         goto ERR;
     }
 
+    nghash->context = (int *)malloc(sizeof(int) * ctx_len);
+    if (nghash->context == NULL) {
+        ST_WARNING("Failed to malloc context.");
+        goto ERR;
+    }
+    memcpy(nghash->context, ctx, sizeof(int) * ctx_len);
     nghash->ctx_len = ctx_len;
 
     nghash->P = (unsigned int *)malloc(sizeof(unsigned int) * ctx_len);
@@ -77,104 +79,40 @@ ngram_hash_t* ngram_hash_create(int *ctx, int ctx_len)
         goto ERR;
     }
 
-    for (a = 0; a < nghash->ctx_len; a++) {
-        idx = abs(context[nghash->ctx_len-1]) * PRIMES[abs(context[a]) % PRIMES_SIZE];
-        idx += abs(context[a]);
-        data->P[a] = PRIMES[idx % PRIMES_SIZE];
+    for (a = 0; a < ctx_len; a++) {
+        idx = (unsigned)ctx[ctx_len - 1] * PRIMES[(unsigned)ctx[a] % PRIMES_SIZE];
+        idx += (unsigned)ctx[a];
+        nghash->P[a] = PRIMES[idx % PRIMES_SIZE];
         if (a > 0) {
-            data->P[a] *= data->P[a - 1];
+            nghash->P[a] *= nghash->P[a - 1];
         } else {
-            data->P[a] *= PRIMES[0] * PRIMES[1] * 1;
+            nghash->P[a] *= PRIMES[0] * PRIMES[1];
         }
     }
 
-    return 0;
+    return nghash;
 ERR:
     safe_ngram_hash_destroy(nghash);
-    return -1;
+    return NULL;
 }
 
-static int direct_get_hash_pos(hash_t *hash, hash_t init_val,
-        unsigned int **P, st_wt_int_t *context, int n_ctx, int *words,
-        int n_word, int tgt_pos)
+hash_t ngram_hash(ngram_hash_t *nghash, int *sent, int sent_len,
+        int tgt_pos, hash_t init_val)
 {
-    int a;
-    int b;
-
-    // assert all context[i].i > 0
-    for (a = 0; a < n_ctx; a++) {
-        if (tgt_pos + context[a].i >= n_word) {
-            return a;
-        }
-        if (words[tgt_pos + context[a].i] < 0
-                || words[tgt_pos + context[a].i] == UNK_ID) {
-            // if OOV was in future, do not use
-            // this N-gram feature and higher orders
-            return a;
-        }
-
-        hash[a] = init_val;
-        for (b = 0; b <= a; b++) {
-            hash[a] += P[a][b] * (hash_t)(words[tgt_pos+context[b].i] + 1);
-        }
-    }
-
-    return n_ctx;
-}
-
-uint64_t ngram_hash(ngram_hash_t *nghash, int *sent, int sent_len,
-        int tgt_pos, uint64_t init_val)
-{
-    uint64_t hash;
+    hash_t hash;
     int word;
 
-    hash = nghash->P[0] * init_val;
+    int a;
+
+    hash = PRIMES[0] * PRIMES[1] * init_val;
     for (a = 0; a < nghash->ctx_len; a++) {
-        if (tgt_pos + nghash->context[a] >= sent_len) {
+        if (tgt_pos + nghash->context[a] < 0
+                || tgt_pos + nghash->context[a] >= sent_len) {
             continue;
-        } if (tgt_pos + nghash->context[a] >= 0) {
-            word = sent[tgt_pos + nghash->context[a]];
-        } else {
-            word = 0; // <s>
         }
-        hash += P[a]*(hash_t)(word + 1);
+        word = sent[tgt_pos + nghash->context[a]];
+        hash += nghash->P[a]*(hash_t)(word + 1);
     }
 
     return hash;
-}
-
-static int direct_get_hash_neg(hash_t *hash, hash_t init_val,
-        unsigned int **P, st_wt_int_t *context, int n_ctx, int *words,
-        int n_word, int tgt_pos)
-{
-    int a;
-    int b;
-    int word;
-
-    // assert all context[i].i < 0
-    for (a = n_ctx - 1; a >= 0; a--) {
-        if (tgt_pos + context[a].i < -1) {
-            return n_ctx - a - 1;
-        }
-        if (tgt_pos + context[a].i >= 0) {
-            if (words[tgt_pos + context[a].i] < 0
-                    || words[tgt_pos + context[a].i] == UNK_ID) {
-                // if OOV was in history, do not use
-                // this N-gram feature and higher orders
-                return n_ctx - a - 1;
-            }
-        }
-
-        hash[n_ctx - a - 1] = init_val;
-        for (b = n_ctx - 1; b >= a; b--) {
-            if (tgt_pos + context[b].i >= 0) {
-                word = words[tgt_pos + context[b].i];
-            } else {
-                word = 0; // <s>
-            }
-            hash[n_ctx - a - 1] += P[n_ctx - a - 1][b - a]*(hash_t)(word + 1);
-        }
-    }
-
-    return n_ctx;
 }
