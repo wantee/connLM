@@ -98,7 +98,7 @@ int dgu_data_setup(dgu_data_t *data, st_wt_int_t *features, int n_feat)
     data->num_features = n_feat;
     max_order = 0;
     data->positive = n_feat;
-    for (a = 0; a < n_feat; a++) {
+    for (a = n_feat - 1; a >= 0; a--) {
         if (features[a].i > 0) {
             data->positive = a;
         }
