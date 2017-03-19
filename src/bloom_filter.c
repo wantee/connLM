@@ -80,8 +80,17 @@ ST_OPT_ERR:
 
 void bloom_filter_destroy(bloom_filter_t *blm_flt)
 {
+    int o;
+
     if (blm_flt == NULL) {
         return;
+    }
+
+    if (blm_flt->nghashes != NULL) {
+        for (o = 0; o <= blm_flt->blm_flt_opt.max_order; o++) {
+            safe_ngram_hash_destroy(blm_flt->nghashes[o]);
+        }
+        safe_free(blm_flt->nghashes);
     }
 
     safe_free(blm_flt->cells);
@@ -93,6 +102,9 @@ bloom_filter_t* bloom_filter_create(bloom_filter_opt_t *blm_flt_opt,
         vocab_t *vocab)
 {
     bloom_filter_t *blm_flt = NULL;
+
+    int *context = NULL;
+    int o;
 
     ST_CHECK_PARAM(blm_flt_opt == NULL || vocab == NULL, NULL);
 
@@ -115,9 +127,50 @@ bloom_filter_t* bloom_filter_create(bloom_filter_opt_t *blm_flt_opt,
     }
     memset(blm_flt->cells, 0, BITNSLOTS(blm_flt->blm_flt_opt.capacity));
 
+    if (blm_flt->blm_flt_opt.full_context) {
+        blm_flt->nghashes = (ngram_hash_t **)malloc(sizeof(ngram_hash_t*)
+                * blm_flt_opt->max_order);
+    } else {
+        blm_flt->nghashes = (ngram_hash_t **)malloc(sizeof(ngram_hash_t*));
+    }
+    if (blm_flt->nghashes == NULL) {
+        ST_WARNING("Failed to malloc nghashes.");
+        goto ERR;
+    }
+
+    context = (int *)malloc(sizeof(int) * blm_flt_opt->max_order);
+    if (context == NULL) {
+        ST_WARNING("Failed to malloc context.");
+        goto ERR;
+    }
+    for (o = 0; o < blm_flt_opt->max_order; o++) {
+        context[o] = -(blm_flt_opt->max_order - o - 1);
+    }
+
+    blm_flt->nghashes[0] = ngram_hash_create(context, blm_flt_opt->max_order);
+    if (blm_flt->nghashes[0] == NULL) {
+        ST_WARNING("Failed to ngram_hash_create for [%d]-gram.",
+                blm_flt_opt->max_order);
+        goto ERR;
+    }
+
+    if (blm_flt->blm_flt_opt.full_context) {
+        for (o = 1; o < blm_flt_opt->max_order; o++) {
+            blm_flt->nghashes[o] = ngram_hash_create(context + o,
+                    blm_flt_opt->max_order - o);
+            if (blm_flt->nghashes[o] == NULL) {
+                ST_WARNING("Failed to ngram_hash_create for [%d]-gram.", o);
+                goto ERR;
+            }
+        }
+    }
+
+    safe_free(context);
+
     return blm_flt;
 
 ERR:
+    safe_free(context);
     safe_bloom_filter_destroy(blm_flt);
     return NULL;
 }

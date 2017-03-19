@@ -34,6 +34,7 @@ extern "C" {
 #include <connlm/config.h>
 
 #include "vocab.h"
+#include "ngram_hash.h"
 
 /** @defgroup g_bloom_filter N-gram Bloom Filter
  * A Bloom Filter to determine whether a n-gram is present.
@@ -70,6 +71,8 @@ typedef struct _bloom_filtererter_t_ {
     char *cells; /**< cell store truth value for elements. */
 
     vocab_t *vocab; /**< vocabulary. */
+
+    ngram_hash_t **nghashes; /**< ngram hash for every order. */
 
     bloom_filter_opt_t blm_flt_opt; /**< options. */
 } bloom_filter_t;

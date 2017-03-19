@@ -60,10 +60,13 @@ void dgu_data_destroy(dgu_data_t *data)
         return;
     }
 
-    for (i = 0; i < data->num_features; i++) {
-        safe_ngram_hash_destroy(data->nghashes[i]);
+    if (data->nghashes != NULL) {
+        for (i = 0; i < data->num_features; i++) {
+            safe_ngram_hash_destroy(data->nghashes[i]);
+        }
+        safe_free(data->nghashes);
     }
-    safe_free(data->nghashes);
+
     safe_free(data->hash_vals);
 }
 
