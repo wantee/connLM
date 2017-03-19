@@ -47,7 +47,7 @@ typedef struct _bloom_filter_opt_t_ {
     size_t capacity; /**< number of bits in this filter. */
     int num_hash; /**< number of hash functions. */
 
-    int max_gram; /**< max order of grams. no limits, if less than or equal to zero. */
+    int max_order; /**< max order of grams. */
     bool full_context; /**< compute only grams begins with \<s\>, if false. */
 } bloom_filter_opt_t;
 
@@ -145,11 +145,9 @@ int bloom_filter_build(bloom_filter_t *blm_flt, FILE *text_fp);
  * @param[in] blm_flt the bloom filter.
  * @param[in] words words in ngram.
  * @param[in] n number of words.
- * @param[in] prepend_bos whether to prepend a bos to the words.
  * @return non-zero value if any error.
  */
-int bloom_filter_add(bloom_filter_t *blm_flt, int *words, int n,
-        bool prepend_bos);
+int bloom_filter_add(bloom_filter_t *blm_flt, int *words, int n);
 
 /**
  * Add an ngram a bloom filter.
@@ -157,11 +155,9 @@ int bloom_filter_add(bloom_filter_t *blm_flt, int *words, int n,
  * @param[in] blm_flt the bloom filter.
  * @param[in] words words in ngram.
  * @param[in] n number of words.
- * @param[in] prepend_bos whether to prepend a bos to the words.
  * @return true if exists, false otherwise.
  */
-bool bloom_filter_lookup(bloom_filter_t *blm_flt, int *words, int n,
-        bool prepend_bos);
+bool bloom_filter_lookup(bloom_filter_t *blm_flt, int *words, int n);
 
 #ifdef __cplusplus
 }

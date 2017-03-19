@@ -61,8 +61,12 @@ int bloom_filter_load_opt(bloom_filter_opt_t *blm_flt_opt,
         goto ST_OPT_ERR;
     }
 
-    ST_OPT_SEC_GET_INT(opt, sec_name, "MAX_GRAM", blm_flt_opt->max_gram, 5,
-            "max order of grams. no limits, if less than or equal to zero.");
+    ST_OPT_SEC_GET_INT(opt, sec_name, "MAX_ORDER", blm_flt_opt->max_order, 5,
+            "max order of n-grams.");
+    if (blm_flt_opt->max_order <= 0) {
+        ST_WARNING("MAX_ORDER must be larger than zero");
+        goto ST_OPT_ERR;
+    }
 
     ST_OPT_SEC_GET_BOOL(opt, sec_name, "FULL_CONTEXT",
             blm_flt_opt->full_context, false,
@@ -130,7 +134,7 @@ static int bloom_filter_load_header(bloom_filter_t *blm_flt,
     int version;
     size_t capacity;
     int num_hash;
-    int max_gram;
+    int max_order;
     bool full_context;
 
     ST_CHECK_PARAM((blm_flt == NULL && fo_info == NULL) || fp == NULL
@@ -172,8 +176,8 @@ static int bloom_filter_load_header(bloom_filter_t *blm_flt,
             return -1;
         }
 
-        if (fread(&max_gram, sizeof(int), 1, fp) != 1) {
-            ST_WARNING("Failed to read max_gram.");
+        if (fread(&max_order, sizeof(int), 1, fp) != 1) {
+            ST_WARNING("Failed to read max_order.");
             return -1;
         }
 
@@ -212,8 +216,8 @@ static int bloom_filter_load_header(bloom_filter_t *blm_flt,
             return -1;
         }
 
-        if (st_readline(fp, "Max Gram: %d", &max_gram) != 1) {
-            ST_WARNING("Failed to parse max_gram.[%d]", max_gram);
+        if (st_readline(fp, "Max Order: %d", &max_order) != 1) {
+            ST_WARNING("Failed to parse max_order.[%d]", max_order);
             return -1;
         }
 
@@ -229,7 +233,7 @@ static int bloom_filter_load_header(bloom_filter_t *blm_flt,
     if (blm_flt != NULL) {
         blm_flt->blm_flt_opt.capacity = capacity;
         blm_flt->blm_flt_opt.num_hash = num_hash;
-        blm_flt->blm_flt_opt.max_gram = max_gram;
+        blm_flt->blm_flt_opt.max_order = max_order;
         blm_flt->blm_flt_opt.full_context = full_context;
     }
 
@@ -238,7 +242,7 @@ static int bloom_filter_load_header(bloom_filter_t *blm_flt,
         fprintf(fo_info, "Version: %d\n", version);
         fprintf(fo_info, "Capacity: %zu\n", capacity);
         fprintf(fo_info, "Num Hash: %d\n", num_hash);
-        fprintf(fo_info, "Max Gram: %d\n", max_gram);
+        fprintf(fo_info, "Max Order: %d\n", max_order);
         fprintf(fo_info, "Full Context: %s\n", bool2str(full_context));
     }
 
@@ -344,8 +348,8 @@ static int bloom_filter_save_header(bloom_filter_t *blm_flt, FILE *fp,
             return -1;
         }
 
-        if (fwrite(&blm_flt->blm_flt_opt.max_gram, sizeof(int), 1, fp) != 1) {
-            ST_WARNING("Failed to write max_gram.");
+        if (fwrite(&blm_flt->blm_flt_opt.max_order, sizeof(int), 1, fp) != 1) {
+            ST_WARNING("Failed to write max_order.");
             return -1;
         }
 
@@ -373,8 +377,8 @@ static int bloom_filter_save_header(bloom_filter_t *blm_flt, FILE *fp,
             return -1;
         }
 
-        if (fprintf(fp, "Max Gram: %d\n", blm_flt->blm_flt_opt.max_gram) < 0) {
-            ST_WARNING("Failed to fprintf max_gram.");
+        if (fprintf(fp, "Max Order: %d\n", blm_flt->blm_flt_opt.max_order) < 0) {
+            ST_WARNING("Failed to fprintf max_order.");
             return -1;
         }
 
@@ -500,34 +504,16 @@ int bloom_filter_print_info(FILE *fp, FILE *fo_info)
     return 0;
 }
 
-int bloom_filter_add(bloom_filter_t *blm_flt, int *words, int n,
-        bool prepend_bos)
+int bloom_filter_add(bloom_filter_t *blm_flt, int *words, int n)
 {
-    ST_CHECK_PARAM(blm_flt == NULL, -1);
-
-    if (words == NULL || n <= 0) {
-        if (prepend_bos) {
-            return 0;
-        } else {
-            ST_WARNING("Should not add empty gram.");
-            return -1;
-        }
-    }
-
-    // TODO: deal with SENT_START_ID for hash
+    ST_CHECK_PARAM(blm_flt == NULL || words == NULL || n <= 0, -1);
 
     return 0;
 }
 
-bool bloom_filter_lookup(bloom_filter_t *blm_flt, int *words, int n,
-        bool prepend_bos)
+bool bloom_filter_lookup(bloom_filter_t *blm_flt, int *words, int n)
 {
-    ST_CHECK_PARAM(blm_flt == NULL, false);
-
-    if (words == NULL || n <= 0) {
-        // unigram <s> will always be true.
-        return prepend_bos;
-    }
+    ST_CHECK_PARAM(blm_flt == NULL || words == NULL || n <= 0, false);
 
     return false;
 }
@@ -542,7 +528,7 @@ int bloom_filter_build(bloom_filter_t *blm_flt, FILE *text_fp)
         .capacity = 0,
     };
 
-    int max_gram;
+    int max_order;
     bool full_context;
 
     int sent_start;
@@ -551,7 +537,7 @@ int bloom_filter_build(bloom_filter_t *blm_flt, FILE *text_fp)
 
     ST_CHECK_PARAM(blm_flt == NULL || text_fp == NULL, -1);
 
-    max_gram = blm_flt->blm_flt_opt.max_gram;
+    max_order = blm_flt->blm_flt_opt.max_order;
     full_context = blm_flt->blm_flt_opt.full_context;
 
     while (!feof(text_fp)) {
@@ -562,18 +548,16 @@ int bloom_filter_build(bloom_filter_t *blm_flt, FILE *text_fp)
         }
 
         for (pos = 0; pos < egs.size; pos++) {
-            if (pos == 0 || egs.words[pos - 1] == SENT_END_ID) {
+            if (egs.words[pos] == vocab_get_id(blm_flt->vocab, SENT_START)) {
                 sent_start = pos;
             }
 
-            order = pos - sent_start + 1 + 1/* <s> */;
-            if (max_gram > 0) {
-                order = min(order, max_gram);
-            }
+            order = pos - sent_start + 1;
+            order = min(order, max_order);
 
-            if (pos - order < sent_start) {
+            if (pos - order + 1 <= sent_start) {
                 if (bloom_filter_add(blm_flt, egs.words + sent_start,
-                            order - 1, true) < 0) {
+                            order) < 0) {
                     ST_WARNING("Failed to bloom_filter_add.");
                     goto ERR;
                 }
@@ -583,8 +567,7 @@ int bloom_filter_build(bloom_filter_t *blm_flt, FILE *text_fp)
             if (full_context) {
                 while (order > 0) {
                     if (bloom_filter_add(blm_flt,
-                                egs.words + pos - order + 1,
-                                order, false) < 0) {
+                                egs.words + pos - order + 1, order) < 0) {
                         ST_WARNING("Failed to bloom_filter_add.");
                         goto ERR;
                     }
