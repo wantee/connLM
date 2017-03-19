@@ -39,6 +39,8 @@
 
 static const int BLOOM_FILTER_MAGIC_NUM = 626140498 + 50;
 
+#define bos_id(blm_flt) vocab_get_id((blm_flt)->vocab, SENT_START)
+
 int bloom_filter_load_opt(bloom_filter_opt_t *blm_flt_opt,
         st_opt_t *opt, const char *sec_name)
 {
@@ -54,10 +56,10 @@ int bloom_filter_load_opt(bloom_filter_opt_t *blm_flt_opt,
         goto ST_OPT_ERR;
     }
 
-    ST_OPT_SEC_GET_INT(opt, sec_name, "NUM_HASH", blm_flt_opt->num_hash, 1,
-            "Number of hash function to be used.");
-    if (blm_flt_opt->num_hash <= 0) {
-        ST_WARNING("NUM_HASH must be larger than 0.");
+    ST_OPT_SEC_GET_INT(opt, sec_name, "NUM_HASHES", blm_flt_opt->num_hashes, 1,
+            "Number of hashes to be used.");
+    if (blm_flt_opt->num_hashes <= 0) {
+        ST_WARNING("NUM_HASHES must be larger than 0.");
         goto ST_OPT_ERR;
     }
 
@@ -86,8 +88,10 @@ void bloom_filter_destroy(bloom_filter_t *blm_flt)
         return;
     }
 
+    safe_free(blm_flt->hash_vals);
+
     if (blm_flt->nghashes != NULL) {
-        for (o = 0; o <= blm_flt->blm_flt_opt.max_order; o++) {
+        for (o = 0; o < blm_flt->blm_flt_opt.max_order; o++) {
             safe_ngram_hash_destroy(blm_flt->nghashes[o]);
         }
         safe_free(blm_flt->nghashes);
@@ -121,18 +125,14 @@ bloom_filter_t* bloom_filter_create(bloom_filter_opt_t *blm_flt_opt,
 
     blm_flt->blm_flt_opt.capacity = blm_flt_opt->capacity;
     blm_flt->cells = (char *)malloc(BITNSLOTS(blm_flt->blm_flt_opt.capacity));
-    if (blm_flt->cells != NULL) {
+    if (blm_flt->cells == NULL) {
         ST_WARNING("Failed to malloc cells");
         goto ERR;
     }
     memset(blm_flt->cells, 0, BITNSLOTS(blm_flt->blm_flt_opt.capacity));
 
-    if (blm_flt->blm_flt_opt.full_context) {
-        blm_flt->nghashes = (ngram_hash_t **)malloc(sizeof(ngram_hash_t*)
-                * blm_flt_opt->max_order);
-    } else {
-        blm_flt->nghashes = (ngram_hash_t **)malloc(sizeof(ngram_hash_t*));
-    }
+    blm_flt->nghashes = (ngram_hash_t **)malloc(sizeof(ngram_hash_t*)
+            * blm_flt_opt->max_order);
     if (blm_flt->nghashes == NULL) {
         ST_WARNING("Failed to malloc nghashes.");
         goto ERR;
@@ -147,25 +147,23 @@ bloom_filter_t* bloom_filter_create(bloom_filter_opt_t *blm_flt_opt,
         context[o] = -(blm_flt_opt->max_order - o - 1);
     }
 
-    blm_flt->nghashes[0] = ngram_hash_create(context, blm_flt_opt->max_order);
-    if (blm_flt->nghashes[0] == NULL) {
-        ST_WARNING("Failed to ngram_hash_create for [%d]-gram.",
-                blm_flt_opt->max_order);
-        goto ERR;
-    }
-
-    if (blm_flt->blm_flt_opt.full_context) {
-        for (o = 1; o < blm_flt_opt->max_order; o++) {
-            blm_flt->nghashes[o] = ngram_hash_create(context + o,
-                    blm_flt_opt->max_order - o);
-            if (blm_flt->nghashes[o] == NULL) {
-                ST_WARNING("Failed to ngram_hash_create for [%d]-gram.", o);
-                goto ERR;
-            }
+    for (o = 0; o < blm_flt_opt->max_order; o++) {
+        blm_flt->nghashes[o] = ngram_hash_create(
+                context + blm_flt_opt->max_order - o - 1, o + 1);
+        if (blm_flt->nghashes[o] == NULL) {
+            ST_WARNING("Failed to ngram_hash_create for [%d]-gram.", o);
+            goto ERR;
         }
     }
 
     safe_free(context);
+
+    blm_flt->hash_vals = (hash_t *)malloc(sizeof(hash_t)
+            * blm_flt_opt->num_hashes);
+    if (blm_flt->hash_vals == NULL) {
+        ST_WARNING("Failed to malloc hash_vals");
+        goto ERR;
+    }
 
     return blm_flt;
 
@@ -186,7 +184,7 @@ static int bloom_filter_load_header(bloom_filter_t *blm_flt,
 
     int version;
     size_t capacity;
-    int num_hash;
+    int num_hashes;
     int max_order;
     bool full_context;
 
@@ -224,8 +222,8 @@ static int bloom_filter_load_header(bloom_filter_t *blm_flt,
             return -1;
         }
 
-        if (fread(&num_hash, sizeof(int), 1, fp) != 1) {
-            ST_WARNING("Failed to read num_hash.");
+        if (fread(&num_hashes, sizeof(int), 1, fp) != 1) {
+            ST_WARNING("Failed to read num_hashes.");
             return -1;
         }
 
@@ -264,8 +262,8 @@ static int bloom_filter_load_header(bloom_filter_t *blm_flt,
             return -1;
         }
 
-        if (st_readline(fp, "Num Hash: %d", &num_hash) != 1) {
-            ST_WARNING("Failed to parse num_hash.[%d]", num_hash);
+        if (st_readline(fp, "Num Hashes: %d", &num_hashes) != 1) {
+            ST_WARNING("Failed to parse num_hashes.[%d]", num_hashes);
             return -1;
         }
 
@@ -285,7 +283,7 @@ static int bloom_filter_load_header(bloom_filter_t *blm_flt,
 
     if (blm_flt != NULL) {
         blm_flt->blm_flt_opt.capacity = capacity;
-        blm_flt->blm_flt_opt.num_hash = num_hash;
+        blm_flt->blm_flt_opt.num_hashes = num_hashes;
         blm_flt->blm_flt_opt.max_order = max_order;
         blm_flt->blm_flt_opt.full_context = full_context;
     }
@@ -294,7 +292,7 @@ static int bloom_filter_load_header(bloom_filter_t *blm_flt,
         fprintf(fo_info, "<BLOOM_FILTER>\n");
         fprintf(fo_info, "Version: %d\n", version);
         fprintf(fo_info, "Capacity: %zu\n", capacity);
-        fprintf(fo_info, "Num Hash: %d\n", num_hash);
+        fprintf(fo_info, "Num Hashes: %d\n", num_hashes);
         fprintf(fo_info, "Max Order: %d\n", max_order);
         fprintf(fo_info, "Full Context: %s\n", bool2str(full_context));
     }
@@ -396,8 +394,8 @@ static int bloom_filter_save_header(bloom_filter_t *blm_flt, FILE *fp,
             return -1;
         }
 
-        if (fwrite(&blm_flt->blm_flt_opt.num_hash, sizeof(int), 1, fp) != 1) {
-            ST_WARNING("Failed to write num_hash.");
+        if (fwrite(&blm_flt->blm_flt_opt.num_hashes, sizeof(int), 1, fp) != 1) {
+            ST_WARNING("Failed to write num_hashes.");
             return -1;
         }
 
@@ -425,8 +423,8 @@ static int bloom_filter_save_header(bloom_filter_t *blm_flt, FILE *fp,
             return -1;
         }
 
-        if (fprintf(fp, "Num Hash: %d\n", blm_flt->blm_flt_opt.num_hash) < 0) {
-            ST_WARNING("Failed to fprintf num_hash.");
+        if (fprintf(fp, "Num Hashes: %d\n", blm_flt->blm_flt_opt.num_hashes) < 0) {
+            ST_WARNING("Failed to fprintf num_hashes.");
             return -1;
         }
 
@@ -557,18 +555,100 @@ int bloom_filter_print_info(FILE *fp, FILE *fo_info)
     return 0;
 }
 
+static const size_t HALF_BITS = sizeof(hash_t) / 2 * CHAR_BIT;
+
+static inline hash_t dup_low_bits(hash_t val)
+{
+    return val | (val << HALF_BITS);
+}
+
+static inline void split_hash(hash_t val, hash_t *val_a, hash_t *val_b)
+{
+    static hash_t mask = (((hash_t)1) << HALF_BITS) - 1;
+
+    *val_a = (hash_t)(val >> HALF_BITS);
+    *val_b = (hash_t)(val & mask);
+
+    *val_a = dup_low_bits(*val_a);
+    *val_b = dup_low_bits(*val_b);
+}
+
+static int bloom_filter_hash(bloom_filter_t *blm_flt, int *words, int n)
+{
+    hash_t val;
+    hash_t val_a, val_b;
+
+    int k;
+
+    ST_CHECK_PARAM(blm_flt == NULL || words == NULL || n <= 0, -1);
+
+    if (n > blm_flt->blm_flt_opt.max_order) {
+        ST_WARNING("order[%d] of n-gram must be less than max_order[%d].",
+                n, blm_flt->blm_flt_opt.max_order);
+        return -1;
+    }
+
+    val = ngram_hash(blm_flt->nghashes[n - 1], words, n, n - 1, n);
+
+    split_hash(val, &val_a, &val_b);
+
+    for (k = 0; k < blm_flt->blm_flt_opt.num_hashes; k++) {
+        blm_flt->hash_vals[k] = val_a + (k + 1) * val_b;
+    }
+
+    return 0;
+}
+
 int bloom_filter_add(bloom_filter_t *blm_flt, int *words, int n)
 {
+    int k;
+
     ST_CHECK_PARAM(blm_flt == NULL || words == NULL || n <= 0, -1);
+
+    if (! blm_flt->blm_flt_opt.full_context) {
+        if (words[0] != bos_id(blm_flt)) {
+            ST_WARNING("n-gram must start with <s>, "
+                    "when full_context is false");
+            return -1;
+        }
+    }
+
+    if (bloom_filter_hash(blm_flt, words, n) < 0) {
+        ST_WARNING("Failed to bloom_filter_hash.");
+        return -1;
+    }
+
+    for (k = 0; k < blm_flt->blm_flt_opt.num_hashes; k++) {
+        BITSET(blm_flt->cells,
+               blm_flt->hash_vals[k] % blm_flt->blm_flt_opt.capacity);
+    }
 
     return 0;
 }
 
 bool bloom_filter_lookup(bloom_filter_t *blm_flt, int *words, int n)
 {
+    int k;
+
     ST_CHECK_PARAM(blm_flt == NULL || words == NULL || n <= 0, false);
 
-    return false;
+    if (! blm_flt->blm_flt_opt.full_context && words[0] != bos_id(blm_flt)) {
+        return false;
+    }
+
+    if (bloom_filter_hash(blm_flt, words, n) < 0) {
+        ST_WARNING("Failed to bloom_filter_hash.");
+        return false;
+    }
+
+    for (k = 0; k < blm_flt->blm_flt_opt.num_hashes; k++) {
+        if (! BITTEST(blm_flt->cells,
+               blm_flt->hash_vals[k] % blm_flt->blm_flt_opt.capacity)) {
+            return false;
+        }
+    }
+
+    return true;
 }
 
 #define EPOCH_SIZE 1000
@@ -584,7 +664,7 @@ int bloom_filter_build(bloom_filter_t *blm_flt, FILE *text_fp)
     int max_order;
     bool full_context;
 
-    int sent_start;
+    int sent_start = 0;
     int pos;
     int order;
 
@@ -601,7 +681,7 @@ int bloom_filter_build(bloom_filter_t *blm_flt, FILE *text_fp)
         }
 
         for (pos = 0; pos < egs.size; pos++) {
-            if (egs.words[pos] == vocab_get_id(blm_flt->vocab, SENT_START)) {
+            if (egs.words[pos] == bos_id(blm_flt)) {
                 sent_start = pos;
             }
 

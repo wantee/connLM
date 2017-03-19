@@ -46,7 +46,7 @@ extern "C" {
  */
 typedef struct _bloom_filter_opt_t_ {
     size_t capacity; /**< number of bits in this filter. */
-    int num_hash; /**< number of hash functions. */
+    int num_hashes; /**< number of hashes. */
 
     int max_order; /**< max order of grams. */
     bool full_context; /**< compute only grams begins with \<s\>, if false. */
@@ -73,6 +73,7 @@ typedef struct _bloom_filtererter_t_ {
     vocab_t *vocab; /**< vocabulary. */
 
     ngram_hash_t **nghashes; /**< ngram hash for every order. */
+    hash_t *hash_vals; /**< buffer stored (num_hashes) hash values. */
 
     bloom_filter_opt_t blm_flt_opt; /**< options. */
 } bloom_filter_t;
