@@ -303,7 +303,7 @@ int fst_conv_load_opt(fst_conv_opt_t *conv_opt,
             "WS_ARG_POWER for wildcard subFST. would be the same ws_arg_power, "
             "if not specified");
 
-    if (conv_opt->wsm) {
+    if (conv_opt->wsm == WSM_SAMPLING) {
         ST_OPT_SEC_GET_UINT(opt, sec_name, "INIT_RANDOM_SEED",
                 conv_opt->init_rand_seed, (unsigned int)time(NULL),
                 "Initial random seed, seed for each thread would be "
