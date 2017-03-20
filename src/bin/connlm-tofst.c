@@ -89,7 +89,7 @@ void show_usage(const char *module_name)
     connlm_show_usage(module_name,
             "Convert connLM Model to WFST",
             "<model> <fst-file>",
-            "--max-gram=5 --ws-arg=0.5 --wildcard-ws-arg=0.9 "
+            "--max-gram=5 --ws-arg=0.5 "
             "--word-syms-file=exp/fst/words.txt "
             "exp/final.clm exp/fst/g.txt",
       g_cmd_opt, NULL);

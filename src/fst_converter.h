@@ -71,8 +71,6 @@ typedef struct _fst_converter_opt_t_ {
                       otherwise, as threshold for accumulated probabilty. */
     double ws_arg_power; /**< power to the history length for ws_arg.
                      e.g. cur_ws_arg = ws_arg * pow(hist_len, ws_arg_power).*/
-    double wildcard_ws_arg; /**< ws_arg for wildcard subFST. */
-    double wildcard_ws_arg_power; /**< ws_arg_power for wildcard subFST. */
 
     unsigned int init_rand_seed; /**< initial random seed. */
 } fst_conv_opt_t;
@@ -130,7 +128,6 @@ typedef struct _fst_converter_t_ {
     real_t* final_probs; /**< probability from a state to final state. */
     int* backoff_states; /**< backoff state of a state. */
     real_t * bows; /**< backoff weight of a state. */
-    int n_fst_children; /**< numberof fst state children. */
     pthread_mutex_t fst_state_lock; /**< lock for fst_states. */
 
     FILE *fst_fp; /**< output file pointer for fst file. */

@@ -145,15 +145,6 @@ int direct_glue_save_header(void *extra, FILE *fp, bool binary);
 int direct_glue_init_data(glue_t *glue, input_t *input,
         layer_t **layers, output_t *output);
 
-/**
- * Generate representation for wildcard symbol.
- * @ingroup g_glue_direct
- * @param[in] glue glue.
- * @param[in] word_cnts counts of all words.
- * @return non-zero value if any error.
- */
-int direct_glue_generate_wildcard_repr(glue_t *glue, count_t *word_cnts);
-
 #ifdef __cplusplus
 }
 #endif

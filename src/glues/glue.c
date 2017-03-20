@@ -43,23 +43,19 @@ static glue_impl_t GLUE_IMPL[] = {
     {DIRECT_GLUE_NAME, direct_glue_init, direct_glue_destroy, direct_glue_dup,
         direct_glue_parse_topo, direct_glue_check, direct_glue_draw_label,
         direct_glue_load_header, NULL, direct_glue_save_header, NULL,
-        direct_glue_init_data, direct_glue_init_wt_updater,
-        direct_glue_generate_wildcard_repr},
+        direct_glue_init_data, direct_glue_init_wt_updater},
     {FC_GLUE_NAME, NULL, NULL, NULL,
         fc_glue_parse_topo, fc_glue_check, NULL,
         NULL, NULL, NULL, NULL,
-        fc_glue_init_data, fc_glue_init_wt_updater,
-        NULL},
+        fc_glue_init_data, fc_glue_init_wt_updater},
     {EMB_GLUE_NAME, emb_glue_init, emb_glue_destroy, emb_glue_dup,
         emb_glue_parse_topo, emb_glue_check, emb_glue_draw_label,
         emb_glue_load_header, NULL, emb_glue_save_header, NULL,
-        emb_glue_init_data, emb_glue_init_wt_updater,
-        emb_glue_generate_wildcard_repr},
+        emb_glue_init_data, emb_glue_init_wt_updater},
     {OUT_GLUE_NAME, NULL, NULL, NULL,
         out_glue_parse_topo, out_glue_check, NULL,
         NULL, NULL, NULL, NULL,
-        out_glue_init_data, out_glue_init_wt_updater,
-        NULL},
+        out_glue_init_data, out_glue_init_wt_updater},
 };
 
 static glue_impl_t* glue_get_impl(const char *type)
@@ -109,8 +105,6 @@ void glue_destroy(glue_t *glue)
     glue->out_offset = -1;
     glue->out_length = -1;
     safe_wt_destroy(glue->wt);
-
-    safe_free(glue->wildcard_repr);
 }
 
 bool glue_check(glue_t *glue, layer_t **layers,
@@ -870,20 +864,6 @@ int glue_load_train_opt(glue_t *glue, st_opt_t *opt, const char *sec_name,
 
 ST_OPT_ERR:
     return -1;
-}
-
-int glue_generate_wildcard_repr(glue_t *glue, count_t *word_cnts)
-{
-    ST_CHECK_PARAM(glue == NULL, -1);
-
-    if (glue->impl != NULL && glue->impl->generate_wildcard_repr != NULL) {
-        if (glue->impl->generate_wildcard_repr(glue, word_cnts) < 0) {
-            ST_WARNING("Failed to generate_wildcard_repr for glue impl.");
-            return -1;
-        }
-    }
-
-    return 0;
 }
 
 void glue_sanity_check(glue_t *glue)

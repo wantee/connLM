@@ -58,8 +58,6 @@ typedef unsigned long count_t;
 #define SENT_START "<s>"
 #define UNK "<unk>"
 #define UNK_ID 1
-#define ANY "<any>"
-#define ANY_ID -100
 
 #define EPS "<eps>"
 #define PHI "#phi"

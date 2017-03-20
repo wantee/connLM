@@ -412,9 +412,3 @@ ERR:
     safe_wt_updater_destroy(wt_updater);
     return NULL;
 }
-
-int direct_glue_generate_wildcard_repr(glue_t *glue, count_t *word_cnts)
-{
-    ST_WARNING("direct glue does not support wildcard.");
-    return -1;
-}

@@ -227,7 +227,6 @@ int input_load_header(input_t **input, int version,
     int c;
     int input_size;
     int n_ctx;
-    real_t scale = 0.0;
 
     ST_CHECK_PARAM((input == NULL && fo_info == NULL) || fp == NULL
             || binary == NULL, -1);
@@ -316,7 +315,6 @@ int input_load_header(input_t **input, int version,
         fprintf(fo_info, "Input size: %d\n", input_size);
         fprintf(fo_info, "Num context: %d\n", n_ctx);
         fprintf(fo_info, "Combine: %s\n", combine2str((input_combine_t)c));
-        fprintf(fo_info, "Wildcard scale: "REAL_FMT"\n", (real_t)scale);
     }
 
     return 0;

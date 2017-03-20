@@ -51,7 +51,7 @@ connlm-tofst --config="$conf/tofst.conf" --log-file="$log_file" \
              "$dir/../final.clm" "$dir/g.txt" || exit 1
 
 echo "================================="
-num_states=`../utils/get_value.sh "Total states in FST" $log_file`
+num_states=`../utils/get_value.sh "Total states" $log_file`
 echo "#states: $num_states"
 
 num_arcs=`../utils/get_value.sh "Total arcs" $log_file`
@@ -62,11 +62,9 @@ echo "max-gram: $max_gram"
 
 
 for i in `seq $max_gram`; do
-  num_gram_wildcard=`../utils/get_value.sh "${i}-grams in wildcard subFST" $log_file`
-  num_gram=`../utils/get_value.sh "${i}-grams in normal subFST" $log_file`
-  num_gram_wildcard=${num_gram_wildcard:-0}
+  num_gram=`../utils/get_value.sh "${i}-grams" $log_file`
   num_gram=${num_gram:-0}
-  echo "#${i}-gram: $num_gram_wildcard + $num_gram = `expr $num_gram_wildcard + $num_gram`"
+  echo "#${i}-gram: $num_gram"
 done
 
 echo "================================="

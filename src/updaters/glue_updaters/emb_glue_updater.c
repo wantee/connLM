@@ -66,13 +66,8 @@ int emb_glue_updater_forward(glue_updater_t *glue_updater,
 
                 switch (data->index_method) {
                     case EI_WORD:
-                        if (input_sent->words[pos] == ANY_ID) {
-                            wt = glue->wildcard_repr;
-                            j = 0;
-                        } else {
-                            wt = glue_updater->wt_updater->wt;
-                            j = input_sent->words[pos] * col;
-                        }
+                        wt = glue_updater->wt_updater->wt;
+                        j = input_sent->words[pos] * col;
                         break;
                     case EI_POS:
                         wt = glue_updater->wt_updater->wt;
@@ -105,13 +100,8 @@ int emb_glue_updater_forward(glue_updater_t *glue_updater,
 
                     switch (data->index_method) {
                         case EI_WORD:
-                            if (input_sent->words[pos] == ANY_ID) {
-                                wt = glue->wildcard_repr;
-                                j = b;
-                            } else {
-                                wt = glue_updater->wt_updater->wt;
-                                j = input_sent->words[pos] * col + b;
-                            }
+                            wt = glue_updater->wt_updater->wt;
+                            j = input_sent->words[pos] * col + b;
                             break;
                         case EI_POS:
                             wt = glue_updater->wt_updater->wt;
@@ -142,13 +132,8 @@ int emb_glue_updater_forward(glue_updater_t *glue_updater,
 
                 switch (data->index_method) {
                     case EI_WORD:
-                        if (input_sent->words[pos] == ANY_ID) {
-                            wt = glue->wildcard_repr;
-                            j = 0;
-                        } else {
-                            wt = glue_updater->wt_updater->wt;
-                            j = input_sent->words[pos] * col;
-                        }
+                        wt = glue_updater->wt_updater->wt;
+                        j = input_sent->words[pos] * col;
                         break;
                     case EI_POS:
                         wt = glue_updater->wt_updater->wt;

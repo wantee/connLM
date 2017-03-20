@@ -1015,35 +1015,6 @@ int comp_draw(component_t *comp, FILE *fp, bool verbose)
     return 0;
 }
 
-int comp_generate_wildcard_repr(component_t *comp, count_t *word_cnts)
-{
-    int g;
-
-    ST_CHECK_PARAM(comp == NULL, -1);
-
-    for (g = 0; g < comp->num_glue; g++) {
-        if (glue_generate_wildcard_repr(comp->glues[g], word_cnts) < 0) {
-            ST_WARNING("Failed to glue_generate_wildcard_repr for glue[%s]",
-                    comp->glues[g]->name);
-            return -1;
-        }
-    }
-
-    // check all glue connected with input layer should generate wildcard.
-    for (g = 0; g < comp->num_glue; g++) {
-        if (strcasecmp(comp->layers[comp->glues[g]->in_layer]->type,
-                    INPUT_LAYER_NAME) == 0) {
-            if (comp->glues[g]->wildcard_repr == NULL) {
-                ST_WARNING("glue[%s] does not contain wildcard repr.",
-                        comp->glues[g]->name);
-                return -1;
-            }
-        }
-    }
-
-    return 0;
-}
-
 void comp_sanity_check(component_t *comp)
 {
     int g;
