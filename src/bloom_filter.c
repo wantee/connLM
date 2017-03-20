@@ -555,7 +555,7 @@ int bloom_filter_print_info(FILE *fp, FILE *fo_info)
     return 0;
 }
 
-static const size_t HALF_BITS = sizeof(hash_t) / 2 * CHAR_BIT;
+#define HALF_BITS (sizeof(hash_t) / 2 * CHAR_BIT)
 
 static inline hash_t dup_low_bits(hash_t val)
 {
