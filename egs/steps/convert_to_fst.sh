@@ -45,10 +45,10 @@ opts="--num-thread=$num_thr"
 if $output_ssyms; then
   opts+=" --state-syms-file=$dir/g.ssyms"
 fi
-connlm-tofst --config="$conf/tofst.conf" --log-file="$log_file" \
-             $opts \
-             --word-syms-file="$dir/words.txt" \
-             "$dir/../final.clm" "$dir/g.txt" || exit 1
+shu-run connlm-tofst --config="$conf/tofst.conf" --log-file="$log_file" \
+                     $opts \
+                     --word-syms-file="$dir/words.txt" \
+                     "$dir/../final.clm" "$dir/g.txt" || exit 1
 
 echo "================================="
 num_states=`../utils/get_value.sh "Total states" $log_file`
