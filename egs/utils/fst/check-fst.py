@@ -35,11 +35,8 @@ with open(args.word_syms, "r") as f:
       continue
     fields = line.split()
     assert len(fields) == 2
-    assert fields[0] != "<any>"
     assert fields[0] not in vocab
     vocab[fields[0]] = int(fields[1])
-
-vocab[cf.ANY] = cf.ANY_ID
 
 print("  Loading state syms...")
 ssyms = []
@@ -80,9 +77,6 @@ for sid, syms in enumerate(ssyms):
     arc = rfst.states[s][0]
     rsyms.append(arc.ilab)
     s = arc.to
-  if s == rfst.any_sid:
-    rsyms.append(cf.ANY_ID)
-    rsyms.append(vocab[cf.BOS])
   rsyms.reverse()
   assert rsyms == syms
 
@@ -94,9 +88,9 @@ for sid, state in enumerate(fst.states):
     assert state[0].ilab == vocab[cf.BOS]
     continue
 
-  if sid == fst.start_sid or sid == fst.any_sid:
+  if sid == fst.start_sid:
     # no backoff
-    assert len(state) == len(vocab) - 4 # <eps>, <s>, #phi, <any>
+    assert len(state) == len(vocab) - 3 # <eps>, <s>, #phi
     assert [ arc.ilab for arc in state ] == range(1, 1 + len(state))
     continue
 
@@ -107,28 +101,24 @@ for sid, state in enumerate(fst.states):
 
   # 1. check the backoff state is the suffix of current state
   backoff_syms = ssyms[backoff_arc.to]
-  assert len(backoff_syms) >= 2
-  assert backoff_syms[0] == vocab[cf.BOS] and backoff_syms[1] == cf.ANY_ID
-  if len(backoff_syms) > 2:
-    backoff_syms[2:] == ssyms[sid][:-(len(backoff_syms)-2)]
+  assert len(backoff_syms) >= 1
+  assert backoff_syms[0] == vocab[cf.BOS]
+  if len(backoff_syms) > 1:
+    assert backoff_syms[1:] == ssyms[sid][-(len(backoff_syms)-1):]
 
   # 2. check the backoff state is the *longest* suffix of current state
   assert len(backoff_syms) <= len(ssyms[sid])
-  if (ssyms[sid][1] == cf.ANY_ID and len(backoff_syms) == len(ssyms[sid]) - 1) \
-     or (ssyms[sid][1] != cf.ANY_ID and len(backoff_syms) == len(ssyms[sid])):
+  if len(backoff_syms) == len(ssyms[sid]):
     pass
   else:
-    m = (len(backoff_syms) - 2) + 1
+    m = (len(backoff_syms) - 1) + 1
     n = m + 1
-    if ssyms[sid][1] == cf.ANY_ID:
-      end = len(ssyms[sid]) - 1
-    else:
-      end = len(ssyms[sid])
+    end = len(ssyms[sid])
 
     while n < end:
       longer_path = backoff_syms[:]
       for i in range(m, n):
-        longer_path.insert(2, ssyms[sid][-i])
+        longer_path.insert(1, ssyms[sid][-i])
 
       assert fst.find_path(longer_path) == []
       n += 1
@@ -173,7 +163,7 @@ for (sid, state) in enumerate(fst.states):
 
   total_logp = -np.inf
   for word in vocab:
-    if word in [cf.ANY, cf.BOS, cf.EPS, cf.PHI]:
+    if word in [cf.BOS, cf.EPS, cf.PHI]:
       continue
     logp = fst.get_word_logp(sid, vocab[word])
     total_logp = np.logaddexp(total_logp, logp)

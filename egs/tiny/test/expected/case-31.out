@@ -9,9 +9,8 @@ Finish to validate FST.
 Init: 0
 Final: 1
 Start: 2
-Any: 3
-#state: 10385
-#arc: 31146
+#state: 3967
+#arc: 11894
 
   Checking ssyms...
   Checking backoff arc...
