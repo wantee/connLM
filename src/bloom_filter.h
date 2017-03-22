@@ -68,7 +68,7 @@ int bloom_filter_load_opt(bloom_filter_opt_t *blm_flt_opt,
  * @ingroup g_bloom_filter
  */
 typedef struct _bloom_filtererter_t_ {
-    char *cells; /**< cell store truth value for elements. */
+    unsigned char *cells; /**< cell store truth value for elements. */
 
     vocab_t *vocab; /**< vocabulary. */
 
@@ -162,6 +162,14 @@ int bloom_filter_add(bloom_filter_t *blm_flt, int *words, int n);
  * @return true if exists, false otherwise.
  */
 bool bloom_filter_lookup(bloom_filter_t *blm_flt, int *words, int n);
+
+/**
+ * Compute the load factor for bloom filter.
+ * @ingroup g_bloom_filter
+ * @param[in] blm_flt the bloom filter.
+ * @return the load factor
+ */
+float bloom_filter_load_factor(bloom_filter_t *blm_flt);
 
 #ifdef __cplusplus
 }

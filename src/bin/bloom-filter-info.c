@@ -32,6 +32,8 @@
 
 #include <connlm/bloom_filter.h>
 
+bool g_verbose;
+
 st_opt_t *g_cmd_opt;
 
 int bloom_filter_info_parse_opt(int *argc, const char *argv[])
@@ -60,6 +62,9 @@ int bloom_filter_info_parse_opt(int *argc, const char *argv[])
         goto ST_OPT_ERR;
     }
 
+    ST_OPT_GET_BOOL(g_cmd_opt, "verbose", g_verbose, false,
+            "Print verbose info.");
+
     ST_OPT_GET_BOOL(g_cmd_opt, "help", b, false, "Print help");
 
     return (b ? 1 : 0);
@@ -80,6 +85,7 @@ void show_usage(const char *module_name)
 int main(int argc, const char *argv[])
 {
     FILE *fp = NULL;
+    bloom_filter_t *blm_flt = NULL;
     int ret;
     int i;
 
@@ -115,9 +121,25 @@ int main(int argc, const char *argv[])
             ST_WARNING("Failed to bloom_filter_print_info. [%s]", argv[i]);
             goto ERR;
         }
+
+        if (g_verbose) {
+            rewind(fp);
+
+            blm_flt = bloom_filter_load(fp);
+            if (blm_flt == NULL) {
+                ST_WARNING("Failed to bloom_filter_load. [%s]", argv[i]);
+                goto ERR;
+            }
+
+            fprintf(stdout, "\n<VERBOSE>\n");
+            fprintf(stdout, "Load factor: %.3f\n",
+                    bloom_filter_load_factor(blm_flt));
+        }
+
         safe_st_fclose(fp);
     }
 
+    safe_bloom_filter_destroy(blm_flt);
     safe_st_opt_destroy(g_cmd_opt);
 
     st_log_close(0);
@@ -125,6 +147,8 @@ int main(int argc, const char *argv[])
 
 ERR:
     safe_st_fclose(fp);
+
+    safe_bloom_filter_destroy(blm_flt);
     safe_st_opt_destroy(g_cmd_opt);
 
     st_log_close(1);

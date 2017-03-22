@@ -166,8 +166,7 @@ bloom_filter_t* bloom_filter_create(bloom_filter_opt_t *blm_flt_opt,
 
     blm_flt->vocab = vocab_dup(vocab);
 
-    blm_flt->blm_flt_opt.capacity = blm_flt_opt->capacity;
-    blm_flt->cells = (char *)malloc(BITNSLOTS(blm_flt->blm_flt_opt.capacity));
+    blm_flt->cells = (unsigned char *)malloc(BITNSLOTS(blm_flt->blm_flt_opt.capacity));
     if (blm_flt->cells == NULL) {
         ST_WARNING("Failed to malloc cells");
         goto ERR;
@@ -354,13 +353,13 @@ static int bloom_filter_load_body(bloom_filter_t *blm_flt, int version,
             goto ERR;
         }
 
-        blm_flt->cells = (char *)malloc(BITNSLOTS(blm_flt->blm_flt_opt.capacity));
+        blm_flt->cells = (unsigned char *)malloc(BITNSLOTS(blm_flt->blm_flt_opt.capacity));
         if (blm_flt->cells == NULL) {
             ST_WARNING("Failed to malloc cells.");
             goto ERR;
         }
 
-        if (fread(blm_flt->cells, sizeof(char),
+        if (fread(blm_flt->cells, sizeof(unsigned char),
                     BITNSLOTS(blm_flt->blm_flt_opt.capacity),
                     fp) != BITNSLOTS(blm_flt->blm_flt_opt.capacity)) {
             ST_WARNING("Failed to read cells.");
@@ -372,7 +371,7 @@ static int bloom_filter_load_body(bloom_filter_t *blm_flt, int version,
             goto ERR;
         }
 
-        blm_flt->cells = (char *)malloc(BITNSLOTS(blm_flt->blm_flt_opt.capacity));
+        blm_flt->cells = (unsigned char *)malloc(BITNSLOTS(blm_flt->blm_flt_opt.capacity));
         if (blm_flt->cells == NULL) {
             ST_WARNING("Failed to malloc cells.");
             goto ERR;
@@ -500,7 +499,7 @@ static int bloom_filter_save_body(bloom_filter_t *blm_flt, FILE *fp, bool binary
             return -1;
         }
 
-        if (fwrite(blm_flt->cells, sizeof(char),
+        if (fwrite(blm_flt->cells, sizeof(unsigned char),
                     BITNSLOTS(blm_flt->blm_flt_opt.capacity),
                     fp) != BITNSLOTS(blm_flt->blm_flt_opt.capacity)) {
             ST_WARNING("Failed to write cells.");
@@ -769,4 +768,26 @@ ERR:
     connlm_egs_destroy(&egs);
 
     return -1;
+}
+
+float bloom_filter_load_factor(bloom_filter_t *blm_flt)
+{
+    size_t i;
+    size_t n;
+    unsigned char x;
+
+    ST_CHECK_PARAM(blm_flt == NULL, -1);
+
+    n = 0;
+    for (i = 0; i < BITNSLOTS(blm_flt->blm_flt_opt.capacity); i++) {
+        x = blm_flt->cells[i];
+        while (x > 0) {
+            if (x & 0x01) {
+                ++n;
+            }
+            x = x >> 1;
+        }
+    }
+
+    return n / (float)(blm_flt->blm_flt_opt.capacity);
 }
