@@ -228,7 +228,7 @@ static int get_start_sid(fst_conv_args_t *args, int n, int order)
 int fst_conv_load_opt(fst_conv_opt_t *conv_opt,
         st_opt_t *opt, const char *sec_name)
 {
-    char method_str[MAX_ST_CONF_LEN];
+    char str[MAX_ST_CONF_LEN];
     double def_ws_arg = 0.0;
     double def_ws_arg_power = 0.0;
 
@@ -251,16 +251,18 @@ int fst_conv_load_opt(fst_conv_opt_t *conv_opt,
             "File to be written out state symbols(for debug).");
 
     ST_OPT_SEC_GET_STR(opt, sec_name, "WORD_SELECTION_METHOD",
-            method_str, MAX_ST_CONF_LEN, "Majority",
-            "Word selection method(Baseline/Sampling/Majority)");
-    if (strcasecmp(method_str, "baseline") == 0) {
+            str, MAX_ST_CONF_LEN, "Majority",
+            "Word selection method(Baseline/Sampling/Majority/Pick)");
+    if (strcasecmp(str, "baseline") == 0) {
         conv_opt->wsm = WSM_BASELINE;
-    } else if (strcasecmp(method_str, "sampling") == 0) {
+    } else if (strcasecmp(str, "sampling") == 0) {
         conv_opt->wsm = WSM_SAMPLING;
-    } else if (strcasecmp(method_str, "Majority") == 0) {
+    } else if (strcasecmp(str, "Majority") == 0) {
         conv_opt->wsm = WSM_MAJORITY;
+    } else if (strcasecmp(str, "Pick") == 0) {
+        conv_opt->wsm = WSM_PICK;
     } else {
-        ST_WARNING("Unknown word selection method[%s].", method_str);
+        ST_WARNING("Unknown word selection method[%s].", str);
         goto ST_OPT_ERR;
     }
 
@@ -273,6 +275,8 @@ int fst_conv_load_opt(fst_conv_opt_t *conv_opt,
             break;
 
         case WSM_MAJORITY:
+            /* FALL THROUGH */
+        case WSM_PICK:
             def_ws_arg = 0.5;
             def_ws_arg_power = 0.0;
             break;
@@ -285,6 +289,7 @@ int fst_conv_load_opt(fst_conv_opt_t *conv_opt,
             conv_opt->ws_arg, def_ws_arg,
             "Arg for word selection, would be interpreted as"
             "boost for </s> if WORD_SELECTION_METHOD is Baseline or Sampling, "
+            "as threshold for probability, if it is Pick,"
             "otherwise, as threshold for accumulated probabilty.");
 
     ST_OPT_SEC_GET_DOUBLE(opt, sec_name, "WS_ARG_POWER",
@@ -298,6 +303,14 @@ int fst_conv_load_opt(fst_conv_opt_t *conv_opt,
                 "Initial random seed, seed for each thread would be "
                 "incremented from this value. "
                 "Default is value of time(NULl).");
+    } else if (conv_opt->wsm == WSM_PICK) {
+        ST_OPT_SEC_GET_STR(opt, sec_name, "BLOOM_FILTER_FILE",
+                conv_opt->bloom_filter_file, MAX_DIR_LEN, "",
+                "File stored the bloom filter.");
+        if (conv_opt->bloom_filter_file[0] == '\0') {
+            ST_WARNING("BLOOM_FILTER_FILE not set");
+            goto ST_OPT_ERR;
+        }
     }
 
     ST_OPT_SEC_GET_INT(opt, sec_name, "MAX_GRAM", conv_opt->max_gram, 0,
@@ -349,6 +362,8 @@ void fst_conv_destroy(fst_conv_t *conv)
         safe_fclose(conv->ssyms_fp);
         (void)pthread_mutex_destroy(&conv->ssyms_fp_lock);
     }
+
+    safe_bloom_filter_destroy(conv->blm_flt);
 }
 
 fst_conv_t* fst_conv_create(connlm_t *connlm, int n_thr,
@@ -356,6 +371,7 @@ fst_conv_t* fst_conv_create(connlm_t *connlm, int n_thr,
 {
     fst_conv_t *conv = NULL;
 
+    FILE *fp = NULL;
     int i;
 
     ST_CHECK_PARAM(connlm == NULL || n_thr <= 0 || conv_opt == NULL, NULL);
@@ -388,12 +404,32 @@ fst_conv_t* fst_conv_create(connlm_t *connlm, int n_thr,
 
     if (conv->updaters[0]->input_updater->ctx_rightmost > 0) {
         ST_WARNING("Can not converting: future words in input context.");
-        return NULL;
+        goto ERR;
+    }
+
+    fp = st_fopen(conv->conv_opt.bloom_filter_file, "r");
+    if (fp == NULL) {
+        ST_WARNING("Failed to st_fopen bloom_filter_file[%s].",
+                conv->conv_opt.bloom_filter_file);
+        goto ERR;
+    }
+    conv->blm_flt = bloom_filter_load(fp);
+    if (conv->blm_flt == NULL) {
+        ST_WARNING("Failed to bloom_filter_load from[%s].",
+                conv->conv_opt.bloom_filter_file);
+        goto ERR;
+    }
+    safe_fclose(fp);
+
+    if (! vocab_equal(conv->connlm->vocab, conv->blm_flt->vocab)) {
+        ST_WARNING("Vocab of bloom filter and connlm model not match.");
+        goto ERR;
     }
 
     return conv;
 
 ERR:
+    safe_fclose(fp);
     safe_fst_conv_destroy(conv);
     return NULL;
 }
@@ -727,6 +763,7 @@ UNLOCK_AND_ERR:
 
 static int select_words_baseline(fst_conv_t *conv, double *output_probs,
         double boost, unsigned int *rand_seed,
+        int *word_hist, int num_word_hist,
         int *selected_words, int *num_selected)
 {
     int word;
@@ -799,6 +836,7 @@ static int boost_sampling(double *probs, int n_probs,
 
 static int select_words_sampling(fst_conv_t *conv, double *output_probs,
         double boost, unsigned int *rand_seed,
+        int *word_hist, int num_word_hist,
         int *selected_words, int *num_selected)
 {
     int word;
@@ -865,6 +903,7 @@ static int prob_cmp(const void *elem1, const void *elem2, void *args)
 
 static int select_words_majority(fst_conv_t *conv, double *output_probs,
         double threshold, unsigned int *rand_seed,
+        int *word_hist, int num_word_hist,
         int *selected_words, int *num_selected)
 {
     int n;
@@ -909,8 +948,41 @@ static int select_words_majority(fst_conv_t *conv, double *output_probs,
     return 0;
 }
 
+static int select_words_pick(fst_conv_t *conv, double *output_probs,
+        double threshold, unsigned int *rand_seed,
+        int *word_hist, int num_word_hist,
+        int *selected_words, int *num_selected)
+{
+    int n;
+    int i;
+
+    ST_CHECK_PARAM(conv == NULL || output_probs == NULL
+            || selected_words == NULL || num_selected == NULL, -1);
+
+    n = 0;
+    for (i = 0; i < get_output_size(conv); i++) {
+        if (i == SENT_END_ID) {
+            selected_words[n] = i;
+            ++n;
+        }
+
+        word_hist[num_word_hist] = i;
+        if (output_probs[i] > threshold
+                && bloom_filter_lookup(conv->blm_flt, word_hist,
+                    num_word_hist + 1)) {
+            selected_words[n] = i;
+            ++n;
+        }
+    }
+
+    *num_selected = n;
+
+    return 0;
+}
+
 static int select_words(fst_conv_t *conv, double *output_probs,
         double param, unsigned int *rand_seed,
+        int *word_hist, int num_word_hist,
         int *selected_words, int *num_selected)
 {
     ST_CHECK_PARAM(conv == NULL, -1);
@@ -918,6 +990,7 @@ static int select_words(fst_conv_t *conv, double *output_probs,
     switch (conv->conv_opt.wsm) {
         case WSM_BASELINE:
             if (select_words_baseline(conv, output_probs, param, rand_seed,
+                    word_hist, num_word_hist,
                     selected_words, num_selected) < 0) {
                 ST_WARNING("Failed to select_words_baseline.");
                 return -1;
@@ -925,6 +998,7 @@ static int select_words(fst_conv_t *conv, double *output_probs,
             break;
         case WSM_SAMPLING:
             if (select_words_sampling(conv, output_probs, param, rand_seed,
+                    word_hist, num_word_hist,
                     selected_words, num_selected) < 0) {
                 ST_WARNING("Failed to select_words_sampling.");
                 return -1;
@@ -932,8 +1006,16 @@ static int select_words(fst_conv_t *conv, double *output_probs,
             break;
         case WSM_MAJORITY:
             if (select_words_majority(conv, output_probs, param, rand_seed,
+                    word_hist, num_word_hist,
                     selected_words, num_selected) < 0) {
                 ST_WARNING("Failed to select_words_majority.");
+                return -1;
+            }
+        case WSM_PICK:
+            if (select_words_pick(conv, output_probs, param, rand_seed,
+                    word_hist, num_word_hist,
+                    selected_words, num_selected) < 0) {
+                ST_WARNING("Failed to select_words_pick.");
                 return -1;
             }
             break;
@@ -985,7 +1067,7 @@ static int fst_conv_find_word_hist(fst_conv_t *conv,
     args->num_word_hist = 1;
     p = conv->fst_states[sid].parent;
     while (p != -1 && conv->fst_states[p].word_id != -1 /* init state */) {
-        if (args->num_word_hist >= args->cap_word_hist) {
+        if (args->num_word_hist + 1 >= args->cap_word_hist) { /* +1 for bloom filter lookup */
             args->word_hist = (int *)realloc(args->word_hist,
                     sizeof(int) * (args->num_word_hist + 32));
             if (args->word_hist == NULL) {
@@ -1220,6 +1302,7 @@ static int fst_conv_expand(fst_conv_t *conv, fst_conv_args_t *args)
             ws_arg = args->ws_arg * pow((args->num_word_hist - 1), args->ws_arg_power);
 
             if (select_words(conv, output_probs, ws_arg, &args->rand_seed,
+                        args->word_hist, args->num_word_hist,
                         args->selected_words, &n) < 0) {
                 ST_WARNING("Failed to select_words.");
                 return -1;

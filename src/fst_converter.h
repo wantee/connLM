@@ -38,6 +38,7 @@ extern "C" {
 
 #include "connlm.h"
 #include "updaters/updater.h"
+#include "bloom_filter.h"
 
 /** @defgroup g_conv connLM to WFST Converter
  * Convert a connLM model to WFST.
@@ -52,6 +53,7 @@ typedef enum _word_selection_method_t_ {
     WSM_BASELINE = 0, /**< Baseline method. Select words with probabilty larger than \</s\>. */
     WSM_SAMPLING = 1, /**< Sampling method. Sample words until meeting \</s\>. */
     WSM_MAJORITY = 2, /**< Majority method. Select words with total probabilty larger than a threshold. */
+    WSM_PICK = 3, /**< Pick method. Pick some words according to a bloom filter. */
 } ws_method_t;
 
 /**
@@ -73,6 +75,8 @@ typedef struct _fst_converter_opt_t_ {
                      e.g. cur_ws_arg = ws_arg * pow(hist_len, ws_arg_power).*/
 
     unsigned int init_rand_seed; /**< initial random seed. */
+
+    char bloom_filter_file[MAX_DIR_LEN]; /**< bloom filter file. */
 } fst_conv_opt_t;
 
 /**
@@ -135,6 +139,8 @@ typedef struct _fst_converter_t_ {
 
     FILE *ssyms_fp; /**< output file pointer for state symbols file. */
     pthread_mutex_t ssyms_fp_lock; /**< lock for ssyms_fp. */
+
+    bloom_filter_t* blm_flt; /**< ngram bloom filter for selecting words. */
 
     fst_conv_opt_t conv_opt; /**< options. */
 } fst_conv_t;

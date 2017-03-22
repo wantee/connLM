@@ -102,13 +102,56 @@ void bloom_filter_destroy(bloom_filter_t *blm_flt)
     safe_vocab_destroy(blm_flt->vocab);
 }
 
+static int bloom_filter_init_hash(bloom_filter_t *blm_flt)
+{
+    int *context = NULL;
+    int o;
+
+    blm_flt->nghashes = (ngram_hash_t **)malloc(sizeof(ngram_hash_t*)
+            * blm_flt->blm_flt_opt.max_order);
+    if (blm_flt->nghashes == NULL) {
+        ST_WARNING("Failed to malloc nghashes.");
+        goto ERR;
+    }
+
+    context = (int *)malloc(sizeof(int) * blm_flt->blm_flt_opt.max_order);
+    if (context == NULL) {
+        ST_WARNING("Failed to malloc context.");
+        goto ERR;
+    }
+    for (o = 0; o < blm_flt->blm_flt_opt.max_order; o++) {
+        context[o] = -(blm_flt->blm_flt_opt.max_order - o - 1);
+    }
+
+    for (o = 0; o < blm_flt->blm_flt_opt.max_order; o++) {
+        blm_flt->nghashes[o] = ngram_hash_create(
+                context + blm_flt->blm_flt_opt.max_order - o - 1, o + 1);
+        if (blm_flt->nghashes[o] == NULL) {
+            ST_WARNING("Failed to ngram_hash_create for [%d]-gram.", o);
+            goto ERR;
+        }
+    }
+
+    safe_free(context);
+
+    blm_flt->hash_vals = (hash_t *)malloc(sizeof(hash_t)
+            * blm_flt->blm_flt_opt.num_hashes);
+    if (blm_flt->hash_vals == NULL) {
+        ST_WARNING("Failed to malloc hash_vals");
+        goto ERR;
+    }
+
+    return 0;
+
+ERR:
+    safe_free(context);
+    return -1;
+}
+
 bloom_filter_t* bloom_filter_create(bloom_filter_opt_t *blm_flt_opt,
         vocab_t *vocab)
 {
     bloom_filter_t *blm_flt = NULL;
-
-    int *context = NULL;
-    int o;
 
     ST_CHECK_PARAM(blm_flt_opt == NULL || vocab == NULL, NULL);
 
@@ -131,44 +174,14 @@ bloom_filter_t* bloom_filter_create(bloom_filter_opt_t *blm_flt_opt,
     }
     memset(blm_flt->cells, 0, BITNSLOTS(blm_flt->blm_flt_opt.capacity));
 
-    blm_flt->nghashes = (ngram_hash_t **)malloc(sizeof(ngram_hash_t*)
-            * blm_flt_opt->max_order);
-    if (blm_flt->nghashes == NULL) {
-        ST_WARNING("Failed to malloc nghashes.");
-        goto ERR;
-    }
-
-    context = (int *)malloc(sizeof(int) * blm_flt_opt->max_order);
-    if (context == NULL) {
-        ST_WARNING("Failed to malloc context.");
-        goto ERR;
-    }
-    for (o = 0; o < blm_flt_opt->max_order; o++) {
-        context[o] = -(blm_flt_opt->max_order - o - 1);
-    }
-
-    for (o = 0; o < blm_flt_opt->max_order; o++) {
-        blm_flt->nghashes[o] = ngram_hash_create(
-                context + blm_flt_opt->max_order - o - 1, o + 1);
-        if (blm_flt->nghashes[o] == NULL) {
-            ST_WARNING("Failed to ngram_hash_create for [%d]-gram.", o);
-            goto ERR;
-        }
-    }
-
-    safe_free(context);
-
-    blm_flt->hash_vals = (hash_t *)malloc(sizeof(hash_t)
-            * blm_flt_opt->num_hashes);
-    if (blm_flt->hash_vals == NULL) {
-        ST_WARNING("Failed to malloc hash_vals");
+    if (bloom_filter_init_hash(blm_flt) < 0) {
+        ST_WARNING("Failed to bloom_filter_init_hash.");
         goto ERR;
     }
 
     return blm_flt;
 
 ERR:
-    safe_free(context);
     safe_bloom_filter_destroy(blm_flt);
     return NULL;
 }
@@ -187,6 +200,8 @@ static int bloom_filter_load_header(bloom_filter_t *blm_flt,
     int num_hashes;
     int max_order;
     bool full_context;
+
+    bool b;
 
     ST_CHECK_PARAM((blm_flt == NULL && fo_info == NULL) || fp == NULL
             || binary == NULL, -1);
@@ -297,6 +312,22 @@ static int bloom_filter_load_header(bloom_filter_t *blm_flt,
         fprintf(fo_info, "Full Context: %s\n", bool2str(full_context));
     }
 
+    b = *binary;
+
+    if (vocab_load_header((blm_flt == NULL) ? NULL : &(blm_flt->vocab),
+                version, fp, binary, fo_info) < 0) {
+        ST_WARNING("Failed to vocab_load_header.");
+        return -1;
+    }
+    if (*binary != b) {
+        ST_WARNING("Both binary and text format in one file.");
+        return -1;
+    }
+
+    if (fo_info != NULL) {
+        fflush(fo_info);
+    }
+
     return version;
 }
 
@@ -362,6 +393,11 @@ static int bloom_filter_load_body(bloom_filter_t *blm_flt, int version,
                 BITSET(blm_flt->cells, i);
             }
         }
+    }
+
+    if (vocab_load_body(blm_flt->vocab, version, fp, binary) < 0) {
+        ST_WARNING("Failed to vocab_load_body.");
+        return -1;
     }
 
     return 0;
@@ -440,6 +476,11 @@ static int bloom_filter_save_header(bloom_filter_t *blm_flt, FILE *fp,
         }
     }
 
+    if (vocab_save_header(blm_flt->vocab, fp, binary) < 0) {
+        ST_WARNING("Failed to vocab_save_header.");
+        return -1;
+    }
+
     return 0;
 }
 
@@ -488,6 +529,11 @@ static int bloom_filter_save_body(bloom_filter_t *blm_flt, FILE *fp, bool binary
         }
     }
 
+    if (vocab_save_body(blm_flt->vocab, fp, binary) < 0) {
+        ST_WARNING("Failed to vocab_save_body.");
+        return -1;
+    }
+
     return 0;
 }
 
@@ -531,6 +577,11 @@ bloom_filter_t* bloom_filter_load(FILE *fp)
 
     if (bloom_filter_load_body(blm_flt, version, fp, binary) < 0) {
         ST_WARNING("Failed to bloom_filter_load_body.");
+        goto ERR;
+    }
+
+    if (bloom_filter_init_hash(blm_flt) < 0) {
+        ST_WARNING("Failed to bloom_filter_init_hash.");
         goto ERR;
     }
 
