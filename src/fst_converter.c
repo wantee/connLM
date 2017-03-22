@@ -270,13 +270,13 @@ int fst_conv_load_opt(fst_conv_opt_t *conv_opt,
         case WSM_SAMPLING:
             /* FALL THROUGH */
         case WSM_BASELINE:
+            /* FALL THROUGH */
+        case WSM_PICK:
             def_ws_arg = 0.0;
             def_ws_arg_power = 0.0;
             break;
 
         case WSM_MAJORITY:
-            /* FALL THROUGH */
-        case WSM_PICK:
             def_ws_arg = 0.5;
             def_ws_arg_power = 0.0;
             break;
@@ -964,12 +964,15 @@ static int select_words_pick(fst_conv_t *conv, double *output_probs,
         if (i == SENT_END_ID) {
             selected_words[n] = i;
             ++n;
+            continue;
+        }
+
+        if (threshold > 0 && output_probs[i] < threshold) {
+            continue;
         }
 
         word_hist[num_word_hist] = i;
-        if (output_probs[i] > threshold
-                && bloom_filter_lookup(conv->blm_flt, word_hist,
-                    num_word_hist + 1)) {
+        if (bloom_filter_lookup(conv->blm_flt, word_hist, num_word_hist + 1)) {
             selected_words[n] = i;
             ++n;
         }
