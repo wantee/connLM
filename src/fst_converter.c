@@ -407,23 +407,25 @@ fst_conv_t* fst_conv_create(connlm_t *connlm, int n_thr,
         goto ERR;
     }
 
-    fp = st_fopen(conv->conv_opt.bloom_filter_file, "r");
-    if (fp == NULL) {
-        ST_WARNING("Failed to st_fopen bloom_filter_file[%s].",
-                conv->conv_opt.bloom_filter_file);
-        goto ERR;
-    }
-    conv->blm_flt = bloom_filter_load(fp);
-    if (conv->blm_flt == NULL) {
-        ST_WARNING("Failed to bloom_filter_load from[%s].",
-                conv->conv_opt.bloom_filter_file);
-        goto ERR;
-    }
-    safe_fclose(fp);
+    if (conv->conv_opt.bloom_filter_file[0] != '\0') {
+        fp = st_fopen(conv->conv_opt.bloom_filter_file, "r");
+        if (fp == NULL) {
+            ST_WARNING("Failed to st_fopen bloom_filter_file[%s].",
+                    conv->conv_opt.bloom_filter_file);
+            goto ERR;
+        }
+        conv->blm_flt = bloom_filter_load(fp);
+        if (conv->blm_flt == NULL) {
+            ST_WARNING("Failed to bloom_filter_load from[%s].",
+                    conv->conv_opt.bloom_filter_file);
+            goto ERR;
+        }
+        safe_fclose(fp);
 
-    if (! vocab_equal(conv->connlm->vocab, conv->blm_flt->vocab)) {
-        ST_WARNING("Vocab of bloom filter and connlm model not match.");
-        goto ERR;
+        if (! vocab_equal(conv->connlm->vocab, conv->blm_flt->vocab)) {
+            ST_WARNING("Vocab of bloom filter and connlm model not match.");
+            goto ERR;
+        }
     }
 
     return conv;
@@ -1014,6 +1016,7 @@ static int select_words(fst_conv_t *conv, double *output_probs,
                 ST_WARNING("Failed to select_words_majority.");
                 return -1;
             }
+            break;
         case WSM_PICK:
             if (select_words_pick(conv, output_probs, param, rand_seed,
                     word_hist, num_word_hist,
