@@ -70,10 +70,6 @@ int bloom_filter_load_opt(bloom_filter_opt_t *blm_flt_opt,
         goto ST_OPT_ERR;
     }
 
-    ST_OPT_SEC_GET_BOOL(opt, sec_name, "FULL_CONTEXT",
-            blm_flt_opt->full_context, false,
-            "Compute only grams begins with <s>, if false.");
-
     return 0;
 
 ST_OPT_ERR:
@@ -188,7 +184,6 @@ ERR:
 static int bloom_filter_load_header(bloom_filter_t *blm_flt,
         FILE *fp, bool *binary, FILE *fo_info)
 {
-    char sym[MAX_LINE_LEN];
     union {
         char str[4];
         int magic_num;
@@ -198,7 +193,6 @@ static int bloom_filter_load_header(bloom_filter_t *blm_flt,
     size_t capacity;
     int num_hashes;
     int max_order;
-    bool full_context;
 
     bool b;
 
@@ -245,11 +239,6 @@ static int bloom_filter_load_header(bloom_filter_t *blm_flt,
             ST_WARNING("Failed to read max_order.");
             return -1;
         }
-
-        if (fread(&full_context, sizeof(bool), 1, fp) != 1) {
-            ST_WARNING("Failed to read full_context.");
-            return -1;
-        }
     } else {
         if (st_readline(fp, "    ") != 0) {
             ST_WARNING("flag error.");
@@ -285,21 +274,12 @@ static int bloom_filter_load_header(bloom_filter_t *blm_flt,
             ST_WARNING("Failed to parse max_order.[%d]", max_order);
             return -1;
         }
-
-        if (st_readline(fp, "Full Context: %"xSTR(MAX_LINE_LEN)"s",
-                    sym) != 1) {
-            ST_WARNING("Failed to parse full_context.[%s]", sym);
-            return -1;
-        }
-        sym[MAX_LINE_LEN - 1] = '\0';
-        full_context = str2bool(sym);
     }
 
     if (blm_flt != NULL) {
         blm_flt->blm_flt_opt.capacity = capacity;
         blm_flt->blm_flt_opt.num_hashes = num_hashes;
         blm_flt->blm_flt_opt.max_order = max_order;
-        blm_flt->blm_flt_opt.full_context = full_context;
     }
 
     if (fo_info != NULL) {
@@ -308,7 +288,6 @@ static int bloom_filter_load_header(bloom_filter_t *blm_flt,
         fprintf(fo_info, "Capacity: %zu\n", capacity);
         fprintf(fo_info, "Num Hashes: %d\n", num_hashes);
         fprintf(fo_info, "Max Order: %d\n", max_order);
-        fprintf(fo_info, "Full Context: %s\n", bool2str(full_context));
     }
 
     b = *binary;
@@ -438,11 +417,6 @@ static int bloom_filter_save_header(bloom_filter_t *blm_flt, FILE *fp,
             ST_WARNING("Failed to write max_order.");
             return -1;
         }
-
-        if (fwrite(&blm_flt->blm_flt_opt.full_context, sizeof(bool), 1, fp) != 1) {
-            ST_WARNING("Failed to write full_context.");
-            return -1;
-        }
     } else {
         if (fprintf(fp, "    \n<BLOOM_FILTER>\n") < 0) {
             ST_WARNING("Failed to fprintf header.");
@@ -465,12 +439,6 @@ static int bloom_filter_save_header(bloom_filter_t *blm_flt, FILE *fp,
 
         if (fprintf(fp, "Max Order: %d\n", blm_flt->blm_flt_opt.max_order) < 0) {
             ST_WARNING("Failed to fprintf max_order.");
-            return -1;
-        }
-
-        if (fprintf(fp, "Full Context: %s\n",
-                    bool2str(blm_flt->blm_flt_opt.full_context)) < 0) {
-            ST_WARNING("Failed to fprintf full_context.");
             return -1;
         }
     }
@@ -655,14 +623,6 @@ int bloom_filter_add(bloom_filter_t *blm_flt, int *words, int n)
 
     ST_CHECK_PARAM(blm_flt == NULL || words == NULL || n <= 0, -1);
 
-    if (! blm_flt->blm_flt_opt.full_context) {
-        if (words[0] != bos_id(blm_flt)) {
-            ST_WARNING("n-gram must start with <s>, "
-                    "when full_context is false");
-            return -1;
-        }
-    }
-
     if (bloom_filter_hash(blm_flt, words, n) < 0) {
         ST_WARNING("Failed to bloom_filter_hash.");
         return -1;
@@ -681,10 +641,6 @@ bool bloom_filter_lookup(bloom_filter_t *blm_flt, int *words, int n)
     int k;
 
     ST_CHECK_PARAM(blm_flt == NULL || words == NULL || n <= 0, false);
-
-    if (! blm_flt->blm_flt_opt.full_context && words[0] != bos_id(blm_flt)) {
-        return false;
-    }
 
     if (bloom_filter_hash(blm_flt, words, n) < 0) {
         ST_WARNING("Failed to bloom_filter_hash.");
@@ -712,7 +668,6 @@ int bloom_filter_build(bloom_filter_t *blm_flt, FILE *text_fp)
     };
 
     int max_order;
-    bool full_context;
 
     int sent_start = 0;
     int pos;
@@ -721,7 +676,6 @@ int bloom_filter_build(bloom_filter_t *blm_flt, FILE *text_fp)
     ST_CHECK_PARAM(blm_flt == NULL || text_fp == NULL, -1);
 
     max_order = blm_flt->blm_flt_opt.max_order;
-    full_context = blm_flt->blm_flt_opt.full_context;
 
     while (!feof(text_fp)) {
         if (connlm_egs_read(&egs, NULL, EPOCH_SIZE,
@@ -738,24 +692,13 @@ int bloom_filter_build(bloom_filter_t *blm_flt, FILE *text_fp)
             order = pos - sent_start + 1;
             order = min(order, max_order);
 
-            if (pos - order + 1 <= sent_start) {
-                if (bloom_filter_add(blm_flt, egs.words + sent_start,
-                            order) < 0) {
+            while (order > 0) {
+                if (bloom_filter_add(blm_flt,
+                            egs.words + pos - order + 1, order) < 0) {
                     ST_WARNING("Failed to bloom_filter_add.");
                     goto ERR;
                 }
                 --order;
-            }
-
-            if (full_context) {
-                while (order > 0) {
-                    if (bloom_filter_add(blm_flt,
-                                egs.words + pos - order + 1, order) < 0) {
-                        ST_WARNING("Failed to bloom_filter_add.");
-                        goto ERR;
-                    }
-                    --order;
-                }
             }
         }
     }
