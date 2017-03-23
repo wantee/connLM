@@ -600,11 +600,7 @@ static int bloom_filter_hash(bloom_filter_t *blm_flt, int *words, int n)
 
     ST_CHECK_PARAM(blm_flt == NULL || words == NULL || n <= 0, -1);
 
-    if (n > blm_flt->blm_flt_opt.max_order) {
-        ST_WARNING("order[%d] of n-gram must be less than max_order[%d].",
-                n, blm_flt->blm_flt_opt.max_order);
-        return -1;
-    }
+    assert (n <= blm_flt->blm_flt_opt.max_order);
 
     val = ngram_hash(blm_flt->nghashes[n - 1], words, n, n - 1, n);
 
@@ -622,6 +618,12 @@ int bloom_filter_add(bloom_filter_t *blm_flt, int *words, int n)
     int k;
 
     ST_CHECK_PARAM(blm_flt == NULL || words == NULL || n <= 0, -1);
+
+    if (n > blm_flt->blm_flt_opt.max_order) {
+        ST_WARNING("order[%d] of n-gram must be less than max_order[%d].",
+                n, blm_flt->blm_flt_opt.max_order);
+        return -1;
+    }
 
     if (bloom_filter_hash(blm_flt, words, n) < 0) {
         ST_WARNING("Failed to bloom_filter_hash.");
@@ -641,6 +643,10 @@ bool bloom_filter_lookup(bloom_filter_t *blm_flt, int *words, int n)
     int k;
 
     ST_CHECK_PARAM(blm_flt == NULL || words == NULL || n <= 0, false);
+
+    if (n > blm_flt->blm_flt_opt.max_order) {
+        return false;
+    }
 
     if (bloom_filter_hash(blm_flt, words, n) < 0) {
         ST_WARNING("Failed to bloom_filter_hash.");
