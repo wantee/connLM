@@ -974,7 +974,9 @@ static int select_words_pick(fst_conv_t *conv, double *output_probs,
         }
 
         word_hist[num_word_hist] = i;
-        if (bloom_filter_lookup(conv->blm_flt, word_hist, num_word_hist + 1)) {
+        if (bloom_filter_lookup(conv->blm_flt, word_hist, num_word_hist + 1)
+                || bloom_filter_lookup(conv->blm_flt, word_hist + 1,
+                    num_word_hist)) {
             selected_words[n] = i;
             ++n;
         }
