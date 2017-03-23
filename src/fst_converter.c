@@ -53,6 +53,7 @@ typedef struct _fst_converter_args_t_ {
     fst_conv_t *conv;
     int tid;
     int sid;
+    bloom_filter_buf_t *blm_flt_buf;
 
     unsigned int rand_seed;
     double *output_probs;
@@ -80,6 +81,8 @@ static void fst_conv_args_destroy(fst_conv_args_t *args)
 
     args->tid = -1;
     args->rand_seed = 0;
+
+    safe_bloom_filter_buf_destroy(args->blm_flt_buf);
 
     safe_free(args->output_probs);
     safe_free(args->selected_words);
@@ -121,6 +124,14 @@ static int fst_conv_args_init(fst_conv_args_t *args,
     if (args->word_hist == NULL) {
         ST_WARNING("Failed to malloc word_hist");
         goto ERR;
+    }
+
+    if (conv->blm_flt != NULL) {
+        args->blm_flt_buf = bloom_filter_buf_create(conv->blm_flt);
+        if (args->blm_flt_buf == NULL) {
+            ST_WARNING("Failed to bloom_filter_buf_create.");
+            goto ERR;
+        }
     }
 
     return 0;
@@ -763,27 +774,24 @@ UNLOCK_AND_ERR:
 
 }
 
-static int select_words_baseline(fst_conv_t *conv, double *output_probs,
-        double boost, unsigned int *rand_seed,
-        int *word_hist, int num_word_hist,
-        int *selected_words, int *num_selected)
+static int select_words_baseline(fst_conv_t *conv, fst_conv_args_t *args,
+        double boost)
 {
     int word;
     int n;
 
-    ST_CHECK_PARAM(conv == NULL || output_probs == NULL
-            || selected_words == NULL || num_selected == NULL, -1);
+    ST_CHECK_PARAM(conv == NULL || args == NULL, -1);
 
     n = 0;
     for (word = 0; word < get_output_size(conv); word++) {
         if (word == SENT_END_ID
-                || output_probs[word] >= output_probs[SENT_END_ID] + boost) {
-            selected_words[n++] = word;
+            || args->output_probs[word] >=
+                args->output_probs[SENT_END_ID] + boost) {
+            args->selected_words[n++] = word;
         }
     }
-    *num_selected = n;
 
-    return 0;
+    return n;
 }
 
 // probs contains the probability for all words,
@@ -836,24 +844,21 @@ static int boost_sampling(double *probs, int n_probs,
     return word;
 }
 
-static int select_words_sampling(fst_conv_t *conv, double *output_probs,
-        double boost, unsigned int *rand_seed,
-        int *word_hist, int num_word_hist,
-        int *selected_words, int *num_selected)
+static int select_words_sampling(fst_conv_t *conv, fst_conv_args_t *args,
+        double boost)
 {
     int word;
     int n;
 
     int i;
 
-    ST_CHECK_PARAM(conv == NULL || output_probs == NULL
-            || selected_words == NULL || num_selected == NULL, -1);
+    ST_CHECK_PARAM(conv == NULL || args == NULL, -1);
 
     n = 0;
     word = -1;
     while(true) {
-        word = boost_sampling(output_probs, get_output_size(conv),
-                boost, rand_seed);
+        word = boost_sampling(args->output_probs, get_output_size(conv),
+                boost, &(args->rand_seed));
         if (word < 0) {
             ST_WARNING("Failed to boost_sampling.");
             return -1;
@@ -861,27 +866,26 @@ static int select_words_sampling(fst_conv_t *conv, double *output_probs,
 
         assert(n < get_output_size(conv));
 
-        selected_words[n] = word;
+        args->selected_words[n] = word;
         n++;
 
         // avoid selecting the same word next time
-        output_probs[word] = -output_probs[word];
+        args->output_probs[word] = -args->output_probs[word];
 
         if (word == SENT_END_ID) {
             break;
         }
     }
-    *num_selected = n;
 
     // recover probs for selected words
     for (i = 0; i < n; i++) {
-        word = selected_words[i];
-        output_probs[word] = -output_probs[word];
+        word = args->selected_words[i];
+        args->output_probs[word] = -args->output_probs[word];
     }
 
-    st_int_sort(selected_words, n);
+    st_int_sort(args->selected_words, n);
 
-    return 0;
+    return n;
 }
 
 static int prob_cmp(const void *elem1, const void *elem2, void *args)
@@ -903,10 +907,8 @@ static int prob_cmp(const void *elem1, const void *elem2, void *args)
     return 0;
 }
 
-static int select_words_majority(fst_conv_t *conv, double *output_probs,
-        double threshold, unsigned int *rand_seed,
-        int *word_hist, int num_word_hist,
-        int *selected_words, int *num_selected)
+static int select_words_majority(fst_conv_t *conv, fst_conv_args_t *args,
+        double threshold)
 {
     int n;
 
@@ -914,22 +916,21 @@ static int select_words_majority(fst_conv_t *conv, double *output_probs,
     int i;
     bool has_eos;
 
-    ST_CHECK_PARAM(conv == NULL || output_probs == NULL
-            || selected_words == NULL || num_selected == NULL, -1);
+    ST_CHECK_PARAM(conv == NULL || args == NULL, -1);
 
     for (i = 0; i < get_output_size(conv); i++) {
-        selected_words[i] = i;
+        args->selected_words[i] = i;
     }
 
-    st_qsort(selected_words, get_output_size(conv), sizeof(int),
-            prob_cmp, (void *)output_probs);
+    st_qsort(args->selected_words, get_output_size(conv), sizeof(int),
+            prob_cmp, (void *)args->output_probs);
 
     acc = 0.0;
     n = 0;
     has_eos = false;
     for (i = 0; i < get_output_size(conv); i++) {
-        acc += output_probs[selected_words[i]];
-        if (selected_words[i] == SENT_END_ID) {
+        acc += args->output_probs[args->selected_words[i]];
+        if (args->selected_words[i] == SENT_END_ID) {
             has_eos = true;
         }
         n++;
@@ -939,90 +940,80 @@ static int select_words_majority(fst_conv_t *conv, double *output_probs,
     }
 
     if (! has_eos) {
-        selected_words[n] = SENT_END_ID;
+        args->selected_words[n] = SENT_END_ID;
         n++;
     }
 
-    st_int_sort(selected_words, n);
+    st_int_sort(args->selected_words, n);
 
-    *num_selected = n;
-
-    return 0;
+    return n;
 }
 
-static int select_words_pick(fst_conv_t *conv, double *output_probs,
-        double threshold, unsigned int *rand_seed,
-        int *word_hist, int num_word_hist,
-        int *selected_words, int *num_selected)
+static int select_words_pick(fst_conv_t *conv, fst_conv_args_t *args,
+        double threshold)
 {
     int n;
     int i;
 
-    ST_CHECK_PARAM(conv == NULL || output_probs == NULL
-            || selected_words == NULL || num_selected == NULL, -1);
+    ST_CHECK_PARAM(conv == NULL || args == NULL, -1);
 
     n = 0;
     for (i = 0; i < get_output_size(conv); i++) {
         if (i == SENT_END_ID) {
-            selected_words[n] = i;
+            args->selected_words[n] = i;
             ++n;
             continue;
         }
 
-        if (threshold > 0 && output_probs[i] < threshold) {
+        if (threshold > 0 && args->output_probs[i] < threshold) {
             continue;
         }
 
-        word_hist[num_word_hist] = i;
-        if (bloom_filter_lookup(conv->blm_flt, word_hist, num_word_hist + 1)
-                || bloom_filter_lookup(conv->blm_flt, word_hist + 1,
-                    num_word_hist)) {
-            selected_words[n] = i;
+        args->word_hist[args->num_word_hist] = i;
+        if (bloom_filter_lookup(conv->blm_flt, args->blm_flt_buf,
+                    args->word_hist, args->num_word_hist + 1)
+                || bloom_filter_lookup(conv->blm_flt, args->blm_flt_buf,
+                    args->word_hist + 1, args->num_word_hist)) {
+            args->selected_words[n] = i;
             ++n;
         }
     }
 
-    *num_selected = n;
-
-    return 0;
+    return n;
 }
 
-static int select_words(fst_conv_t *conv, double *output_probs,
-        double param, unsigned int *rand_seed,
-        int *word_hist, int num_word_hist,
-        int *selected_words, int *num_selected)
+// fill the candidate words in args->selected_words, and return the length
+static int select_words(fst_conv_t *conv, fst_conv_args_t *args, double param)
 {
-    ST_CHECK_PARAM(conv == NULL, -1);
+    int n;
+
+    ST_CHECK_PARAM(conv == NULL || args == NULL, -1);
 
     switch (conv->conv_opt.wsm) {
         case WSM_BASELINE:
-            if (select_words_baseline(conv, output_probs, param, rand_seed,
-                    word_hist, num_word_hist,
-                    selected_words, num_selected) < 0) {
+            n = select_words_baseline(conv, args, param);
+            if (n < 0) {
                 ST_WARNING("Failed to select_words_baseline.");
                 return -1;
             }
             break;
         case WSM_SAMPLING:
-            if (select_words_sampling(conv, output_probs, param, rand_seed,
-                    word_hist, num_word_hist,
-                    selected_words, num_selected) < 0) {
+            n = select_words_sampling(conv, args, param);
+            if (n < 0) {
                 ST_WARNING("Failed to select_words_sampling.");
                 return -1;
             }
             break;
         case WSM_MAJORITY:
-            if (select_words_majority(conv, output_probs, param, rand_seed,
-                    word_hist, num_word_hist,
-                    selected_words, num_selected) < 0) {
+            n = select_words_majority(conv, args, param);
+            if (n < 0) {
                 ST_WARNING("Failed to select_words_majority.");
                 return -1;
             }
             break;
         case WSM_PICK:
-            if (select_words_pick(conv, output_probs, param, rand_seed,
-                    word_hist, num_word_hist,
-                    selected_words, num_selected) < 0) {
+            n = select_words_pick(conv, args, param);
+            if (n < 0) {
                 ST_WARNING("Failed to select_words_pick.");
                 return -1;
             }
@@ -1032,7 +1023,7 @@ static int select_words(fst_conv_t *conv, double *output_probs,
             return -1;
     }
 
-    return 0;
+    return n;
 }
 
 static int fst_conv_search_children(fst_conv_t *conv, int sid, int word_id)
@@ -1309,9 +1300,8 @@ static int fst_conv_expand(fst_conv_t *conv, fst_conv_args_t *args)
 
             ws_arg = args->ws_arg * pow((args->num_word_hist - 1), args->ws_arg_power);
 
-            if (select_words(conv, output_probs, ws_arg, &args->rand_seed,
-                        args->word_hist, args->num_word_hist,
-                        args->selected_words, &n) < 0) {
+            n = select_words(conv, args, ws_arg);
+            if (n < 0) {
                 ST_WARNING("Failed to select_words.");
                 return -1;
             }

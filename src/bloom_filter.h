@@ -66,13 +66,12 @@ int bloom_filter_load_opt(bloom_filter_opt_t *blm_flt_opt,
  * Bloom Filter
  * @ingroup g_bloom_filter
  */
-typedef struct _bloom_filtererter_t_ {
+typedef struct _bloom_filter_t_ {
     unsigned char *cells; /**< cell store truth value for elements. */
 
     vocab_t *vocab; /**< vocabulary. */
 
     ngram_hash_t **nghashes; /**< ngram hash for every order. */
-    hash_t *hash_vals; /**< buffer stored (num_hashes) hash values. */
 
     bloom_filter_opt_t blm_flt_opt; /**< options. */
 } bloom_filter_t;
@@ -143,24 +142,63 @@ int bloom_filter_print_info(FILE *model_fp, FILE *fo);
 int bloom_filter_build(bloom_filter_t *blm_flt, FILE *text_fp);
 
 /**
- * Add an ngram a bloom filter.
+ * Bloom Filter Data Buffer
  * @ingroup g_bloom_filter
- * @param[in] blm_flt the bloom filter.
- * @param[in] words words in ngram.
- * @param[in] n number of words.
- * @return non-zero value if any error.
  */
-int bloom_filter_add(bloom_filter_t *blm_flt, int *words, int n);
+typedef struct _bloom_filter_buffer_t_ {
+    hash_t *hash_vals; /**< buffer stored (num_hashes) hash values. */
+} bloom_filter_buf_t;
+
+/**
+ * Destroy a bloom filter buffer and set the pointer to NULL.
+ * @ingroup g_bloom_filter
+ * @param[in] ptr pointer to bloom_filter_buf_t.
+ */
+#define safe_bloom_filter_buf_destroy(ptr) do {\
+    if((ptr) != NULL) {\
+        bloom_filter_buf_destroy(ptr);\
+        safe_free(ptr);\
+        (ptr) = NULL;\
+    }\
+    } while(0)
+/**
+ * Destroy a bloom filter buffer.
+ * @ingroup g_bloom_filter
+ * @param[in] buf bloom filter buffer to be destroyed.
+ */
+void bloom_filter_buf_destroy(bloom_filter_buf_t *buf);
+
+/**
+ * Create a bloom filter buffer.
+ * @ingroup g_bloom_filter
+ * @param[in] blm_flt bloom filter.
+ * @return bloom_filter_buf on success, otherwise NULL.
+ */
+bloom_filter_buf_t* bloom_filter_buf_create(bloom_filter_t *blm_flt);
 
 /**
  * Add an ngram a bloom filter.
  * @ingroup g_bloom_filter
  * @param[in] blm_flt the bloom filter.
+ * @param[in] buf a bloom filter buffer.
+ * @param[in] words words in ngram.
+ * @param[in] n number of words.
+ * @return non-zero value if any error.
+ */
+int bloom_filter_add(bloom_filter_t *blm_flt, bloom_filter_buf_t *buf,
+        int *words, int n);
+
+/**
+ * Add an ngram a bloom filter.
+ * @ingroup g_bloom_filter
+ * @param[in] blm_flt the bloom filter.
+ * @param[in] buf a bloom filter buffer.
  * @param[in] words words in ngram.
  * @param[in] n number of words.
  * @return true if exists, false otherwise.
  */
-bool bloom_filter_lookup(bloom_filter_t *blm_flt, int *words, int n);
+bool bloom_filter_lookup(bloom_filter_t *blm_flt, bloom_filter_buf_t *buf,
+        int *words, int n);
 
 /**
  * Compute the load factor for bloom filter.

@@ -76,6 +76,42 @@ ST_OPT_ERR:
     return -1;
 }
 
+void bloom_filter_buf_destroy(bloom_filter_buf_t *buf)
+{
+    if (buf == NULL) {
+        return;
+    }
+
+    safe_free(buf->hash_vals);
+}
+
+bloom_filter_buf_t* bloom_filter_buf_create(bloom_filter_t *blm_flt)
+{
+    bloom_filter_buf_t *buf = NULL;
+
+    ST_CHECK_PARAM(blm_flt == NULL, NULL);
+
+    buf = (bloom_filter_buf_t *)malloc(sizeof(bloom_filter_buf_t));
+    if (buf == NULL) {
+        ST_WARNING("Failed to malloc bloom filter buffer.");
+        return NULL;
+    }
+    memset(buf, 0, sizeof(bloom_filter_buf_t));
+
+    buf->hash_vals = (hash_t *)malloc(sizeof(hash_t)
+            * blm_flt->blm_flt_opt.num_hashes);
+    if (buf->hash_vals == NULL) {
+        ST_WARNING("Failed to malloc hash_vals");
+        goto ERR;
+    }
+
+    return buf;
+
+ERR:
+    safe_bloom_filter_buf_destroy(buf);
+    return NULL;
+}
+
 void bloom_filter_destroy(bloom_filter_t *blm_flt)
 {
     int o;
@@ -83,8 +119,6 @@ void bloom_filter_destroy(bloom_filter_t *blm_flt)
     if (blm_flt == NULL) {
         return;
     }
-
-    safe_free(blm_flt->hash_vals);
 
     if (blm_flt->nghashes != NULL) {
         for (o = 0; o < blm_flt->blm_flt_opt.max_order; o++) {
@@ -129,13 +163,6 @@ static int bloom_filter_init_hash(bloom_filter_t *blm_flt)
     }
 
     safe_free(context);
-
-    blm_flt->hash_vals = (hash_t *)malloc(sizeof(hash_t)
-            * blm_flt->blm_flt_opt.num_hashes);
-    if (blm_flt->hash_vals == NULL) {
-        ST_WARNING("Failed to malloc hash_vals");
-        goto ERR;
-    }
 
     return 0;
 
@@ -591,7 +618,8 @@ static inline void split_hash(hash_t val, hash_t *val_a, hash_t *val_b)
     *val_b = dup_low_bits(*val_b);
 }
 
-static int bloom_filter_hash(bloom_filter_t *blm_flt, int *words, int n)
+static int bloom_filter_hash(bloom_filter_t *blm_flt, int *words, int n,
+        hash_t *hash_vals)
 {
     hash_t val;
     hash_t val_a, val_b;
@@ -607,17 +635,20 @@ static int bloom_filter_hash(bloom_filter_t *blm_flt, int *words, int n)
     split_hash(val, &val_a, &val_b);
 
     for (k = 0; k < blm_flt->blm_flt_opt.num_hashes; k++) {
-        blm_flt->hash_vals[k] = val_a + (k + 1) * val_b;
+        hash_vals[k] = val_a + (k + 1) * val_b;
+        hash_vals[k] %= blm_flt->blm_flt_opt.capacity;
     }
 
     return 0;
 }
 
-int bloom_filter_add(bloom_filter_t *blm_flt, int *words, int n)
+int bloom_filter_add(bloom_filter_t *blm_flt, bloom_filter_buf_t *buf,
+        int *words, int n)
 {
     int k;
 
-    ST_CHECK_PARAM(blm_flt == NULL || words == NULL || n <= 0, -1);
+    ST_CHECK_PARAM(blm_flt == NULL || buf == NULL
+            || words == NULL || n <= 0, -1);
 
     if (n > blm_flt->blm_flt_opt.max_order) {
         ST_WARNING("order[%d] of n-gram must be less than max_order[%d].",
@@ -625,37 +656,37 @@ int bloom_filter_add(bloom_filter_t *blm_flt, int *words, int n)
         return -1;
     }
 
-    if (bloom_filter_hash(blm_flt, words, n) < 0) {
+    if (bloom_filter_hash(blm_flt, words, n, buf->hash_vals) < 0) {
         ST_WARNING("Failed to bloom_filter_hash.");
         return -1;
     }
 
     for (k = 0; k < blm_flt->blm_flt_opt.num_hashes; k++) {
-        BITSET(blm_flt->cells,
-               blm_flt->hash_vals[k] % blm_flt->blm_flt_opt.capacity);
+        BITSET(blm_flt->cells, buf->hash_vals[k]);
     }
 
     return 0;
 }
 
-bool bloom_filter_lookup(bloom_filter_t *blm_flt, int *words, int n)
+bool bloom_filter_lookup(bloom_filter_t *blm_flt, bloom_filter_buf_t *buf,
+        int *words, int n)
 {
     int k;
 
-    ST_CHECK_PARAM(blm_flt == NULL || words == NULL || n <= 0, false);
+    ST_CHECK_PARAM(blm_flt == NULL || buf == NULL
+            || words == NULL || n <= 0, false);
 
     if (n > blm_flt->blm_flt_opt.max_order) {
         return false;
     }
 
-    if (bloom_filter_hash(blm_flt, words, n) < 0) {
+    if (bloom_filter_hash(blm_flt, words, n, buf->hash_vals) < 0) {
         ST_WARNING("Failed to bloom_filter_hash.");
         return false;
     }
 
     for (k = 0; k < blm_flt->blm_flt_opt.num_hashes; k++) {
-        if (! BITTEST(blm_flt->cells,
-               blm_flt->hash_vals[k] % blm_flt->blm_flt_opt.capacity)) {
+        if (! BITTEST(blm_flt->cells, buf->hash_vals[k])) {
             return false;
         }
     }
@@ -673,6 +704,8 @@ int bloom_filter_build(bloom_filter_t *blm_flt, FILE *text_fp)
         .capacity = 0,
     };
 
+    bloom_filter_buf_t *buf = NULL;
+
     int max_order;
 
     int sent_start = 0;
@@ -682,6 +715,12 @@ int bloom_filter_build(bloom_filter_t *blm_flt, FILE *text_fp)
     ST_CHECK_PARAM(blm_flt == NULL || text_fp == NULL, -1);
 
     max_order = blm_flt->blm_flt_opt.max_order;
+
+    buf = bloom_filter_buf_create(blm_flt);
+    if (buf == NULL) {
+        ST_WARNING("Failed to bloom_filter_buf_create.");
+        goto ERR;
+    }
 
     while (!feof(text_fp)) {
         if (connlm_egs_read(&egs, NULL, EPOCH_SIZE,
@@ -699,7 +738,7 @@ int bloom_filter_build(bloom_filter_t *blm_flt, FILE *text_fp)
             order = min(order, max_order);
 
             while (order > 0) {
-                if (bloom_filter_add(blm_flt,
+                if (bloom_filter_add(blm_flt, buf,
                             egs.words + pos - order + 1, order) < 0) {
                     ST_WARNING("Failed to bloom_filter_add.");
                     goto ERR;
@@ -709,11 +748,13 @@ int bloom_filter_build(bloom_filter_t *blm_flt, FILE *text_fp)
         }
     }
 
+    safe_bloom_filter_buf_destroy(buf);
     connlm_egs_destroy(&egs);
 
     return 0;
 
 ERR:
+    safe_bloom_filter_buf_destroy(buf);
     connlm_egs_destroy(&egs);
 
     return -1;
