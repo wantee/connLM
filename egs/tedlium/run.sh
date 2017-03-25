@@ -15,6 +15,7 @@ exp_dir=./exp/
 
 tr_thr=16
 eval_thr=16
+tofst_thr=16
 
 realtype="float"
 
@@ -23,6 +24,7 @@ stepnames+=("Learn Vocab")
 stepnames+=("Train MaxEnt model:maxent")
 stepnames+=("Train RNN model:rnn")
 stepnames+=("Train RNN+MaxEnt model:rnn+maxent")
+stepnames+=("Convert RNN to WFST:rnn#")
 
 steps_len=${#stepnames[*]}
 
@@ -94,18 +96,23 @@ fi
 while [ $st -le $steps_len ]
 do
   if shu-in-range $st $steps; then
-  echo
-  echo "Step $st: ${stepnames[$st]%%:*} ..."
-  model=${stepnames[$st]#*:}
-  if [[ "$model" == *"~"* ]]; then
-    ../steps/run_cascade.sh --train-thr $tr_thr --eval-thr $eval_thr \
-        ${model} $conf_dir $exp_dir \
-        $train_file $valid_file $test_file || exit 1;
-  else
-    ../steps/run_standalone.sh --train-thr $tr_thr --eval-thr $eval_thr \
-        ${model} $conf_dir $exp_dir \
-        $train_file $valid_file $test_file || exit 1;
-  fi
+    echo
+    echo "Step $st: ${stepnames[$st]%%:*} ..."
+    model=${stepnames[$st]#*:}
+    if [[ "$model" == *"~"* ]]; then
+      ../steps/run_cascade.sh --train-thr $tr_thr --eval-thr $eval_thr \
+          ${model} $conf_dir $exp_dir \
+          $train_file $valid_file $test_file || exit 1;
+    elif [[ "$model" == *"#" ]]; then
+      model=${model%?}
+      ../steps/convert_to_fst.sh --num-thr $tofst_thr \
+          --bloom-filter-text-file $train_file \
+          ${model} $conf_dir $exp_dir || exit 1;
+    else
+      ../steps/run_standalone.sh --train-thr $tr_thr --eval-thr $eval_thr \
+          ${model} $conf_dir $exp_dir \
+          $train_file $valid_file $test_file || exit 1;
+    fi
   fi
   ((st++))
 done
