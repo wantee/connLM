@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 from __future__ import print_function
+import subprocess
 import argparse
 import os
 import sys
@@ -18,7 +19,7 @@ parser.add_argument("fst_txt", type=str, help="The FST file.")
 parser.add_argument("state_map", type=str, help="The final state mapping.")
 
 # echo command line to stderr for logging.
-print(' '.join(sys.argv), file=sys.stderr)
+print(subprocess.list2cmdline(sys.argv), file=sys.stderr)
 
 args = parser.parse_args()
 
