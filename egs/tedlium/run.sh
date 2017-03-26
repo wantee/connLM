@@ -1,14 +1,14 @@
 #!/bin/bash
 
-data=./corpus
+# data source from 'cantab-tedlium' or 'TedliumRelease2'
+data_source=TedliumRelease2
 
-# base url for downloads.
-data_url=http://cantabresearch.com/cantab-TEDLIUM.tar.bz2
-
-train_file=./data/train
-valid_file=./data/valid
-test_file=./data/test
-wordlist=./data/wordlist
+corpus=./corpus
+data=./data/
+train_file=$data/train
+valid_file=$data/valid
+test_file=$data/test
+wordlist=$data/wordlist
 
 conf_dir=./conf/
 exp_dir=./exp/
@@ -70,18 +70,15 @@ st=1
 if shu-in-range $st $steps; then
 echo
 echo "Step $st: ${stepnames[$st]} ..."
-local/download_data.sh $data_url $data || exit 1
-
-num_dev_sentences=15000
-mkdir -p `dirname "$train_file"`
-tail -n +$num_dev_sentences < $data/cantab-TEDLIUM/cantab-TEDLIUM.txt \
-       | sed 's/ <\/s>//g'  > $train_file
-mkdir -p `dirname "$valid_file"`
-head -n $num_dev_sentences < $data/cantab-TEDLIUM/cantab-TEDLIUM.txt \
-       | sed 's/ <\/s>//g'  > $valid_file || exit 1
-
-awk '{print $1}' $data/cantab-TEDLIUM/cantab-TEDLIUM.dct | sort | uniq | \
-      grep -v "<s>" > $wordlist || exit 1
+  if [ "$data_source" == "cantab-tedlium" ]; then
+    num_valid=15000
+    local/cantab-tedlium-download_data.sh $corpus || exit 1
+    local/cantab-tedlium-prepare_data.sh $corpus $num_valid $data || exit 1
+  else
+    num_valid=10000
+    local/tedlium-release2-download_data.sh $corpus || exit 1
+    local/tedlium-release2-prepare_data.sh $corpus $num_valid $data || exit 1
+  fi
 fi
 ((st++))
 
