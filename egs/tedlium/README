@@ -1,6 +1,8 @@
-Corpus: 34M words, (including 1.75M </s>)
-Vocabulary: 150k
+Corpus TedliumRelease2: 266M, (14M </s>)
+Vocabulary: 152k
 Test Set: 18290 words (including 507 </s>)
 
-# Test set is from kaldi project, i.e., kaldi/egs/tedlium/s5_r2/data/local/local_lm/data/real_dev_set.txt.
-# see kaldi/egs/tedlium/s5_r2/local/ted_train_lm.sh to generate the data set.
+===========================================================================
+Corpus Cantab: 34M words, (including 1.75M </s>)
+Vocabulary: 150k
+Test Set: Same as Corpus TedliumRelease2
