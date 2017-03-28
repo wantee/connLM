@@ -110,7 +110,7 @@ typedef struct _weight_updater_t_ {
 #define safe_wt_updater_destroy(ptr) do {\
     if((ptr) != NULL) {\
         wt_updater_destroy(ptr);\
-        safe_free(ptr);\
+        safe_st_free(ptr);\
         (ptr) = NULL;\
     }\
     } while(0)

@@ -63,7 +63,7 @@ static emb_index_method_t str2index(const char *str)
 #define safe_emb_glue_data_destroy(ptr) do {\
     if((ptr) != NULL) {\
         emb_glue_data_destroy((emb_glue_data_t *)ptr);\
-        safe_free(ptr);\
+        safe_st_free(ptr);\
         (ptr) = NULL;\
     }\
     } while(0)
@@ -82,9 +82,9 @@ static emb_glue_data_t* emb_glue_data_init()
 {
     emb_glue_data_t *data = NULL;
 
-    data = (emb_glue_data_t *)malloc(sizeof(emb_glue_data_t));
+    data = (emb_glue_data_t *)st_malloc(sizeof(emb_glue_data_t));
     if (data == NULL) {
-        ST_WARNING("Failed to malloc emb_glue_data.");
+        ST_WARNING("Failed to st_malloc emb_glue_data.");
         goto ERR;
     }
     memset(data, 0, sizeof(emb_glue_data_t));

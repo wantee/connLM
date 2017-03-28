@@ -63,7 +63,7 @@ typedef struct _bptt_updater_t_ {
 #define safe_bptt_updater_destroy(ptr) do {\
     if((ptr) != NULL) {\
         bptt_updater_destroy(ptr);\
-        safe_free(ptr);\
+        safe_st_free(ptr);\
         (ptr) = NULL;\
     }\
     } while(0)

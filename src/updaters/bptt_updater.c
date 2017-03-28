@@ -43,18 +43,18 @@ void bptt_updater_destroy(bptt_updater_t *bptt_updater)
         for (i = 1; i <= bptt_updater->num_glue; i++) {
             safe_st_aligned_free(bptt_updater->ac_bptt[i]);
         }
-        safe_free(bptt_updater->ac_bptt);
+        safe_st_free(bptt_updater->ac_bptt);
     }
 
     if (bptt_updater->er_bptt != NULL) {
         for (i = 1; i <= bptt_updater->num_glue; i++) {
             safe_st_aligned_free(bptt_updater->er_bptt[i]);
         }
-        safe_free(bptt_updater->er_bptt);
+        safe_st_free(bptt_updater->er_bptt);
     }
 
     if (bptt_updater->wt_updaters != NULL) {
-        safe_free(bptt_updater->wt_updaters);
+        safe_st_free(bptt_updater->wt_updaters);
     }
 }
 
@@ -68,9 +68,9 @@ bptt_updater_t* bptt_updater_create(component_t *comp, int cycle_id,
     ST_CHECK_PARAM(comp == NULL || cycle_id < 0
             || cycle_id >= comp->num_glue_cycle, NULL);
 
-    bptt_updater = (bptt_updater_t *)malloc(sizeof(bptt_updater_t));
+    bptt_updater = (bptt_updater_t *)st_malloc(sizeof(bptt_updater_t));
     if (bptt_updater == NULL) {
-        ST_WARNING("Failed to malloc bptt_updater.");
+        ST_WARNING("Failed to st_malloc bptt_updater.");
         goto ERR;
     }
     memset(bptt_updater, 0, sizeof(bptt_updater_t));
@@ -83,24 +83,24 @@ bptt_updater_t* bptt_updater_create(component_t *comp, int cycle_id,
     bptt_updater->num_glue = comp->glue_cycles[cycle_id][0];
 
     sz = sizeof(real_t *) * (bptt_updater->num_glue + 1);
-    bptt_updater->ac_bptt = (real_t **)malloc(sz);
+    bptt_updater->ac_bptt = (real_t **)st_malloc(sz);
     if (bptt_updater->ac_bptt == NULL) {
-        ST_WARNING("Failed to malloc ac_bptt.");
+        ST_WARNING("Failed to st_malloc ac_bptt.");
         goto ERR;
     }
     memset(bptt_updater->ac_bptt, 0, sz);
 
-    bptt_updater->er_bptt = (real_t **)malloc(sz);
+    bptt_updater->er_bptt = (real_t **)st_malloc(sz);
     if (bptt_updater->er_bptt == NULL) {
-        ST_WARNING("Failed to malloc er_bptt.");
+        ST_WARNING("Failed to st_malloc er_bptt.");
         goto ERR;
     }
     memset(bptt_updater->er_bptt, 0, sz);
 
     sz = sizeof(wt_updater_t *) * (bptt_updater->num_glue + 1);
-    bptt_updater->wt_updaters = (wt_updater_t **)malloc(sz);
+    bptt_updater->wt_updaters = (wt_updater_t **)st_malloc(sz);
     if (bptt_updater->wt_updaters == NULL) {
-        ST_WARNING("Failed to malloc wt_updaters.");
+        ST_WARNING("Failed to st_malloc wt_updaters.");
         goto ERR;
     }
     memset(bptt_updater->wt_updaters, 0, sz);

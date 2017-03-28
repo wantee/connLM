@@ -139,7 +139,7 @@ output_tree_bfs_aux_t *output_tree_bfs_aux_create(output_tree_t *tree);
 #define safe_output_tree_bfs_aux_destroy(ptr) do {\
     if((ptr) != NULL) {\
         output_tree_bfs_aux_destroy(ptr);\
-        safe_free(ptr);\
+        safe_st_free(ptr);\
         (ptr) = NULL;\
     }\
     } while(0)
@@ -187,7 +187,7 @@ output_tree_dfs_aux_t *output_tree_dfs_aux_create(output_tree_t *tree);
 #define safe_output_tree_dfs_aux_destroy(ptr) do {\
     if((ptr) != NULL) {\
         output_tree_dfs_aux_destroy(ptr);\
-        safe_free(ptr);\
+        safe_st_free(ptr);\
         (ptr) = NULL;\
     }\
     } while(0)
@@ -266,7 +266,7 @@ int output_load_opt(output_opt_t *output_opt, st_opt_t *opt,
 #define safe_output_destroy(ptr) do {\
     if((ptr) != NULL) {\
         output_destroy(ptr);\
-        safe_free(ptr);\
+        safe_st_free(ptr);\
         (ptr) = NULL;\
     }\
     } while(0)

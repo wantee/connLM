@@ -62,7 +62,7 @@ typedef struct _ngram_hash_t_ {
 #define safe_ngram_hash_destroy(ptr) do {\
     if((ptr) != NULL) {\
         ngram_hash_destroy(ptr);\
-        safe_free(ptr);\
+        safe_st_free(ptr);\
         (ptr) = NULL;\
     }\
     } while(0)

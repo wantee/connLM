@@ -419,10 +419,10 @@ model_filter_t parse_model_filter(const char *mdl_filter,
                         if (*num_comp == -1) { // already set all components with single 'c'
                             break;
                         }
-                        *comp_names = realloc(*comp_names,
+                        *comp_names = st_realloc(*comp_names,
                                 MAX_NAME_LEN*(*num_comp + 1));
                         if (*comp_names == NULL) {
-                            ST_WARNING("Failed to realloc comp_names");
+                            ST_WARNING("Failed to st_realloc comp_names");
                             goto ERR;
                         }
 
@@ -460,7 +460,7 @@ RET:
     return mf;
 
 ERR:
-    safe_free(*comp_names);
+    safe_st_free(*comp_names);
     *num_comp = 0;
     mdl_file[0] = '\0';
     return MF_ERR;
@@ -530,7 +530,7 @@ int concat_mat_add_row(concat_mat_t *mat, real_t *vec, int vec_size)
         sz = mat->cap_row * mat->col * sizeof(real_t);
         mat->val = (real_t *)st_aligned_realloc(mat->val, sz, ALIGN_SIZE);
         if (mat->val == NULL) {
-            ST_WARNING("Failed to realloc val");
+            ST_WARNING("Failed to st_realloc val");
             return -1;
         }
     }
@@ -557,7 +557,7 @@ int concat_mat_add_mat(concat_mat_t *dst, concat_mat_t *src)
         sz = dst->cap_row * dst->col * sizeof(real_t);
         dst->val = (real_t *)st_aligned_realloc(dst->val, sz, ALIGN_SIZE);
         if (dst->val == NULL) {
-            ST_WARNING("Failed to realloc val");
+            ST_WARNING("Failed to st_realloc val");
             return -1;
         }
     }

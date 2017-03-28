@@ -36,7 +36,7 @@ static const int DIRECT_GLUE_MAGIC_NUM = 626140498 + 71;
 #define safe_direct_glue_data_destroy(ptr) do {\
     if((ptr) != NULL) {\
         direct_glue_data_destroy((direct_glue_data_t *)ptr);\
-        safe_free(ptr);\
+        safe_st_free(ptr);\
         (ptr) = NULL;\
     }\
     } while(0)
@@ -54,9 +54,9 @@ static direct_glue_data_t* direct_glue_data_init()
 {
     direct_glue_data_t *data = NULL;
 
-    data = (direct_glue_data_t *)malloc(sizeof(direct_glue_data_t));
+    data = (direct_glue_data_t *)st_malloc(sizeof(direct_glue_data_t));
     if (data == NULL) {
-        ST_WARNING("Failed to malloc direct_glue_data.");
+        ST_WARNING("Failed to st_malloc direct_glue_data.");
         goto ERR;
     }
     memset(data, 0, sizeof(direct_glue_data_t));

@@ -116,26 +116,26 @@ int main(int argc, const char *argv[])
     }
     ST_CLEAN("Model-out: %s", argv[argc - 1]);
 
-    mfs = (model_filter_t *)malloc(sizeof(model_filter_t) * (argc - 2));
+    mfs = (model_filter_t *)st_malloc(sizeof(model_filter_t) * (argc - 2));
     if (mfs == NULL) {
-        ST_WARNING("Failed to malloc mfs.");
+        ST_WARNING("Failed to st_malloc mfs.");
         goto ERR;
     }
 
-    fnames = (char *)malloc(sizeof(char) * MAX_DIR_LEN * (argc - 2));
+    fnames = (char *)st_malloc(sizeof(char) * MAX_DIR_LEN * (argc - 2));
     if (fnames == NULL) {
-        ST_WARNING("Failed to malloc fnames.");
+        ST_WARNING("Failed to st_malloc fnames.");
         goto ERR;
     }
 
-    comp_names = (char **)malloc(sizeof(char*) * (argc - 2));
+    comp_names = (char **)st_malloc(sizeof(char*) * (argc - 2));
     if (comp_names == NULL) {
-        ST_WARNING("Failed to malloc comp_names.");
+        ST_WARNING("Failed to st_malloc comp_names.");
         goto ERR;
     }
-    num_comp = (int *)malloc(sizeof(int) * (argc - 2));
+    num_comp = (int *)st_malloc(sizeof(int) * (argc - 2));
     if (num_comp == NULL) {
-        ST_WARNING("Failed to malloc num_comp.");
+        ST_WARNING("Failed to st_malloc num_comp.");
         goto ERR;
     }
     for (i = 0; i < argc - 2; i++) {
@@ -253,15 +253,15 @@ int main(int argc, const char *argv[])
     }
 
     safe_st_fclose(fp);
-    safe_free(mfs);
-    safe_free(fnames);
+    safe_st_free(mfs);
+    safe_st_free(fnames);
     if (comp_names != NULL) {
         for (i = 0; i < argc - 2; i++) {
-            safe_free(comp_names[i]);
+            safe_st_free(comp_names[i]);
         }
     }
-    safe_free(comp_names);
-    safe_free(num_comp);
+    safe_st_free(comp_names);
+    safe_st_free(num_comp);
     safe_st_opt_destroy(g_cmd_opt);
     safe_connlm_destroy(connlm);
 
@@ -270,15 +270,15 @@ int main(int argc, const char *argv[])
 
 ERR:
     safe_st_fclose(fp);
-    safe_free(mfs);
-    safe_free(fnames);
+    safe_st_free(mfs);
+    safe_st_free(fnames);
     if (comp_names != NULL) {
         for (i = 0; i < argc - 2; i++) {
-            safe_free(comp_names[i]);
+            safe_st_free(comp_names[i]);
         }
     }
-    safe_free(comp_names);
-    safe_free(num_comp);
+    safe_st_free(comp_names);
+    safe_st_free(num_comp);
     safe_st_opt_destroy(g_cmd_opt);
     safe_connlm_destroy(connlm);
     safe_connlm_destroy(connlm1);

@@ -80,7 +80,7 @@ typedef struct _component_t_ {
 #define safe_comp_destroy(ptr) do {\
     if((ptr) != NULL) {\
         comp_destroy(ptr);\
-        safe_free(ptr);\
+        safe_st_free(ptr);\
         (ptr) = NULL;\
     }\
     } while(0)

@@ -101,7 +101,7 @@ static int vocab_load_wordlist(vocab_t *vocab)
     }
 
     safe_fclose(fp);
-    safe_free(line);
+    safe_st_free(line);
 
     if (err) {
         return -1;
@@ -111,7 +111,7 @@ static int vocab_load_wordlist(vocab_t *vocab)
 
 ERR:
     safe_fclose(fp);
-    safe_free(line);
+    safe_st_free(line);
     return -1;
 }
 
@@ -121,9 +121,9 @@ vocab_t *vocab_create(vocab_opt_t *vocab_opt)
 
     ST_CHECK_PARAM(vocab_opt == NULL, NULL);
 
-    vocab = (vocab_t *) malloc(sizeof(vocab_t));
+    vocab = (vocab_t *)st_malloc(sizeof(vocab_t));
     if (vocab == NULL) {
-        ST_WARNING("Falied to malloc vocab_t.");
+        ST_WARNING("Failed to st_malloc vocab_t.");
         goto ERR;
     }
     memset(vocab, 0, sizeof(vocab_t));
@@ -179,7 +179,7 @@ void vocab_destroy(vocab_t *vocab)
     }
 
     safe_st_alphabet_destroy(vocab->alphabet);
-    safe_free(vocab->cnts);
+    safe_st_free(vocab->cnts);
 }
 
 vocab_t* vocab_dup(vocab_t *v)
@@ -188,9 +188,9 @@ vocab_t* vocab_dup(vocab_t *v)
 
     ST_CHECK_PARAM(v == NULL, NULL);
 
-    vocab = (vocab_t *) malloc(sizeof(vocab_t));
+    vocab = (vocab_t *)st_malloc(sizeof(vocab_t));
     if (vocab == NULL) {
-        ST_WARNING("Falied to malloc vocab_t.");
+        ST_WARNING("Failed to st_malloc vocab_t.");
         goto ERR;
     }
     memset(vocab, 0, sizeof(vocab_t));
@@ -204,9 +204,9 @@ vocab_t* vocab_dup(vocab_t *v)
         goto ERR;
     }
 
-    vocab->cnts = (count_t *) malloc(sizeof(count_t) * v->vocab_size);
+    vocab->cnts = (count_t *)st_malloc(sizeof(count_t) * v->vocab_size);
     if (vocab->cnts == NULL) {
-        ST_WARNING("Failed to malloc cnts.");
+        ST_WARNING("Failed to st_malloc cnts.");
         goto ERR;
     }
     memcpy(vocab->cnts, v->cnts, sizeof(count_t)*v->vocab_size);
@@ -285,9 +285,9 @@ int vocab_load_header(vocab_t **vocab, int version, FILE *fp, bool *binary,
     }
 
     if (vocab != NULL) {
-        *vocab = (vocab_t *)malloc(sizeof(vocab_t));
+        *vocab = (vocab_t *)st_malloc(sizeof(vocab_t));
         if (*vocab == NULL) {
-            ST_WARNING("Failed to malloc vocab_t");
+            ST_WARNING("Failed to st_malloc vocab_t");
             goto ERR;
         }
         memset(*vocab, 0, sizeof(vocab_t));
@@ -341,9 +341,9 @@ int vocab_load_body(vocab_t *vocab, int version, FILE *fp, bool binary)
             goto ERR;
         }
 
-        vocab->cnts = (count_t *)malloc(sizeof(count_t)*vocab->vocab_size);
+        vocab->cnts = (count_t *)st_malloc(sizeof(count_t)*vocab->vocab_size);
         if (vocab->cnts == NULL) {
-            ST_WARNING("Failed to malloc cnts.");
+            ST_WARNING("Failed to st_malloc cnts.");
             goto ERR;
         }
 
@@ -364,9 +364,9 @@ int vocab_load_body(vocab_t *vocab, int version, FILE *fp, bool binary)
             goto ERR;
         }
 
-        vocab->cnts = (count_t *)malloc(sizeof(count_t)*vocab->vocab_size);
+        vocab->cnts = (count_t *)st_malloc(sizeof(count_t)*vocab->vocab_size);
         if (vocab->cnts == NULL) {
-            ST_WARNING("Failed to malloc cnts.");
+            ST_WARNING("Failed to st_malloc cnts.");
             goto ERR;
         }
 
@@ -386,7 +386,7 @@ int vocab_load_body(vocab_t *vocab, int version, FILE *fp, bool binary)
     return 0;
 ERR:
     safe_st_alphabet_destroy(vocab->alphabet);
-    safe_free(vocab->cnts);
+    safe_st_free(vocab->cnts);
     return -1;
 }
 
@@ -548,9 +548,9 @@ static int vocab_sort(vocab_t *vocab, word_info_t *word_infos,
     }
 
     vocab->vocab_size += 1/* <s> */;
-    cnts = (count_t *)malloc(sizeof(count_t)*vocab->vocab_size);
+    cnts = (count_t *)st_malloc(sizeof(count_t)*vocab->vocab_size);
     if (cnts == NULL) {
-        ST_WARNING("Failed to malloc cnts");
+        ST_WARNING("Failed to st_malloc cnts");
         goto ERR;
     }
 
@@ -588,7 +588,7 @@ static int vocab_sort(vocab_t *vocab, word_info_t *word_infos,
 
   ERR:
     safe_st_alphabet_destroy(alphabet);
-    safe_free(cnts);
+    safe_st_free(cnts);
     return -1;
 }
 
@@ -674,10 +674,10 @@ int vocab_learn(vocab_t *vocab, FILE *fp, vocab_learn_opt_t *lr_opt)
 
     ST_CHECK_PARAM(vocab == NULL || fp == NULL || lr_opt == NULL, -1);
 
-    word_infos = (word_info_t *) malloc(sizeof(word_info_t)
+    word_infos = (word_info_t *)st_malloc(sizeof(word_info_t)
             * vocab->vocab_opt.max_alphabet_size);
     if (word_infos == NULL) {
-        ST_WARNING("Failed to malloc word_infos.");
+        ST_WARNING("Failed to st_malloc word_infos.");
         goto ERR;
     }
 
@@ -725,10 +725,10 @@ int vocab_learn(vocab_t *vocab, FILE *fp, vocab_learn_opt_t *lr_opt)
     ST_NOTICE("Words: " COUNT_FMT, words);
     ST_NOTICE("Vocab Size: %d", vocab->vocab_size);
 
-    safe_free(word_infos);
+    safe_st_free(word_infos);
     return 0;
 ERR:
-    safe_free(word_infos);
+    safe_st_free(word_infos);
     return -1;
 }
 

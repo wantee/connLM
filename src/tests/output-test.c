@@ -624,9 +624,9 @@ static int check_output(output_t *output, count_t *cnts,
 
     sz = ftell(fp);
 
-    buf = malloc(sz + 1);
+    buf = st_malloc(sz + 1);
     if (buf == NULL) {
-        ST_WARNING("Failed to malloc buf.");
+        ST_WARNING("Failed to st_malloc buf.");
         goto ERR;
     }
 
@@ -646,12 +646,12 @@ static int check_output(output_t *output, count_t *cnts,
     ret = strcmp(refs[ncase - 1], buf);
 
     safe_fclose(fp);
-    safe_free(buf);
+    safe_st_free(buf);
 
     return ret;
 ERR:
     safe_fclose(fp);
-    safe_free(buf);
+    safe_st_free(buf);
 
     return -1;
 }

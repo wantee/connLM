@@ -87,7 +87,7 @@ typedef enum _model_filter_t_ {
  * @param[in] mdl_filter string for the model filter.
  * @param[out] mdl_file name of model file.
  * @param[in] mdl_file_len max len of model file buffer.
- * @param[out] comp_names names of components specified, every MAX_NAME_LEN is one name. Must be freed outside this function.
+ * @param[out] comp_names names of components specified, every MAX_NAME_LEN is one name. Must be st_freed outside this function.
  * @param[out] num_comp number of components specified, -1 means all.
  * @return filter type. MF_ERR if error.
  */
@@ -116,7 +116,7 @@ typedef struct _concatable_matrix_t_ {
 #define safe_concat_mat_destroy(ptr) do {\
     if((ptr) != NULL) {\
         concat_mat_destroy(ptr);\
-        safe_free(ptr);\
+        safe_st_free(ptr);\
         (ptr) = NULL;\
     }\
     } while(0)

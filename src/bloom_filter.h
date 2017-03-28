@@ -84,7 +84,7 @@ typedef struct _bloom_filter_t_ {
 #define safe_bloom_filter_destroy(ptr) do {\
     if((ptr) != NULL) {\
         bloom_filter_destroy(ptr);\
-        safe_free(ptr);\
+        safe_st_free(ptr);\
         (ptr) = NULL;\
     }\
     } while(0)
@@ -157,7 +157,7 @@ typedef struct _bloom_filter_buffer_t_ {
 #define safe_bloom_filter_buf_destroy(ptr) do {\
     if((ptr) != NULL) {\
         bloom_filter_buf_destroy(ptr);\
-        safe_free(ptr);\
+        safe_st_free(ptr);\
         (ptr) = NULL;\
     }\
     } while(0)

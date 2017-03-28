@@ -57,7 +57,7 @@ vocab_t* vocab_test_new()
         vocab_add_word(vocab, word);
     }
     vocab->vocab_size = VOCAB_TEST_SIZE;
-    vocab->cnts = (count_t *)malloc(sizeof(count_t) * vocab->vocab_size);
+    vocab->cnts = (count_t *)st_malloc(sizeof(count_t) * vocab->vocab_size);
     assert(vocab->cnts != NULL);
     for (i = 0; i < vocab->vocab_size; i++) {
         vocab->cnts[i] = vocab->vocab_size - i;

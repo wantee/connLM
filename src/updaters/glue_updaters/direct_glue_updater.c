@@ -47,7 +47,7 @@ typedef struct _dgu_data_t_ {
 #define safe_dgu_data_destroy(ptr) do {\
     if((ptr) != NULL) {\
         dgu_data_destroy((dgu_data_t *)ptr);\
-        safe_free(ptr);\
+        safe_st_free(ptr);\
         (ptr) = NULL;\
     }\
     } while(0)
@@ -64,19 +64,19 @@ void dgu_data_destroy(dgu_data_t *data)
         for (i = 0; i < data->num_features; i++) {
             safe_ngram_hash_destroy(data->nghashes[i]);
         }
-        safe_free(data->nghashes);
+        safe_st_free(data->nghashes);
     }
 
-    safe_free(data->hash_vals);
+    safe_st_free(data->hash_vals);
 }
 
 dgu_data_t* dgu_data_init(glue_updater_t *glue_updater)
 {
     dgu_data_t *data = NULL;
 
-    data = (dgu_data_t *)malloc(sizeof(dgu_data_t));
+    data = (dgu_data_t *)st_malloc(sizeof(dgu_data_t));
     if (data == NULL) {
-        ST_WARNING("Failed to malloc dgu_data.");
+        ST_WARNING("Failed to st_malloc dgu_data.");
         goto ERR;
     }
     memset(data, 0, sizeof(dgu_data_t));
@@ -110,14 +110,14 @@ int dgu_data_setup(dgu_data_t *data, st_wt_int_t *features, int n_feat)
         }
     }
 
-    data->nghashes = (ngram_hash_t **)malloc(sizeof(ngram_hash_t*) * n_feat);
+    data->nghashes = (ngram_hash_t **)st_malloc(sizeof(ngram_hash_t*) * n_feat);
     if (data->nghashes == NULL) {
-        ST_WARNING("Failed to malloc nghashes.");
+        ST_WARNING("Failed to st_malloc nghashes.");
         goto ERR;
     }
-    context = (int *)malloc(sizeof(int) * max_order);
+    context = (int *)st_malloc(sizeof(int) * max_order);
     if (context == NULL) {
-        ST_WARNING("Failed to malloc context.");
+        ST_WARNING("Failed to st_malloc context.");
         goto ERR;
     }
 
@@ -146,18 +146,18 @@ int dgu_data_setup(dgu_data_t *data, st_wt_int_t *features, int n_feat)
         }
     }
 
-    data->hash_vals = (hash_t *)malloc(sizeof(hash_t)*(n_feat + 1));
+    data->hash_vals = (hash_t *)st_malloc(sizeof(hash_t)*(n_feat + 1));
     if (data->hash_vals == NULL) {
-        ST_WARNING("Failed to malloc hash_vals.");
+        ST_WARNING("Failed to st_malloc hash_vals.");
         goto ERR;
     }
     data->hash_vals[0] = (hash_t)(108641969L * 116049371L); // PRIMES[0] * PRIMES[1] in ngram_hash
 
-    safe_free(context);
+    safe_st_free(context);
     return 0;
 ERR:
     dgu_data_destroy(data);
-    safe_free(context);
+    safe_st_free(context);
     return -1;
 }
 

@@ -97,9 +97,9 @@ layer_t* layer_parse_topo(const char *line)
 
     ST_CHECK_PARAM(line == NULL, NULL);
 
-    layer = (layer_t *)malloc(sizeof(layer_t));
+    layer = (layer_t *)st_malloc(sizeof(layer_t));
     if (layer == NULL) {
-        ST_WARNING("Failed to malloc layer_t.");
+        ST_WARNING("Failed to st_malloc layer_t.");
         goto ERR;
     }
     memset(layer, 0, sizeof(layer_t));
@@ -198,9 +198,9 @@ layer_t* layer_dup(layer_t *l)
 
     ST_CHECK_PARAM(l == NULL, NULL);
 
-    layer = (layer_t *) malloc(sizeof(layer_t));
+    layer = (layer_t *)st_malloc(sizeof(layer_t));
     if (layer == NULL) {
-        ST_WARNING("Falied to malloc layer_t.");
+        ST_WARNING("Failed to st_malloc layer_t.");
         goto ERR;
     }
     memset(layer, 0, sizeof(layer_t));
@@ -316,9 +316,9 @@ int layer_load_header(layer_t **layer, int version,
     }
 
     if (layer != NULL) {
-        *layer = (layer_t *)malloc(sizeof(layer_t));
+        *layer = (layer_t *)st_malloc(sizeof(layer_t));
         if (*layer == NULL) {
-            ST_WARNING("Failed to malloc layer_t");
+            ST_WARNING("Failed to st_malloc layer_t");
             goto ERR;
         }
         memset(*layer, 0, sizeof(layer_t));

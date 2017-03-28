@@ -89,7 +89,7 @@ vocab_t *vocab_create(vocab_opt_t *vocab_opt);
 #define safe_vocab_destroy(ptr) do {\
     if((ptr) != NULL) {\
         vocab_destroy(ptr);\
-        safe_free(ptr);\
+        safe_st_free(ptr);\
         (ptr) = NULL;\
     }\
     } while(0)

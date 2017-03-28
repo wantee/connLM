@@ -84,7 +84,7 @@ typedef struct _graph_t_ {
 #define safe_graph_destroy(ptr) do {\
     if((ptr) != NULL) {\
         graph_destroy(ptr);\
-        safe_free(ptr);\
+        safe_st_free(ptr);\
         (ptr) = NULL;\
     }\
     } while(0)

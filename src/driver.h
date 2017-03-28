@@ -124,7 +124,7 @@ typedef struct _driver_t_ {
 #define safe_driver_destroy(ptr) do {\
     if((ptr) != NULL) {\
         driver_destroy(ptr);\
-        safe_free(ptr);\
+        safe_st_free(ptr);\
         (ptr) = NULL;\
     }\
     } while(0)

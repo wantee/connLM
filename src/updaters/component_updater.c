@@ -43,21 +43,21 @@ void comp_updater_destroy(comp_updater_t *comp_updater)
         for (i = 2; i < comp_updater->comp->num_layer; i++) {
             safe_layer_updater_destroy(comp_updater->layer_updaters[i]);
         }
-        safe_free(comp_updater->layer_updaters);
+        safe_st_free(comp_updater->layer_updaters);
     }
 
     if (comp_updater->glue_updaters != NULL) {
         for (i = 0; i < comp_updater->comp->num_glue; i++) {
             safe_glue_updater_destroy(comp_updater->glue_updaters[i]);
         }
-        safe_free(comp_updater->glue_updaters);
+        safe_st_free(comp_updater->glue_updaters);
     }
 
     if (comp_updater->bptt_updaters != NULL) {
         for (i = 0; i < comp_updater->comp->num_glue_cycle; i++) {
             safe_bptt_updater_destroy(comp_updater->bptt_updaters[i]);
         }
-        safe_free(comp_updater->bptt_updaters);
+        safe_st_free(comp_updater->bptt_updaters);
     }
 
     safe_st_aligned_free(comp_updater->bptt_er0);
@@ -77,9 +77,9 @@ comp_updater_t* comp_updater_create(component_t *comp,
 
     ST_CHECK_PARAM(comp == NULL, NULL);
 
-    comp_updater = (comp_updater_t *)malloc(sizeof(comp_updater_t));
+    comp_updater = (comp_updater_t *)st_malloc(sizeof(comp_updater_t));
     if (comp_updater == NULL) {
-        ST_WARNING("Failed to malloc comp_updater.");
+        ST_WARNING("Failed to st_malloc comp_updater.");
         goto ERR;
     }
     memset(comp_updater, 0, sizeof(comp_updater_t));
@@ -89,9 +89,9 @@ comp_updater_t* comp_updater_create(component_t *comp,
 
     if (comp->num_layer > 0) {
         sz = sizeof(layer_updater_t*)*comp->num_layer;
-        comp_updater->layer_updaters = (layer_updater_t **)malloc(sz);
+        comp_updater->layer_updaters = (layer_updater_t **)st_malloc(sz);
         if (comp_updater->layer_updaters == NULL) {
-            ST_WARNING("Failed to malloc layer_updaters.");
+            ST_WARNING("Failed to st_malloc layer_updaters.");
             goto ERR;
         }
         memset(comp_updater->layer_updaters, 0, sz);
@@ -108,9 +108,9 @@ comp_updater_t* comp_updater_create(component_t *comp,
 
     if (comp->num_glue > 0) {
         sz = sizeof(glue_updater_t*)*comp->num_glue;
-        comp_updater->glue_updaters = (glue_updater_t **)malloc(sz);
+        comp_updater->glue_updaters = (glue_updater_t **)st_malloc(sz);
         if (comp_updater->glue_updaters == NULL) {
-            ST_WARNING("Failed to malloc glue_updaters.");
+            ST_WARNING("Failed to st_malloc glue_updaters.");
             goto ERR;
         }
 
@@ -161,10 +161,10 @@ int comp_updater_setup(comp_updater_t *comp_updater, bool backprop)
 
     if (backprop) {
         if (comp->num_glue_cycle > 0) {
-            comp_updater->bptt_updaters = (bptt_updater_t **)malloc(
+            comp_updater->bptt_updaters = (bptt_updater_t **)st_malloc(
                     sizeof(bptt_updater_t*) * comp->num_glue_cycle);
             if (comp_updater->bptt_updaters == NULL) {
-                ST_WARNING("Failed to malloc bptt_updaters.");
+                ST_WARNING("Failed to st_malloc bptt_updaters.");
                 goto ERR;
             }
             for (i = 0; i < comp->num_glue_cycle; i++) {
@@ -211,7 +211,7 @@ ERR:
         for (i = 0; i < comp_updater->comp->num_glue_cycle; i++) {
             safe_bptt_updater_destroy(comp_updater->bptt_updaters[i]);
         }
-        safe_free(comp_updater->bptt_updaters);
+        safe_st_free(comp_updater->bptt_updaters);
     }
     safe_st_aligned_free(comp_updater->bptt_er0);
     safe_st_aligned_free(comp_updater->bptt_er1);

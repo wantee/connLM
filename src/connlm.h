@@ -86,7 +86,7 @@ int connlm_load_train_opt(connlm_t *connlm, st_opt_t *opt,
 #define safe_connlm_destroy(ptr) do {\
     if((ptr) != NULL) {\
         connlm_destroy(ptr);\
-        safe_free(ptr);\
+        safe_st_free(ptr);\
         (ptr) = NULL;\
     }\
     } while(0)

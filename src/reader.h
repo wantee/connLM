@@ -80,7 +80,7 @@ typedef struct _connlm_egs_t_ {
 #define safe_connlm_egs_destroy(ptr) do {\
     if((ptr) != NULL) {\
         connlm_egs_destroy(ptr);\
-        safe_free(ptr);\
+        safe_st_free(ptr);\
         (ptr) = NULL;\
     }\
     } while(0)
@@ -155,7 +155,7 @@ typedef struct _reader_t_ {
 #define safe_reader_destroy(ptr) do {\
     if((ptr) != NULL) {\
         reader_destroy(ptr);\
-        safe_free(ptr);\
+        safe_st_free(ptr);\
         (ptr) = NULL;\
     }\
     } while(0)

@@ -84,15 +84,15 @@ static void fst_conv_args_destroy(fst_conv_args_t *args)
 
     safe_bloom_filter_buf_destroy(args->blm_flt_buf);
 
-    safe_free(args->output_probs);
-    safe_free(args->selected_words);
+    safe_st_free(args->output_probs);
+    safe_st_free(args->selected_words);
 
-    safe_free(args->word_hist);
+    safe_st_free(args->word_hist);
     args->num_word_hist = 0;
     args->cap_word_hist = 0;
 
-    safe_free(args->num_grams);
-    safe_free(args->start_sids);
+    safe_st_free(args->num_grams);
+    safe_st_free(args->start_sids);
 
     args->conv = NULL;
 }
@@ -106,23 +106,23 @@ static int fst_conv_args_init(fst_conv_args_t *args,
     args->tid = tid;
     args->rand_seed = conv->conv_opt.init_rand_seed + tid;
 
-    args->output_probs = (double *)malloc(sizeof(double)
+    args->output_probs = (double *)st_malloc(sizeof(double)
             * get_output_size(conv));
     if (args->output_probs == NULL) {
-        ST_WARNING("Failed to malloc output_probs.");
+        ST_WARNING("Failed to st_malloc output_probs.");
         goto ERR;
     }
 
-    args->selected_words = (int *)malloc(sizeof(int) * get_output_size(conv));
+    args->selected_words = (int *)st_malloc(sizeof(int) * get_output_size(conv));
     if (args->selected_words == NULL) {
-        ST_WARNING("Failed to malloc selected_words.");
+        ST_WARNING("Failed to st_malloc selected_words.");
         goto ERR;
     }
 
     args->cap_word_hist = 32;
-    args->word_hist = (int *)malloc(sizeof(int) * args->cap_word_hist);
+    args->word_hist = (int *)st_malloc(sizeof(int) * args->cap_word_hist);
     if (args->word_hist == NULL) {
-        ST_WARNING("Failed to malloc word_hist");
+        ST_WARNING("Failed to st_malloc word_hist");
         goto ERR;
     }
 
@@ -144,7 +144,7 @@ ERR:
 #define safe_fst_conv_args_list_destroy(ptr, n) do {\
     if((ptr) != NULL) {\
         fst_conv_args_list_destroy(ptr, n);\
-        safe_free(ptr);\
+        safe_st_free(ptr);\
         (ptr) = NULL;\
     }\
     } while(0)
@@ -169,10 +169,10 @@ static fst_conv_args_t* fst_conv_args_list_create(fst_conv_t *conv)
 
     ST_CHECK_PARAM(conv == NULL, NULL);
 
-    args = (fst_conv_args_t *)malloc(sizeof(fst_conv_args_t)
+    args = (fst_conv_args_t *)st_malloc(sizeof(fst_conv_args_t)
             * conv->n_thr);
     if (args == NULL) {
-        ST_WARNING("Failed to malloc fst_conv_args_t");
+        ST_WARNING("Failed to st_malloc fst_conv_args_t");
         goto ERR;
     }
     memset(args, 0, sizeof(fst_conv_args_t) * conv->n_thr);
@@ -350,21 +350,21 @@ void fst_conv_destroy(fst_conv_t *conv)
     for(i = 0; i < conv->n_thr; i++) {
         safe_updater_destroy(conv->updaters[i]);
     }
-    safe_free(conv->updaters);
+    safe_st_free(conv->updaters);
     conv->n_thr = 0;
 
     safe_st_block_cache_destroy(conv->model_state_cache);
 
-    safe_free(conv->fst_states);
+    safe_st_free(conv->fst_states);
     (void)pthread_mutex_destroy(&conv->fst_state_lock);
     conv->cap_fst_states = 0;
     conv->n_fst_state = 0;
 
-    safe_free(conv->fst_children);
-    safe_free(conv->in_probs);
-    safe_free(conv->final_probs);
-    safe_free(conv->backoff_states);
-    safe_free(conv->bows);
+    safe_st_free(conv->fst_children);
+    safe_st_free(conv->in_probs);
+    safe_st_free(conv->final_probs);
+    safe_st_free(conv->backoff_states);
+    safe_st_free(conv->bows);
 
     (void)pthread_mutex_destroy(&conv->fst_fp_lock);
     conv->fst_fp = NULL;
@@ -387,9 +387,9 @@ fst_conv_t* fst_conv_create(connlm_t *connlm, int n_thr,
 
     ST_CHECK_PARAM(connlm == NULL || n_thr <= 0 || conv_opt == NULL, NULL);
 
-    conv = (fst_conv_t *)malloc(sizeof(fst_conv_t));
+    conv = (fst_conv_t *)st_malloc(sizeof(fst_conv_t));
     if (conv == NULL) {
-        ST_WARNING("Failed to malloc converter.");
+        ST_WARNING("Failed to st_malloc converter.");
         return NULL;
     }
     memset(conv, 0, sizeof(fst_conv_t));
@@ -398,9 +398,9 @@ fst_conv_t* fst_conv_create(connlm_t *connlm, int n_thr,
     conv->n_thr = n_thr;
     conv->conv_opt = *conv_opt;
 
-    conv->updaters = (updater_t **)malloc(sizeof(updater_t*)*n_thr);
+    conv->updaters = (updater_t **)st_malloc(sizeof(updater_t*)*n_thr);
     if (conv->updaters == NULL) {
-        ST_WARNING("Failed to malloc updaters.");
+        ST_WARNING("Failed to st_malloc updaters.");
         goto ERR;
     }
     memset(conv->updaters, 0, sizeof(updater_t*) * n_thr);
@@ -408,7 +408,7 @@ fst_conv_t* fst_conv_create(connlm_t *connlm, int n_thr,
     for (i = 0; i < conv->n_thr; i++) {
         conv->updaters[i] = updater_create(connlm);
         if (conv->updaters[i] == NULL) {
-            ST_WARNING("Failed to malloc updater[%d].", i);
+            ST_WARNING("Failed to st_malloc updater[%d].", i);
             goto ERR;
         }
     }
@@ -447,7 +447,7 @@ ERR:
     return NULL;
 }
 
-static int fst_conv_realloc_states(fst_conv_t *conv, int num_extra)
+static int fst_conv_st_realloc_states(fst_conv_t *conv, int num_extra)
 {
     int i;
     int num_new_states;
@@ -456,44 +456,44 @@ static int fst_conv_realloc_states(fst_conv_t *conv, int num_extra)
 
     num_new_states = conv->cap_fst_states + num_extra;
 
-    conv->fst_states = realloc(conv->fst_states,
+    conv->fst_states = st_realloc(conv->fst_states,
             sizeof(fst_state_t) * num_new_states);
     if (conv->fst_states == NULL) {
-        ST_WARNING("Failed to realloc fst_states.");
+        ST_WARNING("Failed to st_realloc fst_states.");
         return -1;
     }
 
-    conv->fst_children = realloc(conv->fst_children,
+    conv->fst_children = st_realloc(conv->fst_children,
             sizeof(fst_state_children_t) * num_new_states);
     if (conv->fst_children == NULL) {
-        ST_WARNING("Failed to realloc fst_children.");
+        ST_WARNING("Failed to st_realloc fst_children.");
         return -1;
     }
     for (i = conv->cap_fst_states; i < num_new_states; i++) {
         conv->fst_children[i].first_child = -1;
         conv->fst_children[i].num_children = -1;
     }
-    conv->in_probs = realloc(conv->in_probs,
+    conv->in_probs = st_realloc(conv->in_probs,
             sizeof(real_t) * num_new_states);
     if (conv->in_probs == NULL) {
-        ST_WARNING("Failed to realloc in_probs.");
+        ST_WARNING("Failed to st_realloc in_probs.");
         return -1;
     }
-    conv->final_probs = realloc(conv->final_probs,
+    conv->final_probs = st_realloc(conv->final_probs,
             sizeof(real_t) * num_new_states);
     if (conv->final_probs == NULL) {
-        ST_WARNING("Failed to realloc final_probs.");
+        ST_WARNING("Failed to st_realloc final_probs.");
         return -1;
     }
-    conv->backoff_states = realloc(conv->backoff_states,
+    conv->backoff_states = st_realloc(conv->backoff_states,
             sizeof(int) * num_new_states);
     if (conv->backoff_states == NULL) {
-        ST_WARNING("Failed to realloc backoff_states.");
+        ST_WARNING("Failed to st_realloc backoff_states.");
         return -1;
     }
-    conv->bows = realloc(conv->bows, sizeof(real_t) * num_new_states);
+    conv->bows = st_realloc(conv->bows, sizeof(real_t) * num_new_states);
     if (conv->bows == NULL) {
-        ST_WARNING("Failed to realloc bows.");
+        ST_WARNING("Failed to st_realloc bows.");
         return -1;
     }
     for (i = conv->cap_fst_states; i < num_new_states; i++) {
@@ -574,8 +574,8 @@ static int fst_conv_setup(fst_conv_t *conv, FILE *fst_fp,
         return -1;
     }
 
-    if (fst_conv_realloc_states(conv, conv->n_thr * get_output_size(conv)) < 0) {
-        ST_WARNING("Failed to fst_conv_realloc_states.");
+    if (fst_conv_st_realloc_states(conv, conv->n_thr * get_output_size(conv)) < 0) {
+        ST_WARNING("Failed to fst_conv_st_realloc_states.");
         return -1;
     }
 
@@ -1067,10 +1067,10 @@ static int fst_conv_find_word_hist(fst_conv_t *conv,
     p = conv->fst_states[sid].parent;
     while (p != -1 && conv->fst_states[p].word_id != -1 /* init state */) {
         if (args->num_word_hist + 1 >= args->cap_word_hist) { /* +1 for bloom filter lookup */
-            args->word_hist = (int *)realloc(args->word_hist,
+            args->word_hist = (int *)st_realloc(args->word_hist,
                     sizeof(int) * (args->num_word_hist + 32));
             if (args->word_hist == NULL) {
-                ST_WARNING("Failed to realloc word_hist");
+                ST_WARNING("Failed to st_realloc word_hist");
                 return -1;
             }
             args->cap_word_hist = args->num_word_hist + 32;
@@ -1363,17 +1363,17 @@ static int fst_conv_expand(fst_conv_t *conv, fst_conv_args_t *args)
 
             args->num_arcs++;
             if (args->num_word_hist + 1 > args->max_gram) {
-                args->num_grams = (int *)realloc(args->num_grams,
+                args->num_grams = (int *)st_realloc(args->num_grams,
                         sizeof(int) * (args->num_word_hist + 1));
                 if (args->num_grams == NULL) {
-                    ST_WARNING("Failed to realloc num_grams.");
+                    ST_WARNING("Failed to st_realloc num_grams.");
                     return -1;
                 }
 
-                args->start_sids = (int *)realloc(args->start_sids,
+                args->start_sids = (int *)st_realloc(args->start_sids,
                         sizeof(int) * (args->num_word_hist + 1));
                 if (args->start_sids == NULL) {
-                    ST_WARNING("Failed to realloc start_sids.");
+                    ST_WARNING("Failed to st_realloc start_sids.");
                     return -1;
                 }
 
@@ -1458,9 +1458,9 @@ static int fst_conv_build(fst_conv_t *conv, fst_conv_args_t *args)
 
     ST_CHECK_PARAM(conv == NULL || args == NULL, -1);
 
-    pts = (pthread_t *)malloc(sizeof(pthread_t) * conv->n_thr);
+    pts = (pthread_t *)st_malloc(sizeof(pthread_t) * conv->n_thr);
     if (pts == NULL) {
-        ST_WARNING("Failed to malloc pts");
+        ST_WARNING("Failed to st_malloc pts");
         goto ERR;
     }
 
@@ -1471,8 +1471,8 @@ static int fst_conv_build(fst_conv_t *conv, fst_conv_args_t *args)
     }
 
     num_states_needed = conv->n_thr * get_output_size(conv);
-    if (fst_conv_realloc_states(conv, num_states_needed) < 0) {
-        ST_WARNING("Failed to fst_conv_realloc_states.");
+    if (fst_conv_st_realloc_states(conv, num_states_needed) < 0) {
+        ST_WARNING("Failed to fst_conv_st_realloc_states.");
         goto ERR;
     }
 
@@ -1488,8 +1488,8 @@ static int fst_conv_build(fst_conv_t *conv, fst_conv_args_t *args)
     num_states_needed = conv->n_thr * get_output_size(conv);
     while (sid < conv->n_fst_state) {
         if (conv->n_fst_state + num_states_needed > conv->cap_fst_states) {
-            if (fst_conv_realloc_states(conv, num_states_needed) < 0) {
-                ST_WARNING("Failed to fst_conv_realloc_states.");
+            if (fst_conv_st_realloc_states(conv, num_states_needed) < 0) {
+                ST_WARNING("Failed to fst_conv_st_realloc_states.");
                 goto ERR;
             }
         }
@@ -1514,7 +1514,7 @@ static int fst_conv_build(fst_conv_t *conv, fst_conv_args_t *args)
 
         for (i = 0; i < n; i++) {
             if (pthread_join(pts[i], NULL) != 0) {
-                ST_WARNING("Falied to pthread_join.");
+                ST_WARNING("Failed to pthread_join.");
                 goto ERR;
             }
         }
@@ -1525,12 +1525,12 @@ static int fst_conv_build(fst_conv_t *conv, fst_conv_args_t *args)
         }
     }
 
-    safe_free(pts);
+    safe_st_free(pts);
     return 0;
 
 ERR:
 
-    safe_free(pts);
+    safe_st_free(pts);
     return -1;
 }
 

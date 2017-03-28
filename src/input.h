@@ -73,7 +73,7 @@ typedef struct _input_t_ {
 #define safe_input_destroy(ptr) do {\
     if((ptr) != NULL) {\
         input_destroy(ptr);\
-        safe_free(ptr);\
+        safe_st_free(ptr);\
         (ptr) = NULL;\
     }\
     } while(0)

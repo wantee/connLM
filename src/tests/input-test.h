@@ -111,7 +111,7 @@ input_t* input_test_new(int input_size)
 {
     input_t *input = NULL;
 
-    input = (input_t *)malloc(sizeof(input_t));
+    input = (input_t *)st_malloc(sizeof(input_t));
     assert (input != NULL);
 
     memset(input, 0, sizeof(input_t));

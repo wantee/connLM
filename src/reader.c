@@ -42,7 +42,7 @@
 void connlm_egs_destroy(connlm_egs_t *egs)
 {
     if (egs != NULL) {
-        safe_free(egs->words);
+        safe_st_free(egs->words);
         egs->capacity = 0;
         egs->size = 0;
     }
@@ -55,9 +55,9 @@ static int connlm_egs_ensure(connlm_egs_t *egs, int capacity)
     ST_CHECK_PARAM(egs == NULL, -1);
 
     if (egs->capacity < capacity) {
-        egs->words = realloc(egs->words, sizeof(int)*capacity);
+        egs->words = st_realloc(egs->words, sizeof(int)*capacity);
         if (egs->words == NULL) {
-            ST_WARNING("Failed to realloc egs->words. capacity[%d]",
+            ST_WARNING("Failed to st_realloc egs->words. capacity[%d]",
                     capacity);
             return -1;
         }
@@ -211,7 +211,7 @@ int connlm_egs_read(connlm_egs_t *egs, int *sent_ends,
         }
     }
 
-    safe_free(line);
+    safe_st_free(line);
 
     if (err) {
         return -1;
@@ -225,7 +225,7 @@ int connlm_egs_read(connlm_egs_t *egs, int *sent_ends,
 
 ERR:
 
-    safe_free(line);
+    safe_st_free(line);
     return -1;
 }
 
@@ -244,7 +244,7 @@ void reader_destroy(reader_t *reader)
         p = p->next;
 
         connlm_egs_destroy(q);
-        safe_free(q);
+        safe_st_free(q);
     }
     reader->full_egs_head = NULL;
     reader->full_egs_tail = NULL;
@@ -255,7 +255,7 @@ void reader_destroy(reader_t *reader)
         p = p->next;
 
         connlm_egs_destroy(q);
-        safe_free(q);
+        safe_st_free(q);
     }
     reader->empty_egs = NULL;
 
@@ -320,9 +320,9 @@ reader_t* reader_create(reader_opt_t *opt, int num_thrs,
     ST_CHECK_PARAM(opt == NULL || num_thrs < 0 || vocab == NULL
             || text_file == NULL, NULL);
 
-    reader = (reader_t *)malloc(sizeof(reader_t));
+    reader = (reader_t *)st_malloc(sizeof(reader_t));
     if (reader == NULL) {
-        ST_WARNING("Failed to malloc reader.");
+        ST_WARNING("Failed to st_malloc reader.");
         return NULL;
     }
     memset(reader, 0, sizeof(reader_t));
@@ -338,9 +338,9 @@ reader_t* reader_create(reader_opt_t *opt, int num_thrs,
     reader->full_egs_tail = NULL;
     reader->empty_egs = NULL;;
     for (i = 0; i < pool_size; i++) {
-        egs = (connlm_egs_t *)malloc(sizeof(connlm_egs_t));
+        egs = (connlm_egs_t *)st_malloc(sizeof(connlm_egs_t));
         if (egs == NULL) {
-            ST_WARNING("Failed to malloc egs.");
+            ST_WARNING("Failed to st_malloc egs.");
             goto ERR;
         }
         memset(egs, 0, sizeof(connlm_egs_t));
@@ -443,15 +443,15 @@ static void* reader_read_thread(void *args)
     }
 
     if (reader->opt.shuffle) {
-        shuffle_buf = (int *)malloc(sizeof(int) * epoch_size);
+        shuffle_buf = (int *)st_malloc(sizeof(int) * epoch_size);
         if (shuffle_buf == NULL) {
-            ST_WARNING("Failed to malloc shuffle_buf");
+            ST_WARNING("Failed to st_malloc shuffle_buf");
             goto ERR;
         }
 
-        sent_ends = (int *)malloc(sizeof(int) * epoch_size);
+        sent_ends = (int *)st_malloc(sizeof(int) * epoch_size);
         if (sent_ends == NULL) {
-            ST_WARNING("Failed to malloc sent_ends");
+            ST_WARNING("Failed to st_malloc sent_ends");
             goto ERR;
         }
     }
@@ -649,8 +649,8 @@ static void* reader_read_thread(void *args)
 
     connlm_egs_destroy(&egs);
     safe_fclose(text_fp);
-    safe_free(shuffle_buf);
-    safe_free(sent_ends);
+    safe_st_free(shuffle_buf);
+    safe_st_free(sent_ends);
 
     return NULL;
 
@@ -659,8 +659,8 @@ ERR:
 
     connlm_egs_destroy(&egs);
     safe_fclose(text_fp);
-    safe_free(shuffle_buf);
-    safe_free(sent_ends);
+    safe_st_free(shuffle_buf);
+    safe_st_free(sent_ends);
 
     for (i = 0; i < num_thrs; i++) {
         /* posting semaphore without adding data indicates finish. */

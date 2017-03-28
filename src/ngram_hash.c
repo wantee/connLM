@@ -46,8 +46,8 @@ void ngram_hash_destroy(ngram_hash_t *nghash)
     if (nghash == NULL) {
         return;
     }
-    safe_free(nghash->P);
-    safe_free(nghash->context);
+    safe_st_free(nghash->P);
+    safe_st_free(nghash->context);
     nghash->ctx_len = 0;
 }
 
@@ -59,23 +59,23 @@ ngram_hash_t* ngram_hash_create(int *ctx, int ctx_len)
 
     ST_CHECK_PARAM(ctx == NULL || ctx_len <= 0, NULL);
 
-    nghash = (ngram_hash_t *)malloc(sizeof(ngram_hash_t));
+    nghash = (ngram_hash_t *)st_malloc(sizeof(ngram_hash_t));
     if (nghash == NULL) {
-        ST_WARNING("Failed to malloc ngram_hash_t.");
+        ST_WARNING("Failed to st_malloc ngram_hash_t.");
         goto ERR;
     }
 
-    nghash->context = (int *)malloc(sizeof(int) * ctx_len);
+    nghash->context = (int *)st_malloc(sizeof(int) * ctx_len);
     if (nghash->context == NULL) {
-        ST_WARNING("Failed to malloc context.");
+        ST_WARNING("Failed to st_malloc context.");
         goto ERR;
     }
     memcpy(nghash->context, ctx, sizeof(int) * ctx_len);
     nghash->ctx_len = ctx_len;
 
-    nghash->P = (unsigned int *)malloc(sizeof(unsigned int) * ctx_len);
+    nghash->P = (unsigned int *)st_malloc(sizeof(unsigned int) * ctx_len);
     if (nghash->P == NULL) {
-        ST_WARNING("Failed to malloc P.");
+        ST_WARNING("Failed to st_malloc P.");
         goto ERR;
     }
 

@@ -82,7 +82,7 @@ void bloom_filter_buf_destroy(bloom_filter_buf_t *buf)
         return;
     }
 
-    safe_free(buf->hash_vals);
+    safe_st_free(buf->hash_vals);
 }
 
 bloom_filter_buf_t* bloom_filter_buf_create(bloom_filter_t *blm_flt)
@@ -91,17 +91,17 @@ bloom_filter_buf_t* bloom_filter_buf_create(bloom_filter_t *blm_flt)
 
     ST_CHECK_PARAM(blm_flt == NULL, NULL);
 
-    buf = (bloom_filter_buf_t *)malloc(sizeof(bloom_filter_buf_t));
+    buf = (bloom_filter_buf_t *)st_malloc(sizeof(bloom_filter_buf_t));
     if (buf == NULL) {
-        ST_WARNING("Failed to malloc bloom filter buffer.");
+        ST_WARNING("Failed to st_malloc bloom filter buffer.");
         return NULL;
     }
     memset(buf, 0, sizeof(bloom_filter_buf_t));
 
-    buf->hash_vals = (hash_t *)malloc(sizeof(hash_t)
+    buf->hash_vals = (hash_t *)st_malloc(sizeof(hash_t)
             * blm_flt->blm_flt_opt.num_hashes);
     if (buf->hash_vals == NULL) {
-        ST_WARNING("Failed to malloc hash_vals");
+        ST_WARNING("Failed to st_malloc hash_vals");
         goto ERR;
     }
 
@@ -124,10 +124,10 @@ void bloom_filter_destroy(bloom_filter_t *blm_flt)
         for (o = 0; o < blm_flt->blm_flt_opt.max_order; o++) {
             safe_ngram_hash_destroy(blm_flt->nghashes[o]);
         }
-        safe_free(blm_flt->nghashes);
+        safe_st_free(blm_flt->nghashes);
     }
 
-    safe_free(blm_flt->cells);
+    safe_st_free(blm_flt->cells);
 
     safe_vocab_destroy(blm_flt->vocab);
 }
@@ -137,16 +137,16 @@ static int bloom_filter_init_hash(bloom_filter_t *blm_flt)
     int *context = NULL;
     int o;
 
-    blm_flt->nghashes = (ngram_hash_t **)malloc(sizeof(ngram_hash_t*)
+    blm_flt->nghashes = (ngram_hash_t **)st_malloc(sizeof(ngram_hash_t*)
             * blm_flt->blm_flt_opt.max_order);
     if (blm_flt->nghashes == NULL) {
-        ST_WARNING("Failed to malloc nghashes.");
+        ST_WARNING("Failed to st_malloc nghashes.");
         goto ERR;
     }
 
-    context = (int *)malloc(sizeof(int) * blm_flt->blm_flt_opt.max_order);
+    context = (int *)st_malloc(sizeof(int) * blm_flt->blm_flt_opt.max_order);
     if (context == NULL) {
-        ST_WARNING("Failed to malloc context.");
+        ST_WARNING("Failed to st_malloc context.");
         goto ERR;
     }
     for (o = 0; o < blm_flt->blm_flt_opt.max_order; o++) {
@@ -162,12 +162,12 @@ static int bloom_filter_init_hash(bloom_filter_t *blm_flt)
         }
     }
 
-    safe_free(context);
+    safe_st_free(context);
 
     return 0;
 
 ERR:
-    safe_free(context);
+    safe_st_free(context);
     return -1;
 }
 
@@ -178,9 +178,9 @@ bloom_filter_t* bloom_filter_create(bloom_filter_opt_t *blm_flt_opt,
 
     ST_CHECK_PARAM(blm_flt_opt == NULL || vocab == NULL, NULL);
 
-    blm_flt = (bloom_filter_t *)malloc(sizeof(bloom_filter_t));
+    blm_flt = (bloom_filter_t *)st_malloc(sizeof(bloom_filter_t));
     if (blm_flt == NULL) {
-        ST_WARNING("Failed to malloc bloom filter.");
+        ST_WARNING("Failed to st_malloc bloom filter.");
         return NULL;
     }
     memset(blm_flt, 0, sizeof(bloom_filter_t));
@@ -189,9 +189,9 @@ bloom_filter_t* bloom_filter_create(bloom_filter_opt_t *blm_flt_opt,
 
     blm_flt->vocab = vocab_dup(vocab);
 
-    blm_flt->cells = (unsigned char *)malloc(BITNSLOTS(blm_flt->blm_flt_opt.capacity));
+    blm_flt->cells = (unsigned char *)st_malloc(BITNSLOTS(blm_flt->blm_flt_opt.capacity));
     if (blm_flt->cells == NULL) {
-        ST_WARNING("Failed to malloc cells");
+        ST_WARNING("Failed to st_malloc cells");
         goto ERR;
     }
     memset(blm_flt->cells, 0, BITNSLOTS(blm_flt->blm_flt_opt.capacity));
@@ -359,9 +359,9 @@ static int bloom_filter_load_body(bloom_filter_t *blm_flt, int version,
             goto ERR;
         }
 
-        blm_flt->cells = (unsigned char *)malloc(BITNSLOTS(blm_flt->blm_flt_opt.capacity));
+        blm_flt->cells = (unsigned char *)st_malloc(BITNSLOTS(blm_flt->blm_flt_opt.capacity));
         if (blm_flt->cells == NULL) {
-            ST_WARNING("Failed to malloc cells.");
+            ST_WARNING("Failed to st_malloc cells.");
             goto ERR;
         }
 
@@ -377,9 +377,9 @@ static int bloom_filter_load_body(bloom_filter_t *blm_flt, int version,
             goto ERR;
         }
 
-        blm_flt->cells = (unsigned char *)malloc(BITNSLOTS(blm_flt->blm_flt_opt.capacity));
+        blm_flt->cells = (unsigned char *)st_malloc(BITNSLOTS(blm_flt->blm_flt_opt.capacity));
         if (blm_flt->cells == NULL) {
-            ST_WARNING("Failed to malloc cells.");
+            ST_WARNING("Failed to st_malloc cells.");
             goto ERR;
         }
         memset(blm_flt->cells, 0, BITNSLOTS(blm_flt->blm_flt_opt.capacity));
@@ -407,7 +407,7 @@ static int bloom_filter_load_body(bloom_filter_t *blm_flt, int version,
 
     return 0;
 ERR:
-    safe_free(blm_flt->cells);
+    safe_st_free(blm_flt->cells);
     return -1;
 }
 
@@ -556,9 +556,9 @@ bloom_filter_t* bloom_filter_load(FILE *fp)
 
     ST_CHECK_PARAM(fp == NULL, NULL);
 
-    blm_flt = (bloom_filter_t *)malloc(sizeof(bloom_filter_t));
+    blm_flt = (bloom_filter_t *)st_malloc(sizeof(bloom_filter_t));
     if (blm_flt == NULL) {
-        ST_WARNING("Failed to malloc bloom_filter_t");
+        ST_WARNING("Failed to st_malloc bloom_filter_t");
         goto ERR;
     }
     memset(blm_flt, 0, sizeof(bloom_filter_t));

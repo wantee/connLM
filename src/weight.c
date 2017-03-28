@@ -108,9 +108,9 @@ weight_t* wt_dup(weight_t *src)
 
     ST_CHECK_PARAM(src == NULL, NULL);
 
-    dst = (weight_t *)malloc(sizeof(weight_t));
+    dst = (weight_t *)st_malloc(sizeof(weight_t));
     if (dst == NULL) {
-        ST_WARNING("Failed to malloc weight_t.");
+        ST_WARNING("Failed to st_malloc weight_t.");
         return NULL;
     }
     memset(dst, 0, sizeof(weight_t));
@@ -333,9 +333,9 @@ int wt_load_header(weight_t **wt, int version,
     }
 
     if (wt != NULL) {
-        *wt = (weight_t *)malloc(sizeof(weight_t));
+        *wt = (weight_t *)st_malloc(sizeof(weight_t));
         if (*wt == NULL) {
-            ST_WARNING("Failed to malloc weight_t");
+            ST_WARNING("Failed to st_malloc weight_t");
             goto ERR;
         }
         memset(*wt, 0, sizeof(weight_t));

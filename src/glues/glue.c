@@ -160,9 +160,9 @@ glue_t* glue_parse_topo(const char *line, layer_t **layers,
 
     ST_CHECK_PARAM(line == NULL, NULL);
 
-    glue = (glue_t *)malloc(sizeof(glue_t));
+    glue = (glue_t *)st_malloc(sizeof(glue_t));
     if (glue == NULL) {
-        ST_WARNING("Failed to malloc glue_t.");
+        ST_WARNING("Failed to st_malloc glue_t.");
         goto ERR;
     }
     memset(glue, 0, sizeof(glue_t));
@@ -290,9 +290,9 @@ glue_t* glue_parse_topo(const char *line, layer_t **layers,
         goto ERR;
     }
 
-    glue->wt = (weight_t *)malloc(sizeof(weight_t));
+    glue->wt = (weight_t *)st_malloc(sizeof(weight_t));
     if (glue->wt == NULL) {
-        ST_WARNING("Failed to malloc weight_t");
+        ST_WARNING("Failed to st_malloc weight_t");
         goto ERR;
     }
     memset(glue->wt, 0, sizeof(weight_t));
@@ -338,9 +338,9 @@ glue_t* glue_dup(glue_t *g)
 
     ST_CHECK_PARAM(g == NULL, NULL);
 
-    glue = (glue_t *) malloc(sizeof(glue_t));
+    glue = (glue_t *)st_malloc(sizeof(glue_t));
     if (glue == NULL) {
-        ST_WARNING("Falied to malloc glue_t.");
+        ST_WARNING("Failed to st_malloc glue_t.");
         goto ERR;
     }
     memset(glue, 0, sizeof(glue_t));
@@ -515,9 +515,9 @@ int glue_load_header(glue_t **glue, int version,
     }
 
     if (glue != NULL) {
-        *glue = (glue_t *)malloc(sizeof(glue_t));
+        *glue = (glue_t *)st_malloc(sizeof(glue_t));
         if (*glue == NULL) {
-            ST_WARNING("Failed to malloc glue_t");
+            ST_WARNING("Failed to st_malloc glue_t");
             goto ERR;
         }
         memset(*glue, 0, sizeof(glue_t));

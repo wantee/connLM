@@ -43,9 +43,9 @@ static void comp_destroy_glue_cycles(component_t *comp)
     }
 
     for (i = 0; i < comp->num_glue_cycle; i++) {
-        safe_free(comp->glue_cycles[i]);
+        safe_st_free(comp->glue_cycles[i]);
     }
-    safe_free(comp->glue_cycles);
+    safe_st_free(comp->glue_cycles);
     comp->num_glue_cycle = 0;
 }
 
@@ -65,16 +65,16 @@ void comp_destroy(component_t *comp)
     for (l = 0; l < comp->num_layer; l++) {
         safe_layer_destroy(comp->layers[l]);
     }
-    safe_free(comp->layers);
+    safe_st_free(comp->layers);
     comp->num_layer = 0;
 
     for (g = 0; g < comp->num_glue; g++) {
         safe_glue_destroy(comp->glues[g]);
     }
-    safe_free(comp->glues);
+    safe_st_free(comp->glues);
     comp->num_glue = 0;
 
-    safe_free(comp->fwd_order);
+    safe_st_free(comp->fwd_order);
 
     comp_destroy_glue_cycles(comp);
 }
@@ -85,17 +85,17 @@ static int comp_dup_glue_cycles(component_t *comp, int **cycles, int num_cycle)
 
     comp->num_glue_cycle = num_cycle;
     if (comp->num_glue_cycle > 0) {
-        comp->glue_cycles = (int **)malloc(sizeof(int *)*comp->num_glue_cycle);
+        comp->glue_cycles = (int **)st_malloc(sizeof(int *)*comp->num_glue_cycle);
         if (comp->glue_cycles == NULL) {
-            ST_WARNING("Failed to malloc comp->glue_cycles.");
+            ST_WARNING("Failed to st_malloc comp->glue_cycles.");
             goto ERR;
         }
 
         for (i = 0; i < comp->num_glue_cycle; i++) {
             n = cycles[i][0] + 1;
-            comp->glue_cycles[i] = (int *)malloc(sizeof(int) * n);
+            comp->glue_cycles[i] = (int *)st_malloc(sizeof(int) * n);
             if (comp->glue_cycles[i] == NULL) {
-                ST_WARNING("Failed to malloc comp->glue_cycles[%d].", i);
+                ST_WARNING("Failed to st_malloc comp->glue_cycles[%d].", i);
                 goto ERR;
             }
             memcpy(comp->glue_cycles[i], cycles[i], sizeof(int) * n);
@@ -118,9 +118,9 @@ component_t* comp_dup(component_t *c)
 
     ST_CHECK_PARAM(c == NULL, NULL);
 
-    comp = (component_t *)malloc(sizeof(component_t));
+    comp = (component_t *)st_malloc(sizeof(component_t));
     if (comp == NULL) {
-        ST_WARNING("Falied to malloc component_t.");
+        ST_WARNING("Failed to st_malloc component_t.");
         goto ERR;
     }
     memset(comp, 0, sizeof(component_t));
@@ -137,10 +137,10 @@ component_t* comp_dup(component_t *c)
     }
 
     if (c->num_layer > 0) {
-        comp->layers = (layer_t **)malloc(sizeof(layer_t *)
+        comp->layers = (layer_t **)st_malloc(sizeof(layer_t *)
                 * c->num_layer);
         if (comp->layers == NULL) {
-            ST_WARNING("Failed to malloc layers.");
+            ST_WARNING("Failed to st_malloc layers.");
             goto ERR;
         }
 
@@ -158,10 +158,10 @@ component_t* comp_dup(component_t *c)
     }
 
     if (c->num_glue > 0) {
-        comp->glues = (glue_t **)malloc(sizeof(glue_t *)
+        comp->glues = (glue_t **)st_malloc(sizeof(glue_t *)
                 * c->num_glue);
         if (comp->glues == NULL) {
-            ST_WARNING("Failed to malloc glues.");
+            ST_WARNING("Failed to st_malloc glues.");
             goto ERR;
         }
 
@@ -248,7 +248,7 @@ static int comp_sort_glue(component_t *comp)
 
     comp->fwd_order = graph_sort(graph);
     if (comp->fwd_order == NULL) {
-        ST_WARNING("Falied to graph_sort.");
+        ST_WARNING("Failed to graph_sort.");
         goto ERR;
     }
 
@@ -283,15 +283,15 @@ component_t *comp_init_from_topo(const char* topo_content,
 
     ST_CHECK_PARAM(topo_content == NULL || output == NULL, NULL);
 
-    comp = (component_t *)malloc(sizeof(component_t));
+    comp = (component_t *)st_malloc(sizeof(component_t));
     if (comp == NULL) {
-        ST_WARNING("Failed to malloc comp.");
+        ST_WARNING("Failed to st_malloc comp.");
         goto ERR;
     }
     memset(comp, 0, sizeof(component_t));
     comp->comp_scale = 1.0;
 
-    comp->layers = (layer_t **)realloc(comp->layers,
+    comp->layers = (layer_t **)st_realloc(comp->layers,
             sizeof(layer_t *) * (comp->num_layer + 1));
     if (comp->layers == NULL) {
         ST_WARNING("Failed to alloc layers.");
@@ -315,9 +315,9 @@ component_t *comp_init_from_topo(const char* topo_content,
         while (*p != '\n' && *p != '\0') {
             if (line_sz >= line_cap) {
                 line_cap += 1024;
-                line = (char *)realloc(line, line_cap);
+                line = (char *)st_realloc(line, line_cap);
                 if (line == NULL) {
-                    ST_WARNING("Failed to realloc line.");
+                    ST_WARNING("Failed to st_realloc line.");
                     goto ERR;
                 }
             }
@@ -346,7 +346,7 @@ component_t *comp_init_from_topo(const char* topo_content,
                 ST_WARNING("Failed to input_parse_topo.");
                 goto ERR;
             }
-            comp->layers = (layer_t **)realloc(comp->layers,
+            comp->layers = (layer_t **)st_realloc(comp->layers,
                     sizeof(layer_t *) * (comp->num_layer + 1));
             if (comp->layers == NULL) {
                 ST_WARNING("Failed to alloc layers.");
@@ -368,7 +368,7 @@ component_t *comp_init_from_topo(const char* topo_content,
                 ST_WARNING("input definition should place before layer.");
                 goto ERR;
             }
-            comp->layers = (layer_t **)realloc(comp->layers,
+            comp->layers = (layer_t **)st_realloc(comp->layers,
                     sizeof(layer_t *) * (comp->num_layer + 1));
             if (comp->layers == NULL) {
                 ST_WARNING("Failed to alloc layers.");
@@ -386,7 +386,7 @@ component_t *comp_init_from_topo(const char* topo_content,
                 ST_WARNING("input definition should place before glue.");
                 goto ERR;
             }
-            comp->glues = (glue_t **)realloc(comp->glues,
+            comp->glues = (glue_t **)st_realloc(comp->glues,
                     sizeof(glue_t *) * (comp->num_glue + 1));
             if (comp->glues == NULL) {
                 ST_WARNING("Failed to alloc glues.");
@@ -403,7 +403,7 @@ component_t *comp_init_from_topo(const char* topo_content,
         }
     }
 
-    safe_free(line);
+    safe_st_free(line);
 
     if (comp->input == NULL) {
         ST_WARNING("NO input layer.");
@@ -456,7 +456,7 @@ component_t *comp_init_from_topo(const char* topo_content,
     return comp;
 
 ERR:
-    safe_free(line);
+    safe_st_free(line);
 
     safe_comp_destroy(comp);
     return NULL;
@@ -626,9 +626,9 @@ int comp_load_header(component_t **comp, int version,
     }
 
     if (comp != NULL) {
-        *comp = (component_t *)malloc(sizeof(component_t));
+        *comp = (component_t *)st_malloc(sizeof(component_t));
         if (*comp == NULL) {
-            ST_WARNING("Failed to malloc component_t");
+            ST_WARNING("Failed to st_malloc component_t");
             goto ERR;
         }
         memset(*comp, 0, sizeof(component_t));
@@ -637,7 +637,7 @@ int comp_load_header(component_t **comp, int version,
         (*comp)->name[MAX_NAME_LEN - 1] = '\0';
 
         sz = sizeof(layer_t *)*num_layer;
-        (*comp)->layers = (layer_t **)malloc(sz);
+        (*comp)->layers = (layer_t **)st_malloc(sz);
         if ((*comp)->layers == NULL) {
             ST_WARNING("Failed to alloc layers.");
             goto ERR;
@@ -646,7 +646,7 @@ int comp_load_header(component_t **comp, int version,
         (*comp)->num_layer = num_layer;
 
         sz = sizeof(glue_t *)*num_glue;
-        (*comp)->glues = (glue_t **)malloc(sz);
+        (*comp)->glues = (glue_t **)st_malloc(sz);
         if ((*comp)->glues == NULL) {
             ST_WARNING("Failed to alloc glues.");
             goto ERR;

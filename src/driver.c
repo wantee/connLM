@@ -94,7 +94,7 @@ void driver_destroy(driver_t *driver)
     for(i = 0; i < driver->n_thr; i++) {
         safe_updater_destroy(driver->updaters[i]);
     }
-    safe_free(driver->updaters);
+    safe_st_free(driver->updaters);
     driver->n_thr = 0;
 }
 
@@ -106,9 +106,9 @@ driver_t* driver_create(connlm_t *connlm, reader_t *reader, int n_thr)
 
     ST_CHECK_PARAM(connlm == NULL || n_thr <= 0, NULL);
 
-    driver = (driver_t *)malloc(sizeof(driver_t));
+    driver = (driver_t *)st_malloc(sizeof(driver_t));
     if (driver == NULL) {
-        ST_WARNING("Failed to malloc driver.");
+        ST_WARNING("Failed to st_malloc driver.");
         return NULL;
     }
     memset(driver, 0, sizeof(driver_t));
@@ -117,9 +117,9 @@ driver_t* driver_create(connlm_t *connlm, reader_t *reader, int n_thr)
     driver->reader = reader;
     driver->n_thr = n_thr;
 
-    driver->updaters = (updater_t **)malloc(sizeof(updater_t*)*n_thr);
+    driver->updaters = (updater_t **)st_malloc(sizeof(updater_t*)*n_thr);
     if (driver->updaters == NULL) {
-        ST_WARNING("Failed to malloc updaters.");
+        ST_WARNING("Failed to st_malloc updaters.");
         goto ERR;
     }
     memset(driver->updaters, 0, sizeof(updater_t*) * n_thr);
@@ -127,7 +127,7 @@ driver_t* driver_create(connlm_t *connlm, reader_t *reader, int n_thr)
     for (i = 0; i < driver->n_thr; i++) {
         driver->updaters[i] = updater_create(connlm);
         if (driver->updaters[i] == NULL) {
-            ST_WARNING("Failed to malloc updater[%d].", i);
+            ST_WARNING("Failed to st_malloc updater[%d].", i);
             goto ERR;
         }
     }
@@ -390,24 +390,24 @@ static int driver_do_run(driver_t *driver)
     gettimeofday(&tts, NULL);
 
     n_thr = driver->n_thr;
-    pts = (pthread_t *)malloc(n_thr * sizeof(pthread_t));
+    pts = (pthread_t *)st_malloc(n_thr * sizeof(pthread_t));
     if (pts == NULL) {
-        ST_WARNING("Failed to malloc pts");
+        ST_WARNING("Failed to st_malloc pts");
         goto ERR;
     }
 
-    thrs = (driver_thr_t *)malloc(sizeof(driver_thr_t) * n_thr);
+    thrs = (driver_thr_t *)st_malloc(sizeof(driver_thr_t) * n_thr);
     if (thrs == NULL) {
-        ST_WARNING("Failed to malloc thrs");
+        ST_WARNING("Failed to st_malloc thrs");
         goto ERR;
     }
     memset(thrs, 0, sizeof(driver_thr_t) * n_thr);
 
     driver->err = 0;
 
-    stats = (thr_stat_t *)malloc(sizeof(thr_stat_t) * n_thr);
+    stats = (thr_stat_t *)st_malloc(sizeof(thr_stat_t) * n_thr);
     if (stats == NULL) {
-        ST_WARNING("Failed to malloc stats");
+        ST_WARNING("Failed to st_malloc stats");
         goto ERR;
     }
     memset(stats, 0, sizeof(thr_stat_t) * n_thr);
@@ -423,14 +423,14 @@ static int driver_do_run(driver_t *driver)
         thrs[i].stat = stats + i;
         if (pthread_create(pts + i, NULL, driver_thread,
                     (void *)(thrs + i)) != 0) {
-            ST_WARNING("Falied to pthread_create driver_thread.");
+            ST_WARNING("Failed to pthread_create driver_thread.");
             goto ERR;
         }
     }
 
     for (i = 0; i < n_thr; i++) {
         if (pthread_join(pts[i], NULL) != 0) {
-            ST_WARNING("Falied to pthread_join.");
+            ST_WARNING("Failed to pthread_join.");
             goto ERR;
         }
     }
@@ -488,17 +488,17 @@ static int driver_do_run(driver_t *driver)
         }
     }
 
-    safe_free(pts);
-    safe_free(thrs);
-    safe_free(stats);
+    safe_st_free(pts);
+    safe_st_free(thrs);
+    safe_st_free(stats);
 
     return 0;
 
 ERR:
 
-    safe_free(pts);
-    safe_free(thrs);
-    safe_free(stats);
+    safe_st_free(pts);
+    safe_st_free(thrs);
+    safe_st_free(stats);
     return -1;
 }
 

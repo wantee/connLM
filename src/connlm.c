@@ -88,7 +88,7 @@ void connlm_destroy(connlm_t *connlm)
     for (c = 0; c < connlm->num_comp; c++) {
         safe_comp_destroy(connlm->comps[c]);
     }
-    safe_free(connlm->comps);
+    safe_st_free(connlm->comps);
     connlm->num_comp = 0;
 }
 
@@ -109,7 +109,7 @@ int connlm_init(connlm_t *connlm, FILE *topo_fp)
 
     ST_CHECK_PARAM(connlm == NULL || topo_fp == NULL, -1);
 
-    safe_free(connlm->comps);
+    safe_st_free(connlm->comps);
     connlm->num_comp = 0;
     part = 0;
     has_comp = false;
@@ -145,7 +145,7 @@ int connlm_init(connlm_t *connlm, FILE *topo_fp)
                 ST_WARNING("Miss placed </component>");
                 goto ERR;
             }
-            connlm->comps = (component_t **)realloc(connlm->comps,
+            connlm->comps = (component_t **)st_realloc(connlm->comps,
                     sizeof(component_t *) * (connlm->num_comp + 1));
             if (connlm->comps == NULL) {
                 ST_WARNING("Failed to alloc comps.");
@@ -179,9 +179,9 @@ int connlm_init(connlm_t *connlm, FILE *topo_fp)
 
         if (strlen(line) + 2 + content_sz > content_cap) {
             content_cap += (strlen(line) + 2);
-            content = (char *)realloc(content, content_cap);
+            content = (char *)st_realloc(content, content_cap);
             if (content == NULL) {
-                ST_WARNING("Failed to realloc content.");
+                ST_WARNING("Failed to st_realloc content.");
                 goto ERR;
             }
         }
@@ -203,8 +203,8 @@ int connlm_init(connlm_t *connlm, FILE *topo_fp)
         goto ERR;
     }
 
-    safe_free(line);
-    safe_free(content);
+    safe_st_free(line);
+    safe_st_free(content);
 
     for (c = 0; c < connlm->num_comp - 1; c++) {
         for (d = c+1; d < connlm->num_comp; d++) {
@@ -220,14 +220,14 @@ int connlm_init(connlm_t *connlm, FILE *topo_fp)
     return 0;
 
 ERR:
-    safe_free(line);
-    safe_free(content);
+    safe_st_free(line);
+    safe_st_free(content);
 
     if (connlm->comps != NULL) {
         for (c = 0; c < connlm->num_comp; c++) {
             safe_comp_destroy(connlm->comps[c]);
         }
-        safe_free(connlm->comps);
+        safe_st_free(connlm->comps);
         connlm->num_comp = 0;
     }
 
@@ -244,9 +244,9 @@ connlm_t *connlm_new(vocab_t *vocab, output_t *output,
     ST_CHECK_PARAM(vocab == NULL && output == NULL
             && comps == NULL, NULL);
 
-    connlm = (connlm_t *)malloc(sizeof(connlm_t));
+    connlm = (connlm_t *)st_malloc(sizeof(connlm_t));
     if (connlm == NULL) {
-        ST_WARNING("Failed to malloc connlm_t");
+        ST_WARNING("Failed to st_malloc connlm_t");
         goto ERR;
     }
     memset(connlm, 0, sizeof(connlm_t));
@@ -268,10 +268,10 @@ connlm_t *connlm_new(vocab_t *vocab, output_t *output,
     }
 
     if (comps != NULL && n_comp > 0) {
-        connlm->comps = (component_t **)malloc(sizeof(component_t *)
+        connlm->comps = (component_t **)st_malloc(sizeof(component_t *)
                 * n_comp);
         if (connlm->comps == NULL) {
-            ST_WARNING("Failed to malloc comps.");
+            ST_WARNING("Failed to st_malloc comps.");
             goto ERR;
         }
 
@@ -441,7 +441,7 @@ static int connlm_load_header(connlm_t *connlm, FILE *fp,
 
     if (connlm != NULL ) {
         sz = sizeof(component_t *) * (connlm->num_comp);
-        connlm->comps = (component_t **)malloc(sz);
+        connlm->comps = (component_t **)st_malloc(sz);
         if (connlm->comps == NULL) {
             ST_WARNING("Failed to alloc comps.");
             goto ERR;
@@ -468,7 +468,7 @@ static int connlm_load_header(connlm_t *connlm, FILE *fp,
 
 ERR:
     if (connlm != NULL) {
-        safe_free(connlm->comps);
+        safe_st_free(connlm->comps);
         connlm->num_comp = 0;
     }
     return -1;
@@ -511,9 +511,9 @@ connlm_t* connlm_load(FILE *fp)
 
     ST_CHECK_PARAM(fp == NULL, NULL);
 
-    connlm = (connlm_t *)malloc(sizeof(connlm_t));
+    connlm = (connlm_t *)st_malloc(sizeof(connlm_t));
     if (connlm == NULL) {
-        ST_WARNING("Failed to malloc connlm_t");
+        ST_WARNING("Failed to st_malloc connlm_t");
         goto ERR;
     }
     memset(connlm, 0, sizeof(connlm_t));
@@ -776,7 +776,7 @@ int connlm_filter(connlm_t *connlm, model_filter_t mf,
             for (c = 0; c < connlm->num_comp; c++) {
                 safe_comp_destroy(connlm->comps[c]);
             }
-            safe_free(connlm->comps);
+            safe_st_free(connlm->comps);
             connlm->num_comp = 0;
         }
 
@@ -893,7 +893,7 @@ int connlm_add_comp(connlm_t *connlm, component_t *comp)
         ST_NOTICE("Rename comp[%s] to [%s].", comp->name, name);
     }
 
-    connlm->comps = (component_t **)realloc(connlm->comps,
+    connlm->comps = (component_t **)st_realloc(connlm->comps,
             sizeof(component_t *) * (connlm->num_comp + 1));
     if (connlm->comps == NULL) {
         ST_WARNING("Failed to alloc comps.");

@@ -93,9 +93,9 @@ glue_updater_t* glue_updater_create(glue_t *glue)
 
     ST_CHECK_PARAM(glue == NULL, NULL);
 
-    glue_updater = (glue_updater_t *)malloc(sizeof(glue_updater_t));
+    glue_updater = (glue_updater_t *)st_malloc(sizeof(glue_updater_t));
     if (glue_updater == NULL) {
-        ST_WARNING("Failed to malloc glue_updater.");
+        ST_WARNING("Failed to st_malloc glue_updater.");
         goto ERR;
     }
     memset(glue_updater, 0, sizeof(glue_updater_t));

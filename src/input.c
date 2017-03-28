@@ -65,7 +65,7 @@ void input_destroy(input_t *input)
     }
 
     input->input_size = 0;
-    safe_free(input->context);
+    safe_st_free(input->context);
     input->n_ctx = 0;
 }
 
@@ -81,9 +81,9 @@ input_t* input_parse_topo(const char *line, int input_size)
 
     ST_CHECK_PARAM(line == NULL, NULL);
 
-    input = (input_t *)malloc(sizeof(input_t));
+    input = (input_t *)st_malloc(sizeof(input_t));
     if (input == NULL) {
-        ST_WARNING("Failed to malloc input_t.");
+        ST_WARNING("Failed to st_malloc input_t.");
         goto ERR;
     }
     memset(input, 0, sizeof(input_t));
@@ -98,7 +98,7 @@ input_t* input_parse_topo(const char *line, int input_size)
         goto ERR;
     }
 
-    safe_free(input->context);
+    safe_st_free(input->context);
     input->n_ctx = 0;
     while (p != NULL) {
         p = get_next_token(p, token);
@@ -165,9 +165,9 @@ input_t* input_dup(input_t *in)
 
     ST_CHECK_PARAM(in == NULL, NULL);
 
-    input = (input_t *) malloc(sizeof(input_t));
+    input = (input_t *)st_malloc(sizeof(input_t));
     if (input == NULL) {
-        ST_WARNING("Falied to malloc input_t.");
+        ST_WARNING("Failed to st_malloc input_t.");
         goto ERR;
     }
     memset(input, 0, sizeof(input_t));
@@ -175,9 +175,9 @@ input_t* input_dup(input_t *in)
     input->input_size = in->input_size;
     input->combine = in->combine;
 
-    input->context = (st_wt_int_t *)malloc(sizeof(st_wt_int_t)*in->n_ctx);
+    input->context = (st_wt_int_t *)st_malloc(sizeof(st_wt_int_t)*in->n_ctx);
     if (input->context == NULL) {
-        ST_WARNING("Failed to malloc context.");
+        ST_WARNING("Failed to st_malloc context.");
         goto ERR;
     }
     for (i = 0; i < in->n_ctx; i++) {
@@ -198,9 +198,9 @@ layer_t* input_get_layer(input_t *input)
 
     ST_CHECK_PARAM(input == NULL, NULL);
 
-    layer = (layer_t *)malloc(sizeof(layer_t));
+    layer = (layer_t *)st_malloc(sizeof(layer_t));
     if (layer == NULL) {
-        ST_WARNING("Failed to malloc layer.");
+        ST_WARNING("Failed to st_malloc layer.");
         goto ERR;
     }
     memset(layer, 0, sizeof(layer_t));
@@ -211,7 +211,7 @@ layer_t* input_get_layer(input_t *input)
 
     return layer;
 ERR:
-    safe_free(layer);
+    safe_st_free(layer);
     return NULL;
 }
 
@@ -298,9 +298,9 @@ int input_load_header(input_t **input, int version,
     }
 
     if (input != NULL) {
-        *input = (input_t *)malloc(sizeof(input_t));
+        *input = (input_t *)st_malloc(sizeof(input_t));
         if (*input == NULL) {
-            ST_WARNING("Failed to malloc input_t");
+            ST_WARNING("Failed to st_malloc input_t");
             goto ERR;
         }
         memset(*input, 0, sizeof(input_t));
@@ -339,12 +339,12 @@ int input_load_body(input_t *input, int version, FILE *fp, bool binary)
         return -1;
     }
 
-    safe_free(input->context);
+    safe_st_free(input->context);
 
     sz = sizeof(st_wt_int_t) * input->n_ctx;
-    input->context = (st_wt_int_t *) malloc(sz);
+    input->context = (st_wt_int_t *)st_malloc(sz);
     if (input->context == NULL) {
-        ST_WARNING("Failed to malloc context.");
+        ST_WARNING("Failed to st_malloc context.");
         goto ERR;
     }
     memset(input->context, 0, sz);
@@ -386,7 +386,7 @@ int input_load_body(input_t *input, int version, FILE *fp, bool binary)
 
     return 0;
 ERR:
-    safe_free(input->context);
+    safe_st_free(input->context);
 
     return -1;
 }

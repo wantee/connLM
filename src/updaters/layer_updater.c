@@ -82,9 +82,9 @@ layer_updater_t* layer_updater_create(layer_t *layer)
 
     ST_CHECK_PARAM(layer == NULL, NULL);
 
-    layer_updater = (layer_updater_t *)malloc(sizeof(layer_updater_t));
+    layer_updater = (layer_updater_t *)st_malloc(sizeof(layer_updater_t));
     if (layer_updater == NULL) {
-        ST_WARNING("Failed to malloc layer_updater.");
+        ST_WARNING("Failed to st_malloc layer_updater.");
         goto ERR;
     }
     memset(layer_updater, 0, sizeof(layer_updater_t));

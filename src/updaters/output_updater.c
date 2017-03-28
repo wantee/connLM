@@ -43,7 +43,7 @@ void out_updater_destroy(out_updater_t *out_updater)
 
     out_updater->output = NULL;
 
-    safe_free(out_updater->node_probs);
+    safe_st_free(out_updater->node_probs);
     safe_output_tree_bfs_aux_destroy(out_updater->bfs_aux);
 }
 
@@ -53,9 +53,9 @@ out_updater_t* out_updater_create(output_t *output)
 
     ST_CHECK_PARAM(output == NULL, NULL);
 
-    out_updater = (out_updater_t *)malloc(sizeof(out_updater_t));
+    out_updater = (out_updater_t *)st_malloc(sizeof(out_updater_t));
     if (out_updater == NULL) {
-        ST_WARNING("Failed to malloc out_updater.");
+        ST_WARNING("Failed to st_malloc out_updater.");
         goto ERR;
     }
     memset(out_updater, 0, sizeof(out_updater_t));
@@ -357,10 +357,10 @@ int out_updater_init_all(out_updater_t *out_updater)
 {
     ST_CHECK_PARAM(out_updater == NULL, -1);
 
-    out_updater->node_probs = (double *)malloc(sizeof(double)
+    out_updater->node_probs = (double *)st_malloc(sizeof(double)
             * out_updater->output->tree->num_node);
     if (out_updater->node_probs == NULL) {
-        ST_WARNING("Failed to malloc node_probs.");
+        ST_WARNING("Failed to st_malloc node_probs.");
         return -1;
     }
 

@@ -173,7 +173,7 @@ int out_glue_updater_backprop(glue_updater_t *glue_updater,
             goto ERR;
         }
 
-        safe_free(segs);
+        safe_st_free(segs);
     }
 
     ow_args.glue_updater = glue_updater;
@@ -191,7 +191,7 @@ int out_glue_updater_backprop(glue_updater_t *glue_updater,
     return 0;
 
 ERR:
-    safe_free(segs);
+    safe_st_free(segs);
     return -1;
 }
 

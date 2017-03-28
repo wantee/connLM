@@ -36,7 +36,7 @@ static const int SIGMOID_LAYER_MAGIC_NUM = 626140498 + 62;
 #define safe_sigmoid_data_destroy(ptr) do {\
     if((ptr) != NULL) {\
         sigmoid_data_destroy((sigmoid_data_t *)ptr);\
-        safe_free(ptr);\
+        safe_st_free(ptr);\
         (ptr) = NULL;\
     }\
     } while(0)
@@ -53,9 +53,9 @@ sigmoid_data_t* sigmoid_data_init()
 {
     sigmoid_data_t *data = NULL;
 
-    data = (sigmoid_data_t *)malloc(sizeof(sigmoid_data_t));
+    data = (sigmoid_data_t *)st_malloc(sizeof(sigmoid_data_t));
     if (data == NULL) {
-        ST_WARNING("Failed to malloc sigmoid_data.");
+        ST_WARNING("Failed to st_malloc sigmoid_data.");
         goto ERR;
     }
     memset(data, 0, sizeof(sigmoid_data_t));

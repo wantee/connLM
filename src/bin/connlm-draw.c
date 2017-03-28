@@ -147,7 +147,7 @@ int main(int argc, const char *argv[])
         goto ERR;
     }
 
-    safe_free(comp_names);
+    safe_st_free(comp_names);
     safe_st_fclose(fp);
     safe_st_opt_destroy(g_cmd_opt);
     safe_connlm_destroy(connlm);
@@ -156,7 +156,7 @@ int main(int argc, const char *argv[])
     return 0;
 
 ERR:
-    safe_free(comp_names);
+    safe_st_free(comp_names);
     safe_st_fclose(fp);
     safe_st_opt_destroy(g_cmd_opt);
     safe_connlm_destroy(connlm);

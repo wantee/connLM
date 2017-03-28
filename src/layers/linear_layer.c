@@ -35,7 +35,7 @@ static const int LINEAR_LAYER_MAGIC_NUM = 626140498 + 61;
 #define safe_linear_data_destroy(ptr) do {\
     if((ptr) != NULL) {\
         linear_data_destroy((linear_data_t *)ptr);\
-        safe_free(ptr);\
+        safe_st_free(ptr);\
         (ptr) = NULL;\
     }\
     } while(0)
@@ -52,9 +52,9 @@ linear_data_t* linear_data_init()
 {
     linear_data_t *data = NULL;
 
-    data = (linear_data_t *)malloc(sizeof(linear_data_t));
+    data = (linear_data_t *)st_malloc(sizeof(linear_data_t));
     if (data == NULL) {
-        ST_WARNING("Failed to malloc linear_data.");
+        ST_WARNING("Failed to st_malloc linear_data.");
         goto ERR;
     }
     memset(data, 0, sizeof(linear_data_t));

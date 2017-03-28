@@ -195,7 +195,7 @@ void updater_destroy(updater_t *updater)
         for (c = 0; c < updater->connlm->num_comp; c++) {
             safe_comp_updater_destroy(updater->comp_updaters[c]);
         }
-        safe_free(updater->comp_updaters);
+        safe_st_free(updater->comp_updaters);
     }
     updater->connlm = NULL;
 }
@@ -209,9 +209,9 @@ updater_t* updater_create(connlm_t *connlm)
 
     ST_CHECK_PARAM(connlm == NULL, NULL);
 
-    updater = (updater_t *)malloc(sizeof(updater_t));
+    updater = (updater_t *)st_malloc(sizeof(updater_t));
     if (updater == NULL) {
-        ST_WARNING("Failed to malloc updater.");
+        ST_WARNING("Failed to st_malloc updater.");
         goto ERR;
     }
     memset(updater, 0, sizeof(updater_t));
@@ -233,9 +233,9 @@ updater_t* updater_create(connlm_t *connlm)
 
     if (connlm->num_comp > 0) {
         sz = sizeof(comp_updater_t*)*connlm->num_comp;
-        updater->comp_updaters = (comp_updater_t **)malloc(sz);
+        updater->comp_updaters = (comp_updater_t **)st_malloc(sz);
         if (updater->comp_updaters == NULL) {
-            ST_WARNING("Failed to malloc comp_updaters.");
+            ST_WARNING("Failed to st_malloc comp_updaters.");
             goto ERR;
         }
 

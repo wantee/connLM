@@ -60,7 +60,7 @@ typedef struct _output_updater_t_ {
 #define safe_out_updater_destroy(ptr) do {\
     if((ptr) != NULL) {\
         out_updater_destroy(ptr);\
-        safe_free(ptr);\
+        safe_st_free(ptr);\
         (ptr) = NULL;\
     }\
     } while(0)
