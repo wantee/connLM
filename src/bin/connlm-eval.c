@@ -31,6 +31,7 @@
 #include <stutils/st_log.h>
 #include <stutils/st_io.h>
 #include <stutils/st_string.h>
+#include <stutils/st_mem.h>
 
 #include <connlm/utils.h>
 #include <connlm/connlm.h>
@@ -109,6 +110,11 @@ int main(int argc, const char *argv[])
     reader_t *reader = NULL;
     driver_t *driver = NULL;
     int ret;
+
+    if (st_mem_usage_init() < 0) {
+        ST_WARNING("Failed to st_mem_usage_init.");
+        goto ERR;
+    }
 
     (void)st_escape_args(argc, argv, args, 1024);
 
@@ -193,6 +199,8 @@ int main(int argc, const char *argv[])
     safe_st_opt_destroy(g_cmd_opt);
     safe_connlm_destroy(connlm);
 
+    st_mem_usage_report();
+    st_mem_usage_destroy();
     st_log_close(0);
 
     return 0;
@@ -205,6 +213,7 @@ ERR:
     safe_st_opt_destroy(g_cmd_opt);
     safe_connlm_destroy(connlm);
 
+    st_mem_usage_destroy();
     st_log_close(1);
     return -1;
 }

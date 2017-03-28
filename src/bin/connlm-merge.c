@@ -26,6 +26,8 @@
 
 #include <stutils/st_log.h>
 #include <stutils/st_io.h>
+#include <stutils/st_string.h>
+#include <stutils/st_mem.h>
 
 #include <connlm/utils.h>
 #include <connlm/connlm.h>
@@ -82,6 +84,7 @@ void show_usage(const char *module_name)
 
 int main(int argc, const char *argv[])
 {
+    char args[1024] = "";
     FILE *fp = NULL;
     connlm_t *connlm = NULL;
     connlm_t *connlm1 = NULL;
@@ -91,6 +94,13 @@ int main(int argc, const char *argv[])
     int *num_comp = NULL;
     int ret;
     int i, c;
+
+    if (st_mem_usage_init() < 0) {
+        ST_WARNING("Failed to st_mem_usage_init.");
+        goto ERR;
+    }
+
+    (void)st_escape_args(argc, argv, args, 1024);
 
     ret = connlm_merge_parse_opt(&argc, argv);
     if (ret < 0) {
@@ -110,6 +120,7 @@ int main(int argc, const char *argv[])
         goto ERR;
     }
 
+    ST_CLEAN("Command-line: %s", args);
     st_opt_show(g_cmd_opt, "connLM Merge Options");
     for (i = 1; i < argc - 1; i++) {
         ST_CLEAN("Model-in-%d: %s", i, argv[i]);
@@ -265,6 +276,8 @@ int main(int argc, const char *argv[])
     safe_st_opt_destroy(g_cmd_opt);
     safe_connlm_destroy(connlm);
 
+    st_mem_usage_report();
+    st_mem_usage_destroy();
     st_log_close(0);
     return 0;
 
@@ -283,6 +296,7 @@ ERR:
     safe_connlm_destroy(connlm);
     safe_connlm_destroy(connlm1);
 
+    st_mem_usage_destroy();
     st_log_close(1);
     return -1;
 }
