@@ -108,7 +108,8 @@ wt_updater_t* fc_glue_init_wt_updater(glue_t *glue, param_t *param)
     }
 
     wt_updater = wt_updater_create(param == NULL ? &glue->param : param,
-            glue->wt->mat, glue->wt->row, glue->wt->col, WT_UT_FULL);
+            glue->wt->mat, glue->wt->bias,
+            glue->wt->row, glue->wt->col, WT_UT_FULL);
     if (wt_updater == NULL) {
         ST_WARNING("Failed to wt_updater_create.");
         goto ERR;

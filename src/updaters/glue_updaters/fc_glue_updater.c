@@ -37,6 +37,7 @@ int fc_glue_updater_forward(glue_updater_t *glue_updater,
         real_t *in_ac, real_t *out_ac)
 {
     wt_updater_t *wt_updater;
+    int i;
 
     ST_CHECK_PARAM(glue_updater == NULL || comp_updater == NULL
             || in_ac == NULL || out_ac == NULL, -1);
@@ -45,6 +46,12 @@ int fc_glue_updater_forward(glue_updater_t *glue_updater,
 
     matXvec(out_ac, wt_updater->wt, in_ac,
             wt_updater->row, wt_updater->col, 1.0);
+
+    if (wt_updater->bias != NULL) {
+        for (i = 0; i < wt_updater->row; i++) {
+            out_ac[i] += wt_updater->bias[i];
+        }
+    }
 
     return 0;
 }
