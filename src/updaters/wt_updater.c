@@ -81,6 +81,14 @@ void wt_updater_destroy(wt_updater_t *wt_updater)
     wt_updater->shared_wt = NULL;
     safe_st_aligned_free(wt_updater->ori_wt);
     safe_st_aligned_free(wt_updater->delta_wt);
+    if (wt_updater->bias != wt_updater->shared_bias) {
+        safe_st_aligned_free(wt_updater->bias);
+    } else {
+        wt_updater->bias = NULL;
+    }
+    wt_updater->shared_bias = NULL;
+    safe_st_aligned_free(wt_updater->ori_bias);
+    safe_st_aligned_free(wt_updater->delta_bias);
     wt_updater->row = -1;
     wt_updater->col = -1;
 
@@ -143,6 +151,7 @@ int wt_updater_init(wt_updater_t *wt_updater)
     st_int_seg_t seg;
 
     size_t sz;
+    size_t bias_sz;
 
     ST_CHECK_PARAM(wt_updater == NULL, -1);
 
@@ -155,10 +164,10 @@ int wt_updater_init(wt_updater_t *wt_updater)
         sz = wt_updater->row;
     }
     sz *= sizeof(real_t);
+    bias_sz = wt_updater->row * sizeof(real_t);
 
     if (wt_updater->param.sync_size > 0) {
         safe_st_aligned_free(wt_updater->wt);
-
         wt_updater->wt = st_aligned_malloc(sz, ALIGN_SIZE);
         if (wt_updater->wt == NULL) {
             ST_WARNING("Failed to st_aligned_malloc wt.");
@@ -173,8 +182,28 @@ int wt_updater_init(wt_updater_t *wt_updater)
             goto ERR;
         }
         memcpy(wt_updater->ori_wt, wt_updater->wt, sz);
+
+        if (wt_updater->shared_bias != NULL) {
+            safe_st_aligned_free(wt_updater->bias);
+            wt_updater->bias = st_aligned_malloc(bias_sz, ALIGN_SIZE);
+            if (wt_updater->bias == NULL) {
+                ST_WARNING("Failed to st_aligned_malloc bias.");
+                goto ERR;
+            }
+            memcpy(wt_updater->bias, wt_updater->shared_bias, bias_sz);
+
+            safe_st_aligned_free(wt_updater->ori_bias);
+            wt_updater->ori_bias = st_aligned_malloc(bias_sz, ALIGN_SIZE);
+            if (wt_updater->ori_bias == NULL) {
+                ST_WARNING("Failed to st_malloc ori_bias.");
+                goto ERR;
+            }
+            memcpy(wt_updater->ori_bias, wt_updater->bias, bias_sz);
+        }
+
     } else {
         wt_updater->wt = wt_updater->shared_wt;
+        wt_updater->bias = wt_updater->shared_bias;
     }
 
     if (wt_updater->param.momentum != 0.0) {
@@ -185,6 +214,16 @@ int wt_updater_init(wt_updater_t *wt_updater)
             goto ERR;
         }
         memset(wt_updater->delta_wt, 0, sz);
+
+        if (wt_updater->shared_bias != NULL) {
+            safe_st_aligned_free(wt_updater->delta_bias);
+            wt_updater->delta_bias = st_aligned_malloc(bias_sz, ALIGN_SIZE);
+            if (wt_updater->delta_bias == NULL) {
+                ST_WARNING("Failed to st_malloc delta_bias.");
+                goto ERR;
+            }
+            memset(wt_updater->delta_bias, 0, bias_sz);
+        }
     }
 
     switch (wt_updater->type) {
@@ -226,7 +265,7 @@ ERR:
 }
 
 wt_updater_t* wt_updater_create(param_t *param,
-        real_t *wt, int row, int col, wt_update_type_t type)
+        real_t *wt, real_t *bias, int row, int col, wt_update_type_t type)
 {
     wt_updater_t *wt_updater = NULL;
 
@@ -243,6 +282,7 @@ wt_updater_t* wt_updater_create(param_t *param,
     wt_updater->row = row;
     wt_updater->col = col;
     wt_updater->shared_wt = wt;
+    wt_updater->shared_bias = bias;
     wt_updater->type = type;
 
     if (wt_updater_init(wt_updater) < 0) {
@@ -348,10 +388,13 @@ static int wt_updater_mini_update(wt_updater_t *wt_updater)
     wt_dirty_buf_t *dirty;
     real_t *wt;
     real_t *delta_wt;
+    real_t *bias;
+    real_t *delta_bias;
 
     st_int_seg_t *seg;
     int row, col;
-    int sz, idx, i, a;
+    int sz, idx, i, j, a;
+    real_t sum;
 
     real_t lr, l2;
     real_t momentum;
@@ -359,6 +402,8 @@ static int wt_updater_mini_update(wt_updater_t *wt_updater)
     dirty = &wt_updater->mini_dirty;
     wt = wt_updater->wt;
     delta_wt = wt_updater->delta_wt;
+    bias = wt_updater->bias;
+    delta_bias = wt_updater->delta_bias;
 
     row = wt_updater->row;
     col = wt_updater->col;
@@ -388,11 +433,30 @@ static int wt_updater_mini_update(wt_updater_t *wt_updater)
                         delta_wt[i] -= l2 * wt[i];
                         wt[i] += delta_wt[i];
                     }
+                    if (bias != NULL) {
+                        for (i = 0; i < row; i++) {
+                            sum = 0.0;
+                            for (j = 0; j < dirty->buf_er[0].n_row; j++) {
+                                sum += dirty->buf_er[0].val[j * row + i];
+                            }
+                            delta_bias[i] = lr * sum - l2 * bias[i] + momentum * delta_bias[i];
+                            bias[i] += delta_bias[i];
+                        }
+                    }
                 } else {
                     matXmat(wt, dirty->buf_er[0].val,
                             dirty->buf_in[0].val, row, col,
                             dirty->buf_er[0].n_row,
                             lr, 1.0 - l2);
+                    if (bias != NULL) {
+                        for (i = 0; i < row; i++) {
+                            sum = 0.0;
+                            for (j = 0; j < dirty->buf_er[0].n_row; j++) {
+                                sum += dirty->buf_er[0].val[j * row + i];
+                            }
+                            bias[i] += lr * sum - l2 * bias[i];
+                        }
+                    }
                 }
             }
             break;
@@ -414,12 +478,31 @@ static int wt_updater_mini_update(wt_updater_t *wt_updater)
                                 delta_wt[i] -= l2 * wt[i];
                                 wt[i] += delta_wt[i];
                             }
+                            if (bias != NULL) {
+                                for (i = seg->s; i < (seg->s + seg->n); i++) {
+                                    sum = 0.0;
+                                    for (j = 0; j < dirty->buf_er[idx].n_row; j++) {
+                                        sum += dirty->buf_er[idx].val[j * seg->n + i - seg->s];
+                                    }
+                                    delta_bias[i] = lr * sum - l2 * bias[i] + momentum * delta_bias[i];
+                                    bias[i] += delta_bias[i];
+                                }
+                            }
                         } else {
                             matXmat(wt + seg->s * col,
                                     dirty->buf_er[idx].val,
                                     dirty->buf_in[idx].val, seg->n, col,
                                     dirty->buf_er[idx].n_row,
                                     lr, 1.0 - l2);
+                            if (bias != NULL) {
+                                for (i = seg->s; i < (seg->s + seg->n); i++) {
+                                    sum = 0.0;
+                                    for (j = 0; j < dirty->buf_er[idx].n_row; j++) {
+                                        sum += dirty->buf_er[idx].val[j * seg->n + i - seg->s];
+                                    }
+                                    bias[i] += lr * sum - l2 * bias[i];
+                                }
+                            }
                         }
                     }
                 }
@@ -485,6 +568,9 @@ static int wt_updater_sync(wt_updater_t *wt_updater)
     real_t *shared_wt;
     real_t *wt;
     real_t *ori_wt;
+    real_t *shared_bias;
+    real_t *bias;
+    real_t *ori_bias;
 
     st_int_seg_t *seg;
     int row, col;
@@ -497,6 +583,9 @@ static int wt_updater_sync(wt_updater_t *wt_updater)
     shared_wt = wt_updater->shared_wt;
     wt = wt_updater->wt;
     ori_wt = wt_updater->ori_wt;
+    shared_bias = wt_updater->shared_bias;
+    bias = wt_updater->bias;
+    ori_bias = wt_updater->ori_bias;
 
     switch (wt_updater->type) {
         case WT_UT_FULL:
@@ -511,6 +600,15 @@ static int wt_updater_sync(wt_updater_t *wt_updater)
             }
             memcpy(wt, shared_wt, sz * sizeof(real_t));
             memcpy(ori_wt, wt, sz * sizeof(real_t));
+
+            if (bias != NULL) {
+                for (i = 0; i < row; i++) {
+                    shared_bias[i] += bias[i] - ori_bias[i];
+                }
+                memcpy(bias, shared_bias, row * sizeof(real_t));
+                memcpy(ori_bias, bias, row * sizeof(real_t));
+            }
+
             break;
 
         case WT_UT_SEG:
@@ -522,6 +620,15 @@ static int wt_updater_sync(wt_updater_t *wt_updater)
                 sz = col * seg->n * sizeof(real_t);
                 memcpy(wt + seg->s * col, shared_wt + seg->s * col, sz);
                 memcpy(ori_wt + seg->s * col, wt + seg->s * col, sz);
+
+                if (bias != NULL) {
+                    for (i = seg->s; i < (seg->s + seg->n); i++) {
+                        shared_bias[i] += bias[i] - ori_bias[i];
+                    }
+                    sz = seg->n * sizeof(real_t);
+                    memcpy(bias + seg->s, shared_bias + seg->s, sz);
+                    memcpy(ori_bias + seg->s, bias + seg->s, sz);
+                }
             }
             break;
 
@@ -566,6 +673,8 @@ static int wt_updater_update(wt_updater_t *wt_updater,
 {
     real_t *wt;
     real_t *delta_wt;
+    real_t *bias;
+    real_t *delta_bias;
 
     real_t lr;
     real_t l2;
@@ -586,6 +695,8 @@ static int wt_updater_update(wt_updater_t *wt_updater,
 
     wt = wt_updater->wt;
     delta_wt = wt_updater->delta_wt;
+    bias = wt_updater->bias;
+    delta_bias = wt_updater->delta_bias;
 
     switch (wt_updater->type) {
         case WT_UT_PART:
@@ -667,9 +778,20 @@ static int wt_updater_update(wt_updater_t *wt_updater,
                     delta_wt[i] -= l2 * wt[i];
                     wt[i] += delta_wt[i];
                 }
+                if (bias != NULL) {
+                    for (i = row_start; i < row_end; i++) {
+                        delta_bias[i] = lr * er[i - row_start] - l2 * bias[i] + momentum * delta_bias[i];
+                        bias[i] += delta_bias[i];
+                    }
+                }
             } else {
                 matXmat(wt + row_start * col, er, in, row_end - row_start,
                         col, 1, lr, 1.0 - l2);
+                if (bias != NULL) {
+                    for (i = row_start; i < row_end; i++) {
+                        bias[i] += lr * er[i - row_start] - l2 * bias[i];
+                    }
+                }
             }
             break;
         default:

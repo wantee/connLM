@@ -7,7 +7,7 @@ layer name=hidden1 size=16 type=tanh
 layer name=hidden2 size=16 type=tanh
 
 glue name=emb type=emb in=input out=hidden1
-glue name=ff type=fc in=hidden1 out=hidden2
+glue name=ff type=fc in=hidden1 out=hidden2 bias=None
 glue name=recur type=fc in=hidden2 out=hidden1
-glue name=out type=out in=hidden2 out=output
+glue name=out type=out in=hidden2 out=output bias=None
 </component>

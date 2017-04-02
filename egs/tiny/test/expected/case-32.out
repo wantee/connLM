@@ -6,17 +6,17 @@ Step 1: Learn Vocab ...
 Words: 81350
 Vocab size: 3722
 =================================
-../steps/learn_vocab.sh: Elapse time: 0s
+../steps/learn_vocab.sh: Elapse time: 1s
 
 Step 9: Convert RNN to WFST ...
 ../steps/convert_to_fst.sh --num-thr 4 rnn test/tmp/case-32/exp/conf test/tmp/case-32/exp
 =================================
-#states: 2761769
-#arcs: 5606139
+#states: 776222
+#arcs: 1598784
 max-gram: 4
 #1-gram: 1
 #2-gram: 3721
-#3-gram: 82605
-#4-gram: 2758046
+#3-gram: 46344
+#4-gram: 772499
 =================================
-../steps/convert_to_fst.sh: Elapse time: 2m44s
+../steps/convert_to_fst.sh: Elapse time: 59s

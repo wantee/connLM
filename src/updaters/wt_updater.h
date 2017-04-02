@@ -84,10 +84,14 @@ typedef struct _weight_dirty_buffer_t_ {
 typedef struct _weight_updater_t_ {
     param_t param; /**< the param. */
 
-    real_t *shared_wt; /**< shared weight maxtrix for all updaters. */
-    real_t *wt; /**< local weight maxtrix of this updater. */
-    real_t *ori_wt; /**< origin weight maxtrix for sync. */
+    real_t *shared_wt; /**< shared weight matrix for all updaters. */
+    real_t *wt; /**< local weight matrix of this updater. */
+    real_t *ori_wt; /**< origin weight matrix for sync. */
     real_t *delta_wt; /**< buffer for delta weight. used by momentum. */
+    real_t *shared_bias; /**< shared bias for all updaters. */
+    real_t *bias; /**< local bias of this updater. */
+    real_t *ori_bias; /**< origin bias for sync. */
+    real_t *delta_bias; /**< buffer for delta bias. used by momentum. */
     int row; /**< row of weight maxtrix. */
     int col; /**< col of weight maxtrix. */
     wt_update_type_t type; /**< updating type. */
@@ -130,13 +134,14 @@ void wt_updater_destroy(wt_updater_t *wt_updater);
  * @ingroup g_updater_wt
  * @param[in] param the param.
  * @param[in] wt the weight maxtrix.
+ * @param[in] bias the bias vector.
  * @param[in] row row of weight maxtrix.
  * @param[in] col col of weight maxtrix.
  * @param[in] type updating type of weight maxtrix.
  * @return wt_updater on success, otherwise NULL.
  */
 wt_updater_t* wt_updater_create(param_t *param,
-        real_t *wt, int row, int col, wt_update_type_t type);
+        real_t *wt, real_t *bias, int row, int col, wt_update_type_t type);
 
 /**
  * (Re)init a wt_updater.

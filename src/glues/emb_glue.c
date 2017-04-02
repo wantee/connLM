@@ -291,6 +291,8 @@ bool emb_glue_check(glue_t *glue, layer_t **layers, int n_layer,
         }
     }
 
+    glue->wt->init_bias = INFINITY; // direct weight will not have bias
+
     return true;
 }
 
@@ -496,7 +498,8 @@ wt_updater_t* emb_glue_init_wt_updater(glue_t *glue, param_t *param)
     }
 
     wt_updater = wt_updater_create(param == NULL ? &glue->param : param,
-            glue->wt->mat, glue->wt->row, glue->wt->col, WT_UT_ONE_SHOT);
+            glue->wt->mat, glue->wt->bias,
+            glue->wt->row, glue->wt->col, WT_UT_ONE_SHOT);
     if (wt_updater == NULL) {
         ST_WARNING("Failed to wt_updater_create.");
         goto ERR;

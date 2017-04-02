@@ -55,11 +55,13 @@ typedef enum _weight_init_type_t {
  */
 typedef struct _weight_t_ {
     real_t *mat; /**< weight matrix. */
+    real_t *bias; /**< bias vector. */
     int row; /**< number row of weight matrix. */
     int col; /**< number column of weight matrix. */
 
     wt_init_type_t init_type; /**< weight init type. */
     real_t init_param; /**< parameter of init type. */
+    real_t init_bias; /**< initial value of bias, non-bias if it is inf. */
 } weight_t;
 
 /**

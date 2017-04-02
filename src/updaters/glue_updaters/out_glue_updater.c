@@ -40,11 +40,14 @@ static int out_glue_updater_forward_node(glue_updater_t *glue_updater,
         real_t *in_ac, real_t *out_ac, real_t scale)
 {
     real_t *wt;
+    real_t *bias;
     int layer_size;
+    output_node_id_t ch;
 
     ST_CHECK_PARAM(glue_updater == NULL, -1);
 
     wt = glue_updater->wt_updater->wt;
+    bias = glue_updater->wt_updater->bias;
     layer_size = glue_updater->wt_updater->col;
 
     if (output->norm == ON_SOFTMAX) {
@@ -52,6 +55,11 @@ static int out_glue_updater_forward_node(glue_updater_t *glue_updater,
             matXvec(out_ac + child_s,
                     wt + output_param_idx(output, child_s) * layer_size,
                     in_ac, child_e - child_s - 1, layer_size, scale);
+        }
+        if (bias != NULL) {
+            for (ch = child_s; ch < child_e - 1; ch++) {
+                out_ac[ch] += scale * bias[output_param_idx(output, ch)];
+            }
         }
     }
 
