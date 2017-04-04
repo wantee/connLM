@@ -1,3 +1,17 @@
+Corpus: TedliumRelease2
+Environment: AWS c4.4xlarge with 16vCPU @ 2.90GHz
+BLAS: MKL
+Thread: 16
+config commit: 3c8a2445812b7c051f253e5f0fd60bfe8d91c7b8
+
+Model        Parameters         PPL    Speed(word/sec)    Time
+=====================================================================
+MaxEnt       4/2G               156    1080k                  36min
+RNN          400                155      52k              11hr30min
+RNN+MaxEnt   400+4/2G           127      47k              14hr18min
+
+-------------------------------------------------------------------------
+Corpus: Cantab
 Environment: AWS c4.4xlarge with 16vCPU @ 2.90GHz
 BLAS: MKL
 Thread: 16
