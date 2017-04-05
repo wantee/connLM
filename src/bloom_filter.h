@@ -49,6 +49,7 @@ typedef struct _bloom_filter_opt_t_ {
     int num_hashes; /**< number of hashes. */
 
     int max_order; /**< max order of grams. */
+    int *min_counts; /**< min-count per every ngram order. */
 } bloom_filter_opt_t;
 
 /**

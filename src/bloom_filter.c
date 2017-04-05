@@ -32,6 +32,7 @@
 #include <stutils/st_macro.h>
 #include <stutils/st_log.h>
 #include <stutils/st_io.h>
+#include <stutils/st_int.h>
 #include <stutils/st_string.h>
 
 #include "reader.h"
@@ -40,6 +41,50 @@
 static const int BLOOM_FILTER_MAGIC_NUM = 626140498 + 50;
 
 #define bos_id(blm_flt) vocab_get_id((blm_flt)->vocab, SENT_START)
+
+static int str2intlist(const char *str, int *list, int n)
+{
+    int *arr = NULL;
+    int n_arr = 0;
+    int i;
+
+    if (st_parse_int_array(str, &arr, &n_arr) < 0) {
+        ST_WARNING("Failed to st_parse_int_array [%s].", str);
+        return -1;
+    }
+
+    for (i = 0; i < n && i < n_arr; i++) {
+        list[i] = arr[i];
+    }
+    for(; i < n; i++) { // fill the remaining with last value
+        list[i] = arr[n_arr - 1];
+    }
+
+    safe_st_free(arr);
+
+    if (n > n_arr) {
+        return 1;
+    } else if (n < n_arr) {
+        return 2;
+    }
+
+    return 0;
+}
+
+static char* intlist2str(int *list, int n, char *str, size_t str_len)
+{
+    size_t len;
+    int i;
+
+    len = 0;
+    for (i = 0; i < n - 1; i++) {
+        snprintf(str + len, str_len - len, "%d,", list[i]);
+        len = strlen(str);
+    }
+    snprintf(str + len, str_len - len, "%d", list[i]);
+
+    return str;
+}
 
 int bloom_filter_load_opt(bloom_filter_opt_t *blm_flt_opt,
         st_opt_t *opt, const char *sec_name)
@@ -67,6 +112,21 @@ int bloom_filter_load_opt(bloom_filter_opt_t *blm_flt_opt,
             "max order of n-grams.");
     if (blm_flt_opt->max_order <= 0) {
         ST_WARNING("MAX_ORDER must be larger than zero");
+        goto ST_OPT_ERR;
+    }
+
+    ST_OPT_SEC_GET_STR(opt, sec_name, "MIN_COUNTS", str, MAX_ST_CONF_LEN, "1",
+            "min-count per every ngram order, in a comma-separated list.");
+
+    blm_flt_opt->min_counts = (int *)st_malloc(sizeof(int)
+            * blm_flt_opt->max_order);
+    if (blm_flt_opt->min_counts == NULL) {
+        ST_WARNING("Failed to st_malloc min_counts.");
+        goto ST_OPT_ERR;
+    }
+    if (str2intlist(str, blm_flt_opt->min_counts,
+                blm_flt_opt->max_order) < 0) {
+        ST_WARNING("Failed to str2intlist for min_counts[%s].", str);
         goto ST_OPT_ERR;
     }
 
@@ -130,6 +190,8 @@ void bloom_filter_destroy(bloom_filter_t *blm_flt)
     safe_st_free(blm_flt->cells);
 
     safe_vocab_destroy(blm_flt->vocab);
+
+    safe_st_free(blm_flt->blm_flt_opt.min_counts);
 }
 
 static int bloom_filter_init_hash(bloom_filter_t *blm_flt)
@@ -220,7 +282,9 @@ static int bloom_filter_load_header(bloom_filter_t *blm_flt,
     size_t capacity;
     int num_hashes;
     int max_order;
+    int *min_counts = NULL;
 
+    char str[MAX_LINE_LEN];
     bool b;
 
     ST_CHECK_PARAM((blm_flt == NULL && fo_info == NULL) || fp == NULL
@@ -252,19 +316,36 @@ static int bloom_filter_load_header(bloom_filter_t *blm_flt,
             return -1;
         }
 
+        if (version < 9) {
+            ST_WARNING("File versoin[%d] less than 9 is not supported, "
+                    "please downgrade connlm toolkit", version);
+            return -1;
+        }
+
         if (fread(&capacity, sizeof(size_t), 1, fp) != 1) {
             ST_WARNING("Failed to read capacity.");
-            return -1;
+            goto ERR;
         }
 
         if (fread(&num_hashes, sizeof(int), 1, fp) != 1) {
             ST_WARNING("Failed to read num_hashes.");
-            return -1;
+            goto ERR;
         }
 
         if (fread(&max_order, sizeof(int), 1, fp) != 1) {
             ST_WARNING("Failed to read max_order.");
-            return -1;
+            goto ERR;
+        }
+
+        min_counts = (int *)st_malloc(sizeof(int) * max_order);
+        if (min_counts == NULL) {
+            ST_WARNING("Failed to st_malloc min_counts.");
+            goto ERR;
+        }
+
+        if (fread(min_counts, sizeof(int), max_order, fp) != max_order) {
+            ST_WARNING("Failed to read min_counts.");
+            goto ERR;
         }
     } else {
         if (st_readline(fp, "    ") != 0) {
@@ -289,17 +370,33 @@ static int bloom_filter_load_header(bloom_filter_t *blm_flt,
 
         if (st_readline(fp, "Capacity: %zu", &capacity) != 1) {
             ST_WARNING("Failed to parse capacity.[%zu]", capacity);
-            return -1;
+            goto ERR;
         }
 
         if (st_readline(fp, "Num Hashes: %d", &num_hashes) != 1) {
             ST_WARNING("Failed to parse num_hashes.[%d]", num_hashes);
-            return -1;
+            goto ERR;
         }
 
         if (st_readline(fp, "Max Order: %d", &max_order) != 1) {
             ST_WARNING("Failed to parse max_order.[%d]", max_order);
-            return -1;
+            goto ERR;
+        }
+
+        if (st_readline(fp, "Min-Counts: %"xSTR(MAX_LINE_LEN)"s", str) != 1) {
+            ST_WARNING("Failed to parse min_counts.[%s]", str);
+            goto ERR;
+        }
+
+        min_counts = (int *)st_malloc(sizeof(int) * max_order);
+        if (min_counts == NULL) {
+            ST_WARNING("Failed to st_malloc min_counts.");
+            goto ERR;
+        }
+
+        if (str2intlist(str, min_counts, max_order) < 0) {
+            ST_WARNING("Failed to str2intlist for min_counts[%s].", str);
+            goto ERR;
         }
     }
 
@@ -307,6 +404,15 @@ static int bloom_filter_load_header(bloom_filter_t *blm_flt,
         blm_flt->blm_flt_opt.capacity = capacity;
         blm_flt->blm_flt_opt.num_hashes = num_hashes;
         blm_flt->blm_flt_opt.max_order = max_order;
+
+        blm_flt->blm_flt_opt.min_counts = (int *)st_malloc(
+                sizeof(int) * max_order);
+        if (blm_flt->blm_flt_opt.min_counts == NULL) {
+            ST_WARNING("Failed to st_malloc min_counts for blm_flt_opt.");
+            goto ERR;
+        }
+        memcpy(blm_flt->blm_flt_opt.min_counts, min_counts,
+                sizeof(int) * max_order);
     }
 
     if (fo_info != NULL) {
@@ -315,6 +421,8 @@ static int bloom_filter_load_header(bloom_filter_t *blm_flt,
         fprintf(fo_info, "Capacity: %zu\n", capacity);
         fprintf(fo_info, "Num Hashes: %d\n", num_hashes);
         fprintf(fo_info, "Max Order: %d\n", max_order);
+        fprintf(fo_info, "Min-Counts: %s\n",
+                intlist2str(min_counts, max_order, str, MAX_LINE_LEN));
     }
 
     b = *binary;
@@ -322,18 +430,24 @@ static int bloom_filter_load_header(bloom_filter_t *blm_flt,
     if (vocab_load_header((blm_flt == NULL) ? NULL : &(blm_flt->vocab),
                 version, fp, binary, fo_info) < 0) {
         ST_WARNING("Failed to vocab_load_header.");
-        return -1;
+        goto ERR;
     }
     if (*binary != b) {
         ST_WARNING("Both binary and text format in one file.");
-        return -1;
+        goto ERR;
     }
 
     if (fo_info != NULL) {
         fflush(fo_info);
     }
 
+    safe_st_free(min_counts);
+
     return version;
+
+ERR:
+    safe_st_free(min_counts);
+    return -1;
 }
 
 static int bloom_filter_load_body(bloom_filter_t *blm_flt, int version,
@@ -414,6 +528,7 @@ ERR:
 static int bloom_filter_save_header(bloom_filter_t *blm_flt, FILE *fp,
         bool binary)
 {
+    char str[MAX_LINE_LEN];
     int n;
 
     ST_CHECK_PARAM(blm_flt == NULL || fp == NULL, -1);
@@ -444,6 +559,13 @@ static int bloom_filter_save_header(bloom_filter_t *blm_flt, FILE *fp,
             ST_WARNING("Failed to write max_order.");
             return -1;
         }
+
+        if (fwrite(blm_flt->blm_flt_opt.min_counts, sizeof(int),
+                   blm_flt->blm_flt_opt.max_order, fp)
+                != blm_flt->blm_flt_opt.max_order) {
+            ST_WARNING("Failed to write min_counts.");
+            return -1;
+        }
     } else {
         if (fprintf(fp, "    \n<BLOOM_FILTER>\n") < 0) {
             ST_WARNING("Failed to fprintf header.");
@@ -466,6 +588,14 @@ static int bloom_filter_save_header(bloom_filter_t *blm_flt, FILE *fp,
 
         if (fprintf(fp, "Max Order: %d\n", blm_flt->blm_flt_opt.max_order) < 0) {
             ST_WARNING("Failed to fprintf max_order.");
+            return -1;
+        }
+
+        if (fprintf(fp, "Min-Counts: %s\n",
+                   intlist2str(blm_flt->blm_flt_opt.min_counts,
+                        blm_flt->blm_flt_opt.max_order,
+                        str, MAX_LINE_LEN)) < 0) {
+            ST_WARNING("Failed to fprintf min_counts.");
             return -1;
         }
     }
