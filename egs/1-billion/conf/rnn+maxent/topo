@@ -3,14 +3,14 @@ property name=maxent
 
 input context=-4,-3,-2,-1
 
-glue name=direct type=direct size=128M in=input out=output
+glue name=direct type=direct size=2G in=input out=output
 </component>
 <component>
 property name=rnn
 
 input context=-1
 
-layer name=hidden size=300 type=tanh
+layer name=hidden size=600 type=tanh
 
 glue name=emb type=emb in=input out=hidden init=uniform init_param=0.1
 glue name=recur type=fc in=hidden out=hidden init=trunc_norm init_param=0.01
