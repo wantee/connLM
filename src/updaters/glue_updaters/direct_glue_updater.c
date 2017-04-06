@@ -286,7 +286,7 @@ static int direct_forward_walker(output_t *output, output_node_id_t node,
     output_node_id_t ch;
     hash_t h;
     real_t scale;
-    int hash_sz;
+    size_t hash_sz;
 
     dw_args = (direct_walker_args_t *) args;
 
@@ -407,9 +407,9 @@ static int direct_backprop_walker(output_t *output, output_node_id_t node,
         output_node_id_t child_s, output_node_id_t child_e, void *args)
 {
     direct_walker_args_t *dw_args;
-    st_int_seg_t seg;
+    st_size_seg_t seg;
     hash_t h;
-    int hash_sz;
+    size_t hash_sz;
 
     dw_args = (direct_walker_args_t *) args;
 
@@ -491,8 +491,9 @@ int direct_glue_updater_forward_out(glue_updater_t *glue_updater,
 
     real_t *hash_wt;
     real_t scale;
-    int hash_sz, a;
+    size_t hash_sz;
     hash_t h;
+    int a;
 
     output_node_id_t ch, child_s, child_e;
 

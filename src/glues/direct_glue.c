@@ -169,7 +169,7 @@ int direct_glue_parse_topo(glue_t *glue, const char *line)
         }
 
         if (strcasecmp("size", keyvalue) == 0) {
-            data->hash_sz = (int)st_str2ll(keyvalue + MAX_LINE_LEN);
+            data->hash_sz = st_str2ll(keyvalue + MAX_LINE_LEN);
             if (data->hash_sz <= 0) {
                 ST_WARNING("Illegal size[%s]", keyvalue + MAX_LINE_LEN);
                 goto ERR;
@@ -258,16 +258,14 @@ int direct_glue_load_header(void **extra, int version,
         int magic_num;
     } flag;
 
-    int hash_sz;
+    size_t hash_sz;
 
     ST_CHECK_PARAM((extra == NULL && fo_info == NULL) || fp == NULL
             || binary == NULL, -1);
 
-    if (version < 3) {
+    if (version < 9) {
         ST_WARNING("Too old version of connlm file");
         return -1;
-    } else if (version < 4) { // Add this function from version 4
-        return 0;
     }
 
     if (fread(&flag.magic_num, sizeof(int), 1, fp) != 1) {
@@ -289,7 +287,7 @@ int direct_glue_load_header(void **extra, int version,
     }
 
     if (*binary) {
-        if (fread(&hash_sz, sizeof(int), 1, fp) != 1) {
+        if (fread(&hash_sz, sizeof(size_t), 1, fp) != 1) {
             ST_WARNING("Failed to read hash_sz.");
             return -1;
         }
@@ -303,7 +301,7 @@ int direct_glue_load_header(void **extra, int version,
             goto ERR;
         }
 
-        if (st_readline(fp, "Hash size: %d", &hash_sz) != 1) {
+        if (st_readline(fp, "Hash size: %zu", &hash_sz) != 1) {
             ST_WARNING("Failed to parse hash_sz.");
             goto ERR;
         }
@@ -322,7 +320,7 @@ int direct_glue_load_header(void **extra, int version,
 
     if (fo_info != NULL) {
         fprintf(fo_info, "\n<DIRECT-GLUE>\n");
-        fprintf(fo_info, "Hash size: %d\n", hash_sz);
+        fprintf(fo_info, "Hash size: %zu\n", hash_sz);
     }
 
     return 0;
@@ -348,7 +346,7 @@ int direct_glue_save_header(void *extra, FILE *fp, bool binary)
             return -1;
         }
 
-        if (fwrite(&(data->hash_sz), sizeof(int), 1, fp) != 1) {
+        if (fwrite(&(data->hash_sz), sizeof(size_t), 1, fp) != 1) {
             ST_WARNING("Failed to write hash_sz.");
             return -1;
         }
@@ -358,7 +356,7 @@ int direct_glue_save_header(void *extra, FILE *fp, bool binary)
             return -1;
         }
 
-        if (fprintf(fp, "Hash size: %d\n", data->hash_sz) < 0) {
+        if (fprintf(fp, "Hash size: %zu\n", data->hash_sz) < 0) {
             ST_WARNING("Failed to fprintf hash_sz.");
             return -1;
         }
@@ -382,7 +380,7 @@ int direct_glue_init_data(glue_t *glue, input_t *input,
 
     data = (direct_glue_data_t *)glue->extra;
 
-    if (wt_init(glue->wt, data->hash_sz, 0) < 0) {
+    if (wt_init(glue->wt, data->hash_sz, 1) < 0) {
         ST_WARNING("Failed to wt_init.");
         return -1;
     }

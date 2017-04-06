@@ -56,8 +56,8 @@ typedef enum _weight_init_type_t {
 typedef struct _weight_t_ {
     real_t *mat; /**< weight matrix. */
     real_t *bias; /**< bias vector. */
-    int row; /**< number row of weight matrix. */
-    int col; /**< number column of weight matrix. */
+    size_t row; /**< number row of weight matrix. */
+    size_t col; /**< number column of weight matrix. */
 
     wt_init_type_t init_type; /**< weight init type. */
     real_t init_param; /**< parameter of init type. */
@@ -162,7 +162,7 @@ int wt_save_body(weight_t *wt, FILE *fp, bool binary, char *name);
  * @param[in] col num of column in matrix.
  * @return non-zero value if any error.
  */
-int wt_init(weight_t *wt, int row, int col);
+int wt_init(weight_t *wt, size_t row, size_t col);
 
 /**
  * Do sanity check on a weight and print warnings.

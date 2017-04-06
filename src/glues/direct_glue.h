@@ -49,7 +49,7 @@ extern "C" {
  * @ingroup g_glue_direct
  */
 typedef struct _direct_glue_data_t_ {
-    int hash_sz; /**< size of hash wt. */
+    size_t hash_sz; /**< size of hash wt. */
 } direct_glue_data_t;
 
 /**

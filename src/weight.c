@@ -73,19 +73,11 @@ void wt_destroy(weight_t *wt)
     wt->col = 0;
 }
 
-static int wt_alloc(weight_t *wt, int row, int col)
+static int wt_alloc(weight_t *wt, size_t row, size_t col)
 {
-    size_t sz;
+    ST_CHECK_PARAM(wt == NULL || row <= 0 || col <= 0, -1);
 
-    ST_CHECK_PARAM(wt == NULL || row < 0, -1);
-
-    sz = row;
-    if (col > 0) {
-        sz *= col;
-    }
-    sz *= sizeof(real_t);
-
-    wt->mat = st_aligned_malloc(sz, ALIGN_SIZE);
+    wt->mat = st_aligned_malloc(row * col * sizeof(real_t), ALIGN_SIZE);
     if (wt->mat == NULL) {
         ST_WARNING("Failed to st_aligned_malloc mat.");
         goto ERR;
@@ -115,7 +107,6 @@ ERR:
 weight_t* wt_dup(weight_t *src)
 {
     weight_t *dst = NULL;
-    size_t sz;
 
     ST_CHECK_PARAM(src == NULL, NULL);
 
@@ -134,13 +125,8 @@ weight_t* wt_dup(weight_t *src)
         ST_WARNING("Failed to wt_alloc.");
         goto ERR;
     }
-    sz = src->row;
-    if (src->col > 0) {
-        sz *= src->col;
-    }
-    sz *= sizeof(real_t);
 
-    memcpy(dst->mat, src->mat, sz);
+    memcpy(dst->mat, src->mat, src->row * src->col * sizeof(real_t));
 
     if (src->bias != NULL) {
         memcpy(dst->bias, src->bias, sizeof(real_t) * src->row);
@@ -281,8 +267,8 @@ int wt_load_header(weight_t **wt, int version,
         int magic_num;
     } flag;
 
-    int row;
-    int col;
+    size_t row;
+    size_t col;
     int i;
     real_t init_param;
     real_t init_bias = INFINITY;
@@ -290,7 +276,7 @@ int wt_load_header(weight_t **wt, int version,
     ST_CHECK_PARAM((wt == NULL && fo_info == NULL) || fp == NULL
             || binary == NULL, -1);
 
-    if (version < 3) {
+    if (version < 9) {
         ST_WARNING("Too old version of connlm file");
         return -1;
     }
@@ -314,11 +300,11 @@ int wt_load_header(weight_t **wt, int version,
     }
 
     if (*binary) {
-        if (fread(&row, sizeof(int), 1, fp) != 1) {
+        if (fread(&row, sizeof(size_t), 1, fp) != 1) {
             ST_WARNING("Failed to read row.");
             return -1;
         }
-        if (fread(&col, sizeof(int), 1, fp) != 1) {
+        if (fread(&col, sizeof(size_t), 1, fp) != 1) {
             ST_WARNING("Failed to read col.");
             return -1;
         }
@@ -346,11 +332,11 @@ int wt_load_header(weight_t **wt, int version,
             goto ERR;
         }
 
-        if (st_readline(fp, "Row: %d", &row) != 1) {
+        if (st_readline(fp, "Row: %zu", &row) != 1) {
             ST_WARNING("Failed to parse row.");
             goto ERR;
         }
-        if (st_readline(fp, "Col: %d", &col) != 1) {
+        if (st_readline(fp, "Col: %zu", &col) != 1) {
             ST_WARNING("Failed to parse col.");
             goto ERR;
         }
@@ -401,8 +387,8 @@ int wt_load_header(weight_t **wt, int version,
 
     if (fo_info != NULL) {
         fprintf(fo_info, "\n<WEIGHT>\n");
-        fprintf(fo_info, "Row: %d\n", row);
-        fprintf(fo_info, "Col: %d\n", col);
+        fprintf(fo_info, "Row: %zu\n", row);
+        fprintf(fo_info, "Col: %zu\n", col);
         fprintf(fo_info, "Init: %s\n", init2str((wt_init_type_t)i));
         fprintf(fo_info, "Init param: %g\n", init_param);
         if (isinf(init_bias)) {
@@ -425,8 +411,8 @@ int wt_load_body(weight_t *wt, int version, FILE *fp, bool binary)
 {
     char name[MAX_NAME_LEN];
     int n;
-    int i, j, col;
-    int sz;
+    size_t i, j;
+    size_t sz;
 
     char *line = NULL;
     size_t line_sz = 0;
@@ -436,7 +422,7 @@ int wt_load_body(weight_t *wt, int version, FILE *fp, bool binary)
 
     ST_CHECK_PARAM(wt == NULL || fp == NULL, -1);
 
-    if (version < 5) {
+    if (version < 9) {
         ST_WARNING("Too old version of connlm file");
         return -1;
     }
@@ -450,11 +436,6 @@ int wt_load_body(weight_t *wt, int version, FILE *fp, bool binary)
         return -1;
     }
 
-    sz = wt->row;
-    if (wt->col > 0) {
-        sz *= wt->col;
-    }
-
     if (binary) {
         if (fread(&n, sizeof(int), 1, fp) != 1) {
             ST_WARNING("Failed to read magic num.");
@@ -466,6 +447,7 @@ int wt_load_body(weight_t *wt, int version, FILE *fp, bool binary)
             goto ERR;
         }
 
+        sz = wt->row * wt->col;
         if (fread(wt->mat, sizeof(real_t), sz, fp) != sz) {
             ST_WARNING("Failed to read mat.");
             goto ERR;
@@ -487,34 +469,29 @@ int wt_load_body(weight_t *wt, int version, FILE *fp, bool binary)
             goto ERR;
         }
 
-        if (wt->col <= 0) {
-            col = 1;
-        } else {
-            col = wt->col;
-        }
         for (i = 0; i < wt->row; i++) {
             if (st_fgets(&line, &line_sz, fp, &err) == NULL || err) {
-                ST_WARNING("Failed to parse mat[%d].", i);
+                ST_WARNING("Failed to parse mat[%zu].", i);
             }
             p = line;
-            for (j = 0; j < col; j++) {
+            for (j = 0; j < wt->col; j++) {
                 p = get_next_token(p, token);
                 if (p == NULL
-                        || sscanf(token, REAL_FMT, wt->mat+i*col+j) != 1) {
-                    ST_WARNING("Failed to parse mat[%d, %d].", i, j);
+                        || sscanf(token, REAL_FMT, wt->mat+i*wt->col+j) != 1) {
+                    ST_WARNING("Failed to parse mat[%zu, %zu].", i, j);
                     goto ERR;
                 }
             }
         }
         if (wt->bias != NULL) {
             if (st_fgets(&line, &line_sz, fp, &err) == NULL || err) {
-                ST_WARNING("Failed to parse bias[%d].", i);
+                ST_WARNING("Failed to parse bias.");
             }
             p = line;
             for (i = 0; i < wt->row; i++) {
                 p = get_next_token(p, token);
                 if (p == NULL || sscanf(token, REAL_FMT, wt->bias + i) != 1) {
-                    ST_WARNING("Failed to parse bias[%d].", i);
+                    ST_WARNING("Failed to parse bias[%zu].", i);
                     goto ERR;
                 }
             }
@@ -540,11 +517,11 @@ int wt_save_header(weight_t *wt, FILE *fp, bool binary)
             return -1;
         }
 
-        if (fwrite(&wt->row, sizeof(int), 1, fp) != 1) {
+        if (fwrite(&wt->row, sizeof(size_t), 1, fp) != 1) {
             ST_WARNING("Failed to write row.");
             return -1;
         }
-        if (fwrite(&wt->col, sizeof(int), 1, fp) != 1) {
+        if (fwrite(&wt->col, sizeof(size_t), 1, fp) != 1) {
             ST_WARNING("Failed to write col.");
             return -1;
         }
@@ -568,11 +545,11 @@ int wt_save_header(weight_t *wt, FILE *fp, bool binary)
             return -1;
         }
 
-        if (fprintf(fp, "Row: %d\n", wt->row) < 0) {
+        if (fprintf(fp, "Row: %zu\n", wt->row) < 0) {
             ST_WARNING("Failed to fprintf row.");
             return -1;
         }
-        if (fprintf(fp, "Col: %d\n", wt->col) < 0) {
+        if (fprintf(fp, "Col: %zu\n", wt->col) < 0) {
             ST_WARNING("Failed to fprintf col.");
             return -1;
         }
@@ -596,18 +573,13 @@ int wt_save_header(weight_t *wt, FILE *fp, bool binary)
 int wt_save_body(weight_t *wt, FILE *fp, bool binary, char *name)
 {
     int n;
-    int i, j, col;
-    int sz;
+    size_t i, j;
+    size_t sz;
 
     ST_CHECK_PARAM(fp == NULL, -1);
 
     if (wt->row <= 0) {
         return 0;
-    }
-
-    sz = wt->row;
-    if (wt->col > 0) {
-        sz *= wt->col;
     }
 
     if (binary) {
@@ -617,6 +589,7 @@ int wt_save_body(weight_t *wt, FILE *fp, bool binary, char *name)
             return -1;
         }
 
+        sz = wt->row * wt->col;
         if (fwrite(wt->mat, sizeof(real_t), sz, fp) != sz) {
             ST_WARNING("Failed to write mat.");
             return -1;
@@ -637,32 +610,27 @@ int wt_save_body(weight_t *wt, FILE *fp, bool binary, char *name)
             return -1;
         }
 
-        if (wt->col <= 0) {
-            col = 1;
-        } else {
-            col = wt->col;
-        }
         for (i = 0; i < wt->row; i++) {
-            for (j = 0; j < col - 1; j++) {
-                if (fprintf(fp, REAL_FMT" ", wt->mat[i*col + j]) < 0) {
-                    ST_WARNING("Failed to fprintf mat[%d,%d].", i, j);
+            for (j = 0; j < wt->col - 1; j++) {
+                if (fprintf(fp, REAL_FMT" ", wt->mat[i*wt->col + j]) < 0) {
+                    ST_WARNING("Failed to fprintf mat[%zu,%zu].", i, j);
                     return -1;
                 }
             }
-            if (fprintf(fp, REAL_FMT"\n", wt->mat[i*col + j]) < 0) {
-                ST_WARNING("Failed to fprintf mat[%d/%d].", i, j);
+            if (fprintf(fp, REAL_FMT"\n", wt->mat[i*wt->col + j]) < 0) {
+                ST_WARNING("Failed to fprintf mat[%zu/%zu].", i, j);
                 return -1;
             }
         }
         if (wt->bias != NULL) {
             for (i = 0; i < wt->row - 1; i++) {
                 if (fprintf(fp, REAL_FMT" ", wt->bias[i]) < 0) {
-                    ST_WARNING("Failed to fprintf bias[%d].", i);
+                    ST_WARNING("Failed to fprintf bias[%zu].", i);
                     return -1;
                 }
             }
             if (fprintf(fp, REAL_FMT"\n", wt->bias[i]) < 0) {
-                ST_WARNING("Failed to fprintf bias[%d].", i);
+                ST_WARNING("Failed to fprintf bias[%zu].", i);
                 return -1;
             }
         }
@@ -671,10 +639,10 @@ int wt_save_body(weight_t *wt, FILE *fp, bool binary, char *name)
     return 0;
 }
 
-int wt_init(weight_t *wt, int row, int col)
+int wt_init(weight_t *wt, size_t row, size_t col)
 {
-    int i;
-    int sz;
+    size_t i;
+    size_t sz;
 
     ST_CHECK_PARAM(wt == NULL || row <= 0, -1);
 
@@ -683,11 +651,7 @@ int wt_init(weight_t *wt, int row, int col)
         return -1;
     }
 
-    sz = wt->row;
-    if (wt->col > 0) {
-        sz *= wt->col;
-    }
-
+    sz = wt->row * wt->col;
     switch(wt->init_type) {
         case WT_INIT_CONST:
             for (i = 0; i < sz; i++) {
@@ -735,15 +699,11 @@ int wt_init(weight_t *wt, int row, int col)
 
 void wt_sanity_check(weight_t *wt, const char *name)
 {
-    int n;
-    int i, sz;
+    size_t i, n, sz;
 
     ST_CHECK_PARAM_VOID(wt == NULL);
 
-    sz = wt->row;
-    if (wt->col > 0) {
-        sz *= wt->col;
-    }
+    sz = wt->row * wt->col;
 
     n = 0;
     for (i = 0; i < sz; i++) {
@@ -753,7 +713,7 @@ void wt_sanity_check(weight_t *wt, const char *name)
     }
 
     if (n > 0) {
-        ST_WARNING("There are %d extraordinary values in weight of [%s]",
+        ST_WARNING("There are %zu extraordinary values in weight of [%s]",
                 n, name);
     }
 
@@ -766,7 +726,7 @@ void wt_sanity_check(weight_t *wt, const char *name)
         }
 
         if (n > 0) {
-            ST_WARNING("There are %d extraordinary values in bias of [%s]",
+            ST_WARNING("There are %zu extraordinary values in bias of [%s]",
                     n, name);
         }
     }
