@@ -148,6 +148,7 @@ int bloom_filter_build(bloom_filter_t *blm_flt, FILE *text_fp);
  */
 typedef struct _bloom_filter_buffer_t_ {
     hash_t *hash_vals; /**< buffer stored (num_hashes) hash values. */
+    int unit_bits; /**< number of bits in a slot of hash. */
 } bloom_filter_buf_t;
 
 /**
