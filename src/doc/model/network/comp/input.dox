@@ -39,6 +39,10 @@
     E.g. for a 5-gram input, context=-4,-3,-2,-1, or one can also set a
     skip-gram input with context=-4,-2. Since our model should be able to
     predict current target word, 0 can not be in the context.
+    In addition, one could give each position in context a specific weight
+    or scale, by appending a colon and a float number to the corresponding
+    integer. E.g., context=-4:0.5,-3:0.8,-2:0.9,-1. If a weight is not given,
+    the default value 1.0 will be assigned.
 
   - @c combine -- this specify how will the context words be combined into a
     single vector as input for the model. There are three methods: sum, avg
