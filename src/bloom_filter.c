@@ -32,6 +32,8 @@
 #include <stutils/st_macro.h>
 #include <stutils/st_log.h>
 #include <stutils/st_io.h>
+#include <stutils/st_int.h>
+#include <stutils/st_bit.h>
 #include <stutils/st_string.h>
 
 #include "reader.h"
@@ -41,10 +43,89 @@ static const int BLOOM_FILTER_MAGIC_NUM = 626140498 + 50;
 
 #define bos_id(blm_flt) vocab_get_id((blm_flt)->vocab, SENT_START)
 
+static int str2intlist(const char *str, int *list, int n)
+{
+    int *arr = NULL;
+    int n_arr = 0;
+    int i;
+
+    if (st_parse_int_array(str, &arr, &n_arr) < 0) {
+        ST_WARNING("Failed to st_parse_int_array [%s].", str);
+        return -1;
+    }
+
+    for (i = 0; i < n && i < n_arr; i++) {
+        list[i] = arr[i];
+    }
+    for(; i < n; i++) { // fill the remaining with last value
+        list[i] = arr[n_arr - 1];
+    }
+
+    safe_st_free(arr);
+
+    if (n > n_arr) {
+        return 1;
+    } else if (n < n_arr) {
+        return 2;
+    }
+
+    return 0;
+}
+
+static char* intlist2str(int *list, int n, char *str, size_t str_len)
+{
+    size_t len;
+    int i;
+
+    len = 0;
+    for (i = 0; i < n - 1; i++) {
+        snprintf(str + len, str_len - len, "%d,", list[i]);
+        len = strlen(str);
+    }
+    snprintf(str + len, str_len - len, "%d", list[i]);
+
+    return str;
+}
+
+static int get_max_min_count(bloom_filter_t *blm_flt)
+{
+    int i;
+    int max;
+
+    max = blm_flt->blm_flt_opt.min_counts[0];;
+    for (i = 1; i < blm_flt->blm_flt_opt.max_order; i++) {
+        if (blm_flt->blm_flt_opt.min_counts[i] > max) {
+            max = blm_flt->blm_flt_opt.min_counts[i];
+        }
+    }
+
+    return max;
+}
+
+static int get_num_unit_bits(bloom_filter_t *blm_flt)
+{
+    int m;
+    int num_bits;
+
+    m = get_max_min_count(blm_flt);
+    num_bits = 1;
+    while ((m = m >> 1) > 0) {
+        ++num_bits;
+    }
+
+    return num_bits;
+}
+
+static size_t get_num_cells(bloom_filter_t *blm_flt)
+{
+    return NBITNSLOTS(blm_flt->blm_flt_opt.capacity, get_num_unit_bits(blm_flt));
+}
+
 int bloom_filter_load_opt(bloom_filter_opt_t *blm_flt_opt,
         st_opt_t *opt, const char *sec_name)
 {
     char str[MAX_ST_CONF_LEN];
+    int i;
 
     ST_CHECK_PARAM(blm_flt_opt == NULL || opt == NULL, -1);
 
@@ -68,6 +149,26 @@ int bloom_filter_load_opt(bloom_filter_opt_t *blm_flt_opt,
     if (blm_flt_opt->max_order <= 0) {
         ST_WARNING("MAX_ORDER must be larger than zero");
         goto ST_OPT_ERR;
+    }
+
+    ST_OPT_SEC_GET_STR(opt, sec_name, "MIN_COUNTS", str, MAX_ST_CONF_LEN, "1",
+            "min-count per every ngram order, in a comma-separated list.");
+
+    blm_flt_opt->min_counts = (int *)st_malloc(sizeof(int)
+            * blm_flt_opt->max_order);
+    if (blm_flt_opt->min_counts == NULL) {
+        ST_WARNING("Failed to st_malloc min_counts.");
+        goto ST_OPT_ERR;
+    }
+    if (str2intlist(str, blm_flt_opt->min_counts,
+                blm_flt_opt->max_order) < 0) {
+        ST_WARNING("Failed to str2intlist for min_counts[%s].", str);
+        goto ST_OPT_ERR;
+    }
+    for (i = 0; i < blm_flt_opt->max_order; i++) {
+        if (blm_flt_opt->min_counts[i] < 1) {
+            blm_flt_opt->min_counts[i] = 1;
+        }
     }
 
     return 0;
@@ -105,6 +206,8 @@ bloom_filter_buf_t* bloom_filter_buf_create(bloom_filter_t *blm_flt)
         goto ERR;
     }
 
+    buf->unit_bits = get_num_unit_bits(blm_flt);
+
     return buf;
 
 ERR:
@@ -130,6 +233,8 @@ void bloom_filter_destroy(bloom_filter_t *blm_flt)
     safe_st_free(blm_flt->cells);
 
     safe_vocab_destroy(blm_flt->vocab);
+
+    safe_st_free(blm_flt->blm_flt_opt.min_counts);
 }
 
 static int bloom_filter_init_hash(bloom_filter_t *blm_flt)
@@ -189,12 +294,12 @@ bloom_filter_t* bloom_filter_create(bloom_filter_opt_t *blm_flt_opt,
 
     blm_flt->vocab = vocab_dup(vocab);
 
-    blm_flt->cells = (unsigned char *)st_malloc(BITNSLOTS(blm_flt->blm_flt_opt.capacity));
+    blm_flt->cells = (unsigned char *)st_malloc(get_num_cells(blm_flt));
     if (blm_flt->cells == NULL) {
         ST_WARNING("Failed to st_malloc cells");
         goto ERR;
     }
-    memset(blm_flt->cells, 0, BITNSLOTS(blm_flt->blm_flt_opt.capacity));
+    memset(blm_flt->cells, 0, get_num_cells(blm_flt));
 
     if (bloom_filter_init_hash(blm_flt) < 0) {
         ST_WARNING("Failed to bloom_filter_init_hash.");
@@ -208,6 +313,17 @@ ERR:
     return NULL;
 }
 
+#define NUM_CELL_LINE 16
+#define CELL_LINE_VAL_FMT "%d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d"
+#define CELL_LINE_VAL_PTR(vals) (vals), (vals) + 1, (vals) + 2, (vals) + 3, \
+                            (vals) + 4, (vals) + 5, (vals) + 6, (vals) + 7, \
+                            (vals) + 8, (vals) + 9, (vals) + 10, (vals) + 11, \
+                            (vals) + 12, (vals) + 13, (vals) + 14, (vals) + 15
+#define CELL_LINE_VAL(vals) (vals)[0], (vals)[1], (vals)[2], (vals)[3], \
+                            (vals)[4], (vals)[5], (vals)[6], (vals)[7], \
+                            (vals)[8], (vals)[9], (vals)[10], (vals)[11], \
+                            (vals)[12], (vals)[13], (vals)[14], (vals)[15]
+
 static int bloom_filter_load_header(bloom_filter_t *blm_flt,
         FILE *fp, bool *binary, FILE *fo_info)
 {
@@ -220,7 +336,9 @@ static int bloom_filter_load_header(bloom_filter_t *blm_flt,
     size_t capacity;
     int num_hashes;
     int max_order;
+    int *min_counts = NULL;
 
+    char str[MAX_LINE_LEN];
     bool b;
 
     ST_CHECK_PARAM((blm_flt == NULL && fo_info == NULL) || fp == NULL
@@ -252,19 +370,36 @@ static int bloom_filter_load_header(bloom_filter_t *blm_flt,
             return -1;
         }
 
+        if (version < 9) {
+            ST_WARNING("File versoin[%d] less than 9 is not supported, "
+                    "please downgrade connlm toolkit", version);
+            return -1;
+        }
+
         if (fread(&capacity, sizeof(size_t), 1, fp) != 1) {
             ST_WARNING("Failed to read capacity.");
-            return -1;
+            goto ERR;
         }
 
         if (fread(&num_hashes, sizeof(int), 1, fp) != 1) {
             ST_WARNING("Failed to read num_hashes.");
-            return -1;
+            goto ERR;
         }
 
         if (fread(&max_order, sizeof(int), 1, fp) != 1) {
             ST_WARNING("Failed to read max_order.");
-            return -1;
+            goto ERR;
+        }
+
+        min_counts = (int *)st_malloc(sizeof(int) * max_order);
+        if (min_counts == NULL) {
+            ST_WARNING("Failed to st_malloc min_counts.");
+            goto ERR;
+        }
+
+        if (fread(min_counts, sizeof(int), max_order, fp) != max_order) {
+            ST_WARNING("Failed to read min_counts.");
+            goto ERR;
         }
     } else {
         if (st_readline(fp, "    ") != 0) {
@@ -289,17 +424,33 @@ static int bloom_filter_load_header(bloom_filter_t *blm_flt,
 
         if (st_readline(fp, "Capacity: %zu", &capacity) != 1) {
             ST_WARNING("Failed to parse capacity.[%zu]", capacity);
-            return -1;
+            goto ERR;
         }
 
         if (st_readline(fp, "Num Hashes: %d", &num_hashes) != 1) {
             ST_WARNING("Failed to parse num_hashes.[%d]", num_hashes);
-            return -1;
+            goto ERR;
         }
 
         if (st_readline(fp, "Max Order: %d", &max_order) != 1) {
             ST_WARNING("Failed to parse max_order.[%d]", max_order);
-            return -1;
+            goto ERR;
+        }
+
+        if (st_readline(fp, "Min-Counts: %"xSTR(MAX_LINE_LEN)"s", str) != 1) {
+            ST_WARNING("Failed to parse min_counts.[%s]", str);
+            goto ERR;
+        }
+
+        min_counts = (int *)st_malloc(sizeof(int) * max_order);
+        if (min_counts == NULL) {
+            ST_WARNING("Failed to st_malloc min_counts.");
+            goto ERR;
+        }
+
+        if (str2intlist(str, min_counts, max_order) < 0) {
+            ST_WARNING("Failed to str2intlist for min_counts[%s].", str);
+            goto ERR;
         }
     }
 
@@ -307,6 +458,15 @@ static int bloom_filter_load_header(bloom_filter_t *blm_flt,
         blm_flt->blm_flt_opt.capacity = capacity;
         blm_flt->blm_flt_opt.num_hashes = num_hashes;
         blm_flt->blm_flt_opt.max_order = max_order;
+
+        blm_flt->blm_flt_opt.min_counts = (int *)st_malloc(
+                sizeof(int) * max_order);
+        if (blm_flt->blm_flt_opt.min_counts == NULL) {
+            ST_WARNING("Failed to st_malloc min_counts for blm_flt_opt.");
+            goto ERR;
+        }
+        memcpy(blm_flt->blm_flt_opt.min_counts, min_counts,
+                sizeof(int) * max_order);
     }
 
     if (fo_info != NULL) {
@@ -315,6 +475,8 @@ static int bloom_filter_load_header(bloom_filter_t *blm_flt,
         fprintf(fo_info, "Capacity: %zu\n", capacity);
         fprintf(fo_info, "Num Hashes: %d\n", num_hashes);
         fprintf(fo_info, "Max Order: %d\n", max_order);
+        fprintf(fo_info, "Min-Counts: %s\n",
+                intlist2str(min_counts, max_order, str, MAX_LINE_LEN));
     }
 
     b = *binary;
@@ -322,18 +484,24 @@ static int bloom_filter_load_header(bloom_filter_t *blm_flt,
     if (vocab_load_header((blm_flt == NULL) ? NULL : &(blm_flt->vocab),
                 version, fp, binary, fo_info) < 0) {
         ST_WARNING("Failed to vocab_load_header.");
-        return -1;
+        goto ERR;
     }
     if (*binary != b) {
         ST_WARNING("Both binary and text format in one file.");
-        return -1;
+        goto ERR;
     }
 
     if (fo_info != NULL) {
         fflush(fo_info);
     }
 
+    safe_st_free(min_counts);
+
     return version;
+
+ERR:
+    safe_st_free(min_counts);
+    return -1;
 }
 
 static int bloom_filter_load_body(bloom_filter_t *blm_flt, int version,
@@ -342,7 +510,12 @@ static int bloom_filter_load_body(bloom_filter_t *blm_flt, int version,
     int n;
 
     size_t i;
-    int f;
+    char buf[sizeof(int) * CHAR_BIT + 1];
+    char str[MAX_LINE_LEN];
+    int vals[NUM_CELL_LINE];
+    char *p;
+    int j, b;
+    int unit_bits;
 
     ST_CHECK_PARAM(blm_flt == NULL || fp == NULL, -1);
 
@@ -359,15 +532,14 @@ static int bloom_filter_load_body(bloom_filter_t *blm_flt, int version,
             goto ERR;
         }
 
-        blm_flt->cells = (unsigned char *)st_malloc(BITNSLOTS(blm_flt->blm_flt_opt.capacity));
+        blm_flt->cells = (unsigned char *)st_malloc(get_num_cells(blm_flt));
         if (blm_flt->cells == NULL) {
             ST_WARNING("Failed to st_malloc cells.");
             goto ERR;
         }
 
         if (fread(blm_flt->cells, sizeof(unsigned char),
-                    BITNSLOTS(blm_flt->blm_flt_opt.capacity),
-                    fp) != BITNSLOTS(blm_flt->blm_flt_opt.capacity)) {
+                    get_num_cells(blm_flt), fp) != get_num_cells(blm_flt)) {
             ST_WARNING("Failed to read cells.");
             goto ERR;
         }
@@ -377,25 +549,66 @@ static int bloom_filter_load_body(bloom_filter_t *blm_flt, int version,
             goto ERR;
         }
 
-        blm_flt->cells = (unsigned char *)st_malloc(BITNSLOTS(blm_flt->blm_flt_opt.capacity));
+        blm_flt->cells = (unsigned char *)st_malloc(get_num_cells(blm_flt));
         if (blm_flt->cells == NULL) {
             ST_WARNING("Failed to st_malloc cells.");
             goto ERR;
         }
-        memset(blm_flt->cells, 0, BITNSLOTS(blm_flt->blm_flt_opt.capacity));
+        memset(blm_flt->cells, 0, get_num_cells(blm_flt));
 
         if (st_readline(fp, " Cells:") != 0) {
             ST_WARNING("cells flag error.");
             goto ERR;
         }
 
-        for (i = 0; i < blm_flt->blm_flt_opt.capacity; i++) {
-            if (st_readline(fp, "\t%*zu\t%d\n", &f) != 1) {
+        unit_bits = get_num_unit_bits(blm_flt);
+        for (i = 0; i < blm_flt->blm_flt_opt.capacity / NUM_CELL_LINE; i++) {
+            if (st_readline(fp, "\t%*zu:\t"CELL_LINE_VAL_FMT"\n",
+                        CELL_LINE_VAL_PTR(vals)) != NUM_CELL_LINE) {
                 ST_WARNING("Failed to parse cells.");
                 goto ERR;
             }
-            if (f != 0) {
-                BITSET(blm_flt->cells, i);
+            for (j = 0; j < NUM_CELL_LINE; j++) {
+                if (vals[j] != 0) {
+                    st_nbit_set(blm_flt->cells, unit_bits,
+                            i * NUM_CELL_LINE + j, vals[j]);
+                }
+            }
+        }
+        if (st_readline(fp, "\t%*zu:\t%s\n", str) != 1) {
+            ST_WARNING("Failed to parse last line cells.");
+            goto ERR;
+        }
+        p = str;
+        for (j = 0; j < blm_flt->blm_flt_opt.capacity % NUM_CELL_LINE; j++) {
+            b = 0;
+            while (*p != '\0' && *p != ' ') {
+                if (b > sizeof(int) * CHAR_BIT) {
+                    ST_WARNING("Too large slot val");
+                    goto ERR;
+                }
+                buf[b] = *p;
+                ++p;
+                ++b;
+            }
+            buf[b] = '\0';
+            if (j < blm_flt->blm_flt_opt.capacity % NUM_CELL_LINE - 1) {
+                if (*p == '\0') {
+                    ST_WARNING("Not enough slots");
+                    goto ERR;
+                }
+                ++p;
+            } else {
+                if (*p != '\0') {
+                    ST_WARNING("Too many slots");
+                    goto ERR;
+                }
+            }
+
+            vals[j] = atoi(buf);
+            if (vals[j] != 0) {
+                st_nbit_set(blm_flt->cells, unit_bits,
+                        i * NUM_CELL_LINE + j, vals[j]);
             }
         }
     }
@@ -414,6 +627,7 @@ ERR:
 static int bloom_filter_save_header(bloom_filter_t *blm_flt, FILE *fp,
         bool binary)
 {
+    char str[MAX_LINE_LEN];
     int n;
 
     ST_CHECK_PARAM(blm_flt == NULL || fp == NULL, -1);
@@ -444,6 +658,13 @@ static int bloom_filter_save_header(bloom_filter_t *blm_flt, FILE *fp,
             ST_WARNING("Failed to write max_order.");
             return -1;
         }
+
+        if (fwrite(blm_flt->blm_flt_opt.min_counts, sizeof(int),
+                   blm_flt->blm_flt_opt.max_order, fp)
+                != blm_flt->blm_flt_opt.max_order) {
+            ST_WARNING("Failed to write min_counts.");
+            return -1;
+        }
     } else {
         if (fprintf(fp, "    \n<BLOOM_FILTER>\n") < 0) {
             ST_WARNING("Failed to fprintf header.");
@@ -468,6 +689,14 @@ static int bloom_filter_save_header(bloom_filter_t *blm_flt, FILE *fp,
             ST_WARNING("Failed to fprintf max_order.");
             return -1;
         }
+
+        if (fprintf(fp, "Min-Counts: %s\n",
+                   intlist2str(blm_flt->blm_flt_opt.min_counts,
+                        blm_flt->blm_flt_opt.max_order,
+                        str, MAX_LINE_LEN)) < 0) {
+            ST_WARNING("Failed to fprintf min_counts.");
+            return -1;
+        }
     }
 
     if (vocab_save_header(blm_flt->vocab, fp, binary) < 0) {
@@ -483,7 +712,9 @@ static int bloom_filter_save_body(bloom_filter_t *blm_flt, FILE *fp, bool binary
     int n;
 
     size_t i;
-    int f;
+    int vals[NUM_CELL_LINE];
+    int j;
+    int unit_bits;
 
     ST_CHECK_PARAM(blm_flt == NULL || fp == NULL, -1);
 
@@ -495,8 +726,7 @@ static int bloom_filter_save_body(bloom_filter_t *blm_flt, FILE *fp, bool binary
         }
 
         if (fwrite(blm_flt->cells, sizeof(unsigned char),
-                    BITNSLOTS(blm_flt->blm_flt_opt.capacity),
-                    fp) != BITNSLOTS(blm_flt->blm_flt_opt.capacity)) {
+                    get_num_cells(blm_flt), fp) != get_num_cells(blm_flt)) {
             ST_WARNING("Failed to write cells.");
             return -1;
         }
@@ -510,16 +740,33 @@ static int bloom_filter_save_body(bloom_filter_t *blm_flt, FILE *fp, bool binary
             ST_WARNING("Failed to fprintf cells.");
             return -1;
         }
-        for (i = 0; i < blm_flt->blm_flt_opt.capacity; i++) {
-            if (BITTEST(blm_flt->cells, i)) {
-                f = 1;
-            } else {
-                f = 0;
+        unit_bits = get_num_unit_bits(blm_flt);
+        for (i = 0; i < blm_flt->blm_flt_opt.capacity / NUM_CELL_LINE; i++) {
+            for (j = 0; j < NUM_CELL_LINE; j++) {
+                vals[j] = st_nbit_get(blm_flt->cells, unit_bits,
+                        i * NUM_CELL_LINE + j);
             }
-            if (fprintf(fp, "\t%zu\t%d\n", i, f) < 0) {
-                ST_WARNING("Failed to fprintf cell[%zu]", i);
+            if (fprintf(fp, "\t%zu:\t"CELL_LINE_VAL_FMT"\n",
+                        i * NUM_CELL_LINE, CELL_LINE_VAL(vals)) < 0) {
+                ST_WARNING("Failed to fprintf cells[%zu].", i * NUM_CELL_LINE);
                 return -1;
             }
+        }
+        if (fprintf(fp, "\t%zu:\t", i * NUM_CELL_LINE) < 0) {
+            ST_WARNING("Failed to fprintf last line cells.");
+            return -1;
+        }
+        for (j = 0; j < blm_flt->blm_flt_opt.capacity % NUM_CELL_LINE - 1; j++) {
+            if (fprintf(fp, "%d ", st_nbit_get(blm_flt->cells, unit_bits,
+                            i * NUM_CELL_LINE + j)) < 0) {
+                ST_WARNING("Failed to fprintf last line cells.");
+                return -1;
+            }
+        }
+        if (fprintf(fp, "%d", st_nbit_get(blm_flt->cells, unit_bits,
+                        blm_flt->blm_flt_opt.capacity - 1)) < 0) {
+            ST_WARNING("Failed to fprintf last line cells.");
+            return -1;
         }
     }
 
@@ -646,6 +893,7 @@ int bloom_filter_add(bloom_filter_t *blm_flt, bloom_filter_buf_t *buf,
         int *words, int n)
 {
     int k;
+    int cnt;
 
     ST_CHECK_PARAM(blm_flt == NULL || buf == NULL
             || words == NULL || n <= 0, -1);
@@ -662,7 +910,11 @@ int bloom_filter_add(bloom_filter_t *blm_flt, bloom_filter_buf_t *buf,
     }
 
     for (k = 0; k < blm_flt->blm_flt_opt.num_hashes; k++) {
-        BITSET(blm_flt->cells, buf->hash_vals[k]);
+        cnt = st_nbit_get(blm_flt->cells, buf->unit_bits, buf->hash_vals[k]);
+        if (cnt < blm_flt->blm_flt_opt.min_counts[n - 1]) {
+            st_nbit_set(blm_flt->cells, buf->unit_bits,
+                    buf->hash_vals[k], cnt + 1);
+        }
     }
 
     return 0;
@@ -686,7 +938,8 @@ bool bloom_filter_lookup(bloom_filter_t *blm_flt, bloom_filter_buf_t *buf,
     }
 
     for (k = 0; k < blm_flt->blm_flt_opt.num_hashes; k++) {
-        if (! BITTEST(blm_flt->cells, buf->hash_vals[k])) {
+        if (st_nbit_get(blm_flt->cells, buf->unit_bits, buf->hash_vals[k])
+                < blm_flt->blm_flt_opt.min_counts[n - 1]) {
             return false;
         }
     }
@@ -764,18 +1017,16 @@ float bloom_filter_load_factor(bloom_filter_t *blm_flt)
 {
     size_t i;
     size_t n;
-    unsigned char x;
+    int unit_bits;
 
     ST_CHECK_PARAM(blm_flt == NULL, -1);
 
+    unit_bits = get_num_unit_bits(blm_flt);
+
     n = 0;
-    for (i = 0; i < BITNSLOTS(blm_flt->blm_flt_opt.capacity); i++) {
-        x = blm_flt->cells[i];
-        while (x > 0) {
-            if (x & 0x01) {
-                ++n;
-            }
-            x = x >> 1;
+    for (i = 0; i < blm_flt->blm_flt_opt.capacity; i++) {
+        if (st_nbit_get(blm_flt->cells, unit_bits, i) > 0) {
+            ++n;
         }
     }
 
