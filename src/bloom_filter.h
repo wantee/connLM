@@ -50,6 +50,8 @@ typedef struct _bloom_filter_opt_t_ {
 
     int max_order; /**< max order of grams. */
     int *min_counts; /**< min-count per every ngram order. */
+
+    bool compressed; /**< whether stored in compressed format. */
 } bloom_filter_opt_t;
 
 /**
@@ -120,9 +122,11 @@ bloom_filter_t* bloom_filter_load(FILE *fp);
  * @param[in] blm_flt bloom filter to be saved.
  * @param[in] fp file stream saved to.
  * @param[in] binary whether to use binary format.
+ * @param[in] compress whether to use compressed format, only valid if binary == true.
  * @return non-zero value if any error.
  */
-int bloom_filter_save(bloom_filter_t *blm_flt, FILE *fp, bool binary);
+int bloom_filter_save(bloom_filter_t *blm_flt, FILE *fp,
+        bool binary, bool compress);
 
 /**
  * Print info of a bloom filter file stream.

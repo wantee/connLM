@@ -31,7 +31,7 @@ extern "C" {
 
 #define CONNLM_VERSION   "2.0.1"
 
-#define CONNLM_FILE_VERSION   9
+#define CONNLM_FILE_VERSION   10
 
 #define CONNLM_GIT_COMMIT "0"
 

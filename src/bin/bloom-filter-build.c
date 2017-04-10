@@ -38,6 +38,7 @@
 #include <connlm/bloom_filter.h>
 
 bool g_binary;
+bool g_compress;
 
 st_opt_t *g_cmd_opt;
 bloom_filter_opt_t g_blm_flt_opt;
@@ -75,6 +76,11 @@ int bloom_filter_parse_opt(int *argc, const char *argv[])
 
     ST_OPT_GET_BOOL(g_cmd_opt, "BINARY", g_binary, true,
             "Save file as binary format");
+
+    if (g_binary) {
+        ST_OPT_GET_BOOL(g_cmd_opt, "COMPRESS", g_compress, true,
+                "Save file as compressed format");
+    }
 
     ST_OPT_GET_BOOL(g_cmd_opt, "help", b, false, "Print help");
 
@@ -169,7 +175,7 @@ int main(int argc, const char *argv[])
         goto ERR;
     }
 
-    if (bloom_filter_save(blm_flt, fp, g_binary) < 0) {
+    if (bloom_filter_save(blm_flt, fp, g_binary, g_compress) < 0) {
         ST_WARNING("Failed to bloom_filter_save.");
         goto ERR;
     }

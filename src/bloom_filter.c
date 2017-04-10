@@ -35,6 +35,7 @@
 #include <stutils/st_int.h>
 #include <stutils/st_bit.h>
 #include <stutils/st_string.h>
+#include <stutils/st_varint.h>
 
 #include "reader.h"
 #include "bloom_filter.h"
@@ -337,6 +338,7 @@ static int bloom_filter_load_header(bloom_filter_t *blm_flt,
     int num_hashes;
     int max_order;
     int *min_counts = NULL;
+    bool compressed = false;
 
     char str[MAX_LINE_LEN];
     bool b;
@@ -399,6 +401,11 @@ static int bloom_filter_load_header(bloom_filter_t *blm_flt,
 
         if (fread(min_counts, sizeof(int), max_order, fp) != max_order) {
             ST_WARNING("Failed to read min_counts.");
+            goto ERR;
+        }
+
+        if (fread(&compressed, sizeof(bool), 1, fp) != 1) {
+            ST_WARNING("Failed to read compressed.");
             goto ERR;
         }
     } else {
@@ -467,6 +474,8 @@ static int bloom_filter_load_header(bloom_filter_t *blm_flt,
         }
         memcpy(blm_flt->blm_flt_opt.min_counts, min_counts,
                 sizeof(int) * max_order);
+
+        blm_flt->blm_flt_opt.compressed = compressed;
     }
 
     if (fo_info != NULL) {
@@ -477,6 +486,9 @@ static int bloom_filter_load_header(bloom_filter_t *blm_flt,
         fprintf(fo_info, "Max Order: %d\n", max_order);
         fprintf(fo_info, "Min-Counts: %s\n",
                 intlist2str(min_counts, max_order, str, MAX_LINE_LEN));
+        if (*binary) {
+            fprintf(fo_info, "Compressed: %s\n", bool2str(compressed));
+        }
     }
 
     b = *binary;
@@ -502,6 +514,43 @@ static int bloom_filter_load_header(bloom_filter_t *blm_flt,
 ERR:
     safe_st_free(min_counts);
     return -1;
+}
+
+static int bloom_filter_load_compress_cells(bloom_filter_t *blm_flt, FILE *fp)
+{
+    size_t i;
+    size_t num_cells;
+    uint64_t num_zeros;
+
+    uint8_t c;
+
+    ST_CHECK_PARAM(blm_flt == NULL || fp == NULL, -1);
+
+    i = 0;
+    num_cells = get_num_cells(blm_flt);
+    while (i < num_cells) {
+        if (fread(&c, sizeof(uint8_t), 1, fp) != 1) {
+            ST_WARNING("Failed to read cell[%zu].", i);
+            return -1;
+        }
+
+        if (c != 0) {
+            blm_flt->cells[i] = c;
+            ++i;
+            continue;
+        }
+
+        if (st_varint_decode_stream_uint64(fp, &num_zeros) < 0) {
+            ST_WARNING("Failed to st_varint_decode_stream_uint64[%zu]", i);
+            return -1;
+        }
+
+        assert(i + num_zeros <= num_cells);
+        memset(blm_flt->cells + i, 0, sizeof(uint8_t) * num_zeros);
+        i += num_zeros;
+    }
+
+    return 0;
 }
 
 static int bloom_filter_load_body(bloom_filter_t *blm_flt, int version,
@@ -538,10 +587,17 @@ static int bloom_filter_load_body(bloom_filter_t *blm_flt, int version,
             goto ERR;
         }
 
-        if (fread(blm_flt->cells, sizeof(unsigned char),
-                    get_num_cells(blm_flt), fp) != get_num_cells(blm_flt)) {
-            ST_WARNING("Failed to read cells.");
-            goto ERR;
+        if (version >= 10 && blm_flt->blm_flt_opt.compressed) {
+            if (bloom_filter_load_compress_cells(blm_flt, fp) < 0) {
+                ST_WARNING("Failed to bloom_filter_load_compress_cells.");
+                return -1;
+            }
+        } else {
+            if (fread(blm_flt->cells, sizeof(unsigned char),
+                        get_num_cells(blm_flt), fp) != get_num_cells(blm_flt)) {
+                ST_WARNING("Failed to read cells.");
+                goto ERR;
+            }
         }
     } else {
         if (st_readline(fp, "<BLOOM_FILTER-DATA>") != 0) {
@@ -625,7 +681,7 @@ ERR:
 }
 
 static int bloom_filter_save_header(bloom_filter_t *blm_flt, FILE *fp,
-        bool binary)
+        bool binary, bool compress)
 {
     char str[MAX_LINE_LEN];
     int n;
@@ -663,6 +719,11 @@ static int bloom_filter_save_header(bloom_filter_t *blm_flt, FILE *fp,
                    blm_flt->blm_flt_opt.max_order, fp)
                 != blm_flt->blm_flt_opt.max_order) {
             ST_WARNING("Failed to write min_counts.");
+            return -1;
+        }
+
+        if (fwrite(&compress, sizeof(bool), 1, fp) != 1) {
+            ST_WARNING("Failed to write compressed.");
             return -1;
         }
     } else {
@@ -707,7 +768,64 @@ static int bloom_filter_save_header(bloom_filter_t *blm_flt, FILE *fp,
     return 0;
 }
 
-static int bloom_filter_save_body(bloom_filter_t *blm_flt, FILE *fp, bool binary)
+static int write_zeros_cells(uint64_t num_zeros, FILE *fp)
+{
+    uint8_t zero = 0;
+
+    if (fwrite(&zero, sizeof(uint8_t), 1, fp) != 1) {
+        ST_WARNING("Failed to write zero cell.");
+        return -1;
+    }
+    if (st_varint_encode_stream_uint64(num_zeros, fp) < 0) {
+        ST_WARNING("Failed to st_varint_encode_stream_uint64[%"PRIu64"]",
+                num_zeros);
+        return -1;
+    }
+
+    return 0;
+}
+
+static int bloom_filter_save_compress_cells(bloom_filter_t *blm_flt, FILE *fp)
+{
+    size_t i;
+    size_t num_cells;
+    uint64_t num_zeros;
+
+    ST_CHECK_PARAM(blm_flt == NULL || fp == NULL, -1);
+
+    num_zeros = 0;
+    num_cells = get_num_cells(blm_flt);
+    for (i = 0; i < num_cells; i++) {
+        if (blm_flt->cells[i] == 0) {
+            ++num_zeros;
+            continue;
+        }
+
+        if (num_zeros > 0) {
+            if (write_zeros_cells(num_zeros, fp) < 0) {
+                ST_WARNING("Failed to write_zeros_cells[%zu].", i);
+                return -1;
+            }
+            num_zeros = 0;
+        }
+
+        if (fwrite(blm_flt->cells + i, sizeof(uint8_t), 1, fp) != 1) {
+            ST_WARNING("Failed to write non-zero cell[%zu].", i);
+            return -1;
+        }
+    }
+    if (num_zeros > 0) {
+        if (write_zeros_cells(num_zeros, fp) < 0) {
+            ST_WARNING("Failed to write_zeros_cells[%zu].", i);
+            return -1;
+        }
+    }
+
+    return 0;
+}
+
+static int bloom_filter_save_body(bloom_filter_t *blm_flt, FILE *fp,
+        bool binary, bool compress)
 {
     int n;
 
@@ -725,10 +843,17 @@ static int bloom_filter_save_body(bloom_filter_t *blm_flt, FILE *fp, bool binary
             return -1;
         }
 
-        if (fwrite(blm_flt->cells, sizeof(unsigned char),
-                    get_num_cells(blm_flt), fp) != get_num_cells(blm_flt)) {
-            ST_WARNING("Failed to write cells.");
-            return -1;
+        if (compress) {
+            if (bloom_filter_save_compress_cells(blm_flt, fp) < 0) {
+                ST_WARNING("Failed to bloom_filter_save_compress_cells.");
+                return -1;
+            }
+        } else {
+            if (fwrite(blm_flt->cells, sizeof(unsigned char),
+                        get_num_cells(blm_flt), fp) != get_num_cells(blm_flt)) {
+                ST_WARNING("Failed to write cells.");
+                return -1;
+            }
         }
     } else {
         if (fprintf(fp, "<BLOOM_FILTER-DATA>\n") < 0) {
@@ -778,16 +903,17 @@ static int bloom_filter_save_body(bloom_filter_t *blm_flt, FILE *fp, bool binary
     return 0;
 }
 
-int bloom_filter_save(bloom_filter_t *blm_flt, FILE *fp, bool binary)
+int bloom_filter_save(bloom_filter_t *blm_flt, FILE *fp,
+        bool binary, bool compress)
 {
     ST_CHECK_PARAM(blm_flt == NULL || fp == NULL, -1);
 
-    if (bloom_filter_save_header(blm_flt, fp, binary) < 0) {
+    if (bloom_filter_save_header(blm_flt, fp, binary, compress) < 0) {
         ST_WARNING("Failed to bloom_filter_save_header.");
         return -1;
     }
 
-    if (bloom_filter_save_body(blm_flt, fp, binary) < 0) {
+    if (bloom_filter_save_body(blm_flt, fp, binary, compress) < 0) {
         ST_WARNING("Failed to bloom_filter_save_body.");
         return -1;
     }
