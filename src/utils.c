@@ -593,3 +593,12 @@ connlm_fmt_t connlm_format_parse(const char *str)
 
     return CONN_FMT_UNKNOWN;
 }
+
+int16_t quantify_int16(real_t r, real_t multiple)
+{
+    r = r * multiple;
+    r = min(r, (1 << 15) - 1);
+    r = max(r, -(1 << 15));
+
+    return (int16_t)r;
+}

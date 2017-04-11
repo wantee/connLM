@@ -558,7 +558,7 @@ int glue_load_header(glue_t **glue, int version,
         ST_WARNING("Failed to wt_load_header.");
         goto ERR;
     }
-    if (*fmt != f) {
+    if (connlm_fmt_is_bin(*fmt) != connlm_fmt_is_bin(f)) {
         ST_WARNING("Multiple formats in one file.");
         return -1;
     }

@@ -29,6 +29,7 @@
 extern "C" {
 #endif
 
+#include <inttypes.h>
 #include <math.h>
 
 #include <stutils/st_opt.h>
@@ -154,6 +155,15 @@ typedef enum _connlm_format_t_ {
  * @return the format, CONN_FMT_UNKNOWN if string not valid or any other error.
  */
 connlm_fmt_t connlm_format_parse(const char *str);
+
+/**
+ * quantify a float number to sint16
+ * @ingroup g_connlm
+ * @param[in] r the float number.
+ * @param[in] multiple multiple to enlarge the number before quantify.
+ * @return quantified value.
+ */
+int16_t quantify_int16(real_t r, real_t multiple);
 
 #ifdef __cplusplus
 }
