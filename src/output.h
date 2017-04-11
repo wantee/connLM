@@ -37,6 +37,7 @@ extern "C" {
 
 #include <connlm/config.h>
 
+#include "utils.h"
 #include "layers/layer.h"
 
 /** @defgroup g_output Output Layer
@@ -290,48 +291,48 @@ output_t* output_dup(output_t *o);
  * @param[out] output output tree initialised.
  * @param[in] version file version of loading file.
  * @param[in] fp file stream loaded from.
- * @param[out] binary whether the file stream is in binary format.
- * @param[in] fo file stream used to print information, if it is not NULL.
+ * @param[out] fmt storage format.
+ * @param[out] fo file stream used to print information, if it is not NULL.
  * @see output_load_body
  * @see output_save_header, output_save_body
  * @return non-zero value if any error.
  */
 int output_load_header(output_t **output, int version, FILE *fp,
-        bool *binary, FILE *fo);
+        connlm_fmt_t *fmt, FILE *fo);
 /**
  * Load output tree body.
  * @ingroup g_output
  * @param[in] output output tree to be loaded.
  * @param[in] version file version of loading file.
  * @param[in] fp file stream loaded from.
- * @param[in] binary whether to use binary format.
+ * @param[in] fmt storage format.
  * @see output_load_header
  * @see output_save_header, output_save_body
  * @return non-zero value if any error.
  */
-int output_load_body(output_t *output, int version, FILE *fp, bool binary);
+int output_load_body(output_t *output, int version, FILE *fp, connlm_fmt_t fmt);
 /**
  * Save output tree header.
  * @ingroup g_output
  * @param[in] output output tree to be saved.
  * @param[in] fp file stream saved to.
- * @param[in] binary whether to use binary format.
+ * @param[in] fmt storage format.
  * @see output_save_body
  * @see output_load_header, output_load_body
  * @return non-zero value if any error.
  */
-int output_save_header(output_t *output, FILE *fp, bool binary);
+int output_save_header(output_t *output, FILE *fp, connlm_fmt_t fmt);
 /**
  * Save output tree body.
  * @ingroup g_output
  * @param[in] output output tree to be saved.
  * @param[in] fp file stream saved to.
- * @param[in] binary whether to use binary format.
+ * @param[in] fmt storage format.
  * @see output_save_header
  * @see output_load_header, output_load_body
  * @return non-zero value if any error.
  */
-int output_save_body(output_t *output, FILE *fp, bool binary);
+int output_save_body(output_t *output, FILE *fp, connlm_fmt_t fmt);
 
 /**
  * Generate output tree with word counts.

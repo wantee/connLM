@@ -35,6 +35,7 @@ extern "C" {
 #include <stutils/st_alphabet.h>
 
 #include <connlm/config.h>
+#include "utils.h"
 
 /** @defgroup g_vocab Vocabulary
  * Vocabulary maps a word string to a integer id and verse vice.
@@ -113,48 +114,48 @@ vocab_t* vocab_dup(vocab_t *v);
  * @param[out] vocab initialised.
  * @param[in] version file version of loading file.
  * @param[in] fp file stream loaded from.
- * @param[out] binary whether the file stream is in binary format.
- * @param[in] fo file stream used to print information, if it is not NULL.
+ * @param[out] fmt storage format.
+ * @param[out] fo file stream used to print information, if it is not NULL.
  * @see vocab_load_body
  * @see vocab_save_header, vocab_save_body
  * @return non-zero value if any error.
  */
 int vocab_load_header(vocab_t **vocab, int version, FILE *fp,
-        bool *binary, FILE *fo);
+        connlm_fmt_t *fmt, FILE *fo);
 /**
  * Load vocab body.
  * @ingroup g_vocab
  * @param[in] vocab vocab to be loaded.
  * @param[in] version file version of loading file.
  * @param[in] fp file stream loaded from.
- * @param[in] binary whether to use binary format.
+ * @param[in] fmt storage format.
  * @see vocab_load_header
  * @see vocab_save_header, vocab_save_body
  * @return non-zero value if any error.
  */
-int vocab_load_body(vocab_t *vocab, int version, FILE *fp, bool binary);
+int vocab_load_body(vocab_t *vocab, int version, FILE *fp, connlm_fmt_t fmt);
 /**
  * Save vocab header.
  * @ingroup g_vocab
  * @param[in] vocab vocab to be saved.
  * @param[in] fp file stream saved to.
- * @param[in] binary whether to use binary format.
+ * @param[in] fmt storage format.
  * @see vocab_save_body
  * @see vocab_load_header, vocab_load_body
  * @return non-zero value if any error.
  */
-int vocab_save_header(vocab_t *vocab, FILE *fp, bool binary);
+int vocab_save_header(vocab_t *vocab, FILE *fp, connlm_fmt_t fmt);
 /**
  * Save vocab body.
  * @ingroup g_vocab
  * @param[in] vocab vocab to be saved.
  * @param[in] fp file stream saved to.
- * @param[in] binary whether to use binary format.
+ * @param[in] fmt storage format.
  * @see vocab_save_header
  * @see vocab_load_header, vocab_load_body
  * @return non-zero value if any error.
  */
-int vocab_save_body(vocab_t *vocab, FILE *fp, bool binary);
+int vocab_save_body(vocab_t *vocab, FILE *fp, connlm_fmt_t fmt);
 
 /**
  * Parameters for learning Vocab.

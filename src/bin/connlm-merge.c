@@ -32,13 +32,15 @@
 #include <connlm/utils.h>
 #include <connlm/connlm.h>
 
-bool g_binary;
+connlm_fmt_t g_fmt;
 
 st_opt_t *g_cmd_opt;
 
 int connlm_merge_parse_opt(int *argc, const char *argv[])
 {
     st_log_opt_t log_opt;
+
+    char str[MAX_ST_CONF_LEN];
     bool b;
 
     g_cmd_opt = st_opt_create();
@@ -62,8 +64,13 @@ int connlm_merge_parse_opt(int *argc, const char *argv[])
         goto ST_OPT_ERR;
     }
 
-    ST_OPT_GET_BOOL(g_cmd_opt, "BINARY", g_binary, true,
-            "Save file as binary format");
+    ST_OPT_GET_STR(g_cmd_opt, "FORMAT", str, MAX_ST_CONF_LEN, "Bin",
+            "storage format(Txt/Bin/Zeros-Compress/Short-Q)");
+    g_fmt = connlm_format_parse(str);
+    if (g_fmt == CONN_FMT_UNKNOWN) {
+        ST_WARNING("Unknown format[%s]", str);
+        goto ST_OPT_ERR;
+    }
 
     ST_OPT_GET_BOOL(g_cmd_opt, "help", b, false, "Print help");
 
@@ -258,7 +265,7 @@ int main(int argc, const char *argv[])
         goto ERR;
     }
 
-    if (connlm_save(connlm, fp, g_binary) < 0) {
+    if (connlm_save(connlm, fp, g_fmt) < 0) {
         ST_WARNING("Failed to connlm_save. [%s]", argv[argc - 1]);
         goto ERR;
     }

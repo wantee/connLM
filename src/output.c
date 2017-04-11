@@ -272,7 +272,7 @@ bool output_tree_equal(output_tree_t *tree1, output_tree_t *tree2)
 }
 
 int output_tree_load_header(output_tree_t **tree, int version,
-        FILE *fp, bool *binary, FILE *fo_info)
+        FILE *fp, connlm_fmt_t *fmt, FILE *fo_info)
 {
     char sym[MAX_LINE_LEN];
     size_t sz;
@@ -287,7 +287,7 @@ int output_tree_load_header(output_tree_t **tree, int version,
     bool has_leafmap;
 
     ST_CHECK_PARAM((tree == NULL && fo_info == NULL) || fp == NULL
-            || binary == NULL, -1);
+            || fmt == NULL, -1);
 
     if (version < 3) {
         ST_WARNING("Too old version of connlm file");
@@ -299,20 +299,28 @@ int output_tree_load_header(output_tree_t **tree, int version,
         return -1;
     }
 
+    *fmt = CONN_FMT_UNKNOWN;
     if (strncmp(flag.str, "    ", 4) == 0) {
-        *binary = false;
+        *fmt = CONN_FMT_TXT;
     } else if (OUTPUT_TREE_MAGIC_NUM != flag.magic_num) {
         ST_WARNING("magic num wrong.");
         return -2;
-    } else {
-        *binary = true;
     }
 
     if (tree != NULL) {
         *tree = NULL;
     }
 
-    if (*binary) {
+    if (*fmt != CONN_FMT_TXT) {
+        if (version >= 12) {
+            if (fread(fmt, sizeof(connlm_fmt_t), 1, fp) != 1) {
+                ST_WARNING("Failed to read fmt.");
+                goto ERR;
+            }
+        } else {
+            *fmt = CONN_FMT_BIN;
+        }
+
         if (fread(&num_node, sizeof(output_node_id_t), 1, fp) != 1) {
             ST_WARNING("Failed to read output size.");
             return -1;
@@ -417,7 +425,7 @@ ERR:
 }
 
 int output_tree_load_body(output_tree_t *tree, int version,
-        FILE *fp, bool binary)
+        FILE *fp, connlm_fmt_t fmt)
 {
     size_t sz;
 
@@ -443,7 +451,7 @@ int output_tree_load_body(output_tree_t *tree, int version,
         memset(tree->nodes, 0, sz);
     }
 
-    if (binary) {
+    if (connlm_fmt_is_bin(fmt)) {
         if (fread(&n, sizeof(int), 1, fp) != 1) {
             ST_WARNING("Failed to read magic num.");
             goto ERR;
@@ -535,7 +543,7 @@ ERR:
     return -1;
 }
 
-int output_tree_save_header(output_tree_t *tree, FILE *fp, bool binary)
+int output_tree_save_header(output_tree_t *tree, FILE *fp, connlm_fmt_t fmt)
 {
     int n;
     bool has_leafmap;
@@ -548,11 +556,16 @@ int output_tree_save_header(output_tree_t *tree, FILE *fp, bool binary)
         has_leafmap = false;
     }
 
-    if (binary) {
+    if (connlm_fmt_is_bin(fmt)) {
         if (fwrite(&OUTPUT_TREE_MAGIC_NUM, sizeof(int), 1, fp) != 1) {
             ST_WARNING("Failed to write magic num.");
             return -1;
         }
+        if (fwrite(&fmt, sizeof(connlm_fmt_t), 1, fp) != 1) {
+            ST_WARNING("Failed to write fmt.");
+            return -1;
+        }
+
         if (tree == NULL) {
             n = 0;
             if (fwrite(&n, sizeof(int), 1, fp) != 1) {
@@ -621,7 +634,7 @@ int output_tree_save_header(output_tree_t *tree, FILE *fp, bool binary)
     return 0;
 }
 
-int output_tree_save_body(output_tree_t *tree, FILE *fp, bool binary)
+int output_tree_save_body(output_tree_t *tree, FILE *fp, connlm_fmt_t fmt)
 {
     output_node_id_t i;
     int n;
@@ -632,7 +645,7 @@ int output_tree_save_body(output_tree_t *tree, FILE *fp, bool binary)
         return 0;
     }
 
-    if (binary) {
+    if (connlm_fmt_is_bin(fmt)) {
         n = -OUTPUT_TREE_MAGIC_NUM;
         if (fwrite(&n, sizeof(int), 1, fp) != 1) {
             ST_WARNING("Failed to write magic num.");
@@ -2073,7 +2086,7 @@ bool output_equal(output_t *output1, output_t *output2)
 }
 
 int output_load_header(output_t **output, int version,
-        FILE *fp, bool *binary, FILE *fo_info)
+        FILE *fp, connlm_fmt_t *fmt, FILE *fo_info)
 {
     char sym[MAX_LINE_LEN];
     union {
@@ -2086,10 +2099,10 @@ int output_load_header(output_t **output, int version,
     int m;
     int max_depth;
     int max_branch;
-    bool b;
+    connlm_fmt_t f;
 
     ST_CHECK_PARAM((output == NULL && fo_info == NULL) || fp == NULL
-            || binary == NULL, -1);
+            || fmt == NULL, -1);
 
     if (version < 3) {
         ST_WARNING("Too old version of connlm file");
@@ -2101,20 +2114,28 @@ int output_load_header(output_t **output, int version,
         return -1;
     }
 
+    *fmt = CONN_FMT_UNKNOWN;
     if (strncmp(flag.str, "    ", 4) == 0) {
-        *binary = false;
+        *fmt = CONN_FMT_TXT;
     } else if (OUTPUT_MAGIC_NUM != flag.magic_num) {
         ST_WARNING("magic num wrong.");
         return -2;
-    } else {
-        *binary = true;
     }
 
     if (output != NULL) {
         *output = NULL;
     }
 
-    if (*binary) {
+    if (*fmt != CONN_FMT_TXT) {
+        if (version >= 12) {
+            if (fread(fmt, sizeof(connlm_fmt_t), 1, fp) != 1) {
+                ST_WARNING("Failed to read fmt.");
+                goto ERR;
+            }
+        } else {
+            *fmt = CONN_FMT_BIN;
+        }
+
         if (fread(&output_size, sizeof(int), 1, fp) != 1) {
             ST_WARNING("Failed to read output size.");
             goto ERR;
@@ -2228,14 +2249,13 @@ int output_load_header(output_t **output, int version,
     }
 
     if (output_tree_load_header(output != NULL ? &((*output)->tree) : NULL,
-                version, fp, &b, fo_info) < 0) {
+                version, fp, &f, fo_info) < 0) {
         ST_WARNING("Failed to output_tree_load_header.");
         goto ERR;
     }
-
-    if (b != *binary) {
-        ST_WARNING("Tree binary not match with output binary");
-        goto ERR;
+    if (*fmt != f) {
+        ST_WARNING("Multiple formats in one file.");
+        return -1;
     }
 
     return 0;
@@ -2247,7 +2267,7 @@ ERR:
     return -1;
 }
 
-int output_load_body(output_t *output, int version, FILE *fp, bool binary)
+int output_load_body(output_t *output, int version, FILE *fp, connlm_fmt_t fmt)
 {
     int n;
 
@@ -2258,7 +2278,7 @@ int output_load_body(output_t *output, int version, FILE *fp, bool binary)
         return -1;
     }
 
-    if (binary) {
+    if (connlm_fmt_is_bin(fmt)) {
         if (fread(&n, sizeof(int), 1, fp) != 1) {
             ST_WARNING("Failed to read magic num.");
             goto ERR;
@@ -2276,7 +2296,7 @@ int output_load_body(output_t *output, int version, FILE *fp, bool binary)
         }
     }
 
-    if (output_tree_load_body(output->tree, version, fp, binary) < 0) {
+    if (output_tree_load_body(output->tree, version, fp, fmt) < 0) {
         ST_WARNING("Failed to output_tree_load_body.");
         goto ERR;
     }
@@ -2288,17 +2308,22 @@ ERR:
     return -1;
 }
 
-int output_save_header(output_t *output, FILE *fp, bool binary)
+int output_save_header(output_t *output, FILE *fp, connlm_fmt_t fmt)
 {
     int n;
 
     ST_CHECK_PARAM(fp == NULL, -1);
 
-    if (binary) {
+    if (connlm_fmt_is_bin(fmt)) {
         if (fwrite(&OUTPUT_MAGIC_NUM, sizeof(int), 1, fp) != 1) {
             ST_WARNING("Failed to write magic num.");
             return -1;
         }
+        if (fwrite(&fmt, sizeof(connlm_fmt_t), 1, fp) != 1) {
+            ST_WARNING("Failed to write fmt.");
+            return -1;
+        }
+
         if (output == NULL) {
             n = 0;
             if (fwrite(&n, sizeof(int), 1, fp) != 1) {
@@ -2374,7 +2399,7 @@ int output_save_header(output_t *output, FILE *fp, bool binary)
         }
     }
 
-    if (output_tree_save_header(output->tree, fp, binary) < 0) {
+    if (output_tree_save_header(output->tree, fp, fmt) < 0) {
         ST_WARNING("Failed to output_tree_save_header.");
         return -1;
     }
@@ -2382,7 +2407,7 @@ int output_save_header(output_t *output, FILE *fp, bool binary)
     return 0;
 }
 
-int output_save_body(output_t *output, FILE *fp, bool binary)
+int output_save_body(output_t *output, FILE *fp, connlm_fmt_t fmt)
 {
     int n;
 
@@ -2392,7 +2417,7 @@ int output_save_body(output_t *output, FILE *fp, bool binary)
         return 0;
     }
 
-    if (binary) {
+    if (connlm_fmt_is_bin(fmt)) {
         n = -OUTPUT_MAGIC_NUM;
         if (fwrite(&n, sizeof(int), 1, fp) != 1) {
             ST_WARNING("Failed to write magic num.");
@@ -2405,7 +2430,7 @@ int output_save_body(output_t *output, FILE *fp, bool binary)
         }
     }
 
-    if (output_tree_save_body(output->tree, fp, binary) < 0) {
+    if (output_tree_save_body(output->tree, fp, fmt) < 0) {
         ST_WARNING("Failed to output_tree_save_body.");
         return -1;
     }

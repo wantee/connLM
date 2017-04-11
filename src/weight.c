@@ -259,7 +259,7 @@ ERR:
 }
 
 int wt_load_header(weight_t **wt, int version,
-        FILE *fp, bool *binary, FILE *fo_info)
+        FILE *fp, connlm_fmt_t *fmt, FILE *fo_info)
 {
     char sym[MAX_LINE_LEN];
     union {
@@ -274,7 +274,7 @@ int wt_load_header(weight_t **wt, int version,
     real_t init_bias = INFINITY;
 
     ST_CHECK_PARAM((wt == NULL && fo_info == NULL) || fp == NULL
-            || binary == NULL, -1);
+            || fmt == NULL, -1);
 
     if (version < 9) {
         ST_WARNING("Too old version of connlm file");
@@ -286,20 +286,28 @@ int wt_load_header(weight_t **wt, int version,
         return -1;
     }
 
+    *fmt = CONN_FMT_UNKNOWN;
     if (strncmp(flag.str, "    ", 4) == 0) {
-        *binary = false;
+        *fmt = CONN_FMT_TXT;
     } else if (WT_MAGIC_NUM != flag.magic_num) {
         ST_WARNING("magic num wrong.");
         return -2;
-    } else {
-        *binary = true;
     }
 
     if (wt != NULL) {
         *wt = NULL;
     }
 
-    if (*binary) {
+    if (*fmt != CONN_FMT_TXT) {
+        if (version >= 12) {
+            if (fread(fmt, sizeof(connlm_fmt_t), 1, fp) != 1) {
+                ST_WARNING("Failed to read fmt.");
+                goto ERR;
+            }
+        } else {
+            *fmt = CONN_FMT_BIN;
+        }
+
         if (fread(&row, sizeof(size_t), 1, fp) != 1) {
             ST_WARNING("Failed to read row.");
             return -1;
@@ -407,7 +415,7 @@ ERR:
     return -1;
 }
 
-int wt_load_body(weight_t *wt, int version, FILE *fp, bool binary)
+int wt_load_body(weight_t *wt, int version, FILE *fp, connlm_fmt_t fmt)
 {
     char name[MAX_NAME_LEN];
     int n;
@@ -436,7 +444,7 @@ int wt_load_body(weight_t *wt, int version, FILE *fp, bool binary)
         return -1;
     }
 
-    if (binary) {
+    if (connlm_fmt_is_bin(fmt)) {
         if (fread(&n, sizeof(int), 1, fp) != 1) {
             ST_WARNING("Failed to read magic num.");
             goto ERR;
@@ -505,15 +513,19 @@ ERR:
     return -1;
 }
 
-int wt_save_header(weight_t *wt, FILE *fp, bool binary)
+int wt_save_header(weight_t *wt, FILE *fp, connlm_fmt_t fmt)
 {
     int n;
 
     ST_CHECK_PARAM(fp == NULL, -1);
 
-    if (binary) {
+    if (connlm_fmt_is_bin(fmt)) {
         if (fwrite(&WT_MAGIC_NUM, sizeof(int), 1, fp) != 1) {
             ST_WARNING("Failed to write magic num.");
+            return -1;
+        }
+        if (fwrite(&fmt, sizeof(connlm_fmt_t), 1, fp) != 1) {
+            ST_WARNING("Failed to write fmt.");
             return -1;
         }
 
@@ -570,7 +582,7 @@ int wt_save_header(weight_t *wt, FILE *fp, bool binary)
     return 0;
 }
 
-int wt_save_body(weight_t *wt, FILE *fp, bool binary, char *name)
+int wt_save_body(weight_t *wt, FILE *fp, connlm_fmt_t fmt, char *name)
 {
     int n;
     size_t i, j;
@@ -582,7 +594,7 @@ int wt_save_body(weight_t *wt, FILE *fp, bool binary, char *name)
         return 0;
     }
 
-    if (binary) {
+    if (connlm_fmt_is_bin(fmt)) {
         n = -WT_MAGIC_NUM;
         if (fwrite(&n, sizeof(int), 1, fp) != 1) {
             ST_WARNING("Failed to write magic num.");

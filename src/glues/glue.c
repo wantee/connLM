@@ -382,7 +382,7 @@ ERR:
 }
 
 int glue_load_header(glue_t **glue, int version,
-        FILE *fp, bool *binary, FILE *fo_info)
+        FILE *fp, connlm_fmt_t *fmt, FILE *fo_info)
 {
     union {
         char str[4];
@@ -399,10 +399,10 @@ int glue_load_header(glue_t **glue, int version,
     int out_length;
 
     glue_impl_t *impl;
-    bool b;
+    connlm_fmt_t f;
 
     ST_CHECK_PARAM((glue == NULL && fo_info == NULL) || fp == NULL
-            || binary == NULL, -1);
+            || fmt == NULL, -1);
 
     if (version < 6) {
         ST_WARNING("Too old version of connlm file");
@@ -414,20 +414,28 @@ int glue_load_header(glue_t **glue, int version,
         return -1;
     }
 
+    *fmt = CONN_FMT_UNKNOWN;
     if (strncmp(flag.str, "    ", 4) == 0) {
-        *binary = false;
+        *fmt = CONN_FMT_TXT;
     } else if (GLUE_MAGIC_NUM != flag.magic_num) {
         ST_WARNING("magic num wrong.");
         return -2;
-    } else {
-        *binary = true;
     }
 
     if (glue != NULL) {
         *glue = NULL;
     }
 
-    if (*binary) {
+    if (*fmt != CONN_FMT_TXT) {
+        if (version >= 12) {
+            if (fread(fmt, sizeof(connlm_fmt_t), 1, fp) != 1) {
+                ST_WARNING("Failed to read fmt.");
+                goto ERR;
+            }
+        } else {
+            *fmt = CONN_FMT_BIN;
+        }
+
         if (fread(name, sizeof(char), MAX_NAME_LEN, fp) != MAX_NAME_LEN) {
             ST_WARNING("Failed to read name.");
             return -1;
@@ -546,26 +554,24 @@ int glue_load_header(glue_t **glue, int version,
     }
 
     if (wt_load_header(glue != NULL ? &((*glue)->wt) : NULL,
-            version, fp, &b, fo_info) < 0) {
+            version, fp, &f, fo_info) < 0) {
         ST_WARNING("Failed to wt_load_header.");
         goto ERR;
     }
-
-    if (b != *binary) {
-        ST_WARNING("binary not match");
-        goto ERR;
+    if (*fmt != f) {
+        ST_WARNING("Multiple formats in one file.");
+        return -1;
     }
 
     if (impl->load_header != NULL) {
         if (impl->load_header(glue != NULL ? &((*glue)->extra) : NULL,
-                version, fp, &b, fo_info) < 0) {
+                version, fp, &f, fo_info) < 0) {
             ST_WARNING("Failed to impl->load_header.");
             goto ERR;
         }
-
-        if (b != *binary) {
-            ST_WARNING("binary not match");
-            goto ERR;
+        if (*fmt != f) {
+            ST_WARNING("Multiple formats in one file.");
+            return -1;
         }
     }
 
@@ -578,7 +584,7 @@ ERR:
     return -1;
 }
 
-int glue_load_body(glue_t *glue, int version, FILE *fp, bool binary)
+int glue_load_body(glue_t *glue, int version, FILE *fp, connlm_fmt_t fmt)
 {
     int n;
 
@@ -589,7 +595,7 @@ int glue_load_body(glue_t *glue, int version, FILE *fp, bool binary)
         return -1;
     }
 
-    if (binary) {
+    if (connlm_fmt_is_bin(fmt)) {
         if (fread(&n, sizeof(int), 1, fp) != 1) {
             ST_WARNING("Failed to read magic num.");
             goto ERR;
@@ -606,13 +612,13 @@ int glue_load_body(glue_t *glue, int version, FILE *fp, bool binary)
         }
     }
 
-    if (wt_load_body(glue->wt, version, fp, binary) < 0) {
+    if (wt_load_body(glue->wt, version, fp, fmt) < 0) {
         ST_WARNING("Failed to wt_load_body.");
         goto ERR;
     }
 
     if (glue->impl->load_body != NULL) {
-        if (glue->impl->load_body(glue->extra, version, fp, binary) < 0) {
+        if (glue->impl->load_body(glue->extra, version, fp, fmt) < 0) {
             ST_WARNING("Failed to glue->impl->load_body.");
             goto ERR;
         }
@@ -624,17 +630,22 @@ ERR:
     return -1;
 }
 
-int glue_save_header(glue_t *glue, FILE *fp, bool binary)
+int glue_save_header(glue_t *glue, FILE *fp, connlm_fmt_t fmt)
 {
     int n;
 
     ST_CHECK_PARAM(fp == NULL, -1);
 
-    if (binary) {
+    if (connlm_fmt_is_bin(fmt)) {
         if (fwrite(&GLUE_MAGIC_NUM, sizeof(int), 1, fp) != 1) {
             ST_WARNING("Failed to write magic num.");
             return -1;
         }
+        if (fwrite(&fmt, sizeof(connlm_fmt_t), 1, fp) != 1) {
+            ST_WARNING("Failed to write fmt.");
+            return -1;
+        }
+
         if (glue == NULL) {
             n = 0;
             if (fwrite(&n, sizeof(int), 1, fp) != 1) {
@@ -718,13 +729,13 @@ int glue_save_header(glue_t *glue, FILE *fp, bool binary)
         }
     }
 
-    if (wt_save_header(glue->wt, fp, binary) < 0) {
+    if (wt_save_header(glue->wt, fp, fmt) < 0) {
         ST_WARNING("Failed to wt_save_header.");
         return -1;
     }
 
     if (glue->impl != NULL && glue->impl->save_header != NULL) {
-        if (glue->impl->save_header(glue->extra, fp, binary) < 0) {
+        if (glue->impl->save_header(glue->extra, fp, fmt) < 0) {
             ST_WARNING("Failed to glue->impl->save_header.");
             return -1;
         }
@@ -733,13 +744,14 @@ int glue_save_header(glue_t *glue, FILE *fp, bool binary)
     return 0;
 }
 
-int glue_save_body(glue_t *glue, FILE *fp, bool binary)
+int glue_save_body(glue_t *glue, FILE *fp, connlm_fmt_t fmt)
 {
+    connlm_fmt_t wt_fmt;
     int n;
 
     ST_CHECK_PARAM(fp == NULL, -1);
 
-    if (binary) {
+    if (connlm_fmt_is_bin(fmt)) {
         n = -GLUE_MAGIC_NUM;
         if (fwrite(&n, sizeof(int), 1, fp) != 1) {
             ST_WARNING("Failed to write magic num.");
@@ -752,13 +764,23 @@ int glue_save_body(glue_t *glue, FILE *fp, bool binary)
         }
     }
 
-    if (wt_save_body(glue->wt, fp, binary, glue->name) < 0) {
+    if (strcasecmp(glue->type, DIRECT_GLUE_NAME) == 0) {
+        wt_fmt = fmt;
+    } else {
+        if (connlm_fmt_is_bin(fmt)) {
+            wt_fmt = CONN_FMT_BIN;
+        } else {
+            wt_fmt = CONN_FMT_TXT;
+        }
+    }
+
+    if (wt_save_body(glue->wt, fp, wt_fmt, glue->name) < 0) {
         ST_WARNING("Failed to wt_save_body.");
         return -1;
     }
 
     if (glue->impl != NULL && glue->impl->save_body != NULL) {
-        if (glue->impl->save_body(glue->extra, fp, binary) < 0) {
+        if (glue->impl->save_body(glue->extra, fp, fmt) < 0) {
             ST_WARNING("Failed to glue->impl->save_body.");
             return -1;
         }

@@ -568,3 +568,28 @@ int concat_mat_add_mat(concat_mat_t *dst, concat_mat_t *src)
 
     return 0;
 }
+
+connlm_fmt_t connlm_format_parse(const char *str)
+{
+    ST_CHECK_PARAM(str == NULL, CONN_FMT_UNKNOWN);
+
+    if (strcasecmp(str, "Text") == 0
+            || strcasecmp(str, "Txt") == 0
+            || strcasecmp(str, "T") == 0) {
+        return CONN_FMT_TXT;
+    } else if (strcasecmp(str, "Binary") == 0
+            || strcasecmp(str, "Bin") == 0
+            || strcasecmp(str, "B") == 0) {
+        return CONN_FMT_BIN;
+    } else if (strcasecmp(str, "Zeros-Compressed") == 0
+            || strcasecmp(str, "Zeros-Compress") == 0
+            || strcasecmp(str, "ZC") == 0) {
+        return CONN_FMT_ZEROS_COMPRESSED;
+    } else if (strcasecmp(str, "Short-Quantization") == 0
+            || strcasecmp(str, "Short-Q") == 0
+            || strcasecmp(str, "SQ") == 0) {
+        return CONN_FMT_SHORT_QUANTIZATION;
+    }
+
+    return CONN_FMT_UNKNOWN;
+}

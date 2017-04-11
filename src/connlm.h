@@ -131,10 +131,10 @@ connlm_t* connlm_load(FILE *fp);
  * @ingroup g_connlm
  * @param[in] connlm connlm to be saved.
  * @param[in] fp file stream saved to.
- * @param[in] binary whether to use binary format.
+ * @param[in] fmt storage format.
  * @return non-zero value if any error.
  */
-int connlm_save(connlm_t *connlm, FILE *fp, bool binary);
+int connlm_save(connlm_t *connlm, FILE *fp, connlm_fmt_t fmt);
 
 /**
  * Convert a connlm model into graphviz format.

@@ -41,6 +41,27 @@ extern "C" {
  */
 
 /**
+ * Storage Format for Bloom Filter
+ * @ingroup g_bloom_filter
+ */
+typedef enum _bloom_filter_format_t_ {
+    BF_FMT_UNKNOWN     = 0x0000, /**< Unknown format. */
+    BF_FMT_TXT         = 0x0001, /**< Text format. */
+    BF_FMT_BIN         = 0x0010, /**< (flat) Binary format. */
+    BF_FMT_COMPRESSED  = 0x0011, /**< Compressed (binary) format. */
+} bloom_filter_format_t;
+
+#define blm_flt_fmt_is_bin(fmt) (((fmt) & 0x0010) != 0)
+
+/**
+ * Parse the string representation to a bloom_filter_format_t
+ * @ingroup g_bloom_filter
+ * @param[in] str string to be parsed.
+ * @return the format, BF_FMT_UNKNOWN if string not valid or any other error.
+ */
+bloom_filter_format_t bloom_filter_format_parse(const char *str);
+
+/**
  * Options for bloom_filter.
  * @ingroup g_bloom_filter
  */
@@ -50,8 +71,6 @@ typedef struct _bloom_filter_opt_t_ {
 
     int max_order; /**< max order of grams. */
     int *min_counts; /**< min-count per every ngram order. */
-
-    bool compressed; /**< whether stored in compressed format. */
 } bloom_filter_opt_t;
 
 /**
@@ -121,12 +140,11 @@ bloom_filter_t* bloom_filter_load(FILE *fp);
  * @ingroup g_bloom_filter
  * @param[in] blm_flt bloom filter to be saved.
  * @param[in] fp file stream saved to.
- * @param[in] binary whether to use binary format.
- * @param[in] compress whether to use compressed format, only valid if binary == true.
+ * @param[in] fmt storage format.
  * @return non-zero value if any error.
  */
 int bloom_filter_save(bloom_filter_t *blm_flt, FILE *fp,
-        bool binary, bool compress);
+        bloom_filter_format_t fmt);
 
 /**
  * Print info of a bloom filter file stream.

@@ -37,6 +37,7 @@
 #include <stutils/st_string.h>
 #include <stutils/st_varint.h>
 
+#include "connlm.h"
 #include "reader.h"
 #include "bloom_filter.h"
 
@@ -120,6 +121,42 @@ static int get_num_unit_bits(bloom_filter_t *blm_flt)
 static size_t get_num_cells(bloom_filter_t *blm_flt)
 {
     return NBITNSLOTS(blm_flt->blm_flt_opt.capacity, get_num_unit_bits(blm_flt));
+}
+
+bloom_filter_format_t bloom_filter_format_parse(const char *str)
+{
+    ST_CHECK_PARAM(str == NULL, BF_FMT_UNKNOWN);
+
+    if (strcasecmp(str, "Text") == 0
+            || strcasecmp(str, "Txt") == 0
+            || strcasecmp(str, "T") == 0) {
+        return BF_FMT_TXT;
+    } else if (strcasecmp(str, "Binary") == 0
+            || strcasecmp(str, "Bin") == 0
+            || strcasecmp(str, "B") == 0) {
+        return BF_FMT_BIN;
+    } else if (strcasecmp(str, "Compressed") == 0
+            || strcasecmp(str, "Compress") == 0
+            || strcasecmp(str, "C") == 0) {
+        return BF_FMT_COMPRESSED;
+    }
+
+    return BF_FMT_UNKNOWN;
+}
+
+static char* fmt2str(bloom_filter_format_t fmt)
+{
+    switch (fmt) {
+        case BF_FMT_TXT:
+            return "Text";
+        case BF_FMT_BIN:
+            return "Binary";
+        case BF_FMT_COMPRESSED:
+            return "Compressed";
+        default:
+            return "Unknown";
+    }
+    return "Unknown";
 }
 
 int bloom_filter_load_opt(bloom_filter_opt_t *blm_flt_opt,
@@ -326,7 +363,7 @@ ERR:
                             (vals)[12], (vals)[13], (vals)[14], (vals)[15]
 
 static int bloom_filter_load_header(bloom_filter_t *blm_flt,
-        FILE *fp, bool *binary, FILE *fo_info)
+        FILE *fp, bloom_filter_format_t *fmt, FILE *fo_info)
 {
     union {
         char str[4];
@@ -338,29 +375,27 @@ static int bloom_filter_load_header(bloom_filter_t *blm_flt,
     int num_hashes;
     int max_order;
     int *min_counts = NULL;
-    bool compressed = false;
 
     char str[MAX_LINE_LEN];
-    bool b;
+    connlm_fmt_t connlm_fmt;
 
     ST_CHECK_PARAM((blm_flt == NULL && fo_info == NULL) || fp == NULL
-            || binary == NULL, -1);
+            || fmt == NULL, -1);
 
     if (fread(&flag.magic_num, sizeof(int), 1, fp) != 1) {
         ST_WARNING("Failed to load magic num.");
         return -1;
     }
 
+    *fmt = BF_FMT_UNKNOWN;
     if (strncmp(flag.str, "    ", 4) == 0) {
-        *binary = false;
+        *fmt = BF_FMT_TXT;
     } else if (BLOOM_FILTER_MAGIC_NUM != flag.magic_num) {
         ST_WARNING("magic num wrong.");
         return -2;
-    } else {
-        *binary = true;
     }
 
-    if (*binary) {
+    if (*fmt != BF_FMT_TXT) {
         if (fread(&version, sizeof(int), 1, fp) != 1) {
             ST_WARNING("Failed to read version.");
             return -1;
@@ -376,6 +411,19 @@ static int bloom_filter_load_header(bloom_filter_t *blm_flt,
             ST_WARNING("File versoin[%d] less than 9 is not supported, "
                     "please downgrade connlm toolkit", version);
             return -1;
+        } else if (version == 11) {
+            ST_WARNING("File versoin 11 is not supported, "
+                    "please downgrade connlm toolkit");
+            return -1;
+        }
+
+        if (version >= 12) {
+            if (fread(fmt, sizeof(bloom_filter_format_t), 1, fp) != 1) {
+                ST_WARNING("Failed to read fmt.");
+                goto ERR;
+            }
+        } else {
+            *fmt = BF_FMT_BIN;
         }
 
         if (fread(&capacity, sizeof(size_t), 1, fp) != 1) {
@@ -401,11 +449,6 @@ static int bloom_filter_load_header(bloom_filter_t *blm_flt,
 
         if (fread(min_counts, sizeof(int), max_order, fp) != max_order) {
             ST_WARNING("Failed to read min_counts.");
-            goto ERR;
-        }
-
-        if (fread(&compressed, sizeof(bool), 1, fp) != 1) {
-            ST_WARNING("Failed to read compressed.");
             goto ERR;
         }
     } else {
@@ -474,8 +517,6 @@ static int bloom_filter_load_header(bloom_filter_t *blm_flt,
         }
         memcpy(blm_flt->blm_flt_opt.min_counts, min_counts,
                 sizeof(int) * max_order);
-
-        blm_flt->blm_flt_opt.compressed = compressed;
     }
 
     if (fo_info != NULL) {
@@ -486,19 +527,15 @@ static int bloom_filter_load_header(bloom_filter_t *blm_flt,
         fprintf(fo_info, "Max Order: %d\n", max_order);
         fprintf(fo_info, "Min-Counts: %s\n",
                 intlist2str(min_counts, max_order, str, MAX_LINE_LEN));
-        if (*binary) {
-            fprintf(fo_info, "Compressed: %s\n", bool2str(compressed));
-        }
+        fprintf(fo_info, "Format: %s\n", fmt2str(*fmt));
     }
 
-    b = *binary;
-
     if (vocab_load_header((blm_flt == NULL) ? NULL : &(blm_flt->vocab),
-                version, fp, binary, fo_info) < 0) {
+                version, fp, &connlm_fmt, fo_info) < 0) {
         ST_WARNING("Failed to vocab_load_header.");
         goto ERR;
     }
-    if (*binary != b) {
+    if (connlm_fmt_is_bin(connlm_fmt) != blm_flt_fmt_is_bin(*fmt)) {
         ST_WARNING("Both binary and text format in one file.");
         goto ERR;
     }
@@ -554,7 +591,7 @@ static int bloom_filter_load_compress_cells(bloom_filter_t *blm_flt, FILE *fp)
 }
 
 static int bloom_filter_load_body(bloom_filter_t *blm_flt, int version,
-        FILE *fp, bool binary)
+        FILE *fp, bloom_filter_format_t fmt)
 {
     int n;
 
@@ -570,7 +607,7 @@ static int bloom_filter_load_body(bloom_filter_t *blm_flt, int version,
 
     blm_flt->cells = NULL;
 
-    if (binary) {
+    if (blm_flt_fmt_is_bin(fmt)) {
         if (fread(&n, sizeof(int), 1, fp) != 1) {
             ST_WARNING("Failed to read magic num.");
             goto ERR;
@@ -587,7 +624,7 @@ static int bloom_filter_load_body(bloom_filter_t *blm_flt, int version,
             goto ERR;
         }
 
-        if (version >= 10 && blm_flt->blm_flt_opt.compressed) {
+        if (version >= 10 && (fmt & BF_FMT_COMPRESSED)) {
             if (bloom_filter_load_compress_cells(blm_flt, fp) < 0) {
                 ST_WARNING("Failed to bloom_filter_load_compress_cells.");
                 return -1;
@@ -669,7 +706,8 @@ static int bloom_filter_load_body(bloom_filter_t *blm_flt, int version,
         }
     }
 
-    if (vocab_load_body(blm_flt->vocab, version, fp, binary) < 0) {
+    if (vocab_load_body(blm_flt->vocab, version, fp,
+            blm_flt_fmt_is_bin(fmt) ? CONN_FMT_BIN : CONN_FMT_TXT) < 0) {
         ST_WARNING("Failed to vocab_load_body.");
         return -1;
     }
@@ -681,14 +719,14 @@ ERR:
 }
 
 static int bloom_filter_save_header(bloom_filter_t *blm_flt, FILE *fp,
-        bool binary, bool compress)
+        bloom_filter_format_t fmt)
 {
     char str[MAX_LINE_LEN];
     int n;
 
     ST_CHECK_PARAM(blm_flt == NULL || fp == NULL, -1);
 
-    if (binary) {
+    if (blm_flt_fmt_is_bin(fmt)) {
         if (fwrite(&BLOOM_FILTER_MAGIC_NUM, sizeof(int), 1, fp) != 1) {
             ST_WARNING("Failed to write magic num.");
             return -1;
@@ -719,11 +757,6 @@ static int bloom_filter_save_header(bloom_filter_t *blm_flt, FILE *fp,
                    blm_flt->blm_flt_opt.max_order, fp)
                 != blm_flt->blm_flt_opt.max_order) {
             ST_WARNING("Failed to write min_counts.");
-            return -1;
-        }
-
-        if (fwrite(&compress, sizeof(bool), 1, fp) != 1) {
-            ST_WARNING("Failed to write compressed.");
             return -1;
         }
     } else {
@@ -760,7 +793,8 @@ static int bloom_filter_save_header(bloom_filter_t *blm_flt, FILE *fp,
         }
     }
 
-    if (vocab_save_header(blm_flt->vocab, fp, binary) < 0) {
+    if (vocab_save_header(blm_flt->vocab, fp,
+            blm_flt_fmt_is_bin(fmt) ? CONN_FMT_BIN : CONN_FMT_TXT) < 0) {
         ST_WARNING("Failed to vocab_save_header.");
         return -1;
     }
@@ -825,7 +859,7 @@ static int bloom_filter_save_compress_cells(bloom_filter_t *blm_flt, FILE *fp)
 }
 
 static int bloom_filter_save_body(bloom_filter_t *blm_flt, FILE *fp,
-        bool binary, bool compress)
+        bloom_filter_format_t fmt)
 {
     int n;
 
@@ -836,14 +870,14 @@ static int bloom_filter_save_body(bloom_filter_t *blm_flt, FILE *fp,
 
     ST_CHECK_PARAM(blm_flt == NULL || fp == NULL, -1);
 
-    if (binary) {
+    if (blm_flt_fmt_is_bin(fmt)) {
         n = -BLOOM_FILTER_MAGIC_NUM;
         if (fwrite(&n, sizeof(int), 1, fp) != 1) {
             ST_WARNING("Failed to write magic num.");
             return -1;
         }
 
-        if (compress) {
+        if (fmt & BF_FMT_COMPRESSED) {
             if (bloom_filter_save_compress_cells(blm_flt, fp) < 0) {
                 ST_WARNING("Failed to bloom_filter_save_compress_cells.");
                 return -1;
@@ -895,7 +929,8 @@ static int bloom_filter_save_body(bloom_filter_t *blm_flt, FILE *fp,
         }
     }
 
-    if (vocab_save_body(blm_flt->vocab, fp, binary) < 0) {
+    if (vocab_save_body(blm_flt->vocab, fp,
+            blm_flt_fmt_is_bin(fmt) ? CONN_FMT_BIN : CONN_FMT_TXT) < 0) {
         ST_WARNING("Failed to vocab_save_body.");
         return -1;
     }
@@ -904,16 +939,16 @@ static int bloom_filter_save_body(bloom_filter_t *blm_flt, FILE *fp,
 }
 
 int bloom_filter_save(bloom_filter_t *blm_flt, FILE *fp,
-        bool binary, bool compress)
+        bloom_filter_format_t fmt)
 {
     ST_CHECK_PARAM(blm_flt == NULL || fp == NULL, -1);
 
-    if (bloom_filter_save_header(blm_flt, fp, binary, compress) < 0) {
+    if (bloom_filter_save_header(blm_flt, fp, fmt) < 0) {
         ST_WARNING("Failed to bloom_filter_save_header.");
         return -1;
     }
 
-    if (bloom_filter_save_body(blm_flt, fp, binary, compress) < 0) {
+    if (bloom_filter_save_body(blm_flt, fp, fmt) < 0) {
         ST_WARNING("Failed to bloom_filter_save_body.");
         return -1;
     }
@@ -925,7 +960,7 @@ bloom_filter_t* bloom_filter_load(FILE *fp)
 {
     bloom_filter_t *blm_flt = NULL;
     int version;
-    bool binary;
+    bloom_filter_format_t fmt;
 
     ST_CHECK_PARAM(fp == NULL, NULL);
 
@@ -936,13 +971,13 @@ bloom_filter_t* bloom_filter_load(FILE *fp)
     }
     memset(blm_flt, 0, sizeof(bloom_filter_t));
 
-    version = bloom_filter_load_header(blm_flt, fp, &binary, NULL);
+    version = bloom_filter_load_header(blm_flt, fp, &fmt, NULL);
     if (version < 0) {
         ST_WARNING("Failed to bloom_filter_load_header.");
         goto ERR;
     }
 
-    if (bloom_filter_load_body(blm_flt, version, fp, binary) < 0) {
+    if (bloom_filter_load_body(blm_flt, version, fp, fmt) < 0) {
         ST_WARNING("Failed to bloom_filter_load_body.");
         goto ERR;
     }
@@ -961,11 +996,11 @@ ERR:
 
 int bloom_filter_print_info(FILE *fp, FILE *fo_info)
 {
-    bool binary;
+    bloom_filter_format_t fmt;
 
     ST_CHECK_PARAM(fp == NULL || fo_info == NULL, -1);
 
-    if (bloom_filter_load_header(NULL, fp, &binary, fo_info) < 0) {
+    if (bloom_filter_load_header(NULL, fp, &fmt, fo_info) < 0) {
         ST_WARNING("Failed to bloom_filter_load_header.");
         return -1;
     }

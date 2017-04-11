@@ -249,7 +249,7 @@ char* direct_glue_draw_label(glue_t *glue, char *label, size_t label_len)
 }
 
 int direct_glue_load_header(void **extra, int version,
-        FILE *fp, bool *binary, FILE *fo_info)
+        FILE *fp, connlm_fmt_t *fmt, FILE *fo_info)
 {
     direct_glue_data_t *data = NULL;
 
@@ -261,7 +261,7 @@ int direct_glue_load_header(void **extra, int version,
     size_t hash_sz;
 
     ST_CHECK_PARAM((extra == NULL && fo_info == NULL) || fp == NULL
-            || binary == NULL, -1);
+            || fmt == NULL, -1);
 
     if (version < 9) {
         ST_WARNING("Too old version of connlm file");
@@ -273,20 +273,28 @@ int direct_glue_load_header(void **extra, int version,
         return -1;
     }
 
+    *fmt = CONN_FMT_UNKNOWN;
     if (strncmp(flag.str, "    ", 4) == 0) {
-        *binary = false;
+        *fmt = CONN_FMT_TXT;
     } else if (DIRECT_GLUE_MAGIC_NUM != flag.magic_num) {
         ST_WARNING("magic num wrong.");
         return -2;
-    } else {
-        *binary = true;
     }
 
     if (extra != NULL) {
         *extra = NULL;
     }
 
-    if (*binary) {
+    if (*fmt != CONN_FMT_TXT) {
+        if (version >= 12) {
+            if (fread(fmt, sizeof(connlm_fmt_t), 1, fp) != 1) {
+                ST_WARNING("Failed to read fmt.");
+                goto ERR;
+            }
+        } else {
+            *fmt = CONN_FMT_BIN;
+        }
+
         if (fread(&hash_sz, sizeof(size_t), 1, fp) != 1) {
             ST_WARNING("Failed to read hash_sz.");
             return -1;
@@ -332,7 +340,7 @@ ERR:
     return -1;
 }
 
-int direct_glue_save_header(void *extra, FILE *fp, bool binary)
+int direct_glue_save_header(void *extra, FILE *fp, connlm_fmt_t fmt)
 {
     direct_glue_data_t *data;
 
@@ -340,9 +348,13 @@ int direct_glue_save_header(void *extra, FILE *fp, bool binary)
 
     data = (direct_glue_data_t *)extra;
 
-    if (binary) {
+    if (connlm_fmt_is_bin(fmt)) {
         if (fwrite(&DIRECT_GLUE_MAGIC_NUM, sizeof(int), 1, fp) != 1) {
             ST_WARNING("Failed to write magic num.");
+            return -1;
+        }
+        if (fwrite(&fmt, sizeof(connlm_fmt_t), 1, fp) != 1) {
+            ST_WARNING("Failed to write fmt.");
             return -1;
         }
 

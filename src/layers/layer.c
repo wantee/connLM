@@ -227,7 +227,7 @@ ERR:
 }
 
 int layer_load_header(layer_t **layer, int version,
-        FILE *fp, bool *binary, FILE *fo_info)
+        FILE *fp, connlm_fmt_t *fmt, FILE *fo_info)
 {
     layer_impl_t *impl;
 
@@ -239,10 +239,10 @@ int layer_load_header(layer_t **layer, int version,
     char name[MAX_NAME_LEN];
     char type[MAX_NAME_LEN];
     int size;
-    bool b;
+    connlm_fmt_t f;
 
     ST_CHECK_PARAM((layer == NULL && fo_info == NULL) || fp == NULL
-            || binary == NULL, -1);
+            || fmt == NULL, -1);
 
     if (version < 3) {
         ST_WARNING("Too old version of connlm file");
@@ -254,20 +254,28 @@ int layer_load_header(layer_t **layer, int version,
         return -1;
     }
 
+    *fmt = CONN_FMT_UNKNOWN;
     if (strncmp(flag.str, "    ", 4) == 0) {
-        *binary = false;
+        *fmt = CONN_FMT_TXT;
     } else if (LAYER_MAGIC_NUM != flag.magic_num) {
         ST_WARNING("magic num wrong.");
         return -2;
-    } else {
-        *binary = true;
     }
 
     if (layer != NULL) {
         *layer = NULL;
     }
 
-    if (*binary) {
+    if (*fmt != CONN_FMT_TXT) {
+        if (version >= 12) {
+            if (fread(fmt, sizeof(connlm_fmt_t), 1, fp) != 1) {
+                ST_WARNING("Failed to read fmt.");
+                goto ERR;
+            }
+        } else {
+            *fmt = CONN_FMT_BIN;
+        }
+
         if (fread(name, sizeof(char), MAX_NAME_LEN, fp) != MAX_NAME_LEN) {
             ST_WARNING("Failed to read name.");
             return -1;
@@ -337,14 +345,14 @@ int layer_load_header(layer_t **layer, int version,
 
     if (impl->load_header != NULL) {
         if (impl->load_header(layer != NULL ? &((*layer)->extra) : NULL,
-                    version, fp, &b, fo_info) < 0) {
+                    version, fp, &f, fo_info) < 0) {
             ST_WARNING("Failed to impl->load_header.");
             goto ERR;
         }
 
-        if (b != *binary) {
-            ST_WARNING("Tree binary not match with output binary");
-            goto ERR;
+        if (*fmt != f) {
+            ST_WARNING("Multiple formats in one file.");
+            return -1;
         }
     }
 
@@ -357,7 +365,7 @@ ERR:
     return -1;
 }
 
-int layer_load_body(layer_t *layer, int version, FILE *fp, bool binary)
+int layer_load_body(layer_t *layer, int version, FILE *fp, connlm_fmt_t fmt)
 {
     int n;
 
@@ -368,7 +376,7 @@ int layer_load_body(layer_t *layer, int version, FILE *fp, bool binary)
         return -1;
     }
 
-    if (binary) {
+    if (connlm_fmt_is_bin(fmt)) {
         if (fread(&n, sizeof(int), 1, fp) != 1) {
             ST_WARNING("Failed to read magic num.");
             goto ERR;
@@ -386,7 +394,7 @@ int layer_load_body(layer_t *layer, int version, FILE *fp, bool binary)
     }
 
     if (layer->impl->load_body != NULL) {
-        if (layer->impl->load_body(layer->extra, version, fp, binary) < 0) {
+        if (layer->impl->load_body(layer->extra, version, fp, fmt) < 0) {
             ST_WARNING("Failed to glue->impl->load_body.");
             goto ERR;
         }
@@ -398,13 +406,17 @@ ERR:
     return -1;
 }
 
-int layer_save_header(layer_t *layer, FILE *fp, bool binary)
+int layer_save_header(layer_t *layer, FILE *fp, connlm_fmt_t fmt)
 {
     ST_CHECK_PARAM(layer == NULL || fp == NULL, -1);
 
-    if (binary) {
+    if (connlm_fmt_is_bin(fmt)) {
         if (fwrite(&LAYER_MAGIC_NUM, sizeof(int), 1, fp) != 1) {
             ST_WARNING("Failed to write magic num.");
+            return -1;
+        }
+        if (fwrite(&fmt, sizeof(connlm_fmt_t), 1, fp) != 1) {
+            ST_WARNING("Failed to write fmt.");
             return -1;
         }
 
@@ -443,7 +455,7 @@ int layer_save_header(layer_t *layer, FILE *fp, bool binary)
     }
 
     if (layer->impl != NULL && layer->impl->save_header != NULL) {
-        if (layer->impl->save_header(layer->extra, fp, binary) < 0) {
+        if (layer->impl->save_header(layer->extra, fp, fmt) < 0) {
             ST_WARNING("Failed to glue->impl->save_header.");
             return -1;
         }
@@ -452,13 +464,13 @@ int layer_save_header(layer_t *layer, FILE *fp, bool binary)
     return 0;
 }
 
-int layer_save_body(layer_t *layer, FILE *fp, bool binary)
+int layer_save_body(layer_t *layer, FILE *fp, connlm_fmt_t fmt)
 {
     int n;
 
     ST_CHECK_PARAM(layer == NULL || fp == NULL, -1);
 
-    if (binary) {
+    if (connlm_fmt_is_bin(fmt)) {
         n = -LAYER_MAGIC_NUM;
         if (fwrite(&n, sizeof(int), 1, fp) != 1) {
             ST_WARNING("Failed to write magic num.");
@@ -473,7 +485,7 @@ int layer_save_body(layer_t *layer, FILE *fp, bool binary)
     }
 
     if (layer->impl != NULL && layer->impl->save_body != NULL) {
-        if (layer->impl->save_body(layer->extra, fp, binary) < 0) {
+        if (layer->impl->save_body(layer->extra, fp, fmt) < 0) {
             ST_WARNING("Failed to layer->impl->save_body.");
             return -1;
         }
