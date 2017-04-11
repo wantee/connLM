@@ -191,6 +191,14 @@ int connlm_add_comp(connlm_t *connlm, component_t *comp);
  */
 void connlm_sanity_check(connlm_t *connlm);
 
+/**
+ * Print verbose info of a connlm model.
+ * @ingroup g_connlm
+ * @param[in] connlm the connlm model.
+ * @param[in] fo file stream print info to.
+ */
+void connlm_print_verbose_info(connlm_t *connlm, FILE *fo);
+
 #ifdef __cplusplus
 }
 #endif

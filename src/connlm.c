@@ -921,3 +921,14 @@ void connlm_sanity_check(connlm_t *connlm)
         comp_sanity_check(connlm->comps[c]);
     }
 }
+
+void connlm_print_verbose_info(connlm_t *connlm, FILE *fo)
+{
+    int c;
+
+    ST_CHECK_PARAM_VOID(connlm == NULL || fo == NULL);
+
+    for (c = 0; c < connlm->num_comp; c++) {
+        comp_print_verbose_info(connlm->comps[c], fo);
+    }
+}

@@ -508,3 +508,8 @@ char* input_draw_label(input_t *input, char *label, size_t label_len)
 
     return label;
 }
+
+void input_print_verbose_info(input_t *input, FILE *fo)
+{
+    ST_CHECK_PARAM_VOID(input == NULL || fo == NULL);
+}

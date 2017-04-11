@@ -203,6 +203,14 @@ int comp_draw(component_t *comp, FILE *fp, bool verbose);
  */
 void comp_sanity_check(component_t *comp);
 
+/**
+ * Print verbose info of a component.
+ * @ingroup g_component
+ * @param[in] comp the component.
+ * @param[in] fo file stream print info to.
+ */
+void comp_print_verbose_info(component_t *comp, FILE *fo);
+
 #ifdef __cplusplus
 }
 #endif

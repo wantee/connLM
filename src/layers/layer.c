@@ -41,21 +41,21 @@ static const int LAYER_MAGIC_NUM = 626140498 + 60;
 static layer_impl_t LAYER_IMPL[] = {
     /* pseudo-layers. */
     {INPUT_LAYER_NAME, NULL, NULL, NULL, NULL, NULL, NULL,
-        NULL, NULL, NULL},
+        NULL, NULL, NULL, NULL},
     {OUTPUT_LAYER_NAME, NULL, NULL, NULL, NULL, NULL, NULL,
-        NULL, NULL, NULL},
+        NULL, NULL, NULL, NULL},
 
     /* register-layers. */
     {LINEAR_NAME, linear_init, linear_destroy, linear_dup,
         linear_parse_topo, NULL, linear_load_header,
-        linear_load_body, linear_save_header, NULL},
+        linear_load_body, linear_save_header, NULL, NULL},
     {SIGMOID_NAME, sigmoid_init, sigmoid_destroy, sigmoid_dup,
         sigmoid_parse_topo, NULL, sigmoid_load_header,
-        sigmoid_load_body, sigmoid_save_header, NULL},
+        sigmoid_load_body, sigmoid_save_header, NULL, NULL},
     {TANH_NAME, NULL, NULL, NULL,
-        NULL, NULL, NULL, NULL, NULL, NULL},
+        NULL, NULL, NULL, NULL, NULL, NULL, NULL},
     {RELU_NAME, NULL, NULL, NULL,
-        NULL, NULL, NULL, NULL, NULL, NULL},
+        NULL, NULL, NULL, NULL, NULL, NULL, NULL},
 };
 
 static layer_impl_t* layer_get_impl(const char *type)
@@ -495,4 +495,13 @@ char* layer_draw_label(layer_t *layer, char *label, size_t label_len)
                 : "");
 
     return label;
+}
+
+void layer_print_verbose_info(layer_t *layer, FILE *fo)
+{
+    ST_CHECK_PARAM_VOID(layer == NULL || fo == NULL);
+
+    if (layer->impl != NULL && layer->impl->print_verbose_info != NULL) {
+        layer->impl->print_verbose_info(layer, fo);
+    }
 }

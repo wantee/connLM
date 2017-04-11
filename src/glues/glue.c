@@ -43,19 +43,20 @@ static glue_impl_t GLUE_IMPL[] = {
     {DIRECT_GLUE_NAME, direct_glue_init, direct_glue_destroy, direct_glue_dup,
         direct_glue_parse_topo, direct_glue_check, direct_glue_draw_label,
         direct_glue_load_header, NULL, direct_glue_save_header, NULL,
-        direct_glue_init_data, direct_glue_init_wt_updater},
+        direct_glue_init_data, direct_glue_init_wt_updater,
+        direct_glue_print_verbose_info},
     {FC_GLUE_NAME, NULL, NULL, NULL,
         fc_glue_parse_topo, fc_glue_check, NULL,
         NULL, NULL, NULL, NULL,
-        fc_glue_init_data, fc_glue_init_wt_updater},
+        fc_glue_init_data, fc_glue_init_wt_updater, NULL},
     {EMB_GLUE_NAME, emb_glue_init, emb_glue_destroy, emb_glue_dup,
         emb_glue_parse_topo, emb_glue_check, emb_glue_draw_label,
         emb_glue_load_header, NULL, emb_glue_save_header, NULL,
-        emb_glue_init_data, emb_glue_init_wt_updater},
+        emb_glue_init_data, emb_glue_init_wt_updater, NULL},
     {OUT_GLUE_NAME, NULL, NULL, NULL,
         out_glue_parse_topo, out_glue_check, NULL,
         NULL, NULL, NULL, NULL,
-        out_glue_init_data, out_glue_init_wt_updater},
+        out_glue_init_data, out_glue_init_wt_updater, NULL},
 };
 
 static glue_impl_t* glue_get_impl(const char *type)
@@ -872,5 +873,14 @@ void glue_sanity_check(glue_t *glue)
 
     if (glue->wt != NULL) {
         wt_sanity_check(glue->wt, glue->name);
+    }
+}
+
+void glue_print_verbose_info(glue_t *glue, FILE *fo)
+{
+    ST_CHECK_PARAM_VOID(glue == NULL || fo == NULL);
+
+    if (glue->impl != NULL && glue->impl->print_verbose_info != NULL) {
+        glue->impl->print_verbose_info(glue, fo);
     }
 }

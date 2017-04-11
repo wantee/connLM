@@ -68,6 +68,9 @@ typedef struct _layer_implementation_t_ {
 
     int (*save_body)(void *extra, FILE *fp,
             bool binary); /**< save body layer. */
+
+    void (*print_verbose_info)(layer_t *layer, FILE *fo); /**< print info. */
+
 } layer_impl_t;
 
 /**
@@ -179,6 +182,14 @@ int layer_save_body(layer_t *layer, FILE *fp, bool binary);
  * @return label on success, NULL if any error.
  */
 char* layer_draw_label(layer_t *layer, char *label, size_t label_len);
+
+/**
+ * Print verbose info of a layer.
+ * @ingroup g_layer
+ * @param[in] layer the layer.
+ * @param[in] fo file stream print info to.
+ */
+void layer_print_verbose_info(layer_t *layer, FILE *fo);
 
 #ifdef __cplusplus
 }

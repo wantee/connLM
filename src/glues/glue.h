@@ -90,6 +90,8 @@ typedef struct _glue_implementation_t_ {
     wt_updater_t* (*init_wt_updater)(glue_t *glue,
             param_t *param); /**< init wt_updater for glue.*/
 
+    void (*print_verbose_info)(glue_t *glue, FILE *fo); /**< print info. */
+
 } glue_impl_t;
 
 /**
@@ -317,6 +319,14 @@ int glue_backprop(glue_t *glue, comp_updater_t *comp_updater,
  * @param[in] glue glue
  */
 void glue_sanity_check(glue_t *glue);
+
+/**
+ * Print verbose info of a glue.
+ * @ingroup g_glue
+ * @param[in] glue the glue.
+ * @param[in] fo file stream print info to.
+ */
+void glue_print_verbose_info(glue_t *glue, FILE *fo);
 
 #ifdef __cplusplus
 }

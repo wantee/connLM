@@ -136,7 +136,7 @@ int direct_glue_save_header(void *extra, FILE *fp, bool binary);
 /**
  * Initialise data of direct glue.
  * @ingroup g_glue_direct
- * @param[in] glue glue.
+ * @param[in] glue the direct glue.
  * @param[in] input input layer of network.
  * @param[in] layers layers of network.
  * @param[in] output output layer of network.
@@ -144,6 +144,14 @@ int direct_glue_save_header(void *extra, FILE *fp, bool binary);
  */
 int direct_glue_init_data(glue_t *glue, input_t *input,
         layer_t **layers, output_t *output);
+
+/**
+ * Print verbose info of a direct glue.
+ * @ingroup g_glue_direct
+ * @param[in] glue the direct glue.
+ * @param[in] fo file stream print info to.
+ */
+void direct_glue_print_verbose_info(glue_t *glue, FILE *fo);
 
 #ifdef __cplusplus
 }

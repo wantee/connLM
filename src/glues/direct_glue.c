@@ -413,3 +413,29 @@ ERR:
     safe_wt_updater_destroy(wt_updater);
     return NULL;
 }
+
+static float direct_glue_load_factor(glue_t *glue)
+{
+    size_t i;
+
+    size_t n;
+
+    ST_CHECK_PARAM(glue == NULL, 0.0);
+
+    n = 0;
+    for (i = 0; i < glue->wt->row; i++) {
+        if (glue->wt->mat[i] != 0) {
+            ++n;
+        }
+    }
+
+    return n / (float)(glue->wt->row);
+}
+
+void direct_glue_print_verbose_info(glue_t *glue, FILE *fo)
+{
+    ST_CHECK_PARAM_VOID(glue == NULL || fo == NULL);
+
+    fprintf(fo, "<DIRECT_GLUE>: %s\n", glue->name);
+    fprintf(fo, "Load factor: %.3f\n", direct_glue_load_factor(glue));
+}

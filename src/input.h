@@ -173,6 +173,14 @@ int input_save_body(input_t *input, FILE *fp, bool binary);
  */
 char* input_draw_label(input_t *input, char *label, size_t label_len);
 
+/**
+ * Print verbose info of a input.
+ * @ingroup g_input
+ * @param[in] input the input layer.
+ * @param[in] fo file stream print info to.
+ */
+void input_print_verbose_info(input_t *input, FILE *fo);
+
 #ifdef __cplusplus
 }
 #endif

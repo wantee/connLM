@@ -1025,3 +1025,20 @@ void comp_sanity_check(component_t *comp)
         glue_sanity_check(comp->glues[g]);
     }
 }
+
+void comp_print_verbose_info(component_t *comp, FILE *fo)
+{
+    int i;
+
+    ST_CHECK_PARAM_VOID(comp == NULL || fo == NULL);
+
+    input_print_verbose_info(comp->input, fo);
+
+    for (i = 0; i < comp->num_layer; i++) {
+        layer_print_verbose_info(comp->layers[i], fo);
+    }
+
+    for (i = 0; i < comp->num_glue; i++) {
+        glue_print_verbose_info(comp->glues[i], fo);
+    }
+}
