@@ -102,10 +102,12 @@ void connlm_destroy(connlm_t *connlm)
     safe_vocab_destroy(connlm->vocab);
     safe_output_destroy(connlm->output);
 
-    for (c = 0; c < connlm->num_comp; c++) {
-        safe_comp_destroy(connlm->comps[c]);
+    if (connlm->comps != NULL) {
+        for (c = 0; c < connlm->num_comp; c++) {
+            safe_comp_destroy(connlm->comps[c]);
+        }
+        safe_st_free(connlm->comps);
     }
-    safe_st_free(connlm->comps);
     connlm->num_comp = 0;
 }
 
