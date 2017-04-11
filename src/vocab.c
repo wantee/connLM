@@ -231,6 +231,12 @@ int vocab_load_header(vocab_t **vocab, int version, FILE *fp, bool *binary,
     ST_CHECK_PARAM((vocab == NULL && fo_info == NULL) || fp == NULL
             || binary == NULL, -1);
 
+    if (version < 11) {
+        ST_WARNING("File versoin[%d] less than 11 is not supported, "
+                "please downgrade connlm toolkit", version);
+        return -1;
+    }
+
     if (fread(&flag.magic_num, sizeof(int), 1, fp) != 1) {
         ST_WARNING("Failed to load magic num.");
         return -1;
