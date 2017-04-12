@@ -47,11 +47,11 @@ extern "C" {
 typedef enum _bloom_filter_format_t_ {
     BF_FMT_UNKNOWN     = 0x0000, /**< Unknown format. */
     BF_FMT_TXT         = 0x0001, /**< Text format. */
-    BF_FMT_BIN         = 0x0010, /**< (flat) Binary format. */
-    BF_FMT_COMPRESSED  = 0x0011, /**< Compressed (binary) format. */
+    BF_FMT_BIN         = 0x0002, /**< (flat) Binary format. */
+    BF_FMT_COMPRESSED  = 0x0004, /**< Compressed (binary) format. */
 } bloom_filter_format_t;
 
-#define blm_flt_fmt_is_bin(fmt) (((fmt) & 0x0010) != 0)
+#define blm_flt_fmt_is_bin(fmt) ((fmt) > 1)
 
 /**
  * Parse the string representation to a bloom_filter_format_t

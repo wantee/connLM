@@ -30,6 +30,7 @@
 #include <stutils/st_log.h>
 #include <stutils/st_utils.h>
 #include <stutils/st_mem.h>
+#include <stutils/st_string.h>
 
 #include "utils.h"
 #include "fastexp.h"
@@ -571,27 +572,67 @@ int concat_mat_add_mat(concat_mat_t *dst, concat_mat_t *src)
 
 connlm_fmt_t connlm_format_parse(const char *str)
 {
+    connlm_fmt_t fmt;
+
+    char buf[MAX_LINE_LEN];
+    int i;
+    const char *p;
+
     ST_CHECK_PARAM(str == NULL, CONN_FMT_UNKNOWN);
 
-    if (strcasecmp(str, "Text") == 0
-            || strcasecmp(str, "Txt") == 0
-            || strcasecmp(str, "T") == 0) {
-        return CONN_FMT_TXT;
-    } else if (strcasecmp(str, "Binary") == 0
-            || strcasecmp(str, "Bin") == 0
-            || strcasecmp(str, "B") == 0) {
-        return CONN_FMT_BIN;
-    } else if (strcasecmp(str, "Zeros-Compressed") == 0
-            || strcasecmp(str, "Zeros-Compress") == 0
-            || strcasecmp(str, "ZC") == 0) {
-        return CONN_FMT_ZEROS_COMPRESSED;
-    } else if (strcasecmp(str, "Short-Quantization") == 0
-            || strcasecmp(str, "Short-Q") == 0
-            || strcasecmp(str, "SQ") == 0) {
-        return CONN_FMT_SHORT_QUANTIZATION;
+    fmt = CONN_FMT_UNKNOWN;
+    p = str;
+    while (*p != '\0') {
+        i = 0;
+        while (*p != '|' && *p != '\0') {
+            if (i >= MAX_LINE_LEN - 1) {
+                ST_WARNING("Too long name");
+                return CONN_FMT_UNKNOWN;
+            }
+            buf[i] = *p;
+            ++i;
+            ++p;
+        }
+        buf[i] = '\0';
+        trim(buf);
+
+        if (strcasecmp(buf, "Text") == 0
+                || strcasecmp(buf, "Txt") == 0
+                || strcasecmp(buf, "T") == 0) {
+            if (connlm_fmt_is_bin(fmt)) {
+                ST_WARNING("Text and Binary format can't exist simultaneously");
+                return CONN_FMT_UNKNOWN;
+            }
+            fmt = CONN_FMT_TXT;
+            continue;
+        }
+
+        if (fmt == CONN_FMT_TXT) {
+            ST_WARNING("Text and Binary format can't exist simultaneously");
+            return CONN_FMT_UNKNOWN;
+        }
+
+        if (strcasecmp(buf, "Binary") == 0
+                || strcasecmp(buf, "Bin") == 0
+                || strcasecmp(buf, "B") == 0) {
+            fmt |= CONN_FMT_BIN;
+        } else if (strcasecmp(buf, "Zeros-Compressed") == 0
+                || strcasecmp(buf, "Zeros-Compress") == 0
+                || strcasecmp(buf, "ZC") == 0) {
+            fmt |= CONN_FMT_ZEROS_COMPRESSED;
+        } else if (strcasecmp(buf, "Short-Quantization") == 0
+                || strcasecmp(buf, "Short-Q") == 0
+                || strcasecmp(buf, "SQ") == 0) {
+            fmt |= CONN_FMT_SHORT_QUANTIZATION;
+        }
+
+        if (*p == '\0') {
+            break;
+        }
+        ++p;
     }
 
-    return CONN_FMT_UNKNOWN;
+    return fmt;
 }
 
 int16_t quantify_int16(real_t r, real_t multiple)

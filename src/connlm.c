@@ -43,21 +43,37 @@ const char* connlm_revision()
     return CONNLM_GIT_COMMIT;
 }
 
-static char* fmt2str(connlm_fmt_t fmt)
+static char* fmt2str(connlm_fmt_t fmt, char *str, size_t len)
 {
-    switch (fmt) {
-        case CONN_FMT_TXT:
-            return "Text";
-        case CONN_FMT_BIN:
-            return "Binary";
-        case CONN_FMT_ZEROS_COMPRESSED:
-            return "Zeros-Compressed";
-        case CONN_FMT_SHORT_QUANTIZATION:
-            return "Short-Quantization";
-        default:
-            return "Unknown";
+    if (fmt == CONN_FMT_UNKNOWN) {
+        strncpy(str, "Unknown", len - 1);
+        str[len - 1] = '\0';
+    } else if (fmt == CONN_FMT_TXT) {
+        strncpy(str, "Text", len - 1);
+        str[len - 1] = '\0';
+    } else {
+        str[0] = '\0';
+        if (fmt & CONN_FMT_BIN) {
+            if (str[0] != '\0') {
+                strncat(str, "|", len - strlen(str));
+            }
+            strncat(str, "Binary", len - strlen(str));
+        }
+        if (fmt & CONN_FMT_SHORT_QUANTIZATION) {
+            if (str[0] != '\0') {
+                strncat(str, "|", len - strlen(str));
+            }
+            strncat(str, "Short-Quantization", len - strlen(str));
+        }
+        if (fmt & CONN_FMT_ZEROS_COMPRESSED) {
+            if (str[0] != '\0') {
+                strncat(str, "|", len - strlen(str));
+            }
+            strncat(str, "Zeros-Compressed", len - strlen(str));
+        }
     }
-    return "Unknown";
+
+    return str;
 }
 
 int connlm_load_train_opt(connlm_t *connlm, st_opt_t *opt, const char *sec_name)
@@ -440,7 +456,7 @@ static int connlm_load_header(connlm_t *connlm, FILE *fp,
         fprintf(fo_info, "Version: %d\n", version);
         fprintf(fo_info, "Real type: %s\n",
                 (real_size == sizeof(double)) ? "double" : "float");
-        fprintf(fo_info, "Format: %s\n", fmt2str(*fmt));
+        fprintf(fo_info, "Format: %s\n", fmt2str(*fmt, line, MAX_LINE_LEN));
         fprintf(fo_info, "Num comp: %d\n", num_comp);
     }
 

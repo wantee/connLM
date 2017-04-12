@@ -586,6 +586,7 @@ ERR:
 
 int glue_load_body(glue_t *glue, int version, FILE *fp, connlm_fmt_t fmt)
 {
+    connlm_fmt_t wt_fmt;
     int n;
 
     ST_CHECK_PARAM(glue == NULL || fp == NULL, -1);
@@ -612,7 +613,17 @@ int glue_load_body(glue_t *glue, int version, FILE *fp, connlm_fmt_t fmt)
         }
     }
 
-    if (wt_load_body(glue->wt, version, fp, fmt) < 0) {
+    if (strcasecmp(glue->type, DIRECT_GLUE_NAME) == 0) {
+        wt_fmt = fmt;
+    } else {
+        if (connlm_fmt_is_bin(fmt)) {
+            wt_fmt = CONN_FMT_BIN;
+        } else {
+            wt_fmt = CONN_FMT_TXT;
+        }
+    }
+
+    if (wt_load_body(glue->wt, version, fp, wt_fmt) < 0) {
         ST_WARNING("Failed to wt_load_body.");
         goto ERR;
     }

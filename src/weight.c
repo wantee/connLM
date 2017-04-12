@@ -553,8 +553,8 @@ int wt_load_body(weight_t *wt, int version, FILE *fp, connlm_fmt_t fmt)
                     goto ERR;
                 }
             }
-        } else if (fmt | CONN_FMT_SHORT_QUANTIZATION) {
-            if (fmt | CONN_FMT_ZEROS_COMPRESSED) {
+        } else if (fmt & CONN_FMT_SHORT_QUANTIZATION) {
+            if (fmt & CONN_FMT_ZEROS_COMPRESSED) {
                 if (wt_load_sq_zc(wt->mat, sz, fp) < 0) {
                     ST_WARNING("Failed to wt_load_sq_zc for mat.");
                     return -1;
@@ -566,11 +566,9 @@ int wt_load_body(weight_t *wt, int version, FILE *fp, connlm_fmt_t fmt)
                     }
                 }
             } else {
-                for (i = 0; i < sz; i++) {
-                    if (wt_load_sq(wt->mat, sz, fp) < 0) {
-                        ST_WARNING("Failed to wt_load_sq for mat.");
-                        return -1;
-                    }
+                if (wt_load_sq(wt->mat, sz, fp) < 0) {
+                    ST_WARNING("Failed to wt_load_sq for mat.");
+                    return -1;
                 }
                 if (wt->bias != NULL) {
                     if (wt_load_sq(wt->bias, wt->row, fp) < 0) {
@@ -579,14 +577,14 @@ int wt_load_body(weight_t *wt, int version, FILE *fp, connlm_fmt_t fmt)
                     }
                 }
             }
-        } else if (fmt | CONN_FMT_ZEROS_COMPRESSED) {
+        } else if (fmt & CONN_FMT_ZEROS_COMPRESSED) {
             if (wt_load_zc(wt->mat, sz, fp) < 0) {
-                ST_WARNING("Failed to wt_load_sq for mat.");
+                ST_WARNING("Failed to wt_load_zc for mat.");
                 return -1;
             }
             if (wt->bias != NULL) {
                 if (wt_load_zc(wt->bias, wt->row, fp) < 0) {
-                    ST_WARNING("Failed to wt_load_sq for bias.");
+                    ST_WARNING("Failed to wt_load_zc for bias.");
                     return -1;
                 }
             }
@@ -781,6 +779,8 @@ static int wt_save_sq(real_t *a, size_t sz, FILE *fp)
             return -1;
         }
     }
+
+    return 0;
 }
 
 static int write_zeros_real(uint64_t num_zeros, FILE *fp)
@@ -866,8 +866,8 @@ int wt_save_body(weight_t *wt, FILE *fp, connlm_fmt_t fmt, char *name)
                     return -1;
                 }
             }
-        } else if (fmt | CONN_FMT_SHORT_QUANTIZATION) {
-            if (fmt | CONN_FMT_ZEROS_COMPRESSED) {
+        } else if (fmt & CONN_FMT_SHORT_QUANTIZATION) {
+            if (fmt & CONN_FMT_ZEROS_COMPRESSED) {
                 if (wt_save_sq_zc(wt->mat, sz, fp) < 0) {
                     ST_WARNING("Failed to wt_save_sq_zc for mat.");
                     return -1;
@@ -890,7 +890,7 @@ int wt_save_body(weight_t *wt, FILE *fp, connlm_fmt_t fmt, char *name)
                     }
                 }
             }
-        } else if (fmt | CONN_FMT_ZEROS_COMPRESSED) {
+        } else if (fmt & CONN_FMT_ZEROS_COMPRESSED) {
             if (wt_save_zc(wt->mat, sz, fp) < 0) {
                 ST_WARNING("Failed to wt_save_zc for mat.");
                 return -1;
