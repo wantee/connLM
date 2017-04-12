@@ -131,12 +131,13 @@ int main(int argc, const char *argv[])
 
             fprintf(stdout, "\n<VERBOSE>\n");
             connlm_print_verbose_info(connlm, stdout);
+
+            safe_connlm_destroy(connlm);
         }
 
         safe_st_fclose(fp);
     }
 
-    safe_connlm_destroy(connlm);
     safe_st_opt_destroy(g_cmd_opt);
 
     st_log_close(0);

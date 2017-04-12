@@ -630,9 +630,11 @@ int wt_load_body(weight_t *wt, int version, FILE *fp, connlm_fmt_t fmt)
         }
     }
 
+    safe_st_free(line);
     return 0;
 ERR:
 
+    safe_st_free(line);
     wt_destroy(wt);
     return -1;
 }
