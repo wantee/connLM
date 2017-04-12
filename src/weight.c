@@ -697,9 +697,16 @@ int wt_save_header(weight_t *wt, FILE *fp, connlm_fmt_t fmt)
             ST_WARNING("Failed to fprintf init param.");
             return -1;
         }
-        if (fprintf(fp, "Bias: %f\n", wt->init_bias) < 0) {
-            ST_WARNING("Failed to fprintf init bias.");
-            return -1;
+        if (isinf(wt->init_bias)) {
+            if (fprintf(fp, "Bias: None\n") < 0) {
+                ST_WARNING("Failed to fprintf init bias.");
+                return -1;
+            }
+        } else {
+            if (fprintf(fp, "Bias: %f\n", wt->init_bias) < 0) {
+                ST_WARNING("Failed to fprintf init bias.");
+                return -1;
+            }
         }
     }
 
