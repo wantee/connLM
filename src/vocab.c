@@ -372,7 +372,7 @@ int vocab_load_body(vocab_t *vocab, int version, FILE *fp, connlm_fmt_t fmt)
             goto ERR;
         }
 
-        vocab->alphabet = st_alphabet_load_from_txt(fp);
+        vocab->alphabet = st_alphabet_load_from_txt(fp, vocab->vocab_size);
         if (vocab->alphabet == NULL) {
             ST_WARNING("Failed to st_alphabet_load_from_txt.");
             goto ERR;
