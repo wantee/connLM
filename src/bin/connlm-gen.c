@@ -37,8 +37,6 @@
 #include <connlm/connlm.h>
 #include <connlm/driver.h>
 
-bool g_binary;
-
 st_opt_t *g_cmd_opt;
 
 driver_gen_opt_t g_gen_opt;

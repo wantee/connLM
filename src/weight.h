@@ -30,6 +30,7 @@ extern "C" {
 #endif
 
 #include <connlm/config.h>
+#include "utils.h"
 
 /** @defgroup g_weight NNet weight
  * Weight for NNet, with various types.
@@ -107,14 +108,14 @@ int wt_parse_topo(weight_t *wt, char *line, size_t line_len);
  * @param[out] wt wt initialised.
  * @param[in] version file version of loading file.
  * @param[in] fp file stream loaded from.
- * @param[out] binary whether the file stream is in binary format.
- * @param[in] fo_info file stream used to print information, if it is not NULL.
+ * @param[out] fmt storage format.
+ * @param[out] fo_info file stream used to print information, if it is not NULL.
  * @see wt_load_body
  * @see wt_save_header, wt_save_body
  * @return non-zero value if any error.
  */
 int wt_load_header(weight_t **wt, int version,
-        FILE *fp, bool *binary, FILE *fo_info);
+        FILE *fp, connlm_fmt_t *fmt, FILE *fo_info);
 
 /**
  * Load wt body.
@@ -122,37 +123,37 @@ int wt_load_header(weight_t **wt, int version,
  * @param[in] wt wt to be loaded.
  * @param[in] version file version of loading file.
  * @param[in] fp file stream loaded from.
- * @param[in] binary whether to use binary format.
+ * @param[in] fmt storage format.
  * @see wt_load_header
  * @see wt_save_header, wt_save_body
  * @return non-zero value if any error.
  */
-int wt_load_body(weight_t *wt, int version, FILE *fp, bool binary);
+int wt_load_body(weight_t *wt, int version, FILE *fp, connlm_fmt_t fmt);
 
 /**
  * Save wt header.
  * @ingroup g_weight
  * @param[in] wt wt to be saved.
  * @param[in] fp file stream saved to.
- * @param[in] binary whether to use binary format.
+ * @param[in] fmt storage format.
  * @see wt_save_body
  * @see wt_load_header, wt_load_body
  * @return non-zero value if any error.
  */
-int wt_save_header(weight_t *wt, FILE *fp, bool binary);
+int wt_save_header(weight_t *wt, FILE *fp, connlm_fmt_t fmt);
 
 /**
  * Save wt body.
  * @ingroup g_weight
  * @param[in] wt wt to be saved.
  * @param[in] fp file stream saved to.
- * @param[in] binary whether to use binary format.
+ * @param[in] fmt storage format.
  * @param[in] name name of the weight.
  * @see wt_save_header
  * @see wt_load_header, wt_load_body
  * @return non-zero value if any error.
  */
-int wt_save_body(weight_t *wt, FILE *fp, bool binary, char *name);
+int wt_save_body(weight_t *wt, FILE *fp, connlm_fmt_t fmt, char *name);
 
 /**
  * Initialise weight.

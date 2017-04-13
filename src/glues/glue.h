@@ -33,6 +33,7 @@ extern "C" {
 
 #include <connlm/config.h>
 
+#include "utils.h"
 #include "input.h"
 #include "output.h"
 #include "layers/layer.h"
@@ -73,22 +74,24 @@ typedef struct _glue_implementation_t_ {
             size_t label_len); /**< label for drawing a glue. */
 
     int (*load_header)(void **extra, int version, FILE *fp,
-            bool *binary, FILE *fo_info); /**< load header of glue. */
+            connlm_fmt_t *fmt, FILE *fo_info); /**< load header of glue. */
 
     int (*load_body)(void *extra, int version, FILE *fp,
-            bool binary); /**< load body of glue. */
+            connlm_fmt_t fmt); /**< load body of glue. */
 
     int (*save_header)(void *extra, FILE *fp,
-            bool binary); /**< save header of glue. */
+            connlm_fmt_t fmt); /**< save header of glue. */
 
     int (*save_body)(void *extra, FILE *fp,
-            bool binary); /**< save body of glue. */
+            connlm_fmt_t fmt); /**< save body of glue. */
 
     int (*init_data)(glue_t *glue, input_t *input,
             layer_t **layers, output_t *output); /**< init data of glue. */
 
     wt_updater_t* (*init_wt_updater)(glue_t *glue,
             param_t *param); /**< init wt_updater for glue.*/
+
+    void (*print_verbose_info)(glue_t *glue, FILE *fo); /**< print info. */
 
 } glue_impl_t;
 
@@ -184,14 +187,14 @@ bool glue_check(glue_t *glue, layer_t **layers,
  * @param[out] glue glue initialised.
  * @param[in] version file version of loading file.
  * @param[in] fp file stream loaded from.
- * @param[out] binary whether the file stream is in binary format.
- * @param[in] fo_info file stream used to print information, if it is not NULL.
+ * @param[out] fmt storage format.
+ * @param[out] fo_info file stream used to print information, if it is not NULL.
  * @see glue_load_body
  * @see glue_save_header, glue_save_body
  * @return non-zero value if any error.
  */
 int glue_load_header(glue_t **glue, int version,
-        FILE *fp, bool *binary, FILE *fo_info);
+        FILE *fp, connlm_fmt_t *fmt, FILE *fo_info);
 
 /**
  * Load glue body.
@@ -199,36 +202,36 @@ int glue_load_header(glue_t **glue, int version,
  * @param[in] glue glue to be loaded.
  * @param[in] version file version of loading file.
  * @param[in] fp file stream loaded from.
- * @param[in] binary whether to use binary format.
+ * @param[out] fmt storage format.
  * @see glue_load_header
  * @see glue_save_header, glue_save_body
  * @return non-zero value if any error.
  */
-int glue_load_body(glue_t *glue, int version, FILE *fp, bool binary);
+int glue_load_body(glue_t *glue, int version, FILE *fp, connlm_fmt_t fmt);
 
 /**
  * Save glue header.
  * @ingroup g_glue
  * @param[in] glue glue to be saved.
  * @param[in] fp file stream saved to.
- * @param[in] binary whether to use binary format.
+ * @param[out] fmt storage format.
  * @see glue_save_body
  * @see glue_load_header, glue_load_body
  * @return non-zero value if any error.
  */
-int glue_save_header(glue_t *glue, FILE *fp, bool binary);
+int glue_save_header(glue_t *glue, FILE *fp, connlm_fmt_t fmt);
 
 /**
  * Save glue body.
  * @ingroup g_glue
  * @param[in] glue glue to be saved.
  * @param[in] fp file stream saved to.
- * @param[in] binary whether to use binary format.
+ * @param[out] fmt storage format.
  * @see glue_save_header
  * @see glue_load_header, glue_load_body
  * @return non-zero value if any error.
  */
-int glue_save_body(glue_t *glue, FILE *fp, bool binary);
+int glue_save_body(glue_t *glue, FILE *fp, connlm_fmt_t fmt);
 
 /**
  * Provide label string for drawing glue.
@@ -317,6 +320,14 @@ int glue_backprop(glue_t *glue, comp_updater_t *comp_updater,
  * @param[in] glue glue
  */
 void glue_sanity_check(glue_t *glue);
+
+/**
+ * Print verbose info of a glue.
+ * @ingroup g_glue
+ * @param[in] glue the glue.
+ * @param[in] fo file stream print info to.
+ */
+void glue_print_verbose_info(glue_t *glue, FILE *fo);
 
 #ifdef __cplusplus
 }

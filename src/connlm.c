@@ -43,6 +43,39 @@ const char* connlm_revision()
     return CONNLM_GIT_COMMIT;
 }
 
+static char* fmt2str(connlm_fmt_t fmt, char *str, size_t len)
+{
+    if (fmt == CONN_FMT_UNKNOWN) {
+        strncpy(str, "Unknown", len - 1);
+        str[len - 1] = '\0';
+    } else if (fmt == CONN_FMT_TXT) {
+        strncpy(str, "Text", len - 1);
+        str[len - 1] = '\0';
+    } else {
+        str[0] = '\0';
+        if (fmt & CONN_FMT_BIN) {
+            if (str[0] != '\0') {
+                strncat(str, "|", len - strlen(str));
+            }
+            strncat(str, "Binary", len - strlen(str));
+        }
+        if (fmt & CONN_FMT_SHORT_QUANTIZATION) {
+            if (str[0] != '\0') {
+                strncat(str, "|", len - strlen(str));
+            }
+            strncat(str, "Short-Quantization", len - strlen(str));
+        }
+        if (fmt & CONN_FMT_ZEROS_COMPRESSED) {
+            if (str[0] != '\0') {
+                strncat(str, "|", len - strlen(str));
+            }
+            strncat(str, "Zeros-Compressed", len - strlen(str));
+        }
+    }
+
+    return str;
+}
+
 int connlm_load_train_opt(connlm_t *connlm, st_opt_t *opt, const char *sec_name)
 {
     param_t param;
@@ -85,10 +118,12 @@ void connlm_destroy(connlm_t *connlm)
     safe_vocab_destroy(connlm->vocab);
     safe_output_destroy(connlm->output);
 
-    for (c = 0; c < connlm->num_comp; c++) {
-        safe_comp_destroy(connlm->comps[c]);
+    if (connlm->comps != NULL) {
+        for (c = 0; c < connlm->num_comp; c++) {
+            safe_comp_destroy(connlm->comps[c]);
+        }
+        safe_st_free(connlm->comps);
     }
-    safe_st_free(connlm->comps);
     connlm->num_comp = 0;
 }
 
@@ -293,11 +328,11 @@ ERR:
 }
 
 static int connlm_load_header(connlm_t *connlm, FILE *fp,
-        bool *binary, FILE *fo_info)
+        connlm_fmt_t *fmt, FILE *fo_info)
 {
     char line[MAX_LINE_LEN];
     size_t sz;
-    bool b;
+    connlm_fmt_t f;
 
     union {
         char str[4];
@@ -310,23 +345,22 @@ static int connlm_load_header(connlm_t *connlm, FILE *fp,
     int num_comp;
 
     ST_CHECK_PARAM((connlm == NULL && fo_info == NULL) || fp == NULL
-            || binary == NULL, -1);
+            || fmt == NULL, -1);
 
     if (fread(&flag.magic_num, sizeof(int), 1, fp) != 1) {
         ST_WARNING("Failed to load magic num.");
         return -1;
     }
 
+    *fmt = CONN_FMT_UNKNOWN;
     if (strncmp(flag.str, "    ", 4) == 0) {
-        *binary = false;
+        *fmt = CONN_FMT_TXT;
     } else if (CONNLM_MAGIC_NUM != flag.magic_num) {
         ST_WARNING("magic num wrong.");
         return -2;
-    } else {
-        *binary = true;
     }
 
-    if (*binary) {
+    if (*fmt != CONN_FMT_TXT) {
         if (fread(&version, sizeof(int), 1, fp) != 1) {
             ST_WARNING("Failed to read version.");
             return -1;
@@ -352,6 +386,15 @@ static int connlm_load_header(connlm_t *connlm, FILE *fp,
         if (real_size != sizeof(real_t)) {
             ST_WARNING("Real type not match. Please recompile toolkit");
             return -1;
+        }
+
+        if (version >= 12) {
+            if (fread(fmt, sizeof(connlm_fmt_t), 1, fp) != 1) {
+                ST_WARNING("Failed to read fmt.");
+                goto ERR;
+            }
+        } else {
+            *fmt = CONN_FMT_BIN;
         }
 
         if (fread(&num_comp, sizeof(int), 1, fp) != 1) {
@@ -413,29 +456,27 @@ static int connlm_load_header(connlm_t *connlm, FILE *fp,
         fprintf(fo_info, "Version: %d\n", version);
         fprintf(fo_info, "Real type: %s\n",
                 (real_size == sizeof(double)) ? "double" : "float");
-        fprintf(fo_info, "Binary: %s\n", bool2str(*binary));
+        fprintf(fo_info, "Format: %s\n", fmt2str(*fmt, line, MAX_LINE_LEN));
         fprintf(fo_info, "Num comp: %d\n", num_comp);
     }
 
-    b = *binary;
-
     if (vocab_load_header((connlm == NULL) ? NULL : &(connlm->vocab),
-                version, fp, binary, fo_info) < 0) {
+                version, fp, &f, fo_info) < 0) {
         ST_WARNING("Failed to vocab_load_header.");
         return -1;
     }
-    if (*binary != b) {
-        ST_WARNING("Both binary and text format in one file.");
+    if (*fmt != f) {
+        ST_WARNING("Multiple formats in one file.");
         return -1;
     }
 
     if (output_load_header((connlm == NULL) ? NULL : &connlm->output,
-                version, fp, binary, fo_info) < 0) {
+                version, fp, &f, fo_info) < 0) {
         ST_WARNING("Failed to output_load_header.");
         return -1;
     }
-    if (*binary != b) {
-        ST_WARNING("Both binary and text format in one file.");
+    if (*fmt != f) {
+        ST_WARNING("Multiple formats in one file.");
         return -1;
     }
 
@@ -450,13 +491,13 @@ static int connlm_load_header(connlm_t *connlm, FILE *fp,
     }
     for (c = 0; c < num_comp; c++) {
         if (comp_load_header((connlm == NULL) ? NULL : connlm->comps + c,
-                    version, fp, binary, fo_info) < 0) {
+                    version, fp, &f, fo_info) < 0) {
             ST_WARNING("Failed to comp_load_header.");
             goto ERR;
         }
-        if (*binary != b) {
-            ST_WARNING("Both binary and text format in one file.");
-            goto ERR;
+        if (*fmt != f) {
+            ST_WARNING("Multiple formats in one file.");
+            return -1;
         }
     }
 
@@ -475,26 +516,26 @@ ERR:
 }
 
 static int connlm_load_body(connlm_t *connlm, int version,
-        FILE *fp, bool binary)
+        FILE *fp, connlm_fmt_t fmt)
 {
     int c;
 
     ST_CHECK_PARAM(connlm == NULL || fp == NULL, -1);
 
-    if (vocab_load_body(connlm->vocab, version, fp, binary) < 0) {
+    if (vocab_load_body(connlm->vocab, version, fp, fmt) < 0) {
         ST_WARNING("Failed to vocab_load_body.");
         return -1;
     }
 
     if (connlm->output != NULL) {
-        if (output_load_body(connlm->output, version, fp, binary) < 0) {
+        if (output_load_body(connlm->output, version, fp, fmt) < 0) {
             ST_WARNING("Failed to output_load_body.");
             return -1;
         }
     }
 
     for (c = 0; c < connlm->num_comp; c++) {
-        if (comp_load_body(connlm->comps[c], version, fp, binary) < 0) {
+        if (comp_load_body(connlm->comps[c], version, fp, fmt) < 0) {
             ST_WARNING("Failed to comp_load_body[%d].", c);
             return -1;
         }
@@ -507,7 +548,7 @@ connlm_t* connlm_load(FILE *fp)
 {
     connlm_t *connlm = NULL;
     int version;
-    bool binary;
+    connlm_fmt_t fmt;
 
     ST_CHECK_PARAM(fp == NULL, NULL);
 
@@ -518,13 +559,13 @@ connlm_t* connlm_load(FILE *fp)
     }
     memset(connlm, 0, sizeof(connlm_t));
 
-    version = connlm_load_header(connlm, fp, &binary, NULL);
+    version = connlm_load_header(connlm, fp, &fmt, NULL);
     if (version < 0) {
         ST_WARNING("Failed to connlm_load_header.");
         goto ERR;
     }
 
-    if (connlm_load_body(connlm, version, fp, binary) < 0) {
+    if (connlm_load_body(connlm, version, fp, fmt) < 0) {
         ST_WARNING("Failed to connlm_load_body.");
         goto ERR;
     }
@@ -538,11 +579,11 @@ ERR:
 
 int connlm_print_info(FILE *fp, FILE *fo_info)
 {
-    bool binary;
+    connlm_fmt_t fmt;
 
     ST_CHECK_PARAM(fp == NULL || fo_info == NULL, -1);
 
-    if (connlm_load_header(NULL, fp, &binary, fo_info) < 0) {
+    if (connlm_load_header(NULL, fp, &fmt, fo_info) < 0) {
         ST_WARNING("Failed to connlm_load_header.");
         return -1;
     }
@@ -550,14 +591,14 @@ int connlm_print_info(FILE *fp, FILE *fo_info)
     return 0;
 }
 
-static int connlm_save_header(connlm_t *connlm, FILE *fp, bool binary)
+static int connlm_save_header(connlm_t *connlm, FILE *fp, connlm_fmt_t fmt)
 {
     int n;
     int c;
 
     ST_CHECK_PARAM(connlm == NULL || fp == NULL, -1);
 
-    if (binary) {
+    if (connlm_fmt_is_bin(fmt)) {
         if (fwrite(&CONNLM_MAGIC_NUM, sizeof(int), 1, fp) != 1) {
             ST_WARNING("Failed to write magic num.");
             return -1;
@@ -572,6 +613,11 @@ static int connlm_save_header(connlm_t *connlm, FILE *fp, bool binary)
         n = sizeof(real_t);
         if (fwrite(&n, sizeof(int), 1, fp) != 1) {
             ST_WARNING("Failed to write real size.");
+            return -1;
+        }
+
+        if (fwrite(&fmt, sizeof(connlm_fmt_t), 1, fp) != 1) {
+            ST_WARNING("Failed to write fmt.");
             return -1;
         }
 
@@ -601,18 +647,18 @@ static int connlm_save_header(connlm_t *connlm, FILE *fp, bool binary)
         }
     }
 
-    if (vocab_save_header(connlm->vocab, fp, binary) < 0) {
+    if (vocab_save_header(connlm->vocab, fp, fmt) < 0) {
         ST_WARNING("Failed to vocab_save_header.");
         return -1;
     }
 
-    if (output_save_header(connlm->output, fp, binary) < 0) {
+    if (output_save_header(connlm->output, fp, fmt) < 0) {
         ST_WARNING("Failed to output_save_header.");
         return -1;
     }
 
     for (c = 0; c < connlm->num_comp; c++) {
-        if (comp_save_header(connlm->comps[c], fp, binary) < 0) {
+        if (comp_save_header(connlm->comps[c], fp, fmt) < 0) {
             ST_WARNING("Failed to comp_save_header.");
             return -1;
         }
@@ -621,24 +667,24 @@ static int connlm_save_header(connlm_t *connlm, FILE *fp, bool binary)
     return 0;
 }
 
-static int connlm_save_body(connlm_t *connlm, FILE *fp, bool binary)
+static int connlm_save_body(connlm_t *connlm, FILE *fp, connlm_fmt_t fmt)
 {
     int c;
 
     ST_CHECK_PARAM(connlm == NULL || fp == NULL, -1);
 
-    if (vocab_save_body(connlm->vocab, fp, binary) < 0) {
+    if (vocab_save_body(connlm->vocab, fp, fmt) < 0) {
         ST_WARNING("Failed to vocab_save_body.");
         return -1;
     }
 
-    if (output_save_body(connlm->output, fp, binary) < 0) {
+    if (output_save_body(connlm->output, fp, fmt) < 0) {
         ST_WARNING("Failed to output_save_body.");
         return -1;
     }
 
     for (c = 0; c < connlm->num_comp; c++) {
-        if (comp_save_body(connlm->comps[c], fp, binary) < 0) {
+        if (comp_save_body(connlm->comps[c], fp, fmt) < 0) {
             ST_WARNING("Failed to comp_save_body.");
             return -1;
         }
@@ -647,16 +693,16 @@ static int connlm_save_body(connlm_t *connlm, FILE *fp, bool binary)
     return 0;
 }
 
-int connlm_save(connlm_t *connlm, FILE *fp, bool binary)
+int connlm_save(connlm_t *connlm, FILE *fp, connlm_fmt_t fmt)
 {
     ST_CHECK_PARAM(connlm == NULL || fp == NULL, -1);
 
-    if (connlm_save_header(connlm, fp, binary) < 0) {
+    if (connlm_save_header(connlm, fp, fmt) < 0) {
         ST_WARNING("Failed to connlm_save_header.");
         return -1;
     }
 
-    if (connlm_save_body(connlm, fp, binary) < 0) {
+    if (connlm_save_body(connlm, fp, fmt) < 0) {
         ST_WARNING("Failed to connlm_save_body.");
         return -1;
     }
@@ -919,5 +965,16 @@ void connlm_sanity_check(connlm_t *connlm)
 
     for (c = 0; c < connlm->num_comp; c++) {
         comp_sanity_check(connlm->comps[c]);
+    }
+}
+
+void connlm_print_verbose_info(connlm_t *connlm, FILE *fo)
+{
+    int c;
+
+    ST_CHECK_PARAM_VOID(connlm == NULL || fo == NULL);
+
+    for (c = 0; c < connlm->num_comp; c++) {
+        comp_print_verbose_info(connlm->comps[c], fo);
     }
 }

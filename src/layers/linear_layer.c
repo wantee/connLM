@@ -188,7 +188,7 @@ ERR:
 }
 
 int linear_load_header(void **extra, int version,
-        FILE *fp, bool *binary, FILE *fo_info)
+        FILE *fp, connlm_fmt_t *fmt, FILE *fo_info)
 {
     linear_data_t *data = NULL;
 
@@ -200,7 +200,7 @@ int linear_load_header(void **extra, int version,
     real_t scale;
 
     ST_CHECK_PARAM((extra == NULL && fo_info == NULL) || fp == NULL
-            || binary == NULL, -1);
+            || fmt == NULL, -1);
 
     if (version < 3) {
         ST_WARNING("Too old version of connlm file");
@@ -212,20 +212,28 @@ int linear_load_header(void **extra, int version,
         return -1;
     }
 
+    *fmt = CONN_FMT_UNKNOWN;
     if (strncmp(flag.str, "    ", 4) == 0) {
-        *binary = false;
+        *fmt = CONN_FMT_TXT;
     } else if (LINEAR_LAYER_MAGIC_NUM != flag.magic_num) {
         ST_WARNING("magic num wrong.");
         return -2;
-    } else {
-        *binary = true;
     }
 
     if (extra != NULL) {
         *extra = NULL;
     }
 
-    if (*binary) {
+    if (*fmt != CONN_FMT_TXT) {
+        if (version >= 12) {
+            if (fread(fmt, sizeof(connlm_fmt_t), 1, fp) != 1) {
+                ST_WARNING("Failed to read fmt.");
+                goto ERR;
+            }
+        } else {
+            *fmt = CONN_FMT_BIN;
+        }
+
         if (fread(&scale, sizeof(real_t), 1, fp) != 1) {
             ST_WARNING("Failed to read scale.");
             return -1;
@@ -271,7 +279,7 @@ ERR:
     return -1;
 }
 
-int linear_load_body(void *extra, int version, FILE *fp, bool binary)
+int linear_load_body(void *extra, int version, FILE *fp, connlm_fmt_t fmt)
 {
     int n;
 
@@ -284,7 +292,7 @@ int linear_load_body(void *extra, int version, FILE *fp, bool binary)
         return 0;
     }
 
-    if (binary) {
+    if (connlm_fmt_is_bin(fmt)) {
         if (fread(&n, sizeof(int), 1, fp) != 1) {
             ST_WARNING("Failed to read magic num.");
             goto ERR;
@@ -307,7 +315,7 @@ ERR:
     return -1;
 }
 
-int linear_save_header(void *extra, FILE *fp, bool binary)
+int linear_save_header(void *extra, FILE *fp, connlm_fmt_t fmt)
 {
     linear_data_t *data;
 
@@ -315,9 +323,13 @@ int linear_save_header(void *extra, FILE *fp, bool binary)
 
     data = (linear_data_t *)extra;
 
-    if (binary) {
+    if (connlm_fmt_is_bin(fmt)) {
         if (fwrite(&LINEAR_LAYER_MAGIC_NUM, sizeof(int), 1, fp) != 1) {
             ST_WARNING("Failed to write magic num.");
+            return -1;
+        }
+        if (fwrite(&fmt, sizeof(connlm_fmt_t), 1, fp) != 1) {
+            ST_WARNING("Failed to write fmt.");
             return -1;
         }
 

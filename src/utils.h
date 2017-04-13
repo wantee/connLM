@@ -29,6 +29,7 @@
 extern "C" {
 #endif
 
+#include <inttypes.h>
 #include <math.h>
 
 #include <stutils/st_opt.h>
@@ -132,6 +133,37 @@ int concat_mat_add_row(concat_mat_t *mat, real_t *vec, int vec_size);
  * Add all rows from src to dst
  */
 int concat_mat_add_mat(concat_mat_t *dst, concat_mat_t *src);
+
+/**
+ * Storage Format for connLM model.
+ * @ingroup g_connlm
+ */
+typedef enum _connlm_format_t_ {
+    CONN_FMT_UNKNOWN             = 0x0000, /**< Unknown format. */
+    CONN_FMT_TXT                 = 0x0001, /**< Text format. */
+    CONN_FMT_BIN                 = 0x0002, /**< (flat) Binary format. */
+    CONN_FMT_ZEROS_COMPRESSED    = 0x0004, /**< zeros-compressed (binary) format. */
+    CONN_FMT_SHORT_QUANTIZATION  = 0x0008, /**< quantify to short (binary) format. */
+} connlm_fmt_t;
+
+#define connlm_fmt_is_bin(fmt) ((fmt) > 1)
+
+/**
+ * Parse the string representation to a connlm_fmt_t
+ * @ingroup g_connlm
+ * @param[in] str string to be parsed.
+ * @return the format, CONN_FMT_UNKNOWN if string not valid or any other error.
+ */
+connlm_fmt_t connlm_format_parse(const char *str);
+
+/**
+ * quantify a float number to sint16
+ * @ingroup g_connlm
+ * @param[in] r the float number.
+ * @param[in] multiple multiple to enlarge the number before quantify.
+ * @return quantified value.
+ */
+int16_t quantify_int16(real_t r, real_t multiple);
 
 #ifdef __cplusplus
 }

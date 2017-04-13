@@ -218,8 +218,8 @@ ERR:
     return NULL;
 }
 
-int vocab_load_header(vocab_t **vocab, int version, FILE *fp, bool *binary,
-        FILE *fo_info)
+int vocab_load_header(vocab_t **vocab, int version, FILE *fp,
+        connlm_fmt_t *fmt, FILE *fo_info)
 {
     union {
         char str[4];
@@ -229,27 +229,41 @@ int vocab_load_header(vocab_t **vocab, int version, FILE *fp, bool *binary,
     int vocab_size;
 
     ST_CHECK_PARAM((vocab == NULL && fo_info == NULL) || fp == NULL
-            || binary == NULL, -1);
+            || fmt == NULL, -1);
+
+    if (version < 11) {
+        ST_WARNING("File versoin[%d] less than 11 is not supported, "
+                "please downgrade connlm toolkit", version);
+        return -1;
+    }
 
     if (fread(&flag.magic_num, sizeof(int), 1, fp) != 1) {
         ST_WARNING("Failed to load magic num.");
         return -1;
     }
 
+    *fmt = CONN_FMT_UNKNOWN;
     if (strncmp(flag.str, "    ", 4) == 0) {
-        *binary = false;
+        *fmt = CONN_FMT_TXT;
     } else if (VOCAB_MAGIC_NUM != flag.magic_num) {
         ST_WARNING("magic num wrong.");
         return -2;
-    } else {
-        *binary = true;
     }
 
     if (vocab != NULL) {
         *vocab = NULL;
     }
 
-    if (*binary) {
+    if (*fmt != CONN_FMT_TXT) {
+        if (version >= 12) {
+            if (fread(fmt, sizeof(connlm_fmt_t), 1, fp) != 1) {
+                ST_WARNING("Failed to read fmt.");
+                goto ERR;
+            }
+        } else {
+            *fmt = CONN_FMT_BIN;
+        }
+
         if (fread(&vocab_size, sizeof(int), 1, fp) != 1) {
             ST_WARNING("Failed to read vocab size.");
             return -1;
@@ -309,7 +323,7 @@ ERR:
     return -1;
 }
 
-int vocab_load_body(vocab_t *vocab, int version, FILE *fp, bool binary)
+int vocab_load_body(vocab_t *vocab, int version, FILE *fp, connlm_fmt_t fmt)
 {
     int n;
 
@@ -324,7 +338,7 @@ int vocab_load_body(vocab_t *vocab, int version, FILE *fp, bool binary)
     vocab->alphabet = NULL;
     vocab->cnts = NULL;
 
-    if (binary) {
+    if (connlm_fmt_is_bin(fmt)) {
         if (fread(&n, sizeof(int), 1, fp) != 1) {
             ST_WARNING("Failed to read magic num.");
             goto ERR;
@@ -358,7 +372,7 @@ int vocab_load_body(vocab_t *vocab, int version, FILE *fp, bool binary)
             goto ERR;
         }
 
-        vocab->alphabet = st_alphabet_load_from_txt(fp);
+        vocab->alphabet = st_alphabet_load_from_txt(fp, vocab->vocab_size);
         if (vocab->alphabet == NULL) {
             ST_WARNING("Failed to st_alphabet_load_from_txt.");
             goto ERR;
@@ -390,17 +404,23 @@ ERR:
     return -1;
 }
 
-int vocab_save_header(vocab_t *vocab, FILE *fp, bool binary)
+int vocab_save_header(vocab_t *vocab, FILE *fp, connlm_fmt_t fmt)
 {
     int sz;
 
     ST_CHECK_PARAM(fp == NULL, -1);
 
-    if (binary) {
+    if (connlm_fmt_is_bin(fmt)) {
         if (fwrite(&VOCAB_MAGIC_NUM, sizeof(int), 1, fp) != 1) {
             ST_WARNING("Failed to write magic num.");
             return -1;
         }
+
+        if (fwrite(&fmt, sizeof(connlm_fmt_t), 1, fp) != 1) {
+            ST_WARNING("Failed to write fmt.");
+            return -1;
+        }
+
         if (vocab == NULL) {
             sz = 0;
             if (fwrite(&sz, sizeof(int), 1, fp) != 1) {
@@ -438,7 +458,7 @@ int vocab_save_header(vocab_t *vocab, FILE *fp, bool binary)
     return 0;
 }
 
-int vocab_save_body(vocab_t *vocab, FILE *fp, bool binary)
+int vocab_save_body(vocab_t *vocab, FILE *fp, connlm_fmt_t fmt)
 {
     int n;
     int i;
@@ -449,7 +469,7 @@ int vocab_save_body(vocab_t *vocab, FILE *fp, bool binary)
         return 0;
     }
 
-    if (binary) {
+    if (connlm_fmt_is_bin(fmt)) {
         n = -VOCAB_MAGIC_NUM;
         if (fwrite(&n, sizeof(int), 1, fp) != 1) {
             ST_WARNING("Failed to write magic num.");

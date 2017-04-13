@@ -30,6 +30,8 @@
 #include <connlm/utils.h>
 #include <connlm/connlm.h>
 
+bool g_verbose;
+
 st_opt_t *g_cmd_opt;
 
 int connlm_info_parse_opt(int *argc, const char *argv[])
@@ -58,6 +60,9 @@ int connlm_info_parse_opt(int *argc, const char *argv[])
         goto ST_OPT_ERR;
     }
 
+    ST_OPT_GET_BOOL(g_cmd_opt, "verbose", g_verbose, false,
+            "Print verbose info.");
+
     ST_OPT_GET_BOOL(g_cmd_opt, "help", b, false, "Print help");
 
     return (b ? 1 : 0);
@@ -78,6 +83,7 @@ void show_usage(const char *module_name)
 int main(int argc, const char *argv[])
 {
     FILE *fp = NULL;
+    connlm_t *connlm = NULL;
     int ret;
     int i;
 
@@ -113,6 +119,22 @@ int main(int argc, const char *argv[])
             ST_WARNING("Failed to connlm_print_info. [%s]", argv[i]);
             goto ERR;
         }
+
+        if (g_verbose) {
+            rewind(fp);
+
+            connlm = connlm_load(fp);
+            if (connlm == NULL) {
+                ST_WARNING("Failed to connlm_load. [%s]", argv[i]);
+                goto ERR;
+            }
+
+            fprintf(stdout, "\n<VERBOSE>\n");
+            connlm_print_verbose_info(connlm, stdout);
+
+            safe_connlm_destroy(connlm);
+        }
+
         safe_st_fclose(fp);
     }
 
@@ -123,6 +145,7 @@ int main(int argc, const char *argv[])
 
 ERR:
     safe_st_fclose(fp);
+    safe_connlm_destroy(connlm);
     safe_st_opt_destroy(g_cmd_opt);
 
     st_log_close(1);

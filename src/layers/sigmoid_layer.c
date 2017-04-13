@@ -189,7 +189,7 @@ ERR:
 }
 
 int sigmoid_load_header(void **extra, int version,
-        FILE *fp, bool *binary, FILE *fo_info)
+        FILE *fp, connlm_fmt_t *fmt, FILE *fo_info)
 {
     sigmoid_data_t *data = NULL;
 
@@ -201,7 +201,7 @@ int sigmoid_load_header(void **extra, int version,
     real_t steepness;
 
     ST_CHECK_PARAM((extra == NULL && fo_info == NULL) || fp == NULL
-            || binary == NULL, -1);
+            || fmt == NULL, -1);
 
     if (version < 3) {
         ST_WARNING("Too old version of connlm file");
@@ -213,20 +213,28 @@ int sigmoid_load_header(void **extra, int version,
         return -1;
     }
 
+    *fmt = CONN_FMT_UNKNOWN;
     if (strncmp(flag.str, "    ", 4) == 0) {
-        *binary = false;
+        *fmt = CONN_FMT_TXT;
     } else if (SIGMOID_LAYER_MAGIC_NUM != flag.magic_num) {
         ST_WARNING("magic num wrong.");
         return -2;
-    } else {
-        *binary = true;
     }
 
     if (extra != NULL) {
         *extra = NULL;
     }
 
-    if (*binary) {
+    if (*fmt != CONN_FMT_TXT) {
+        if (version >= 12) {
+            if (fread(fmt, sizeof(connlm_fmt_t), 1, fp) != 1) {
+                ST_WARNING("Failed to read fmt.");
+                goto ERR;
+            }
+        } else {
+            *fmt = CONN_FMT_BIN;
+        }
+
         if (fread(&steepness, sizeof(real_t), 1, fp) != 1) {
             ST_WARNING("Failed to read steepness.");
             return -1;
@@ -272,7 +280,7 @@ ERR:
     return -1;
 }
 
-int sigmoid_load_body(void *extra, int version, FILE *fp, bool binary)
+int sigmoid_load_body(void *extra, int version, FILE *fp, connlm_fmt_t fmt)
 {
     int n;
 
@@ -285,7 +293,7 @@ int sigmoid_load_body(void *extra, int version, FILE *fp, bool binary)
         return 0;
     }
 
-    if (binary) {
+    if (connlm_fmt_is_bin(fmt)) {
         if (fread(&n, sizeof(int), 1, fp) != 1) {
             ST_WARNING("Failed to read magic num.");
             goto ERR;
@@ -308,7 +316,7 @@ ERR:
     return -1;
 }
 
-int sigmoid_save_header(void *extra, FILE *fp, bool binary)
+int sigmoid_save_header(void *extra, FILE *fp, connlm_fmt_t fmt)
 {
     sigmoid_data_t *data;
 
@@ -316,9 +324,13 @@ int sigmoid_save_header(void *extra, FILE *fp, bool binary)
 
     data = (sigmoid_data_t *)extra;
 
-    if (binary) {
+    if (connlm_fmt_is_bin(fmt)) {
         if (fwrite(&SIGMOID_LAYER_MAGIC_NUM, sizeof(int), 1, fp) != 1) {
             ST_WARNING("Failed to write magic num.");
+            return -1;
+        }
+        if (fwrite(&fmt, sizeof(connlm_fmt_t), 1, fp) != 1) {
+            ST_WARNING("Failed to write fmt.");
             return -1;
         }
 

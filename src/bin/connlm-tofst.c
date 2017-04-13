@@ -37,7 +37,6 @@
 #include <connlm/connlm.h>
 #include <connlm/fst_converter.h>
 
-bool g_binary;
 int g_num_thr;
 
 st_opt_t *g_cmd_opt;

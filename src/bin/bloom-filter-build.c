@@ -37,7 +37,7 @@
 #include <connlm/connlm.h>
 #include <connlm/bloom_filter.h>
 
-bool g_binary;
+bloom_filter_format_t g_fmt;
 
 st_opt_t *g_cmd_opt;
 bloom_filter_opt_t g_blm_flt_opt;
@@ -45,6 +45,8 @@ bloom_filter_opt_t g_blm_flt_opt;
 int bloom_filter_parse_opt(int *argc, const char *argv[])
 {
     st_log_opt_t log_opt;
+
+    char str[MAX_ST_CONF_LEN];
     bool b;
 
     g_cmd_opt = st_opt_create();
@@ -73,8 +75,13 @@ int bloom_filter_parse_opt(int *argc, const char *argv[])
         goto ST_OPT_ERR;
     }
 
-    ST_OPT_GET_BOOL(g_cmd_opt, "BINARY", g_binary, true,
-            "Save file as binary format");
+    ST_OPT_GET_STR(g_cmd_opt, "FORMAT", str, MAX_ST_CONF_LEN, "Compress",
+            "storage format(Txt/Bin/Compress)");
+    g_fmt = bloom_filter_format_parse(str);
+    if (g_fmt == BF_FMT_UNKNOWN) {
+        ST_WARNING("Unknown format[%s]", str);
+        goto ST_OPT_ERR;
+    }
 
     ST_OPT_GET_BOOL(g_cmd_opt, "help", b, false, "Print help");
 
@@ -169,7 +176,7 @@ int main(int argc, const char *argv[])
         goto ERR;
     }
 
-    if (bloom_filter_save(blm_flt, fp, g_binary) < 0) {
+    if (bloom_filter_save(blm_flt, fp, g_fmt) < 0) {
         ST_WARNING("Failed to bloom_filter_save.");
         goto ERR;
     }

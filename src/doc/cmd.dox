@@ -26,12 +26,6 @@
 
   @section cmd_filter The Model filter
 
-  The low level I/O in connLM use the
-  <a href="https://github.com/wantee/stutils">stutils</a> library.
-
-  Most connLM tools has a @c binary option to determine whether write
-  models in binary format.
-
   ConnLM supports a specific format used to refer a model file,
   which is called the <em> Model Filter </em>.
 
@@ -58,7 +52,7 @@
   of MaxEnt in one model:
 
   @code{.sh}
-  $ connlm-copy --binary=false mdl,c{maxent}:exp/rnn+maxent/final.clm - | less
+  $ connlm-copy --format=txt mdl,c{maxent}:exp/rnn+maxent/final.clm - | less
   @endcode
 
   Users can find many examples using model filter in the
@@ -73,9 +67,19 @@
   All command line tools provide @c \-\-config option to specify a
   configuration file (note that option passed by command line would override
   the value in configuration file), @c \-\-log-file and @c \-\-log-level
-  options to specify logging file location and logging level. For all tools
-  that will save a model, one can pass @c \-\-binary to control whether to
-  save the model in binary format.
+  options to specify logging file location and logging level.
+
+  For all connLM tools that will save a model file, there is a @c \-\-format
+  option to specify the storage format for writing. Currently, there are
+  four types of storage format: Text, Binary, Zeros-Compress(ZC) and
+  Short-Quantization(SQ). Text format save the model in a human readable way,
+  the other three are all binary format.
+
+  ZC and SQ are used for compressing the weight of network. ZC will compress
+  the consecutive zeros in weight, while SQ quantifies the float or double
+  value to a short. These two method could be applied simultaneously, by
+  passing 'ZC|SQ' to @c \-\-format. Note that, in current implementation,
+  we only do compress on the direct glue since it is usually of large size.
 
   User could get the help message of a command line tool by typing the name
   of command line and @c \-\-help option or just typing the name. Note that,
@@ -103,7 +107,7 @@
     connlm-vocab data/train exp/vocab.clm
 
   Options  :
-    --config                   : config file (string, default = "")
+    --help                     : Print help (bool, default = false)
     --log-file                 : Log file (string, default = "/dev/stderr")
     --log-level                : Log level (1-8) (int, default = 8)
     --wordlist                 : File name of wordlist. (string, default = "")
@@ -111,9 +115,8 @@
     --max-vocab-size           : Maximum size of Vocabulary. 0 denotes no limit. (int, default = 0)
     --max-word-num             : Maximum number of words used to learn vocab. 0 denotes no limit. (ulong, default = 0)
     --min-count                : Mininum count for a word to be used in learning vocab. 0 denotes no limit. (int, default = 0)
-    --binary                   : Save file as binary format (bool, default = true)
-    --help                     : Print help (bool, default = false)
-
+    --format                   : storage format(Txt/Bin/Zeros-Compress/Short-Q) (string, default = "Bin")
+    --config                   : config file (string, default = "")
   @endcode
 
   Two predefined words (\</s\> and \<unk\>) will be added to the vocabulary
@@ -167,15 +170,14 @@
     connlm-output exp/vocab.clm exp/output.clm
 
   Options  :
-    --config                   : config file (string, default = "")
+    --help                     : Print help (bool, default = false)
     --log-file                 : Log file (string, default = "/dev/stderr")
     --log-level                : Log level (1-8) (int, default = 8)
     --method                   : Constructing method(TopDown/BottomUp) (string, default = "TopDown")
     --max-depth                : Maximum depth of output tree (int, default = 2)
     --max-branch               : Maximum branch of output tree (int, default = 100)
-    --binary                   : Save file as binary format (bool, default = true)
-    --help                     : Print help (bool, default = false)
-
+    --format                   : storage format(Txt/Bin/Zeros-Compress/Short-Q) (string, default = "Bin")
+    --config                   : config file (string, default = "")
   @endcode
 
   @c \-\-method is to specify the constructing method, which could be "TopDown"

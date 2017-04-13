@@ -33,6 +33,7 @@ extern "C" {
 
 #include <connlm/config.h>
 
+#include "utils.h"
 #include "input.h"
 #include "output.h"
 #include "layers/layer.h"
@@ -129,14 +130,14 @@ int comp_load_train_opt(component_t *comp, st_opt_t *opt, const char *sec_name,
  * @param[out] comp component initialised.
  * @param[in] version file version of loading file.
  * @param[in] fp file stream loaded from.
- * @param[out] binary whether the file stream is in binary format.
- * @param[in] fo_info file stream used to print information, if it is not NULL.
+ * @param[out] fmt storage format.
+ * @param[out] fo_info file stream used to print information, if it is not NULL.
  * @see comp_load_body
  * @see comp_save_header, comp_save_body
  * @return non-zero value if any error.
  */
 int comp_load_header(component_t **comp, int version,
-        FILE *fp, bool *binary, FILE *fo_info);
+        FILE *fp, connlm_fmt_t *fmt, FILE *fo_info);
 
 /**
  * Load component body.
@@ -144,36 +145,36 @@ int comp_load_header(component_t **comp, int version,
  * @param[in] comp component to be loaded.
  * @param[in] version file version of loading file.
  * @param[in] fp file stream loaded from.
- * @param[in] binary whether to use binary format.
+ * @param[in] fmt storage format.
  * @see comp_load_header
  * @see comp_save_header, comp_save_body
  * @return non-zero value if any error.
  */
-int comp_load_body(component_t *comp, int version, FILE *fp, bool binary);
+int comp_load_body(component_t *comp, int version, FILE *fp, connlm_fmt_t fmt);
 
 /**
  * Save component header.
  * @ingroup g_component
  * @param[in] comp component to be saved.
  * @param[in] fp file stream saved to.
- * @param[in] binary whether to use binary format.
+ * @param[in] fmt storage format.
  * @see comp_save_body
  * @see comp_load_header, comp_load_body
  * @return non-zero value if any error.
  */
-int comp_save_header(component_t *comp, FILE *fp, bool binary);
+int comp_save_header(component_t *comp, FILE *fp, connlm_fmt_t fmt);
 
 /**
  * Save component body.
  * @ingroup g_component
  * @param[in] comp component to be saved.
  * @param[in] fp file stream saved to.
- * @param[in] binary whether to use binary format.
+ * @param[in] fmt storage format.
  * @see comp_save_header
  * @see comp_load_header, comp_load_body
  * @return non-zero value if any error.
  */
-int comp_save_body(component_t *comp, FILE *fp, bool binary);
+int comp_save_body(component_t *comp, FILE *fp, connlm_fmt_t fmt);
 
 /**
  * Get nodename in graphviz format of input layer.
@@ -202,6 +203,14 @@ int comp_draw(component_t *comp, FILE *fp, bool verbose);
  * @param[in] comp component
  */
 void comp_sanity_check(component_t *comp);
+
+/**
+ * Print verbose info of a component.
+ * @ingroup g_component
+ * @param[in] comp the component.
+ * @param[in] fo file stream print info to.
+ */
+void comp_print_verbose_info(component_t *comp, FILE *fo);
 
 #ifdef __cplusplus
 }

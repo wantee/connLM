@@ -529,7 +529,7 @@ ST_OPT_ERR:
 }
 
 int comp_load_header(component_t **comp, int version,
-        FILE *fp, bool *binary, FILE *fo_info)
+        FILE *fp, connlm_fmt_t *fmt, FILE *fo_info)
 {
     union {
         char str[4];
@@ -544,10 +544,10 @@ int comp_load_header(component_t **comp, int version,
     int l;
     int g;
 
-    bool b;
+    connlm_fmt_t f;
 
     ST_CHECK_PARAM((comp == NULL && fo_info == NULL) || fp == NULL
-            || binary == NULL, -1);
+            || fmt == NULL, -1);
 
     if (version < 3) {
         ST_WARNING("Too old version of connlm file");
@@ -559,20 +559,28 @@ int comp_load_header(component_t **comp, int version,
         return -1;
     }
 
+    *fmt = CONN_FMT_UNKNOWN;
     if (strncmp(flag.str, "    ", 4) == 0) {
-        *binary = false;
+        *fmt = CONN_FMT_TXT;
     } else if (COMP_MAGIC_NUM != flag.magic_num) {
         ST_WARNING("magic num wrong.");
         return -2;
-    } else {
-        *binary = true;
     }
 
     if (comp != NULL) {
         *comp = NULL;
     }
 
-    if (*binary) {
+    if (*fmt != CONN_FMT_TXT) {
+        if (version >= 12) {
+            if (fread(fmt, sizeof(connlm_fmt_t), 1, fp) != 1) {
+                ST_WARNING("Failed to read fmt.");
+                goto ERR;
+            }
+        } else {
+            *fmt = CONN_FMT_BIN;
+        }
+
         if (fread(name, sizeof(char), MAX_NAME_LEN, fp) != MAX_NAME_LEN) {
             ST_WARNING("Failed to read name.");
             return -1;
@@ -665,36 +673,36 @@ int comp_load_header(component_t **comp, int version,
     }
 
     if (input_load_header(comp != NULL ? &((*comp)->input) : NULL,
-                version, fp, &b, fo_info) < 0) {
+                version, fp, &f, fo_info) < 0) {
         ST_WARNING("Failed to input_load_header.");
         goto ERR;
     }
-    if (*binary != b) {
-        ST_WARNING("Both binary and text format in one file.");
-        goto ERR;
+    if (*fmt != f) {
+        ST_WARNING("Multiple formats in one file.");
+        return -1;
     }
 
     for (l = 0; l < num_layer; l++) {
         if (layer_load_header(comp != NULL ? &((*comp)->layers[l]) : NULL,
-                    version, fp, &b, fo_info) < 0) {
+                    version, fp, &f, fo_info) < 0) {
             ST_WARNING("Failed to layer_load_header[%d].", l);
             goto ERR;
         }
-        if (*binary != b) {
-            ST_WARNING("Both binary and text format in one file.");
-            goto ERR;
+        if (*fmt != f) {
+            ST_WARNING("Multiple formats in one file.");
+            return -1;
         }
     }
 
     for (g = 0; g < num_glue; g++) {
         if (glue_load_header(comp != NULL ? &((*comp)->glues[g]) : NULL,
-                    version, fp, &b, fo_info) < 0) {
+                    version, fp, &f, fo_info) < 0) {
             ST_WARNING("Failed to glue_load_header[%d].", g);
             goto ERR;
         }
-        if (*binary != b) {
-            ST_WARNING("Both binary and text format in one file.");
-            goto ERR;
+        if (*fmt != f) {
+            ST_WARNING("Multiple formats in one file.");
+            return -1;
         }
     }
 
@@ -707,7 +715,7 @@ ERR:
     return -1;
 }
 
-int comp_load_body(component_t *comp, int version, FILE *fp, bool binary)
+int comp_load_body(component_t *comp, int version, FILE *fp, connlm_fmt_t fmt)
 {
     int n;
     int l;
@@ -720,7 +728,7 @@ int comp_load_body(component_t *comp, int version, FILE *fp, bool binary)
         return -1;
     }
 
-    if (binary) {
+    if (connlm_fmt_is_bin(fmt)) {
         if (fread(&n, sizeof(int), 1, fp) != 1) {
             ST_WARNING("Failed to read magic num.");
             goto ERR;
@@ -738,20 +746,20 @@ int comp_load_body(component_t *comp, int version, FILE *fp, bool binary)
         }
     }
 
-    if (input_load_body(comp->input, version, fp, binary) < 0) {
+    if (input_load_body(comp->input, version, fp, fmt) < 0) {
         ST_WARNING("Failed to input_load_body.");
         goto ERR;
     }
 
     for (l = 0; l < comp->num_layer; l++) {
-        if (layer_load_body(comp->layers[l], version, fp, binary) < 0) {
+        if (layer_load_body(comp->layers[l], version, fp, fmt) < 0) {
             ST_WARNING("Failed to layer_load_body[%d].", l);
             goto ERR;
         }
     }
 
     for (g = 0; g < comp->num_glue; g++) {
-        if (glue_load_body(comp->glues[g], version, fp, binary) < 0) {
+        if (glue_load_body(comp->glues[g], version, fp, fmt) < 0) {
             ST_WARNING("Failed to glue_load_body[%d].", g);
             goto ERR;
         }
@@ -778,16 +786,20 @@ ERR:
     return -1;
 }
 
-int comp_save_header(component_t *comp, FILE *fp, bool binary)
+int comp_save_header(component_t *comp, FILE *fp, connlm_fmt_t fmt)
 {
     int l;
     int g;
 
     ST_CHECK_PARAM(fp == NULL, -1);
 
-    if (binary) {
+    if (connlm_fmt_is_bin(fmt)) {
         if (fwrite(&COMP_MAGIC_NUM, sizeof(int), 1, fp) != 1) {
             ST_WARNING("Failed to write magic num.");
+            return -1;
+        }
+        if (fwrite(&fmt, sizeof(connlm_fmt_t), 1, fp) != 1) {
+            ST_WARNING("Failed to write fmt.");
             return -1;
         }
 
@@ -835,20 +847,20 @@ int comp_save_header(component_t *comp, FILE *fp, bool binary)
         }
     }
 
-    if (input_save_header(comp->input, fp, binary) < 0) {
+    if (input_save_header(comp->input, fp, fmt) < 0) {
         ST_WARNING("Failed to input_save_header.");
         return -1;
     }
 
     for (l = 0; l < comp->num_layer; l++) {
-        if (layer_save_header(comp->layers[l], fp, binary) < 0) {
+        if (layer_save_header(comp->layers[l], fp, fmt) < 0) {
             ST_WARNING("Failed to layer_save_header[%d].", l);
             return -1;
         }
     }
 
     for (g = 0; g < comp->num_glue; g++) {
-        if (glue_save_header(comp->glues[g], fp, binary) < 0) {
+        if (glue_save_header(comp->glues[g], fp, fmt) < 0) {
             ST_WARNING("Failed to glue_save_header[%d].", g);
             return -1;
         }
@@ -857,7 +869,7 @@ int comp_save_header(component_t *comp, FILE *fp, bool binary)
     return 0;
 }
 
-int comp_save_body(component_t *comp, FILE *fp, bool binary)
+int comp_save_body(component_t *comp, FILE *fp, connlm_fmt_t fmt)
 {
     int n;
     int l;
@@ -869,7 +881,7 @@ int comp_save_body(component_t *comp, FILE *fp, bool binary)
         return 0;
     }
 
-    if (binary) {
+    if (connlm_fmt_is_bin(fmt)) {
         n = -COMP_MAGIC_NUM;
         if (fwrite(&n, sizeof(int), 1, fp) != 1) {
             ST_WARNING("Failed to write magic num.");
@@ -882,20 +894,20 @@ int comp_save_body(component_t *comp, FILE *fp, bool binary)
         }
     }
 
-    if (input_save_body(comp->input, fp, binary) < 0) {
+    if (input_save_body(comp->input, fp, fmt) < 0) {
         ST_WARNING("Failed to input_save_body.");
         return -1;
     }
 
     for (l = 0; l < comp->num_layer; l++) {
-        if (layer_save_body(comp->layers[l], fp, binary) < 0) {
+        if (layer_save_body(comp->layers[l], fp, fmt) < 0) {
             ST_WARNING("Failed to layer_save_body[%d].", l);
             return -1;
         }
     }
 
     for (g = 0; g < comp->num_glue; g++) {
-        if (glue_save_body(comp->glues[g], fp, binary) < 0) {
+        if (glue_save_body(comp->glues[g], fp, fmt) < 0) {
             ST_WARNING("Failed to glue_save_body[%d].", g);
             return -1;
         }
@@ -1023,5 +1035,22 @@ void comp_sanity_check(component_t *comp)
 
     for (g = 0; g < comp->num_glue; g++) {
         glue_sanity_check(comp->glues[g]);
+    }
+}
+
+void comp_print_verbose_info(component_t *comp, FILE *fo)
+{
+    int i;
+
+    ST_CHECK_PARAM_VOID(comp == NULL || fo == NULL);
+
+    input_print_verbose_info(comp->input, fo);
+
+    for (i = 0; i < comp->num_layer; i++) {
+        layer_print_verbose_info(comp->layers[i], fo);
+    }
+
+    for (i = 0; i < comp->num_glue; i++) {
+        glue_print_verbose_info(comp->glues[i], fo);
     }
 }

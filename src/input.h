@@ -117,14 +117,14 @@ layer_t* input_get_layer(input_t *input);
  * @param[out] input input initialised.
  * @param[in] version file version of loading file.
  * @param[in] fp file stream loaded from.
- * @param[out] binary whether the file stream is in binary format.
- * @param[in] fo_info file stream used to print information, if it is not NULL.
+ * @param[out] fmt storage format.
+ * @param[out] fo_info file stream used to print information, if it is not NULL.
  * @see input_load_body
  * @see input_save_header, input_save_body
  * @return non-zero value if any error.
  */
 int input_load_header(input_t **input, int version,
-        FILE *fp, bool *binary, FILE *fo_info);
+        FILE *fp, connlm_fmt_t *fmt, FILE *fo_info);
 
 /**
  * Load input body.
@@ -132,36 +132,36 @@ int input_load_header(input_t **input, int version,
  * @param[in] input input to be loaded.
  * @param[in] version file version of loading file.
  * @param[in] fp file stream loaded from.
- * @param[in] binary whether to use binary format.
+ * @param[in] fmt storage format.
  * @see input_load_header
  * @see input_save_header, input_save_body
  * @return non-zero value if any error.
  */
-int input_load_body(input_t *input, int version, FILE *fp, bool binary);
+int input_load_body(input_t *input, int version, FILE *fp, connlm_fmt_t fmt);
 
 /**
  * Save input header.
  * @ingroup g_input
  * @param[in] input input to be saved.
  * @param[in] fp file stream saved to.
- * @param[in] binary whether to use binary format.
+ * @param[in] fmt storage format.
  * @see input_save_body
  * @see input_load_header, input_load_body
  * @return non-zero value if any error.
  */
-int input_save_header(input_t *input, FILE *fp, bool binary);
+int input_save_header(input_t *input, FILE *fp, connlm_fmt_t fmt);
 
 /**
  * Save input body.
  * @ingroup g_input
  * @param[in] input input to be saved.
  * @param[in] fp file stream saved to.
- * @param[in] binary whether to use binary format.
+ * @param[in] fmt storage format.
  * @see input_save_header
  * @see input_load_header, input_load_body
  * @return non-zero value if any error.
  */
-int input_save_body(input_t *input, FILE *fp, bool binary);
+int input_save_body(input_t *input, FILE *fp, connlm_fmt_t fmt);
 
 /**
  * Provide label string for drawing input.
@@ -172,6 +172,14 @@ int input_save_body(input_t *input, FILE *fp, bool binary);
  * @return label on success, NULL if any error.
  */
 char* input_draw_label(input_t *input, char *label, size_t label_len);
+
+/**
+ * Print verbose info of a input.
+ * @ingroup g_input
+ * @param[in] input the input layer.
+ * @param[in] fo file stream print info to.
+ */
+void input_print_verbose_info(input_t *input, FILE *fo);
 
 #ifdef __cplusplus
 }

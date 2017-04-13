@@ -114,29 +114,29 @@ char* direct_glue_draw_label(glue_t *glue, char *label, size_t label_len);
  * @param[out] extra extra data to be initialised.
  * @param[in] version file version of loading file.
  * @param[in] fp file stream loaded from.
- * @param[out] binary whether the file stream is in binary format.
- * @param[in] fo_info file stream used to print information, if it is not NULL.
+ * @param[out] fmt storage format.
+ * @param[out] fo_info file stream used to print information, if it is not NULL.
  * @see direct_glue_save_header
  * @return non-zero value if any error.
  */
 int direct_glue_load_header(void **extra, int version,
-        FILE *fp, bool *binary, FILE *fo_info);
+        FILE *fp, connlm_fmt_t *fmt, FILE *fo_info);
 
 /**
  * Save direct glue header.
  * @ingroup g_glue_direct
  * @param[in] extra extra data to be saved.
  * @param[in] fp file stream saved to.
- * @param[in] binary whether to use binary format.
+ * @param[in] fmt storage format.
  * @see direct_glue_load_header
  * @return non-zero value if any error.
  */
-int direct_glue_save_header(void *extra, FILE *fp, bool binary);
+int direct_glue_save_header(void *extra, FILE *fp, connlm_fmt_t fmt);
 
 /**
  * Initialise data of direct glue.
  * @ingroup g_glue_direct
- * @param[in] glue glue.
+ * @param[in] glue the direct glue.
  * @param[in] input input layer of network.
  * @param[in] layers layers of network.
  * @param[in] output output layer of network.
@@ -144,6 +144,14 @@ int direct_glue_save_header(void *extra, FILE *fp, bool binary);
  */
 int direct_glue_init_data(glue_t *glue, input_t *input,
         layer_t **layers, output_t *output);
+
+/**
+ * Print verbose info of a direct glue.
+ * @ingroup g_glue_direct
+ * @param[in] glue the direct glue.
+ * @param[in] fo file stream print info to.
+ */
+void direct_glue_print_verbose_info(glue_t *glue, FILE *fo);
 
 #ifdef __cplusplus
 }
