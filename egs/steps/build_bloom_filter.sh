@@ -17,6 +17,7 @@ help_message=`print_help`
 [ -f `dirname $0`/path.sh ] && . `dirname $0`/path.sh
 [ -f ./path.sh ] && . ./path.sh
 
+. ../utils/common_utils.sh || exit 1
 . ../utils/parse_options.sh || exit 1
 
 if [ $# -lt 4 ]; then
@@ -26,7 +27,7 @@ fi
 
 conf_dir=$1
 exp_dir=$2
-text_file=$3
+text_file=`rxfilename $3`
 out_file=$4
 
 begin_date=`date +"%Y-%m-%d %H:%M:%S"`
@@ -37,7 +38,7 @@ mkdir -p "$exp_dir/log"
 log_file=${log_file:-"$exp_dir/log/bf-build.log"}
 shu-run bloom-filter-build --config="$conf_dir/bf-build.conf" \
                      --log-file="$log_file" \
-                     "$exp_dir/vocab.clm" "$text_file" "$out_file" || exit 1
+                     "$exp_dir/vocab.clm" "'$text_file'" "$out_file" || exit 1
 
 echo "================================="
 shu-run bloom-filter-info --log-file="$exp_dir/log/bf-info.log" \

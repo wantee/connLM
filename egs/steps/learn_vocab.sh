@@ -20,6 +20,7 @@ help_message=`print_help`
 [ -f `dirname $0`/path.sh ] && . `dirname $0`/path.sh
 [ -f ./path.sh ] && . ./path.sh
 
+. ../utils/common_utils.sh || exit 1
 . ../utils/parse_options.sh || exit 1
 
 if [ $# -ne 2 ]; then
@@ -27,7 +28,7 @@ if [ $# -ne 2 ]; then
   exit 1;
 fi
 
-train_file=$1
+train_file=`rxfilename $1`
 dir=$2
 
 log_file=$dir/log/vocab.log
@@ -37,7 +38,7 @@ begin_date=`date +"%Y-%m-%d %H:%M:%S"`
 begin_ts=`date +%s`
 mkdir -p $dir
 
-echo "$0: Learning vocab $model_file from $train_file"
+echo "$0: Learning vocab $model_file from $1"
 opts="--log-file=$log_file"
 if [ -n "$config_file" ]; then
   opts+=" --config=$config_file"
@@ -45,7 +46,7 @@ fi
 if [ -n "$wordlist" ]; then
   opts+=" --wordlist=$wordlist"
 fi
-shu-run connlm-vocab $opts $train_file $model_file || exit 1;
+shu-run connlm-vocab $opts "'$train_file'" $model_file || exit 1;
 
 words=`../utils/get_value.sh "Words" $log_file`
 size=`../utils/get_value.sh "Vocab Size" $log_file`
