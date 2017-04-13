@@ -58,11 +58,11 @@ for set in train dev; do
 done
 
 # Unzip TEDLIUM 6 data sources, normalize apostrophe+suffix to previous word, gzip the result.
-gunzip -c $corpus/TEDLIUM_release2/LM/*.en.gz | sed 's/ <\/s>//g' | local/join_suffix.py > $data/train
+gunzip -c $corpus/TEDLIUM_release2/LM/*.en.gz | sed 's/ <\/s>//g' | local/join_suffix.py | gzip -c > $data/train.gz
 # use a subset of the annotated training data as the dev set .
 head -n $num_valid < data/tmp/train.txt | cut -d " " -f 2-  > $data/valid
 # .. and the rest of the training data as an additional data source.
-tail -n +$[$num_valid+1] < data/tmp/train.txt | cut -d " " -f 2- >> $data/train
+tail -n +$[$num_valid+1] < data/tmp/train.txt | cut -d " " -f 2- | gzip -c >> $data/train.gz
 
 # for reporting perplexities, we'll use the "real" dev set.
 cut -d " " -f 2-  < $data/tmp/dev.txt  > $data/test

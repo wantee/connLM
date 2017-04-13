@@ -25,7 +25,7 @@ data=`cd $data; pwd`
 export LC_ALL=C
 
 tail -n +$num_valid < $corpus/cantab-TEDLIUM/cantab-TEDLIUM.txt \
-       | sed 's/ <\/s>//g'  > $data/train
+       | sed 's/ <\/s>//g' | gzip -c > $data/train.gz
 head -n $num_valid < $corpus/cantab-TEDLIUM/cantab-TEDLIUM.txt \
        | sed 's/ <\/s>//g'  > $data/valid || exit 1
 ln -sf $data/valid $data/test

@@ -6,7 +6,7 @@ data=./corpus
 data_url=www.openslr.org/resources/12
 lm_url=www.openslr.org/resources/11
 
-train_file=./data/train
+train_file=./data/train.gz
 valid_file=./data/valid
 test_file=./data/test
 vocab_file=./data/vocab
@@ -85,7 +85,7 @@ if [ ! -e "$train_file" ]; then
   echo "Preparing train..."
   mkdir -p `dirname $train_file` || exit 1
   python local/filt.py $vocab_file <(gunzip -c $data/librispeech-lm-norm.txt.gz)  | \
-             perl ../utils/shuf.pl > $train_file || exit 1
+             perl ../utils/shuf.pl | gzip -c > $train_file || exit 1
 fi
 
 if [ ! -e "$valid_file" ]; then

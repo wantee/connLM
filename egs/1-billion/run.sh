@@ -5,7 +5,7 @@ data=$PWD/corpus
 # base url for downloads.
 data_url=http://statmt.org/wmt11/training-monolingual.tgz
 
-train_file=./data/train
+train_file=./data/train.gz
 valid_file=./data/valid
 test_file=./data/test
 vocab_file=./data/vocab
@@ -73,7 +73,7 @@ local/prep_data.sh $data || exit 1
 
 if [ ! -f "$train_file" ]; then
   mkdir -p `dirname "$train_file"`
-  cat $data/1-billion-word-language-modeling-benchmark/training-monolingual.tokenized.shuffled/news.en-*-of-00100 >> $train_file || exit 1
+  cat $data/1-billion-word-language-modeling-benchmark/training-monolingual.tokenized.shuffled/news.en-*-of-00100 | gzip -c > $train_file || exit 1
 fi
 if [ ! -f "$valid_file" ]; then
   mkdir -p `dirname "$valid_file"`

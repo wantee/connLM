@@ -5,7 +5,7 @@ data_source=TedliumRelease2
 
 corpus=./corpus
 data=./data/
-train_file=$data/train
+train_file=$data/train.gz
 valid_file=$data/valid
 test_file=$data/test
 wordlist=$data/wordlist
