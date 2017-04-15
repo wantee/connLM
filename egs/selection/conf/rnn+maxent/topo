@@ -1,0 +1,18 @@
+<component>
+property name=maxent
+
+input context=-2,-1
+
+glue name=direct type=direct size=2M in=input out=output
+</component>
+<component>
+property name=rnn
+
+input context=-1
+
+layer name=hidden size=15 type=tanh
+
+glue name=emb type=emb in=input out=hidden
+glue name=recur type=fc in=hidden out=hidden init=identity init_param=0.5
+glue name=out type=out in=hidden out=output
+</component>

@@ -8,8 +8,6 @@ exp_dir="./exp/"
 model_type="rnn+maxent"
 thresh=0
 
-class_size=""
-#class_size="50;100;150;200"
 tr_thr=1
 eval_thr=1
 score_job=4
@@ -100,8 +98,7 @@ exp=$exp_dir/indomain
 ../steps/learn_vocab.sh --config-file $conf_dir/vocab.conf \
     $train_file $exp || exit 1;
 
-../steps/run_standalone.sh --class-size "$class_size" \
-      --train-thr $tr_thr --eval-thr $eval_thr \
+../steps/run_standalone.sh --train-thr $tr_thr --eval-thr $eval_thr \
     $model_type $conf_dir $exp $train_file $valid_file $test_file \
   || exit 1;
 fi
@@ -118,8 +115,7 @@ exp=$exp_dir/general
 ../steps/learn_vocab.sh --config-file $conf_dir/vocab.conf \
     $train_file $exp || exit 1;
 
-../steps/run_standalone.sh --class-size "$class_size" \
-      --train-thr $tr_thr --eval-thr $eval_thr \
+../steps/run_standalone.sh --train-thr $tr_thr --eval-thr $eval_thr \
     $model_type $conf_dir $exp $train_file $valid_file $test_file \
   || exit 1;
 fi

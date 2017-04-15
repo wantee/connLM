@@ -48,8 +48,7 @@ function score_corpus() {
           --out-prob "$score_dir/score.$i.prob" \
           --eval-opts "--print-sent-prob=true --out-log-base=10" \
           --log-file "$score_dir/log/score.$i.log" \
-          --pipe-input true \
-          "$dir" "sed -n '${s},${e}p' $corpus" \
+          "$dir" "sed -n '${s},${e}p' $corpus |" \
         > "$score_dir/log/score_sh.$i.log" 2>&1 &
     pids[$(expr $i + 0)]=$!
   done
