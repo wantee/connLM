@@ -64,7 +64,7 @@ function score_corpus() {
   done
 
   for i in `seq -w $score_job`; do
-    echo "$0: Score job $i log: "
+    echo "$0: Score job $i log:"
     cat "$score_dir/log/score_sh.$i.log"
   done
 

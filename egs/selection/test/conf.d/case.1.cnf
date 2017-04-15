@@ -13,4 +13,4 @@ normalize="../tiny/test/normalize_log.sh"
 compare_normalize=("expected/case-SHU_CASE.out:test/output/case-SHU_CASE.out")
 compare=("expected/case-SHU_CASE.selected.rnn+maxent.0.0:test/tmp/case-SHU_CASE/exp/selected.rnn+maxent.0.0"
          "expected/case-SHU_CASE.selected.rnn+maxent.0.5:test/tmp/case-SHU_CASE/exp/selected.rnn+maxent.0.5"
-         "expected/case-SHU_CASE.selected.rnn+maxent.1.0:test/tmp/case-SHU_CASE/exp/selected.rnn+maxent.1.0"
+         "expected/case-SHU_CASE.selected.rnn+maxent.1.0:test/tmp/case-SHU_CASE/exp/selected.rnn+maxent.1.0")
