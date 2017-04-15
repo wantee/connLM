@@ -24,7 +24,7 @@ stepnames+=("Learn Vocab")
 stepnames+=("Train MaxEnt model:maxent")
 stepnames+=("Train RNN model:rnn")
 stepnames+=("Train RNN+MaxEnt model:rnn+maxent")
-stepnames+=("Convert RNN to WFST:rnn#")
+stepnames+=("Convert RNN+MaxEnt to WFST:rnn+maxent#")
 
 steps_len=${#stepnames[*]}
 
@@ -102,9 +102,10 @@ do
           $train_file $valid_file $test_file || exit 1;
     elif [[ "$model" == *"#" ]]; then
       model=${model%?}
-      ../steps/convert_to_fst.sh --num-thr $tofst_thr \
+      ../steps/run_tofst.sh --tofst-thr $tofst_thr \
           --bloom-filter-text-file $train_file \
-          ${model} $conf_dir $exp_dir || exit 1;
+          --wildcard-state-text-file $valid_file \
+          $conf_dir/${model} $exp_dir/${model} || exit 1;
     else
       ../steps/run_standalone.sh --train-thr $tr_thr --eval-thr $eval_thr \
           ${model} $conf_dir $exp_dir \
