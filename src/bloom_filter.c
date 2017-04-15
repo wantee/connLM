@@ -738,6 +738,11 @@ static int bloom_filter_save_header(bloom_filter_t *blm_flt, FILE *fp,
             return -1;
         }
 
+        if (fwrite(&fmt, sizeof(bloom_filter_format_t), 1, fp) != 1) {
+            ST_WARNING("Failed to write fmt.");
+            return -1;
+        }
+
         if (fwrite(&blm_flt->blm_flt_opt.capacity, sizeof(size_t), 1, fp) != 1) {
             ST_WARNING("Failed to write capacity.");
             return -1;
