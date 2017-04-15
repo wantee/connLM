@@ -36,7 +36,7 @@ fi
 
 
 dir=$1
-test_file=`rxfilename $2`
+test_file=`rxfilename "$2"`
 
 begin_date=`date +"%Y-%m-%d %H:%M:%S"`
 begin_ts=`date +%s`

@@ -28,7 +28,7 @@ if [ $# -ne 2 ]; then
   exit 1;
 fi
 
-train_file=`rxfilename $1`
+train_file=`rxfilename "$1"`
 dir=$2
 
 log_file=$dir/log/vocab.log

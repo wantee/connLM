@@ -27,7 +27,7 @@ fi
 
 conf_dir=$1
 exp_dir=$2
-text_file=`rxfilename $3`
+text_file=`rxfilename "$3"`
 out_file=$4
 
 begin_date=`date +"%Y-%m-%d %H:%M:%S"`

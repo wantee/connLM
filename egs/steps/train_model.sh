@@ -44,8 +44,8 @@ if [ $# -ne 3 ]; then
   exit 1;
 fi
 
-train_file=`rxfilename $1`
-valid_file=`rxfilename $2`
+train_file=`rxfilename "$1"`
+valid_file=`rxfilename "$2"`
 dir=$3
 mdl_init=init.clm
 

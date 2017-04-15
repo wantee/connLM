@@ -17,7 +17,9 @@ wxfilename()
 {
   filename=$1
 
-  if [ "${filename##*.}" == "gz" ]; then
+  if [ "${filename:0:1}" == "|" ]; then
+    echo $filename
+  elif [ "${filename##*.}" == "gz" ]; then
     echo "| gzip -c > $filename"
   elif [ "${filename##*.}" == "bz2" ]; then
     echo "| bunzip2 -c > $filename"
