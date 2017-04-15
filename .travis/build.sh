@@ -9,6 +9,7 @@ if [ $TRAVIS_BRANCH == 'master' ] || [ $TRAVIS_BRANCH == 'develop' ]; then
     echo "Testing miscs"
     make -C src test
     (cd egs/tiny; shu-testing 1-2)
+    (cd egs/selection; shu-testing)
   fi
 
   if [ $CASE -eq 2 ]; then
