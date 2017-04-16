@@ -115,7 +115,7 @@ class FST:
 
     return None
 
-  def find_path(self, words, start_sid=-1):
+  def find_path(self, words, start_sid=-1, partial=False):
     path = []
     if start_sid < 0:
       sid = self.init_sid
@@ -125,7 +125,10 @@ class FST:
     for word in words:
       arc = self.find_arc(sid, word)
       if arc is None:
-        return []
+        if partial:
+          return path
+        else:
+          return []
       else:
         path.append(arc)
       sid = arc.to
@@ -184,6 +187,7 @@ class FST:
       assert rfst.num_arcs() == self.num_arcs()
 
     # every state except (init, final) should have one </s> arcs
-    assert len(rfst.states[rfst.init_sid]) == self.num_states() - 2
+    # This is not valid with wsm == pick
+    #assert len(rfst.states[rfst.init_sid]) == self.num_states() - 2
 
     return rfst

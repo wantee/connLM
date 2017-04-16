@@ -28,7 +28,7 @@ print(subprocess.list2cmdline(sys.argv), file=sys.stderr)
 
 args = parser.parse_args()
 
-print("  Loading word syms...")
+print("  Loading word syms...", file=sys.stderr)
 vocab = {}
 with open(args.word_syms, "r") as f:
   for line in f:
@@ -39,7 +39,7 @@ with open(args.word_syms, "r") as f:
     assert fields[0] not in vocab
     vocab[fields[0]] = int(fields[1])
 
-print("  Loading state syms...")
+print("  Loading state syms...", file=sys.stderr)
 ssyms = []
 with open(args.state_syms, "r") as f:
   sid = 0
@@ -59,12 +59,12 @@ with open(args.state_syms, "r") as f:
     ssyms.append(map(lambda x: int(vocab[x]), fields[1].split(":")))
     sid += 1
 
-print("  Loading FST...")
+print("  Loading FST...", file=sys.stderr)
 fst = cf.FST(vocab)
 fst.load(args.fst_txt)
 print(fst)
 
-print("  Checking ssyms...")
+print("  Checking ssyms...", file=sys.stderr)
 rfst = fst.reverse()
 #print(rfst)
 for sid, syms in enumerate(ssyms):
@@ -81,7 +81,7 @@ for sid, syms in enumerate(ssyms):
   rsyms.reverse()
   assert rsyms == syms
 
-print("  Checking backoff arc...")
+print("  Checking backoff arc...", file=sys.stderr)
 fst.sort_ilab()
 for sid, state in enumerate(fst.states):
   if sid == fst.init_sid:
@@ -125,7 +125,7 @@ for sid, state in enumerate(fst.states):
       n += 1
 
 if args.sent_prob != '':
-  print("  Checking sentence probabilities...")
+  print("  Checking sentence probabilities...", file=sys.stderr)
   fst.create_logp_cache()
 
   sents = []
@@ -145,12 +145,13 @@ if args.sent_prob != '':
           logprobs = [0.0]
 
   for (sent, logprobs) in sents:
-    path = fst.find_path(sent)
-    assert len(path) == len(sent)
+    path = fst.find_path(sent, partial=True)
+    # </s> may not exist when wsm == pick
+    assert len(path) == len(sent) or len(path) + 1 == len(sent)
     for arc, logp in zip(path, logprobs):
       assert np.isclose(-arc.weight, logp)
 
-print("  Checking bows...")
+print("  Checking bows...", file=sys.stderr)
 fst.sort_ilab()
 fst.create_logp_cache()
 for (sid, state) in enumerate(fst.states):
@@ -169,6 +170,6 @@ for (sid, state) in enumerate(fst.states):
     logp = fst.get_word_logp(sid, vocab[word])
     total_logp = np.logaddexp(total_logp, logp)
 
-  assert np.isclose(total_logp, 0.0, atol=1e-5)
+  assert np.isclose(total_logp, 0.0, atol=1e-5) or print(sid, total_logp, file=sys.stderr)
 
 print("Finish to validate FST.", file=sys.stderr)

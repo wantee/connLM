@@ -1,6 +1,6 @@
-name="Convert RNN to FST"
+name="Convert RNN+MaxEnt to FST"
 
-_model=rnn
+_model=rnn+maxent
 _step=9
 _case_dir=test/tmp/case-$SHU_CASE
 
