@@ -972,8 +972,9 @@ static int select_words_pick(fst_conv_t *conv, fst_conv_args_t *args,
         args->word_hist[args->num_word_hist] = i;
         if (bloom_filter_lookup(conv->blm_flt, args->blm_flt_buf,
                     args->word_hist, args->num_word_hist + 1)
-                || bloom_filter_lookup(conv->blm_flt, args->blm_flt_buf,
-                    args->word_hist + 1, args->num_word_hist)) {
+            || (args->num_word_hist + 1 < conv->conv_opt.max_gram
+                && bloom_filter_lookup(conv->blm_flt, args->blm_flt_buf,
+                    args->word_hist + 1, args->num_word_hist))) {
             args->selected_words[n] = i;
             ++n;
         }
