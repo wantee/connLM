@@ -175,9 +175,18 @@ int comp_updater_forward_out(comp_updater_t *comp_updater,
         output_node_id_t node);
 
 /**
+ * Feed-forward one word of output layer.
+ * @ingroup g_updater_comp
+ * @param[in] comp_updater the comp_updater.
+ * @param[in] word the word.
+ * @return non-zero value if any error.
+ */
+int comp_updater_forward_out_word(comp_updater_t *comp_updater, int word);
+
+/**
  * Get the size of state in comp_updater.
  * @ingroup g_updater_comp
- * @param[in] comp_updater comp_updater.
+ * @param[in] comp_updater the comp_updater.
  * @return state size of comp_updater, -1 if any error.
  */
 int comp_updater_state_size(comp_updater_t *comp_updater);
@@ -185,7 +194,7 @@ int comp_updater_state_size(comp_updater_t *comp_updater);
 /**
  * Dump the state of comp_updater.
  * @ingroup g_updater_comp
- * @param[in] comp_updater comp_updater.
+ * @param[in] comp_updater the comp_updater.
  * @param[out] state pointer to store the dumped state. Size of state
  *             must be larger than or equal to the state_size returned
  *             by comp_updater_state_size.
@@ -196,13 +205,33 @@ int comp_updater_dump_state(comp_updater_t *comp_updater, real_t *state);
 /**
  * Feed the state of comp_updater.
  * @ingroup g_updater_comp
- * @param[in] comp_updater comp_updater.
+ * @param[in] comp_updater the comp_updater.
  * @param[in] state pointer to values to be fed into state. Size of state
  *             must be larger than or equal to the state_size returned
  *             by comp_updater_state_size.
  * @return non-zero value if any error.
  */
 int comp_updater_feed_state(comp_updater_t *comp_updater, real_t *state);
+
+/**
+ * Initialize multi-call of forward_out_word.
+ * @ingroup g_updater_comp
+ * @param[in] comp_updater the comp_updater.
+ * @param[in] output the output layer.
+ * @return non-zero value if any error.
+ */
+int comp_updater_init_multicall(comp_updater_t *comp_updater,
+        output_t *output);
+
+/**
+ * Clear multi-call of forward_out_word.
+ * @ingroup g_updater_comp
+ * @param[in] comp_updater the comp_updater.
+ * @param[in] output the output layer.
+ * @return non-zero value if any error.
+ */
+int comp_updater_clear_multicall(comp_updater_t *comp_updater,
+        output_t *output);
 
 #ifdef __cplusplus
 }
