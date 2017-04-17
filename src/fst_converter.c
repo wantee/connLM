@@ -498,7 +498,7 @@ static int fst_conv_st_realloc_states(fst_conv_t *conv, int num_extra)
     }
     for (i = conv->cap_fst_states; i < num_new_states; i++) {
         conv->in_probs[i] = 0.0;
-        conv->final_probs[i] = 0.0;
+        conv->final_probs[i] = -1.0;
         conv->bows[i] = 0.0;
         conv->backoff_states[i] = -1;
     }
@@ -715,7 +715,7 @@ static int fst_conv_print_arc(fst_conv_t *conv,
     ST_CHECK_PARAM(conv == NULL || from < 0 || to < 0 || wid < 0, -1);
 
     if (to == FST_FINAL_STATE) {
-        if (conv->final_probs[from] != 0.0) {
+        if (conv->final_probs[from] != -1.0) {
             ST_WARNING("state[%d] has multiple final probs.", from);
             return -1;
         }
@@ -1125,7 +1125,7 @@ static int fst_conv_get_prob(fst_conv_t *conv, int sid, int word, double *prob)
 
     *prob = 0.0;
 
-    if (word == SENT_END_ID) {
+    if (word == SENT_END_ID && conv->final_probs[sid] != -1.0) {
         if (conv->final_probs[sid] <= 0.0) {
             ST_WARNING("state[%d]'s sent_end_prob is not valid[%f]",
                     sid, conv->final_probs[sid]);
@@ -1143,6 +1143,16 @@ static int fst_conv_get_prob(fst_conv_t *conv, int sid, int word, double *prob)
                             ch, conv->in_probs[ch]);
                 }
                 *prob += log(conv->in_probs[ch]);
+                break;
+            }
+
+            if (sid == FST_SENT_START_STATE && word == SENT_END_ID) {
+                if (conv->final_probs[sid] <= 0.0) {
+                    ST_WARNING("state[%d]'s sent_end_prob is not valid[%f]",
+                            sid, conv->final_probs[sid]);
+                }
+                *prob += log(conv->final_probs[sid]);
+
                 break;
             }
 
@@ -1374,7 +1384,6 @@ static int fst_conv_expand(fst_conv_t *conv, fst_conv_args_t *args)
                 to_sid = FST_FINAL_STATE;
             } else {
                 to_sid = new_sid++;
-                assert(to_sid < ret_sid + n - 1);
                 conv->fst_states[to_sid].word_id = word;
                 if (conv->model_state_cache != NULL) {
                     conv->fst_states[to_sid].model_state_id = model_state_id;
