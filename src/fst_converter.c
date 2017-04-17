@@ -249,10 +249,6 @@ int fst_conv_load_opt(fst_conv_opt_t *conv_opt,
             conv_opt->print_syms, false,
             "Print symbols instead of ids in FST, if true.");
 
-    ST_OPT_SEC_GET_BOOL(opt, sec_name, "OUTPUT_UNK",
-            conv_opt->output_unk, false,
-            "output <unk> in FST, if true.");
-
     ST_OPT_SEC_GET_STR(opt, sec_name, "WORD_SYMS_FILE",
             conv_opt->word_syms_file, MAX_DIR_LEN, "",
             "File to be written out word symbols.");
@@ -793,6 +789,10 @@ static int select_words_baseline(fst_conv_t *conv, fst_conv_args_t *args,
 
     n = 0;
     for (word = 0; word < get_output_size(conv); word++) {
+        if (word == UNK_ID) {
+            continue;
+        }
+
         if (word == SENT_END_ID
             || args->output_probs[word] >=
                 args->output_probs[SENT_END_ID] + boost) {
@@ -873,6 +873,10 @@ static int select_words_sampling(fst_conv_t *conv, fst_conv_args_t *args,
             return -1;
         }
 
+        if (word == UNK_ID) {
+            continue;
+        }
+
         assert(n < get_output_size(conv));
 
         args->selected_words[n] = word;
@@ -938,6 +942,9 @@ static int select_words_majority(fst_conv_t *conv, fst_conv_args_t *args,
     n = 0;
     has_eos = false;
     for (i = 0; i < get_output_size(conv); i++) {
+        if (args->selected_words[i] == UNK_ID) {
+            continue;
+        }
         acc += args->output_probs[args->selected_words[i]];
         if (args->selected_words[i] == SENT_END_ID) {
             has_eos = true;
@@ -961,19 +968,22 @@ static int select_words_majority(fst_conv_t *conv, fst_conv_args_t *args,
 static int select_words_pick(fst_conv_t *conv, fst_conv_args_t *args)
 {
     int n;
-    int i;
+    int word;
 
     ST_CHECK_PARAM(conv == NULL || args == NULL, -1);
 
     n = 0;
-    for (i = 0; i < get_output_size(conv); i++) {
-        args->word_hist[args->num_word_hist] = i;
+    for (word = 0; word < get_output_size(conv); word++) {
+        if (word == UNK_ID) {
+            continue;
+        }
+        args->word_hist[args->num_word_hist] = word;
         if (bloom_filter_lookup(conv->blm_flt, args->blm_flt_buf,
                     args->word_hist, args->num_word_hist + 1)
             || (args->num_word_hist + 1 < conv->conv_opt.max_gram
                 && bloom_filter_lookup(conv->blm_flt, args->blm_flt_buf,
                     args->word_hist + 1, args->num_word_hist))) {
-            args->selected_words[n] = i;
+            args->selected_words[n] = word;
             ++n;
         }
     }
@@ -1263,7 +1273,6 @@ static int fst_conv_expand(fst_conv_t *conv, fst_conv_args_t *args)
                     ST_WARNING("Failed to select_words_pick.");
                     return -1;
                 }
-
             }
 
             if (updater_step_with_state(updater, state, args->word_hist,
@@ -1281,8 +1290,7 @@ static int fst_conv_expand(fst_conv_t *conv, fst_conv_args_t *args)
                 }
                 output_probs[word] = exp(logp);
 
-                if ((word == UNK_ID && ! conv->conv_opt.output_unk) ||
-                        (ws_arg > 0 && !no_backoff && output_probs[word] < ws_arg)) {
+                if (ws_arg > 0 && !no_backoff && output_probs[word] < ws_arg) {
                     memmove(args->selected_words + i,
                             args->selected_words + i + 1,
                             sizeof(int) * (n - i - 1));
@@ -1303,10 +1311,6 @@ static int fst_conv_expand(fst_conv_t *conv, fst_conv_args_t *args)
             // logprob2prob
             for (i = 0; i < output_size; i++) {
                 output_probs[i] = exp(output_probs[i]);
-            }
-
-            if (! conv->conv_opt.output_unk) {
-                output_probs[UNK_ID] = -output_probs[UNK_ID];
             }
         }
 
