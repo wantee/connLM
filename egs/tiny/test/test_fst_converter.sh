@@ -90,7 +90,7 @@ if [ $? -ne 0 ]; then
 fi
 
 echo "Checking FST..."
-grep -v '<any>' "$dir/num/g.ssyms" | awk '{print $2}' | \
+cat "$dir/num/g.ssyms" | awk 'NF > 1 { if ($2 != "<s>" && $2 != "</s>") {print $2} }' | \
      perl -e 'use List::Util qw/shuffle/; print shuffle <>;' | \
      head -n 100 | tr ':' ' ' | cut -d' ' -f2- > "$dir/num/sents.txt"
 if [ $? -ne 0 ]; then
