@@ -72,6 +72,11 @@ typedef struct _glue_updater_implementation_t_ {
             comp_updater_t *comp_updater, output_node_id_t node,
             real_t *in_ac, real_t *out_ac); /**< forward_out glue updater.*/
 
+    int (*forward_out_word)(glue_updater_t *glue_updater,
+            comp_updater_t *comp_updater, int word,
+            real_t *in_ac, real_t *out_ac); /**< forward_out_word glue updater.*/
+
+    bool multicall; /**< whether need multi-call of forword_out_word.*/
 } glue_updater_impl_t;
 
 /**
@@ -83,6 +88,7 @@ typedef struct _glue_updater_t_ {
 
     wt_updater_t *wt_updater; /**< the wt_updater. */
     glue_updater_impl_t *impl; /**< implementation for glue. */
+    bool *forwarded; /**< whether a node is forwarded already. For support of multi-call. */
     void *extra; /**< hook to store extra data. */
 } glue_updater_t;
 
@@ -186,6 +192,37 @@ int glue_updater_forward_util_out(glue_updater_t *glue_updater,
  */
 int glue_updater_forward_out(glue_updater_t *glue_updater,
         comp_updater_t *comp_updater, output_node_id_t node);
+
+/**
+ * Feed-forward one word of output layer.
+ * @ingroup g_updater_glue
+ * @param[in] glue_updater the glue_updater.
+ * @param[in] comp_updater the comp_updater.
+ * @param[in] word the word.
+ * @return non-zero value if any error.
+ */
+int glue_updater_forward_out_word(glue_updater_t *glue_updater,
+        comp_updater_t *comp_updater, int word);
+
+/**
+ * Initialize multi-call of forward_out_word.
+ * @ingroup g_updater_glue
+ * @param[in] glue_updater glue_updater.
+ * @param[in] output the output layer.
+ * @return non-zero value if any error.
+ */
+int glue_updater_init_multicall(glue_updater_t *glue_updater,
+        output_t *output);
+
+/**
+ * Clear multi-call of forward_out_word.
+ * @ingroup g_updater_glue
+ * @param[in] glue_updater glue_updater.
+ * @param[in] output the output layer.
+ * @return non-zero value if any error.
+ */
+int glue_updater_clear_multicall(glue_updater_t *glue_updater,
+        output_t *output);
 
 #ifdef __cplusplus
 }

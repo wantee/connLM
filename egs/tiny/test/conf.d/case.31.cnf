@@ -1,11 +1,12 @@
-name="FST converter with RNN"
+name="FST converter with RNN+MaxEnt"
 
-_model=rnn
-_step=5
+_model=rnn+maxent
+_step=7
 _case_dir=test/tmp/case-$SHU_CASE
 
 before="./test/test_model_before.sh ${_model} && ./test/test_model_script.sh ${_step}"
 
-script="./test/test_fst_converter.sh ${_case_dir}/exp/${_model} ${_case_dir}/fst_conv > test/output/case-${SHU_CASE}.out 2>&1"
+script="for wsm in 'baseline' 'pick'; do ./test/test_fst_converter.sh ${_case_dir}/exp/ ${_case_dir}/conf/ ${_model} \${wsm} ${_case_dir}/fst_conv/\${wsm}; done > test/output/case-${SHU_CASE}.out 2>&1"
 
-compare=("expected/case-$SHU_CASE.out:test/output/case-$SHU_CASE.out")
+normalize="./test/normalize_log.sh"
+compare_normalize=("expected/case-$SHU_CASE.out:test/output/case-$SHU_CASE.out")

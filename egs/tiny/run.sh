@@ -21,7 +21,7 @@ stepnames+=("Train RNN model:rnn")
 stepnames+=("Train crossing RNN model:crossing-rnn")
 stepnames+=("Train RNN+MaxEnt model:rnn+maxent")
 stepnames+=("Train MaxEnt~RNN merge model:maxent~rnn")
-stepnames+=("Convert RNN to WFST:rnn#")
+stepnames+=("Convert RNN+MaxEnt to WFST:rnn+maxent#")
 
 steps_len=${#stepnames[*]}
 
@@ -85,6 +85,7 @@ do
     elif [[ "$model" == *"#" ]]; then
       model=${model%?}
       ../steps/convert_to_fst.sh --num-thr $tofst_thr \
+          --bloom-filter-text-file $train_file \
           ${model} $conf_dir $exp_dir || exit 1;
     else
       ../steps/run_standalone.sh --train-thr $tr_thr --eval-thr $eval_thr \

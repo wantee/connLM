@@ -498,7 +498,7 @@ static int fst_conv_st_realloc_states(fst_conv_t *conv, int num_extra)
     }
     for (i = conv->cap_fst_states; i < num_new_states; i++) {
         conv->in_probs[i] = 0.0;
-        conv->final_probs[i] = 0.0;
+        conv->final_probs[i] = -1.0;
         conv->bows[i] = 0.0;
         conv->backoff_states[i] = -1;
     }
@@ -542,10 +542,19 @@ static int fst_conv_setup(fst_conv_t *conv, FILE *fst_fp,
         return -1;
     }
 
-    for (i = 0; i < conv->n_thr; i++) {
-        if (updater_setup_all(conv->updaters[i]) < 0) {
-            ST_WARNING("Failed to updater_setup_all.");
-            return -1;
+    if (conv->conv_opt.wsm == WSM_PICK) {
+        for (i = 0; i < conv->n_thr; i++) {
+            if (updater_setup_multicall(conv->updaters[i]) < 0) {
+                ST_WARNING("Failed to updater_setup_multicall.");
+                return -1;
+            }
+        }
+    } else {
+        for (i = 0; i < conv->n_thr; i++) {
+            if (updater_setup_all(conv->updaters[i]) < 0) {
+                ST_WARNING("Failed to updater_setup_all.");
+                return -1;
+            }
         }
     }
 
@@ -706,7 +715,7 @@ static int fst_conv_print_arc(fst_conv_t *conv,
     ST_CHECK_PARAM(conv == NULL || from < 0 || to < 0 || wid < 0, -1);
 
     if (to == FST_FINAL_STATE) {
-        if (conv->final_probs[from] != 0.0) {
+        if (conv->final_probs[from] != -1.0) {
             ST_WARNING("state[%d] has multiple final probs.", from);
             return -1;
         }
@@ -949,8 +958,7 @@ static int select_words_majority(fst_conv_t *conv, fst_conv_args_t *args,
     return n;
 }
 
-static int select_words_pick(fst_conv_t *conv, fst_conv_args_t *args,
-        double threshold)
+static int select_words_pick(fst_conv_t *conv, fst_conv_args_t *args)
 {
     int n;
     int i;
@@ -959,21 +967,12 @@ static int select_words_pick(fst_conv_t *conv, fst_conv_args_t *args,
 
     n = 0;
     for (i = 0; i < get_output_size(conv); i++) {
-        if (i == SENT_END_ID) {
-            args->selected_words[n] = i;
-            ++n;
-            continue;
-        }
-
-        if (threshold > 0 && args->output_probs[i] < threshold) {
-            continue;
-        }
-
         args->word_hist[args->num_word_hist] = i;
         if (bloom_filter_lookup(conv->blm_flt, args->blm_flt_buf,
                     args->word_hist, args->num_word_hist + 1)
-                || bloom_filter_lookup(conv->blm_flt, args->blm_flt_buf,
-                    args->word_hist + 1, args->num_word_hist)) {
+            || (args->num_word_hist + 1 < conv->conv_opt.max_gram
+                && bloom_filter_lookup(conv->blm_flt, args->blm_flt_buf,
+                    args->word_hist + 1, args->num_word_hist))) {
             args->selected_words[n] = i;
             ++n;
         }
@@ -1011,15 +1010,8 @@ static int select_words(fst_conv_t *conv, fst_conv_args_t *args, double param)
                 return -1;
             }
             break;
-        case WSM_PICK:
-            n = select_words_pick(conv, args, param);
-            if (n < 0) {
-                ST_WARNING("Failed to select_words_pick.");
-                return -1;
-            }
-            break;
         default:
-            ST_WARNING("Unkown word selection method");
+            ST_WARNING("Invalid word selection method");
             return -1;
     }
 
@@ -1133,7 +1125,7 @@ static int fst_conv_get_prob(fst_conv_t *conv, int sid, int word, double *prob)
 
     *prob = 0.0;
 
-    if (word == SENT_END_ID) {
+    if (word == SENT_END_ID && conv->final_probs[sid] != -1.0) {
         if (conv->final_probs[sid] <= 0.0) {
             ST_WARNING("state[%d]'s sent_end_prob is not valid[%f]",
                     sid, conv->final_probs[sid]);
@@ -1151,6 +1143,16 @@ static int fst_conv_get_prob(fst_conv_t *conv, int sid, int word, double *prob)
                             ch, conv->in_probs[ch]);
                 }
                 *prob += log(conv->in_probs[ch]);
+                break;
+            }
+
+            if (sid == FST_SENT_START_STATE && word == SENT_END_ID) {
+                if (conv->final_probs[sid] <= 0.0) {
+                    ST_WARNING("state[%d]'s sent_end_prob is not valid[%f]",
+                            sid, conv->final_probs[sid]);
+                }
+                *prob += log(conv->final_probs[sid]);
+
                 break;
             }
 
@@ -1181,6 +1183,7 @@ static int fst_conv_expand(fst_conv_t *conv, fst_conv_args_t *args)
     real_t *state;
     real_t *new_state;
     double *output_probs;
+    double logp;
     double ws_arg = 0.0;
     int output_size;
 
@@ -1220,6 +1223,7 @@ static int fst_conv_expand(fst_conv_t *conv, fst_conv_args_t *args)
         ST_WARNING("Failed to fst_conv_find_word_hist");
         return -1;
     }
+    ws_arg = args->ws_arg * pow((args->num_word_hist - 1), args->ws_arg_power);
 
     no_backoff = false;
     if (conv->fst_states[sid].word_id == bos_id(conv)) {
@@ -1246,10 +1250,64 @@ static int fst_conv_expand(fst_conv_t *conv, fst_conv_args_t *args)
             && args->num_word_hist >= conv->conv_opt.max_gram) {
         ret_sid = sid;
     } else {
-        if (updater_step_with_state(updater, state, args->word_hist,
-                    args->num_word_hist, output_probs) < 0) {
-            ST_WARNING("Failed to updater_step_with_state.");
-            return -1;
+        n = 0;
+        if (conv->conv_opt.wsm == WSM_PICK) {
+            if (no_backoff) {
+                for (word = 0; word < get_output_size(conv); word++) {
+                    args->selected_words[n] = word;
+                    n++;
+                }
+            } else {
+                n = select_words_pick(conv, args);
+                if (n < 0) {
+                    ST_WARNING("Failed to select_words_pick.");
+                    return -1;
+                }
+
+            }
+
+            if (updater_step_with_state(updater, state, args->word_hist,
+                        args->num_word_hist) < 0) {
+                ST_WARNING("Failed to updater_step_with_state.");
+                return -1;
+            }
+
+            i = 0;
+            while (i < n) {
+                word = args->selected_words[i];
+                if (updater_forward_out_word(updater, word, &logp) < 0) {
+                    ST_WARNING("Falied to updater_forward_out_word.");
+                    return -1;
+                }
+                output_probs[word] = exp(logp);
+
+                if ((word == UNK_ID && ! conv->conv_opt.output_unk) ||
+                        (ws_arg > 0 && !no_backoff && output_probs[word] < ws_arg)) {
+                    memmove(args->selected_words + i,
+                            args->selected_words + i + 1,
+                            sizeof(int) * (n - i - 1));
+                    --n;
+                    continue;
+                }
+
+                ++i;
+            }
+        } else {
+            if (updater_step_with_state_forward_out_all(updater, state,
+                        args->word_hist, args->num_word_hist,
+                        output_probs) < 0) {
+                ST_WARNING("Failed to updater_step_with_state.");
+                return -1;
+            }
+
+            // logprob2prob
+            for (i = 0; i < output_size; i++) {
+                output_probs[i] = exp(output_probs[i]);
+            }
+
+            if (! conv->conv_opt.output_unk) {
+                output_probs[UNK_ID] = -output_probs[UNK_ID];
+            }
         }
 
         if (conv->model_state_cache != NULL) {
@@ -1276,42 +1334,34 @@ static int fst_conv_expand(fst_conv_t *conv, fst_conv_args_t *args)
             }
         }
 
-        // logprob2prob
-        for (i = 0; i < output_size; i++) {
-            output_probs[i] = exp(output_probs[i]);
-        }
-
-        if (! conv->conv_opt.output_unk) {
-            output_probs[UNK_ID] = -output_probs[UNK_ID];
-        }
-
-        // select words
-        n = 0;
-        if (no_backoff) {
-            for (word = 0; word < get_output_size(conv); word++) {
-                if (output_probs[word] <= 0.0) {
-                    continue;
+        if (conv->conv_opt.wsm != WSM_PICK) {
+            // select words
+            if (no_backoff) {
+                n = 0;
+                for (word = 0; word < get_output_size(conv); word++) {
+                    if (output_probs[word] <= 0.0) {
+                        continue;
+                    }
+                    args->selected_words[n] = word;
+                    n++;
                 }
-                args->selected_words[n] = word;
-                n++;
+            } else {
+                assert(args->num_word_hist > 1);
+
+                n = select_words(conv, args, ws_arg);
+                if (n < 0) {
+                    ST_WARNING("Failed to select_words.");
+                    return -1;
+                }
+
+                assert(n < get_output_size(conv));
             }
-        } else {
-            assert(args->num_word_hist > 1);
-
-            ws_arg = args->ws_arg * pow((args->num_word_hist - 1), args->ws_arg_power);
-
-            n = select_words(conv, args, ws_arg);
-            if (n < 0) {
-                ST_WARNING("Failed to select_words.");
-                return -1;
-            }
-
-            assert(n < get_output_size(conv));
         }
 
 
-        new_sid = fst_conv_add_states(conv, n - 1/* -1 for </s> */, sid,
-                args->store_children);
+        new_sid = fst_conv_add_states(conv,
+                (n > 0 && args->selected_words[0] == SENT_END_ID) ? n - 1 : n,
+                sid, args->store_children);
         if (new_sid < 0) {
             ST_WARNING("Failed to fst_conv_add_states.");
             return -1;
@@ -1334,7 +1384,6 @@ static int fst_conv_expand(fst_conv_t *conv, fst_conv_args_t *args)
                 to_sid = FST_FINAL_STATE;
             } else {
                 to_sid = new_sid++;
-                assert(to_sid < ret_sid + n - 1);
                 conv->fst_states[to_sid].word_id = word;
                 if (conv->model_state_cache != NULL) {
                     conv->fst_states[to_sid].model_state_id = model_state_id;

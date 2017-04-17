@@ -46,16 +46,19 @@ static glue_updater_impl_t GLUE_UPDATER_IMPL[] = {
     {DIRECT_GLUE_NAME, direct_glue_updater_init, direct_glue_updater_destroy,
         direct_glue_updater_setup,
         direct_glue_updater_forward, direct_glue_updater_backprop,
-        direct_glue_updater_forward_util_out, direct_glue_updater_forward_out},
+        direct_glue_updater_forward_util_out, direct_glue_updater_forward_out,
+        direct_glue_updater_forward_out_word,
+        true},
     {FC_GLUE_NAME, NULL, NULL,
         NULL, fc_glue_updater_forward, fc_glue_updater_backprop,
-        fc_glue_updater_forward, NULL},
+        fc_glue_updater_forward, NULL, false},
     {EMB_GLUE_NAME, NULL, NULL,
         NULL, emb_glue_updater_forward, emb_glue_updater_backprop,
-        emb_glue_updater_forward, NULL},
+        emb_glue_updater_forward, NULL, false},
     {OUT_GLUE_NAME, NULL, NULL,
         NULL, out_glue_updater_forward, out_glue_updater_backprop,
-        NULL, out_glue_updater_forward_out},
+        NULL, out_glue_updater_forward_out, out_glue_updater_forward_out_word,
+        true},
 };
 
 static glue_updater_impl_t* glue_updater_get_impl(const char *type)
@@ -82,6 +85,8 @@ void glue_updater_destroy(glue_updater_t *glue_updater)
             glue_updater->impl->destroy(glue_updater);
         }
     }
+
+    safe_st_free(glue_updater->forwarded);
 
     safe_wt_updater_destroy(glue_updater->wt_updater);
     glue_updater->glue = NULL;
@@ -398,6 +403,85 @@ int glue_updater_forward_out(glue_updater_t *glue_updater,
             return -1;
         }
     }
+
+    return 0;
+}
+
+int glue_updater_forward_out_word(glue_updater_t *glue_updater,
+        comp_updater_t *comp_updater, int word)
+{
+    glue_t *glue;
+    layer_updater_t **layer_updaters;
+
+    real_t *in_ac;
+    real_t *out_ac;
+    int lid;
+
+    ST_CHECK_PARAM(glue_updater == NULL || comp_updater == NULL, -1);
+
+    glue = glue_updater->glue;
+    layer_updaters = comp_updater->layer_updaters;
+
+#ifdef _CONNLM_TRACE_PROCEDURE_
+    ST_TRACE("Forward-out-word: glue[%s]", glue->name);
+#endif
+
+    if (glue_updater->impl != NULL && glue_updater->impl->forward_out_word != NULL) {
+        in_ac = NULL;
+        lid = glue->in_layer;
+        if (lid >= 2) { // Ignore input & output layer
+            if (glue->recur_type == RECUR_HEAD) {
+                in_ac = layer_updaters[lid]->ac_state + glue->in_offset;
+            } else {
+                in_ac = layer_updaters[lid]->ac + glue->in_offset;
+            }
+        }
+        if (glue->out_layer == 0) { // output layer
+            out_ac = comp_updater->out_updater->ac + glue->out_offset;
+        } else {
+            out_ac = layer_updaters[glue->out_layer]->ac + glue->out_offset;
+        }
+        if (glue_updater->impl->forward_out_word(glue_updater, comp_updater,
+                    word, in_ac, out_ac) < 0) {
+            ST_WARNING("Failed to glue_updater->impl->forward_out_word.[%s]",
+                    glue->name);
+            return -1;
+        }
+    }
+
+    return 0;
+}
+
+int glue_updater_init_multicall(glue_updater_t *glue_updater, output_t *output)
+{
+    ST_CHECK_PARAM(glue_updater == NULL, -1);
+
+    if (glue_updater->impl == NULL || ! glue_updater->impl->multicall) {
+        glue_updater->forwarded = NULL;
+        return 0;
+    }
+
+    glue_updater->forwarded = st_malloc(sizeof(bool) * output->tree->num_node);
+    if (glue_updater->forwarded == NULL) {
+        ST_WARNING("Failed to st_malloc forwarded.");
+        return -1;
+    }
+    memset(glue_updater->forwarded, 0, sizeof(bool) * output->tree->num_node);
+
+    return 0;
+}
+
+int glue_updater_clear_multicall(glue_updater_t *glue_updater,
+        output_t *output)
+{
+    ST_CHECK_PARAM(glue_updater == NULL, -1);
+
+    if (glue_updater->forwarded == NULL) {
+        return 0;
+    }
+
+    memset(glue_updater->forwarded, 0,
+            sizeof(bool) * (output->tree->num_node));
 
     return 0;
 }

@@ -88,7 +88,7 @@ updater_t* updater_create(connlm_t *connlm);
 /**
  * Setup updater for running.
  * @ingroup g_updater
- * @param[in] updater updater.
+ * @param[in] updater the updater.
  * @param[in] backprop whether do backprop.
  * @return non-zero value if any error.
  */
@@ -97,7 +97,7 @@ int updater_setup(updater_t *updater, bool backprop);
 /**
  * Feed input words to a updater.
  * @ingroup g_updater
- * @param[in] updater updater.
+ * @param[in] updater the updater.
  * @param[in] words input words buffer.
  * @param[in] n_word number of input words.
  * @return non-zero value if any error.
@@ -107,7 +107,7 @@ int updater_feed(updater_t *updater, int *words, int n_word);
 /**
  * Determine whethre can perform a step for a updater.
  * @ingroup g_updater
- * @param[in] updater updater.
+ * @param[in] updater the updater.
  * @return true if steppabel, otherwise false.
  */
 bool updater_steppable(updater_t *updater);
@@ -115,7 +115,7 @@ bool updater_steppable(updater_t *updater);
 /**
  * Step one word for a updater.
  * @ingroup g_updater
- * @param[in] updater updater.
+ * @param[in] updater the updater.
  * @return word for this step, -1 if any error.
  */
 int updater_step(updater_t *updater);
@@ -123,7 +123,7 @@ int updater_step(updater_t *updater);
 /**
  * Finalize a updater for running.
  * @ingroup g_updater
- * @param[in] updater updater.
+ * @param[in] updater the updater.
  * @return non-zero value if any error.
  */
 int updater_finalize(updater_t *updater);
@@ -131,7 +131,7 @@ int updater_finalize(updater_t *updater);
 /**
  * Sampling a word.
  * @ingroup g_updater
- * @param[in] updater updater.
+ * @param[in] updater the updater.
  * @param[in] startover if true, feed \<s\> before sampling.
  * @return the sampled word, -1 if any error.
  */
@@ -140,7 +140,7 @@ int updater_sampling(updater_t *updater, bool startover);
 /**
  * Get the size of state in updater.
  * @ingroup g_updater
- * @param[in] updater updater.
+ * @param[in] updater the updater.
  * @return state size of updater, -1 if any error.
  */
 int updater_state_size(updater_t *updater);
@@ -148,7 +148,7 @@ int updater_state_size(updater_t *updater);
 /**
  * Dump the state of updater.
  * @ingroup g_updater
- * @param[in] updater updater.
+ * @param[in] updater the updater.
  * @param[out] state pointer to store the dumped state. Size of state
  *             must be larger than or equal to the state_size returned
  *             by updater_state_size.
@@ -159,7 +159,7 @@ int updater_dump_state(updater_t *updater, real_t *state);
 /**
  * Feed the state of updater.
  * @ingroup g_updater
- * @param[in] updater updater.
+ * @param[in] updater the updater.
  * @param[in] state pointer to values to be fed into state. Size of state
  *             must be larger than or equal to the state_size returned
  *             by updater_state_size.
@@ -170,23 +170,56 @@ int updater_feed_state(updater_t *updater, real_t *state);
 /**
  * Setup updater for running with activating all words in one step.
  * @ingroup g_updater
- * @param[in] updater updater.
+ * @param[in] updater the updater.
  * @return non-zero value if any error.
  */
 int updater_setup_all(updater_t *updater);
 
 /**
- * Run one step with specified state and history.
+ * Run one step with specified state and history,
+ * forward output layer for all words.
+ * Activate all words if output_probs != NULL
  * @ingroup g_updater
- * @param[in] updater updater.
+ * @param[in] updater the updater.
  * @param[in] state state for model, from updater_dump_state.
  * @param[in] hist word history.
  * @param[in] num_hist number of word history.
  * @param[out] output_probs log-probs for all words.
  * @return non-zero value if any error.
  */
-int updater_step_with_state(updater_t *updater, real_t *state,
+int updater_step_with_state_forward_out_all(updater_t *updater, real_t *state,
         int *hist, int num_hist, double *output_probs);
+
+/**
+ * Run one step with specified state and history, without forward output.
+ * @ingroup g_updater
+ * @param[in] updater the updater.
+ * @param[in] state state for model, from updater_dump_state.
+ * @param[in] hist word history.
+ * @param[in] num_hist number of word history.
+ * @return non-zero value if any error.
+ */
+int updater_step_with_state(updater_t *updater, real_t *state,
+        int *hist, int num_hist);
+
+/**
+ * Forward and activate in output layer for a word.
+ * Activate the word if logp != NULL
+ * @ingroup g_updater
+ * @param[in] updater the updater.
+ * @param[in] word the word.
+ * @param[out] logp log-probs for the word.
+ * @return non-zero value if any error.
+ */
+int updater_forward_out_word(updater_t *updater, int word, double *logp);
+
+/**
+ * Setup updater for multi-call of forward_out_word.
+ * @ingroup g_updater
+ * @param[in] updater the updater.
+ * @return non-zero value if any error.
+ */
+int updater_setup_multicall(updater_t *updater);
 
 #ifdef __cplusplus
 }

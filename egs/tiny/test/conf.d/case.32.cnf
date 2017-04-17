@@ -1,10 +1,10 @@
-name="Convert RNN to FST"
+name="Convert RNN+MaxEnt to FST"
 
-_model=rnn
+_model=rnn+maxent
 _step=9
 _case_dir=test/tmp/case-$SHU_CASE
 
-before="./test/test_model_before.sh ${_model} && ./test/test_model_script.sh 5"
+before="./test/test_model_before.sh ${_model} && ./test/test_model_script.sh 7"
 
 script="./test/test_model_script.sh ${_step}"
 

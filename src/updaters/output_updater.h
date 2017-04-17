@@ -50,6 +50,8 @@ typedef struct _output_updater_t_ {
 
     double *node_probs; /**< buffer for probablity of nodes in output tree. */
     output_tree_bfs_aux_t *bfs_aux; /**< aux for output tree BFS. */
+
+    bool *forwarded; /**< whether a node is forwarded already. For support of multi-call. */
 } out_updater_t;
 
 /**
@@ -171,6 +173,22 @@ int out_updater_clear_all(out_updater_t *out_updater);
  */
 int out_updater_activate_all(out_updater_t *out_updater,
         double *output_probs);
+
+/**
+ * Initialize multi-call of activate.
+ * @ingroup g_updater_output
+ * @param[in] out_updater the out_updater.
+ * @return non-zero value if any error.
+ */
+int out_updater_init_multicall(out_updater_t *out_updater);
+
+/**
+ * Clear multi-call of activate.
+ * @ingroup g_updater_output
+ * @param[in] out_updater the out_updater.
+ * @return non-zero value if any error.
+ */
+int out_updater_clear_multicall(out_updater_t *out_updater);
 
 #ifdef __cplusplus
 }

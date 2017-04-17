@@ -646,11 +646,6 @@ static int updater_cleanup(updater_t *updater)
         }
     }
 
-    if (out_updater_clear_all(updater->out_updater) < 0) {
-        ST_WARNING("Failed to out_updater_clear_all.");
-        return -1;
-    }
-
     return 0;
 }
 
@@ -729,13 +724,72 @@ static int updater_forward_out_all(updater_t *updater)
     return 0;
 }
 
-int updater_step_with_state(updater_t *updater, real_t *state,
+int updater_step_with_state_forward_out_all(updater_t *updater, real_t *state,
         int *hist, int num_hist, double *output_probs)
 {
     ST_CHECK_PARAM(updater == NULL, -1);
 
+    if (out_updater_clear_all(updater->out_updater) < 0) {
+        ST_WARNING("Failed to out_updater_clear_all.");
+        return -1;
+    }
+
+    if (updater_step_with_state(updater, state, hist, num_hist) < 0) {
+        ST_WARNING("Failed to updater_step_with_state.");
+        return -1;
+    }
+
+    if (updater_forward_out_all(updater) < 0) {
+        ST_WARNING("Failed to updater_forward_out_all.");
+        return -1;
+    }
+
+    if (output_probs != NULL) {
+        if (out_updater_activate_all(updater->out_updater,
+                    output_probs) < 0) {
+            ST_WARNING("Failed to out_updater_activate_all.");
+            return -1;
+        }
+    }
+
+    return 0;
+}
+
+static int updater_clear_multicall(updater_t *updater)
+{
+    int c;
+
+    ST_CHECK_PARAM(updater == NULL, -1);
+
+    for (c = 0; c < updater->connlm->num_comp; c++) {
+        if (comp_updater_clear_multicall(updater->comp_updaters[c],
+                    updater->out_updater->output) < 0) {
+            ST_WARNING("Failed to comp_updater_clear_multicall[%s].",
+                    updater->connlm->comps[c]->name);
+            return -1;
+        }
+    }
+
+    if (out_updater_clear_multicall(updater->out_updater) < 0) {
+        ST_WARNING("Failed to out_updater_clear_multicall.");
+        return -1;
+    }
+
+    return 0;
+}
+
+int updater_step_with_state(updater_t *updater, real_t *state,
+        int *hist, int num_hist)
+{
+    ST_CHECK_PARAM(updater == NULL, -1);
+
     if (updater_cleanup(updater) < 0) {
-        ST_WARNING("updater_cleanup.");
+        ST_WARNING("Failed to updater_cleanup.");
+        return -1;
+    }
+
+    if (updater_clear_multicall(updater) < 0) {
+        ST_WARNING("Failed to updater_clear_multicall.");
         return -1;
     }
 
@@ -758,22 +812,63 @@ int updater_step_with_state(updater_t *updater, real_t *state,
         return -1;
     }
 
-    if (updater_forward_out_all(updater) < 0) {
-        ST_WARNING("Failed to updater_forward_out_all.");
-        return -1;
-    }
-
     if (updater_save_state(updater) < 0) {
         ST_WARNING("updater_save_state.");
         return -1;
     }
 
-    if (output_probs != NULL) {
-        if (out_updater_activate_all(updater->out_updater,
-                    output_probs) < 0) {
-            ST_WARNING("Failed to out_updater_activate_all.");
+    return 0;
+}
+
+int updater_setup_multicall(updater_t *updater)
+{
+    int c;
+
+    ST_CHECK_PARAM(updater == NULL, -1);
+
+    if (updater_setup(updater, false) < 0) {
+        ST_WARNING("Failed to updater_setup.");
+        return -1;
+    }
+
+    for (c = 0; c < updater->connlm->num_comp; c++) {
+        if (comp_updater_init_multicall(updater->comp_updaters[c],
+                    updater->out_updater->output) < 0) {
+            ST_WARNING("Failed to comp_updater_init_multicall[%s].",
+                    updater->connlm->comps[c]->name);
             return -1;
         }
+    }
+
+    if (out_updater_init_multicall(updater->out_updater) < 0) {
+        ST_WARNING("Failed to out_updater_init_multicall.");
+        return -1;
+    }
+
+    return 0;
+}
+
+int updater_forward_out_word(updater_t *updater, int word, double *logp)
+{
+    ST_CHECK_PARAM(updater == NULL || word < 0, -1);
+
+    int c;
+
+    for (c = 0; c < updater->connlm->num_comp; c++) {
+        if (comp_updater_forward_out_word(updater->comp_updaters[c], word) < 0) {
+            ST_WARNING("Failed to comp_updater_forward[%s].",
+                    updater->connlm->comps[c]->name);
+            return -1;
+        }
+    }
+
+    if (logp != NULL) {
+        *logp = 0.0;
+        if (out_updater_activate(updater->out_updater, word, logp) < 0) {
+            ST_WARNING("Failed to out_updater_activate.");
+            return -1;
+        }
+
     }
 
     return 0;

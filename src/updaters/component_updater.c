@@ -640,6 +640,34 @@ int comp_updater_forward_out(comp_updater_t *comp_updater,
     return 0;
 }
 
+int comp_updater_forward_out_word(comp_updater_t *comp_updater, int word)
+{
+    component_t *comp;
+    glue_updater_t *glue_updater;
+
+    int g;
+
+    ST_CHECK_PARAM(comp_updater == NULL, -1);
+
+    comp = comp_updater->comp;
+
+#ifdef _CONNLM_TRACE_PROCEDURE_
+    ST_TRACE("Forward-out-word: comp[%s], word[%d]", comp->name, word);
+#endif
+
+    for (g = 0; g < comp->num_glue; g++) {
+        glue_updater = comp_updater->glue_updaters[comp->fwd_order[g]];
+        if (glue_updater_forward_out_word(glue_updater,
+                    comp_updater, word) < 0) {
+            ST_WARNING("Failed to forward_out_word glue[%s].",
+                    glue_updater->glue->name);
+            return -1;
+        }
+    }
+
+    return 0;
+}
+
 int comp_updater_state_size(comp_updater_t *comp_updater)
 {
     int i;
@@ -713,6 +741,44 @@ int comp_updater_feed_state(comp_updater_t *comp_updater, real_t *state)
             return -1;
         }
         total_size += size;
+    }
+
+    return 0;
+}
+
+int comp_updater_init_multicall(comp_updater_t *comp_updater,
+        output_t *output)
+{
+    int i;
+
+    ST_CHECK_PARAM(comp_updater == NULL, -1);
+
+    for (i = 0; i < comp_updater->comp->num_glue; i++) {
+        if (glue_updater_init_multicall(comp_updater->glue_updaters[i],
+                    output) < 0) {
+            ST_WARNING("Failed to glue_updater_init_multicall.[%s]",
+                    comp_updater->comp->glues[i]->name);
+            return -1;
+        }
+    }
+
+    return 0;
+}
+
+int comp_updater_clear_multicall(comp_updater_t *comp_updater,
+        output_t *output)
+{
+    int i;
+
+    ST_CHECK_PARAM(comp_updater == NULL, -1);
+
+    for (i = 0; i < comp_updater->comp->num_glue; i++) {
+        if (glue_updater_clear_multicall(comp_updater->glue_updaters[i],
+                    output) < 0) {
+            ST_WARNING("Failed to glue_updater_clear_multicall.[%s]",
+                    comp_updater->comp->glues[i]->name);
+            return -1;
+        }
     }
 
     return 0;

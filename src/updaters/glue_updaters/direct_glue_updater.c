@@ -268,13 +268,64 @@ int direct_glue_updater_setup(glue_updater_t *glue_updater,
     return 0;
 }
 
+static int direct_glue_updater_forward_node(output_t *output,
+        output_node_id_t node,
+        output_node_id_t child_s, output_node_id_t child_e,
+        real_t *hash_wt, size_t hash_sz,
+        hash_t *hash_vals, int hash_order, real_t *out_ac, real_t scale,
+        bool *forwarded)
+{
+    hash_t h;
+    output_node_id_t ch;
+    int a;
+
+    ST_CHECK_PARAM(output == NULL || out_ac == NULL, -1);
+
+    if (forwarded != NULL) {
+        if (forwarded[node]) {
+            return 0;
+        }
+        forwarded[node] = true;
+    }
+
+    if (output->norm == ON_SOFTMAX) {
+        for (a = 0; a < hash_order; a++) {
+            h = hash_vals[a] + child_s;
+            if (h > hash_sz) {
+                h -= hash_sz;
+            }
+
+            if (h + child_e - child_s - 1 > hash_sz) {
+                for (ch = child_s; h < hash_sz; ch++, h++) {
+                    out_ac[ch] += scale * hash_wt[h];
+                }
+                for (h = 0; ch < child_e - 1; ch++, h++) {
+                    out_ac[ch] += scale * hash_wt[h];
+                }
+            } else {
+                for (ch = child_s; ch < child_e - 1; ch++, h++) {
+                    out_ac[ch] += scale * hash_wt[h];
+                }
+            }
+        }
+    }
+
+    return 0;
+}
+
 typedef struct _direct_walker_args_t_ {
     real_t comp_scale;
     real_t *out_ac;
     real_t *out_er;
-    hash_t h;
+
+    real_t *hash_wt;
+    hash_t hash_sz;
+    hash_t *hash_vals;
+    int hash_order;
 
     wt_updater_t *wt_updater;
+
+    bool *forwarded;
 } direct_walker_args_t;
 
 static int direct_forward_walker(output_t *output, output_node_id_t node,
@@ -282,37 +333,15 @@ static int direct_forward_walker(output_t *output, output_node_id_t node,
         output_node_id_t child_s, output_node_id_t child_e, void *args)
 {
     direct_walker_args_t *dw_args;
-    real_t *hash_wt;
-    output_node_id_t ch;
-    hash_t h;
-    real_t scale;
-    size_t hash_sz;
 
     dw_args = (direct_walker_args_t *) args;
 
-    scale = dw_args->comp_scale;
-    hash_wt = dw_args->wt_updater->wt;
-
-    if (output->norm == ON_SOFTMAX) {
-        hash_sz = dw_args->wt_updater->row;
-
-        h = dw_args->h + child_s;
-        if (h > hash_sz) {
-            h -= hash_sz;
-        }
-
-        if (h + child_e - child_s - 1 > hash_sz) {
-            for (ch = child_s; h < hash_sz; ch++, h++) {
-                dw_args->out_ac[ch] += scale * hash_wt[h];
-            }
-            for (h = 0; ch < child_e - 1; ch++, h++) {
-                dw_args->out_ac[ch] += scale * hash_wt[h];
-            }
-        } else {
-            for (ch = child_s; ch < child_e - 1; ch++, h++) {
-                dw_args->out_ac[ch] += scale * hash_wt[h];
-            }
-        }
+    if (direct_glue_updater_forward_node(output, node,
+                child_s, child_e, dw_args->hash_wt, dw_args->hash_sz,
+                dw_args->hash_vals, dw_args->hash_order,
+                dw_args->out_ac, dw_args->comp_scale, dw_args->forwarded) < 0) {
+        ST_WARNING("Failed to direct_glue_updater_forward_node");
+        return -1;
     }
 
     return 0;
@@ -368,7 +397,6 @@ int direct_glue_updater_forward(glue_updater_t *glue_updater,
     out_updater_t *out_updater;
 
     direct_walker_args_t dw_args;
-    int a;
 
     ST_CHECK_PARAM(glue_updater == NULL || comp_updater == NULL
             || input_sent == NULL || out_ac == NULL, -1);
@@ -389,14 +417,16 @@ int direct_glue_updater_forward(glue_updater_t *glue_updater,
     dw_args.out_ac = out_ac;
     dw_args.comp_scale = comp_updater->comp->comp_scale;
     dw_args.wt_updater = glue_updater->wt_updater;
-    for (a = 0; a < data->hash_order; a++) {
-        dw_args.h = data->hash_vals[a];
-        if (output_walk_through_path(out_updater->output,
-                    input_sent->words[input_sent->tgt_pos],
-                    direct_forward_walker, (void *)&dw_args) < 0) {
-            ST_WARNING("Failed to output_walk_through_path.");
-            return -1;
-        }
+    dw_args.hash_wt = glue_updater->wt_updater->wt;
+    dw_args.hash_sz = glue_updater->glue->wt->row;
+    dw_args.hash_vals = data->hash_vals;
+    dw_args.hash_order = data->hash_order;
+    dw_args.forwarded = NULL;
+    if (output_walk_through_path(out_updater->output,
+                input_sent->words[input_sent->tgt_pos],
+                direct_forward_walker, (void *)&dw_args) < 0) {
+        ST_WARNING("Failed to output_walk_through_path.");
+        return -1;
     }
 
     return 0;
@@ -410,6 +440,7 @@ static int direct_backprop_walker(output_t *output, output_node_id_t node,
     st_size_seg_t seg;
     hash_t h;
     size_t hash_sz;
+    int a;
 
     dw_args = (direct_walker_args_t *) args;
 
@@ -419,18 +450,21 @@ static int direct_backprop_walker(output_t *output, output_node_id_t node,
         }
 
         hash_sz = dw_args->wt_updater->row;
-        h = dw_args->h + child_s;
-        if (h >= hash_sz) {
-            h -= hash_sz;
-        }
 
-        seg.s = h;
-        seg.n = child_e - child_s - 1;
-        if (wt_update(dw_args->wt_updater, &seg, -1,
-                    dw_args->out_er + child_s, dw_args->comp_scale,
-                    NULL, 1.0, NULL) < 0) {
-            ST_WARNING("Failed to wt_update.");
-            return -1;
+        for (a = 0; a < dw_args->hash_order; a++) {
+            h = dw_args->hash_vals[a] + child_s;
+            if (h >= hash_sz) {
+                h -= hash_sz;
+            }
+
+            seg.s = h;
+            seg.n = child_e - child_s - 1;
+            if (wt_update(dw_args->wt_updater, &seg, -1,
+                        dw_args->out_er + child_s, dw_args->comp_scale,
+                        NULL, 1.0, NULL) < 0) {
+                ST_WARNING("Failed to wt_update.");
+                return -1;
+            }
         }
     }
 
@@ -445,7 +479,6 @@ int direct_glue_updater_backprop(glue_updater_t *glue_updater,
     out_updater_t *out_updater;
 
     direct_walker_args_t dw_args;
-    int a;
 
     ST_CHECK_PARAM(glue_updater == NULL || comp_updater == NULL
             || input_sent == NULL, -1);
@@ -456,14 +489,13 @@ int direct_glue_updater_backprop(glue_updater_t *glue_updater,
     dw_args.out_er = out_er;
     dw_args.comp_scale = comp_updater->comp->comp_scale;
     dw_args.wt_updater = glue_updater->wt_updater;
-    for (a = 0; a < data->hash_order; a++) {
-        dw_args.h = data->hash_vals[a];
-        if (output_walk_through_path(out_updater->output,
-                    input_sent->words[input_sent->tgt_pos],
-                    direct_backprop_walker, (void *)&dw_args) < 0) {
-            ST_WARNING("Failed to output_walk_through_path.");
-            return -1;
-        }
+    dw_args.hash_vals = data->hash_vals;
+    dw_args.hash_order = data->hash_order;
+    if (output_walk_through_path(out_updater->output,
+                input_sent->words[input_sent->tgt_pos],
+                direct_backprop_walker, (void *)&dw_args) < 0) {
+        ST_WARNING("Failed to output_walk_through_path.");
+        return -1;
     }
 
     return 0;
@@ -485,22 +517,15 @@ int direct_glue_updater_forward_out(glue_updater_t *glue_updater,
         comp_updater_t *comp_updater, output_node_id_t node,
         real_t* in_ac, real_t *out_ac)
 {
-    dgu_data_t *data;
     out_updater_t *out_updater;
     output_t *output;
+    dgu_data_t *data;
 
-    real_t *hash_wt;
-    real_t scale;
-    size_t hash_sz;
-    hash_t h;
-    int a;
-
-    output_node_id_t ch, child_s, child_e;
+    output_node_id_t child_s, child_e;
 
     ST_CHECK_PARAM(glue_updater == NULL || comp_updater == NULL
             || node == OUTPUT_NODE_NONE || out_ac == NULL, -1);
 
-    data = (dgu_data_t *)glue_updater->extra;
     out_updater = comp_updater->out_updater;
     output = out_updater->output;
 
@@ -511,30 +536,47 @@ int direct_glue_updater_forward_out(glue_updater_t *glue_updater,
         return 0;
     }
 
-    hash_sz = glue_updater->glue->wt->row;
-    scale = comp_updater->comp->comp_scale;
-    hash_wt = glue_updater->wt_updater->wt;
+    data = (dgu_data_t *)glue_updater->extra;
 
-    if (output->norm == ON_SOFTMAX) {
-        for (a = 0; a < data->hash_order; a++) {
-            h = data->hash_vals[a] + child_s;
-            if (h > hash_sz) {
-                h -= hash_sz;
-            }
+    if (direct_glue_updater_forward_node(output, node,
+                child_s, child_e,
+                glue_updater->wt_updater->wt, glue_updater->glue->wt->row,
+                data->hash_vals, data->hash_order,
+                out_ac, comp_updater->comp->comp_scale, NULL) < 0) {
+        ST_WARNING("Failed to direct_glue_updater_forward_node");
+        return -1;
+    }
 
-            if (h + child_e - child_s - 1 > hash_sz) {
-                for (ch = child_s; h < hash_sz; ch++, h++) {
-                    out_ac[ch] += scale * hash_wt[h];
-                }
-                for (h = 0; ch < child_e - 1; ch++, h++) {
-                    out_ac[ch] += scale * hash_wt[h];
-                }
-            } else {
-                for (ch = child_s; ch < child_e - 1; ch++, h++) {
-                    out_ac[ch] += scale * hash_wt[h];
-                }
-            }
-        }
+    return 0;
+}
+
+int direct_glue_updater_forward_out_word(glue_updater_t *glue_updater,
+        comp_updater_t *comp_updater, int word,
+        real_t* in_ac, real_t *out_ac)
+{
+    direct_walker_args_t dw_args;
+
+    out_updater_t *out_updater;
+    dgu_data_t *data;
+
+    ST_CHECK_PARAM(glue_updater == NULL || comp_updater == NULL
+            || word < 0 || out_ac == NULL, -1);
+
+    out_updater = comp_updater->out_updater;
+    data = (dgu_data_t *)glue_updater->extra;
+
+    dw_args.out_ac = out_ac;
+    dw_args.comp_scale = comp_updater->comp->comp_scale;
+    dw_args.wt_updater = glue_updater->wt_updater;
+    dw_args.hash_wt = glue_updater->wt_updater->wt;
+    dw_args.hash_sz = glue_updater->glue->wt->row;
+    dw_args.hash_vals = data->hash_vals;
+    dw_args.hash_order = data->hash_order;
+    dw_args.forwarded = glue_updater->forwarded;
+    if (output_walk_through_path(out_updater->output,
+                word, direct_forward_walker, (void *)&dw_args) < 0) {
+        ST_WARNING("Failed to output_walk_through_path.");
+        return -1;
     }
 
     return 0;
