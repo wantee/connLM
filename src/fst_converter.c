@@ -563,8 +563,7 @@ static int fst_conv_setup(fst_conv_t *conv, FILE *fst_fp,
     state_size = updater_state_size(conv->updaters[0]);
     if (state_size > 0) {
         conv->model_state_cache = st_block_cache_create(
-                sizeof(real_t) * state_size, get_output_size(conv),
-                get_output_size(conv));
+                sizeof(real_t) * state_size, get_output_size(conv));
         if (conv->model_state_cache == NULL) {
             ST_WARNING("Failed to st_block_cache_create model_state_cache.");
             return -1;
