@@ -63,7 +63,7 @@ fi
 shu-run connlm-tofst --config="$conf/tofst.conf" --log-file="$log_file" \
                      $opts \
                      --word-syms-file="$dir/words.txt" \
-                     "$dir/../final.clm" "$dir/g.txt" || exit 1
+                     "$dir/../final.clm" "'| gzip -c > $dir/g.txt.gz'" || exit 1
 
 echo "================================="
 num_states=`../utils/get_value.sh "Total states" $log_file`
