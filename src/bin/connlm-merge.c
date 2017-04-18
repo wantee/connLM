@@ -130,9 +130,9 @@ int main(int argc, const char *argv[])
     ST_CLEAN("Command-line: %s", args);
     st_opt_show(g_cmd_opt, "connLM Merge Options");
     for (i = 1; i < argc - 1; i++) {
-        ST_CLEAN("Model-in-%d: %s", i, argv[i]);
+        ST_CLEAN("Model-in-%d: '%s'", i, argv[i]);
     }
-    ST_CLEAN("Model-out: %s", argv[argc - 1]);
+    ST_CLEAN("Model-out: '%s'", argv[argc - 1]);
 
     mfs = (model_filter_t *)st_malloc(sizeof(model_filter_t) * (argc - 2));
     if (mfs == NULL) {

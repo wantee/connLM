@@ -134,7 +134,7 @@ int main(int argc, const char *argv[])
 
     ST_CLEAN("Command-line: %s", args);
     st_opt_show(g_cmd_opt, "connLM Output Options");
-    ST_CLEAN("Model-in: %s, Model-out: %s", argv[1], argv[2]);
+    ST_CLEAN("Model-in: '%s', Model-out: '%s'", argv[1], argv[2]);
 
     ST_NOTICE("Loading vocab model..");
     fp = st_fopen(argv[1], "rb");

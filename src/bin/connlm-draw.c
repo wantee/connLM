@@ -120,7 +120,7 @@ int main(int argc, const char *argv[])
 
     ST_CLEAN("Command-line: %s", args);
     st_opt_show(g_cmd_opt, "connLM Draw Options");
-    ST_CLEAN("Model-in: %s, Graphviz-out: %s", argv[1], argv[2]);
+    ST_CLEAN("Model-in: '%s', Graphviz-out: '%s'", argv[1], argv[2]);
 
     mf = parse_model_filter(argv[1], fname, MAX_DIR_LEN,
             &comp_names, &num_comp);

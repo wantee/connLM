@@ -137,7 +137,7 @@ int main(int argc, const char *argv[])
 
     ST_CLEAN("Command-line: %s", args);
     st_opt_show(g_cmd_opt, "connLM Test Options");
-    ST_CLEAN("Model: %s, Test: %s", argv[1], argv[2]);
+    ST_CLEAN("Model: '%s', Test: '%s'", argv[1], argv[2]);
 
     fp = st_fopen(argv[1], "rb");
     if (fp == NULL) {

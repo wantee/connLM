@@ -139,7 +139,7 @@ int main(int argc, const char *argv[])
 
     ST_CLEAN("Command-line: %s", args);
     st_opt_show(g_cmd_opt, "connLM Vocab Options");
-    ST_CLEAN("Train: %s, Model: %s", argv[1], argv[2]);
+    ST_CLEAN("Text: '%s', Model: '%s'", argv[1], argv[2]);
 
     ST_NOTICE("Learning Vocab...");
     vocab = vocab_create(&g_vocab_opt);

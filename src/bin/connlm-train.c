@@ -161,9 +161,9 @@ int main(int argc, const char *argv[])
 
     ST_CLEAN("Command-line: %s", args);
     if (g_dry_run) {
-        ST_CLEAN("Model-in: %s", argv[1]);
+        ST_CLEAN("Model-in: '%s'", argv[1]);
     } else {
-        ST_CLEAN("Model-in: %s, Train: %s, Model-out: %s",
+        ST_CLEAN("Model-in: '%s', Train: '%s', Model-out: '%s'",
                 argv[1], argv[2], argv[3]);
     }
 

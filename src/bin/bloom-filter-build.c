@@ -135,7 +135,7 @@ int main(int argc, const char *argv[])
 
     ST_CLEAN("Command-line: %s", args);
     st_opt_show(g_cmd_opt, "Bloom Filter Build Options");
-    ST_CLEAN("Vocab: %s, Text: %s, Model-out: %s", argv[1], argv[2], argv[3]);
+    ST_CLEAN("Vocab: '%s', Text: '%s', Model-out: '%s'", argv[1], argv[2], argv[3]);
 
     fp = st_fopen(argv[1], "rb");
     if (fp == NULL) {

@@ -129,7 +129,7 @@ int main(int argc, const char *argv[])
 
     ST_CLEAN("Command-line: %s", args);
     st_opt_show(g_cmd_opt, "connLM Init Options");
-    ST_CLEAN("Model-in: %s, Topo: %s, Model-out: %s",
+    ST_CLEAN("Model-in: '%s', Topo: '%s', Model-out: '%s'",
             argv[1], argv[2], argv[3]);
 
     fp = st_fopen(argv[1], "rb");
