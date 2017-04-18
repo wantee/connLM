@@ -1591,7 +1591,7 @@ int fst_conv_convert(fst_conv_t *conv, FILE *fst_fp)
     FILE *fp = NULL;
     fst_conv_args_t *args = NULL;
 
-    struct timeval tt0, tt1, tt2;
+    struct timeval tt1, tt2;
 
     int num_grams;
 
@@ -1667,7 +1667,7 @@ int fst_conv_convert(fst_conv_t *conv, FILE *fst_fp)
             "Total arcs: %d, Elapsed time: %.3fs.",
             conv->n_fst_state, get_max_gram(args, conv->n_thr),
             get_total_arcs(args, conv->n_thr) + 1/* <s> arc*/,
-            TIMEDIFF(tt0, tt2) / 1000.0);
+            TIMEDIFF(tt1, tt2) / 1000.0);
 
     safe_fst_conv_args_list_destroy(args, conv->n_thr);
 
