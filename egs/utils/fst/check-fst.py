@@ -36,8 +36,10 @@ with open(args.word_syms, "r") as f:
       continue
     fields = line.split()
     assert len(fields) == 2
+    assert fields[0] != cf.WILDCARD
     assert fields[0] not in vocab
     vocab[fields[0]] = int(fields[1])
+vocab[cf.WILDCARD] = cf.WILDCARD_ID
 
 print("  Loading state syms...", file=sys.stderr)
 ssyms = []
@@ -78,6 +80,8 @@ for sid, syms in enumerate(ssyms):
     arc = rfst.states[s][0]
     rsyms.append(arc.ilab)
     s = arc.to
+  if s == rfst.wildcard_sid:
+    rsyms.append(cf.WILDCARD_ID)
   rsyms.reverse()
   assert rsyms == syms
 
@@ -89,9 +93,9 @@ for sid, state in enumerate(fst.states):
     assert state[0].ilab == vocab[cf.BOS]
     continue
 
-  if sid == fst.start_sid:
+  if sid == fst.wildcard_sid:
     # no backoff
-    assert len(state) == len(vocab) - 3 # <eps>, <s>, #phi
+    assert len(state) == len(vocab) - 4 # <eps>, <s>, #phi, <wildcard>
     assert [ arc.ilab for arc in state ] == range(1, 1 + len(state))
     continue
 
@@ -103,7 +107,7 @@ for sid, state in enumerate(fst.states):
   # 1. check the backoff state is the suffix of current state
   backoff_syms = ssyms[backoff_arc.to]
   assert len(backoff_syms) >= 1
-  assert backoff_syms[0] == vocab[cf.BOS]
+  assert backoff_syms[0] == vocab[cf.WILDCARD]
   if len(backoff_syms) > 1:
     assert backoff_syms[1:] == ssyms[sid][-(len(backoff_syms)-1):]
 
@@ -114,7 +118,10 @@ for sid, state in enumerate(fst.states):
   else:
     m = (len(backoff_syms) - 1) + 1
     n = m + 1
-    end = len(ssyms[sid])
+    if ssyms[sid][0] == cf.WILDCARD_ID:
+      end = len(ssyms[sid]) - 1
+    else:
+      end = len(ssyms[sid])
 
     while n < end:
       longer_path = backoff_syms[:]
@@ -146,7 +153,7 @@ if args.sent_prob != '':
 
   for (sent, logprobs) in sents:
     path = fst.find_path(sent, partial=True)
-    # </s> may not exist when wsm == pick
+    # </s> may not exist
     assert len(path) == len(sent) or len(path) + 1 == len(sent)
     for arc, logp in zip(path, logprobs):
       assert np.isclose(-arc.weight, logp)
@@ -165,7 +172,7 @@ for (sid, state) in enumerate(fst.states):
 
   total_logp = -np.inf
   for word in vocab:
-    if word in [cf.BOS, cf.EPS, cf.PHI]:
+    if word in [cf.BOS, cf.EPS, cf.PHI, cf.WILDCARD]:
       continue
     logp = fst.get_word_logp(sid, vocab[word])
     total_logp = np.logaddexp(total_logp, logp)

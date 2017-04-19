@@ -49,16 +49,14 @@ opts="--num-thread=$num_thr"
 if $output_ssyms; then
   opts+=" --state-syms-file=$dir/g.ssyms"
 fi
-wsm=`../utils/get_config.py $conf/tofst.conf WORD_SELECTION_METHOD`
-if [ "`echo $wsm | tr '[A-Z]' '[a-z]'`" == "pick" ]; then
-  blmflt="$exp_dir/$model/`basename $bloom_filter_text_file`.blmflt"
-  if ! $skip_build_bloom_filter; then
-    ../steps/build_bloom_filter.sh "$conf" "$exp_dir" \
-        "$bloom_filter_text_file" "$blmflt" || exit 1
-  fi
 
-  opts+=" --bloom-filter-file=$blmflt"
+blmflt="$exp_dir/$model/`basename $bloom_filter_text_file`.blmflt"
+if ! $skip_build_bloom_filter; then
+  ../steps/build_bloom_filter.sh "$conf" "$exp_dir" \
+      "$bloom_filter_text_file" "$blmflt" || exit 1
 fi
+
+opts+=" --bloom-filter-file=$blmflt"
 
 shu-run connlm-tofst --config="$conf/tofst.conf" --log-file="$log_file" \
                      $opts \

@@ -6,7 +6,7 @@ Step 1: Learn Vocab ...
 Words: 81350
 Vocab size: 3722
 =================================
-../steps/learn_vocab.sh: Elapse time: 1s
+../steps/learn_vocab.sh: Elapse time: 0s
 
 Step 9: Convert RNN+MaxEnt to WFST ...
 ../steps/convert_to_fst.sh --num-thr 4 --bloom-filter-text-file ./data/train rnn+maxent test/tmp/case-32/exp/conf test/tmp/case-32/exp
@@ -28,14 +28,14 @@ Vocab size: 3722
 <VERBOSE>
 Load factor: 0.001
 =================================
-../steps/build_bloom_filter.sh: Elapse time: 9s
+../steps/build_bloom_filter.sh: Elapse time: 6s
 =================================
-#states: 32006
-#arcs: 66038
+#states: 75357
+#arcs: 157681
 max-gram: 4
 #1-gram: 1
-#2-gram: 3721
-#3-gram: 24652
-#4-gram: 5661
+#2-gram: 4447
+#3-gram: 27880
+#4-gram: 49999
 =================================
-../steps/convert_to_fst.sh: Elapse time: 23s
+../steps/convert_to_fst.sh: Elapse time: 17s

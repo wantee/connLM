@@ -6,7 +6,10 @@ import numpy as np
 EPS = "<eps>"
 BOS = "<s>"
 EOS = "</s>"
+WILDCARD = "<wildcard>"
 PHI = "#phi"
+
+WILDCARD_ID = -100
 
 class Arc:
   def __init__(self, source, to, ilab, olab, weight):
@@ -25,6 +28,7 @@ class FST:
     self.init_sid = -1
     self.final_sid = -1
     self.start_sid = -1
+    self.wildcard_sid = -1
     self.states = []
 
     self._vocab = vocab
@@ -54,6 +58,8 @@ class FST:
         if self.init_sid == -1:
           self.init_sid = arc.source
           self.start_sid = arc.to
+        elif self.wildcard_sid == -1: # the second arc must be from <wildcard> state
+          self.wildcard_sid = arc.source
 
         while len(self.states) <= arc.source:
           self.states.append([])
@@ -61,6 +67,7 @@ class FST:
 
     assert self.init_sid != -1
     assert self.start_sid != -1
+    assert self.wildcard_sid != -1
     assert self.final_sid != -1
 
     for state in self.states:
@@ -78,6 +85,7 @@ class FST:
     s = "Init: %d\n" % (self.init_sid)
     s += "Final: %d\n" % (self.final_sid)
     s += "Start: %d\n" % (self.start_sid)
+    s += "Wildcard: %d\n" % (self.wildcard_sid)
     s += "#state: %d\n" % (self.num_states())
     s += "#arc: %d\n" % (self.num_arcs())
 
@@ -165,6 +173,7 @@ class FST:
     rfst.init_sid = self.final_sid
     rfst.final_sid = self.init_sid
     rfst.start_sid = self.start_sid
+    rfst.wildcard_sid = self.wildcard_sid
 
     rfst.states = [[] for i in xrange(len(self.states))]
     for state in self.states:
@@ -176,18 +185,14 @@ class FST:
 
     if drop_backoff:
       for sid, state in enumerate(rfst.states):
-        if sid == rfst.final_sid:
+        if sid == rfst.final_sid or sid == rfst.wildcard_sid:
           assert len(state) == 0
         elif sid != rfst.init_sid:
           # all state except init and final should have only one child
           assert len(state) == 1
-      # init state, final state, <s> state have no backoff arc
+      # init state, final state, <wildcard> state have no backoff arc
       assert rfst.num_arcs() == self.num_arcs() - self.num_states() + 3
     else:
       assert rfst.num_arcs() == self.num_arcs()
-
-    # every state except (init, final) should have one </s> arcs
-    # This is not valid with wsm == pick
-    #assert len(rfst.states[rfst.init_sid]) == self.num_states() - 2
 
     return rfst
