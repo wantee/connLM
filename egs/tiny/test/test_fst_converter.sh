@@ -103,7 +103,7 @@ if [ $? -ne 0 ]; then
   exit 1
 fi
 
-../utils/fst/check-fst.py --sent-prob="$dir/num/sents.prob" \
+../utils/fst/check-fst.py --skip-bow-percent=0.95 --sent-prob="$dir/num/sents.prob" \
                       "$dir/num/words.txt" "$dir/num/g.ssyms" "$dir/num/g.txt"
 if [ $? -ne 0 ]; then
   shu-err "check-fst.py failed"

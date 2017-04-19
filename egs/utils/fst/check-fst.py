@@ -5,6 +5,7 @@ import subprocess
 import argparse
 import os
 import sys
+import random
 import numpy as np
 
 sys.path.append(os.path.abspath(os.path.dirname(sys.argv[0])))
@@ -18,6 +19,9 @@ parser = argparse.ArgumentParser(description="This script validates a FST "
 parser.add_argument("--sent-prob", type=str, default="",
                     help="Sentences probability file to be checked, the "
                     "prob file is typically output by connlm-eval")
+parser.add_argument("--skip-bow-percent", type=float, default="0.0",
+                    help="percentage of states to skip checking bow "
+                    "(For speedup)")
 parser.add_argument("word_syms", type=str, help="word symbols file.")
 parser.add_argument("state_syms", type=str, help="state symbols file.")
 parser.add_argument("fst_txt", type=str, help="FST file with ids for labels. "
@@ -168,6 +172,9 @@ for (sid, state) in enumerate(fst.states):
     assert state[0].weight == 0.0
     continue
   if sid == fst.final_sid:
+    continue
+
+  if random.random() < args.skip_bow_percent:
     continue
 
   total_logp = -np.inf
