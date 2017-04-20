@@ -30,12 +30,12 @@ Load factor: 0.001
 =================================
 ../steps/build_bloom_filter.sh: Elapse time: 6s
 =================================
-#states: 75357
-#arcs: 157681
+#states: 118016
+#arcs: 249128
 max-gram: 4
-#1-gram: 1
-#2-gram: 4447
-#3-gram: 27880
-#4-gram: 49999
+#1-gram: 3722
+#2-gram: 25378
+#3-gram: 47566
+#4-gram: 54449
 =================================
-../steps/convert_to_fst.sh: Elapse time: 17s
+../steps/convert_to_fst.sh: Elapse time: 30s

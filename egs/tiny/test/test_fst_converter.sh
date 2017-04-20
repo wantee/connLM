@@ -35,9 +35,9 @@ function tofst()
 
   opts="--word-selection-method=$wsm "
   if [ "$wsm" == "beam" ]; then
-    opts+="--threshold=1.0 "
+    opts+="--threshold=0.1 "
   elif [ "$wsm" == "majority" ]; then
-    opts+="--threshold=1.0 "
+    opts+="--threshold=0.5 "
   fi
 
   connlm-tofst --log-file="$out_dir/log/fst.converter.log" \

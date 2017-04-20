@@ -17,7 +17,7 @@ Vocab size: 3722
 <VERBOSE>
 Load factor: 0.001
 =================================
-../steps/build_bloom_filter.sh: Elapse time: 6s
+../steps/build_bloom_filter.sh: Elapse time: 5s
 Testing fst converter...
 Generating num FST...
 Checking FST...
@@ -34,8 +34,8 @@ Init: 0
 Final: 1
 Start: 2
 Wildcard: 3
-#state: 75357
-#arc: 157681
+#state: 35232
+#arc: 75699
 
 Generating sym FST...
 Differing num FST with sym FST...
@@ -69,7 +69,7 @@ Vocab size: 3722
 <VERBOSE>
 Load factor: 0.001
 =================================
-../steps/build_bloom_filter.sh: Elapse time: 6s
+../steps/build_bloom_filter.sh: Elapse time: 4s
 Testing fst converter...
 Generating num FST...
 Checking FST...
@@ -86,8 +86,8 @@ Init: 0
 Final: 1
 Start: 2
 Wildcard: 3
-#state: 75357
-#arc: 157681
+#state: 12262
+#arc: 27286
 
 Generating sym FST...
 Differing num FST with sym FST...
