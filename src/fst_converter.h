@@ -50,10 +50,8 @@ extern "C" {
  */
 typedef enum _word_selection_method_t_ {
     WSM_UNKNOWN = -1, /**< Unknown method. */
-    WSM_BASELINE = 0, /**< Baseline method. Select words with probabilty larger than \</s\>. */
-    WSM_SAMPLING = 1, /**< Sampling method. Sample words until meeting \</s\>. */
-    WSM_MAJORITY = 2, /**< Majority method. Select words with total probabilty larger than a threshold. */
-    WSM_PICK = 3, /**< Pick method. Pick some words according to a bloom filter. */
+    WSM_BEAM = 0,     /**< Beam method. Select words with probabilty larger than max_prob - beam. */
+    WSM_MAJORITY = 1, /**< Majority method. Select words with total probabilty larger than a threshold. */
 } ws_method_t;
 
 /**
@@ -67,13 +65,7 @@ typedef struct _fst_converter_opt_t_ {
     char state_syms_file[MAX_DIR_LEN]; /**< state symbols file. */
     int max_gram; /**< maximum gram to be expaned. */
     ws_method_t wsm; /**< word selection method. */
-    double ws_arg; /**< arg for word selection, would be interpreted as
-                      boost for \</s\> if wsm is Baseline or Sampling,
-                      otherwise, as threshold for accumulated probabilty. */
-    double ws_arg_power; /**< power to the history length for ws_arg.
-                     e.g. cur_ws_arg = ws_arg * pow(hist_len, ws_arg_power).*/
-
-    unsigned int init_rand_seed; /**< initial random seed. */
+    double threshold; /**< threshold for word selection. */
 
     char bloom_filter_file[MAX_DIR_LEN]; /**< bloom filter file. */
 } fst_conv_opt_t;
@@ -131,6 +123,7 @@ typedef struct _fst_converter_t_ {
     real_t* final_probs; /**< probability from a state to final state. */
     int* backoff_states; /**< backoff state of a state. */
     real_t * bows; /**< backoff weight of a state. */
+    int cap_fst_children; /**< capacity of fst_children. */
     pthread_mutex_t fst_state_lock; /**< lock for fst_states. */
 
     FILE *fst_fp; /**< output file pointer for fst file. */

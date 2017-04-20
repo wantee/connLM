@@ -16,7 +16,7 @@ fi
 exp_dir=${1:-./exp/}
 conf_dir=${2:-./conf/}
 model=${3:-rnn+maxent}
-wsm=${4:-baseline}
+wsm=${4:-majority}
 dir=${5:-./test/tmp/fst_conv}
 
 rm -rf "$dir"
@@ -24,10 +24,8 @@ mkdir -p "$dir"
 mkdir -p "$dir/num"
 mkdir -p "$dir/sym"
 
-if [ "$wsm" == "pick" ]; then
-  ../steps/build_bloom_filter.sh "$conf_dir/$model" "$exp_dir" \
-      "data/train" "$exp_dir/$model/train.blmflt" || exit 1
-fi
+../steps/build_bloom_filter.sh "$conf_dir/$model" "$exp_dir" \
+    "data/train" "$exp_dir/$model/train.blmflt" || exit 1
 
 function tofst()
 {
@@ -35,17 +33,16 @@ function tofst()
   print_syms=$2
   nt=${3:-1}
 
-  opts=""
-  if [ "$wsm" == "pick" ]; then
-    opts+="--word-selection-method=pick "
-    opts+="--bloom-filter-file=$exp_dir/$model/train.blmflt "
-    opts+="--ws-arg=0.05 --max-gram=4 "
-  else
-    opts+="--word-selection-method=$wsm --ws-arg=0.025 --ws-arg-power=0.8 "
+  opts="--word-selection-method=$wsm "
+  if [ "$wsm" == "beam" ]; then
+    opts+="--threshold=1.0 "
+  elif [ "$wsm" == "majority" ]; then
+    opts+="--threshold=1.0 "
   fi
 
   connlm-tofst --log-file="$out_dir/log/fst.converter.log" \
-               --num-thread=$nt --output-unk=true \
+               --num-thread=$nt --max-gram=4 \
+               --bloom-filter-file="$exp_dir/$model/train.blmflt" \
                --word-syms-file="$out_dir/words.txt" \
                --state-syms-file="$out_dir/g.ssyms" \
                --print-syms=$2 $opts\
@@ -90,7 +87,7 @@ if [ $? -ne 0 ]; then
 fi
 
 echo "Checking FST..."
-cat "$dir/num/g.ssyms" | awk 'NF > 1 { if ($2 != "<s>" && $2 != "</s>") {print $2} }' | \
+cat "$dir/num/g.ssyms" | awk '$2 ~ /^<s>:/ {print $2}' | \
      perl -e 'use List::Util qw/shuffle/; print shuffle <>;' | \
      head -n 100 | tr ':' ' ' | cut -d' ' -f2- > "$dir/num/sents.txt"
 if [ $? -ne 0 ]; then
@@ -106,7 +103,7 @@ if [ $? -ne 0 ]; then
   exit 1
 fi
 
-../utils/fst/check-fst.py --sent-prob="$dir/num/sents.prob" \
+../utils/fst/check-fst.py --skip-bow-percent=0.95 --sent-prob="$dir/num/sents.prob" \
                       "$dir/num/words.txt" "$dir/num/g.ssyms" "$dir/num/g.txt"
 if [ $? -ne 0 ]; then
   shu-err "check-fst.py failed"
