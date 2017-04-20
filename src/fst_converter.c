@@ -69,8 +69,8 @@ typedef struct _fst_converter_args_t_ {
     int cap_word_hist;
     int num_word_hist;
 
-    int max_gram;
     int num_arcs;
+    int cur_gram;
     int *num_grams;
     int *start_sids; /* start sid for every gram. */
 } fst_conv_args_t;
@@ -103,6 +103,8 @@ static void fst_conv_args_destroy(fst_conv_args_t *args)
 static int fst_conv_args_init(fst_conv_args_t *args,
         fst_conv_t *conv, int tid)
 {
+    int o;
+
     ST_CHECK_PARAM(args == NULL || conv == NULL, -1);
 
     args->conv = conv;
@@ -142,6 +144,24 @@ static int fst_conv_args_init(fst_conv_args_t *args,
             goto ERR;
         }
     }
+
+    args->num_grams = (int *)st_malloc(sizeof(int) * conv->conv_opt.max_gram);
+    if (args->num_grams == NULL) {
+        ST_WARNING("Failed to st_realloc num_grams.");
+        return -1;
+    }
+
+    args->start_sids = (int *)st_malloc(sizeof(int) * conv->conv_opt.max_gram);
+    if (args->start_sids == NULL) {
+        ST_WARNING("Failed to st_realloc start_sids.");
+        return -1;
+    }
+
+    for (o = 0; o < conv->conv_opt.max_gram; o++) {
+        args->num_grams[o] = 0;
+        args->start_sids[o] = INT_MAX;
+    }
+    args->cur_gram = 0;
 
     return 0;
 
@@ -212,21 +232,6 @@ static int get_total_arcs(fst_conv_args_t *args, int n)
     return num_arcs;
 }
 
-static int get_max_gram(fst_conv_args_t *args, int n)
-{
-    int i;
-
-    int max_gram = 0;
-
-    for (i = 0; i < n; i++) {
-        if (args[i].max_gram > max_gram) {
-            max_gram = args[i].max_gram;
-        }
-    }
-
-    return max_gram;
-}
-
 static int get_start_sid(fst_conv_args_t *args, int n, int order)
 {
     int start_sid = INT_MAX;
@@ -234,9 +239,6 @@ static int get_start_sid(fst_conv_args_t *args, int n, int order)
     int i;
 
     for (i = 0; i < n; i++) {
-        if (order > args[i].max_gram) {
-            continue;
-        }
         if (args[i].start_sids[order - 1] < start_sid) {
             start_sid = args[i].start_sids[order - 1];
         }
@@ -286,16 +288,19 @@ int fst_conv_load_opt(fst_conv_opt_t *conv_opt,
     ST_OPT_SEC_GET_STR(opt, sec_name, "BLOOM_FILTER_FILE",
             conv_opt->bloom_filter_file, MAX_DIR_LEN, "",
             "File stored the bloom filter.");
-    if (conv_opt->bloom_filter_file[0] == '\0') {
-        ST_WARNING("BLOOM_FILTER_FILE not set");
-        goto ST_OPT_ERR;
-    }
 
     ST_OPT_SEC_GET_INT(opt, sec_name, "MAX_GRAM", conv_opt->max_gram, 0,
-            "Maximum gram to be expaned(no limits if less than or equal to 0).");
+            "Maximum gram to be expaned(decided by the bloom-filter if "
+            "less than or equal to 0).");
     if (conv_opt->max_gram > 0 && conv_opt->max_gram <= 2) {
         ST_WARNING("MAX_GRAM must be larger than 2.");
         goto ST_OPT_ERR;
+    } else if (conv_opt->max_gram <= 0) {
+        if (conv_opt->bloom_filter_file[0] == '\0') {
+            ST_WARNING("Can not determine MAX_GRAM, since BLOOM_FILTER_FILE "
+                    "not set");
+            goto ST_OPT_ERR;
+        }
     }
 
     return 0;
@@ -404,6 +409,10 @@ fst_conv_t* fst_conv_create(connlm_t *connlm, int n_thr,
         if (! vocab_equal(conv->connlm->vocab, conv->blm_flt->vocab)) {
             ST_WARNING("Vocab of bloom filter and connlm model not match.");
             goto ERR;
+        }
+
+        if (conv->conv_opt.max_gram <= 0) {
+            conv->conv_opt.max_gram = conv->blm_flt->blm_flt_opt.max_order;
         }
     }
 
@@ -848,24 +857,34 @@ static int get_condidate_word(fst_conv_t *conv, fst_conv_args_t *args)
     ST_CHECK_PARAM(conv == NULL || args == NULL, -1);
 
     n = 0;
-    for (word = 0; word < get_output_size(conv); word++) {
-        if (word == UNK_ID) {
-            continue;
-        }
-        args->word_hist[args->num_word_hist] = word;
-
-        choose = false;
-        if (args->word_hist[0] == WILDCARD_ID) {
-            choose = bloom_filter_lookup(conv->blm_flt, args->blm_flt_buf,
-                        args->word_hist + 1, args->num_word_hist);
-        } else {
-            choose = bloom_filter_lookup(conv->blm_flt, args->blm_flt_buf,
-                        args->word_hist, args->num_word_hist + 1);
-        }
-
-        if (choose) {
+    if (conv->blm_flt == NULL) {
+        for (word = 0; word < get_output_size(conv); word++) {
+            if (word == UNK_ID) {
+                continue;
+            }
             args->candidate_words[n] = word;
             ++n;
+        }
+    } else {
+        for (word = 0; word < get_output_size(conv); word++) {
+            if (word == UNK_ID) {
+                continue;
+            }
+            args->word_hist[args->num_word_hist] = word;
+
+            choose = false;
+            if (args->word_hist[0] == WILDCARD_ID) {
+                choose = bloom_filter_lookup(conv->blm_flt, args->blm_flt_buf,
+                        args->word_hist + 1, args->num_word_hist);
+            } else {
+                choose = bloom_filter_lookup(conv->blm_flt, args->blm_flt_buf,
+                        args->word_hist, args->num_word_hist + 1);
+            }
+
+            if (choose) {
+                args->candidate_words[n] = word;
+                ++n;
+            }
         }
     }
 
@@ -1084,8 +1103,9 @@ static int fst_conv_expand(fst_conv_t *conv, fst_conv_args_t *args)
     int to_sid;
     bcache_id_t model_state_id = -1;
     int word;
+    int hist_order;
 
-    int i, n, o;
+    int i, n;
     bool no_backoff;
 
     ST_CHECK_PARAM(conv == NULL || args == NULL, -1);
@@ -1111,6 +1131,12 @@ static int fst_conv_expand(fst_conv_t *conv, fst_conv_args_t *args)
         return -1;
     }
 
+    if (args->word_hist[0] == WILDCARD_ID) {
+        hist_order = args->num_word_hist - 1;
+    } else {
+        hist_order = args->num_word_hist;
+    }
+
     no_backoff = false;
     if (conv->fst_states[sid].word_id == WILDCARD_ID) {
         no_backoff = true;
@@ -1134,8 +1160,7 @@ static int fst_conv_expand(fst_conv_t *conv, fst_conv_args_t *args)
         denominator = 1.0;
     }
 
-    if (conv->conv_opt.max_gram > 0
-            && args->num_word_hist >= conv->conv_opt.max_gram) {
+    if (conv->conv_opt.max_gram > 0 && hist_order >= conv->conv_opt.max_gram) {
         ret_sid = sid;
     } else {
         if (no_backoff) {
@@ -1255,29 +1280,11 @@ static int fst_conv_expand(fst_conv_t *conv, fst_conv_args_t *args)
             }
 
             args->num_arcs++;
-            if (args->num_word_hist + 1 > args->max_gram) {
-                args->num_grams = (int *)st_realloc(args->num_grams,
-                        sizeof(int) * (args->num_word_hist + 1));
-                if (args->num_grams == NULL) {
-                    ST_WARNING("Failed to st_realloc num_grams.");
-                    return -1;
-                }
-
-                args->start_sids = (int *)st_realloc(args->start_sids,
-                        sizeof(int) * (args->num_word_hist + 1));
-                if (args->start_sids == NULL) {
-                    ST_WARNING("Failed to st_realloc start_sids.");
-                    return -1;
-                }
-
-                for (o = args->max_gram; o < args->num_word_hist + 1; o++) {
-                    args->num_grams[o] = 0;
-                    args->start_sids[o] = 0;
-                }
-                args->max_gram = args->num_word_hist + 1;
-                args->start_sids[args->num_word_hist] = ret_sid;
+            if (hist_order + 1 > args->cur_gram) {
+                args->cur_gram = hist_order + 1;
+                args->start_sids[hist_order] = ret_sid;
             }
-            args->num_grams[args->num_word_hist] += 1;
+            args->num_grams[hist_order] += 1;
         }
 
         if (conv->model_state_cache != NULL) {
@@ -1309,8 +1316,8 @@ static int fst_conv_expand(fst_conv_t *conv, fst_conv_args_t *args)
     }
 
     if (sid % FST_CONV_LOG_STEP == 0) {
-        ST_TRACE("Expanded states: %d, max gram: %d, states to be expaned: %d",
-                sid, args->max_gram,
+        ST_TRACE("Expanded states: %d, gram: %d, states to be expaned: %d",
+                sid, args->cur_gram,
                 (sid == FST_SENT_START_STATE) ? conv->n_fst_state - ret_sid
                                               : conv->n_fst_state - sid);
     }
@@ -1404,7 +1411,7 @@ static int fst_conv_prepare_build(fst_conv_t *conv)
 }
 
 static int fst_conv_build(fst_conv_t *conv, fst_conv_args_t *args,
-        int init_sid, bool store_children)
+        int init_sid, int init_order, bool store_children)
 {
     pthread_t *pts = NULL;
     int sid;
@@ -1432,9 +1439,13 @@ static int fst_conv_build(fst_conv_t *conv, fst_conv_args_t *args,
 
     for (n = 0; n < conv->n_thr; n++) {
         args[n].store_children = store_children;
+        for (i = 0; i < conv->conv_opt.max_gram; i++) {
+            args[n].cur_gram = init_order;
+            args[n].start_sids[i] = INT_MAX;
+        }
     }
 
-    cur_gram = 1;
+    cur_gram = init_order;
     sid = init_sid;
     while (sid < conv->n_fst_state) {
         if (conv->n_fst_state + num_states_needed > conv->cap_fst_states) {
@@ -1448,10 +1459,12 @@ static int fst_conv_build(fst_conv_t *conv, fst_conv_args_t *args,
         n_states = conv->n_fst_state;
 
         // following lines ensure we expend order by order
-        start_sid = get_start_sid(args, conv->n_thr, cur_gram + 1);
-        if (sid + conv->n_thr > start_sid) {
-            n_states = start_sid;
-            cur_gram++;
+        if (cur_gram < conv->conv_opt.max_gram) {
+            start_sid = get_start_sid(args, conv->n_thr, cur_gram + 1);
+            if (sid + conv->n_thr > start_sid) {
+                n_states = start_sid;
+                cur_gram++;
+            }
         }
 
         for (n = 0; sid < n_states && n < conv->n_thr; sid++, n++) {
@@ -1500,7 +1513,7 @@ static int fst_conv_build_wildcard(fst_conv_t *conv, fst_conv_args_t *args)
         return -1;
     }
 
-    if (fst_conv_build(conv, args, sid, true) < 0) {
+    if (fst_conv_build(conv, args, sid, 1, true) < 0) {
         ST_WARNING("Failed to fst_conv_build");
         return -1;
     }
@@ -1523,7 +1536,7 @@ static int fst_conv_build_bos(fst_conv_t *conv, fst_conv_args_t *args)
         return -1;
     }
 
-    if (fst_conv_build(conv, args, sid, false) < 0) {
+    if (fst_conv_build(conv, args, sid, 2, false) < 0) {
         ST_WARNING("Failed to fst_conv_build");
         return -1;
     }
@@ -1569,7 +1582,7 @@ int fst_conv_convert(fst_conv_t *conv, FILE *fst_fp)
     }
     gettimeofday(&tt2, NULL);
 
-    for (o = 0; o < get_max_gram(args, conv->n_thr); o++) {
+    for (o = 0; o < conv->conv_opt.max_gram; o++) {
         num_grams = 0;
         for (i = 0; i < conv->n_thr; i++) {
             num_grams += args[i].num_grams[o];
@@ -1582,7 +1595,7 @@ int fst_conv_convert(fst_conv_t *conv, FILE *fst_fp)
 
     ST_NOTICE("Total states: %d (max_gram = %d). "
             "Total arcs: %d, Elapsed time: %.3fs.",
-            conv->n_fst_state, get_max_gram(args, conv->n_thr),
+            conv->n_fst_state, conv->conv_opt.max_gram,
             get_total_arcs(args, conv->n_thr) + 1/* <s> arc*/,
             TIMEDIFF(tt1, tt2) / 1000.0);
 
