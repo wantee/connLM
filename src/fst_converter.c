@@ -1189,10 +1189,18 @@ static int fst_conv_expand(fst_conv_t *conv, fst_conv_args_t *args)
             }
         }
 
-        if (updater_step_with_state(updater, state, args->word_hist,
-                    args->num_word_hist) < 0) {
-            ST_WARNING("Failed to updater_step_with_state.");
-            return -1;
+        if (args->word_hist[0] == WILDCARD_ID) {
+            if (updater_step_with_state(updater, state, args->word_hist + 1,
+                        args->num_word_hist - 1) < 0) {
+                ST_WARNING("Failed to updater_step_with_state.");
+                return -1;
+            }
+        } else {
+            if (updater_step_with_state(updater, state, args->word_hist,
+                        args->num_word_hist) < 0) {
+                ST_WARNING("Failed to updater_step_with_state.");
+                return -1;
+            }
         }
         if (conv->model_state_cache != NULL) {
             if (conv->fst_states[sid].model_state_id >= 0) {
