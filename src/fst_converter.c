@@ -1031,15 +1031,38 @@ static int fst_conv_get_prob(fst_conv_t *conv, int sid, int word, double *prob)
 
     ST_CHECK_PARAM(conv == NULL || sid < 0 || word < 0 || prob == NULL, -1);
 
+    if (sid >= conv->cap_fst_children) {
+        ST_WARNING("sid not in fst_children cannot get prob");
+        return -1;
+    }
+
     *prob = 0.0;
 
-    if (word == SENT_END_ID && sid < conv->cap_fst_children
-            && conv->final_probs[sid] != -1.0) {
-        if (conv->final_probs[sid] <= 0.0) {
-            ST_WARNING("state[%d]'s sent_end_prob is not valid[%f]",
-                    sid, conv->final_probs[sid]);
+    if (word == SENT_END_ID) {
+        while (true) {
+            if(conv->final_probs[sid] != -1.0) {
+                if (conv->final_probs[sid] <= 0.0) {
+                    ST_WARNING("state[%d]'s sent_end_prob is not valid[%f]",
+                            sid, conv->final_probs[sid]);
+                }
+                *prob += log(conv->final_probs[sid]);
+                break;
+            }
+
+            // backoff
+            if (conv->backoff_states[sid] < 0) {
+                ST_WARNING("state[%d] has no backoff arc", sid);
+                return -1;
+            }
+
+            if (conv->bows[sid] == 0.0) {
+                ST_WARNING("state[%d]'s backoff_prob is not valid[%f]",
+                        sid, conv->bows[sid]);
+            }
+            *prob += log(conv->bows[sid]);
+
+            sid = conv->backoff_states[sid];
         }
-        *prob += log(conv->final_probs[sid]);
     } else {
         while (true) {
             ch = fst_conv_search_children(conv, sid, word);
@@ -1052,16 +1075,6 @@ static int fst_conv_get_prob(fst_conv_t *conv, int sid, int word, double *prob)
                             ch, conv->in_probs[ch]);
                 }
                 *prob += log(conv->in_probs[ch]);
-                break;
-            }
-
-            if (sid == FST_WILDCARD_STATE && word == SENT_END_ID) {
-                if (conv->final_probs[sid] <= 0.0) {
-                    ST_WARNING("state[%d]'s sent_end_prob is not valid[%f]",
-                            sid, conv->final_probs[sid]);
-                }
-                *prob += log(conv->final_probs[sid]);
-
                 break;
             }
 
