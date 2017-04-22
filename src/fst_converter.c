@@ -381,7 +381,7 @@ fst_conv_t* fst_conv_create(connlm_t *connlm, int n_thr,
     for (i = 0; i < conv->n_thr; i++) {
         conv->updaters[i] = updater_create(connlm);
         if (conv->updaters[i] == NULL) {
-            ST_WARNING("Failed to st_malloc updater[%d].", i);
+            ST_WARNING("Failed to updater_create[%d].", i);
             goto ERR;
         }
     }

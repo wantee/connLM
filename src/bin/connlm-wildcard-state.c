@@ -1,7 +1,7 @@
 /*
  * The MIT License (MIT)
  *
- * Copyright (c) 2015 Wang Jian
+ * Copyright (c) 2017 Wang Jian
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -31,11 +31,12 @@
 
 #include <connlm/utils.h>
 #include <connlm/connlm.h>
+#include <connlm/wildcard_state.h>
 
 st_opt_t *g_cmd_opt;
-bool g_verbose;
+wildcard_state_opt_t g_ws_opt;
 
-int connlm_draw_parse_opt(int *argc, const char *argv[])
+int connlm_wildcard_state_parse_opt(int *argc, const char *argv[])
 {
     st_log_opt_t log_opt;
     bool b;
@@ -61,8 +62,10 @@ int connlm_draw_parse_opt(int *argc, const char *argv[])
         goto ST_OPT_ERR;
     }
 
-    ST_OPT_GET_BOOL(g_cmd_opt, "VERBOSE", g_verbose, false,
-            "Output verbose dot");
+    if (wildcard_state_load_opt(&g_ws_opt, g_cmd_opt, NULL) < 0) {
+        ST_WARNING("Failed to wildcard_state_load_opt");
+        goto ST_OPT_ERR;
+    }
 
     ST_OPT_GET_BOOL(g_cmd_opt, "help", b, false, "Print help");
 
@@ -75,22 +78,19 @@ ST_OPT_ERR:
 void show_usage(const char *module_name)
 {
     connlm_show_usage(module_name,
-            "Convert connLM File into Graphviz Format",
-            "<model-filter> <gv.dot>",
-            "mdl,-o:exp/init.clm init.dot",
-            g_cmd_opt, model_filter_help());
+            "Generate wildcard state for a connLM Model",
+            "<model> <output-state>",
+            "exp/rnn/final.clm exp/rnn/final_wildcard.txt",
+            g_cmd_opt, NULL);
 }
 
 int main(int argc, const char *argv[])
 {
     char args[1024] = "";
-    char fname[MAX_DIR_LEN];
     FILE *fp = NULL;
     connlm_t *connlm = NULL;
+    wildcard_state_t *ws = NULL;
 
-    char *comp_names = NULL;
-    int num_comp;
-    model_filter_t mf;
     int ret;
 
     if (st_mem_usage_init() < 0) {
@@ -100,7 +100,7 @@ int main(int argc, const char *argv[])
 
     (void)st_escape_args(argc, argv, args, 1024);
 
-    ret = connlm_draw_parse_opt(&argc, argv);
+    ret = connlm_wildcard_state_parse_opt(&argc, argv);
     if (ret < 0) {
         goto ERR;
     } if (ret == 1) {
@@ -119,31 +119,30 @@ int main(int argc, const char *argv[])
     }
 
     ST_CLEAN("Command-line: %s", args);
-    st_opt_show(g_cmd_opt, "connLM Draw Options");
-    ST_CLEAN("Model-in: '%s', Graphviz-out: '%s'", argv[1], argv[2]);
+    st_opt_show(g_cmd_opt, "connLM Wildcard State Options");
+    ST_CLEAN("Model-in: '%s', State-out: '%s'", argv[1], argv[2]);
 
-    mf = parse_model_filter(argv[1], fname, MAX_DIR_LEN,
-            &comp_names, &num_comp);
-    if (mf == MF_ERR) {
-        ST_WARNING("Failed to parse_model_filter.");
-        goto ERR;
-    }
-
-    fp = st_fopen(fname, "rb");
+    fp = st_fopen(argv[1], "rb");
     if (fp == NULL) {
-        ST_WARNING("Failed to st_fopen. [%s]", fname);
+        ST_WARNING("Failed to st_fopen. [%s]", argv[1]);
         goto ERR;
     }
 
     connlm = connlm_load(fp);
     if (connlm == NULL) {
-        ST_WARNING("Failed to connlm_load. [%s]", fname);
+        ST_WARNING("Failed to connlm_load. [%s]", argv[1]);
         goto ERR;
     }
     safe_st_fclose(fp);
 
-    if (connlm_filter(connlm, mf, comp_names, num_comp) < 0) {
-        ST_WARNING("Failed to connlm_filter.");
+    ws = wildcard_state_create(connlm, &g_ws_opt);
+    if (ws == NULL) {
+        ST_WARNING("Failed to wildcard_state_create.");
+        goto ERR;
+    }
+
+    if (wildcard_state_generate(ws) < 0) {
+        ST_WARNING("Failed to wildcard_state_generate.");
         goto ERR;
     }
 
@@ -153,13 +152,14 @@ int main(int argc, const char *argv[])
         goto ERR;
     }
 
-    if (connlm_draw(connlm, fp, g_verbose) < 0) {
-        ST_WARNING("Failed to connlm_draw. [%s]", argv[2]);
+    if (wildcard_state_save(ws, fp) < 0) {
+        ST_WARNING("Failed to wildcard_state_save..");
         goto ERR;
     }
 
-    safe_st_free(comp_names);
     safe_st_fclose(fp);
+
+    safe_wildcard_state_destroy(ws);
     safe_st_opt_destroy(g_cmd_opt);
     safe_connlm_destroy(connlm);
 
@@ -169,8 +169,8 @@ int main(int argc, const char *argv[])
     return 0;
 
 ERR:
-    safe_st_free(comp_names);
     safe_st_fclose(fp);
+    safe_wildcard_state_destroy(ws);
     safe_st_opt_destroy(g_cmd_opt);
     safe_connlm_destroy(connlm);
 

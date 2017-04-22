@@ -643,3 +643,35 @@ int16_t quantify_int16(real_t r, real_t multiple)
 
     return (int16_t)r;
 }
+
+int print_vec(FILE *fp, real_t *vec, size_t size, const char *name)
+{
+    size_t i;
+
+    ST_CHECK_PARAM(fp == NULL || vec == NULL || size <= 0, -1);
+
+    if (name != NULL) {
+        if (fprintf(fp, "%s: ", name) < 0) {
+            ST_WARNING("Failed to fprintf name, Disk full?");
+            return -1;
+        }
+    }
+    if (fprintf(fp, "[ ") < 0) {
+        ST_WARNING("Failed to fprintf, Disk full?");
+        return -1;
+    }
+
+    for (i = 0; i < size; i++) {
+        if (fprintf(fp, REAL_FMT" ", vec[i]) < 0) {
+            ST_WARNING("Failed to fprintf, Disk full?");
+            return -1;
+        }
+    }
+
+    if (fprintf(fp, "]\n") < 0) {
+        ST_WARNING("Failed to fprintf, Disk full?");
+        return -1;
+    }
+
+    return 0;
+}
