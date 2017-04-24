@@ -41,6 +41,7 @@ extern "C" {
 typedef struct _layer_updater_t_ layer_updater_t;
 typedef int (*activate_func_t)(layer_t *layer, real_t *vec, int size); /**< activate function. */
 typedef int (*deriv_func_t)(layer_t *layer, real_t *er, real_t *ac, int size); /**< deriv function. */
+typedef int (*random_state_func_t)(layer_t *layer, real_t *state, int size); /**< random state function. */
 /**
  * Layer updater.
  * @ingroup g_updater_layer
@@ -55,6 +56,7 @@ typedef struct _layer_updater_t_ {
     bool activated; /**< activation indicator. */
     deriv_func_t deriv; /**< deriv function. */
     bool derived; /**< derived indicator. */
+    random_state_func_t random_state; /**< random state function. */
 
     real_t *ac_state; /**< state of activation(for prev timestep). */
     real_t *er_raw; /**< raw value of error(before derived). */
@@ -182,6 +184,17 @@ int layer_updater_dump_state(layer_updater_t *layer_updater, real_t *state);
  * @return non-zero value if any error.
  */
 int layer_updater_feed_state(layer_updater_t *layer_updater, real_t *state);
+
+/**
+ * Generate random state of layer_updater.
+ * @ingroup g_updater_layer
+ * @param[in] layer_updater layer_updater.
+ * @param[out] state pointer to generated state. Size of state
+ *             must be larger than or equal to the state_size returned
+ *             by layer_updater_state_size.
+ * @return non-zero value if any error.
+ */
+int layer_updater_random_state(layer_updater_t *layer_updater, real_t *state);
 
 #ifdef __cplusplus
 }

@@ -27,6 +27,7 @@
 #include <stutils/st_log.h>
 #include <stutils/st_io.h>
 #include <stutils/st_string.h>
+#include <stutils/st_rand.h>
 
 #include "linear_layer.h"
 
@@ -383,6 +384,22 @@ int linear_deriv(layer_t *layer, real_t *er, real_t *ac, int size)
         for (i = 0; i < size; i++) {
             er[i] *= param->scale;
         }
+    }
+
+    return 0;
+}
+
+int linear_random_state(layer_t *layer, real_t *state, int size)
+{
+    linear_data_t *param;
+    int i;
+
+    ST_CHECK_PARAM(layer == NULL || state == NULL, -1);
+
+    param = (linear_data_t *)layer->extra;
+
+    for (i = 0; i < size; i++) {
+        state[i] = st_random(-50.0, 50.0) * param->scale;
     }
 
     return 0;

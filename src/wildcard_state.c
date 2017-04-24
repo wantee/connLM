@@ -182,6 +182,11 @@ static int generate_random_state(wildcard_state_t *ws)
     }
     memset(ws->random_state, 0, sizeof(real_t) * ws->state_size);
 
+    if (updater_random_state(ws->updater, ws->random_state) < 0) {
+        ST_WARNING("Failed to updater_random_state.");
+        return -1;
+    }
+
     return 0;
 }
 

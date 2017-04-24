@@ -60,6 +60,16 @@ int tanh_activate(layer_t *layer, real_t *vec, int size);
  */
 int tanh_deriv(layer_t *layer, real_t *er, real_t *ac, int size);
 
+/**
+ * Generate random state for tanh layer.
+ * @ingroup g_layer_tanh
+ * @param[in] layer the tanh layer.
+ * @param[out] state the generated state.
+ * @param[in] size size of state.
+ * @return non-zero value if any error.
+ */
+int tanh_random_state(layer_t *layer, real_t *state, int size);
+
 #ifdef __cplusplus
 }
 #endif

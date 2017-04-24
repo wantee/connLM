@@ -214,6 +214,17 @@ int comp_updater_dump_state(comp_updater_t *comp_updater, real_t *state);
 int comp_updater_feed_state(comp_updater_t *comp_updater, real_t *state);
 
 /**
+ * Generate random state of comp_updater.
+ * @ingroup g_updater_comp
+ * @param[in] comp_updater the comp_updater.
+ * @param[out] state pointer to generated state. Size of state
+ *             must be larger than or equal to the state_size returned
+ *             by comp_updater_state_size.
+ * @return non-zero value if any error.
+ */
+int comp_updater_random_state(comp_updater_t *comp_updater, real_t *state);
+
+/**
  * Initialize multi-call of forward_out_word.
  * @ingroup g_updater_comp
  * @param[in] comp_updater the comp_updater.

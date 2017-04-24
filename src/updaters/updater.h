@@ -168,6 +168,17 @@ int updater_dump_state(updater_t *updater, real_t *state);
 int updater_feed_state(updater_t *updater, real_t *state);
 
 /**
+ * Generate random state of updater.
+ * @ingroup g_updater
+ * @param[in] updater the updater.
+ * @param[out] state pointer to generated state. Size of state
+ *             must be larger than or equal to the state_size returned
+ *             by updater_state_size.
+ * @return non-zero value if any error.
+ */
+int updater_random_state(updater_t *updater, real_t *state);
+
+/**
  * Setup updater for running with activating all words in one step.
  * @ingroup g_updater
  * @param[in] updater the updater.

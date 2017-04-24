@@ -54,13 +54,14 @@ typedef struct _layer_activate_func_t_ {
     char type[MAX_NAME_LEN];
     activate_func_t activate;
     deriv_func_t deriv;
+    random_state_func_t random_state;
 } layer_act_t;
 
 static layer_act_t LAYER_ACT[] = {
-    {LINEAR_NAME, linear_activate, linear_deriv},
-    {SIGMOID_NAME, sigmoid_activate, sigmoid_deriv},
-    {TANH_NAME, tanh_activate, tanh_deriv},
-    {RELU_NAME, relu_activate, relu_deriv},
+    {LINEAR_NAME, linear_activate, linear_deriv, linear_random_state},
+    {SIGMOID_NAME, sigmoid_activate, sigmoid_deriv, sigmoid_random_state},
+    {TANH_NAME, tanh_activate, tanh_deriv, tanh_random_state},
+    {RELU_NAME, relu_activate, relu_deriv, relu_random_state},
 };
 
 static layer_act_t* layer_get_act(const char *type)
@@ -92,6 +93,7 @@ layer_updater_t* layer_updater_create(layer_t *layer)
     layer_updater->layer = layer;
     layer_updater->activate = layer_get_act(layer->type)->activate;
     layer_updater->deriv = layer_get_act(layer->type)->deriv;
+    layer_updater->random_state = layer_get_act(layer->type)->random_state;
 
     return layer_updater;
 
@@ -323,6 +325,23 @@ int layer_updater_feed_state(layer_updater_t *layer_updater, real_t *state)
     if (layer_updater->ac_state != NULL) {
         sz = sizeof(real_t) * layer_updater->layer->size;
         memcpy(layer_updater->ac_state, state, sz);
+    }
+
+    return 0;
+}
+
+int layer_updater_random_state(layer_updater_t *layer_updater, real_t *state)
+{
+
+    ST_CHECK_PARAM(layer_updater == NULL || state == NULL, -1);
+
+    if (layer_updater->ac_state != NULL && layer_updater->random_state != NULL) {
+        if (layer_updater->random_state(layer_updater->layer,
+                    state, layer_updater->layer->size) < 0) {
+            ST_WARNING("Failed to layer_updater->random_state.[%s]",
+                    layer_updater->layer->name);
+            return -1;
+        }
     }
 
     return 0;
