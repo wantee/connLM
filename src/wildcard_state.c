@@ -199,6 +199,13 @@ static int generate_sampling_state(wildcard_state_t *ws)
     }
     memset(ws->sampling_state, 0, sizeof(real_t) * ws->state_size);
 
+    if (ws->ws_opt.pre_activation) {
+        if (updater_activate_state(ws->updater, ws->sampling_state)) {
+            ST_WARNING("Failed to updater_activate_state.");
+            return -1;
+        }
+    }
+
     return 0;
 }
 
@@ -210,6 +217,13 @@ static int generate_eval_state(wildcard_state_t *ws)
         return -1;
     }
     memset(ws->eval_state, 0, sizeof(real_t) * ws->state_size);
+
+    if (ws->ws_opt.pre_activation) {
+        if (updater_activate_state(ws->updater, ws->eval_state)) {
+            ST_WARNING("Failed to updater_activate_state.");
+            return -1;
+        }
+    }
 
     return 0;
 }
@@ -285,7 +299,7 @@ int wildcard_state_save(wildcard_state_t *ws, FILE *fp)
         }
     }
 
-    if (print_vec(fp, ws->state, ws->state_size, "State") < 0) {
+    if (print_vec(fp, ws->state, ws->state_size, NULL) < 0) {
         ST_WARNING("Failed to print_vec for state.");
         return -1;
     }

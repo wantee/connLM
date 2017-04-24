@@ -346,3 +346,20 @@ int layer_updater_random_state(layer_updater_t *layer_updater, real_t *state)
 
     return 0;
 }
+
+int layer_updater_activate_state(layer_updater_t *layer_updater, real_t *state)
+{
+
+    ST_CHECK_PARAM(layer_updater == NULL || state == NULL, -1);
+
+    if (layer_updater->activate != NULL) {
+        if (layer_updater->activate(layer_updater->layer,
+                    state, layer_updater->layer->size) < 0) {
+            ST_WARNING("Failed to layer_updater->random_state.[%s]",
+                    layer_updater->layer->name);
+            return -1;
+        }
+    }
+
+    return 0;
+}

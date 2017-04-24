@@ -902,3 +902,32 @@ int updater_forward_out_word(updater_t *updater, int word, double *logp)
 
     return 0;
 }
+
+int updater_activate_state(updater_t *updater, real_t *state)
+{
+    int c;
+    int size;
+    int total_size;
+
+    ST_CHECK_PARAM(updater == NULL || state == NULL, -1);
+
+    total_size = 0;
+    for (c = 0; c < updater->connlm->num_comp; c++) {
+        size = comp_updater_state_size(updater->comp_updaters[c]);
+        if (size < 0) {
+            ST_WARNING("Failed to comp_updater_state_size[%s].",
+                    updater->connlm->comps[c]->name);
+            return -1;
+        }
+
+        if (comp_updater_activate_state(updater->comp_updaters[c],
+                    state + total_size) < 0) {
+            ST_WARNING("Failed to comp_updater_activate_state[%s].",
+                    updater->connlm->comps[c]->name);
+            return -1;
+        }
+        total_size += size;
+    }
+
+    return 0;
+}

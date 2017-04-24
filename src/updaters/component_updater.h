@@ -244,6 +244,17 @@ int comp_updater_init_multicall(comp_updater_t *comp_updater,
 int comp_updater_clear_multicall(comp_updater_t *comp_updater,
         output_t *output);
 
+/**
+ * Activate state with comp_updater.
+ * @ingroup g_updater_comp
+ * @param[in] comp_updater the comp_updater with activatation functions.
+ * @param[out] state pointer to activated state. Size of state
+ *             must be larger than or equal to the state_size returned
+ *             by comp_updater_state_size.
+ * @return non-zero value if any error.
+ */
+int comp_updater_activate_state(comp_updater_t *comp_updater, real_t *state);
+
 #ifdef __cplusplus
 }
 #endif

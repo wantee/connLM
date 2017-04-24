@@ -196,6 +196,17 @@ int layer_updater_feed_state(layer_updater_t *layer_updater, real_t *state);
  */
 int layer_updater_random_state(layer_updater_t *layer_updater, real_t *state);
 
+/**
+ * Activate state with layer_updater.
+ * @ingroup g_updater_layer
+ * @param[in] layer_updater the layer_updater with activatation functions.
+ * @param[out] state pointer to activated state. Size of state
+ *             must be larger than or equal to the state_size returned
+ *             by layer_updater_state_size.
+ * @return non-zero value if any error.
+ */
+int layer_updater_activate_state(layer_updater_t *layer_updater, real_t *state);
+
 #ifdef __cplusplus
 }
 #endif

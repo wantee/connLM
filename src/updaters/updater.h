@@ -232,6 +232,17 @@ int updater_forward_out_word(updater_t *updater, int word, double *logp);
  */
 int updater_setup_multicall(updater_t *updater);
 
+/**
+ * Activate state with updater.
+ * @ingroup g_updater
+ * @param[in] updater the updater with activatation functions.
+ * @param[out] state pointer to activated state. Size of state
+ *             must be larger than or equal to the state_size returned
+ *             by updater_state_size.
+ * @return non-zero value if any error.
+ */
+int updater_activate_state(updater_t *updater, real_t *state);
+
 #ifdef __cplusplus
 }
 #endif
