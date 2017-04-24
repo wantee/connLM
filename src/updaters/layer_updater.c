@@ -188,6 +188,31 @@ ERR:
     return -1;
 }
 
+int layer_updater_setup_pre_ac_state(layer_updater_t *layer_updater)
+{
+    size_t sz;
+
+    ST_CHECK_PARAM(layer_updater == NULL, -1);
+
+    if (layer_updater->pre_ac_state == NULL) {
+        sz = sizeof(real_t) * layer_updater->layer->size;
+        layer_updater->pre_ac_state = st_aligned_malloc(sz, ALIGN_SIZE);
+        if (layer_updater->pre_ac_state == NULL) {
+            ST_WARNING("Failed to st_aligned_malloc pre_ac_state.");
+            goto ERR;
+        }
+        memset(layer_updater->pre_ac_state, 0, sz);
+    }
+
+    return 0;
+
+ERR:
+
+    safe_st_aligned_free(layer_updater->ac_state);
+
+    return -1;
+}
+
 int layer_updater_activate(layer_updater_t *layer_updater)
 {
     ST_CHECK_PARAM(layer_updater == NULL, -1);
@@ -199,6 +224,11 @@ int layer_updater_activate(layer_updater_t *layer_updater)
 #ifdef _CONNLM_TRACE_PROCEDURE_
     ST_TRACE("Activate: layer[%s]", layer_updater->layer->name);
 #endif
+
+    if (layer_updater->pre_ac_state != NULL) {
+        memcpy(layer_updater->pre_ac_state, layer_updater->ac,
+                sizeof(real_t) * layer_updater->layer->size);
+    }
 
     if (layer_updater->activate != NULL) {
         if (layer_updater->activate(layer_updater->layer,
@@ -315,6 +345,22 @@ int layer_updater_dump_state(layer_updater_t *layer_updater, real_t *state)
 
     return 0;
 }
+
+int layer_updater_dump_pre_ac_state(layer_updater_t *layer_updater,
+        real_t *state)
+{
+    size_t sz;
+
+    ST_CHECK_PARAM(layer_updater == NULL || state == NULL, -1);
+
+    if (layer_updater->pre_ac_state != NULL) {
+        sz = sizeof(real_t) * layer_updater->layer->size;
+        memcpy(state, layer_updater->pre_ac_state, sz);
+    }
+
+    return 0;
+}
+
 
 int layer_updater_feed_state(layer_updater_t *layer_updater, real_t *state)
 {

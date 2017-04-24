@@ -131,6 +131,16 @@ int glue_updater_setup(glue_updater_t *glue_updater,
         comp_updater_t *comp_updater, bool backprop);
 
 /**
+ * Setup pre-activation state of glue_updater for running.
+ * @ingroup g_updater_glue
+ * @param[in] glue_updater glue_updater.
+ * @param[in] comp_updater the comp_updater.
+ * @return non-zero value if any error.
+ */
+int glue_updater_setup_pre_ac_state(glue_updater_t *glue_updater,
+        comp_updater_t *comp_updater);
+
+/**
  * Reset a glue_updater.
  * @ingroup g_updater_glue
  * @param[in] glue_updater the glue_updater.

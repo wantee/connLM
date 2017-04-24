@@ -589,6 +589,35 @@ int updater_dump_state(updater_t *updater, real_t *state)
     return 0;
 }
 
+int updater_dump_pre_ac_state(updater_t *updater, real_t *state)
+{
+    int c;
+    int size;
+    int total_size;
+
+    ST_CHECK_PARAM(updater == NULL || state == NULL, -1);
+
+    total_size = 0;
+    for (c = 0; c < updater->connlm->num_comp; c++) {
+        size = comp_updater_state_size(updater->comp_updaters[c]);
+        if (size < 0) {
+            ST_WARNING("Failed to comp_updater_state_size[%s].",
+                    updater->connlm->comps[c]->name);
+            return -1;
+        }
+
+        if (comp_updater_dump_pre_ac_state(updater->comp_updaters[c],
+                    state + total_size) < 0) {
+            ST_WARNING("Failed to comp_updater_dump_pre_ac_state[%s].",
+                    updater->connlm->comps[c]->name);
+            return -1;
+        }
+        total_size += size;
+    }
+
+    return 0;
+}
+
 int updater_feed_state(updater_t *updater, real_t *state)
 {
     int c;
@@ -930,4 +959,93 @@ int updater_activate_state(updater_t *updater, real_t *state)
     }
 
     return 0;
+}
+
+int updater_setup_pre_ac_state(updater_t *updater)
+{
+    int c;
+
+    ST_CHECK_PARAM(updater == NULL, -1);
+
+    for (c = 0; c < updater->connlm->num_comp; c++) {
+        if (comp_updater_setup_pre_ac_state(updater->comp_updaters[c]) < 0) {
+            ST_WARNING("Failed to comp_updater_setup_pre_ac_state[%s].",
+                    updater->connlm->comps[c]->name);
+            return -1;
+        }
+    }
+
+    return 0;
+}
+
+int updater_sampling_state(updater_t *updater, real_t *state,
+        real_t *pre_ac_state, bool startover)
+{
+    int word;
+
+    ST_CHECK_PARAM(updater == NULL
+            || (state == NULL && pre_ac_state == NULL), -1);
+
+    if (startover) {
+        word = vocab_get_id(updater->connlm->vocab, SENT_START);
+        if (updater_feed(updater, &word, 1) < 0) {
+            ST_WARNING("Failed to updater_feed.");
+            return -1;
+        }
+    }
+
+    if (updater_forward_util_out(updater) < 0) {
+        ST_WARNING("Failed to updater_forward_util_out.");
+        return -1;
+    }
+
+    word = updater_sample_out(updater);
+    if (word < 0) {
+        ST_WARNING("Failed to updater_sample_out.");
+        return -1;
+    }
+
+    if (updater_feed(updater, &word, 1) < 0) {
+        ST_WARNING("Failed to updater_feed.");
+        return -1;
+    }
+
+    if (updater_save_state(updater) < 0) {
+        ST_WARNING("updater_save_state.");
+        return -1;
+    }
+
+    if (pre_ac_state != NULL) {
+        if (updater_dump_pre_ac_state(updater, pre_ac_state) < 0) {
+            ST_WARNING("updater_dump_pre_ac_state.");
+            return -1;
+        }
+    }
+
+    if (state != NULL) {
+        if (updater_dump_state(updater, state) < 0) {
+            ST_WARNING("updater_dump_state.");
+            return -1;
+        }
+    }
+
+    if (word == SENT_END_ID) {
+        if (updater_reset(updater) < 0) {
+            ST_WARNING("Failed to updater_reset.");
+            return -1;
+        }
+    }
+
+    if (updater_clear(updater) < 0) {
+        ST_WARNING("updater_clear.");
+        return -1;
+    }
+
+    // Move cur_pos to the pos fed into later after sampled out
+    if (updater_move_input(updater) < 0) {
+        ST_WARNING("Failed to updater_move_input.");
+        return -1;
+    }
+
+    return word;
 }

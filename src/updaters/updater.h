@@ -157,6 +157,17 @@ int updater_state_size(updater_t *updater);
 int updater_dump_state(updater_t *updater, real_t *state);
 
 /**
+ * Dump the pre-activation state of updater.
+ * @ingroup g_updater
+ * @param[in] updater the updater.
+ * @param[out] state pointer to store the dumped state. Size of state
+ *             must be larger than or equal to the state_size returned
+ *             by updater_state_size.
+ * @return non-zero value if any error.
+ */
+int updater_dump_pre_ac_state(updater_t *updater, real_t *state);
+
+/**
  * Feed the state of updater.
  * @ingroup g_updater
  * @param[in] updater the updater.
@@ -242,6 +253,30 @@ int updater_setup_multicall(updater_t *updater);
  * @return non-zero value if any error.
  */
 int updater_activate_state(updater_t *updater, real_t *state);
+
+/**
+ * Sampling a word and return the state.
+ * @ingroup g_updater
+ * @param[in] updater the updater.
+ * @param[out] state pointer to activated state. Set to NULL if not needed.
+ * @param[out] pre_ac_state pointer to pre-activated state.
+ *                                 Set to NULL if not needed.
+ *                                 Size of the above states must be larger
+ *                                 than or equal to the state_size returned
+ *                                 by updater_state_size.
+ * @param[in] startover if true, feed \<s\> before sampling.
+ * @return the sampled word, -1 if any error.
+ */
+int updater_sampling_state(updater_t *updater, real_t *state,
+        real_t *pre_ac_state, bool startover);
+
+/**
+ * Setup pre-activated state for updater.
+ * @ingroup g_updater
+ * @param[in] updater the updater.
+ * @return non-zero value if any error.
+ */
+int updater_setup_pre_ac_state(updater_t *updater);
 
 #ifdef __cplusplus
 }

@@ -82,6 +82,9 @@ void wildcard_state_destroy(wildcard_state_t *ws)
         return;
     }
 
+    safe_st_free(ws->tmp_state);
+    safe_st_free(ws->tmp_pre_ac_state);
+
     safe_st_free(ws->random_state);
     safe_st_free(ws->sampling_state);
     safe_st_free(ws->eval_state);
@@ -110,6 +113,11 @@ wildcard_state_t* wildcard_state_create(connlm_t *connlm,
     ws->connlm = connlm;
     ws->ws_opt = *ws_opt;
 
+    if (connlm_setup(connlm) < 0) {
+        ST_WARNING("Failed to connlm_setup.");
+        goto ERR;
+    }
+
     ws->updater = updater_create(connlm);
     if (ws->updater == NULL) {
         ST_WARNING("Failed to updater_create.");
@@ -121,7 +129,36 @@ wildcard_state_t* wildcard_state_create(connlm_t *connlm,
         goto ERR;
     }
 
+    if (updater_setup_pre_ac_state(ws->updater) < 0) {
+        ST_WARNING("Failed to updater_setup_pre_ac_state.");
+        goto ERR;
+    }
+
     ws->state_size = updater_state_size(ws->updater);
+
+    ws->state = (real_t *)st_malloc(sizeof(real_t) * ws->state_size);
+    if (ws->state == NULL) {
+        ST_WARNING("Failed to st_malloc state");
+        goto ERR;
+    }
+    memset(ws->state, 0, sizeof(real_t) * ws->state_size);
+
+    if (ws->ws_opt.pre_activation) {
+        ws->tmp_pre_ac_state = (real_t *)st_malloc(
+                sizeof(real_t) * ws->state_size);
+        if (ws->tmp_pre_ac_state == NULL) {
+            ST_WARNING("Failed to st_malloc tmp_pre_ac_state");
+            goto ERR;
+        }
+        memset(ws->tmp_pre_ac_state, 0, sizeof(real_t) * ws->state_size);
+    } else {
+        ws->tmp_state = (real_t *)st_malloc(sizeof(real_t) * ws->state_size);
+        if (ws->tmp_state == NULL) {
+            ST_WARNING("Failed to st_malloc tmp_state");
+            goto ERR;
+        }
+        memset(ws->tmp_state, 0, sizeof(real_t) * ws->state_size);
+    }
 
     return ws;
 
@@ -134,13 +171,6 @@ static int wildcard_state_summary(wildcard_state_t *ws)
 {
     int n;
     int i;
-
-    ws->state = (real_t *)st_malloc(sizeof(real_t) * ws->state_size);
-    if (ws->state == NULL) {
-        ST_WARNING("Failed to st_malloc state");
-        return -1;
-    }
-    memset(ws->state, 0, sizeof(real_t) * ws->state_size);
 
     n = 0;
     if (ws->random_state != NULL) {
@@ -192,12 +222,47 @@ static int generate_random_state(wildcard_state_t *ws)
 
 static int generate_sampling_state(wildcard_state_t *ws)
 {
+    int i, n;
+    int word;
+    int n_word;
+    bool startover;
+
     ws->sampling_state = (real_t *)st_malloc(sizeof(real_t)*ws->state_size);
     if (ws->sampling_state == NULL) {
         ST_WARNING("Failed to st_malloc sampling_state");
         return -1;
     }
     memset(ws->sampling_state, 0, sizeof(real_t) * ws->state_size);
+
+    n_word = 0;
+    for (n = 0; n < ws->ws_opt.num_samplings; n++) {
+        startover = true;
+        word = -1;
+        while (word != SENT_END_ID) {
+            word = updater_sampling_state(ws->updater, ws->tmp_state,
+                    ws->tmp_pre_ac_state, startover);
+            if (word < 0) {
+                ST_WARNING("Failed to updater_sampling_state.");
+                return -1;
+            }
+            startover = false;
+
+            if (ws->tmp_state != NULL) {
+                for (i = 0; i < ws->state_size; i++) {
+                    ws->sampling_state[i] += ws->tmp_state[i];
+                }
+            } else {
+                for (i = 0; i < ws->state_size; i++) {
+                    ws->sampling_state[i] += ws->tmp_pre_ac_state[i];
+                }
+            }
+            ++n_word;
+        }
+    }
+
+    for (i = 0; i < ws->state_size; i++) {
+        ws->sampling_state[i] /= n_word;
+    }
 
     if (ws->ws_opt.pre_activation) {
         if (updater_activate_state(ws->updater, ws->sampling_state)) {

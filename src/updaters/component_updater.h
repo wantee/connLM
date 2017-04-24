@@ -203,6 +203,18 @@ int comp_updater_state_size(comp_updater_t *comp_updater);
 int comp_updater_dump_state(comp_updater_t *comp_updater, real_t *state);
 
 /**
+ * Dump the pre-activation state of comp_updater.
+ * @ingroup g_updater_comp
+ * @param[in] comp_updater the comp_updater.
+ * @param[out] state pointer to store the dumped state. Size of state
+ *             must be larger than or equal to the state_size returned
+ *             by comp_updater_state_size.
+ * @return non-zero value if any error.
+ */
+int comp_updater_dump_pre_ac_state(comp_updater_t *comp_updater,
+        real_t *state);
+
+/**
  * Feed the state of comp_updater.
  * @ingroup g_updater_comp
  * @param[in] comp_updater the comp_updater.
@@ -254,6 +266,14 @@ int comp_updater_clear_multicall(comp_updater_t *comp_updater,
  * @return non-zero value if any error.
  */
 int comp_updater_activate_state(comp_updater_t *comp_updater, real_t *state);
+
+/**
+ * Setup pre-activation state for comp_updater.
+ * @ingroup g_updater_comp
+ * @param[in] comp_updater comp_updater.
+ * @return non-zero value if any error.
+ */
+int comp_updater_setup_pre_ac_state(comp_updater_t *comp_updater);
 
 #ifdef __cplusplus
 }
