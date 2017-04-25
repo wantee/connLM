@@ -224,7 +224,7 @@ static int generate_sampling_state(wildcard_state_t *ws)
 {
     int i, n;
     int word;
-    int n_word;
+    count_t n_word;
     bool startover;
 
     ws->sampling_state = (real_t *)st_malloc(sizeof(real_t)*ws->state_size);
@@ -276,21 +276,85 @@ static int generate_sampling_state(wildcard_state_t *ws)
 
 static int generate_eval_state(wildcard_state_t *ws)
 {
-    ws->eval_state = (real_t *)st_malloc(sizeof(real_t)*ws->state_size);
+    FILE *text_fp = NULL;
+
+    count_t n_word;
+
+    connlm_egs_t egs = {
+        .words = NULL,
+        .size = 0,
+        .capacity = 0,
+    };
+
+    int word;
+    int i;
+
+    ws->eval_state = (real_t *)st_malloc(sizeof(real_t) * ws->state_size);
     if (ws->eval_state == NULL) {
         ST_WARNING("Failed to st_malloc eval_state");
-        return -1;
+        goto ERR;
     }
     memset(ws->eval_state, 0, sizeof(real_t) * ws->state_size);
+
+    text_fp = st_fopen(ws->ws_opt.eval_text, "rb");
+    if (text_fp == NULL) {
+        ST_WARNING("Failed to open text file[%s]", ws->ws_opt.eval_text);
+        goto ERR;
+    }
+
+    n_word = 0;
+    while (! feof(text_fp)) {
+        if (connlm_egs_read(&egs, NULL, 1, text_fp,
+                    ws->connlm->vocab, NULL) < 0) {
+            ST_WARNING("Failed to connlm_egs_read.");
+            goto ERR;
+        }
+
+        if (updater_feed(ws->updater, egs.words, egs.size) < 0) {
+            ST_WARNING("Failed to updater_feed.");
+            goto ERR;
+        }
+
+        while (updater_steppable(ws->updater)) {
+            word = updater_step_state(ws->updater, ws->tmp_state,
+                    ws->tmp_pre_ac_state);
+            if (word < 0) {
+                ST_WARNING("Failed to updater_step_state.");
+                goto ERR;
+            }
+            if (ws->tmp_state != NULL) {
+                for (i = 0; i < ws->state_size; i++) {
+                    ws->eval_state[i] += ws->tmp_state[i];
+                }
+            } else {
+                for (i = 0; i < ws->state_size; i++) {
+                    ws->eval_state[i] += ws->tmp_pre_ac_state[i];
+                }
+            }
+            ++n_word;
+        }
+    }
+
+    for (i = 0; i < ws->state_size; i++) {
+        ws->eval_state[i] /= n_word;
+    }
+
+    connlm_egs_destroy(&egs);
+    safe_fclose(text_fp);
 
     if (ws->ws_opt.pre_activation) {
         if (updater_activate_state(ws->updater, ws->eval_state)) {
             ST_WARNING("Failed to updater_activate_state.");
-            return -1;
+            goto ERR;
         }
     }
 
     return 0;
+
+ERR:
+    connlm_egs_destroy(&egs);
+    safe_fclose(text_fp);
+    return -1;
 }
 
 int wildcard_state_generate(wildcard_state_t *ws)

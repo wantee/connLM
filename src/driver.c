@@ -568,7 +568,7 @@ static int driver_gen(driver_t *driver)
                     word = updater_step(updater);
                     if (word < 0) {
                         ST_WARNING("Failed to updater_step.");
-                        return -1;
+                        goto ERR;
                     }
                     first = false;
                 }

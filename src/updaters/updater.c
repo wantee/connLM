@@ -1049,3 +1049,70 @@ int updater_sampling_state(updater_t *updater, real_t *state,
 
     return word;
 }
+
+int updater_step_state(updater_t *updater,
+        real_t *state, real_t *pre_ac_state)
+{
+    int word;
+
+    ST_CHECK_PARAM(updater == NULL, -1);
+
+    word = tgt_word(updater);
+
+    if (updater_forward(updater) < 0) {
+        ST_WARNING("Failed to updater_forward.");
+        return -1;
+    }
+
+    if (updater->backprop) {
+        if (updater_backprop(updater) < 0) {
+            ST_WARNING("Failed to updater_backprop.");
+            return -1;
+        }
+    }
+
+    if (updater_save_state(updater) < 0) {
+        ST_WARNING("updater_save_state.");
+        return -1;
+    }
+
+    if (pre_ac_state != NULL) {
+        if (updater_dump_pre_ac_state(updater, pre_ac_state) < 0) {
+            ST_WARNING("updater_dump_pre_ac_state.");
+            return -1;
+        }
+    }
+
+    if (state != NULL) {
+        if (updater_dump_state(updater, state) < 0) {
+            ST_WARNING("updater_dump_state.");
+            return -1;
+        }
+    }
+
+    if (word == SENT_END_ID) {
+        if (updater_reset(updater) < 0) {
+            ST_WARNING("Failed to updater_reset.");
+            return -1;
+        }
+    }
+
+    if (updater_clear(updater) < 0) {
+        ST_WARNING("updater_clear.");
+        return -1;
+    }
+
+    if (updater_move_input(updater) < 0) {
+        ST_WARNING("Failed to updater_move_input.");
+        return -1;
+    }
+
+    if (updater->finalized) {
+        if (updater_finish(updater) < 0) {
+            ST_WARNING("Failed to updater_finish.");
+            return -1;
+        }
+    }
+
+    return word;
+}
