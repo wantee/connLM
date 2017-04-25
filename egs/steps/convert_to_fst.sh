@@ -1,23 +1,22 @@
 #!/bin/bash
 
-# run a standalone model using standard layout config
 # Begin configuration section.
 num_thr=1
 output_ssyms=false
-bloom_filter_text_file=""
-skip_build_bloom_filter=false
+bloom_filter_file=""
+wildcard_state_file=""
 # end configuration sections
 
 echo "$0 $@"  # Print the command line for logging
 function print_help()
 {
-  echo "usage: $0 <model-type> <conf-dir> <exp-dir>"
-  echo "e.g.: $0 rnn conf exp"
+  echo "usage: $0 <conf-dir> <exp-dir>"
+  echo "e.g.: $0 conf/rnn exp/rnn"
   echo "options: "
   echo "     --num-thr <threads>    # default: 1."
   echo "     --output-ssyms <true|false>   # default: false."
-  echo "     --bloom-filter-text-file <file>   # default: \"\"."
-  echo "     --skip-build-bloom-filter <true|false>   # default: false."
+  echo "     --bloom-filter-file <file>   # default: \"\"."
+  echo "     --wildcard-state-file <file>   # default: \"\"."
 }
 
 help_message=`print_help`
@@ -27,21 +26,18 @@ help_message=`print_help`
 
 . ../utils/parse_options.sh || exit 1
 
-if [ $# -lt 3 ]; then
+if [ $# -lt 2 ]; then
   print_help 1>&2
   exit 1;
 fi
 
-model=$1
-conf_dir=$2
-exp_dir=$3
+conf_dir=$1
+exp_dir=$2
 
 begin_date=`date +"%Y-%m-%d %H:%M:%S"`
 begin_ts=`date +%s`
 
-conf="$conf_dir/$model"
-dir="$exp_dir/$model/fst"
-mkdir -p $dir
+dir="$exp_dir/fst"
 mkdir -p "$dir/log"
 
 log_file=${log_file:-"$dir/log/tofst.log"}
@@ -50,15 +46,15 @@ if $output_ssyms; then
   opts+=" --state-syms-file=$dir/g.ssyms"
 fi
 
-blmflt="$exp_dir/$model/`basename $bloom_filter_text_file`.blmflt"
-if ! $skip_build_bloom_filter; then
-  ../steps/build_bloom_filter.sh "$conf" "$exp_dir" \
-      "$bloom_filter_text_file" "$blmflt" || exit 1
+if [ -n "$bloom_filter_file" ]; then
+  opts+=" --bloom-filter-file=$bloom_filter_file"
 fi
 
-opts+=" --bloom-filter-file=$blmflt"
+if [ -n "$wildcard_state_file" ]; then
+  opts+=" --wildcard-state-file=$wildcard_state_file"
+fi
 
-shu-run connlm-tofst --config="$conf/tofst.conf" --log-file="$log_file" \
+shu-run connlm-tofst --config="$conf_dir/tofst.conf" --log-file="$log_file" \
                      $opts \
                      --word-syms-file="$dir/words.txt" \
                      "$dir/../final.clm" "'| gzip -c > $dir/g.txt.gz'" || exit 1
