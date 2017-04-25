@@ -23,6 +23,7 @@
  */
 
 #include <stutils/st_log.h>
+#include <stutils/st_rand.h>
 
 #include "utils.h"
 #include "relu_layer.h"
@@ -51,6 +52,22 @@ int relu_deriv(layer_t *layer, real_t *er, real_t *ac, int size)
     for (i = 0; i < size; i++) {
         if (ac[i] <= 0) {
             er[i] = 0.0;
+        }
+    }
+
+    return 0;
+}
+
+int relu_random_state(layer_t *layer, real_t *state, int size)
+{
+    int i;
+
+    ST_CHECK_PARAM(layer == NULL || state == NULL, -1);
+
+    for (i = 0; i < size; i++) {
+        state[i] = st_random(-50.0, 50.0);
+        if (state[i] < 0) {
+            state[i] = 0.0;
         }
     }
 

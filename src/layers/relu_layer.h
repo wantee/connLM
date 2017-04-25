@@ -60,6 +60,16 @@ int relu_activate(layer_t *layer, real_t *vec, int size);
  */
 int relu_deriv(layer_t *layer, real_t *er, real_t *ac, int size);
 
+/**
+ * Generated random state for relu layer.
+ * @ingroup g_layer_relu
+ * @param[in] layer the relu layer.
+ * @param[out] state the state.
+ * @param[in] size size of state.
+ * @return non-zero value if any error.
+ */
+int relu_random_state(layer_t *layer, real_t *state, int size);
+
 #ifdef __cplusplus
 }
 #endif

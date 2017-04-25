@@ -24,7 +24,7 @@ mkdir -p "$dir"
 mkdir -p "$dir/num"
 mkdir -p "$dir/sym"
 
-../steps/build_bloom_filter.sh "$conf_dir/$model" "$exp_dir" \
+../steps/build_bloom_filter.sh "$conf_dir/$model" "$exp_dir/$model" \
     "data/train" "$exp_dir/$model/train.blmflt" || exit 1
 
 function tofst()

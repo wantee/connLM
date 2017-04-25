@@ -32,6 +32,7 @@
 
 #include <stutils/st_macro.h>
 #include <stutils/st_log.h>
+#include <stutils/st_string.h>
 #include <stutils/st_int.h>
 #include <stutils/st_io.h>
 
@@ -295,13 +296,12 @@ int fst_conv_load_opt(fst_conv_opt_t *conv_opt,
     if (conv_opt->max_gram > 0 && conv_opt->max_gram <= 2) {
         ST_WARNING("MAX_GRAM must be larger than 2.");
         goto ST_OPT_ERR;
-    } else if (conv_opt->max_gram <= 0) {
-        if (conv_opt->bloom_filter_file[0] == '\0') {
-            ST_WARNING("Can not determine MAX_GRAM, since BLOOM_FILTER_FILE "
-                    "not set");
-            goto ST_OPT_ERR;
-        }
     }
+
+    ST_OPT_SEC_GET_STR(opt, sec_name, "WILDCARD_STATE_FILE",
+            conv_opt->wildcard_state_file, MAX_DIR_LEN, "",
+            "File stored the value for wildcard state. Typically output by "
+            "'connlm-wildcard-state'");
 
     return 0;
 
@@ -348,6 +348,7 @@ void fst_conv_destroy(fst_conv_t *conv)
     }
 
     safe_bloom_filter_destroy(conv->blm_flt);
+    safe_st_free(conv->wildcard_state);
 }
 
 fst_conv_t* fst_conv_create(connlm_t *connlm, int n_thr,
@@ -356,9 +357,21 @@ fst_conv_t* fst_conv_create(connlm_t *connlm, int n_thr,
     fst_conv_t *conv = NULL;
 
     FILE *fp = NULL;
+    char *line = NULL;
+    size_t line_sz = 0;
+
     int i;
+    bool err;
 
     ST_CHECK_PARAM(connlm == NULL || n_thr <= 0 || conv_opt == NULL, NULL);
+
+    if (conv_opt->max_gram <= 0) {
+        if (conv_opt->bloom_filter_file[0] == '\0') {
+            ST_WARNING("Can not determine MAX_GRAM, since BLOOM_FILTER_FILE "
+                    "not set");
+            goto ERR;
+        }
+    }
 
     conv = (fst_conv_t *)st_malloc(sizeof(fst_conv_t));
     if (conv == NULL) {
@@ -381,7 +394,7 @@ fst_conv_t* fst_conv_create(connlm_t *connlm, int n_thr,
     for (i = 0; i < conv->n_thr; i++) {
         conv->updaters[i] = updater_create(connlm);
         if (conv->updaters[i] == NULL) {
-            ST_WARNING("Failed to st_malloc updater[%d].", i);
+            ST_WARNING("Failed to updater_create[%d].", i);
             goto ERR;
         }
     }
@@ -416,9 +429,44 @@ fst_conv_t* fst_conv_create(connlm_t *connlm, int n_thr,
         }
     }
 
+    if (conv->conv_opt.wildcard_state_file[0] != '\0') {
+        fp = st_fopen(conv->conv_opt.wildcard_state_file, "r");
+        if (fp == NULL) {
+            ST_WARNING("Failed to st_fopen wildcard_state_file[%s].",
+                    conv->conv_opt.wildcard_state_file);
+            goto ERR;
+        }
+
+        while (st_fgets(&line, &line_sz, fp, &err)) {
+            remove_newline(line);
+
+            if (line[0] == '\0' || line[0] == '#') {
+                continue;
+            }
+
+            conv->ws_size = parse_vec(line, &conv->wildcard_state, NULL, 0);
+            if (conv->ws_size < 0) {
+                ST_WARNING("Failed to parse_vec. [%s]", line);
+                goto ERR;
+            }
+
+            break;
+        }
+
+        safe_st_free(line);
+        safe_fclose(fp);
+
+        if (err) {
+            ST_WARNING("st_fgets error");
+            goto ERR;
+        }
+
+    }
+
     return conv;
 
 ERR:
+    safe_st_free(line);
     safe_fclose(fp);
     safe_fst_conv_destroy(conv);
     return NULL;
@@ -537,6 +585,13 @@ static int fst_conv_setup(fst_conv_t *conv, FILE *fst_fp,
     }
 
     state_size = updater_state_size(conv->updaters[0]);
+    if (conv->ws_size > 0) {
+        if (state_size != conv->ws_size) {
+            ST_WARNING("wildcard state size not match");
+            return -1;
+        }
+    }
+
     if (state_size > 0) {
         conv->model_state_cache = st_block_cache_create(
                 sizeof(real_t) * state_size, get_output_size(conv));
@@ -1521,12 +1576,25 @@ ERR:
 
 static int fst_conv_build_wildcard(fst_conv_t *conv, fst_conv_args_t *args)
 {
+    real_t *state;
     int sid;
 
     ST_CHECK_PARAM(conv == NULL || args == NULL, -1);
 
     args[0].sid = FST_WILDCARD_STATE;
     args[0].store_children = true;
+
+    if (conv->wildcard_state != NULL && conv->model_state_cache != NULL) {
+        conv->fst_states[FST_WILDCARD_STATE].model_state_id = -1;
+        state = (real_t *)st_block_cache_fetch(conv->model_state_cache,
+                &conv->fst_states[FST_WILDCARD_STATE].model_state_id);
+        if (state == NULL) {
+            ST_WARNING("Failed to st_block_cache_fetch.");
+            return -1;
+        }
+
+        memcpy(state, conv->wildcard_state, sizeof(real_t) * conv->ws_size);
+    }
 
     sid = fst_conv_expand(conv, args + 0);
     if (sid < 0) {

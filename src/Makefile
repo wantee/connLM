@@ -38,6 +38,7 @@ INCS = utils.h \
        updaters/glue_updaters/out_glue_updater.h \
        updaters/wt_updater.h \
        updaters/bptt_updater.h \
+       wildcard_state.h \
        fst_converter.h \
        bloom_filter.h \
        ngram_hash.h
@@ -75,6 +76,7 @@ SRCS = utils.c \
        updaters/glue_updaters/out_glue_updater.c \
        updaters/wt_updater.c \
        updaters/bptt_updater.c \
+       wildcard_state.c \
        fst_converter.c \
        bloom_filter.c \
        ngram_hash.c
@@ -90,6 +92,7 @@ BINS = bin/connlm-train \
        bin/connlm-draw \
        bin/connlm-tofst \
        bin/connlm-merge \
+       bin/connlm-wildcard-state \
        bin/bloom-filter-build \
        bin/bloom-filter-info
 

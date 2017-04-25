@@ -27,6 +27,7 @@
 #include <stutils/st_log.h>
 #include <stutils/st_io.h>
 #include <stutils/st_string.h>
+#include <stutils/st_rand.h>
 
 #include "utils.h"
 #include "sigmoid_layer.h"
@@ -390,6 +391,19 @@ int sigmoid_deriv(layer_t *layer, real_t *er, real_t *ac, int size)
         for (i = 0; i < size; i++) {
             er[i] *= param->steepness * ac[i] * (1 - ac[i]);
         }
+    }
+
+    return 0;
+}
+
+int sigmoid_random_state(layer_t *layer, real_t *state, int size)
+{
+    int i;
+
+    ST_CHECK_PARAM(layer == NULL || state == NULL, -1);
+
+    for (i = 0; i < size; i++) {
+        state[i] = st_random(0.0, 1.0);
     }
 
     return 0;

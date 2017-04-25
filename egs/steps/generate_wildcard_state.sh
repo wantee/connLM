@@ -2,13 +2,15 @@
 
 # Begin configuration section.
 num_thr=1
+eval_text_file=""
 # end configuration sections
 
 echo "$0 $@"  # Print the command line for logging
 function print_help()
 {
-  echo "usage: $0 <conf-dir> <exp-dir> <text-file> <out-file>"
-  echo "e.g.: $0 conf/rnn exp/rnn data/train exp/rnn/train.blmflt"
+  echo "usage: $0 <conf-dir> <exp-dir> <out-file>"
+  echo "e.g.: $0 conf/rnn exp/rnn exp/rnn/ws.txt"
+  echo "     --eval-text-file <file>   # default: \"\"."
 }
 
 help_message=`print_help`
@@ -19,30 +21,30 @@ help_message=`print_help`
 . ../utils/common_utils.sh || exit 1
 . ../utils/parse_options.sh || exit 1
 
-if [ $# -lt 4 ]; then
+if [ $# -lt 3 ]; then
   print_help 1>&2
   exit 1;
 fi
 
 conf_dir=$1
 exp_dir=$2
-text_file=`rxfilename "$3"`
-out_file=$4
+out_file=$3
+
+eval_text_file=`rxfilename "$eval_text_file"`
 
 begin_date=`date +"%Y-%m-%d %H:%M:%S"`
 begin_ts=`date +%s`
 
 mkdir -p "$exp_dir/log"
+log_file=${log_file:-"$exp_dir/log/wildcard-state.log"}
 
-log_file=${log_file:-"$exp_dir/log/bf-build.log"}
-shu-run bloom-filter-build --config="$conf_dir/bf-build.conf" \
+opts=""
+if [ -n "$eval_text_file" ]; then
+  opts+="--eval-text-file='$eval_text_file'"
+fi
+shu-run connlm-wildcard-state --config="$conf_dir/wildcard-state.conf" \
                      --log-file="$log_file" \
-                     "$exp_dir/final.clm" "'$text_file'" "$out_file" || exit 1
-
-echo "================================="
-shu-run bloom-filter-info --log-file="$exp_dir/log/bf-info.log" \
-                          --verbose=true "$out_file" || exit 1
-echo "================================="
+                     $opts "$exp_dir/final.clm" "$out_file" || exit 1
 
 ../utils/check_log.sh -b "$begin_date" $log_file.wf
 

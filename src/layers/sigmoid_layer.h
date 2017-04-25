@@ -141,6 +141,16 @@ int sigmoid_activate(layer_t *layer, real_t *vec, int size);
  */
 int sigmoid_deriv(layer_t *layer, real_t *er, real_t *ac, int size);
 
+/**
+ * Generate random state for sigmoid layer.
+ * @ingroup g_layer_sigmoid
+ * @param[in] layer the sigmoid layer.
+ * @param[out] state the generated state.
+ * @param[in] size size of state.
+ * @return non-zero value if any error.
+ */
+int sigmoid_random_state(layer_t *layer, real_t *state, int size);
+
 #ifdef __cplusplus
 }
 #endif

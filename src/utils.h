@@ -165,6 +165,28 @@ connlm_fmt_t connlm_format_parse(const char *str);
  */
 int16_t quantify_int16(real_t r, real_t multiple);
 
+/**
+ * print a real-valued vector.
+ * @ingroup g_connlm
+ * @param[out] fp file stream to be written into.
+ * @param[in] vec the vector.
+ * @param[in] size size of vector.
+ * @param[in] name name of vector, will be prepended if not NULL.
+ * @return non-zero value if any error.
+ */
+int print_vec(FILE *fp, real_t *vec, size_t size, const char *name);
+
+/**
+ * parse a real-valued vector from a string.
+ * @ingroup g_connlm
+ * @param[in] line input string.
+ * @param[out] vec the vector. Must be st_free outside.
+ * @param[out] name name of the vector, will be ignored if NULL.
+ * @param[in] name_len length of name buffer,
+ * @return size of vector, -1 if any error.
+ */
+int parse_vec(const char *line, real_t **vec, char *name, size_t name_len);
+
 #ifdef __cplusplus
 }
 #endif

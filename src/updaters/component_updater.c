@@ -219,6 +219,27 @@ ERR:
     return -1;
 }
 
+int comp_updater_setup_pre_ac_state(comp_updater_t *comp_updater)
+{
+    component_t *comp;
+    int i;
+
+    ST_CHECK_PARAM(comp_updater == NULL, -1);
+
+    comp = comp_updater->comp;
+
+    for (i = 0; i < comp->num_glue; i++) {
+        if (glue_updater_setup_pre_ac_state(
+                    comp_updater->glue_updaters[i], comp_updater) < 0) {
+            ST_WARNING("Failed to glue_updater_setup_pre_ac_state[%s].",
+                    comp->glues[i]->name);
+            return -1;
+        }
+    }
+
+    return 0;
+}
+
 static int comp_updater_bptt(comp_updater_t *comp_updater, bool clear)
 {
     component_t *comp;
@@ -718,6 +739,36 @@ int comp_updater_dump_state(comp_updater_t *comp_updater, real_t *state)
     return 0;
 }
 
+int comp_updater_dump_pre_ac_state(comp_updater_t *comp_updater,
+        real_t *state)
+{
+    int i;
+    int size;
+    int total_size;
+
+    ST_CHECK_PARAM(comp_updater == NULL || state == NULL, -1);
+
+    total_size = 0;
+    for (i = 2; i < comp_updater->comp->num_layer; i++) {
+        size = layer_updater_state_size(comp_updater->layer_updaters[i]);
+        if (size < 0) {
+            ST_WARNING("Failed to layer_updater_state_size.[%s]",
+                    comp_updater->comp->layers[i]->name);
+            return -1;
+        }
+        if (layer_updater_dump_pre_ac_state(
+                    comp_updater->layer_updaters[i],
+                    state + total_size) < 0) {
+            ST_WARNING("Failed to layer_updater_dump_pre_ac_state.[%s]",
+                    comp_updater->comp->layers[i]->name);
+            return -1;
+        }
+        total_size += size;
+    }
+
+    return 0;
+}
+
 int comp_updater_feed_state(comp_updater_t *comp_updater, real_t *state)
 {
     int i;
@@ -737,6 +788,34 @@ int comp_updater_feed_state(comp_updater_t *comp_updater, real_t *state)
         if (layer_updater_feed_state(comp_updater->layer_updaters[i],
                     state + total_size) < 0) {
             ST_WARNING("Failed to layer_updater_feed_state.[%s]",
+                    comp_updater->comp->layers[i]->name);
+            return -1;
+        }
+        total_size += size;
+    }
+
+    return 0;
+}
+
+int comp_updater_random_state(comp_updater_t *comp_updater, real_t *state)
+{
+    int i;
+    int size;
+    int total_size;
+
+    ST_CHECK_PARAM(comp_updater == NULL || state == NULL, -1);
+
+    total_size = 0;
+    for (i = 2; i < comp_updater->comp->num_layer; i++) {
+        size = layer_updater_state_size(comp_updater->layer_updaters[i]);
+        if (size < 0) {
+            ST_WARNING("Failed to layer_updater_state_size.[%s]",
+                    comp_updater->comp->layers[i]->name);
+            return -1;
+        }
+        if (layer_updater_random_state(comp_updater->layer_updaters[i],
+                    state + total_size) < 0) {
+            ST_WARNING("Failed to layer_updater_random_state.[%s]",
                     comp_updater->comp->layers[i]->name);
             return -1;
         }
@@ -779,6 +858,34 @@ int comp_updater_clear_multicall(comp_updater_t *comp_updater,
                     comp_updater->comp->glues[i]->name);
             return -1;
         }
+    }
+
+    return 0;
+}
+
+int comp_updater_activate_state(comp_updater_t *comp_updater, real_t *state)
+{
+    int i;
+    int size;
+    int total_size;
+
+    ST_CHECK_PARAM(comp_updater == NULL || state == NULL, -1);
+
+    total_size = 0;
+    for (i = 2; i < comp_updater->comp->num_layer; i++) {
+        size = layer_updater_state_size(comp_updater->layer_updaters[i]);
+        if (size < 0) {
+            ST_WARNING("Failed to layer_updater_state_size.[%s]",
+                    comp_updater->comp->layers[i]->name);
+            return -1;
+        }
+        if (layer_updater_activate_state(comp_updater->layer_updaters[i],
+                    state + total_size) < 0) {
+            ST_WARNING("Failed to layer_updater_activate.[%s]",
+                    comp_updater->comp->layers[i]->name);
+            return -1;
+        }
+        total_size += size;
     }
 
     return 0;

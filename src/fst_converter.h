@@ -68,6 +68,7 @@ typedef struct _fst_converter_opt_t_ {
     double threshold; /**< threshold for word selection. */
 
     char bloom_filter_file[MAX_DIR_LEN]; /**< bloom filter file. */
+    char wildcard_state_file[MAX_DIR_LEN]; /**< wildcard state file. */
 } fst_conv_opt_t;
 
 /**
@@ -133,6 +134,8 @@ typedef struct _fst_converter_t_ {
     pthread_mutex_t ssyms_fp_lock; /**< lock for ssyms_fp. */
 
     bloom_filter_t* blm_flt; /**< ngram bloom filter for selecting words. */
+    real_t *wildcard_state; /**< wildcard state loaded from file. */
+    int ws_size; /**< size of wildcard state. */
 
     fst_conv_opt_t conv_opt; /**< options. */
 } fst_conv_t;

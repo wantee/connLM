@@ -174,6 +174,26 @@ ERR:
     return -1;
 }
 
+int glue_updater_setup_pre_ac_state(glue_updater_t *glue_updater,
+        comp_updater_t *comp_updater)
+{
+    glue_t *glue;
+    layer_updater_t *layer_updater;
+
+    ST_CHECK_PARAM(glue_updater == NULL, -1);
+
+    glue = glue_updater->glue;
+    if (glue->recur_type == RECUR_HEAD) {
+        layer_updater = comp_updater->layer_updaters[glue->in_layer];
+        if (layer_updater_setup_pre_ac_state(layer_updater) < 0) {
+            ST_WARNING("Failed to layer_updater_setup_pre_ac_state.");
+            return -1;
+        }
+    }
+
+    return 0;
+}
+
 int glue_updater_reset(glue_updater_t *glue_updater)
 {
     ST_CHECK_PARAM(glue_updater == NULL, -1);

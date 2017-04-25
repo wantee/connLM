@@ -54,13 +54,14 @@ typedef struct _layer_activate_func_t_ {
     char type[MAX_NAME_LEN];
     activate_func_t activate;
     deriv_func_t deriv;
+    random_state_func_t random_state;
 } layer_act_t;
 
 static layer_act_t LAYER_ACT[] = {
-    {LINEAR_NAME, linear_activate, linear_deriv},
-    {SIGMOID_NAME, sigmoid_activate, sigmoid_deriv},
-    {TANH_NAME, tanh_activate, tanh_deriv},
-    {RELU_NAME, relu_activate, relu_deriv},
+    {LINEAR_NAME, linear_activate, linear_deriv, linear_random_state},
+    {SIGMOID_NAME, sigmoid_activate, sigmoid_deriv, sigmoid_random_state},
+    {TANH_NAME, tanh_activate, tanh_deriv, tanh_random_state},
+    {RELU_NAME, relu_activate, relu_deriv, relu_random_state},
 };
 
 static layer_act_t* layer_get_act(const char *type)
@@ -92,6 +93,7 @@ layer_updater_t* layer_updater_create(layer_t *layer)
     layer_updater->layer = layer;
     layer_updater->activate = layer_get_act(layer->type)->activate;
     layer_updater->deriv = layer_get_act(layer->type)->deriv;
+    layer_updater->random_state = layer_get_act(layer->type)->random_state;
 
     return layer_updater;
 
@@ -186,6 +188,31 @@ ERR:
     return -1;
 }
 
+int layer_updater_setup_pre_ac_state(layer_updater_t *layer_updater)
+{
+    size_t sz;
+
+    ST_CHECK_PARAM(layer_updater == NULL, -1);
+
+    if (layer_updater->pre_ac_state == NULL) {
+        sz = sizeof(real_t) * layer_updater->layer->size;
+        layer_updater->pre_ac_state = st_aligned_malloc(sz, ALIGN_SIZE);
+        if (layer_updater->pre_ac_state == NULL) {
+            ST_WARNING("Failed to st_aligned_malloc pre_ac_state.");
+            goto ERR;
+        }
+        memset(layer_updater->pre_ac_state, 0, sz);
+    }
+
+    return 0;
+
+ERR:
+
+    safe_st_aligned_free(layer_updater->ac_state);
+
+    return -1;
+}
+
 int layer_updater_activate(layer_updater_t *layer_updater)
 {
     ST_CHECK_PARAM(layer_updater == NULL, -1);
@@ -197,6 +224,11 @@ int layer_updater_activate(layer_updater_t *layer_updater)
 #ifdef _CONNLM_TRACE_PROCEDURE_
     ST_TRACE("Activate: layer[%s]", layer_updater->layer->name);
 #endif
+
+    if (layer_updater->pre_ac_state != NULL) {
+        memcpy(layer_updater->pre_ac_state, layer_updater->ac,
+                sizeof(real_t) * layer_updater->layer->size);
+    }
 
     if (layer_updater->activate != NULL) {
         if (layer_updater->activate(layer_updater->layer,
@@ -314,6 +346,22 @@ int layer_updater_dump_state(layer_updater_t *layer_updater, real_t *state)
     return 0;
 }
 
+int layer_updater_dump_pre_ac_state(layer_updater_t *layer_updater,
+        real_t *state)
+{
+    size_t sz;
+
+    ST_CHECK_PARAM(layer_updater == NULL || state == NULL, -1);
+
+    if (layer_updater->pre_ac_state != NULL) {
+        sz = sizeof(real_t) * layer_updater->layer->size;
+        memcpy(state, layer_updater->pre_ac_state, sz);
+    }
+
+    return 0;
+}
+
+
 int layer_updater_feed_state(layer_updater_t *layer_updater, real_t *state)
 {
     size_t sz;
@@ -323,6 +371,40 @@ int layer_updater_feed_state(layer_updater_t *layer_updater, real_t *state)
     if (layer_updater->ac_state != NULL) {
         sz = sizeof(real_t) * layer_updater->layer->size;
         memcpy(layer_updater->ac_state, state, sz);
+    }
+
+    return 0;
+}
+
+int layer_updater_random_state(layer_updater_t *layer_updater, real_t *state)
+{
+
+    ST_CHECK_PARAM(layer_updater == NULL || state == NULL, -1);
+
+    if (layer_updater->ac_state != NULL && layer_updater->random_state != NULL) {
+        if (layer_updater->random_state(layer_updater->layer,
+                    state, layer_updater->layer->size) < 0) {
+            ST_WARNING("Failed to layer_updater->random_state.[%s]",
+                    layer_updater->layer->name);
+            return -1;
+        }
+    }
+
+    return 0;
+}
+
+int layer_updater_activate_state(layer_updater_t *layer_updater, real_t *state)
+{
+
+    ST_CHECK_PARAM(layer_updater == NULL || state == NULL, -1);
+
+    if (layer_updater->activate != NULL) {
+        if (layer_updater->activate(layer_updater->layer,
+                    state, layer_updater->layer->size) < 0) {
+            ST_WARNING("Failed to layer_updater->random_state.[%s]",
+                    layer_updater->layer->name);
+            return -1;
+        }
     }
 
     return 0;
