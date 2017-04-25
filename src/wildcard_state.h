@@ -48,7 +48,7 @@ typedef struct _wildcard_state_opt_t_ {
     bool pre_activation; /**< whether averaging values before activation. */
     bool random; /**< whether generateing random states. */
     int num_samplings; /**< number of sentences to be sampled. */
-    char eval_text[MAX_DIR_LEN]; /**< file contains sentences to be evaluated. */
+    char eval_text_file[MAX_DIR_LEN]; /**< file contains sentences to be evaluated. */
 } wildcard_state_opt_t;
 
 /**

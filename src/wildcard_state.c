@@ -59,14 +59,14 @@ int wildcard_state_load_opt(wildcard_state_opt_t *ws_opt,
         st_srand(seed);
     }
 
-    ST_OPT_GET_STR(opt, "EVAL_TEXT", ws_opt->eval_text, MAX_DIR_LEN, "",
-            "Text file contains the sentences to be evaluated "
-            "to generate wildcard state.");
+    ST_OPT_GET_STR(opt, "EVAL_TEXT_FILE", ws_opt->eval_text_file,
+            MAX_DIR_LEN, "", "Text file contains the sentences to "
+            "be evaluated to generate wildcard state.");
 
     if ( ! ws_opt->random &&  ws_opt->num_samplings <= 0
-            && ws_opt->eval_text[0] == '\0') {
+            && ws_opt->eval_text_file[0] == '\0') {
         ST_WARNING("You must set at least one of RANDOM or NUM_SAMPLINGS "
-                "or EVAL_TEXT");
+                "or EVAL_TEXT_FILE");
         goto ST_OPT_ERR;
     }
 
@@ -296,9 +296,9 @@ static int generate_eval_state(wildcard_state_t *ws)
     }
     memset(ws->eval_state, 0, sizeof(real_t) * ws->state_size);
 
-    text_fp = st_fopen(ws->ws_opt.eval_text, "rb");
+    text_fp = st_fopen(ws->ws_opt.eval_text_file, "rb");
     if (text_fp == NULL) {
-        ST_WARNING("Failed to open text file[%s]", ws->ws_opt.eval_text);
+        ST_WARNING("Failed to open text file[%s]", ws->ws_opt.eval_text_file);
         goto ERR;
     }
 
@@ -379,7 +379,7 @@ int wildcard_state_generate(wildcard_state_t *ws)
         }
     }
 
-    if (ws->ws_opt.eval_text[0] != '\0') {
+    if (ws->ws_opt.eval_text_file[0] != '\0') {
         if (generate_eval_state(ws) < 0) {
             ST_WARNING("Failed to generate_eval_state.");
             return -1;

@@ -675,3 +675,88 @@ int print_vec(FILE *fp, real_t *vec, size_t size, const char *name)
 
     return 0;
 }
+
+int parse_vec(const char *line, real_t **vec, char *name, size_t name_len)
+{
+    char token[MAX_NAME_LEN];
+    const char *p, *q, *r;
+    int i, size, cap;
+
+    ST_CHECK_PARAM(line == NULL || vec == NULL, -1);
+
+    *vec = NULL;
+    cap = 128;
+    size = 0;
+
+    p = strchr(line, '[');
+    if (p == NULL) {
+        ST_WARNING("Error vector format: '[' expected.");
+        return -1;
+    }
+
+    q = p;
+    while (q > line) {
+        if (*q == ':') {
+            break;
+        }
+        --q;
+    }
+
+    if (name != NULL && name_len > 0) {
+        i = 0;
+        r = line;
+        while (i < name_len && r < q) {
+            name[i] = *r;
+            ++i;
+            ++r;
+        }
+        if (i < name_len) {
+            name[i] = '\0';
+        } else {
+            name[name_len - 1] = '\0';
+        }
+    }
+
+    *vec = (real_t *)st_malloc(sizeof(real_t) * cap);
+    if (*vec == NULL) {
+        ST_WARNING("Failed to st_malloc vec");
+        goto ERR;
+    }
+
+    ++p;
+    while (*p == ' ' || *p == '\t') {
+        ++p;
+    }
+    while (true) {
+        p = get_next_token(p, token);
+        if (p == NULL || token[0] == ']') {
+            break;
+        }
+
+        if (size >= cap) {
+            *vec = (real_t *)st_realloc(*vec, sizeof(real_t) * (cap + 128));
+            if (*vec == NULL) {
+                ST_WARNING("Failed to st_realloc vec");
+                goto ERR;
+            }
+            cap += 128;
+        }
+
+        if (sscanf(token, REAL_FMT, *vec + size) != 1) {
+            ST_WARNING("Error vector format: Not a float numbers[%s]", token);
+            goto ERR;
+        }
+        ++size;
+    }
+
+    if (token[0] != ']') {
+        ST_WARNING("Error vector format: ']' expected.");
+        goto ERR;
+    }
+
+    return size;
+
+ERR:
+    safe_st_free(*vec);
+    return -1;
+}
