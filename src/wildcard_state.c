@@ -49,15 +49,15 @@ int wildcard_state_load_opt(wildcard_state_opt_t *ws_opt,
     ST_OPT_GET_BOOL(opt, "RANDOM", ws_opt->random, true,
             "Whether generate random states.");
 
-    if (ws_opt->random) {
+    ST_OPT_GET_INT(opt, "NUM_SAMPLINGS", ws_opt->num_samplings, 0,
+            "Number of sampling sentences to generate wildcard state.");
+
+    if (ws_opt->random || ws_opt->num_samplings > 0) {
         ST_OPT_SEC_GET_UINT(opt, sec_name, "RANDOM_SEED",
                 seed, (unsigned int)time(NULL),
                 "Random seed. Default is value of time(NULl).");
         st_srand(seed);
     }
-
-    ST_OPT_GET_INT(opt, "NUM_SAMPLINGS", ws_opt->num_samplings, 0,
-            "Number of sampling sentences to generate wildcard state.");
 
     ST_OPT_GET_STR(opt, "EVAL_TEXT", ws_opt->eval_text, MAX_DIR_LEN, "",
             "Text file contains the sentences to be evaluated "
