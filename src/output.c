@@ -1873,6 +1873,9 @@ static int output_generate_path(output_t *output)
     output_tree_dfs_aux_t *dfs_aux = NULL;
     size_t sz;
 
+    output_path_t *path;
+    output_node_id_t n;
+
     ST_CHECK_PARAM(output == NULL || output->tree == NULL, -1);
 
     sz = sizeof(output_path_t) * output->output_size;
@@ -1897,6 +1900,18 @@ static int output_generate_path(output_t *output)
     }
 
     safe_output_tree_dfs_aux_destroy(dfs_aux);
+
+    // get <unk> root
+    output->unk_root = OUTPUT_NODE_NONE;
+    path = output->paths + UNK_ID;
+    if (path->num_node > 0) {
+        for (n = path->num_node - 1; n >= 0; n--) {
+            if (n_children(output->tree, path->nodes[n]) > 1) {
+                break;
+            }
+            output->unk_root = path->nodes[n];
+        }
+    }
 
     return 0;
 

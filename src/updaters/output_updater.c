@@ -284,7 +284,7 @@ output_node_id_t out_updater_sample(out_updater_t *out_updater,
         }
         if (sampled == e) {
             ST_WARNING("Can't sample from node["OUTPUT_NODE_FMT"], "
-                   "because all its children are <unk> or <s>.");
+                   "because all its children are <unk>.", node);
             return OUTPUT_NODE_NONE;
         }
     }
@@ -311,6 +311,10 @@ output_node_id_t out_updater_sample(out_updater_t *out_updater,
         if (is_leaf(output->tree, sampled)) {
             word = output_tree_leaf2word(output->tree, sampled);
             if (word == UNK_ID) {
+                continue;
+            }
+        } else {
+            if (sampled == output->unk_root) {
                 continue;
             }
         }

@@ -44,8 +44,8 @@ extern "C" {
  * Output Layer of NNet, structured as a tree.
  */
 
-typedef unsigned int output_node_id_t;
-#define OUTPUT_NODE_FMT "%u"
+typedef int output_node_id_t;
+#define OUTPUT_NODE_FMT "%d"
 
 #define OUTPUT_NODE_NONE ((output_node_id_t)-1)
 
@@ -71,6 +71,7 @@ typedef struct _output_opt_t_ {
 
 #define s_children(tree, node) (tree)->nodes[node].children_s
 #define e_children(tree, node) (tree)->nodes[node].children_e
+#define n_children(tree, node) (e_children(tree, node) - s_children(tree, node))
 #define is_leaf(tree, node) (s_children(tree, node) >= e_children(tree, node))
 
 /**
@@ -243,6 +244,7 @@ typedef struct _output_t_ {
 
     output_tree_t *tree; /**< output tree. */
     output_path_t *paths; /**< Store a path for every leaf(word) node. */
+    output_node_id_t unk_root; /**< root of subtree with only one path towards <unk>. */
 
     output_node_id_t *param_map; /**< map a node to index in param weight(used by Softmax). */
     output_node_id_t num_param_map; /**< number of param maps. */
