@@ -51,7 +51,7 @@ mdl_init=init.clm
 
 begin_date=`date +"%Y-%m-%d %H:%M:%S"`
 begin_ts=`date +%s`
-log_dir="$dir/log"
+log_dir="$dir/log/train"
 
 if [ ! -e "$dir/.learn_rate" ]; then
   shu-run connlm-train --dry-run=true --log-file="$log_dir/conf.log" \

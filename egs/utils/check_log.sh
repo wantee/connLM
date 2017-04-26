@@ -21,6 +21,10 @@ datelog()
   begin_line=$2
   end_line=$3
 
+  if [ "$begin_line" == "-1" ]; then
+    return
+  fi
+
   if [ -n "$begin_line" ] && [ -n "$end_line" ]; then
     sed -n "$begin_line,$end_line p" $log
   elif [ -n "$begin_line" ]; then
@@ -67,6 +71,7 @@ for log in $*; do
 
   if [ -n "$begin" ]; then # find begin line
     begin_ts=`date2timestamp "$begin"`
+    begin_line=-1
     while read line; do
       d=`echo $line | awk -F'[()]' '{print $2}'`
       ts=`date2timestamp "$d"`
@@ -118,7 +123,7 @@ elif [ "$mode" == "mem" ]; then
     log=`echo $mem | awk -F':' '{print $1}'`
     allocs=`echo $mem | awk -F':' '{print $2}'`
     frees=`echo $mem | awk -F':' '{print $3}'`
-    if [ "$allocs" -ne "$frees" ]; then
+    if [ "$allocs" != "$frees" ]; then
       err=true
       echo "allocs[$allocs] and frees[$frees] not equal in $log."
     fi

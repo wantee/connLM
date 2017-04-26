@@ -177,7 +177,7 @@ int wt_updater_init(wt_updater_t *wt_updater)
         safe_st_aligned_free(wt_updater->ori_wt);
         wt_updater->ori_wt = st_aligned_malloc(sz, ALIGN_SIZE);
         if (wt_updater->ori_wt == NULL) {
-            ST_WARNING("Failed to st_malloc ori_wt.");
+            ST_WARNING("Failed to st_aligned_malloc ori_wt.");
             goto ERR;
         }
         memcpy(wt_updater->ori_wt, wt_updater->wt, sz);
@@ -194,7 +194,7 @@ int wt_updater_init(wt_updater_t *wt_updater)
             safe_st_aligned_free(wt_updater->ori_bias);
             wt_updater->ori_bias = st_aligned_malloc(bias_sz, ALIGN_SIZE);
             if (wt_updater->ori_bias == NULL) {
-                ST_WARNING("Failed to st_malloc ori_bias.");
+                ST_WARNING("Failed to st_aligned_malloc ori_bias.");
                 goto ERR;
             }
             memcpy(wt_updater->ori_bias, wt_updater->bias, bias_sz);
@@ -209,7 +209,7 @@ int wt_updater_init(wt_updater_t *wt_updater)
         safe_st_aligned_free(wt_updater->delta_wt);
         wt_updater->delta_wt = st_aligned_malloc(sz, ALIGN_SIZE);
         if (wt_updater->delta_wt == NULL) {
-            ST_WARNING("Failed to st_malloc delta_wt.");
+            ST_WARNING("Failed to st_aligned_malloc delta_wt.");
             goto ERR;
         }
         memset(wt_updater->delta_wt, 0, sz);
@@ -218,7 +218,7 @@ int wt_updater_init(wt_updater_t *wt_updater)
             safe_st_aligned_free(wt_updater->delta_bias);
             wt_updater->delta_bias = st_aligned_malloc(bias_sz, ALIGN_SIZE);
             if (wt_updater->delta_bias == NULL) {
-                ST_WARNING("Failed to st_malloc delta_bias.");
+                ST_WARNING("Failed to st_aligned_malloc delta_bias.");
                 goto ERR;
             }
             memset(wt_updater->delta_bias, 0, bias_sz);
