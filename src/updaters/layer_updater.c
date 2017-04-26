@@ -47,6 +47,8 @@ void layer_updater_destroy(layer_updater_t *layer_updater)
     safe_st_aligned_free(layer_updater->ac_state);
     safe_st_aligned_free(layer_updater->er_raw);
 
+    safe_st_aligned_free(layer_updater->pre_ac_state);
+
     layer_updater->layer = NULL;
 }
 
@@ -207,8 +209,7 @@ int layer_updater_setup_pre_ac_state(layer_updater_t *layer_updater)
     return 0;
 
 ERR:
-
-    safe_st_aligned_free(layer_updater->ac_state);
+    safe_st_aligned_free(layer_updater->pre_ac_state);
 
     return -1;
 }
