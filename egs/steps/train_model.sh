@@ -165,7 +165,8 @@ else
   exit 1
 fi
 
-../utils/check_log.sh -b "$begin_date" $log_dir/*.wf
+../utils/check_log.sh -b "$begin_date" mem $log_dir/*.log
+../utils/check_log.sh -b "$begin_date" warn $log_dir/*.log.wf
 
 end_ts=`date +%s`
 echo "$0: Elapse time: $(shu-diff-timestamp $begin_ts $end_ts)"

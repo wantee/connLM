@@ -62,7 +62,8 @@ wpc=`../utils/get_value.sh "words/sec" $log_file`
 echo "Eval Speed: $(bc <<< "scale=1; $wpc / 1000")k words/sec"
 echo "================================="
 
-../utils/check_log.sh -b "$begin_date" $log_file.wf
+../utils/check_log.sh -b "$begin_date" mem $log_file
+../utils/check_log.sh -b "$begin_date" warn $log_file.wf
 
 end_ts=`date +%s`
 echo "$0: Elapse time: $(shu-diff-timestamp $begin_ts $end_ts)"
