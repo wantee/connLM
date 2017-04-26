@@ -10,6 +10,14 @@ MaxEnt       4/2G               156    1080k                  36min
 RNN          400                155      52k              11hr30min
 RNN+MaxEnt   400+4/2G           127      47k              14hr18min
 
+
+FST converter
+config commit: 005d3f034f84aec011987aeaa3e82837d04d1d19
+
+Model        Order    Size    PPL
+====================================
+RNN+MaxEnt   4        3M      231
+
 -------------------------------------------------------------------------
 Corpus: Cantab
 Environment: AWS c4.4xlarge with 16vCPU @ 2.90GHz
