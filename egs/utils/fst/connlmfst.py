@@ -187,9 +187,6 @@ class FST:
       for sid, state in enumerate(rfst.states):
         if sid == rfst.final_sid or sid == rfst.wildcard_sid:
           assert len(state) == 0
-        elif sid != rfst.init_sid:
-          # all state except init and final should have only one child
-          assert len(state) == 1
       # init state, final state, <wildcard> state have no backoff arc
       assert rfst.num_arcs() == self.num_arcs() - self.num_states() + 3
     else:
