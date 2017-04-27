@@ -67,7 +67,6 @@ typedef struct _fst_converter_args_t_ {
     bool store_children;
 
     int *word_hist;
-    int cap_word_hist;
     int num_word_hist;
 
     int num_arcs;
@@ -93,7 +92,6 @@ static void fst_conv_args_destroy(fst_conv_args_t *args)
 
     safe_st_free(args->word_hist);
     args->num_word_hist = 0;
-    args->cap_word_hist = 0;
 
     safe_st_free(args->num_grams);
     safe_st_free(args->start_sids);
@@ -131,8 +129,7 @@ static int fst_conv_args_init(fst_conv_args_t *args,
     }
     args->num_candidates = 0;
 
-    args->cap_word_hist = 32;
-    args->word_hist = (int *)st_malloc(sizeof(int) * args->cap_word_hist);
+    args->word_hist = (int *)st_malloc(sizeof(int) * (conv->conv_opt.max_gram + 1));
     if (args->word_hist == NULL) {
         ST_WARNING("Failed to st_malloc word_hist");
         goto ERR;
@@ -524,9 +521,9 @@ static int fst_conv_st_realloc_states(fst_conv_t *conv, int num_extra,
             return -1;
         }
         for (i = conv->cap_fst_states; i < num_new_states; i++) {
-            conv->in_probs[i] = 0.0;
-            conv->final_probs[i] = -1.0;
-            conv->bows[i] = 0.0;
+            conv->in_probs[i] = NAN;
+            conv->final_probs[i] = NAN;
+            conv->bows[i] = NAN;
             conv->backoff_states[i] = -1;
         }
         conv->cap_fst_children = num_new_states;
@@ -744,32 +741,6 @@ static int fst_conv_print_arc(fst_conv_t *conv,
 
     ST_CHECK_PARAM(conv == NULL || from < 0 || to < 0 || wid < 0, -1);
 
-    if (to == FST_FINAL_STATE) {
-        if (from < conv->cap_fst_children) {
-            if (conv->final_probs[from] != -1.0) {
-                ST_WARNING("state[%d] has multiple final probs.", from);
-                return -1;
-            }
-            conv->final_probs[from] = (real_t)weight;
-        }
-    } else if (wid == phi_id(conv)) {
-        if (from < conv->cap_fst_children) {
-            if (conv->bows[from] != 0.0) {
-                ST_WARNING("state[%d] has multiple bows.", from);
-                return -1;
-            }
-            conv->bows[from] = (real_t)weight;
-        }
-    } else {
-        if (to < conv->cap_fst_children) {
-            if (conv->in_probs[to] != 0.0) {
-                ST_WARNING("state[%d] has multiple in_probs.", to);
-                return -1;
-            }
-            conv->in_probs[to] = (real_t)weight;
-        }
-    }
-
     if (pthread_mutex_lock(&conv->fst_fp_lock) != 0) {
         ST_WARNING("Failed to pthread_mutex_lock fst_fp_lock.");
         return -1;
@@ -921,6 +892,10 @@ static int get_condidate_word(fst_conv_t *conv, fst_conv_args_t *args)
             ++n;
         }
     } else {
+        if (args->num_word_hist >= conv->conv_opt.max_gram + 1) {
+            ST_WARNING("word_hist overflow");
+            return -1;
+        }
         for (word = 0; word < get_output_size(conv); word++) {
             if (word == UNK_ID) {
                 continue;
@@ -1021,14 +996,9 @@ static int fst_conv_find_word_hist(fst_conv_t *conv,
     args->num_word_hist = 1;
     p = conv->fst_states[sid].parent;
     while (p != -1 && conv->fst_states[p].word_id != -1 /* init state */) {
-        if (args->num_word_hist + 1 >= args->cap_word_hist) { /* +1 for bloom filter lookup */
-            args->word_hist = (int *)st_realloc(args->word_hist,
-                    sizeof(int) * (args->num_word_hist + 32));
-            if (args->word_hist == NULL) {
-                ST_WARNING("Failed to st_realloc word_hist");
-                return -1;
-            }
-            args->cap_word_hist = args->num_word_hist + 32;
+        if (args->num_word_hist >= conv->conv_opt.max_gram + 1) {
+            ST_WARNING("word_hist overflow");
+            return -1;
         }
         args->word_hist[args->num_word_hist] = conv->fst_states[p].word_id;
         args->num_word_hist++;
@@ -1046,12 +1016,12 @@ static int fst_conv_find_word_hist(fst_conv_t *conv,
 }
 
 static int fst_conv_find_backoff(fst_conv_t *conv, int *word_hist,
-        int num_word_hist, int sid)
+        int num_word_hist)
 {
     int i, j;
     int backoff_sid;
 
-    ST_CHECK_PARAM(conv == NULL || word_hist == NULL || sid < 0, -1);
+    ST_CHECK_PARAM(conv == NULL || word_hist == NULL, -1);
 
     assert(word_hist[0] == WILDCARD_ID || word_hist[0] == bos_id(conv));
 
@@ -1095,11 +1065,7 @@ static int fst_conv_get_prob(fst_conv_t *conv, int sid, int word, double *prob)
 
     if (word == SENT_END_ID) {
         while (true) {
-            if(conv->final_probs[sid] != -1.0) {
-                if (conv->final_probs[sid] <= 0.0) {
-                    ST_WARNING("state[%d]'s sent_end_prob is not valid[%f]",
-                            sid, conv->final_probs[sid]);
-                }
+            if (! isnan(conv->final_probs[sid])) {
                 *prob += log(conv->final_probs[sid]);
                 break;
             }
@@ -1110,7 +1076,7 @@ static int fst_conv_get_prob(fst_conv_t *conv, int sid, int word, double *prob)
                 return -1;
             }
 
-            if (conv->bows[sid] == 0.0) {
+            if (isnan(conv->bows[sid])) {
                 ST_WARNING("state[%d]'s backoff_prob is not valid[%f]",
                         sid, conv->bows[sid]);
             }
@@ -1125,7 +1091,7 @@ static int fst_conv_get_prob(fst_conv_t *conv, int sid, int word, double *prob)
                 ST_WARNING("Failed to fst_conv_search_children.");
                 return -1;
             } else if (ch >= 0) { // found
-                if (conv->in_probs[ch] <= 0.0) {
+                if (isnan(conv->in_probs[ch])) {
                     ST_WARNING("state[%d]'s in_prob is not valid[%f]",
                             ch, conv->in_probs[ch]);
                 }
@@ -1139,7 +1105,7 @@ static int fst_conv_get_prob(fst_conv_t *conv, int sid, int word, double *prob)
                 return -1;
             }
 
-            if (conv->bows[sid] == 0.0) {
+            if (isnan(conv->bows[sid])) {
                 ST_WARNING("state[%d]'s backoff_prob is not valid[%f]",
                         sid, conv->bows[sid]);
             }
@@ -1167,7 +1133,7 @@ static int fst_conv_expand(fst_conv_t *conv, fst_conv_args_t *args)
     double backoff_prob;
     int backoff_sid = -1;
     int sid;
-    int new_sid, ret_sid;
+    int new_sid = -1, ret_sid;
     int to_sid;
     bcache_id_t model_state_id = -1;
     int word;
@@ -1175,24 +1141,13 @@ static int fst_conv_expand(fst_conv_t *conv, fst_conv_args_t *args)
 
     int i, n;
     bool no_backoff;
+    bool highest_order;
 
     ST_CHECK_PARAM(conv == NULL || args == NULL, -1);
 
     updater = conv->updaters[args->tid];
     sid = args->sid;
     output_probs = args->output_probs;
-
-    if (conv->model_state_cache != NULL
-            && conv->fst_states[sid].model_state_id >= 0) {
-        state = (real_t *)st_block_cache_read(conv->model_state_cache,
-                conv->fst_states[sid].model_state_id);
-        if (state == NULL) {
-            ST_WARNING("Failed to st_block_cache_read state.");
-            return -1;
-        }
-    } else {
-        state = NULL;
-    }
 
     if (fst_conv_find_word_hist(conv, args, sid) < 0) {
         ST_WARNING("Failed to fst_conv_find_word_hist");
@@ -1205,12 +1160,17 @@ static int fst_conv_expand(fst_conv_t *conv, fst_conv_args_t *args)
         hist_order = args->num_word_hist;
     }
 
+    highest_order = false;
+    if (hist_order + 1 >= conv->conv_opt.max_gram) {
+        highest_order = true;
+    }
+
     no_backoff = false;
     if (conv->fst_states[sid].word_id == WILDCARD_ID) {
         no_backoff = true;
     } else {
         backoff_sid = fst_conv_find_backoff(conv, args->word_hist,
-                args->num_word_hist, sid);
+                args->num_word_hist);
         if (backoff_sid < 0) {
             ST_WARNING("Failed to fst_conv_find_backoff.");
             return -1;
@@ -1228,82 +1188,94 @@ static int fst_conv_expand(fst_conv_t *conv, fst_conv_args_t *args)
         denominator = 1.0;
     }
 
-    if (conv->conv_opt.max_gram > 0 && hist_order >= conv->conv_opt.max_gram) {
+    if (no_backoff) {
+        for (word = 0; word < get_output_size(conv); word++) {
+            args->candidate_words[args->num_candidates] = word;
+            args->num_candidates++;
+        }
+    } else {
+        args->num_candidates = get_condidate_word(conv, args);
+        if (args->num_candidates < 0) {
+            ST_WARNING("Failed to get_condidate_word.");
+            return -1;
+        }
+    }
+
+    if (conv->model_state_cache != NULL
+            && conv->fst_states[sid].model_state_id >= 0) {
+        state = (real_t *)st_block_cache_read(conv->model_state_cache,
+                conv->fst_states[sid].model_state_id);
+        if (state == NULL) {
+            ST_WARNING("Failed to st_block_cache_read state.");
+            return -1;
+        }
+    } else {
+        state = NULL;
+    }
+
+    if (args->word_hist[0] == WILDCARD_ID) {
+        if (updater_step_with_state(updater, state, args->word_hist + 1,
+                    args->num_word_hist - 1) < 0) {
+            ST_WARNING("Failed to updater_step_with_state.");
+            return -1;
+        }
+    } else {
+        if (updater_step_with_state(updater, state, args->word_hist,
+                    args->num_word_hist) < 0) {
+            ST_WARNING("Failed to updater_step_with_state.");
+            return -1;
+        }
+    }
+    if (conv->model_state_cache != NULL) {
+        if (conv->fst_states[sid].model_state_id >= 0) {
+            if (st_block_cache_return(conv->model_state_cache,
+                        conv->fst_states[sid].model_state_id) < 0) {
+                ST_WARNING("Failed to st_block_cache_return.");
+                return -1;
+            }
+            conv->fst_states[sid].model_state_id = -1;
+        }
+
+        model_state_id = -1;
+        new_state = (real_t *)st_block_cache_fetch(conv->model_state_cache,
+                &model_state_id);
+        if (new_state == NULL) {
+            ST_WARNING("Failed to st_block_cache_fetch.");
+            return -1;
+        }
+
+        if (updater_dump_state(updater, new_state) < 0) {
+            ST_WARNING("Failed to updater_dump_state.");
+            return -1;
+        }
+    }
+
+    for (i = 0; i < args->num_candidates; i++) {
+        word = args->candidate_words[i];
+        if (updater_forward_out_word(updater, word, &logp) < 0) {
+            ST_WARNING("Falied to updater_forward_out_word.");
+            return -1;
+        }
+        output_probs[word] = exp(logp);
+    }
+
+    if (no_backoff) {
+        for (i = 0; i < args->num_candidates; i++) {
+            args->selected_words[i] = args->candidate_words[i];
+        }
+        n = args->num_candidates;
+    } else {
+        n = select_words(conv, args, conv->conv_opt.threshold);
+        if (n < 0) {
+            ST_WARNING("Failed to select_words.");
+            return -1;
+        }
+    }
+    assert(n <= get_output_size(conv));
+
+    if (highest_order) {
         ret_sid = sid;
     } else {
-        if (no_backoff) {
-            for (word = 0; word < get_output_size(conv); word++) {
-                args->candidate_words[args->num_candidates] = word;
-                args->num_candidates++;
-            }
-        } else {
-            args->num_candidates = get_condidate_word(conv, args);
-            if (args->num_candidates < 0) {
-                ST_WARNING("Failed to get_condidate_word.");
-                return -1;
-            }
-        }
-
-        if (args->word_hist[0] == WILDCARD_ID) {
-            if (updater_step_with_state(updater, state, args->word_hist + 1,
-                        args->num_word_hist - 1) < 0) {
-                ST_WARNING("Failed to updater_step_with_state.");
-                return -1;
-            }
-        } else {
-            if (updater_step_with_state(updater, state, args->word_hist,
-                        args->num_word_hist) < 0) {
-                ST_WARNING("Failed to updater_step_with_state.");
-                return -1;
-            }
-        }
-        if (conv->model_state_cache != NULL) {
-            if (conv->fst_states[sid].model_state_id >= 0) {
-                if (st_block_cache_return(conv->model_state_cache,
-                            conv->fst_states[sid].model_state_id) < 0) {
-                    ST_WARNING("Failed to st_block_cache_return.");
-                    return -1;
-                }
-                conv->fst_states[sid].model_state_id = -1;
-            }
-
-            model_state_id = -1;
-            new_state = (real_t *)st_block_cache_fetch(conv->model_state_cache,
-                    &model_state_id);
-            if (new_state == NULL) {
-                ST_WARNING("Failed to st_block_cache_fetch.");
-                return -1;
-            }
-
-            if (updater_dump_state(updater, new_state) < 0) {
-                ST_WARNING("Failed to updater_dump_state.");
-                return -1;
-            }
-        }
-
-        for (i = 0; i < args->num_candidates; i++) {
-            word = args->candidate_words[i];
-            if (updater_forward_out_word(updater, word, &logp) < 0) {
-                ST_WARNING("Falied to updater_forward_out_word.");
-                return -1;
-            }
-            output_probs[word] = exp(logp);
-        }
-
-        if (no_backoff) {
-            for (i = 0; i < args->num_candidates; i++) {
-                args->selected_words[i] = args->candidate_words[i];
-            }
-            n = args->num_candidates;
-        } else {
-            n = select_words(conv, args, conv->conv_opt.threshold);
-            if (n < 0) {
-                ST_WARNING("Failed to select_words.");
-                return -1;
-            }
-        }
-        assert(n <= get_output_size(conv));
-
         new_sid = fst_conv_add_states(conv,
                 (n > 0 && args->selected_words[0] == SENT_END_ID) ? n - 1 : n,
                 sid, args->store_children);
@@ -1312,63 +1284,91 @@ static int fst_conv_expand(fst_conv_t *conv, fst_conv_args_t *args)
             return -1;
         }
         ret_sid = new_sid;
+    }
 
-        for (i = 0; i < n; i++) {
-            word = args->selected_words[i];
+    for (i = 0; i < n; i++) {
+        word = args->selected_words[i];
 
-            if (!no_backoff) {
-                nominator -= output_probs[word];
-                if (fst_conv_get_prob(conv, backoff_sid, word, &backoff_prob) < 0) {
-                    ST_WARNING("Failed to fst_conv_get_prob.");
-                    return -1;
-                }
-                denominator -= backoff_prob;
-            }
-
-            if (word == SENT_END_ID) {
-                to_sid = FST_FINAL_STATE;
-            } else {
-                to_sid = new_sid++;
-                conv->fst_states[to_sid].word_id = word;
-                if (conv->model_state_cache != NULL) {
-                    conv->fst_states[to_sid].model_state_id = model_state_id;
-                    // hold state_cache
-                    if (st_block_cache_fetch(conv->model_state_cache,
-                                &model_state_id) == NULL) {
-                        ST_WARNING("Failed to st_block_cache_fetch.");
-                        return -1;
-                    }
-                    assert(conv->fst_states[to_sid].model_state_id
-                            == model_state_id);
-                }
-
-                if (fst_conv_print_ssyms(conv, to_sid, args->word_hist,
-                            args->num_word_hist, word) < 0) {
-                    ST_WARNING("Failed to fst_conv_print_ssyms.");
-                    return -1;
-                }
-            }
-
-            if (fst_conv_print_arc(conv, sid, to_sid, word,
-                        output_probs[word]) < 0) {
-                ST_WARNING("Failed to fst_conv_print_arc.");
+        if (!no_backoff) {
+            nominator -= output_probs[word];
+            if (fst_conv_get_prob(conv, backoff_sid, word, &backoff_prob) < 0) {
+                ST_WARNING("Failed to fst_conv_get_prob.");
                 return -1;
             }
-
-            args->num_arcs++;
-            if (hist_order + 1 > args->cur_gram) {
-                args->cur_gram = hist_order + 1;
-                args->start_sids[hist_order] = ret_sid;
-            }
-            args->num_grams[hist_order] += 1;
+            denominator -= backoff_prob;
         }
 
-        if (conv->model_state_cache != NULL) {
-            if (st_block_cache_return(conv->model_state_cache,
-                        model_state_id) < 0) {
-                ST_WARNING("Failed to st_block_cache_return.");
+        if (word == SENT_END_ID) {
+            to_sid = FST_FINAL_STATE;
+
+            if (sid < conv->cap_fst_children) {
+                if (! isnan(conv->final_probs[sid])) {
+                    ST_WARNING("state[%d] has multiple final probs.", sid);
+                    return -1;
+                }
+                conv->final_probs[sid] = (real_t)output_probs[word];
+            }
+        } else if (highest_order) {
+            if (args->num_word_hist >= conv->conv_opt.max_gram + 1) {
+                ST_WARNING("word_hist overflow");
                 return -1;
             }
+            args->word_hist[args->num_word_hist] = word;
+            to_sid = fst_conv_find_backoff(conv, args->word_hist,
+                args->num_word_hist + 1);
+            if (to_sid < 0) {
+                ST_WARNING("Failed to fst_conv_find_backoff for highest ngram.");
+                return -1;
+            }
+        } else {
+            to_sid = new_sid++;
+            conv->fst_states[to_sid].word_id = word;
+            if (conv->model_state_cache != NULL) {
+                conv->fst_states[to_sid].model_state_id = model_state_id;
+                // hold state_cache
+                if (st_block_cache_fetch(conv->model_state_cache,
+                            &model_state_id) == NULL) {
+                    ST_WARNING("Failed to st_block_cache_fetch.");
+                    return -1;
+                }
+                assert(conv->fst_states[to_sid].model_state_id
+                        == model_state_id);
+            }
+
+            if (fst_conv_print_ssyms(conv, to_sid, args->word_hist,
+                        args->num_word_hist, word) < 0) {
+                ST_WARNING("Failed to fst_conv_print_ssyms.");
+                return -1;
+            }
+
+            if (to_sid < conv->cap_fst_children) {
+                if (! isnan(conv->in_probs[to_sid])) {
+                    ST_WARNING("state[%d] has multiple in_probs.", to_sid);
+                    return -1;
+                }
+                conv->in_probs[to_sid] = (real_t)output_probs[word];
+            }
+        }
+
+        if (fst_conv_print_arc(conv, sid, to_sid, word,
+                    output_probs[word]) < 0) {
+            ST_WARNING("Failed to fst_conv_print_arc.");
+            return -1;
+        }
+
+        args->num_arcs++;
+        if (hist_order + 1 > args->cur_gram) {
+            args->cur_gram = hist_order + 1;
+            args->start_sids[hist_order] = ret_sid;
+        }
+        args->num_grams[hist_order] += 1;
+    }
+
+    if (conv->model_state_cache != NULL) {
+        if (st_block_cache_return(conv->model_state_cache,
+                    model_state_id) < 0) {
+            ST_WARNING("Failed to st_block_cache_return.");
+            return -1;
         }
     }
 
@@ -1380,6 +1380,14 @@ static int fst_conv_expand(fst_conv_t *conv, fst_conv_args_t *args)
         if (denominator < 0.0 || denominator > 1.0) {
             ST_WARNING("denominator is invalid[%f]", denominator);
             return -1;
+        }
+
+        if (sid < conv->cap_fst_children) {
+            if (! isnan(conv->bows[sid])) {
+                ST_WARNING("state[%d] has multiple bows.", sid);
+                return -1;
+            }
+            conv->bows[sid] = (real_t)(nominator / denominator);
         }
 
         if (fst_conv_print_arc(conv, sid, backoff_sid,
@@ -1487,7 +1495,8 @@ static int fst_conv_prepare_build(fst_conv_t *conv)
 }
 
 static int fst_conv_build(fst_conv_t *conv, fst_conv_args_t *args,
-        int init_sid, int init_order, bool store_children)
+        int init_sid, int init_order, int max_order,
+        bool store_children)
 {
     pthread_t *pts = NULL;
     int sid;
@@ -1563,10 +1572,14 @@ static int fst_conv_build(fst_conv_t *conv, fst_conv_args_t *args,
             ST_WARNING("Error in worker threads");
             goto ERR;
         }
+
+        if (cur_gram >= max_order) {
+            break;
+        }
     }
 
     safe_st_free(pts);
-    return 0;
+    return sid;
 
 ERR:
 
@@ -1602,7 +1615,15 @@ static int fst_conv_build_wildcard(fst_conv_t *conv, fst_conv_args_t *args)
         return -1;
     }
 
-    if (fst_conv_build(conv, args, sid, 1, true) < 0) {
+    sid = fst_conv_build(conv, args, sid, 1, conv->conv_opt.max_gram - 1,
+                true);
+    if (sid < 0) {
+        ST_WARNING("Failed to fst_conv_build");
+        return -1;
+    }
+
+    if (fst_conv_build(conv, args, sid, conv->conv_opt.max_gram,
+                INT_MAX, true) < 0) {
         ST_WARNING("Failed to fst_conv_build");
         return -1;
     }
@@ -1625,7 +1646,15 @@ static int fst_conv_build_bos(fst_conv_t *conv, fst_conv_args_t *args)
         return -1;
     }
 
-    if (fst_conv_build(conv, args, sid, 2, false) < 0) {
+    sid = fst_conv_build(conv, args, sid, 2, conv->conv_opt.max_gram - 1,
+                false);
+    if (sid < 0) {
+        ST_WARNING("Failed to fst_conv_build");
+        return -1;
+    }
+
+    if (fst_conv_build(conv, args, sid, conv->conv_opt.max_gram,
+                INT_MAX, false) < 0) {
         ST_WARNING("Failed to fst_conv_build");
         return -1;
     }

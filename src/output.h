@@ -244,7 +244,7 @@ typedef struct _output_t_ {
 
     output_tree_t *tree; /**< output tree. */
     output_path_t *paths; /**< Store a path for every leaf(word) node. */
-    output_node_id_t unk_root; /**< root of subtree with only one path towards <unk>. */
+    output_node_id_t unk_root; /**< root of subtree with only one path towards \<unk\>. */
 
     output_node_id_t *param_map; /**< map a node to index in param weight(used by Softmax). */
     output_node_id_t num_param_map; /**< number of param maps. */
