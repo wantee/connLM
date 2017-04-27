@@ -256,7 +256,7 @@ int fst_conv_load_opt(fst_conv_opt_t *conv_opt,
     ST_CHECK_PARAM(conv_opt == NULL || opt == NULL, -1);
 
     ST_OPT_SEC_GET_BOOL(opt, sec_name, "PRINT_SYMS",
-            conv_opt->print_syms, false,
+            conv_opt->print_syms, true,
             "Print symbols instead of ids in FST, if true.");
 
     ST_OPT_SEC_GET_STR(opt, sec_name, "WORD_SYMS_FILE",
