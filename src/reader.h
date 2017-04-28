@@ -58,6 +58,7 @@ typedef struct _reader_opt_t_ {
     int epoch_size;  /**< number sentences read one time per thread. */
     unsigned int rand_seed;   /**< seed for random function. */
     bool shuffle;             /**< whether shuffle the sentences. */
+    bool drop_empty_line;     /**< whether drop empty lines in text. */
     char debug_file[MAX_DIR_LEN]; /**< file to print out debug infos. */
 } reader_opt_t;
 
@@ -100,10 +101,12 @@ void connlm_egs_destroy(connlm_egs_t *egs);
  * @param[in] text_fp text file.
  * @param[in] vocab vocab.
  * @param[out] oovs number of oovs, if not NULL.
+ * @param[in] drop_empty_line whether drop the empty lines.
  * @return non-zero value if any error.
  */
 int connlm_egs_read(connlm_egs_t *egs, int *sent_ends,
-        int epoch_size, FILE *text_fp, vocab_t *vocab, int *oovs);
+        int epoch_size, FILE *text_fp, vocab_t *vocab, int *oovs,
+        bool drop_empty_line);
 
 /**
  * Load reader option.

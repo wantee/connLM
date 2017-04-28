@@ -305,7 +305,7 @@ static int generate_eval_state(wildcard_state_t *ws)
     n_word = 0;
     while (! feof(text_fp)) {
         if (connlm_egs_read(&egs, NULL, 1, text_fp,
-                    ws->connlm->vocab, NULL) < 0) {
+                    ws->connlm->vocab, NULL, true) < 0) {
             ST_WARNING("Failed to connlm_egs_read.");
             goto ERR;
         }

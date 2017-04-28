@@ -543,7 +543,8 @@ static int driver_gen(driver_t *driver)
     while(true) {
         first = true;
         if (text_fp != NULL && !feof(text_fp)) {
-            if (connlm_egs_read(&egs, NULL, 1, text_fp, vocab, NULL) < 0) {
+            if (connlm_egs_read(&egs, NULL, 1, text_fp, vocab,
+                        NULL, true) < 0) {
                 ST_WARNING("Failed to connlm_egs_read.");
                 goto ERR;
             }

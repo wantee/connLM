@@ -1143,7 +1143,7 @@ int bloom_filter_build(bloom_filter_t *blm_flt, FILE *text_fp)
 
     while (!feof(text_fp)) {
         if (connlm_egs_read(&egs, NULL, EPOCH_SIZE,
-                    text_fp, blm_flt->vocab, NULL) < 0) {
+                    text_fp, blm_flt->vocab, NULL, true) < 0) {
             ST_WARNING("Failed to connlm_egs_read.");
             goto ERR;
         }

@@ -109,7 +109,8 @@ static int connlm_egs_print(FILE *fp, pthread_mutex_t *fp_lock,
 }
 
 int connlm_egs_read(connlm_egs_t *egs, int *sent_ends,
-        int epoch_size, FILE *text_fp, vocab_t *vocab, int *oovs)
+        int epoch_size, FILE *text_fp, vocab_t *vocab, int *oovs,
+        bool drop_empty_line)
 {
     char *line = NULL;
     size_t line_sz = 0;
@@ -133,7 +134,7 @@ int connlm_egs_read(connlm_egs_t *egs, int *sent_ends,
     while (st_fgets(&line, &line_sz, text_fp, &err)) {
         remove_newline(line);
 
-        if (line[0] == '\0') {
+        if (line[0] == '\0' && drop_empty_line) {
             continue;
         }
 
@@ -297,6 +298,10 @@ int reader_load_opt(reader_opt_t *reader_opt,
 
     ST_OPT_SEC_GET_BOOL(opt, name, "SHUFFLE",
             reader_opt->shuffle, true, "Shuffle after reading");
+
+    ST_OPT_SEC_GET_BOOL(opt, name, "DROP_EMPTY_LINE",
+            reader_opt->drop_empty_line, true,
+            "whether drop empty lines in text");
 
     ST_OPT_SEC_GET_STR(opt, name, "DEBUG_FILE",
             reader_opt->debug_file, MAX_DIR_LEN, "",
@@ -477,8 +482,8 @@ static void* reader_read_thread(void *args)
 #ifdef _TIME_PROF_
         gettimeofday(&tts_io, NULL);
 #endif
-        num_sents = connlm_egs_read(&egs, sent_ends,
-                epoch_size, text_fp, reader->vocab, &oovs);
+        num_sents = connlm_egs_read(&egs, sent_ends, epoch_size, text_fp,
+                reader->vocab, &oovs, reader->opt.drop_empty_line);
         if (num_sents < 0) {
             ST_WARNING("Failed to connlm_egs_read.");
             goto ERR;
