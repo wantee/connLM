@@ -12,11 +12,12 @@ RNN+MaxEnt   400+4/2G           127      47k              14hr18min
 
 
 FST converter
-config commit: 005d3f034f84aec011987aeaa3e82837d04d1d19
+config commit: 928369a54e0c0ec1edffd05012682e81358a8f68
 
 Model        Order    Size    PPL
 ====================================
 RNN+MaxEnt   4        3M      231
+RNN+MaxEnt   4        12M     164
 
 -------------------------------------------------------------------------
 Corpus: Cantab
