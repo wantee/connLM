@@ -2,6 +2,14 @@
 
 from __future__ import print_function
 import numpy as np
+import os
+import sys
+
+path = os.path.abspath(os.path.dirname(sys.argv[0]))
+sys.path.append(path)
+sys.path.append(os.path.join(path, os.pardir))
+
+from connlm_common import *
 
 EPS = "<eps>"
 BOS = "<s>"
@@ -36,7 +44,8 @@ class FST:
     self._logp_cache = None
 
   def load(self, fst_file):
-    with open(fst_file, "r") as f:
+    is_syms = False
+    with open_file(fst_file, "r") as f:
       for line in f:
         if line.strip() == '':
           continue
@@ -49,17 +58,23 @@ class FST:
           self.final_sid = int(fields[0])
           continue
 
-        arc = Arc(int(fields[0]), int(fields[1]), int(fields[2]),
-                  int(fields[3]), float(fields[4]))
-        if not self._vocab is None:
-          assert (arc.ilab == arc.olab) or \
-               (arc.ilab == self._vocab[PHI] and arc.olab == self._vocab[EPS])
-
         if self.init_sid == -1:
-          self.init_sid = arc.source
-          self.start_sid = arc.to
+          self.init_sid = int(fields[0])
+          self.start_sid = int(fields[1])
+          if fields[2] == BOS:
+            is_syms = True
         elif self.wildcard_sid == -1: # the second arc must be from <wildcard> state
-          self.wildcard_sid = arc.source
+          self.wildcard_sid = int(fields[0])
+
+        if not is_syms:
+          arc = Arc(int(fields[0]), int(fields[1]), int(fields[2]),
+                    int(fields[3]), float(fields[4]))
+        else:
+          arc = Arc(int(fields[0]), int(fields[1]), self._vocab[fields[2]],
+                    self._vocab[fields[3]], float(fields[4]))
+        if not self._vocab is None:
+           assert (arc.ilab == arc.olab) or \
+             (arc.ilab == self._vocab[PHI] and arc.olab == self._vocab[EPS])
 
         while len(self.states) <= arc.source:
           self.states.append([])
@@ -69,11 +84,6 @@ class FST:
     assert self.start_sid != -1
     assert self.wildcard_sid != -1
     assert self.final_sid != -1
-
-    for state in self.states:
-      # check no duplicated arcs
-      labs = map(lambda arc: arc.ilab, state)
-      assert len(set(labs)) == len(labs)
 
   def num_states(self):
     return len(self.states)
@@ -100,10 +110,13 @@ class FST:
 
     self._ilab_sorted = True
 
+  def is_backoff_arc(self, arc):
+    return arc.ilab == self._vocab[PHI]
+
   def get_backoff_arc(self, sid):
     # the last arc must be backoff
     arc = self.states[sid][-1]
-    assert arc.ilab == self._vocab[PHI]
+    assert self.is_backoff_arc(arc)
     return arc
 
   def find_arc(self, sid, word):
@@ -142,6 +155,13 @@ class FST:
       sid = arc.to
 
     return path
+
+  def bow(self, sid):
+    if sid in [self.init_sid, self.wildcard_sid, self.final_sid]:
+      return np.inf
+
+    arc = self.get_backoff_arc(sid)
+    return arc.weight
 
   def create_logp_cache(self):
     if self._logp_cache is None:

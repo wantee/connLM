@@ -70,6 +70,11 @@ fst = cf.FST(vocab)
 fst.load(args.fst_txt)
 print(fst)
 
+for state in fst.states:
+  # check no duplicated arcs
+  labs = map(lambda arc: arc.ilab, state)
+  assert len(set(labs)) == len(labs)
+
 print("  Checking ssyms...", file=sys.stderr)
 rfst = fst.reverse()
 #print(rfst)
