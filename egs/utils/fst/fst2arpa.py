@@ -53,7 +53,6 @@ with open_file(args.word_syms, "r") as f:
     assert fields[0] != cf.WILDCARD
     assert fields[0] not in vocab
     vocab[fields[0]] = int(fields[1])
-vocab[cf.WILDCARD] = cf.WILDCARD_ID
 
 id2word = [""] * len(vocab)
 for w in vocab:
