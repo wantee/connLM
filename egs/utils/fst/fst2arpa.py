@@ -87,7 +87,7 @@ with open_file(args.arpa_file, "w") as f_arpa:
         if fst.is_backoff_arc(arc):
           continue
 
-        syms = ssyms[arc.source] + [arc.ilab]
+        syms = ssyms[sid] + [arc.ilab]
         if arc.to > end: # non-highest order and not </s>
           ssyms[arc.to] = syms
           if arc.to < bos_rng[0]:
@@ -113,7 +113,7 @@ with open_file(args.arpa_file, "w") as f_arpa:
         if fst.is_backoff_arc(arc):
           continue
 
-        syms = ssyms[arc.source] + [arc.ilab]
+        syms = ssyms[sid] + [arc.ilab]
         if arc.to > end: # non-highest order and not </s>
           ssyms[arc.to] = syms
           if arc.to < wildcard_rng[0]:

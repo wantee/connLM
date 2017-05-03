@@ -20,18 +20,15 @@ PHI = "#phi"
 WILDCARD_ID = -100
 
 class Arc:
-  __slots__ = ('source', 'to', 'ilab', 'olab', 'weight')
+  __slots__ = ('to', 'ilab', 'weight')
 
-  def __init__(self, source, to, ilab, olab, weight):
-    self.source = source
+  def __init__(self, to, ilab, weight):
     self.to = to
     self.ilab = ilab
-    self.olab = olab
     self.weight = weight
 
   def __str__(self):
-    return "%d -> %d (%d:%d/%f)" % (self.source, self.to, self.ilab,
-                                    self.olab, self.weight)
+    return "-> %d (%d/%f)" % (self.to, self.ilab, self.weight)
 
 class FST:
   def __init__(self, vocab):
@@ -55,32 +52,34 @@ class FST:
         fields = line.split()
         assert len(fields) == 1 or len(fields) == 5
 
+        source = int(fields[0])
+
         if len(fields) == 1:
           assert self.final_sid == -1
-          self.final_sid = int(fields[0])
+          self.final_sid = source
           continue
 
         if self.init_sid == -1:
-          self.init_sid = int(fields[0])
+          self.init_sid = source
           self.start_sid = int(fields[1])
           if fields[2] == BOS:
             is_syms = True
         elif self.wildcard_sid == -1: # the second arc must be from <wildcard> state
-          self.wildcard_sid = int(fields[0])
+          self.wildcard_sid = source
 
         if not is_syms:
-          arc = Arc(int(fields[0]), int(fields[1]), int(fields[2]),
-                    int(fields[3]), float(fields[4]))
+          if not self._vocab is None:
+            assert ((fields[2] == fields[3]) or \
+                    (int(fields[2]) == self._vocab[PHI] and int(fields[3]) == self._vocab[EPS]))
+          arc = Arc(int(fields[1]), int(fields[2]), float(fields[4]))
         else:
-          arc = Arc(int(fields[0]), int(fields[1]), self._vocab[fields[2]],
-                    self._vocab[fields[3]], float(fields[4]))
-        if not self._vocab is None:
-           assert (arc.ilab == arc.olab) or \
-             (arc.ilab == self._vocab[PHI] and arc.olab == self._vocab[EPS])
+          assert ((fields[2] == fields[3]) or \
+                  (fields[2] == PHI and fields[3] == EPS))
+          arc = Arc(int(fields[1]), self._vocab[fields[2]], float(fields[4]))
 
-        while len(self.states) <= arc.source:
+        while len(self.states) <= source:
           self.states.append([])
-        self.states[arc.source].append(arc)
+        self.states[source].append(arc)
 
     assert self.init_sid != -1
     assert self.start_sid != -1
@@ -198,12 +197,12 @@ class FST:
     rfst.wildcard_sid = self.wildcard_sid
 
     rfst.states = [[] for i in xrange(len(self.states))]
-    for state in self.states:
+    for (sid, state) in enumerate(self.states):
       for arc in state:
         if drop_backoff and arc.ilab == self._vocab[PHI]:
           continue
-        rarc = Arc(arc.to, arc.source, arc.ilab, arc.olab, arc.weight)
-        rfst.states[rarc.source].append(rarc)
+        rarc = Arc(sid, arc.ilab, arc.weight)
+        rfst.states[arc.to].append(rarc)
 
     if drop_backoff:
       for sid, state in enumerate(rfst.states):
