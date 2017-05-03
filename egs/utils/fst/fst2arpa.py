@@ -28,10 +28,7 @@ log(subprocess.list2cmdline(sys.argv))
 args = parser.parse_args()
 
 def ngram(id2word, words):
-  s = ""
-  for w in words:
-    s += id2word[w] + " "
-  return s.strip()
+  return " ".join(map(lambda w: id2word[w], words))
 
 LN_10 = math.log(10)
 inf = float("inf")
@@ -150,3 +147,7 @@ with open_file(header_file, "w") as f:
     print("ngram %d=%d" % (o + 1, ngram_cnts[o]), file=f)
 
 log("Finish to convert FST.")
+
+#import resource
+#mem = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
+#log("Memory usage is: {0} KB".format(mem))

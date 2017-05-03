@@ -20,6 +20,8 @@ PHI = "#phi"
 WILDCARD_ID = -100
 
 class Arc:
+  __slots__ = ('source', 'to', 'ilab', 'olab', 'weight')
+
   def __init__(self, source, to, ilab, olab, weight):
     self.source = source
     self.to = to
