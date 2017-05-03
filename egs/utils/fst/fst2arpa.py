@@ -76,6 +76,13 @@ with open_file(args.arpa_file, "w") as f_arpa:
     log("Printing %d-gram..." % order)
     cnt = 0
     print("\n\\%d-grams:" % order, file=f_arpa)
+    if order == 1:
+      print("%s\t%s\t%s" % (weight2str(inf),
+                            cf.BOS,
+                            weight2str(fst.bow(fst.start_sid))),
+            file=f_arpa)
+      cnt += 1
+
     sids = xrange(bos_rng[0], bos_rng[1])
     end = bos_rng[1] - 1
     bos_rng = [sys.maxint, -1]
