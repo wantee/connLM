@@ -140,7 +140,11 @@ with open_file(args.arpa_file, "w") as f_arpa:
        bos_rng = [fst.start_sid, fst.start_sid + 1]
   print("\n\\end\\", file=f_arpa)
 
-with open_file(args.arpa_file + ".header", "w") as f:
+if args.arpa_file.endswith('.gz'):
+  header_file = args.arpa_file[:-3] + ".header.gz"
+else:
+  header_file = args.arpa_file + ".header"
+with open_file(header_file, "w") as f:
   print("\\data\\", file=f)
   for o in range(order):
     print("ngram %d=%d" % (o + 1, ngram_cnts[o]), file=f)
