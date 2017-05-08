@@ -32,8 +32,6 @@
 #include <stutils/st_log.h>
 #include <stutils/st_io.h>
 #include <stutils/st_string.h>
-#include <stutils/st_queue.h>
-#include <stutils/st_stack.h>
 
 #include "utils.h"
 #include "output.h"
@@ -142,7 +140,7 @@ ST_OPT_ERR:
 #define safe_tree_destroy(ptr) do {\
     if((ptr) != NULL) {\
         output_tree_destroy(ptr);\
-        safe_free(ptr);\
+        safe_st_free(ptr);\
         (ptr) = NULL;\
     }\
     } while(0)
@@ -153,14 +151,14 @@ static void output_tree_destroy(output_tree_t *tree)
         return;
     }
 
-    safe_free(tree->nodes);
+    safe_st_free(tree->nodes);
 
     tree->cap_node = 0;
     tree->num_node = 0;
     tree->root = OUTPUT_NODE_NONE;
 
-    safe_free(tree->leaf2word);
-    safe_free(tree->word2leaf);
+    safe_st_free(tree->leaf2word);
+    safe_st_free(tree->word2leaf);
 }
 
 output_tree_t* output_tree_dup(output_tree_t *t)
@@ -170,9 +168,9 @@ output_tree_t* output_tree_dup(output_tree_t *t)
 
     ST_CHECK_PARAM(t == NULL, NULL);
 
-    tree = (output_tree_t *) malloc(sizeof(output_tree_t));
+    tree = (output_tree_t *)st_malloc(sizeof(output_tree_t));
     if (tree == NULL) {
-        ST_WARNING("Falied to malloc output_tree_t.");
+        ST_WARNING("Failed to st_malloc output_tree_t.");
         goto ERR;
     }
     memset(tree, 0, sizeof(output_tree_t));
@@ -181,9 +179,9 @@ output_tree_t* output_tree_dup(output_tree_t *t)
 
     if (t->nodes != NULL) {
         sz = sizeof(output_tree_node_t) * tree->cap_node;
-        tree->nodes = (output_tree_node_t *)malloc(sz);
+        tree->nodes = (output_tree_node_t *)st_malloc(sz);
         if (tree->nodes == NULL) {
-            ST_WARNING("Failed to malloc nodes for tree.");
+            ST_WARNING("Failed to st_malloc nodes for tree.");
             goto ERR;
         }
 
@@ -193,9 +191,9 @@ output_tree_t* output_tree_dup(output_tree_t *t)
 
     if (t->word2leaf != NULL) {
         sz = sizeof(output_node_id_t)*t->num_leaf;
-        tree->word2leaf = (output_node_id_t *)malloc(sz);
+        tree->word2leaf = (output_node_id_t *)st_malloc(sz);
         if (tree->word2leaf == NULL) {
-            ST_WARNING("Failed to malloc word2leaf for tree.");
+            ST_WARNING("Failed to st_malloc word2leaf for tree.");
             goto ERR;
         }
 
@@ -203,9 +201,9 @@ output_tree_t* output_tree_dup(output_tree_t *t)
     }
     if (t->leaf2word != NULL) {
         sz = sizeof(int)*t->num_node;
-        tree->leaf2word = (int *)malloc(sz);
+        tree->leaf2word = (int *)st_malloc(sz);
         if (tree->leaf2word == NULL) {
-            ST_WARNING("Failed to malloc leaf2word for tree.");
+            ST_WARNING("Failed to st_malloc leaf2word for tree.");
             goto ERR;
         }
 
@@ -274,7 +272,7 @@ bool output_tree_equal(output_tree_t *tree1, output_tree_t *tree2)
 }
 
 int output_tree_load_header(output_tree_t **tree, int version,
-        FILE *fp, bool *binary, FILE *fo_info)
+        FILE *fp, connlm_fmt_t *fmt, FILE *fo_info)
 {
     char sym[MAX_LINE_LEN];
     size_t sz;
@@ -289,7 +287,7 @@ int output_tree_load_header(output_tree_t **tree, int version,
     bool has_leafmap;
 
     ST_CHECK_PARAM((tree == NULL && fo_info == NULL) || fp == NULL
-            || binary == NULL, -1);
+            || fmt == NULL, -1);
 
     if (version < 3) {
         ST_WARNING("Too old version of connlm file");
@@ -301,20 +299,28 @@ int output_tree_load_header(output_tree_t **tree, int version,
         return -1;
     }
 
+    *fmt = CONN_FMT_UNKNOWN;
     if (strncmp(flag.str, "    ", 4) == 0) {
-        *binary = false;
+        *fmt = CONN_FMT_TXT;
     } else if (OUTPUT_TREE_MAGIC_NUM != flag.magic_num) {
         ST_WARNING("magic num wrong.");
         return -2;
-    } else {
-        *binary = true;
     }
 
     if (tree != NULL) {
         *tree = NULL;
     }
 
-    if (*binary) {
+    if (*fmt != CONN_FMT_TXT) {
+        if (version >= 12) {
+            if (fread(fmt, sizeof(connlm_fmt_t), 1, fp) != 1) {
+                ST_WARNING("Failed to read fmt.");
+                goto ERR;
+            }
+        } else {
+            *fmt = CONN_FMT_BIN;
+        }
+
         if (fread(&num_node, sizeof(output_node_id_t), 1, fp) != 1) {
             ST_WARNING("Failed to read output size.");
             return -1;
@@ -371,9 +377,9 @@ int output_tree_load_header(output_tree_t **tree, int version,
     }
 
     if (tree != NULL) {
-        *tree = (output_tree_t *)malloc(sizeof(output_tree_t));
+        *tree = (output_tree_t *)st_malloc(sizeof(output_tree_t));
         if (*tree == NULL) {
-            ST_WARNING("Failed to malloc output_tree_t");
+            ST_WARNING("Failed to st_malloc output_tree_t");
             goto ERR;
         }
         memset(*tree, 0, sizeof(output_tree_t));
@@ -384,15 +390,15 @@ int output_tree_load_header(output_tree_t **tree, int version,
         (*tree)->num_leaf = num_leaf;
         if (has_leafmap) {
             sz = sizeof(output_node_id_t)*num_leaf;
-            (*tree)->word2leaf = (output_node_id_t *)malloc(sz);
+            (*tree)->word2leaf = (output_node_id_t *)st_malloc(sz);
             if ((*tree)->word2leaf == NULL) {
-                ST_WARNING("Failed to malloc word2leaf.");
+                ST_WARNING("Failed to st_malloc word2leaf.");
                 goto ERR;
             }
             sz = sizeof(int)*num_node;
-            (*tree)->leaf2word = (int *)malloc(sz);
+            (*tree)->leaf2word = (int *)st_malloc(sz);
             if ((*tree)->leaf2word == NULL) {
-                ST_WARNING("Failed to malloc leaf2word.");
+                ST_WARNING("Failed to st_malloc leaf2word.");
                 goto ERR;
             }
         } else {
@@ -419,7 +425,7 @@ ERR:
 }
 
 int output_tree_load_body(output_tree_t *tree, int version,
-        FILE *fp, bool binary)
+        FILE *fp, connlm_fmt_t fmt)
 {
     size_t sz;
 
@@ -437,15 +443,15 @@ int output_tree_load_body(output_tree_t *tree, int version,
 
     if (tree->num_node > 0) {
         sz = sizeof(output_tree_node_t) * tree->num_node;
-        tree->nodes = (output_tree_node_t *) malloc(sz);
+        tree->nodes = (output_tree_node_t *)st_malloc(sz);
         if (tree->nodes == NULL) {
-            ST_WARNING("Failed to malloc nodes.");
+            ST_WARNING("Failed to st_malloc nodes.");
             goto ERR;
         }
         memset(tree->nodes, 0, sz);
     }
 
-    if (binary) {
+    if (connlm_fmt_is_bin(fmt)) {
         if (fread(&n, sizeof(int), 1, fp) != 1) {
             ST_WARNING("Failed to read magic num.");
             goto ERR;
@@ -532,12 +538,12 @@ int output_tree_load_body(output_tree_t *tree, int version,
 
     return 0;
 ERR:
-    safe_free(tree->nodes);
+    safe_st_free(tree->nodes);
 
     return -1;
 }
 
-int output_tree_save_header(output_tree_t *tree, FILE *fp, bool binary)
+int output_tree_save_header(output_tree_t *tree, FILE *fp, connlm_fmt_t fmt)
 {
     int n;
     bool has_leafmap;
@@ -550,11 +556,16 @@ int output_tree_save_header(output_tree_t *tree, FILE *fp, bool binary)
         has_leafmap = false;
     }
 
-    if (binary) {
+    if (connlm_fmt_is_bin(fmt)) {
         if (fwrite(&OUTPUT_TREE_MAGIC_NUM, sizeof(int), 1, fp) != 1) {
             ST_WARNING("Failed to write magic num.");
             return -1;
         }
+        if (fwrite(&fmt, sizeof(connlm_fmt_t), 1, fp) != 1) {
+            ST_WARNING("Failed to write fmt.");
+            return -1;
+        }
+
         if (tree == NULL) {
             n = 0;
             if (fwrite(&n, sizeof(int), 1, fp) != 1) {
@@ -623,7 +634,7 @@ int output_tree_save_header(output_tree_t *tree, FILE *fp, bool binary)
     return 0;
 }
 
-int output_tree_save_body(output_tree_t *tree, FILE *fp, bool binary)
+int output_tree_save_body(output_tree_t *tree, FILE *fp, connlm_fmt_t fmt)
 {
     output_node_id_t i;
     int n;
@@ -634,7 +645,7 @@ int output_tree_save_body(output_tree_t *tree, FILE *fp, bool binary)
         return 0;
     }
 
-    if (binary) {
+    if (connlm_fmt_is_bin(fmt)) {
         n = -OUTPUT_TREE_MAGIC_NUM;
         if (fwrite(&n, sizeof(int), 1, fp) != 1) {
             ST_WARNING("Failed to write magic num.");
@@ -723,17 +734,17 @@ static output_tree_t* output_tree_init(output_node_id_t cap_node)
     ST_CHECK_PARAM(cap_node <= 0, NULL);
 
     sz = sizeof(output_tree_t);
-    tree = (output_tree_t *)malloc(sz);
+    tree = (output_tree_t *)st_malloc(sz);
     if (tree == NULL) {
-        ST_WARNING("Failed to malloc tree.");
+        ST_WARNING("Failed to st_malloc tree.");
         goto ERR;
     }
     memset(tree, 0, sz);
 
     sz = cap_node * sizeof(output_tree_node_t);
-    tree->nodes = (output_tree_node_t *)malloc(sz);
+    tree->nodes = (output_tree_node_t *)st_malloc(sz);
     if (tree->nodes == NULL) {
-        ST_WARNING("Failed to malloc nodes.");
+        ST_WARNING("Failed to st_malloc nodes.");
         goto ERR;
     }
 
@@ -755,10 +766,10 @@ static output_node_id_t output_tree_add_node(output_tree_t *tree)
 
     if (tree->num_node >= tree->cap_node) {
         tree->cap_node += NUM_REALLOC;
-        tree->nodes = (output_tree_node_t *)realloc(tree->nodes,
+        tree->nodes = (output_tree_node_t *)st_realloc(tree->nodes,
                 sizeof(output_tree_node_t) * tree->cap_node);
         if (tree->nodes == NULL) {
-            ST_WARNING("Failed to realloc nodes.");
+            ST_WARNING("Failed to st_realloc nodes.");
             return OUTPUT_NODE_NONE;
         }
     }
@@ -782,10 +793,10 @@ static output_node_id_t output_tree_add_node_m(output_tree_t *tree,
 
     if (tree->num_node + n - 1 >= tree->cap_node) {
         tree->cap_node += n + NUM_REALLOC;
-        tree->nodes = (output_tree_node_t *)realloc(tree->nodes,
+        tree->nodes = (output_tree_node_t *)st_realloc(tree->nodes,
                 sizeof(output_tree_node_t) * tree->cap_node);
         if (tree->nodes == NULL) {
-            ST_WARNING("Failed to realloc nodes.");
+            ST_WARNING("Failed to st_realloc nodes.");
             return OUTPUT_NODE_NONE;
         }
     }
@@ -821,7 +832,7 @@ typedef struct _huffman_tree_t_ {
 #define safe_huffman_tree_destroy(ptr) do {\
     if((ptr) != NULL) {\
         huffman_tree_destroy(ptr);\
-        safe_free(ptr);\
+        safe_st_free(ptr);\
         (ptr) = NULL;\
     }\
     } while(0)
@@ -832,7 +843,7 @@ static void huffman_tree_destroy(huffman_tree_t *tree)
         return;
     }
 
-    safe_free(tree->nodes);
+    safe_st_free(tree->nodes);
 
     tree->cap_node = 0;
     tree->num_node = 0;
@@ -847,17 +858,17 @@ static huffman_tree_t* huffman_tree_init(output_node_id_t cap_node)
     ST_CHECK_PARAM(cap_node <= 0, NULL);
 
     sz = sizeof(huffman_tree_t);
-    tree = (huffman_tree_t *)malloc(sz);
+    tree = (huffman_tree_t *)st_malloc(sz);
     if (tree == NULL) {
-        ST_WARNING("Failed to malloc tree.");
+        ST_WARNING("Failed to st_malloc tree.");
         goto ERR;
     }
     memset(tree, 0, sz);
 
     sz = cap_node * sizeof(huffman_tree_node_t);
-    tree->nodes = (huffman_tree_node_t *)malloc(sz);
+    tree->nodes = (huffman_tree_node_t *)st_malloc(sz);
     if (tree->nodes == NULL) {
-        ST_WARNING("Failed to malloc nodes.");
+        ST_WARNING("Failed to st_malloc nodes.");
         goto ERR;
     }
 
@@ -879,10 +890,10 @@ static output_node_id_t huffman_tree_add_node(huffman_tree_t *tree)
 
     if (tree->num_node >= tree->cap_node) {
         tree->cap_node += NUM_REALLOC;
-        tree->nodes = (huffman_tree_node_t *)realloc(tree->nodes,
+        tree->nodes = (huffman_tree_node_t *)st_realloc(tree->nodes,
                 sizeof(huffman_tree_node_t) * tree->cap_node);
         if (tree->nodes == NULL) {
-            ST_WARNING("Failed to realloc nodes.");
+            ST_WARNING("Failed to st_realloc nodes.");
             return OUTPUT_NODE_NONE;
         }
     }
@@ -909,10 +920,10 @@ static output_node_id_t huffman_tree_add_node_m(huffman_tree_t *tree,
 
     if (tree->num_node + n - 1 >= tree->cap_node) {
         tree->cap_node += n + NUM_REALLOC;
-        tree->nodes = (huffman_tree_node_t *)realloc(tree->nodes,
+        tree->nodes = (huffman_tree_node_t *)st_realloc(tree->nodes,
                 sizeof(huffman_tree_node_t) * tree->cap_node);
         if (tree->nodes == NULL) {
-            ST_WARNING("Failed to realloc nodes.");
+            ST_WARNING("Failed to st_realloc nodes.");
             return OUTPUT_NODE_NONE;
         }
     }
@@ -944,11 +955,11 @@ void output_destroy(output_t *output)
 
     if (output->paths != NULL) {
         for (i = 0; i < output->output_size; i++) {
-            safe_free(output->paths[i].nodes);
+            safe_st_free(output->paths[i].nodes);
         }
-        safe_free(output->paths);
+        safe_st_free(output->paths);
     }
-    safe_free(output->param_map);
+    safe_st_free(output->param_map);
     output->num_param_map = 0;
 
     output->output_size = 0;
@@ -963,9 +974,9 @@ output_t* output_dup(output_t *o)
 
     ST_CHECK_PARAM(o == NULL, NULL);
 
-    output = (output_t *) malloc(sizeof(output_t));
+    output = (output_t *)st_malloc(sizeof(output_t));
     if (output == NULL) {
-        ST_WARNING("Falied to malloc output_t.");
+        ST_WARNING("Failed to st_malloc output_t.");
         goto ERR;
     }
     memset(output, 0, sizeof(output_t));
@@ -983,18 +994,18 @@ output_t* output_dup(output_t *o)
 
     if (o->paths != NULL) {
         sz = sizeof(output_path_t) * output->output_size;
-        output->paths = (output_path_t *)malloc(sz);
+        output->paths = (output_path_t *)st_malloc(sz);
         if (output->paths == NULL) {
-            ST_WARNING("Failed to malloc paths.");
+            ST_WARNING("Failed to st_malloc paths.");
             goto ERR;
         }
         for (i = 0; i < output->output_size; i++) {
             if (o->paths[i].num_node > 0) {
                 output->paths[i].num_node = o->paths[i].num_node;
                 sz = sizeof(output_node_id_t) * output->paths[i].num_node;
-                output->paths[i].nodes = (output_node_id_t *)malloc(sz);
+                output->paths[i].nodes = (output_node_id_t *)st_malloc(sz);
                 if (output->paths[i].nodes == NULL) {
-                    ST_WARNING("Failed to malloc nodes for path");
+                    ST_WARNING("Failed to st_malloc nodes for path");
                     goto ERR;
                 }
                 memcpy(output->paths[i].nodes, o->paths[i].nodes, sz);
@@ -1200,9 +1211,9 @@ static huffman_tree_t* output_gen_bu_huffman(output_t *output,
     // Construct Huffman Tree
     if (output->output_opt.max_depth > 0) {
         sz = sizeof(output_node_id_t)*cap_node;
-        depths = (output_node_id_t *)malloc(sz);
+        depths = (output_node_id_t *)st_malloc(sz);
         if (depths == NULL) {
-            ST_WARNING("Failed to malloc depths");
+            ST_WARNING("Failed to st_malloc depths");
             goto ERR;
         }
         memset(depths, 0, sz);
@@ -1310,11 +1321,11 @@ static huffman_tree_t* output_gen_bu_huffman(output_t *output,
     }
     huffman->root = parent;
 
-    safe_free(depths);
+    safe_st_free(depths);
     return huffman;
 
 ERR:
-    safe_free(depths);
+    safe_st_free(depths);
     safe_huffman_tree_destroy(huffman);
     return NULL;
 }
@@ -1478,9 +1489,9 @@ static int output_gen_bu_huffman2tree(output_t *output,
     ST_CHECK_PARAM(output == NULL || huffman == NULL, -1);
 
     sz = sizeof(output_node_id_t)*huffman->num_node;
-    nodemap = (output_node_id_t *)malloc(sz);
+    nodemap = (output_node_id_t *)st_malloc(sz);
     if (nodemap == NULL) {
-        ST_WARNING("Failed to malloc nodemap.");
+        ST_WARNING("Failed to st_malloc nodemap.");
         goto ERR;
     }
     for (n = 0; n < huffman->num_node; ++n) {
@@ -1498,10 +1509,13 @@ static int output_gen_bu_huffman2tree(output_t *output,
         goto ERR;
     }
 #ifdef _OUTPUT_DEBUG_
-    ST_DEBUG("NodeMap: ");
-    for (output_node_id_t n = 0; n < huffman->num_node; n++) {
-        ST_DEBUG(OUTPUT_NODE_FMT" -> "OUTPUT_NODE_FMT,
-                 n, renum.nodemap[n]);
+    {
+        output_node_id_t n;
+        ST_DEBUG("NodeMap: ");
+        for (n = 0; n < huffman->num_node; n++) {
+            ST_DEBUG(OUTPUT_NODE_FMT" -> "OUTPUT_NODE_FMT,
+                    n, renum.nodemap[n]);
+        }
     }
 #endif
 
@@ -1520,9 +1534,9 @@ static int output_gen_bu_huffman2tree(output_t *output,
     }
 
     sz = sizeof(output_node_id_t) * output->output_size;
-    output->tree->word2leaf = (output_node_id_t *)malloc(sz);
+    output->tree->word2leaf = (output_node_id_t *)st_malloc(sz);
     if (output->tree->word2leaf == NULL) {
-        ST_WARNING("Failed to malloc word2leaf.");
+        ST_WARNING("Failed to st_malloc word2leaf.");
         goto ERR;
     }
 
@@ -1531,18 +1545,18 @@ static int output_gen_bu_huffman2tree(output_t *output,
     }
 
     sz = sizeof(output_node_id_t)*huffman->num_node;
-    rnodemap = (output_node_id_t *)malloc(sz);
+    rnodemap = (output_node_id_t *)st_malloc(sz);
     if (rnodemap == NULL) {
-        ST_WARNING("Failed to malloc rnodemap.");
+        ST_WARNING("Failed to st_malloc rnodemap.");
         goto ERR;
     }
     for (n = 0; n < huffman->num_node; n++) {
         rnodemap[nodemap[n]] = n;
     }
     sz = sizeof(int) * output->tree->num_node;
-    output->tree->leaf2word = (int *)malloc(sz);
+    output->tree->leaf2word = (int *)st_malloc(sz);
     if (output->tree->leaf2word == NULL) {
-        ST_WARNING("Failed to malloc leaf2word.");
+        ST_WARNING("Failed to st_malloc leaf2word.");
         goto ERR;
     }
     for (n = 0; n < output->tree->num_node; n++) {
@@ -1553,14 +1567,14 @@ static int output_gen_bu_huffman2tree(output_t *output,
         }
     }
 
-    safe_free(nodemap);
-    safe_free(rnodemap);
+    safe_st_free(nodemap);
+    safe_st_free(rnodemap);
 
     return 0;
 
 ERR:
-    safe_free(nodemap);
-    safe_free(rnodemap);
+    safe_st_free(nodemap);
+    safe_st_free(rnodemap);
     safe_tree_destroy(output->tree);
     return -1;
 }
@@ -1578,13 +1592,16 @@ static int output_gen_bu(output_t *output, count_t *word_cnts)
     }
 
 #ifdef _OUTPUT_DEBUG_
-    ST_DEBUG("Built Huffman Tree. Nodes: "OUTPUT_NODE_FMT, huffman->num_node);
-    ST_DEBUG("Root: "OUTPUT_NODE_FMT, huffman->root);
-    for (output_node_id_t n = 0; n < huffman->num_node; n++) {
-        ST_DEBUG("Node: "OUTPUT_NODE_FMT", Child: "OUTPUT_NODE_FMT
-                 "/"OUTPUT_NODE_FMT":"OUTPUT_NODE_FMT"/"OUTPUT_NODE_FMT, n,
-                 s_children(huffman, n)[0], e_children(huffman, n)[0],
-                 s_children(huffman, n)[1], e_children(huffman, n)[1]);
+    {
+        output_node_id_t n;
+        ST_DEBUG("Built Huffman Tree. Nodes: "OUTPUT_NODE_FMT, huffman->num_node);
+        ST_DEBUG("Root: "OUTPUT_NODE_FMT, huffman->root);
+        for (n = 0; n < huffman->num_node; n++) {
+            ST_DEBUG("Node: "OUTPUT_NODE_FMT", Child: "OUTPUT_NODE_FMT
+                    "/"OUTPUT_NODE_FMT":"OUTPUT_NODE_FMT"/"OUTPUT_NODE_FMT, n,
+                    s_children(huffman, n)[0], e_children(huffman, n)[0],
+                    s_children(huffman, n)[1], e_children(huffman, n)[1]);
+        }
     }
 #endif
 
@@ -1601,39 +1618,72 @@ ERR:
     return -1;
 }
 
-static int output_tree_dfs(output_tree_t *tree,
-        int (*visitor)(output_tree_t *tree, output_node_id_t node,
-            st_stack_t* stack, void *args), void *args)
+output_tree_dfs_aux_t* output_tree_dfs_aux_create(output_tree_t *tree)
 {
-    st_stack_t *node_stack = NULL;
-    output_node_id_t *child_in_stack = NULL; /* current child in the stack for every node*/
+    output_tree_dfs_aux_t *dfs_aux = NULL;
 
-    void *tmp;
-    output_node_id_t node, child;
+    ST_CHECK_PARAM(tree == NULL, NULL);
 
-    ST_CHECK_PARAM(tree == NULL || visitor == NULL, -1);
+    dfs_aux = (output_tree_dfs_aux_t *)st_malloc(sizeof(output_tree_dfs_aux_t));
+    if (dfs_aux == NULL) {
+        ST_WARNING("Failed to st_malloc dfs_aux.");
+        goto ERR;
+    }
+    memset(dfs_aux, 0, sizeof(output_tree_dfs_aux_t));
 
-    node_stack = st_stack_create(tree->num_node);
-    if(node_stack == NULL) {
+    dfs_aux->node_stack = st_stack_create(tree->num_node);
+    if(dfs_aux->node_stack == NULL) {
         ST_WARNING("Failed to create node_stack.");
         goto ERR;
     }
 
-    child_in_stack = (output_node_id_t *)malloc(
+    dfs_aux->child_in_stack = (output_node_id_t *)st_malloc(
             sizeof(output_node_id_t)*tree->num_node);
-    if(child_in_stack == NULL) {
-        ST_WARNING("Failed to malloc child_in_stack.");
+    if(dfs_aux->child_in_stack == NULL) {
+        ST_WARNING("Failed to st_malloc child_in_stack.");
         goto ERR;
     }
+
+    return dfs_aux;
+ERR:
+    safe_output_tree_dfs_aux_destroy(dfs_aux);
+    return NULL;
+}
+
+void output_tree_dfs_aux_destroy(output_tree_dfs_aux_t* dfs_aux)
+{
+    if (dfs_aux == NULL) {
+        return;
+    }
+
+    safe_st_stack_destroy(dfs_aux->node_stack);
+    safe_st_free(dfs_aux->child_in_stack);
+}
+
+int output_tree_dfs(output_tree_t *tree, output_tree_dfs_aux_t *dfs_aux,
+        int (*visitor)(output_tree_t *tree, output_node_id_t node,
+            st_stack_t* stack, void *args), void *args)
+{
+    st_stack_t *node_stack;
+    output_node_id_t *child_in_stack;
+
+    void *tmp;
+    output_node_id_t node, child;
+
+    ST_CHECK_PARAM(tree == NULL || dfs_aux == NULL || visitor == NULL, -1);
+
+    node_stack = dfs_aux->node_stack;
+    child_in_stack = dfs_aux->child_in_stack;
+
     for (node = 0; node < tree->num_node; node++) {
         child_in_stack[node] = OUTPUT_NODE_NONE;
     }
-
     st_stack_clear(node_stack);
+
     if(st_stack_push(node_stack, (void *)(long)tree->root)
             != ST_STACK_OK) {
         ST_WARNING("Failed to st_stack_push root");
-        goto ERR;
+        return -1;
     }
 
 #ifdef _OUTPUT_DEBUG_
@@ -1643,7 +1693,7 @@ static int output_tree_dfs(output_tree_t *tree,
     while(!st_stack_empty(node_stack)) {
         if(st_stack_top(node_stack, &tmp) != ST_STACK_OK) {
             ST_WARNING("Failed to st_stack_top.");
-            goto ERR;
+            return -1;
         }
         node = (output_node_id_t)(long)tmp;
 
@@ -1652,14 +1702,14 @@ static int output_tree_dfs(output_tree_t *tree,
                     && child_in_stack[node] >= e_children(tree, node))) {
             if(st_stack_pop(node_stack, &tmp) != ST_STACK_OK) {
                 ST_WARNING("Failed to st_stack_pop.");
-                goto ERR;
+                return -1;
             }
 #ifdef _OUTPUT_DEBUG_
             ST_DEBUG("POP: " OUTPUT_NODE_FMT, node);
 #endif
             if(visitor(tree, node, node_stack, args) < 0) {
                 ST_WARNING("Failed to visitor.");
-                goto ERR;
+                return -1;
             }
             continue;
         }
@@ -1674,7 +1724,7 @@ static int output_tree_dfs(output_tree_t *tree,
             if(st_stack_push(node_stack, (void *)(long)child)
                     != ST_STACK_OK) {
                 ST_WARNING("Failed to st_stack_push child");
-                goto ERR;
+                return -1;
             }
 #ifdef _OUTPUT_DEBUG_
             ST_DEBUG("PUSH: " OUTPUT_NODE_FMT, child);
@@ -1682,66 +1732,84 @@ static int output_tree_dfs(output_tree_t *tree,
         }
     }
 
-    safe_st_stack_destroy(node_stack);
-    safe_free(child_in_stack);
     return 0;
-
-ERR:
-    safe_st_stack_destroy(node_stack);
-    safe_free(child_in_stack);
-    return -1;
 }
 
-static int output_tree_bfs(output_tree_t *tree,
-        int (*visitor)(output_tree_t *tree,
-            output_node_id_t node, void *args), void *args)
+output_tree_bfs_aux_t* output_tree_bfs_aux_create(output_tree_t *tree)
 {
-    st_queue_t *node_queue = NULL;
+    output_tree_bfs_aux_t *bfs_aux = NULL;
 
-    void *tmp;
-    output_node_id_t node, child;
+    ST_CHECK_PARAM(tree == NULL, NULL);
 
-    ST_CHECK_PARAM(tree == NULL || visitor == NULL, -1);
+    bfs_aux = (output_tree_bfs_aux_t *)st_malloc(sizeof(output_tree_bfs_aux_t));
+    if (bfs_aux == NULL) {
+        ST_WARNING("Failed to st_malloc bfs_aux.");
+        goto ERR;
+    }
+    memset(bfs_aux, 0, sizeof(output_tree_bfs_aux_t));
 
-    node_queue = st_queue_create(tree->num_node);
-    if(node_queue == NULL) {
+    bfs_aux->node_queue = st_queue_create(tree->num_node);
+    if(bfs_aux->node_queue == NULL) {
         ST_WARNING("Failed to create node_queue.");
         goto ERR;
     }
 
+    return bfs_aux;
+ERR:
+    safe_output_tree_bfs_aux_destroy(bfs_aux);
+    return NULL;
+}
+
+void output_tree_bfs_aux_destroy(output_tree_bfs_aux_t* bfs_aux)
+{
+    if (bfs_aux == NULL) {
+        return;
+    }
+
+    safe_st_queue_destroy(bfs_aux->node_queue);
+}
+
+int output_tree_bfs(output_tree_t *tree, output_tree_bfs_aux_t *bfs_aux,
+        int (*visitor)(output_tree_t *tree,
+            output_node_id_t node, void *args), void *args)
+{
+    st_queue_t *node_queue;
+
+    void *tmp;
+    output_node_id_t node, child;
+
+    ST_CHECK_PARAM(tree == NULL || bfs_aux == NULL || visitor == NULL, -1);
+
+    node_queue = bfs_aux->node_queue;
     st_queue_clear(node_queue);
+
     if(st_enqueue(node_queue, (void *)(long)tree->root) != ST_QUEUE_OK) {
         ST_WARNING("Failed to st_enqueue root");
-        goto ERR;
+        return -1;
     }
 
     while(!st_queue_empty(node_queue)) {
         if(st_dequeue(node_queue, &tmp) != ST_QUEUE_OK) {
             ST_WARNING("Failed to st_dequeue.");
-            goto ERR;
+            return -1;
         }
         node = (output_node_id_t)(long)tmp;
 
         if(visitor(tree, node, args) < 0) {
             ST_WARNING("Failed to visitor.");
-            goto ERR;
+            return -1;
         }
 
         for (child = s_children(tree, node);
                 child < e_children(tree, node); ++child) {
             if(st_enqueue(node_queue, (void *)(long)child) != ST_QUEUE_OK) {
                 ST_WARNING("Failed to st_enqueue child");
-                goto ERR;
+                return -1;
             }
         }
     }
 
-    safe_st_queue_destroy(node_queue);
     return 0;
-
-ERR:
-    safe_st_queue_destroy(node_queue);
-    return -1;
 }
 
 static int output_tree_dfs_trav_gen_path(output_tree_t *tree,
@@ -1775,10 +1843,10 @@ static int output_tree_dfs_trav_gen_path(output_tree_t *tree,
 
     n = st_stack_size(stack);
     if (n > 1) {
-        output->paths[word].nodes = (output_node_id_t *)malloc(
+        output->paths[word].nodes = (output_node_id_t *)st_malloc(
                 sizeof(output_node_id_t)*(n-1));
         if (output->paths[word].nodes == NULL) {
-            ST_WARNING("Failed to malloc nodes for path");
+            ST_WARNING("Failed to st_malloc nodes for path");
             goto ERR;
         }
         output->paths[word].num_node = n - 1;
@@ -1794,7 +1862,7 @@ static int output_tree_dfs_trav_gen_path(output_tree_t *tree,
 
     return 0;
 ERR:
-    safe_free(output->paths[word].nodes);
+    safe_st_free(output->paths[word].nodes);
     output->paths[word].num_node = 0;
 
     return -1;
@@ -1802,28 +1870,54 @@ ERR:
 
 static int output_generate_path(output_t *output)
 {
+    output_tree_dfs_aux_t *dfs_aux = NULL;
     size_t sz;
+
+    output_path_t *path;
+    output_node_id_t n;
 
     ST_CHECK_PARAM(output == NULL || output->tree == NULL, -1);
 
     sz = sizeof(output_path_t) * output->output_size;
-    output->paths = (output_path_t *)malloc(sz);
+    output->paths = (output_path_t *)st_malloc(sz);
     if (output->paths == NULL) {
-        ST_WARNING("Failed to malloc paths.");
+        ST_WARNING("Failed to st_malloc paths.");
         goto ERR;
     }
     memset(output->paths, 0, sz);
 
-    if (output_tree_dfs(output->tree, output_tree_dfs_trav_gen_path,
+    dfs_aux = output_tree_dfs_aux_create(output->tree);
+    if (dfs_aux == NULL) {
+        ST_WARNING("Failed to output_tree_dfs_aux_create.");
+        goto ERR;
+    }
+
+    if (output_tree_dfs(output->tree, dfs_aux,
+                output_tree_dfs_trav_gen_path,
                 output) < 0) {
         ST_WARNING("Failed to output_tree_dfs.");
         goto ERR;
     }
 
+    safe_output_tree_dfs_aux_destroy(dfs_aux);
+
+    // get <unk> root
+    output->unk_root = OUTPUT_NODE_NONE;
+    path = output->paths + UNK_ID;
+    if (path->num_node > 0) {
+        for (n = path->num_node - 1; n >= 0; n--) {
+            if (n_children(output->tree, path->nodes[n]) > 1) {
+                break;
+            }
+            output->unk_root = path->nodes[n];
+        }
+    }
+
     return 0;
 
 ERR:
-    safe_free(output->paths);
+    safe_st_free(output->paths);
+    safe_output_tree_dfs_aux_destroy(dfs_aux);
     return -1;
 }
 
@@ -1861,28 +1955,35 @@ static int output_tree_bfs_trav_gen_param_map(output_tree_t *tree,
 
 static int output_generate_param_map(output_t *output)
 {
+    output_tree_bfs_aux_t *bfs_aux = NULL;
     output_gen_param_map_args_t ogpm_args;
     size_t sz;
 
     ST_CHECK_PARAM(output == NULL || output->tree == NULL, -1);
 
-    safe_free(output->param_map);
+    safe_st_free(output->param_map);
 
     if (output->norm != ON_SOFTMAX) {
         return 0;
     }
 
     sz = sizeof(output_node_id_t) * (output->tree->num_node);
-    output->param_map = (output_node_id_t *)malloc(sz);
+    output->param_map = (output_node_id_t *)st_malloc(sz);
     if (output->param_map == NULL) {
-        ST_WARNING("Failed to malloc param_map.");
+        ST_WARNING("Failed to st_malloc param_map.");
         goto ERR;
     }
     memset(output->param_map, 0, sz);
 
+    bfs_aux = output_tree_bfs_aux_create(output->tree);
+    if (bfs_aux == NULL) {
+        ST_WARNING("Failed to output_tree_bfs_aux_create.");
+        goto ERR;
+    }
     ogpm_args.param_map = output->param_map;
     ogpm_args.acc = 0;
-    if (output_tree_bfs(output->tree, output_tree_bfs_trav_gen_param_map,
+    if (output_tree_bfs(output->tree, bfs_aux,
+                output_tree_bfs_trav_gen_param_map,
                 &ogpm_args) < 0) {
         ST_WARNING("Failed to output_tree_bfs.");
         goto ERR;
@@ -1899,10 +2000,12 @@ static int output_generate_param_map(output_t *output)
     }
 #endif
 
+    safe_output_tree_bfs_aux_destroy(bfs_aux);
     return 0;
 
 ERR:
-    safe_free(output->param_map);
+    safe_st_free(output->param_map);
+    safe_output_tree_bfs_aux_destroy(bfs_aux);
     return -1;
 }
 
@@ -1914,9 +2017,9 @@ output_t* output_generate(output_opt_t *output_opt, count_t *word_cnts,
     ST_CHECK_PARAM(output_opt == NULL || word_cnts == NULL
             || output_size <= 0, NULL);
 
-    output = (output_t *) malloc(sizeof(output_t));
+    output = (output_t *)st_malloc(sizeof(output_t));
     if (output == NULL) {
-        ST_WARNING("Falied to malloc output_t.");
+        ST_WARNING("Failed to st_malloc output_t.");
         goto ERR;
     }
     memset(output, 0, sizeof(output_t));
@@ -1947,11 +2050,14 @@ output_t* output_generate(output_opt_t *output_opt, count_t *word_cnts,
     ST_NOTICE("Built Tree. Nodes: "OUTPUT_NODE_FMT, output->tree->num_node);
 
 #ifdef _OUTPUT_DEBUG_
-    ST_DEBUG("Root: "OUTPUT_NODE_FMT, output->tree->root);
-    for (output_node_id_t n = 0; n < output->tree->num_node; n++) {
-        ST_DEBUG("Node: "OUTPUT_NODE_FMT", Child: "OUTPUT_NODE_FMT
-                 "/"OUTPUT_NODE_FMT, n,
-                 s_children(output->tree, n), e_children(output->tree, n));
+    {
+        output_node_id_t n;
+        ST_DEBUG("Root: "OUTPUT_NODE_FMT, output->tree->root);
+        for (n = 0; n < output->tree->num_node; n++) {
+            ST_DEBUG("Node: "OUTPUT_NODE_FMT", Child: "OUTPUT_NODE_FMT
+                    "/"OUTPUT_NODE_FMT, n,
+                    s_children(output->tree, n), e_children(output->tree, n));
+        }
     }
 #endif
 
@@ -1995,7 +2101,7 @@ bool output_equal(output_t *output1, output_t *output2)
 }
 
 int output_load_header(output_t **output, int version,
-        FILE *fp, bool *binary, FILE *fo_info)
+        FILE *fp, connlm_fmt_t *fmt, FILE *fo_info)
 {
     char sym[MAX_LINE_LEN];
     union {
@@ -2008,10 +2114,10 @@ int output_load_header(output_t **output, int version,
     int m;
     int max_depth;
     int max_branch;
-    bool b;
+    connlm_fmt_t f;
 
     ST_CHECK_PARAM((output == NULL && fo_info == NULL) || fp == NULL
-            || binary == NULL, -1);
+            || fmt == NULL, -1);
 
     if (version < 3) {
         ST_WARNING("Too old version of connlm file");
@@ -2023,20 +2129,28 @@ int output_load_header(output_t **output, int version,
         return -1;
     }
 
+    *fmt = CONN_FMT_UNKNOWN;
     if (strncmp(flag.str, "    ", 4) == 0) {
-        *binary = false;
+        *fmt = CONN_FMT_TXT;
     } else if (OUTPUT_MAGIC_NUM != flag.magic_num) {
         ST_WARNING("magic num wrong.");
         return -2;
-    } else {
-        *binary = true;
     }
 
     if (output != NULL) {
         *output = NULL;
     }
 
-    if (*binary) {
+    if (*fmt != CONN_FMT_TXT) {
+        if (version >= 12) {
+            if (fread(fmt, sizeof(connlm_fmt_t), 1, fp) != 1) {
+                ST_WARNING("Failed to read fmt.");
+                goto ERR;
+            }
+        } else {
+            *fmt = CONN_FMT_BIN;
+        }
+
         if (fread(&output_size, sizeof(int), 1, fp) != 1) {
             ST_WARNING("Failed to read output size.");
             goto ERR;
@@ -2125,9 +2239,9 @@ int output_load_header(output_t **output, int version,
     }
 
     if (output != NULL) {
-        *output = (output_t *)malloc(sizeof(output_t));
+        *output = (output_t *)st_malloc(sizeof(output_t));
         if (*output == NULL) {
-            ST_WARNING("Failed to malloc output_t");
+            ST_WARNING("Failed to st_malloc output_t");
             goto ERR;
         }
         memset(*output, 0, sizeof(output_t));
@@ -2150,14 +2264,13 @@ int output_load_header(output_t **output, int version,
     }
 
     if (output_tree_load_header(output != NULL ? &((*output)->tree) : NULL,
-                version, fp, &b, fo_info) < 0) {
+                version, fp, &f, fo_info) < 0) {
         ST_WARNING("Failed to output_tree_load_header.");
         goto ERR;
     }
-
-    if (b != *binary) {
-        ST_WARNING("Tree binary not match with output binary");
-        goto ERR;
+    if (*fmt != f) {
+        ST_WARNING("Multiple formats in one file.");
+        return -1;
     }
 
     return 0;
@@ -2169,7 +2282,7 @@ ERR:
     return -1;
 }
 
-int output_load_body(output_t *output, int version, FILE *fp, bool binary)
+int output_load_body(output_t *output, int version, FILE *fp, connlm_fmt_t fmt)
 {
     int n;
 
@@ -2180,7 +2293,7 @@ int output_load_body(output_t *output, int version, FILE *fp, bool binary)
         return -1;
     }
 
-    if (binary) {
+    if (connlm_fmt_is_bin(fmt)) {
         if (fread(&n, sizeof(int), 1, fp) != 1) {
             ST_WARNING("Failed to read magic num.");
             goto ERR;
@@ -2198,7 +2311,7 @@ int output_load_body(output_t *output, int version, FILE *fp, bool binary)
         }
     }
 
-    if (output_tree_load_body(output->tree, version, fp, binary) < 0) {
+    if (output_tree_load_body(output->tree, version, fp, fmt) < 0) {
         ST_WARNING("Failed to output_tree_load_body.");
         goto ERR;
     }
@@ -2210,17 +2323,22 @@ ERR:
     return -1;
 }
 
-int output_save_header(output_t *output, FILE *fp, bool binary)
+int output_save_header(output_t *output, FILE *fp, connlm_fmt_t fmt)
 {
     int n;
 
     ST_CHECK_PARAM(fp == NULL, -1);
 
-    if (binary) {
+    if (connlm_fmt_is_bin(fmt)) {
         if (fwrite(&OUTPUT_MAGIC_NUM, sizeof(int), 1, fp) != 1) {
             ST_WARNING("Failed to write magic num.");
             return -1;
         }
+        if (fwrite(&fmt, sizeof(connlm_fmt_t), 1, fp) != 1) {
+            ST_WARNING("Failed to write fmt.");
+            return -1;
+        }
+
         if (output == NULL) {
             n = 0;
             if (fwrite(&n, sizeof(int), 1, fp) != 1) {
@@ -2296,7 +2414,7 @@ int output_save_header(output_t *output, FILE *fp, bool binary)
         }
     }
 
-    if (output_tree_save_header(output->tree, fp, binary) < 0) {
+    if (output_tree_save_header(output->tree, fp, fmt) < 0) {
         ST_WARNING("Failed to output_tree_save_header.");
         return -1;
     }
@@ -2304,7 +2422,7 @@ int output_save_header(output_t *output, FILE *fp, bool binary)
     return 0;
 }
 
-int output_save_body(output_t *output, FILE *fp, bool binary)
+int output_save_body(output_t *output, FILE *fp, connlm_fmt_t fmt)
 {
     int n;
 
@@ -2314,7 +2432,7 @@ int output_save_body(output_t *output, FILE *fp, bool binary)
         return 0;
     }
 
-    if (binary) {
+    if (connlm_fmt_is_bin(fmt)) {
         n = -OUTPUT_MAGIC_NUM;
         if (fwrite(&n, sizeof(int), 1, fp) != 1) {
             ST_WARNING("Failed to write magic num.");
@@ -2327,7 +2445,7 @@ int output_save_body(output_t *output, FILE *fp, bool binary)
         }
     }
 
-    if (output_tree_save_body(output->tree, fp, binary) < 0) {
+    if (output_tree_save_body(output->tree, fp, fmt) < 0) {
         ST_WARNING("Failed to output_tree_save_body.");
         return -1;
     }
@@ -2363,6 +2481,7 @@ int output_draw(output_t *output, FILE *fp, count_t *word_cnts,
         st_alphabet_t *vocab)
 {
     char sym[MAX_SYM_LEN];
+    output_tree_dfs_aux_t *dfs_aux = NULL;
     int i;
     output_node_id_t m, n;
 
@@ -2371,7 +2490,7 @@ int output_draw(output_t *output, FILE *fp, count_t *word_cnts,
     if (output->paths == NULL) {
         if (output_generate_path(output) < 0) {
             ST_WARNING("Failed to output_generate_path.");
-            return -1;
+            goto ERR;
         }
     }
 
@@ -2426,15 +2545,28 @@ int output_draw(output_t *output, FILE *fp, count_t *word_cnts,
     }
     fprintf(fp, "\n");
 
-    if (output_tree_dfs(output->tree, output_tree_dfs_trav_draw, fp) < 0) {
-        ST_WARNING("Failed to output_tree_dfs.");
-        return -1;
+    dfs_aux = output_tree_dfs_aux_create(output->tree);
+    if (dfs_aux == NULL) {
+        ST_WARNING("Failed to output_tree_dfs_aux_create.");
+        goto ERR;
     }
+
+    if (output_tree_dfs(output->tree, dfs_aux,
+                output_tree_dfs_trav_draw, fp) < 0) {
+        ST_WARNING("Failed to output_tree_dfs.");
+        goto ERR;
+    }
+
+    safe_output_tree_dfs_aux_destroy(dfs_aux);
 
     fprintf(fp, "  }\n");
     fprintf(fp, "}\n");
 
     return 0;
+
+ERR:
+    safe_output_tree_dfs_aux_destroy(dfs_aux);
+    return -1;
 }
 
 layer_t* output_get_layer(output_t *output)
@@ -2443,19 +2575,20 @@ layer_t* output_get_layer(output_t *output)
 
     ST_CHECK_PARAM(output == NULL, NULL);
 
-    layer = (layer_t *)malloc(sizeof(layer_t));
+    layer = (layer_t *)st_malloc(sizeof(layer_t));
     if (layer == NULL) {
-        ST_WARNING("Failed to malloc layer.");
+        ST_WARNING("Failed to st_malloc layer.");
         goto ERR;
     }
     memset(layer, 0, sizeof(layer_t));
 
     strncat(layer->name, OUTPUT_LAYER_NAME, MAX_NAME_LEN - 1);
     strncat(layer->type, OUTPUT_LAYER_NAME, MAX_NAME_LEN - 1);
+    layer->size = output->tree->num_node;
 
     return layer;
 ERR:
-    safe_free(layer);
+    safe_st_free(layer);
     return NULL;
 }
 
@@ -2550,9 +2683,9 @@ st_int_seg_t* output_gen_segs(output_t *output, int *n_seg)
 
     ST_CHECK_PARAM(output == NULL || n_seg == NULL, NULL);
 
-    segs = (st_int_seg_t *)malloc(sizeof(st_int_seg_t)*output->tree->num_node);
+    segs = (st_int_seg_t *)st_malloc(sizeof(st_int_seg_t)*output->tree->num_node);
     if (segs == NULL) {
-        ST_WARNING("Failed to malloc segs.");
+        ST_WARNING("Failed to st_malloc segs.");
         goto ERR;
     }
 
@@ -2572,6 +2705,6 @@ st_int_seg_t* output_gen_segs(output_t *output, int *n_seg)
     return segs;
 
 ERR:
-    safe_free(segs);
+    safe_st_free(segs);
     return NULL;
 }

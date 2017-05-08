@@ -87,8 +87,7 @@ int out_glue_init_data(glue_t *glue, input_t *input,
         return -1;
     }
 
-    if (wt_init(glue->wt, output_param_size(output),
-                layers[glue->in_layer]->size) < 0) {
+    if (wt_init(glue->wt, output_param_size(output), glue->in_length) < 0) {
         ST_WARNING("Failed to wt_init.");
         return -1;
     }
@@ -108,7 +107,8 @@ wt_updater_t* out_glue_init_wt_updater(glue_t *glue, param_t *param)
     }
 
     wt_updater = wt_updater_create(param == NULL ? &glue->param : param,
-            glue->wt->mat, glue->wt->row, glue->wt->col, WT_UT_SEG);
+            glue->wt->mat, glue->wt->bias,
+            glue->wt->row, glue->wt->col, WT_UT_SEG);
     if (wt_updater == NULL) {
         ST_WARNING("Failed to wt_updater_create.");
         goto ERR;

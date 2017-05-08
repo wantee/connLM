@@ -26,12 +26,6 @@
 
   @section cmd_filter The Model filter
 
-  The low level I/O in connLM use the
-  <a href="https://github.com/wantee/stutils">stutils</a> library.
-
-  Most connLM tools has a @c binary option to determine whether write
-  models in binary format.
-
   ConnLM supports a specific format used to refer a model file,
   which is called the <em> Model Filter </em>.
 
@@ -58,7 +52,7 @@
   of MaxEnt in one model:
 
   @code{.sh}
-  $ connlm-copy --binary=false mdl,c{maxent}:exp/rnn+maxent/final.clm - | less
+  $ connlm-copy --format=txt mdl,c{maxent}:exp/rnn+maxent/final.clm - | less
   @endcode
 
   Users can find many examples using model filter in the
@@ -70,6 +64,150 @@
   The low level I/O in connLM use the
   <a href="https://github.com/wantee/stutils">stutils</a> library.
 
+  All command line tools provide @c \-\-config option to specify a
+  configuration file (note that option passed by command line would override
+  the value in configuration file), @c \-\-log-file and @c \-\-log-level
+  options to specify logging file location and logging level.
+
+  For all connLM tools that will save a model file, there is a @c \-\-format
+  option to specify the storage format for writing. Currently, there are
+  four types of storage format: Text, Binary, Zeros-Compress(ZC) and
+  Short-Quantization(SQ). Text format save the model in a human readable way,
+  the other three are all binary format.
+
+  ZC and SQ are used for compressing the weight of network. ZC will compress
+  the consecutive zeros in weight, while SQ quantifies the float or double
+  value to a short. These two method could be applied simultaneously, by
+  passing 'ZC|SQ' to @c \-\-format. Note that, in current implementation,
+  we only do compress on the direct glue since it is usually of large size.
+
+  User could get the help message of a command line tool by typing the name
+  of command line and @c \-\-help option or just typing the name. Note that,
+  there are some options are only valid or have different default values,
+  when a related 'switch' option is set to a different value. One could make it
+  show the 'hidden' option or default values by typing the command line with
+  the 'switch' option set by the desired value and leave other option not set.
+  For example, by default, typing @c connlm-output would show the default
+  values for @c \-\-max-depth and @c \-\-max-branch for 'TopDown' method,
+  however, if the command line is
+  @code{.sh}
+  connlm-output --help --method=BottomUp
+  @endcode
+  The two default values for 'BottomUp' would be shown.
+
   @section cmd_vocab The connlm-vocab
 
+  @c connlm-vocab is used for learning vocabulary from text source.
+  It reads in a text file and dumps out the vocabulary as a connLM model file.
+  Available options are:
+
+  @code{.sh}
+  Usage    : connlm-vocab [options] <text-file> <model-out>
+  e.g.:
+    connlm-vocab data/train exp/vocab.clm
+
+  Options  :
+    --help                     : Print help (bool, default = false)
+    --log-file                 : Log file (string, default = "/dev/stderr")
+    --log-level                : Log level (1-8) (int, default = 8)
+    --wordlist                 : File name of wordlist. (string, default = "")
+    --max-alphabet-size        : Maximum size of alphabet for vocab. (int, default = 1000000)
+    --max-vocab-size           : Maximum size of Vocabulary. 0 denotes no limit. (int, default = 0)
+    --max-word-num             : Maximum number of words used to learn vocab. 0 denotes no limit. (ulong, default = 0)
+    --min-count                : Mininum count for a word to be used in learning vocab. 0 denotes no limit. (int, default = 0)
+    --format                   : storage format(Txt/Bin/Zeros-Compress/Short-Q) (string, default = "Bin")
+    --config                   : config file (string, default = "")
+  @endcode
+
+  Two predefined words (\</s\> and \<unk\>) will be added to the vocabulary
+  automatically.
+
+  @c \-\-max-alphabet-size restricts the hard limit size of vocabulary can be
+  learned, if the text source have too many words, this value have to be
+  increased.
+
+  When training large corpus, one would not like to learn the vocabulary
+  by going through the whole corpus. Thus, it provides the
+  @c \-\-max-word-num option, which controls the
+  maximum number of words in text source used to learn vocabulary.
+
+  @subsection cmd_vocab_limited Limited Vocabulary
+
+  The learning process can be finer controlled to support the usage of
+  limited vocabulary.
+
+  A manually procedure to limit vocabulary could be: replace
+  the out-of-vocabulary words to a special token, i.e.
+  @c \<unk\>, and then training with the processed data.
+
+  connLM comes with two different ways to avoid above preprocessing. First,
+  one can restrict the size of learned vocabulary explicitly by passing
+  the parameter with @c \-\-max-vocab-size option. Second, one can specify
+  a minimum occurrences for a word to be added to vocabulary, which is
+  accomplished by @c \-\-min-count option, i.e., any word occurs less than
+  min-count times will be ignored. In both methods, the remaining words
+  are the most frequent words.
+
+  @subsection cmd_vocab_fixed Fixed Vocabulary
+
+  The user could also force this command to use a predefined word list as
+  vocabulary, passed by @c \-\-wordlist option. Since it is necessary for
+  connLM toolkit to know the occurrence count for every words,
+  @c connlm-vocab still need to go through some text corpus to accumulate
+  the occurrences.
+
+  @section cmd_output The connlm-output
+
+  The @c connlm-output command is used for generating output layer.
+  The output layer of connLM is structured as a tree. Through this command,
+  users could control the way how the output tree is build.
+  Available options are:
+
+  @code{.sh}
+  $ connlm-output --help
+  Usage    : connlm-output [options] <model-in> <model-out>
+  e.g.:
+    connlm-output exp/vocab.clm exp/output.clm
+
+  Options  :
+    --help                     : Print help (bool, default = false)
+    --log-file                 : Log file (string, default = "/dev/stderr")
+    --log-level                : Log level (1-8) (int, default = 8)
+    --method                   : Constructing method(TopDown/BottomUp) (string, default = "TopDown")
+    --max-depth                : Maximum depth of output tree (int, default = 2)
+    --max-branch               : Maximum branch of output tree (int, default = 100)
+    --format                   : storage format(Txt/Bin/Zeros-Compress/Short-Q) (string, default = "Bin")
+    --config                   : config file (string, default = "")
+  @endcode
+
+  @c \-\-method is to specify the constructing method, which could be "TopDown"
+  or "BottomUp". As the name indicated, with different constructing method,
+  the resulting tree will be build in the order of either from top to bottom
+  or from bottom to top. For details of the constructing process, please refer
+  to @ref model_network_output_process.
+
+  The tree is constructing based on the counts of words, thus the input model
+  file, @c <model-in>, must contain the vocabulary.
+
+  @c \-\-max-depth and @c \-\-max-branch specify the maximum depth of the tree,
+  and the maximum number of branches for each node in the tree.
+  @c \-\-max-depth could be set to zero, which indicates that no constraints
+  of depth would be applied.
+
+  If @c \-\-method is "TopDown", the default value for @c \-\-max-depth is 2,
+  and @c \-\-max-branch is 100. This is basically the same as Class-based
+  Factorization introduced by the
+  <a href="http://www.fit.vutbr.cz/~imikolov/rnnlm/thesis.pdf">
+  original rnnlm  paper </a>, and implemented in the
+  <a href="http://www.fit.vutbr.cz/~imikolov/rnnlm/"> RNNLM Toolkit </a>.
+
+  If @c \-\-method is "BottomUp", the default value for @c \-\-max-depth is 0,
+  and @c \-\-max-branch is 2. This corresponds to the
+  <a href="http://www.iro.umontreal.ca/~lisa/pointeurs/hierarchical-nnlm-aistats05.pdf">
+  Hierarchical Softmax </a>,
+  implemented in the <a href="https://code.google.com/archive/p/word2vec/">
+  word2vec toolkit </a>.
+
+  User can see the above default values by passing only the @c \-\-method
+  option without other arguments to @c connlm-output.
 */

@@ -7,9 +7,9 @@ tmp_dir=$(mktemp -d)
 mkfifo "$tmp_dir/in1" "$tmp_dir/in2"
 mkfifo "$tmp_dir/out1" "$tmp_dir/out2"
 
-connlm-test --log-file=/dev/stderr --epoch-size=0 --print-sent-prob=true --out-log-base=10 $1 "$tmp_dir/in1" "$tmp_dir/out1" &
+connlm-eval --log-file=/dev/stderr --reader^epoch-size=1 --print-sent-prob=true --out-log-base=10 $1 "$tmp_dir/in1" "$tmp_dir/out1" &
 pid1=$!
-connlm-test --log-file=/dev/stderr --epoch-size=0 --print-sent-prob=true --out-log-base=10 $2 "$tmp_dir/in2" "$tmp_dir/out2" &
+connlm-eval --log-file=/dev/stderr --reader^epoch-size=1 --print-sent-prob=true --out-log-base=10 $2 "$tmp_dir/in2" "$tmp_dir/out2" &
 pid2=$!
 tee "$tmp_dir/in1" "$tmp_dir/in2" | paste - "$tmp_dir/out1" "$tmp_dir/out2"
 

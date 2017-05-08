@@ -58,6 +58,7 @@ typedef struct _reader_opt_t_ {
     int epoch_size;  /**< number sentences read one time per thread. */
     unsigned int rand_seed;   /**< seed for random function. */
     bool shuffle;             /**< whether shuffle the sentences. */
+    bool drop_empty_line;     /**< whether drop empty lines in text. */
     char debug_file[MAX_DIR_LEN]; /**< file to print out debug infos. */
 } reader_opt_t;
 
@@ -80,7 +81,7 @@ typedef struct _connlm_egs_t_ {
 #define safe_connlm_egs_destroy(ptr) do {\
     if((ptr) != NULL) {\
         connlm_egs_destroy(ptr);\
-        safe_free(ptr);\
+        safe_st_free(ptr);\
         (ptr) = NULL;\
     }\
     } while(0)
@@ -95,15 +96,17 @@ void connlm_egs_destroy(connlm_egs_t *egs);
  * Read words into egs.
  * @ingroup g_reader
  * @param[in] egs connlm_egs.
- * @param[out] sent_ends postion of \</s\>s.
+ * @param[out] sent_ends contains postion of \</s\>s, if not NULL.
  * @param[in] epoch_size number sents read one time.
  * @param[in] text_fp text file.
  * @param[in] vocab vocab.
- * @param[out] oovs number of oovs.
+ * @param[out] oovs number of oovs, if not NULL.
+ * @param[in] drop_empty_line whether drop the empty lines.
  * @return non-zero value if any error.
  */
 int connlm_egs_read(connlm_egs_t *egs, int *sent_ends,
-        int epoch_size, FILE *text_fp, vocab_t *vocab, int *oovs);
+        int epoch_size, FILE *text_fp, vocab_t *vocab, int *oovs,
+        bool drop_empty_line);
 
 /**
  * Load reader option.
@@ -126,7 +129,8 @@ typedef struct _reader_t_ {
     vocab_t *vocab; /**< vocabulary. */
     int num_thrs; /**< number of working threads. */
 
-    connlm_egs_t *full_egs; /**< pool for egs filled with data. */
+    connlm_egs_t *full_egs_head; /**< head of pool for egs filled with data. */
+    connlm_egs_t *full_egs_tail; /**< head of pool for egs filled with data. */
     connlm_egs_t *empty_egs; /**< pool for egs with data consumed. */
     st_sem_t sem_full; /**< number of full egs. */
     st_sem_t sem_empty; /**< number of empty egs. */
@@ -154,7 +158,7 @@ typedef struct _reader_t_ {
 #define safe_reader_destroy(ptr) do {\
     if((ptr) != NULL) {\
         reader_destroy(ptr);\
-        safe_free(ptr);\
+        safe_st_free(ptr);\
         (ptr) = NULL;\
     }\
     } while(0)
@@ -200,10 +204,9 @@ int reader_wait(reader_t *reader);
  * Get and hold a egs in reading pool.
  * @ingroup g_reader
  * @param[in] reader reader.
- * @param[in] fifo hold egs in FIFO order.
  * @return NULL if there is no more data or any error.
  */
-connlm_egs_t* reader_hold_egs(reader_t *reader, bool fifo);
+connlm_egs_t* reader_hold_egs(reader_t *reader);
 
 /**
  * Relase a egs to reading pool.

@@ -32,7 +32,7 @@ extern "C" {
 #include <connlm/config.h>
 
 #include "component.h"
-#include "param.h"
+#include "updaters/glue_updaters/glue_updater.h"
 
 /** @defgroup g_updater_bptt Updater for BPTT
  * @ingroup g_updater
@@ -63,7 +63,7 @@ typedef struct _bptt_updater_t_ {
 #define safe_bptt_updater_destroy(ptr) do {\
     if((ptr) != NULL) {\
         bptt_updater_destroy(ptr);\
-        safe_free(ptr);\
+        safe_st_free(ptr);\
         (ptr) = NULL;\
     }\
     } while(0)
@@ -79,9 +79,11 @@ void bptt_updater_destroy(bptt_updater_t *bptt_updater);
  * @ingroup g_updater_bptt
  * @param[in] comp the component including all glue_cycles.
  * @param[in] cycle_id the id in glue_cycles.
+ * @param[in] glue_updaters glue updaters.
  * @return bptt_updater on success, otherwise NULL.
  */
-bptt_updater_t* bptt_updater_create(component_t *comp, int cycle_id);
+bptt_updater_t* bptt_updater_create(component_t *comp, int cycle_id,
+        glue_updater_t **glue_updaters);
 
 /**
  * Reset a bptt_updater.

@@ -1,0 +1,48 @@
+
+Step 1: Learn Vocab ...
+../steps/learn_vocab.sh --config-file test/tmp/case-32/exp/conf/vocab.conf ./data/train test/tmp/case-32/exp
+../steps/learn_vocab.sh: Learning vocab test/tmp/case-32/exp/vocab.clm from ./data/train
+=================================
+Words: 81350
+Vocab size: 3722
+=================================
+../steps/learn_vocab.sh: Elapse time: 0s
+
+Step 9: Convert RNN+MaxEnt to WFST ...
+../steps/run_tofst.sh --tofst-thr 4 --bloom-filter-text-file ./data/train --wildcard-state-text-file ./data/valid test/tmp/case-32/exp/conf/rnn+maxent test/tmp/case-32/exp/rnn+maxent
+../steps/run_tofst.sh: Stage 1 --- Building bloom filter...
+../steps/build_bloom_filter.sh test/tmp/case-32/exp/conf/rnn+maxent test/tmp/case-32/exp/rnn+maxent ./data/train test/tmp/case-32/exp/rnn+maxent/train.blmflt
+=================================
+
+Model "test/tmp/case-32/exp/rnn+maxent/train.blmflt":
+<BLOOM_FILTER>
+Version: 12
+Capacity: 1000000000
+Num Hashes: 5
+Max Order: 4
+Min-Counts: 1,1,1,1
+Format: Compressed
+
+<VOCAB>
+Vocab size: 3722
+
+<VERBOSE>
+Load factor: 0.001
+=================================
+../steps/build_bloom_filter.sh: Elapse time: 6s
+../steps/run_tofst.sh: Stage 2 --- Generating wildcard state...
+../steps/generate_wildcard_state.sh --eval-text-file ./data/valid test/tmp/case-32/exp/conf/rnn+maxent test/tmp/case-32/exp/rnn+maxent test/tmp/case-32/exp/rnn+maxent/ws.txt
+../steps/generate_wildcard_state.sh: Elapse time: 0s
+../steps/run_tofst.sh: Stage 3 --- Converting to FST...
+../steps/convert_to_fst.sh --num-thr 4 --bloom-filter-file test/tmp/case-32/exp/rnn+maxent/train.blmflt --wildcard-state-file test/tmp/case-32/exp/rnn+maxent/ws.txt test/tmp/case-32/exp/conf/rnn+maxent test/tmp/case-32/exp/rnn+maxent
+=================================
+#states: 70137
+#arcs: 201249
+max-gram: 4
+#1-gram: 3722
+#2-gram: 25378
+#3-gram: 47566
+#4-gram: 54449
+=================================
+../steps/convert_to_fst.sh: Elapse time: 24s
+../steps/run_tofst.sh: Elapse time: 30s

@@ -43,21 +43,21 @@ void comp_updater_destroy(comp_updater_t *comp_updater)
         for (i = 2; i < comp_updater->comp->num_layer; i++) {
             safe_layer_updater_destroy(comp_updater->layer_updaters[i]);
         }
-        safe_free(comp_updater->layer_updaters);
+        safe_st_free(comp_updater->layer_updaters);
     }
 
     if (comp_updater->glue_updaters != NULL) {
         for (i = 0; i < comp_updater->comp->num_glue; i++) {
             safe_glue_updater_destroy(comp_updater->glue_updaters[i]);
         }
-        safe_free(comp_updater->glue_updaters);
+        safe_st_free(comp_updater->glue_updaters);
     }
 
     if (comp_updater->bptt_updaters != NULL) {
         for (i = 0; i < comp_updater->comp->num_glue_cycle; i++) {
             safe_bptt_updater_destroy(comp_updater->bptt_updaters[i]);
         }
-        safe_free(comp_updater->bptt_updaters);
+        safe_st_free(comp_updater->bptt_updaters);
     }
 
     safe_st_aligned_free(comp_updater->bptt_er0);
@@ -77,9 +77,9 @@ comp_updater_t* comp_updater_create(component_t *comp,
 
     ST_CHECK_PARAM(comp == NULL, NULL);
 
-    comp_updater = (comp_updater_t *)malloc(sizeof(comp_updater_t));
+    comp_updater = (comp_updater_t *)st_malloc(sizeof(comp_updater_t));
     if (comp_updater == NULL) {
-        ST_WARNING("Failed to malloc comp_updater.");
+        ST_WARNING("Failed to st_malloc comp_updater.");
         goto ERR;
     }
     memset(comp_updater, 0, sizeof(comp_updater_t));
@@ -89,9 +89,9 @@ comp_updater_t* comp_updater_create(component_t *comp,
 
     if (comp->num_layer > 0) {
         sz = sizeof(layer_updater_t*)*comp->num_layer;
-        comp_updater->layer_updaters = (layer_updater_t **)malloc(sz);
+        comp_updater->layer_updaters = (layer_updater_t **)st_malloc(sz);
         if (comp_updater->layer_updaters == NULL) {
-            ST_WARNING("Failed to malloc layer_updaters.");
+            ST_WARNING("Failed to st_malloc layer_updaters.");
             goto ERR;
         }
         memset(comp_updater->layer_updaters, 0, sz);
@@ -108,9 +108,9 @@ comp_updater_t* comp_updater_create(component_t *comp,
 
     if (comp->num_glue > 0) {
         sz = sizeof(glue_updater_t*)*comp->num_glue;
-        comp_updater->glue_updaters = (glue_updater_t **)malloc(sz);
+        comp_updater->glue_updaters = (glue_updater_t **)st_malloc(sz);
         if (comp_updater->glue_updaters == NULL) {
-            ST_WARNING("Failed to malloc glue_updaters.");
+            ST_WARNING("Failed to st_malloc glue_updaters.");
             goto ERR;
         }
 
@@ -161,14 +161,15 @@ int comp_updater_setup(comp_updater_t *comp_updater, bool backprop)
 
     if (backprop) {
         if (comp->num_glue_cycle > 0) {
-            comp_updater->bptt_updaters = (bptt_updater_t **)malloc(
+            comp_updater->bptt_updaters = (bptt_updater_t **)st_malloc(
                     sizeof(bptt_updater_t*) * comp->num_glue_cycle);
             if (comp_updater->bptt_updaters == NULL) {
-                ST_WARNING("Failed to malloc bptt_updaters.");
+                ST_WARNING("Failed to st_malloc bptt_updaters.");
                 goto ERR;
             }
             for (i = 0; i < comp->num_glue_cycle; i++) {
-                comp_updater->bptt_updaters[i] = bptt_updater_create(comp, i);
+                comp_updater->bptt_updaters[i] = bptt_updater_create(comp, i,
+                        comp_updater->glue_updaters);
                 if (comp_updater->bptt_updaters[i] == NULL) {
                     ST_WARNING("Failed to bptt_updater_create.[%d][%s]", i,
                             comp->glues[comp->glue_cycles[i][1]]->name);
@@ -210,12 +211,33 @@ ERR:
         for (i = 0; i < comp_updater->comp->num_glue_cycle; i++) {
             safe_bptt_updater_destroy(comp_updater->bptt_updaters[i]);
         }
-        safe_free(comp_updater->bptt_updaters);
+        safe_st_free(comp_updater->bptt_updaters);
     }
     safe_st_aligned_free(comp_updater->bptt_er0);
     safe_st_aligned_free(comp_updater->bptt_er1);
 
     return -1;
+}
+
+int comp_updater_setup_pre_ac_state(comp_updater_t *comp_updater)
+{
+    component_t *comp;
+    int i;
+
+    ST_CHECK_PARAM(comp_updater == NULL, -1);
+
+    comp = comp_updater->comp;
+
+    for (i = 0; i < comp->num_glue; i++) {
+        if (glue_updater_setup_pre_ac_state(
+                    comp_updater->glue_updaters[i], comp_updater) < 0) {
+            ST_WARNING("Failed to glue_updater_setup_pre_ac_state[%s].",
+                    comp->glues[i]->name);
+            return -1;
+        }
+    }
+
+    return 0;
 }
 
 static int comp_updater_bptt(comp_updater_t *comp_updater, bool clear)
@@ -391,6 +413,17 @@ static int comp_updater_bptt(comp_updater_t *comp_updater, bool clear)
                 }
             }
 
+            bptt_updater->num_er_bptt = 0;
+        }
+    }
+
+    for (i = 0; i < comp->num_glue_cycle; i++) {
+        g = comp->glue_cycles[i][1];
+        bptt = comp->glues[g]->bptt_opt.bptt;
+        bptt_delay = comp->glues[g]->bptt_opt.bptt_delay;
+        bptt_updater = comp_updater->bptt_updaters[i];
+
+        if (comp_updater->bptt_step % bptt_delay == 0 || clear) {
             for (j = 1; j <= comp->glue_cycles[i][0]; j++) {
                 wt_updater = bptt_updater->wt_updaters[j];
                 if (wt_flush(wt_updater, false) < 0) {
@@ -398,8 +431,6 @@ static int comp_updater_bptt(comp_updater_t *comp_updater, bool clear)
                     return -1;
                 }
             }
-
-            bptt_updater->num_er_bptt = 0;
         }
     }
 
@@ -606,26 +637,17 @@ int comp_updater_forward_out(comp_updater_t *comp_updater,
 {
     component_t *comp;
     glue_updater_t *glue_updater;
-    output_t *output;
 
-    output_node_id_t s, e;
     int g;
 
     ST_CHECK_PARAM(comp_updater == NULL, -1);
 
     comp = comp_updater->comp;
-    output = comp_updater->out_updater->output;
 
 #ifdef _CONNLM_TRACE_PROCEDURE_
     ST_TRACE("Forward-out: comp[%s], node["OUTPUT_NODE_FMT"]", comp->name,
             node);
 #endif
-
-    s = s_children(output->tree, node);
-    e = e_children(output->tree, node);
-    if (s < e) {
-        memset(comp_updater->out_updater->ac + s, 0 , e - s);
-    }
 
     for (g = 0; g < comp->num_glue; g++) {
         glue_updater = comp_updater->glue_updaters[comp->fwd_order[g]];
@@ -634,6 +656,236 @@ int comp_updater_forward_out(comp_updater_t *comp_updater,
                     glue_updater->glue->name);
             return -1;
         }
+    }
+
+    return 0;
+}
+
+int comp_updater_forward_out_word(comp_updater_t *comp_updater, int word)
+{
+    component_t *comp;
+    glue_updater_t *glue_updater;
+
+    int g;
+
+    ST_CHECK_PARAM(comp_updater == NULL, -1);
+
+    comp = comp_updater->comp;
+
+#ifdef _CONNLM_TRACE_PROCEDURE_
+    ST_TRACE("Forward-out-word: comp[%s], word[%d]", comp->name, word);
+#endif
+
+    for (g = 0; g < comp->num_glue; g++) {
+        glue_updater = comp_updater->glue_updaters[comp->fwd_order[g]];
+        if (glue_updater_forward_out_word(glue_updater,
+                    comp_updater, word) < 0) {
+            ST_WARNING("Failed to forward_out_word glue[%s].",
+                    glue_updater->glue->name);
+            return -1;
+        }
+    }
+
+    return 0;
+}
+
+int comp_updater_state_size(comp_updater_t *comp_updater)
+{
+    int i;
+    int size;
+    int total_size;
+
+    ST_CHECK_PARAM(comp_updater == NULL, -1);
+
+    total_size = 0;
+    for (i = 2; i < comp_updater->comp->num_layer; i++) {
+        size = layer_updater_state_size(comp_updater->layer_updaters[i]);
+        if (size < 0) {
+            ST_WARNING("Failed to layer_updater_state_size.[%s]",
+                    comp_updater->comp->layers[i]->name);
+            return -1;
+        }
+        total_size += size;
+    }
+
+    return total_size;
+}
+
+int comp_updater_dump_state(comp_updater_t *comp_updater, real_t *state)
+{
+    int i;
+    int size;
+    int total_size;
+
+    ST_CHECK_PARAM(comp_updater == NULL || state == NULL, -1);
+
+    total_size = 0;
+    for (i = 2; i < comp_updater->comp->num_layer; i++) {
+        size = layer_updater_state_size(comp_updater->layer_updaters[i]);
+        if (size < 0) {
+            ST_WARNING("Failed to layer_updater_state_size.[%s]",
+                    comp_updater->comp->layers[i]->name);
+            return -1;
+        }
+        if (layer_updater_dump_state(comp_updater->layer_updaters[i],
+                    state + total_size) < 0) {
+            ST_WARNING("Failed to layer_updater_dump_state.[%s]",
+                    comp_updater->comp->layers[i]->name);
+            return -1;
+        }
+        total_size += size;
+    }
+
+    return 0;
+}
+
+int comp_updater_dump_pre_ac_state(comp_updater_t *comp_updater,
+        real_t *state)
+{
+    int i;
+    int size;
+    int total_size;
+
+    ST_CHECK_PARAM(comp_updater == NULL || state == NULL, -1);
+
+    total_size = 0;
+    for (i = 2; i < comp_updater->comp->num_layer; i++) {
+        size = layer_updater_state_size(comp_updater->layer_updaters[i]);
+        if (size < 0) {
+            ST_WARNING("Failed to layer_updater_state_size.[%s]",
+                    comp_updater->comp->layers[i]->name);
+            return -1;
+        }
+        if (layer_updater_dump_pre_ac_state(
+                    comp_updater->layer_updaters[i],
+                    state + total_size) < 0) {
+            ST_WARNING("Failed to layer_updater_dump_pre_ac_state.[%s]",
+                    comp_updater->comp->layers[i]->name);
+            return -1;
+        }
+        total_size += size;
+    }
+
+    return 0;
+}
+
+int comp_updater_feed_state(comp_updater_t *comp_updater, real_t *state)
+{
+    int i;
+    int size;
+    int total_size;
+
+    ST_CHECK_PARAM(comp_updater == NULL || state == NULL, -1);
+
+    total_size = 0;
+    for (i = 2; i < comp_updater->comp->num_layer; i++) {
+        size = layer_updater_state_size(comp_updater->layer_updaters[i]);
+        if (size < 0) {
+            ST_WARNING("Failed to layer_updater_state_size.[%s]",
+                    comp_updater->comp->layers[i]->name);
+            return -1;
+        }
+        if (layer_updater_feed_state(comp_updater->layer_updaters[i],
+                    state + total_size) < 0) {
+            ST_WARNING("Failed to layer_updater_feed_state.[%s]",
+                    comp_updater->comp->layers[i]->name);
+            return -1;
+        }
+        total_size += size;
+    }
+
+    return 0;
+}
+
+int comp_updater_random_state(comp_updater_t *comp_updater, real_t *state)
+{
+    int i;
+    int size;
+    int total_size;
+
+    ST_CHECK_PARAM(comp_updater == NULL || state == NULL, -1);
+
+    total_size = 0;
+    for (i = 2; i < comp_updater->comp->num_layer; i++) {
+        size = layer_updater_state_size(comp_updater->layer_updaters[i]);
+        if (size < 0) {
+            ST_WARNING("Failed to layer_updater_state_size.[%s]",
+                    comp_updater->comp->layers[i]->name);
+            return -1;
+        }
+        if (layer_updater_random_state(comp_updater->layer_updaters[i],
+                    state + total_size) < 0) {
+            ST_WARNING("Failed to layer_updater_random_state.[%s]",
+                    comp_updater->comp->layers[i]->name);
+            return -1;
+        }
+        total_size += size;
+    }
+
+    return 0;
+}
+
+int comp_updater_init_multicall(comp_updater_t *comp_updater,
+        output_t *output)
+{
+    int i;
+
+    ST_CHECK_PARAM(comp_updater == NULL, -1);
+
+    for (i = 0; i < comp_updater->comp->num_glue; i++) {
+        if (glue_updater_init_multicall(comp_updater->glue_updaters[i],
+                    output) < 0) {
+            ST_WARNING("Failed to glue_updater_init_multicall.[%s]",
+                    comp_updater->comp->glues[i]->name);
+            return -1;
+        }
+    }
+
+    return 0;
+}
+
+int comp_updater_clear_multicall(comp_updater_t *comp_updater,
+        output_t *output)
+{
+    int i;
+
+    ST_CHECK_PARAM(comp_updater == NULL, -1);
+
+    for (i = 0; i < comp_updater->comp->num_glue; i++) {
+        if (glue_updater_clear_multicall(comp_updater->glue_updaters[i],
+                    output) < 0) {
+            ST_WARNING("Failed to glue_updater_clear_multicall.[%s]",
+                    comp_updater->comp->glues[i]->name);
+            return -1;
+        }
+    }
+
+    return 0;
+}
+
+int comp_updater_activate_state(comp_updater_t *comp_updater, real_t *state)
+{
+    int i;
+    int size;
+    int total_size;
+
+    ST_CHECK_PARAM(comp_updater == NULL || state == NULL, -1);
+
+    total_size = 0;
+    for (i = 2; i < comp_updater->comp->num_layer; i++) {
+        size = layer_updater_state_size(comp_updater->layer_updaters[i]);
+        if (size < 0) {
+            ST_WARNING("Failed to layer_updater_state_size.[%s]",
+                    comp_updater->comp->layers[i]->name);
+            return -1;
+        }
+        if (layer_updater_activate_state(comp_updater->layer_updaters[i],
+                    state + total_size) < 0) {
+            ST_WARNING("Failed to layer_updater_activate.[%s]",
+                    comp_updater->comp->layers[i]->name);
+            return -1;
+        }
+        total_size += size;
     }
 
     return 0;

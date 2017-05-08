@@ -1,7 +1,7 @@
 /*
  * The MIT License (MIT)
  *
- * Copyright (c) 2015 Wang Jian
+ * Copyright (c) 2015-2016 Wang Jian
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -26,17 +26,21 @@
 
 #include <stutils/st_log.h>
 #include <stutils/st_io.h>
+#include <stutils/st_string.h>
+#include <stutils/st_mem.h>
 
 #include <connlm/utils.h>
 #include <connlm/connlm.h>
 
-bool g_binary;
+connlm_fmt_t g_fmt;
 
 st_opt_t *g_cmd_opt;
 
 int connlm_merge_parse_opt(int *argc, const char *argv[])
 {
     st_log_opt_t log_opt;
+
+    char str[MAX_ST_CONF_LEN];
     bool b;
 
     g_cmd_opt = st_opt_create();
@@ -60,8 +64,13 @@ int connlm_merge_parse_opt(int *argc, const char *argv[])
         goto ST_OPT_ERR;
     }
 
-    ST_OPT_GET_BOOL(g_cmd_opt, "BINARY", g_binary, true,
-            "Save file as binary format");
+    ST_OPT_GET_STR(g_cmd_opt, "FORMAT", str, MAX_ST_CONF_LEN, "Bin",
+            "storage format(Txt/Bin/Zeros-Compress/Short-Q)");
+    g_fmt = connlm_format_parse(str);
+    if (g_fmt == CONN_FMT_UNKNOWN) {
+        ST_WARNING("Unknown format[%s]", str);
+        goto ST_OPT_ERR;
+    }
 
     ST_OPT_GET_BOOL(g_cmd_opt, "help", b, false, "Print help");
 
@@ -76,24 +85,29 @@ void show_usage(const char *module_name)
     connlm_show_usage(module_name,
             "Merge Models",
             "<model-in-filter1> <model-in-filter2> ... <model-out>",
-            g_cmd_opt);
+            "mdl,c{maxent}:exp/maxent/final.clm mdl,c{rnn}:exp/rnn/final.clm exp/maxent~rnn/init.clm",
+            g_cmd_opt, model_filter_help());
 }
 
 int main(int argc, const char *argv[])
 {
+    char args[1024] = "";
     FILE *fp = NULL;
     connlm_t *connlm = NULL;
     connlm_t *connlm1 = NULL;
     model_filter_t *mfs = NULL;
     char *fnames = NULL;
+    char **comp_names = NULL;
+    int *num_comp = NULL;
     int ret;
-    int i;
+    int i, c;
 
-    int hs_size = -1;
-    bool mdl_rnn = false;
-    bool mdl_maxent = false;
-    bool mdl_lbl = false;
-    bool mdl_ffnn = false;
+    if (st_mem_usage_init() < 0) {
+        ST_WARNING("Failed to st_mem_usage_init.");
+        goto ERR;
+    }
+
+    (void)st_escape_args(argc, argv, args, 1024);
 
     ret = connlm_merge_parse_opt(&argc, argv);
     if (ret < 0) {
@@ -113,61 +127,47 @@ int main(int argc, const char *argv[])
         goto ERR;
     }
 
+    ST_CLEAN("Command-line: %s", args);
     st_opt_show(g_cmd_opt, "connLM Merge Options");
     for (i = 1; i < argc - 1; i++) {
-        ST_CLEAN("Model-in-%d: %s", i, argv[i]);
+        ST_CLEAN("Model-in-%d: '%s'", i, argv[i]);
     }
-    ST_CLEAN("Model-out: %s", argv[argc - 1]);
+    ST_CLEAN("Model-out: '%s'", argv[argc - 1]);
 
-    mfs = (model_filter_t *)malloc(sizeof(model_filter_t)*(argc-2));
+    mfs = (model_filter_t *)st_malloc(sizeof(model_filter_t) * (argc - 2));
     if (mfs == NULL) {
-        ST_WARNING("Failed to malloc mfs.");
+        ST_WARNING("Failed to st_malloc mfs.");
         goto ERR;
     }
 
-    fnames = (char *)malloc(sizeof(char)*MAX_DIR_LEN*(argc-2));
+    fnames = (char *)st_malloc(sizeof(char) * MAX_DIR_LEN * (argc - 2));
     if (fnames == NULL) {
-        ST_WARNING("Failed to malloc fnames.");
+        ST_WARNING("Failed to st_malloc fnames.");
         goto ERR;
     }
 
-    for (i = 1; i < argc - 1; i++) {
-        mfs[i - 1] = parse_model_filter(argv[i],
-                fnames + (i-1) * MAX_DIR_LEN, MAX_DIR_LEN);
-        if (mfs[i - 1] == MF_NONE) {
-            ST_WARNING("Failed to parse_model_filter. [%s]", argv[i]);
-            goto ERR;
-        }
+    comp_names = (char **)st_malloc(sizeof(char*) * (argc - 2));
+    if (comp_names == NULL) {
+        ST_WARNING("Failed to st_malloc comp_names.");
+        goto ERR;
+    }
+    num_comp = (int *)st_malloc(sizeof(int) * (argc - 2));
+    if (num_comp == NULL) {
+        ST_WARNING("Failed to st_malloc num_comp.");
+        goto ERR;
+    }
+    for (i = 0; i < argc - 2; i++) {
+        comp_names[i] = NULL;
+        num_comp[i] = 0;
     }
 
     for (i = 0; i < argc - 2; i++) {
-        if (mfs[i] & MF_RNN) {
-            if (mdl_rnn) {
-                ST_WARNING("Can't merge: Duplicate RNN model.");
-                goto ERR;
-            }
-            mdl_rnn = true;
-        }
-        if (mfs[i] & MF_MAXENT) {
-            if (mdl_maxent) {
-                ST_WARNING("Can't merge: Duplicate MAXENT model.");
-                goto ERR;
-            }
-            mdl_maxent = true;
-        }
-        if (mfs[i] & MF_LBL) {
-            if (mdl_lbl) {
-                ST_WARNING("Can't merge: Duplicate LBL model.");
-                goto ERR;
-            }
-            mdl_lbl = true;
-        }
-        if (mfs[i] & MF_FFNN) {
-            if (mdl_ffnn) {
-                ST_WARNING("Can't merge: Duplicate FFNN model.");
-                goto ERR;
-            }
-            mdl_ffnn = true;
+        mfs[i] = parse_model_filter(argv[i + 1],
+                fnames + i * MAX_DIR_LEN, MAX_DIR_LEN,
+                comp_names + i, num_comp + i);
+        if (mfs[i] == MF_ERR) {
+            ST_WARNING("Failed to parse_model_filter. [%s]", argv[i]);
+            goto ERR;
         }
     }
 
@@ -185,8 +185,7 @@ int main(int argc, const char *argv[])
     safe_st_fclose(fp);
 
     if (connlm1->vocab == NULL || connlm1->output == NULL) {
-        ST_WARNING("Can't merge: No vocab or output for model[%s].",
-                fnames);
+        ST_WARNING("Can't merge: No vocab or output for model[%s].", fnames);
         goto ERR;
     }
 
@@ -196,67 +195,20 @@ int main(int argc, const char *argv[])
         goto ERR;
     }
 
-    if (connlm->output->output_opt.hs) {
-        hs_size = connlm_get_hs_size(connlm1);
-        if (hs_size <= 0) {
-            ST_WARNING("Failed to connlm_get_hs_size.");
+    i = 0;
+    ST_NOTICE("Merging Model %d(%s)...", i, argv[i + 1]);
+    if (connlm_filter(connlm1, mfs[i], comp_names[i], num_comp[i]) < 0) {
+        ST_WARNING("Failed to connlm_filter for model [%d/%s]", i, argv[i + 1]);
+        goto ERR;
+    }
+    for (c = 0; c < connlm1->num_comp; c++) {
+        if (connlm_add_comp(connlm, connlm1->comps[c]) < 0) {
+            ST_WARNING("Failed to connlm_add_comp. [%s]",
+                    connlm1->comps[c]->name);
             goto ERR;
         }
     }
 
-    i = 0;
-    ST_NOTICE("Merging Model %d(%s)...", i, argv[i + 1]);
-    if (mfs[i] & MF_MAXENT) {
-        if (connlm1->maxent == NULL) {
-            ST_WARNING("No MaxEnt for model[%s]", argv[i+1]);
-        } else {
-            connlm->maxent = maxent_dup(connlm1->maxent);
-            if (connlm->maxent == NULL) {
-                ST_WARNING("Failed to dup maxent. [%s]",
-                        fnames + i * MAX_DIR_LEN);
-                goto ERR;
-            }
-        }
-    }
-
-    if (mfs[i] & MF_RNN) {
-        if (connlm1->rnn == NULL) {
-            ST_WARNING("No RNN for model[%s]", argv[i+1]);
-        } else {
-            connlm->rnn = rnn_dup(connlm1->rnn);
-            if (connlm->rnn == NULL) {
-                ST_WARNING("Failed to dup rnn. [%s]",
-                        fnames + i * MAX_DIR_LEN);
-                goto ERR;
-            }
-        }
-    }
-
-    if (mfs[i] & MF_LBL) {
-        if (connlm1->lbl == NULL) {
-            ST_WARNING("No LBL for model[%s]", argv[i+1]);
-        } else {
-            connlm->lbl = lbl_dup(connlm1->lbl);
-            if (connlm->lbl == NULL) {
-                ST_WARNING("Failed to dup lbl. [%s]",
-                        fnames + i * MAX_DIR_LEN);
-                goto ERR;
-            }
-        }
-    }
-
-    if (mfs[i] & MF_FFNN) {
-        if (connlm1->ffnn == NULL) {
-            ST_WARNING("No FFNN for model[%s]", argv[i+1]);
-        } else {
-            connlm->ffnn = ffnn_dup(connlm1->ffnn);
-            if (connlm->ffnn == NULL) {
-                ST_WARNING("Failed to dup ffnn. [%s]",
-                        fnames + i * MAX_DIR_LEN);
-                goto ERR;
-            }
-        }
-    }
     safe_connlm_destroy(connlm1);
 
     for (i = 1; i < argc - 2; i++) {
@@ -268,7 +220,7 @@ int main(int argc, const char *argv[])
 
         connlm1 = connlm_load(fp);
         if (connlm1 == NULL) {
-            ST_WARNING("Failed to connlm_load. [%s]", fnames+i*MAX_DIR_LEN);
+            ST_WARNING("Failed to connlm_load. [%s]", fnames + i*MAX_DIR_LEN);
             goto ERR;
         }
         safe_st_fclose(fp);
@@ -292,62 +244,15 @@ int main(int argc, const char *argv[])
             goto ERR;
         }
 
-        if (connlm->output->output_opt.hs) {
-            if (hs_size != connlm_get_hs_size(connlm1)) {
-                ST_WARNING("Can not merge: hs_size not match.");
+        if (connlm_filter(connlm1, mfs[i], comp_names[i], num_comp[i]) < 0) {
+            ST_WARNING("Failed to connlm_filter for model [%d/%s]", i, argv[i + 1]);
+            goto ERR;
+        }
+        for (c = 0; c < connlm1->num_comp; c++) {
+            if (connlm_add_comp(connlm, connlm1->comps[c]) < 0) {
+                ST_WARNING("Failed to connlm_add_comp. [%s]",
+                        connlm1->comps[c]->name);
                 goto ERR;
-            }
-        }
-
-        if (mfs[i] & MF_MAXENT) {
-            if (connlm1->maxent == NULL) {
-                ST_WARNING("No MaxEnt for model[%s]", argv[i+1]);
-            } else {
-                connlm->maxent = maxent_dup(connlm1->maxent);
-                if (connlm->maxent == NULL) {
-                    ST_WARNING("Failed to dup maxent. [%s]",
-                            fnames + i * MAX_DIR_LEN);
-                    goto ERR;
-                }
-            }
-        }
-
-        if (mfs[i] & MF_RNN) {
-            if (connlm1->rnn == NULL) {
-                ST_WARNING("No RNN for model[%s]", argv[i+1]);
-            } else {
-                connlm->rnn = rnn_dup(connlm1->rnn);
-                if (connlm->rnn == NULL) {
-                    ST_WARNING("Failed to dup rnn. [%s]",
-                            fnames + i * MAX_DIR_LEN);
-                    goto ERR;
-                }
-            }
-        }
-
-        if (mfs[i] & MF_LBL) {
-            if (connlm1->lbl == NULL) {
-                ST_WARNING("No LBL for model[%s]", argv[i+1]);
-            } else {
-                connlm->lbl = lbl_dup(connlm1->lbl);
-                if (connlm->lbl == NULL) {
-                    ST_WARNING("Failed to dup lbl. [%s]",
-                            fnames + i * MAX_DIR_LEN);
-                    goto ERR;
-                }
-            }
-        }
-
-        if (mfs[i] & MF_FFNN) {
-            if (connlm1->ffnn == NULL) {
-                ST_WARNING("No FFNN for model[%s]", argv[i+1]);
-            } else {
-                connlm->ffnn = ffnn_dup(connlm1->ffnn);
-                if (connlm->ffnn == NULL) {
-                    ST_WARNING("Failed to dup ffnn. [%s]",
-                            fnames + i * MAX_DIR_LEN);
-                    goto ERR;
-                }
             }
         }
 
@@ -360,28 +265,45 @@ int main(int argc, const char *argv[])
         goto ERR;
     }
 
-    if (connlm_save(connlm, fp, g_binary) < 0) {
+    if (connlm_save(connlm, fp, g_fmt) < 0) {
         ST_WARNING("Failed to connlm_save. [%s]", argv[argc - 1]);
         goto ERR;
     }
 
     safe_st_fclose(fp);
-    safe_free(mfs);
-    safe_free(fnames);
+    safe_st_free(mfs);
+    safe_st_free(fnames);
+    if (comp_names != NULL) {
+        for (i = 0; i < argc - 2; i++) {
+            safe_st_free(comp_names[i]);
+        }
+    }
+    safe_st_free(comp_names);
+    safe_st_free(num_comp);
     safe_st_opt_destroy(g_cmd_opt);
     safe_connlm_destroy(connlm);
 
+    st_mem_usage_report();
+    st_mem_usage_destroy();
     st_log_close(0);
     return 0;
 
 ERR:
     safe_st_fclose(fp);
-    safe_free(mfs);
-    safe_free(fnames);
+    safe_st_free(mfs);
+    safe_st_free(fnames);
+    if (comp_names != NULL) {
+        for (i = 0; i < argc - 2; i++) {
+            safe_st_free(comp_names[i]);
+        }
+    }
+    safe_st_free(comp_names);
+    safe_st_free(num_comp);
     safe_st_opt_destroy(g_cmd_opt);
     safe_connlm_destroy(connlm);
     safe_connlm_destroy(connlm1);
 
+    st_mem_usage_destroy();
     st_log_close(1);
     return -1;
 }

@@ -6,7 +6,7 @@ data=./corpus
 data_url=www.openslr.org/resources/12
 lm_url=www.openslr.org/resources/11
 
-train_file=./data/train
+train_file=./data/train.gz
 valid_file=./data/valid
 test_file=./data/test
 vocab_file=./data/vocab
@@ -14,18 +14,16 @@ vocab_file=./data/vocab
 conf_dir=./conf/
 exp_dir=./exp/
 
-#class_size=""
-class_size="50;100;150;200;250;300;350;400"
-tr_thr=24
-eval_thr=24
+tr_thr=16
+eval_thr=16
 
 realtype="float"
 
 stepnames[1]="Prepare data"
-stepnames[2]="Learn Vocab"
-stepnames[3]="Train MaxEnt model"
-stepnames[4]="Train RNN model"
-stepnames[5]="Train RNN+MaxEnt model"
+stepnames+=("Learn Vocab")
+stepnames+=("Train MaxEnt model:maxent")
+stepnames+=("Train RNN model:rnn")
+stepnames+=("Train RNN+MaxEnt model:rnn+maxent")
 
 steps_len=${#stepnames[*]}
 
@@ -37,7 +35,7 @@ function print_help()
   st=1
   while [ $st -le $steps_len ]
   do
-  echo "   step$st:	${stepnames[$st]}"
+  echo "   step$st:	${stepnames[$st]%%:*}"
   ((st++))
   done
   echo ""
@@ -79,20 +77,20 @@ done
 local/download_lm.sh $lm_url $data || exit 1
 
 if [ ! -e "$vocab_file" ]; then
-  mkdir -p `basename $vocab_file` || exit 1
+  mkdir -p `dirname $vocab_file` || exit 1
   cp $data/librispeech-vocab.txt $vocab_file
 fi
 
 if [ ! -e "$train_file" ]; then
   echo "Preparing train..."
-  mkdir -p `basename $train_file` || exit 1
+  mkdir -p `dirname $train_file` || exit 1
   python local/filt.py $vocab_file <(gunzip -c $data/librispeech-lm-norm.txt.gz)  | \
-             perl ../utils/shuf.pl > $train_file || exit 1
+             perl ../utils/shuf.pl | gzip -c > $train_file || exit 1
 fi
 
 if [ ! -e "$valid_file" ]; then
   echo "Preparing valid..."
-  mkdir -p `basename $valid_file` || exit 1
+  mkdir -p `dirname $valid_file` || exit 1
   > $valid_file || exit 1
   for part in dev-clean dev-other train-clean-100 train-clean-360 train-other-500; do
     local/data_prep.sh $data/LibriSpeech/$part $valid_file || exit 1
@@ -101,7 +99,7 @@ fi
 
 if [ ! -e "$test_file" ]; then
   echo "Preparing test..."
-  mkdir -p `basename $test_file` || exit 1
+  mkdir -p `dirname $test_file` || exit 1
   > $test_file || exit 1
   for part in test-clean test-other; do
     local/data_prep.sh $data/LibriSpeech/$part $test_file || exit 1
@@ -118,40 +116,21 @@ echo "Step $st: ${stepnames[$st]} ..."
 fi
 ((st++))
 
-if shu-in-range $st $steps; then
-echo
-echo "Step $st: ${stepnames[$st]} ..."
-../steps/run_standalone.sh --class-size "$class_size" \
-      --train-thr $tr_thr --eval-thr $eval_thr \
-    maxent $conf_dir $exp_dir $train_file $valid_file $test_file || exit 1;
-fi
-((st++))
-
-if shu-in-range $st $steps; then
-echo
-echo "Step $st: ${stepnames[$st]} ..."
-../steps/run_standalone.sh --class-size "$class_size" \
-      --train-thr $tr_thr --eval-thr $eval_thr \
-    rnn $conf_dir $exp_dir $train_file $valid_file $test_file || exit 1;
-fi
-((st++))
-
-if shu-in-range $st $steps; then
-echo
-echo "Step $st: ${stepnames[$st]} ..."
-../steps/run_standalone.sh --class-size "$class_size" \
-      --train-thr $tr_thr --eval-thr $eval_thr \
-    rnn+maxent $conf_dir $exp_dir $train_file $valid_file $test_file \
-  || exit 1;
-fi
-((st++))
-
-if shu-in-range $st $steps; then
-echo
-echo "Step $st: ${stepnames[$st]} ..."
-../steps/run_cascade.sh --class-size "$class_size" \
-      --train-thr $tr_thr --eval-thr $eval_thr \
-    maxent~rnn $conf_dir $exp_dir $train_file $valid_file $test_file \
-  || exit 1;
-fi
-((st++))
+while [ $st -le $steps_len ]
+do
+  if shu-in-range $st $steps; then
+  echo
+  echo "Step $st: ${stepnames[$st]%%:*} ..."
+  model=${stepnames[$st]#*:}
+  if [[ "$model" == *"~"* ]]; then
+    ../steps/run_cascade.sh --train-thr $tr_thr --eval-thr $eval_thr \
+        ${model} $conf_dir $exp_dir \
+        $train_file $valid_file $test_file || exit 1;
+  else
+    ../steps/run_standalone.sh --train-thr $tr_thr --eval-thr $eval_thr \
+        ${model} $conf_dir $exp_dir \
+        $train_file $valid_file $test_file || exit 1;
+  fi
+  fi
+  ((st++))
+done

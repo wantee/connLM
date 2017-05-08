@@ -28,11 +28,12 @@
 #include <stutils/st_io.h>
 #include <stutils/st_rand.h>
 #include <stutils/st_string.h>
+#include <stutils/st_mem.h>
 
 #include <connlm/utils.h>
 #include <connlm/connlm.h>
 
-bool g_binary;
+connlm_fmt_t g_fmt;
 
 st_opt_t *g_cmd_opt;
 
@@ -40,6 +41,7 @@ int connlm_init_parse_opt(int *argc, const char *argv[])
 {
     st_log_opt_t log_opt;
 
+    char str[MAX_ST_CONF_LEN];
     unsigned int rand_seed;
     bool b;
 
@@ -68,8 +70,13 @@ int connlm_init_parse_opt(int *argc, const char *argv[])
             "Random seed");
     st_srand(rand_seed);
 
-    ST_OPT_GET_BOOL(g_cmd_opt, "BINARY", g_binary, true,
-            "Save file as binary format");
+    ST_OPT_GET_STR(g_cmd_opt, "FORMAT", str, MAX_ST_CONF_LEN, "Bin",
+            "storage format(Txt/Bin/Zeros-Compress/Short-Q)");
+    g_fmt = connlm_format_parse(str);
+    if (g_fmt == CONN_FMT_UNKNOWN) {
+        ST_WARNING("Unknown format[%s]", str);
+        goto ST_OPT_ERR;
+    }
 
     ST_OPT_GET_BOOL(g_cmd_opt, "help", b, false, "Print help");
 
@@ -95,6 +102,11 @@ int main(int argc, const char *argv[])
     connlm_t *connlm = NULL;
     int ret;
 
+    if (st_mem_usage_init() < 0) {
+        ST_WARNING("Failed to st_mem_usage_init.");
+        goto ERR;
+    }
+
     (void)st_escape_args(argc, argv, args, 1024);
 
     ret = connlm_init_parse_opt(&argc, argv);
@@ -117,7 +129,7 @@ int main(int argc, const char *argv[])
 
     ST_CLEAN("Command-line: %s", args);
     st_opt_show(g_cmd_opt, "connLM Init Options");
-    ST_CLEAN("Model-in: %s, Topo: %s, Model-out: %s",
+    ST_CLEAN("Model-in: '%s', Topo: '%s', Model-out: '%s'",
             argv[1], argv[2], argv[3]);
 
     fp = st_fopen(argv[1], "rb");
@@ -156,7 +168,7 @@ int main(int argc, const char *argv[])
         goto ERR;
     }
 
-    if (connlm_save(connlm, fp, g_binary) < 0) {
+    if (connlm_save(connlm, fp, g_fmt) < 0) {
         ST_WARNING("Failed to connlm_save. [%s]", argv[3]);
         goto ERR;
     }
@@ -165,6 +177,8 @@ int main(int argc, const char *argv[])
     safe_st_opt_destroy(g_cmd_opt);
     safe_connlm_destroy(connlm);
 
+    st_mem_usage_report();
+    st_mem_usage_destroy();
     st_log_close(0);
     return 0;
 
@@ -173,6 +187,7 @@ ERR:
     safe_st_opt_destroy(g_cmd_opt);
     safe_connlm_destroy(connlm);
 
+    st_mem_usage_destroy();
     st_log_close(1);
     return -1;
 }

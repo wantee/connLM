@@ -5,6 +5,7 @@
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
+ *
  * in the Software without restriction, including without limitation the rights
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
@@ -47,11 +48,12 @@ extern "C" {
  * @param[in] comp_updater the comp_updater.
  * @param[in] input_sent [unused] input sentence buffer.
  * @param[in] in_ac activation of in layer.
+ * @param[out] out_ac activation of out layer.
  * @return non-zero value if any error.
  */
 int out_glue_updater_forward(glue_updater_t *glue_updater,
         comp_updater_t *comp_updater, sent_t *input_sent,
-        real_t *in_ac);
+        real_t *in_ac, real_t *out_ac);
 
 /**
  * Back-prop one word for a out_glue_updater.
@@ -75,10 +77,26 @@ int out_glue_updater_backprop(glue_updater_t *glue_updater,
  * @param[in] comp_updater the comp_updater.
  * @param[in] node node of output tree.
  * @param[in] in_ac activation of in layer.
+ * @param[out] out_ac activation of out layer.
  * @return non-zero value if any error.
  */
 int out_glue_updater_forward_out(glue_updater_t *glue_updater,
-        comp_updater_t *comp_updater, output_node_id_t node, real_t *in_ac);
+        comp_updater_t *comp_updater, output_node_id_t node,
+        real_t *in_ac, real_t *out_ac);
+
+/**
+ * Feed-forward one word of output layer.
+ * @ingroup g_glue_updater_out
+ * @param[in] glue_updater the glue_updater.
+ * @param[in] comp_updater the comp_updater.
+ * @param[in] word the word.
+ * @param[in] in_ac activation of in layer.
+ * @param[out] out_ac activation of out layer.
+ * @return non-zero value if any error.
+ */
+int out_glue_updater_forward_out_word(glue_updater_t *glue_updater,
+        comp_updater_t *comp_updater, int word,
+        real_t *in_ac, real_t *out_ac);
 
 #ifdef __cplusplus
 }

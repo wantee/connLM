@@ -86,7 +86,7 @@ int connlm_load_train_opt(connlm_t *connlm, st_opt_t *opt,
 #define safe_connlm_destroy(ptr) do {\
     if((ptr) != NULL) {\
         connlm_destroy(ptr);\
-        safe_free(ptr);\
+        safe_st_free(ptr);\
         (ptr) = NULL;\
     }\
     } while(0)
@@ -131,10 +131,10 @@ connlm_t* connlm_load(FILE *fp);
  * @ingroup g_connlm
  * @param[in] connlm connlm to be saved.
  * @param[in] fp file stream saved to.
- * @param[in] binary whether to use binary format.
+ * @param[in] fmt storage format.
  * @return non-zero value if any error.
  */
-int connlm_save(connlm_t *connlm, FILE *fp, bool binary);
+int connlm_save(connlm_t *connlm, FILE *fp, connlm_fmt_t fmt);
 
 /**
  * Convert a connlm model into graphviz format.
@@ -174,6 +174,30 @@ int connlm_filter(connlm_t *connlm, model_filter_t mf,
  * @return non-zero value if any error.
  */
 int connlm_setup(connlm_t *connlm);
+
+/**
+ * Add a component to connlm model.
+ * @ingroup g_connlm
+ * @param[in] connlm connlm model.
+ * @param[in] comp component to be added.
+ * @return non-zero value if any error.
+ */
+int connlm_add_comp(connlm_t *connlm, component_t *comp);
+
+/**
+ * Do sanity check on a component and print warnings.
+ * @ingroup g_connlm
+ * @param[in] connlm connlm model.
+ */
+void connlm_sanity_check(connlm_t *connlm);
+
+/**
+ * Print verbose info of a connlm model.
+ * @ingroup g_connlm
+ * @param[in] connlm the connlm model.
+ * @param[in] fo file stream print info to.
+ */
+void connlm_print_verbose_info(connlm_t *connlm, FILE *fo);
 
 #ifdef __cplusplus
 }

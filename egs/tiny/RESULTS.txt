@@ -1,0 +1,5 @@
+commit: 1f1b552b30d9c538b11b8077d7df3280ce40f324
+
+PPL for models can be found at test/expected/case-*.out
+
+PPL of FST from RNN+MaxEnt: 84.7823

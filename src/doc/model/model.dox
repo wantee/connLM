@@ -24,6 +24,11 @@
 /**
  @page model The connLM Model
 
+ A connLM model contains the structure and parameters of a neural network
+ model. It consists of a vocabulary and a neural network. The vocabulary
+ stores words and their ids. The neural network contains exactly one output
+ layer, and one or more components who share the same output layer.
+
  <p>
   - @subpage model_vocab
   - @subpage model_network

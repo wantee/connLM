@@ -36,7 +36,7 @@ void input_updater_destroy(input_updater_t *input_updater)
         return;
     }
 
-    safe_free(input_updater->words);
+    safe_st_free(input_updater->words);
     input_updater->n_word = 0;
     input_updater->cap_word = 0;
     input_updater->cur_pos = 0;
@@ -48,22 +48,36 @@ void input_updater_destroy(input_updater_t *input_updater)
     input_updater->sent_tail = -1;
 }
 
-input_updater_t* input_updater_create()
+input_updater_t* input_updater_create(int bos_id)
 {
     input_updater_t *input_updater = NULL;
 
-    input_updater = (input_updater_t *)malloc(sizeof(input_updater_t));
+    input_updater = (input_updater_t *)st_malloc(sizeof(input_updater_t));
     if (input_updater == NULL) {
-        ST_WARNING("Failed to malloc input_updater.");
+        ST_WARNING("Failed to st_malloc input_updater.");
         goto ERR;
     }
     memset(input_updater, 0, sizeof(input_updater_t));
+
+    input_updater->bos_id = bos_id;
 
     return input_updater;
 
 ERR:
     safe_input_updater_destroy(input_updater);
     return NULL;
+}
+
+int input_updater_clear(input_updater_t *input_updater)
+{
+    ST_CHECK_PARAM(input_updater == NULL, -1);
+
+    input_updater->n_word = 0;
+    input_updater->cur_pos = 0;
+    input_updater->sent_head = -1;
+    input_updater->sent_tail = -1;
+
+    return 0;
 }
 
 int input_updater_setup(input_updater_t *input_updater, int ctx_leftmost,
@@ -79,9 +93,9 @@ int input_updater_setup(input_updater_t *input_updater, int ctx_leftmost,
     input_updater->cap_word = ctx_leftmost + ctx_rightmost + 1;
 
     sz = sizeof(int) * input_updater->cap_word;
-    input_updater->words = (int *)malloc(sz);
+    input_updater->words = (int *)st_malloc(sz);
     if (input_updater->words == NULL) {
-        ST_WARNING("Failed to malloc words.");
+        ST_WARNING("Failed to st_malloc words.");
         goto ERR;
     }
     memset(input_updater->words, 0, sz);
@@ -93,7 +107,7 @@ int input_updater_setup(input_updater_t *input_updater, int ctx_leftmost,
     return 0;
 
 ERR:
-    safe_free(input_updater->words);
+    safe_st_free(input_updater->words);
     input_updater->n_word = 0;
     input_updater->cap_word = 0;
     input_updater->cur_pos = 0;
@@ -148,13 +162,14 @@ static int input_updater_update_sent(input_updater_t *input_updater,
         }
     }
 
-    sent->words = input_updater->words + input_updater->sent_head;
-    sent->n_word = input_updater->sent_tail - input_updater->sent_head;
-    if (input_updater->cur_pos < input_updater->n_word - 1
-         && input_updater->words[input_updater->cur_pos] == SENT_START_ID) {
+    if (input_updater->cur_pos < input_updater->n_word
+            && input_updater->words[input_updater->cur_pos] == input_updater->bos_id) {
         // we never use <s> as target word, since P(<s>) should be equal to 1
         input_updater->cur_pos++;
     }
+
+    sent->words = input_updater->words + input_updater->sent_head;
+    sent->n_word = input_updater->sent_tail - input_updater->sent_head;
     sent->tgt_pos = input_updater->cur_pos - input_updater->sent_head;
 
     return 0;
@@ -167,8 +182,10 @@ int input_updater_feed(input_updater_t *input_updater, int *words, int n_word,
 
     ST_CHECK_PARAM(input_updater == NULL || words == NULL, -1);
 
-    // drop words already done
-    drop = input_updater->cur_pos - input_updater->ctx_leftmost;
+    // drop words already done, but keep current sentence
+    // in order to calculate word position within the sentence.
+    drop = min(input_updater->cur_pos - input_updater->ctx_leftmost,
+            input_updater->sent_head);
     if (drop > 0) {
         memmove(input_updater->words, input_updater->words + drop,
                 sizeof(int) * (input_updater->n_word - drop));
@@ -181,10 +198,10 @@ int input_updater_feed(input_updater_t *input_updater, int *words, int n_word,
     // append new words
     if (input_updater->n_word + n_word > input_updater->cap_word) {
         input_updater->cap_word = input_updater->n_word + n_word;
-        input_updater->words = (int *)realloc(input_updater->words,
+        input_updater->words = (int *)st_realloc(input_updater->words,
                 sizeof(int) * input_updater->cap_word);
         if (input_updater->words == NULL) {
-            ST_WARNING("Failed to realloc words.");
+            ST_WARNING("Failed to st_realloc words.");
             return -1;
         }
         //memset(input_updater->words + input_updater->n_word, 0,
@@ -207,6 +224,20 @@ int input_updater_move(input_updater_t *input_updater, sent_t *sent)
     ST_CHECK_PARAM(input_updater == NULL, -1);
 
     input_updater->cur_pos++;
+
+    if (input_updater_update_sent(input_updater, sent) < 0) {
+        ST_WARNING("Failed to input_updater_update_sent.");
+        return -1;
+    }
+
+    return 0;
+}
+
+int input_updater_move_to_end(input_updater_t *input_updater, sent_t *sent)
+{
+    ST_CHECK_PARAM(input_updater == NULL, -1);
+
+    input_updater->cur_pos = input_updater->n_word;
 
     if (input_updater_update_sent(input_updater, sent) < 0) {
         ST_WARNING("Failed to input_updater_update_sent.");

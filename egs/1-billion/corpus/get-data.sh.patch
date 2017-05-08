@@ -1,4 +1,0 @@
-45c45
-< done | sort -u --output=training-monolingual.tokenized/news.20XX.en.shuffled.sorted
----
-> done | sort -T . -u --output=training-monolingual.tokenized/news.20XX.en.shuffled.sorted

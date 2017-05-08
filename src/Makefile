@@ -19,6 +19,7 @@ INCS = utils.h \
        layers/linear_layer.h \
        layers/sigmoid_layer.h \
        layers/tanh_layer.h \
+       layers/relu_layer.h \
        glues/glue.h \
        glues/direct_glue.h \
        glues/fc_glue.h \
@@ -36,7 +37,11 @@ INCS = utils.h \
        updaters/glue_updaters/emb_glue_updater.h \
        updaters/glue_updaters/out_glue_updater.h \
        updaters/wt_updater.h \
-       updaters/bptt_updater.h
+       updaters/bptt_updater.h \
+       wildcard_state.h \
+       fst_converter.h \
+       bloom_filter.h \
+       ngram_hash.h
 
 SRCS = utils.c \
        param.c \
@@ -52,6 +57,7 @@ SRCS = utils.c \
        layers/linear_layer.c \
        layers/sigmoid_layer.c \
        layers/tanh_layer.c \
+       layers/relu_layer.c \
        glues/glue.c \
        glues/direct_glue.c \
        glues/fc_glue.c \
@@ -69,7 +75,11 @@ SRCS = utils.c \
        updaters/glue_updaters/emb_glue_updater.c \
        updaters/glue_updaters/out_glue_updater.c \
        updaters/wt_updater.c \
-       updaters/bptt_updater.c
+       updaters/bptt_updater.c \
+       wildcard_state.c \
+       fst_converter.c \
+       bloom_filter.c \
+       ngram_hash.c
 
 BINS = bin/connlm-train \
        bin/connlm-eval \
@@ -80,7 +90,11 @@ BINS = bin/connlm-train \
        bin/connlm-output \
        bin/connlm-gen \
        bin/connlm-draw \
-#       bin/connlm-merge maybe rename to connlm-edit
+       bin/connlm-tofst \
+       bin/connlm-merge \
+       bin/connlm-wildcard-state \
+       bin/bloom-filter-build \
+       bin/bloom-filter-info
 
 #TESTS = tests/maxent-test
 TESTS = tests/utils-test \

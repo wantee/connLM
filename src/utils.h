@@ -29,6 +29,7 @@
 extern "C" {
 #endif
 
+#include <inttypes.h>
 #include <math.h>
 
 #include <stutils/st_opt.h>
@@ -37,7 +38,7 @@ extern "C" {
 
 #define exp10(a) pow(10.0, a)
 
-#define logn(a, base) ((base) == 0) ? log(a) : (log(a) / log(base))
+#define logn(loga, base) ((base) == 0) ? (loga) : ((loga) / log(base))
 #define logn10(log10a, base) ((base) == 0) ? (log10a / M_LOG10E) : (log10a / log10(base))
 
 void matXvec(real_t *dst, real_t *mat, real_t *vec,
@@ -59,6 +60,8 @@ real_t dot_product(real_t *v1, real_t *v2, int vec_size);
 void sigmoid(real_t *vec, int vec_size);
 
 void softmax(real_t *vec, int vec_size);
+
+void tanH(real_t *vec, int vec_size);
 
 void propagate_error(real_t *dst, real_t *vec, real_t *mat,
         int mat_col, int in_vec_size, real_t er_cutoff, real_t scale);
@@ -85,7 +88,7 @@ typedef enum _model_filter_t_ {
  * @param[in] mdl_filter string for the model filter.
  * @param[out] mdl_file name of model file.
  * @param[in] mdl_file_len max len of model file buffer.
- * @param[out] comp_names names of components specified, every MAX_NAME_LEN is one name. Must be freed outside this function.
+ * @param[out] comp_names names of components specified, every MAX_NAME_LEN is one name. Must be st_freed outside this function.
  * @param[out] num_comp number of components specified, -1 means all.
  * @return filter type. MF_ERR if error.
  */
@@ -114,7 +117,7 @@ typedef struct _concatable_matrix_t_ {
 #define safe_concat_mat_destroy(ptr) do {\
     if((ptr) != NULL) {\
         concat_mat_destroy(ptr);\
-        safe_free(ptr);\
+        safe_st_free(ptr);\
         (ptr) = NULL;\
     }\
     } while(0)
@@ -130,6 +133,59 @@ int concat_mat_add_row(concat_mat_t *mat, real_t *vec, int vec_size);
  * Add all rows from src to dst
  */
 int concat_mat_add_mat(concat_mat_t *dst, concat_mat_t *src);
+
+/**
+ * Storage Format for connLM model.
+ * @ingroup g_connlm
+ */
+typedef enum _connlm_format_t_ {
+    CONN_FMT_UNKNOWN             = 0x0000, /**< Unknown format. */
+    CONN_FMT_TXT                 = 0x0001, /**< Text format. */
+    CONN_FMT_BIN                 = 0x0002, /**< (flat) Binary format. */
+    CONN_FMT_ZEROS_COMPRESSED    = 0x0004, /**< zeros-compressed (binary) format. */
+    CONN_FMT_SHORT_QUANTIZATION  = 0x0008, /**< quantify to short (binary) format. */
+} connlm_fmt_t;
+
+#define connlm_fmt_is_bin(fmt) ((fmt) > 1)
+
+/**
+ * Parse the string representation to a connlm_fmt_t
+ * @ingroup g_connlm
+ * @param[in] str string to be parsed.
+ * @return the format, CONN_FMT_UNKNOWN if string not valid or any other error.
+ */
+connlm_fmt_t connlm_format_parse(const char *str);
+
+/**
+ * quantify a float number to sint16
+ * @ingroup g_connlm
+ * @param[in] r the float number.
+ * @param[in] multiple multiple to enlarge the number before quantify.
+ * @return quantified value.
+ */
+int16_t quantify_int16(real_t r, real_t multiple);
+
+/**
+ * print a real-valued vector.
+ * @ingroup g_connlm
+ * @param[out] fp file stream to be written into.
+ * @param[in] vec the vector.
+ * @param[in] size size of vector.
+ * @param[in] name name of vector, will be prepended if not NULL.
+ * @return non-zero value if any error.
+ */
+int print_vec(FILE *fp, real_t *vec, size_t size, const char *name);
+
+/**
+ * parse a real-valued vector from a string.
+ * @ingroup g_connlm
+ * @param[in] line input string.
+ * @param[out] vec the vector. Must be st_free outside.
+ * @param[out] name name of the vector, will be ignored if NULL.
+ * @param[in] name_len length of name buffer,
+ * @return size of vector, -1 if any error.
+ */
+int parse_vec(const char *line, real_t **vec, char *name, size_t name_len);
 
 #ifdef __cplusplus
 }

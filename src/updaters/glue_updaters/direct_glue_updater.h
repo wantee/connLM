@@ -73,11 +73,12 @@ int direct_glue_updater_setup(glue_updater_t *glue_updater,
  * @param[in] comp_updater the comp_updater.
  * @param[in] input_sent input sentence buffer.
  * @param[in] in_ac [unused] activation of in layer.
+ * @param[out] out_ac activation of out layer.
  * @return non-zero value if any error.
  */
 int direct_glue_updater_forward(glue_updater_t *glue_updater,
         comp_updater_t *comp_updater, sent_t *input_sent,
-        real_t *in_ac);
+        real_t *in_ac, real_t *out_ac);
 
 /**
  * Back-prop one word for a direct_glue_updater.
@@ -101,10 +102,12 @@ int direct_glue_updater_backprop(glue_updater_t *glue_updater,
  * @param[in] comp_updater the comp_updater.
  * @param[in] input_sent input sentence buffer.
  * @param[in] in_ac [unused] activation of in layer.
+ * @param[in] out_ac [unused] activation of out layer.
  * @return non-zero value if any error.
  */
 int direct_glue_updater_forward_util_out(glue_updater_t *glue_updater,
-        comp_updater_t *comp_updater, sent_t *input_sent, real_t *in_ac);
+        comp_updater_t *comp_updater, sent_t *input_sent,
+        real_t *in_ac, real_t *out_ac);
 
 /**
  * Feed-forward one node of output layer.
@@ -113,10 +116,26 @@ int direct_glue_updater_forward_util_out(glue_updater_t *glue_updater,
  * @param[in] comp_updater the comp_updater.
  * @param[in] node node of output tree.
  * @param[in] in_ac [unused] activation of in layer.
+ * @param[out] out_ac activation of out layer.
  * @return non-zero value if any error.
  */
 int direct_glue_updater_forward_out(glue_updater_t *glue_updater,
-        comp_updater_t *comp_updater, output_node_id_t node, real_t *in_ac);
+        comp_updater_t *comp_updater, output_node_id_t node,
+        real_t *in_ac, real_t *out_ac);
+
+/**
+ * Feed-forward one word of output layer.
+ * @ingroup g_glue_updater_direct
+ * @param[in] glue_updater the glue_updater.
+ * @param[in] comp_updater the comp_updater.
+ * @param[in] word the word.
+ * @param[in] in_ac [unused] activation of in layer.
+ * @param[out] out_ac activation of out layer.
+ * @return non-zero value if any error.
+ */
+int direct_glue_updater_forward_out_word(glue_updater_t *glue_updater,
+        comp_updater_t *comp_updater, int word,
+        real_t *in_ac, real_t *out_ac);
 
 #ifdef __cplusplus
 }

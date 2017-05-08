@@ -100,7 +100,8 @@ int param_load(param_t *param, st_opt_t *opt, const char *sec_name,
 
     ST_OPT_SEC_GET_DOUBLE(opt, sec_name, "MOMENTUM", d,
             (double)param->momentum,
-            "Momentum");
+            "Momentum. Note: to make the 'effective' learning rate remains "
+            "the same, the learning rate will be multiplied by (1-momentum)");
     param->momentum = (real_t)d;
 
     ST_OPT_SEC_GET_INT(opt, sec_name, "MINI_BATCH", param->mini_batch,
@@ -119,6 +120,45 @@ int param_load(param_t *param, st_opt_t *opt, const char *sec_name,
     return 0;
 ST_OPT_ERR:
     return -1;
+}
+
+bool param_equal(param_t *param1, param_t *param2)
+{
+    ST_CHECK_PARAM(param1 == NULL || param2 == NULL, false);
+
+    if (param1->learn_rate != param2->learn_rate) {
+        return false;
+    }
+
+    if (param1->l1_penalty != param2->l1_penalty) {
+        return false;
+    }
+
+    if (param1->l2_penalty != param2->l2_penalty) {
+        return false;
+    }
+
+    if (param1->l2_delay != param2->l2_delay) {
+        return false;
+    }
+
+    if (param1->momentum != param2->momentum) {
+        return false;
+    }
+
+    if (param1->mini_batch != param2->mini_batch) {
+        return false;
+    }
+
+    if (param1->sync_size != param2->sync_size) {
+        return false;
+    }
+
+    if (param1->er_cutoff != param2->er_cutoff) {
+        return false;
+    }
+
+    return true;
 }
 
 static bptt_opt_t def_bptt_opt = {
@@ -175,4 +215,19 @@ int bptt_opt_load(bptt_opt_t *bptt_opt, st_opt_t *opt, const char *sec_name,
     return 0;
 ST_OPT_ERR:
     return -1;
+}
+
+bool bptt_opt_equal(bptt_opt_t *bptt_opt1, bptt_opt_t *bptt_opt2)
+{
+    ST_CHECK_PARAM(bptt_opt1 == NULL || bptt_opt2 == NULL, false);
+
+    if (bptt_opt1->bptt != bptt_opt2->bptt) {
+        return false;
+    }
+
+    if (bptt_opt1->bptt_delay != bptt_opt2->bptt_delay) {
+        return false;
+    }
+
+    return true;
 }

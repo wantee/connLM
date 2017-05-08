@@ -47,6 +47,11 @@ typedef struct _output_updater_t_ {
 
     real_t *ac; /**< activation of output layer. */
     real_t *er; /**< error of output layer. */
+
+    double *node_probs; /**< buffer for probablity of nodes in output tree. */
+    output_tree_bfs_aux_t *bfs_aux; /**< aux for output tree BFS. */
+
+    bool *forwarded; /**< whether a node is forwarded already. For support of multi-call. */
 } out_updater_t;
 
 /**
@@ -57,7 +62,7 @@ typedef struct _output_updater_t_ {
 #define safe_out_updater_destroy(ptr) do {\
     if((ptr) != NULL) {\
         out_updater_destroy(ptr);\
-        safe_free(ptr);\
+        safe_st_free(ptr);\
         (ptr) = NULL;\
     }\
     } while(0)
@@ -142,6 +147,48 @@ int out_updater_finish(out_updater_t *out_updater);
  */
 output_node_id_t out_updater_sample(out_updater_t *out_updater,
         output_node_id_t node);
+
+/**
+ * Initialize output updater for activating all words in one step.
+ * @ingroup g_updater_output
+ * @param[in] out_updater the out_updater.
+ * @return non-zero value if any error.
+ */
+int out_updater_init_all(out_updater_t *out_updater);
+
+/**
+ * Clear buffer for all words.
+ * @ingroup g_updater_output
+ * @param[in] out_updater the out_updater.
+ * @return non-zero value if any error.
+ */
+int out_updater_clear_all(out_updater_t *out_updater);
+
+/**
+ * Activate a all words in output layer.
+ * @ingroup g_updater_output
+ * @param[in] out_updater the out_updater.
+ * @param[out] output_probs log-probs for all words.
+ * @return non-zero value if any error.
+ */
+int out_updater_activate_all(out_updater_t *out_updater,
+        double *output_probs);
+
+/**
+ * Initialize multi-call of activate.
+ * @ingroup g_updater_output
+ * @param[in] out_updater the out_updater.
+ * @return non-zero value if any error.
+ */
+int out_updater_init_multicall(out_updater_t *out_updater);
+
+/**
+ * Clear multi-call of activate.
+ * @ingroup g_updater_output
+ * @param[in] out_updater the out_updater.
+ * @return non-zero value if any error.
+ */
+int out_updater_clear_multicall(out_updater_t *out_updater);
 
 #ifdef __cplusplus
 }

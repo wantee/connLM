@@ -86,14 +86,14 @@ int linear_parse_topo(layer_t *layer, const char *line);
  * @param[out] extra extra data to be initialised.
  * @param[in] version file version of loading file.
  * @param[in] fp file stream loaded from.
- * @param[out] binary whether the file stream is in binary format.
- * @param[in] fo_info file stream used to print information, if it is not NULL.
+ * @param[out] fmt storage format.
+ * @param[out] fo_info file stream used to print information, if it is not NULL.
  * @see linear_load_body
- * @see linear_save_header, linear_save_body
+ * @see linear_save_header
  * @return non-zero value if any error.
  */
 int linear_load_header(void **extra, int version,
-        FILE *fp, bool *binary, FILE *fo_info);
+        FILE *fp, connlm_fmt_t *fmt, FILE *fo_info);
 
 /**
  * Load linear layer body.
@@ -101,36 +101,23 @@ int linear_load_header(void **extra, int version,
  * @param[in] extra extra data to be loaded.
  * @param[in] version file version of loading file.
  * @param[in] fp file stream loaded from.
- * @param[in] binary whether to use binary format.
+ * @param[in] fmt storage format.
  * @see linear_load_header
- * @see linear_save_header, linear_save_body
+ * @see linear_save_header
  * @return non-zero value if any error.
  */
-int linear_load_body(void *extra, int version, FILE *fp, bool binary);
+int linear_load_body(void *extra, int version, FILE *fp, connlm_fmt_t fmt);
 
 /**
  * Save linear layer header.
  * @ingroup g_layer_linear
  * @param[in] extra extra data to be saved.
  * @param[in] fp file stream saved to.
- * @param[in] binary whether to use binary format.
- * @see linear_save_body
+ * @param[in] fmt storage format.
  * @see linear_load_header, linear_load_body
  * @return non-zero value if any error.
  */
-int linear_save_header(void *extra, FILE *fp, bool binary);
-
-/**
- * Save linear layer body.
- * @ingroup g_layer_linear
- * @param[in] extra extra data to be saved.
- * @param[in] fp file stream saved to.
- * @param[in] binary whether to use binary format.
- * @see linear_save_header
- * @see linear_load_header, linear_load_body
- * @return non-zero value if any error.
- */
-int linear_save_body(void *extra, FILE *fp, bool binary);
+int linear_save_header(void *extra, FILE *fp, connlm_fmt_t fmt);
 
 /**
  * Activate linear layer.
@@ -152,6 +139,16 @@ int linear_activate(layer_t *layer, real_t *vec, int size);
  * @return non-zero value if any error.
  */
 int linear_deriv(layer_t *layer, real_t *er, real_t *ac, int size);
+
+/**
+ * Generate random state for linear layer.
+ * @ingroup g_layer_linear
+ * @param[in] layer the linear layer.
+ * @param[out] state the generated state.
+ * @param[in] size size of state.
+ * @return non-zero value if any error.
+ */
+int linear_random_state(layer_t *layer, real_t *state, int size);
 
 #ifdef __cplusplus
 }

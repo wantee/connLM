@@ -70,7 +70,8 @@ shu-run connlm-init --log-file="$init_log" \
 || exit 1;
 fi
 
-../utils/check_log.sh -b "$begin_date" "$init_log.wf" "$output_log.wf"
+../utils/check_log.sh -b "$begin_date" mem "$init_log" "$output_log"
+../utils/check_log.sh -b "$begin_date" warn "$init_log.wf" "$output_log.wf"
 
 end_ts=`date +%s`
 echo "$0: Elapse time: $(shu-diff-timestamp $begin_ts $end_ts)"

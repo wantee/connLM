@@ -29,12 +29,15 @@
 extern "C" {
 #endif
 
+#include <string.h>
+
 #include <stutils/st_opt.h>
 #include <stutils/st_alphabet.h>
 
 #include <connlm/config.h>
+#include "utils.h"
 
-/** @defgroup g_vocab Vocab
+/** @defgroup g_vocab Vocabulary
  * Vocabulary maps a word string to a integer id and verse vice.
  * Also containing the counts of words used for constructing output layer.
  */
@@ -44,6 +47,7 @@ extern "C" {
  * @ingroup g_vocab
  */
 typedef struct _vocab_opt_t_ {
+    char wordlist[MAX_DIR_LEN]; /**< file name of word list. */
     int max_alphabet_size; /**< max size of alphabet. */
 } vocab_opt_t;
 
@@ -86,7 +90,7 @@ vocab_t *vocab_create(vocab_opt_t *vocab_opt);
 #define safe_vocab_destroy(ptr) do {\
     if((ptr) != NULL) {\
         vocab_destroy(ptr);\
-        safe_free(ptr);\
+        safe_st_free(ptr);\
         (ptr) = NULL;\
     }\
     } while(0)
@@ -110,48 +114,48 @@ vocab_t* vocab_dup(vocab_t *v);
  * @param[out] vocab initialised.
  * @param[in] version file version of loading file.
  * @param[in] fp file stream loaded from.
- * @param[out] binary whether the file stream is in binary format.
- * @param[in] fo file stream used to print information, if it is not NULL.
+ * @param[out] fmt storage format.
+ * @param[out] fo file stream used to print information, if it is not NULL.
  * @see vocab_load_body
  * @see vocab_save_header, vocab_save_body
  * @return non-zero value if any error.
  */
 int vocab_load_header(vocab_t **vocab, int version, FILE *fp,
-        bool *binary, FILE *fo);
+        connlm_fmt_t *fmt, FILE *fo);
 /**
  * Load vocab body.
  * @ingroup g_vocab
  * @param[in] vocab vocab to be loaded.
  * @param[in] version file version of loading file.
  * @param[in] fp file stream loaded from.
- * @param[in] binary whether to use binary format.
+ * @param[in] fmt storage format.
  * @see vocab_load_header
  * @see vocab_save_header, vocab_save_body
  * @return non-zero value if any error.
  */
-int vocab_load_body(vocab_t *vocab, int version, FILE *fp, bool binary);
+int vocab_load_body(vocab_t *vocab, int version, FILE *fp, connlm_fmt_t fmt);
 /**
  * Save vocab header.
  * @ingroup g_vocab
  * @param[in] vocab vocab to be saved.
  * @param[in] fp file stream saved to.
- * @param[in] binary whether to use binary format.
+ * @param[in] fmt storage format.
  * @see vocab_save_body
  * @see vocab_load_header, vocab_load_body
  * @return non-zero value if any error.
  */
-int vocab_save_header(vocab_t *vocab, FILE *fp, bool binary);
+int vocab_save_header(vocab_t *vocab, FILE *fp, connlm_fmt_t fmt);
 /**
  * Save vocab body.
  * @ingroup g_vocab
  * @param[in] vocab vocab to be saved.
  * @param[in] fp file stream saved to.
- * @param[in] binary whether to use binary format.
+ * @param[in] fmt storage format.
  * @see vocab_save_header
  * @see vocab_load_header, vocab_load_body
  * @return non-zero value if any error.
  */
-int vocab_save_body(vocab_t *vocab, FILE *fp, bool binary);
+int vocab_save_body(vocab_t *vocab, FILE *fp, connlm_fmt_t fmt);
 
 /**
  * Parameters for learning Vocab.
@@ -217,6 +221,16 @@ int vocab_add_word(vocab_t *vocab, const char* word);
  * @return true, if equal, false otherwise.
  */
 bool vocab_equal(vocab_t *vocab1, vocab_t *vocab2);
+
+/**
+ * Save vocab to symbols table.
+ * @ingroup g_vocab
+ * @param[in] vocab the vocab.
+ * @param[in] fp file pointer to be printed out.
+ * @param[in] add_eps whether to add \<eps\>(as 0).
+ * @return non-zero value if any error.
+ */
+int vocab_save_syms(vocab_t *vocab, FILE *fp, bool add_eps);
 
 #ifdef __cplusplus
 }

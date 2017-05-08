@@ -65,7 +65,7 @@ void input_destroy(input_t *input)
     }
 
     input->input_size = 0;
-    safe_free(input->context);
+    safe_st_free(input->context);
     input->n_ctx = 0;
 }
 
@@ -81,9 +81,9 @@ input_t* input_parse_topo(const char *line, int input_size)
 
     ST_CHECK_PARAM(line == NULL, NULL);
 
-    input = (input_t *)malloc(sizeof(input_t));
+    input = (input_t *)st_malloc(sizeof(input_t));
     if (input == NULL) {
-        ST_WARNING("Failed to malloc input_t.");
+        ST_WARNING("Failed to st_malloc input_t.");
         goto ERR;
     }
     memset(input, 0, sizeof(input_t));
@@ -98,7 +98,7 @@ input_t* input_parse_topo(const char *line, int input_size)
         goto ERR;
     }
 
-    safe_free(input->context);
+    safe_st_free(input->context);
     input->n_ctx = 0;
     while (p != NULL) {
         p = get_next_token(p, token);
@@ -165,16 +165,19 @@ input_t* input_dup(input_t *in)
 
     ST_CHECK_PARAM(in == NULL, NULL);
 
-    input = (input_t *) malloc(sizeof(input_t));
+    input = (input_t *)st_malloc(sizeof(input_t));
     if (input == NULL) {
-        ST_WARNING("Falied to malloc input_t.");
+        ST_WARNING("Failed to st_malloc input_t.");
         goto ERR;
     }
     memset(input, 0, sizeof(input_t));
 
-    input->context = (st_wt_int_t *)malloc(sizeof(st_wt_int_t)*in->n_ctx);
+    input->input_size = in->input_size;
+    input->combine = in->combine;
+
+    input->context = (st_wt_int_t *)st_malloc(sizeof(st_wt_int_t)*in->n_ctx);
     if (input->context == NULL) {
-        ST_WARNING("Failed to malloc context.");
+        ST_WARNING("Failed to st_malloc context.");
         goto ERR;
     }
     for (i = 0; i < in->n_ctx; i++) {
@@ -195,9 +198,9 @@ layer_t* input_get_layer(input_t *input)
 
     ST_CHECK_PARAM(input == NULL, NULL);
 
-    layer = (layer_t *)malloc(sizeof(layer_t));
+    layer = (layer_t *)st_malloc(sizeof(layer_t));
     if (layer == NULL) {
-        ST_WARNING("Failed to malloc layer.");
+        ST_WARNING("Failed to st_malloc layer.");
         goto ERR;
     }
     memset(layer, 0, sizeof(layer_t));
@@ -208,12 +211,12 @@ layer_t* input_get_layer(input_t *input)
 
     return layer;
 ERR:
-    safe_free(layer);
+    safe_st_free(layer);
     return NULL;
 }
 
 int input_load_header(input_t **input, int version,
-        FILE *fp, bool *binary, FILE *fo_info)
+        FILE *fp, connlm_fmt_t *fmt, FILE *fo_info)
 {
     union {
         char str[4];
@@ -226,7 +229,7 @@ int input_load_header(input_t **input, int version,
     int n_ctx;
 
     ST_CHECK_PARAM((input == NULL && fo_info == NULL) || fp == NULL
-            || binary == NULL, -1);
+            || fmt == NULL, -1);
 
     if (version < 3) {
         ST_WARNING("Too old version of connlm file");
@@ -238,20 +241,28 @@ int input_load_header(input_t **input, int version,
         return -1;
     }
 
+    *fmt = CONN_FMT_UNKNOWN;
     if (strncmp(flag.str, "    ", 4) == 0) {
-        *binary = false;
+        *fmt = CONN_FMT_TXT;
     } else if (INPUT_MAGIC_NUM != flag.magic_num) {
         ST_WARNING("magic num wrong.");
         return -2;
-    } else {
-        *binary = true;
     }
 
     if (input != NULL) {
         *input = NULL;
     }
 
-    if (*binary) {
+    if (*fmt != CONN_FMT_TXT) {
+        if (version >= 12) {
+            if (fread(fmt, sizeof(connlm_fmt_t), 1, fp) != 1) {
+                ST_WARNING("Failed to read fmt.");
+                goto ERR;
+            }
+        } else {
+            *fmt = CONN_FMT_BIN;
+        }
+
         if (fread(&input_size, sizeof(int), 1, fp) != 1) {
             ST_WARNING("Failed to read input_size.");
             return -1;
@@ -295,9 +306,9 @@ int input_load_header(input_t **input, int version,
     }
 
     if (input != NULL) {
-        *input = (input_t *)malloc(sizeof(input_t));
+        *input = (input_t *)st_malloc(sizeof(input_t));
         if (*input == NULL) {
-            ST_WARNING("Failed to malloc input_t");
+            ST_WARNING("Failed to st_malloc input_t");
             goto ERR;
         }
         memset(*input, 0, sizeof(input_t));
@@ -323,7 +334,7 @@ ERR:
     return -1;
 }
 
-int input_load_body(input_t *input, int version, FILE *fp, bool binary)
+int input_load_body(input_t *input, int version, FILE *fp, connlm_fmt_t fmt)
 {
     size_t sz;
     int n;
@@ -336,17 +347,17 @@ int input_load_body(input_t *input, int version, FILE *fp, bool binary)
         return -1;
     }
 
-    safe_free(input->context);
+    safe_st_free(input->context);
 
     sz = sizeof(st_wt_int_t) * input->n_ctx;
-    input->context = (st_wt_int_t *) malloc(sz);
+    input->context = (st_wt_int_t *)st_malloc(sz);
     if (input->context == NULL) {
-        ST_WARNING("Failed to malloc context.");
+        ST_WARNING("Failed to st_malloc context.");
         goto ERR;
     }
     memset(input->context, 0, sz);
 
-    if (binary) {
+    if (connlm_fmt_is_bin(fmt)) {
         if (fread(&n, sizeof(int), 1, fp) != 1) {
             ST_WARNING("Failed to read magic num.");
             goto ERR;
@@ -383,22 +394,27 @@ int input_load_body(input_t *input, int version, FILE *fp, bool binary)
 
     return 0;
 ERR:
-    safe_free(input->context);
+    safe_st_free(input->context);
 
     return -1;
 }
 
-int input_save_header(input_t *input, FILE *fp, bool binary)
+int input_save_header(input_t *input, FILE *fp, connlm_fmt_t fmt)
 {
     int n;
 
     ST_CHECK_PARAM(fp == NULL, -1);
 
-    if (binary) {
+    if (connlm_fmt_is_bin(fmt)) {
         if (fwrite(&INPUT_MAGIC_NUM, sizeof(int), 1, fp) != 1) {
             ST_WARNING("Failed to write magic num.");
             return -1;
         }
+        if (fwrite(&fmt, sizeof(connlm_fmt_t), 1, fp) != 1) {
+            ST_WARNING("Failed to write fmt.");
+            return -1;
+        }
+
         if (input == NULL) {
             n = 0;
             if (fwrite(&n, sizeof(int), 1, fp) != 1) {
@@ -416,7 +432,8 @@ int input_save_header(input_t *input, FILE *fp, bool binary)
             ST_WARNING("Failed to write n_ctx.");
             return -1;
         }
-        if (fwrite(&input->combine, sizeof(int), 1, fp) != 1) {
+        n = (int)input->combine;
+        if (fwrite(&n, sizeof(int), 1, fp) != 1) {
             ST_WARNING("Failed to write combine.");
             return -1;
         }
@@ -443,14 +460,14 @@ int input_save_header(input_t *input, FILE *fp, bool binary)
     return 0;
 }
 
-int input_save_body(input_t *input, FILE *fp, bool binary)
+int input_save_body(input_t *input, FILE *fp, connlm_fmt_t fmt)
 {
     int n;
     int i;
 
     ST_CHECK_PARAM(fp == NULL, -1);
 
-    if (binary) {
+    if (connlm_fmt_is_bin(fmt)) {
         n = -INPUT_MAGIC_NUM;
         if (fwrite(&n, sizeof(int), 1, fp) != 1) {
             ST_WARNING("Failed to write magic num.");
@@ -503,4 +520,9 @@ char* input_draw_label(input_t *input, char *label, size_t label_len)
             combine2str(input->combine));
 
     return label;
+}
+
+void input_print_verbose_info(input_t *input, FILE *fo)
+{
+    ST_CHECK_PARAM_VOID(input == NULL || fo == NULL);
 }

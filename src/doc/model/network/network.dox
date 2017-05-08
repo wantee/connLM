@@ -24,10 +24,24 @@
 /**
  @page model_network The Network
 
+ There is a single output layer with one or more components in a connLM
+ network. The topology could be specified by a @c .topo file.
+
+ The output layer is structured as a tree, whose shape could be control by
+ constructing method and the parameters.
+
+ The internally structure of each component could be determined by the
+ @ref model_network_comp_layer "layers" and
+ @ref model_network_comp_glue "glues".
+
+ Finally, connLM toolkit also provide a command tool to draw the network. This
+ can give user a intuition of what the network looks like, and be helpful for
+ debugging topology file.
+
  <p>
+  - @subpage model_network_output
   - @subpage model_network_topo
   - @subpage model_network_comp
-  - @subpage model_network_output
   - @subpage model_network_draw
  </p>
 

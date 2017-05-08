@@ -26,8 +26,8 @@ function print_help()
   echo "     --eval-threads <number>              # default: 1, number of evaluating threads"
   echo "     --min-iters <number>                 # default: 0, minimum number of iterations"
   echo "     --keep-lr-iters <number>             # default: 0, fix learning rate for N initial iterations"
-  echo "     --start-halving-impr <value>         # default: 0.01, improvement starting halving"
-  echo "     --end-halving-impr <value>           # default: 0.001, improvement ending halving"
+  echo "     --start-halving-impr <value>         # default: 0.003, improvement starting halving"
+  echo "     --end-halving-impr <value>           # default: 0.0003, improvement ending halving"
   echo "     --halving-factor <value>             # default: 0.5, halving factor"
 }
 
@@ -36,6 +36,7 @@ help_message=`print_help`
 [ -f `dirname $0`/path.sh ] && . `dirname $0`/path.sh
 [ -f ./path.sh ] && . ./path.sh
 
+. ../utils/common_utils.sh || exit 1
 . ../utils/parse_options.sh || exit 1
 
 if [ $# -ne 3 ]; then
@@ -43,14 +44,14 @@ if [ $# -ne 3 ]; then
   exit 1;
 fi
 
-train_file=$1
-valid_file=$2
+train_file=`rxfilename "$1"`
+valid_file=`rxfilename "$2"`
 dir=$3
 mdl_init=init.clm
 
 begin_date=`date +"%Y-%m-%d %H:%M:%S"`
 begin_ts=`date +%s`
-log_dir="$dir/log"
+log_dir="$dir/log/train"
 
 if [ ! -e "$dir/.learn_rate" ]; then
   shu-run connlm-train --dry-run=true --log-file="$log_dir/conf.log" \
@@ -67,7 +68,7 @@ mdl_best="$mdl_init"
 shu-run connlm-eval --log-file="$log_dir/valid.prerun.log" \
            --config="$eval_config" \
            --num-thread=$eval_threads \
-           "$dir/$mdl_best" "$valid_file" \
+           "$dir/$mdl_best" "'$valid_file'" \
 || exit 1;
 
 loss=`../utils/get_value.sh "Entropy" $log_dir/valid.prerun.log`
@@ -93,7 +94,7 @@ for iter in $(seq -w $max_iters); do
              --num-thread=$train_threads \
              $lrs \
              --reader^random-seed=$rand_seed \
-             "$dir/$mdl_best" "$train_file" "$dir/$mdl_next" \
+             "$dir/$mdl_best" "'$train_file'" "$dir/$mdl_next" \
   || exit 1;
 
   rand_seed=$((rand_seed+1))
@@ -107,7 +108,7 @@ for iter in $(seq -w $max_iters); do
   shu-run connlm-eval --log-file="$log_dir/valid.${iter}.log" \
              --config="$eval_config" \
              --num-thread=$eval_threads \
-             "$dir/$mdl_next" "$valid_file" \
+             "$dir/$mdl_next" "'$valid_file'" \
   || exit 1;
 
   loss_new=`../utils/get_value.sh "Entropy" $log_dir/valid.${iter}.log`
@@ -164,7 +165,8 @@ else
   exit 1
 fi
 
-../utils/check_log.sh -b "$begin_date" $log_dir/*.wf
+../utils/check_log.sh -b "$begin_date" mem $log_dir/*.log
+../utils/check_log.sh -b "$begin_date" warn $log_dir/*.log.wf
 
 end_ts=`date +%s`
 echo "$0: Elapse time: $(shu-diff-timestamp $begin_ts $end_ts)"

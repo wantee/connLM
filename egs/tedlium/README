@@ -1,0 +1,8 @@
+Corpus TedliumRelease2: 266M, (14M </s>)
+Vocabulary: 152k
+Test Set: 18290 words (including 507 </s>)
+
+===========================================================================
+Corpus Cantab: 34M words, (including 1.75M </s>)
+Vocabulary: 150k
+Test Set: Same as Corpus TedliumRelease2

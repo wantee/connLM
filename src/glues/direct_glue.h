@@ -49,7 +49,7 @@ extern "C" {
  * @ingroup g_glue_direct
  */
 typedef struct _direct_glue_data_t_ {
-    int hash_sz; /**< size of hash wt. */
+    size_t hash_sz; /**< size of hash wt. */
 } direct_glue_data_t;
 
 /**
@@ -70,10 +70,11 @@ int direct_glue_init(glue_t *glue);
 /**
  * Duplicate a direct glue.
  * @ingroup g_glue_direct
- * @param[in] extra source data.
- * @return duplicated extra data, NULL if error.
+ * @param[out] dst dst glue to be duplicated.
+ * @param[in] src src glue to be duplicated.
+ * @return non-zero if any error
  */
-void* direct_glue_dup(void *extra);
+int direct_glue_dup(glue_t *dst, glue_t *src);
 
 /**
  * Parse a topo config line.
@@ -108,9 +109,34 @@ bool direct_glue_check(glue_t *glue, layer_t **layers, int n_layer,
 char* direct_glue_draw_label(glue_t *glue, char *label, size_t label_len);
 
 /**
+ * Load direct glue header and initialise a new direct_glue.
+ * @ingroup g_glue_direct
+ * @param[out] extra extra data to be initialised.
+ * @param[in] version file version of loading file.
+ * @param[in] fp file stream loaded from.
+ * @param[out] fmt storage format.
+ * @param[out] fo_info file stream used to print information, if it is not NULL.
+ * @see direct_glue_save_header
+ * @return non-zero value if any error.
+ */
+int direct_glue_load_header(void **extra, int version,
+        FILE *fp, connlm_fmt_t *fmt, FILE *fo_info);
+
+/**
+ * Save direct glue header.
+ * @ingroup g_glue_direct
+ * @param[in] extra extra data to be saved.
+ * @param[in] fp file stream saved to.
+ * @param[in] fmt storage format.
+ * @see direct_glue_load_header
+ * @return non-zero value if any error.
+ */
+int direct_glue_save_header(void *extra, FILE *fp, connlm_fmt_t fmt);
+
+/**
  * Initialise data of direct glue.
  * @ingroup g_glue_direct
- * @param[in] glue glue.
+ * @param[in] glue the direct glue.
  * @param[in] input input layer of network.
  * @param[in] layers layers of network.
  * @param[in] output output layer of network.
@@ -118,6 +144,14 @@ char* direct_glue_draw_label(glue_t *glue, char *label, size_t label_len);
  */
 int direct_glue_init_data(glue_t *glue, input_t *input,
         layer_t **layers, output_t *output);
+
+/**
+ * Print verbose info of a direct glue.
+ * @ingroup g_glue_direct
+ * @param[in] glue the direct glue.
+ * @param[in] fo file stream print info to.
+ */
+void direct_glue_print_verbose_info(glue_t *glue, FILE *fo);
 
 #ifdef __cplusplus
 }

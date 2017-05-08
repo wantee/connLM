@@ -9,6 +9,7 @@ if [ $TRAVIS_BRANCH == 'master' ] || [ $TRAVIS_BRANCH == 'develop' ]; then
     echo "Testing miscs"
     make -C src test
     (cd egs/tiny; shu-testing 1-2)
+    (cd egs/selection; shu-testing)
   fi
 
   if [ $CASE -eq 2 ]; then
@@ -34,6 +35,33 @@ if [ $TRAVIS_BRANCH == 'master' ] || [ $TRAVIS_BRANCH == 'develop' ]; then
   if [ $CASE -eq 6 ]; then
     echo "Testing crossing-RNN related cases"
     (cd egs/tiny; shu-testing 19-22);
+  fi
+
+  if [ $CASE -eq 7 ]; then
+    echo "Testing RNN+MaxEnt related cases"
+    (cd egs/tiny; shu-testing 23-26);
+  fi
+
+  if [ $CASE -eq 8 ]; then
+    echo "Testing MaxEnt~RNN related cases"
+    (cd egs/tiny; shu-testing 27-30);
+  fi
+
+  if [ $CASE -eq 9 ]; then
+    echo "Testing FST converter related cases"
+    # install numpy on travis
+    if [ "$CI" == "true" ] && [ "$TRAVIS" == "true" ]; then
+      wget http://repo.continuum.io/miniconda/Miniconda2-latest-Linux-x86_64.sh -O miniconda.sh || exit 1
+      chmod +x miniconda.sh && ./miniconda.sh -b -p /home/travis/mc || exit 1
+      export PATH=/home/travis/mc/bin:$PATH
+      conda install --yes numpy>=1.7.0 || exit 1
+    fi
+    (cd egs/tiny; shu-testing 31);
+  fi
+
+  if [ $CASE -eq 10 ]; then
+    echo "Testing convert_to_fst related cases"
+    (cd egs/tiny; shu-testing 32);
   fi
 elif [ $TRAVIS_BRANCH == 'legacy' ]; then
   if [ $CASE -eq 2 ]; then

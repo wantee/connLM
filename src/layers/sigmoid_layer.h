@@ -87,14 +87,14 @@ int sigmoid_parse_topo(layer_t *layer, const char *line);
  * @param[out] extra extra data to be initialised.
  * @param[in] version file version of loading file.
  * @param[in] fp file stream loaded from.
- * @param[out] binary whether the file stream is in binary format.
- * @param[in] fo_info file stream used to print information, if it is not NULL.
+ * @param[out] fmt storage format.
+ * @param[out] fo_info file stream used to print information, if it is not NULL.
  * @see sigmoid_load_body
- * @see sigmoid_save_header, sigmoid_save_body
+ * @see sigmoid_save_header
  * @return non-zero value if any error.
  */
 int sigmoid_load_header(void **extra, int version,
-        FILE *fp, bool *binary, FILE *fo_info);
+        FILE *fp, connlm_fmt_t *fmt, FILE *fo_info);
 
 /**
  * Load sigmoid layer body.
@@ -102,36 +102,23 @@ int sigmoid_load_header(void **extra, int version,
  * @param[in] extra extra data to be loaded.
  * @param[in] version file version of loading file.
  * @param[in] fp file stream loaded from.
- * @param[in] binary whether to use binary format.
+ * @param[in] fmt storage format.
  * @see sigmoid_load_header
- * @see sigmoid_save_header, sigmoid_save_body
+ * @see sigmoid_save_header
  * @return non-zero value if any error.
  */
-int sigmoid_load_body(void *extra, int version, FILE *fp, bool binary);
+int sigmoid_load_body(void *extra, int version, FILE *fp, connlm_fmt_t fmt);
 
 /**
  * Save sigmoid layer header.
  * @ingroup g_layer_sigmoid
  * @param[in] extra extra data to be saved.
  * @param[in] fp file stream saved to.
- * @param[in] binary whether to use binary format.
- * @see sigmoid_save_body
+ * @param[in] fmt storage format.
  * @see sigmoid_load_header, sigmoid_load_body
  * @return non-zero value if any error.
  */
-int sigmoid_save_header(void *extra, FILE *fp, bool binary);
-
-/**
- * Save sigmoid layer body.
- * @ingroup g_layer_sigmoid
- * @param[in] extra extra data to be saved.
- * @param[in] fp file stream saved to.
- * @param[in] binary whether to use binary format.
- * @see sigmoid_save_header
- * @see sigmoid_load_header, sigmoid_load_body
- * @return non-zero value if any error.
- */
-int sigmoid_save_body(void *extra, FILE *fp, bool binary);
+int sigmoid_save_header(void *extra, FILE *fp, connlm_fmt_t fmt);
 
 /**
  * Activate sigmoid layer.
@@ -153,6 +140,16 @@ int sigmoid_activate(layer_t *layer, real_t *vec, int size);
  * @return non-zero value if any error.
  */
 int sigmoid_deriv(layer_t *layer, real_t *er, real_t *ac, int size);
+
+/**
+ * Generate random state for sigmoid layer.
+ * @ingroup g_layer_sigmoid
+ * @param[in] layer the sigmoid layer.
+ * @param[out] state the generated state.
+ * @param[in] size size of state.
+ * @return non-zero value if any error.
+ */
+int sigmoid_random_state(layer_t *layer, real_t *state, int size);
 
 #ifdef __cplusplus
 }

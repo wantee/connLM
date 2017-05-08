@@ -32,6 +32,7 @@ extern "C" {
 #include <connlm/config.h>
 
 #include "glues/glue.h"
+#include "updaters/input_updater.h"
 #include "updaters/wt_updater.h"
 
 /** @defgroup g_updater_glue Updater for Glue
@@ -55,8 +56,8 @@ typedef struct _glue_updater_implementation_t_ {
             bool backprop); /**< setup glue updater.*/
 
     int (*forward)(glue_updater_t *glue_updater,
-            comp_updater_t *comp_updater,
-            sent_t *input_sent, real_t *in_ac); /**< forward glue updater.*/
+            comp_updater_t *comp_updater, sent_t *input_sent,
+            real_t *in_ac, real_t *out_ac); /**< forward glue updater.*/
 
     int (*backprop)(glue_updater_t *glue_updater,
             comp_updater_t *comp_updater,
@@ -65,12 +66,17 @@ typedef struct _glue_updater_implementation_t_ {
 
     int (*forward_util_out)(glue_updater_t *glue_updater,
             comp_updater_t *comp_updater, sent_t *input_sent,
-            real_t *in_ac); /**< forward_util_out glue updater.*/
+            real_t *in_ac, real_t *out_ac); /**< forward_util_out glue updater.*/
 
     int (*forward_out)(glue_updater_t *glue_updater,
             comp_updater_t *comp_updater, output_node_id_t node,
-            real_t *in_ac); /**< forward_out glue updater.*/
+            real_t *in_ac, real_t *out_ac); /**< forward_out glue updater.*/
 
+    int (*forward_out_word)(glue_updater_t *glue_updater,
+            comp_updater_t *comp_updater, int word,
+            real_t *in_ac, real_t *out_ac); /**< forward_out_word glue updater.*/
+
+    bool multicall; /**< whether need multi-call of forword_out_word.*/
 } glue_updater_impl_t;
 
 /**
@@ -82,6 +88,7 @@ typedef struct _glue_updater_t_ {
 
     wt_updater_t *wt_updater; /**< the wt_updater. */
     glue_updater_impl_t *impl; /**< implementation for glue. */
+    bool *forwarded; /**< whether a node is forwarded already. For support of multi-call. */
     void *extra; /**< hook to store extra data. */
 } glue_updater_t;
 
@@ -93,7 +100,7 @@ typedef struct _glue_updater_t_ {
 #define safe_glue_updater_destroy(ptr) do {\
     if((ptr) != NULL) {\
         glue_updater_destroy(ptr);\
-        safe_free(ptr);\
+        safe_st_free(ptr);\
         (ptr) = NULL;\
     }\
     } while(0)
@@ -122,6 +129,16 @@ glue_updater_t* glue_updater_create(glue_t *glue);
  */
 int glue_updater_setup(glue_updater_t *glue_updater,
         comp_updater_t *comp_updater, bool backprop);
+
+/**
+ * Setup pre-activation state of glue_updater for running.
+ * @ingroup g_updater_glue
+ * @param[in] glue_updater glue_updater.
+ * @param[in] comp_updater the comp_updater.
+ * @return non-zero value if any error.
+ */
+int glue_updater_setup_pre_ac_state(glue_updater_t *glue_updater,
+        comp_updater_t *comp_updater);
 
 /**
  * Reset a glue_updater.
@@ -185,6 +202,37 @@ int glue_updater_forward_util_out(glue_updater_t *glue_updater,
  */
 int glue_updater_forward_out(glue_updater_t *glue_updater,
         comp_updater_t *comp_updater, output_node_id_t node);
+
+/**
+ * Feed-forward one word of output layer.
+ * @ingroup g_updater_glue
+ * @param[in] glue_updater the glue_updater.
+ * @param[in] comp_updater the comp_updater.
+ * @param[in] word the word.
+ * @return non-zero value if any error.
+ */
+int glue_updater_forward_out_word(glue_updater_t *glue_updater,
+        comp_updater_t *comp_updater, int word);
+
+/**
+ * Initialize multi-call of forward_out_word.
+ * @ingroup g_updater_glue
+ * @param[in] glue_updater glue_updater.
+ * @param[in] output the output layer.
+ * @return non-zero value if any error.
+ */
+int glue_updater_init_multicall(glue_updater_t *glue_updater,
+        output_t *output);
+
+/**
+ * Clear multi-call of forward_out_word.
+ * @ingroup g_updater_glue
+ * @param[in] glue_updater glue_updater.
+ * @param[in] output the output layer.
+ * @return non-zero value if any error.
+ */
+int glue_updater_clear_multicall(glue_updater_t *glue_updater,
+        output_t *output);
 
 #ifdef __cplusplus
 }

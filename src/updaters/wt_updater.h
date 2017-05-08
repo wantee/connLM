@@ -59,6 +59,11 @@ typedef enum _weight_update_type_t_ {
  */
 typedef struct _weight_dirty_buffer_t_ {
     // WT_UT_PART
+    st_size_seg_t *parts; /**< buffer for segements. */
+    size_t cap_parts; /**< capacity of segements buffer. */
+    size_t n_parts; /**< size of segements buffer. */
+
+    // WT_UT_SEG
     st_int_seg_t *segs; /**< buffer for segements. */
     int cap_seg; /**< capacity of segements buffer. */
     int n_seg; /**< size of segements buffer. */
@@ -68,13 +73,13 @@ typedef struct _weight_dirty_buffer_t_ {
     int cap_id; /**< capacity of ids. */
     int n_id; /**< size of ids. */
 
-#ifdef _BATCH_UPDATE_
     concat_mat_t *buf_in; /**< buffer for in_ac. sized by n_id and cap_id. */
     real_t in_scale; /**< scale of in_ac. */
     concat_mat_t *buf_er; /**< buffer for out_er. sized by n_id and cap_id. */
     real_t er_scale; /**< scale of out_er. */
-    int n_buf;
-#endif
+    int n_buf; /**< number of buffers. */
+
+    real_t *buf_grad; /**< buffer for gradient. sized as weight matrix. */
 } wt_dirty_buf_t;
 
 /**
@@ -84,12 +89,16 @@ typedef struct _weight_dirty_buffer_t_ {
 typedef struct _weight_updater_t_ {
     param_t param; /**< the param. */
 
-    real_t *shared_wt; /**< shared weight maxtrix for all updaters. */
-    real_t *wt; /**< local weight maxtrix of this updater. */
-    real_t *ori_wt; /**< origin weight maxtrix for sync. */
-    real_t *delta_wt; /**< delta weight maxtrix for mini-batch. */
-    int row; /**< row of weight maxtrix. */
-    int col; /**< col of weight maxtrix. */
+    real_t *shared_wt; /**< shared weight matrix for all updaters. */
+    real_t *wt; /**< local weight matrix of this updater. */
+    real_t *ori_wt; /**< origin weight matrix for sync. */
+    real_t *delta_wt; /**< buffer for delta weight. used by momentum. */
+    real_t *shared_bias; /**< shared bias for all updaters. */
+    real_t *bias; /**< local bias of this updater. */
+    real_t *ori_bias; /**< origin bias for sync. */
+    real_t *delta_bias; /**< buffer for delta bias. used by momentum. */
+    size_t row; /**< row of weight maxtrix. */
+    size_t col; /**< col of weight maxtrix. */
     wt_update_type_t type; /**< updating type. */
 
     st_int_seg_t *segs; /**< segs for type == WT_UT_SEG. */
@@ -110,7 +119,7 @@ typedef struct _weight_updater_t_ {
 #define safe_wt_updater_destroy(ptr) do {\
     if((ptr) != NULL) {\
         wt_updater_destroy(ptr);\
-        safe_free(ptr);\
+        safe_st_free(ptr);\
         (ptr) = NULL;\
     }\
     } while(0)
@@ -125,18 +134,19 @@ void wt_updater_destroy(wt_updater_t *wt_updater);
  * Create a wt_updater.
  *
  * row > 0 && col > 0: wt is [ row x col ];
- * row > 0 && col < 0: wt is hash based 1d vector [ row ];
+ * row > 0 && col == 0: wt is hash based 1d vector [ row ];
  *
  * @ingroup g_updater_wt
  * @param[in] param the param.
  * @param[in] wt the weight maxtrix.
+ * @param[in] bias the bias vector.
  * @param[in] row row of weight maxtrix.
  * @param[in] col col of weight maxtrix.
  * @param[in] type updating type of weight maxtrix.
  * @return wt_updater on success, otherwise NULL.
  */
-wt_updater_t* wt_updater_create(param_t *param,
-        real_t *wt, int row, int col, wt_update_type_t type);
+wt_updater_t* wt_updater_create(param_t *param, real_t *wt, real_t *bias,
+        size_t row, size_t col, wt_update_type_t type);
 
 /**
  * (Re)init a wt_updater.
@@ -173,12 +183,12 @@ void wt_updater_clear(wt_updater_t *wt_updater);
  * @ingroup g_updater_wt
  *
  * For WT_UT_FULL: in is [ col x 1 ]; er is [ 1 x row ];
- * For WT_UT_PART: in is [ col x 1 ]; er is [ 1 x row_seg.n ];
+ * For WT_UT_PART: in is [ col x 1 ]; er is [ 1 x part.n ];
  * For WT_UT_SEG: in is [ col x 1 ]; er is [ 1 x updater->segs[row_seg_id].n ];
  * For WT_UT_ONE_SHOT: in is NULL; er is [ 1 x row ]; updating cols in in_idx of wt;
  *
  * @param[in] wt_updater the wt_updater.
- * @param[in] row_seg segment of wt row corresponding to error vector.
+ * @param[in] part segment of wt row corresponding to error vector.
  * @param[in] row_seg_id id of segment of wt row, used by WT_UT_SEG.
  * @param[in] er the error vector.
  * @param[in] er_scale scale of error vector.
@@ -188,7 +198,7 @@ void wt_updater_clear(wt_updater_t *wt_updater);
  * @return non-zero value if any error.
  */
 int wt_update(wt_updater_t *wt_updater,
-        st_int_seg_t* row_seg, int row_seg_id,
+        st_size_seg_t* part, int row_seg_id,
         real_t *er, real_t er_scale,
         real_t *in, real_t in_scale, st_wt_int_t *in_idx);
 

@@ -35,36 +35,56 @@
 #include "emb_glue_updater.h"
 
 int emb_glue_updater_forward(glue_updater_t *glue_updater,
-        comp_updater_t *comp_updater, sent_t *input_sent, real_t *in_ac)
+        comp_updater_t *comp_updater, sent_t *input_sent,
+        real_t* in_ac, real_t *out_ac)
 {
     glue_t *glue;
     input_t *input;
-    layer_updater_t *out_layer_updater;
     real_t *wt;
+    emb_glue_data_t *data;
 
-    int a, b, i, j, col;
+    int pos;
+    int a, b, j, col;
     real_t scale, ac;
 
     ST_CHECK_PARAM(glue_updater == NULL || comp_updater == NULL
-            || input_sent == NULL, -1);
+            || input_sent == NULL || out_ac == NULL, -1);
 
     glue = glue_updater->glue;
+    data = (emb_glue_data_t *)glue->extra;
     input = comp_updater->comp->input;
-    out_layer_updater = comp_updater->layer_updaters[glue->out_layer];
-    wt = glue_updater->wt_updater->wt;
     col = glue->wt->col;
 
     switch (input->combine) {
         case IC_SUM:
             for (a = 0; a < input->n_ctx; a++) {
-                i = input_sent->tgt_pos + input->context[a].i;
-                if (i < 0 || i >= input_sent->n_word) {
+                pos = input_sent->tgt_pos + input->context[a].i;
+                if (pos < 0 || pos >= input_sent->n_word) {
                     continue;
                 }
                 scale = input->context[a].w;
-                j = input_sent->words[i] * col;
+
+                switch (data->index_method) {
+                    case EI_WORD:
+                        wt = glue_updater->wt_updater->wt;
+                        j = input_sent->words[pos] * col;
+                        break;
+                    case EI_POS:
+                        wt = glue_updater->wt_updater->wt;
+                        if (pos >= data->num_vecs) {
+                            j = (data->num_vecs - 1) * col;
+                        } else {
+                            j = pos * col;
+                        }
+                        break;
+                    default:
+                        ST_WARNING("Unknown index method[%d].",
+                                (int)data->index_method);
+                        return -1;
+                }
+
                 for (b = 0; b < col; b++, j++) {
-                    out_layer_updater->ac[b] += scale * wt[j];
+                    out_ac[b] += scale * wt[j];
                 }
             }
             break;
@@ -72,32 +92,70 @@ int emb_glue_updater_forward(glue_updater_t *glue_updater,
             for (b = 0; b < col; b++) {
                 ac = 0;
                 for (a = 0; a < input->n_ctx; a++) {
-                    i = input_sent->tgt_pos + input->context[a].i;
-                    if (i < 0 || i >= input_sent->n_word) {
+                    pos = input_sent->tgt_pos + input->context[a].i;
+                    if (pos < 0 || pos >= input_sent->n_word) {
                         continue;
                     }
                     scale = input->context[a].w;
-                    j = input_sent->words[i] * col + b;
+
+                    switch (data->index_method) {
+                        case EI_WORD:
+                            wt = glue_updater->wt_updater->wt;
+                            j = input_sent->words[pos] * col + b;
+                            break;
+                        case EI_POS:
+                            wt = glue_updater->wt_updater->wt;
+                            if (pos >= data->num_vecs) {
+                                j = (data->num_vecs - 1) * col + b;
+                            } else {
+                                j = pos * col + b;
+                            }
+                            break;
+                        default:
+                            ST_WARNING("Unknown index method[%d].",
+                                    (int)data->index_method);
+                            return -1;
+                    }
+
                     ac += scale * wt[j];
                 }
-                out_layer_updater->ac[b] += ac / input->n_ctx;
+                out_ac[b] += ac / input->n_ctx;
             }
             break;
         case IC_CONCAT:
             for (a = 0; a < input->n_ctx; a++) {
-                i = input_sent->tgt_pos + input->context[a].i;
-                if (i < 0 || i >= input_sent->n_word) {
+                pos = input_sent->tgt_pos + input->context[a].i;
+                if (pos < 0 || pos >= input_sent->n_word) {
                     continue;
                 }
                 scale = input->context[a].w;
-                j = input_sent->words[i] * col;
+
+                switch (data->index_method) {
+                    case EI_WORD:
+                        wt = glue_updater->wt_updater->wt;
+                        j = input_sent->words[pos] * col;
+                        break;
+                    case EI_POS:
+                        wt = glue_updater->wt_updater->wt;
+                        if (pos >= data->num_vecs) {
+                            j = (data->num_vecs - 1) * col;
+                        } else {
+                            j = pos * col;
+                        }
+                        break;
+                    default:
+                        ST_WARNING("Unknown index method[%d].",
+                                (int)data->index_method);
+                        return -1;
+                }
+
                 for (b = a * col; b < (a + 1) * col; b++, j++) {
-                    out_layer_updater->ac[b] += scale * wt[j];
+                    out_ac[b] += scale * wt[j];
                 }
             }
             break;
         default:
-            ST_WARNING("Unknown combine[%d]", input->combine);
+            ST_WARNING("Unknown combine[%d]", (int)input->combine);
             return -1;
     }
 
@@ -109,25 +167,45 @@ int emb_glue_updater_backprop(glue_updater_t *glue_updater,
         real_t *in_ac, real_t *out_er, real_t *in_er)
 {
     glue_t *glue;
+    emb_glue_data_t *data;
     input_t *input;
 
     st_wt_int_t in_idx;
-    int a, i;
+    int pos;
+    int a;
 
     ST_CHECK_PARAM(glue_updater == NULL || comp_updater == NULL
             || input_sent == NULL, -1);
 
     glue = glue_updater->glue;
+    data = (emb_glue_data_t *)glue->extra;
     input = comp_updater->comp->input;
+
+    // backprop words should not contain <any>
 
     if (input->combine == IC_CONCAT) {
         for (a = 0; a < input->n_ctx; a++) {
-            i = input_sent->tgt_pos + input->context[a].i;
-            if (i < 0 || i >= input_sent->n_word) {
+            pos = input_sent->tgt_pos + input->context[a].i;
+            if (pos < 0 || pos >= input_sent->n_word) {
                 continue;
             }
             in_idx.w = input->context[a].w;
-            in_idx.i = input_sent->words[i];
+            switch (data->index_method) {
+                case EI_WORD:
+                    in_idx.i = input_sent->words[pos];
+                    break;
+                case EI_POS:
+                    if (pos >= data->num_vecs) {
+                        in_idx.i = data->num_vecs - 1;
+                    } else {
+                        in_idx.i = pos;
+                    }
+                    break;
+                default:
+                    ST_WARNING("Unknown index method[%d].",
+                            (int)data->index_method);
+                    return -1;
+            }
             if (wt_update(glue_updater->wt_updater, NULL, -1,
                         out_er + a * glue->wt->col,
                         1.0, NULL, 1.0, &in_idx) < 0) {
@@ -137,12 +215,27 @@ int emb_glue_updater_backprop(glue_updater_t *glue_updater,
         }
     } else {
         for (a = 0; a < input->n_ctx; a++) {
-            i = input_sent->tgt_pos + input->context[a].i;
-            if (i < 0 || i >= input_sent->n_word) {
+            pos = input_sent->tgt_pos + input->context[a].i;
+            if (pos < 0 || pos >= input_sent->n_word) {
                 continue;
             }
             in_idx.w = input->context[a].w;
-            in_idx.i = input_sent->words[i];
+            switch (data->index_method) {
+                case EI_WORD:
+                    in_idx.i = input_sent->words[pos];
+                    break;
+                case EI_POS:
+                    if (pos >= data->num_vecs) {
+                        in_idx.i = data->num_vecs - 1;
+                    } else {
+                        in_idx.i = pos;
+                    }
+                    break;
+                default:
+                    ST_WARNING("Unknown index method[%d].",
+                            (int)data->index_method);
+                    return -1;
+            }
             if (wt_update(glue_updater->wt_updater, NULL, -1,
                         out_er, 1.0, NULL, 1.0, &in_idx) < 0) {
                 ST_WARNING("Failed to wt_update.");

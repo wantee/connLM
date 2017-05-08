@@ -33,20 +33,25 @@
 #include "fc_glue_updater.h"
 
 int fc_glue_updater_forward(glue_updater_t *glue_updater,
-        comp_updater_t *comp_updater, sent_t *input_sent, real_t *in_ac)
+        comp_updater_t *comp_updater, sent_t* input_sent,
+        real_t *in_ac, real_t *out_ac)
 {
-    glue_t *glue;
-    layer_updater_t *out_layer_updater;
     wt_updater_t *wt_updater;
+    int i;
 
-    ST_CHECK_PARAM(glue_updater == NULL || comp_updater == NULL, -1);
+    ST_CHECK_PARAM(glue_updater == NULL || comp_updater == NULL
+            || in_ac == NULL || out_ac == NULL, -1);
 
-    glue = glue_updater->glue;
-    out_layer_updater = comp_updater->layer_updaters[glue->out_layer];
     wt_updater = glue_updater->wt_updater;
 
-    matXvec(out_layer_updater->ac, wt_updater->wt, in_ac,
+    matXvec(out_ac, wt_updater->wt, in_ac,
             wt_updater->row, wt_updater->col, 1.0);
+
+    if (wt_updater->bias != NULL) {
+        for (i = 0; i < wt_updater->row; i++) {
+            out_ac[i] += wt_updater->bias[i];
+        }
+    }
 
     return 0;
 }

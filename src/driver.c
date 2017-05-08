@@ -94,7 +94,7 @@ void driver_destroy(driver_t *driver)
     for(i = 0; i < driver->n_thr; i++) {
         safe_updater_destroy(driver->updaters[i]);
     }
-    safe_free(driver->updaters);
+    safe_st_free(driver->updaters);
     driver->n_thr = 0;
 }
 
@@ -106,9 +106,9 @@ driver_t* driver_create(connlm_t *connlm, reader_t *reader, int n_thr)
 
     ST_CHECK_PARAM(connlm == NULL || n_thr <= 0, NULL);
 
-    driver = (driver_t *)malloc(sizeof(driver_t));
+    driver = (driver_t *)st_malloc(sizeof(driver_t));
     if (driver == NULL) {
-        ST_WARNING("Failed to malloc driver.");
+        ST_WARNING("Failed to st_malloc driver.");
         return NULL;
     }
     memset(driver, 0, sizeof(driver_t));
@@ -117,9 +117,9 @@ driver_t* driver_create(connlm_t *connlm, reader_t *reader, int n_thr)
     driver->reader = reader;
     driver->n_thr = n_thr;
 
-    driver->updaters = (updater_t **)malloc(sizeof(updater_t*)*n_thr);
+    driver->updaters = (updater_t **)st_malloc(sizeof(updater_t*)*n_thr);
     if (driver->updaters == NULL) {
-        ST_WARNING("Failed to malloc updaters.");
+        ST_WARNING("Failed to st_malloc updaters.");
         goto ERR;
     }
     memset(driver->updaters, 0, sizeof(updater_t*) * n_thr);
@@ -127,7 +127,7 @@ driver_t* driver_create(connlm_t *connlm, reader_t *reader, int n_thr)
     for (i = 0; i < driver->n_thr; i++) {
         driver->updaters[i] = updater_create(connlm);
         if (driver->updaters[i] == NULL) {
-            ST_WARNING("Failed to malloc updater[%d].", i);
+            ST_WARNING("Failed to st_malloc updater[%d].", i);
             goto ERR;
         }
     }
@@ -221,7 +221,7 @@ static int driver_steps(driver_t *driver, int tid, double *logp,
         *logp += updater->logp;
         if (driver->fp_log != NULL
                     && driver->eval_opt.print_sent_prob) {
-            *logp_sent += logn10(updater->logp, driver->eval_opt.out_log_base);
+            *logp_sent += logn(updater->logp, driver->eval_opt.out_log_base);
         }
 
         if ((*logp != *logp) || (isinf(*logp))) {
@@ -233,7 +233,7 @@ static int driver_steps(driver_t *driver, int tid, double *logp,
         if (driver->fp_log != NULL
                 && (! driver->eval_opt.print_sent_prob)) {
             fprintf(driver->fp_log, "%d\t%.6f\t%s", word,
-                    logn10(updater->logp, driver->eval_opt.out_log_base),
+                    logn(updater->logp, driver->eval_opt.out_log_base),
                     vocab_get_word(updater->connlm->vocab, word));
 
             fprintf(driver->fp_log, "\n");
@@ -274,8 +274,6 @@ static void* driver_thread(void *args)
     double logp;
     double logp_sent;
 
-    bool fifo;
-
     struct timeval tts, tte;
     long ms;
 
@@ -292,15 +290,6 @@ static void* driver_thread(void *args)
 
     gettimeofday(&tts, NULL);
 
-#ifdef _DETERMINISTIC_
-    fifo = true;
-#else
-    if (driver->mode == DRIVER_EVAL && driver->n_thr == 1){
-        fifo = true;
-    } else {
-        fifo = false;
-    }
-#endif
     words = 0;
     sents = 0;
     logp = 0.0;
@@ -311,7 +300,7 @@ static void* driver_thread(void *args)
         }
 
         gettimeofday(&tts_wait, NULL);
-        egs = reader_hold_egs(reader, fifo);
+        egs = reader_hold_egs(reader);
         gettimeofday(&tte_wait, NULL);
 
         if (egs == NULL) { // finish
@@ -351,8 +340,8 @@ static void* driver_thread(void *args)
                 "LogP: %f, Entropy: %f, PPL: %f, "
                 "Time(cpu/wait): %.3fs(%.2f%%)/%.3fs(%.2f%%):%.3f",
                 tid, words, sents, words / ((double) ms / 1000.0),
-                logp, -logp / log10(2) / words,
-                exp10(-logp / (double) words),
+                logp, -logp / log(2) / words,
+                exp(-logp / (double) words),
                 (ms - ms_wait) / 1000.0, (ms - ms_wait) / (ms / 100.0),
                 ms_wait / 1000.0, ms_wait / (ms / 100.0),
                 TIMEDIFF(tts_wait, tte_wait) / 1000.0);
@@ -401,24 +390,24 @@ static int driver_do_run(driver_t *driver)
     gettimeofday(&tts, NULL);
 
     n_thr = driver->n_thr;
-    pts = (pthread_t *)malloc(n_thr * sizeof(pthread_t));
+    pts = (pthread_t *)st_malloc(n_thr * sizeof(pthread_t));
     if (pts == NULL) {
-        ST_WARNING("Failed to malloc pts");
+        ST_WARNING("Failed to st_malloc pts");
         goto ERR;
     }
 
-    thrs = (driver_thr_t *)malloc(sizeof(driver_thr_t) * n_thr);
+    thrs = (driver_thr_t *)st_malloc(sizeof(driver_thr_t) * n_thr);
     if (thrs == NULL) {
-        ST_WARNING("Failed to malloc thrs");
+        ST_WARNING("Failed to st_malloc thrs");
         goto ERR;
     }
     memset(thrs, 0, sizeof(driver_thr_t) * n_thr);
 
     driver->err = 0;
 
-    stats = (thr_stat_t *)malloc(sizeof(thr_stat_t) * n_thr);
+    stats = (thr_stat_t *)st_malloc(sizeof(thr_stat_t) * n_thr);
     if (stats == NULL) {
-        ST_WARNING("Failed to malloc stats");
+        ST_WARNING("Failed to st_malloc stats");
         goto ERR;
     }
     memset(stats, 0, sizeof(thr_stat_t) * n_thr);
@@ -434,14 +423,14 @@ static int driver_do_run(driver_t *driver)
         thrs[i].stat = stats + i;
         if (pthread_create(pts + i, NULL, driver_thread,
                     (void *)(thrs + i)) != 0) {
-            ST_WARNING("Falied to pthread_create driver_thread.");
+            ST_WARNING("Failed to pthread_create driver_thread.");
             goto ERR;
         }
     }
 
     for (i = 0; i < n_thr; i++) {
         if (pthread_join(pts[i], NULL) != 0) {
-            ST_WARNING("Falied to pthread_join.");
+            ST_WARNING("Failed to pthread_join.");
             goto ERR;
         }
     }
@@ -481,8 +470,8 @@ static int driver_do_run(driver_t *driver)
                 ", OOVs: " COUNT_FMT ", words/sec: %.1f", words, sents,
                 driver->reader->oovs, words / ((double) ms / 1000.0));
         ST_NOTICE("LogP: %f", logp);
-        ST_NOTICE("Entropy: %f", -logp / log10(2) / words);
-        ST_NOTICE("PPL: %f", exp10(-logp / (double) words));
+        ST_NOTICE("Entropy: %f", -logp / log(2) / words);
+        ST_NOTICE("PPL: %f", exp(-logp / (double) words));
     }
 
     if (driver->mode == DRIVER_EVAL) {
@@ -493,23 +482,23 @@ static int driver_do_run(driver_t *driver)
                     words, driver->reader->oovs);
             fprintf(driver->fp_log, "LogP: %f\n", logp);
             fprintf(driver->fp_log, "Entropy: %f\n",
-                    -logp / log10(2) / words);
+                    -logp / log(2) / words);
             fprintf(driver->fp_log, "PPL: %f\n",
-                    exp10(-logp / (double) words));
+                    exp(-logp / (double) words));
         }
     }
 
-    safe_free(pts);
-    safe_free(thrs);
-    safe_free(stats);
+    safe_st_free(pts);
+    safe_st_free(thrs);
+    safe_st_free(stats);
 
     return 0;
 
 ERR:
 
-    safe_free(pts);
-    safe_free(thrs);
-    safe_free(stats);
+    safe_st_free(pts);
+    safe_st_free(thrs);
+    safe_st_free(stats);
     return -1;
 }
 
@@ -554,7 +543,8 @@ static int driver_gen(driver_t *driver)
     while(true) {
         first = true;
         if (text_fp != NULL && !feof(text_fp)) {
-            if (connlm_egs_read(&egs, NULL, 1, text_fp, vocab, NULL) < 0) {
+            if (connlm_egs_read(&egs, NULL, 1, text_fp, vocab,
+                        NULL, true) < 0) {
                 ST_WARNING("Failed to connlm_egs_read.");
                 goto ERR;
             }
@@ -579,7 +569,7 @@ static int driver_gen(driver_t *driver)
                     word = updater_step(updater);
                     if (word < 0) {
                         ST_WARNING("Failed to updater_step.");
-                        return -1;
+                        goto ERR;
                     }
                     first = false;
                 }
@@ -630,10 +620,12 @@ static int driver_gen(driver_t *driver)
             ", words/sec: %.1f", n_word, n_sent,
             n_word / ((double) ms / 1000));
 
+    connlm_egs_destroy(&egs);
     safe_fclose(text_fp);
     return 0;
 
 ERR:
+    connlm_egs_destroy(&egs);
     safe_fclose(text_fp);
     return -1;
 }

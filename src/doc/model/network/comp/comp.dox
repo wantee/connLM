@@ -28,6 +28,7 @@
 
   @section model_network_comp_topo The Topology Configurations
 
+  - @subpage model_network_comp_input
   - @subpage model_network_comp_layer
   - @subpage model_network_comp_glue
   - @subpage model_network_comp_weight

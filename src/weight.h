@@ -30,6 +30,7 @@ extern "C" {
 #endif
 
 #include <connlm/config.h>
+#include "utils.h"
 
 /** @defgroup g_weight NNet weight
  * Weight for NNet, with various types.
@@ -44,7 +45,9 @@ typedef enum _weight_init_type_t {
     WT_INIT_UNDEFINED = 0, /**< undefined. */
     WT_INIT_CONST, /**< constant(zero). */
     WT_INIT_UNIFORM, /**< uniform distribution. */
-    WT_INIT_GAUSS, /**< gaussian distribution. */
+    WT_INIT_NORM, /**< normal distribution. */
+    WT_INIT_TRUNC_NORM, /**< truncated normal distribution. */
+    WT_INIT_IDENTITY, /**< indentity matrix. */
 } wt_init_type_t;
 
 /**
@@ -53,11 +56,13 @@ typedef enum _weight_init_type_t {
  */
 typedef struct _weight_t_ {
     real_t *mat; /**< weight matrix. */
-    int row; /**< number row of weight matrix. */
-    int col; /**< number column of weight matrix. */
+    real_t *bias; /**< bias vector. */
+    size_t row; /**< number row of weight matrix. */
+    size_t col; /**< number column of weight matrix. */
 
     wt_init_type_t init_type; /**< weight init type. */
     real_t init_param; /**< parameter of init type. */
+    real_t init_bias; /**< initial value of bias, non-bias if it is inf. */
 } weight_t;
 
 /**
@@ -68,7 +73,7 @@ typedef struct _weight_t_ {
 #define safe_wt_destroy(ptr) do {\
     if((ptr) != NULL) {\
         wt_destroy(ptr);\
-        safe_free(ptr);\
+        safe_st_free(ptr);\
         (ptr) = NULL;\
     }\
     } while(0)
@@ -103,14 +108,14 @@ int wt_parse_topo(weight_t *wt, char *line, size_t line_len);
  * @param[out] wt wt initialised.
  * @param[in] version file version of loading file.
  * @param[in] fp file stream loaded from.
- * @param[out] binary whether the file stream is in binary format.
- * @param[in] fo_info file stream used to print information, if it is not NULL.
+ * @param[out] fmt storage format.
+ * @param[out] fo_info file stream used to print information, if it is not NULL.
  * @see wt_load_body
  * @see wt_save_header, wt_save_body
  * @return non-zero value if any error.
  */
 int wt_load_header(weight_t **wt, int version,
-        FILE *fp, bool *binary, FILE *fo_info);
+        FILE *fp, connlm_fmt_t *fmt, FILE *fo_info);
 
 /**
  * Load wt body.
@@ -118,36 +123,37 @@ int wt_load_header(weight_t **wt, int version,
  * @param[in] wt wt to be loaded.
  * @param[in] version file version of loading file.
  * @param[in] fp file stream loaded from.
- * @param[in] binary whether to use binary format.
+ * @param[in] fmt storage format.
  * @see wt_load_header
  * @see wt_save_header, wt_save_body
  * @return non-zero value if any error.
  */
-int wt_load_body(weight_t *wt, int version, FILE *fp, bool binary);
+int wt_load_body(weight_t *wt, int version, FILE *fp, connlm_fmt_t fmt);
 
 /**
  * Save wt header.
  * @ingroup g_weight
  * @param[in] wt wt to be saved.
  * @param[in] fp file stream saved to.
- * @param[in] binary whether to use binary format.
+ * @param[in] fmt storage format.
  * @see wt_save_body
  * @see wt_load_header, wt_load_body
  * @return non-zero value if any error.
  */
-int wt_save_header(weight_t *wt, FILE *fp, bool binary);
+int wt_save_header(weight_t *wt, FILE *fp, connlm_fmt_t fmt);
 
 /**
  * Save wt body.
  * @ingroup g_weight
  * @param[in] wt wt to be saved.
  * @param[in] fp file stream saved to.
- * @param[in] binary whether to use binary format.
+ * @param[in] fmt storage format.
+ * @param[in] name name of the weight.
  * @see wt_save_header
  * @see wt_load_header, wt_load_body
  * @return non-zero value if any error.
  */
-int wt_save_body(weight_t *wt, FILE *fp, bool binary);
+int wt_save_body(weight_t *wt, FILE *fp, connlm_fmt_t fmt, char *name);
 
 /**
  * Initialise weight.
@@ -157,7 +163,15 @@ int wt_save_body(weight_t *wt, FILE *fp, bool binary);
  * @param[in] col num of column in matrix.
  * @return non-zero value if any error.
  */
-int wt_init(weight_t *wt, int row, int col);
+int wt_init(weight_t *wt, size_t row, size_t col);
+
+/**
+ * Do sanity check on a weight and print warnings.
+ * @ingroup g_weight
+ * @param[in] wt the weight
+ * @param[in] name name of the weight
+ */
+void wt_sanity_check(weight_t *wt, const char *name);
 
 #ifdef __cplusplus
 }

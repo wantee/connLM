@@ -70,7 +70,7 @@ typedef struct _component_updater_t_ {
 #define safe_comp_updater_destroy(ptr) do {\
     if((ptr) != NULL) {\
         comp_updater_destroy(ptr);\
-        safe_free(ptr);\
+        safe_st_free(ptr);\
         (ptr) = NULL;\
     }\
     } while(0)
@@ -173,6 +173,107 @@ int comp_updater_forward_util_out(comp_updater_t *comp_updater,
  */
 int comp_updater_forward_out(comp_updater_t *comp_updater,
         output_node_id_t node);
+
+/**
+ * Feed-forward one word of output layer.
+ * @ingroup g_updater_comp
+ * @param[in] comp_updater the comp_updater.
+ * @param[in] word the word.
+ * @return non-zero value if any error.
+ */
+int comp_updater_forward_out_word(comp_updater_t *comp_updater, int word);
+
+/**
+ * Get the size of state in comp_updater.
+ * @ingroup g_updater_comp
+ * @param[in] comp_updater the comp_updater.
+ * @return state size of comp_updater, -1 if any error.
+ */
+int comp_updater_state_size(comp_updater_t *comp_updater);
+
+/**
+ * Dump the state of comp_updater.
+ * @ingroup g_updater_comp
+ * @param[in] comp_updater the comp_updater.
+ * @param[out] state pointer to store the dumped state. Size of state
+ *             must be larger than or equal to the state_size returned
+ *             by comp_updater_state_size.
+ * @return non-zero value if any error.
+ */
+int comp_updater_dump_state(comp_updater_t *comp_updater, real_t *state);
+
+/**
+ * Dump the pre-activation state of comp_updater.
+ * @ingroup g_updater_comp
+ * @param[in] comp_updater the comp_updater.
+ * @param[out] state pointer to store the dumped state. Size of state
+ *             must be larger than or equal to the state_size returned
+ *             by comp_updater_state_size.
+ * @return non-zero value if any error.
+ */
+int comp_updater_dump_pre_ac_state(comp_updater_t *comp_updater,
+        real_t *state);
+
+/**
+ * Feed the state of comp_updater.
+ * @ingroup g_updater_comp
+ * @param[in] comp_updater the comp_updater.
+ * @param[in] state pointer to values to be fed into state. Size of state
+ *             must be larger than or equal to the state_size returned
+ *             by comp_updater_state_size.
+ * @return non-zero value if any error.
+ */
+int comp_updater_feed_state(comp_updater_t *comp_updater, real_t *state);
+
+/**
+ * Generate random state of comp_updater.
+ * @ingroup g_updater_comp
+ * @param[in] comp_updater the comp_updater.
+ * @param[out] state pointer to generated state. Size of state
+ *             must be larger than or equal to the state_size returned
+ *             by comp_updater_state_size.
+ * @return non-zero value if any error.
+ */
+int comp_updater_random_state(comp_updater_t *comp_updater, real_t *state);
+
+/**
+ * Initialize multi-call of forward_out_word.
+ * @ingroup g_updater_comp
+ * @param[in] comp_updater the comp_updater.
+ * @param[in] output the output layer.
+ * @return non-zero value if any error.
+ */
+int comp_updater_init_multicall(comp_updater_t *comp_updater,
+        output_t *output);
+
+/**
+ * Clear multi-call of forward_out_word.
+ * @ingroup g_updater_comp
+ * @param[in] comp_updater the comp_updater.
+ * @param[in] output the output layer.
+ * @return non-zero value if any error.
+ */
+int comp_updater_clear_multicall(comp_updater_t *comp_updater,
+        output_t *output);
+
+/**
+ * Activate state with comp_updater.
+ * @ingroup g_updater_comp
+ * @param[in] comp_updater the comp_updater with activatation functions.
+ * @param[out] state pointer to activated state. Size of state
+ *             must be larger than or equal to the state_size returned
+ *             by comp_updater_state_size.
+ * @return non-zero value if any error.
+ */
+int comp_updater_activate_state(comp_updater_t *comp_updater, real_t *state);
+
+/**
+ * Setup pre-activation state for comp_updater.
+ * @ingroup g_updater_comp
+ * @param[in] comp_updater comp_updater.
+ * @return non-zero value if any error.
+ */
+int comp_updater_setup_pre_ac_state(comp_updater_t *comp_updater);
 
 #ifdef __cplusplus
 }

@@ -37,7 +37,6 @@ function check_and_download () {
       return 0
     fi
   fi
-  return 0
 
   echo "Downloading file '$fname' into '$dst_dir'..."
   expect_size="${sizes["$fname"]}"

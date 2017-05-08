@@ -36,22 +36,38 @@
 #include "out_glue_updater.h"
 
 static int out_glue_updater_forward_node(glue_updater_t *glue_updater,
-        output_t *output, output_node_id_t child_s, output_node_id_t child_e,
-        real_t *in_ac, real_t *out_ac, real_t scale)
+        output_t *output, output_node_id_t node,
+        output_node_id_t child_s, output_node_id_t child_e,
+        real_t *in_ac, real_t *out_ac, real_t scale, bool *forwarded)
 {
     real_t *wt;
+    real_t *bias;
     int layer_size;
+    output_node_id_t ch;
 
     ST_CHECK_PARAM(glue_updater == NULL, -1);
 
     wt = glue_updater->wt_updater->wt;
+    bias = glue_updater->wt_updater->bias;
     layer_size = glue_updater->wt_updater->col;
+
+    if (forwarded != NULL) {
+        if (forwarded[node]) {
+            return 0;
+        }
+        forwarded[node] = true;
+    }
 
     if (output->norm == ON_SOFTMAX) {
         if (child_e - child_s - 1 > 0) {
             matXvec(out_ac + child_s,
                     wt + output_param_idx(output, child_s) * layer_size,
                     in_ac, child_e - child_s - 1, layer_size, scale);
+        }
+        if (bias != NULL) {
+            for (ch = child_s; ch < child_e - 1; ch++) {
+                out_ac[ch] += scale * bias[output_param_idx(output, ch)];
+            }
         }
     }
 
@@ -66,6 +82,7 @@ typedef struct _out_walker_args_t_ {
     real_t *out_ac;
     real_t *out_er;
     real_t *in_er;
+    bool *forwarded;
 } out_walker_args_t;
 
 static int out_forward_walker(output_t *output, output_node_id_t node,
@@ -77,8 +94,9 @@ static int out_forward_walker(output_t *output, output_node_id_t node,
     ow_args = (out_walker_args_t *) args;
 
     if (out_glue_updater_forward_node(ow_args->glue_updater,
-                ow_args->output, child_s, child_e,
-                ow_args->in_ac, ow_args->out_ac, ow_args->scale) < 0) {
+                ow_args->output, node, child_s, child_e,
+                ow_args->in_ac, ow_args->out_ac, ow_args->scale,
+                ow_args->forwarded) < 0) {
         ST_WARNING("Failed to out_glue_updater_forward_node.");
         return -1;
     }
@@ -88,18 +106,20 @@ static int out_forward_walker(output_t *output, output_node_id_t node,
 }
 
 int out_glue_updater_forward(glue_updater_t *glue_updater,
-        comp_updater_t *comp_updater, sent_t *input_sent, real_t *in_ac)
+        comp_updater_t *comp_updater, sent_t *input_sent,
+        real_t *in_ac, real_t *out_ac)
 {
     out_walker_args_t ow_args;
 
     ST_CHECK_PARAM(glue_updater == NULL || comp_updater == NULL
-            || input_sent == NULL, -1);
+            || input_sent == NULL || out_ac == NULL, -1);
 
     ow_args.glue_updater = glue_updater;
     ow_args.output = comp_updater->out_updater->output;
     ow_args.in_ac = in_ac;
-    ow_args.out_ac = comp_updater->out_updater->ac;
+    ow_args.out_ac = out_ac;
     ow_args.scale = comp_updater->comp->comp_scale;
+    ow_args.forwarded = NULL;
     if (output_walk_through_path(comp_updater->out_updater->output,
                 input_sent->words[input_sent->tgt_pos],
                 out_forward_walker, (void *)&ow_args) < 0) {
@@ -172,7 +192,7 @@ int out_glue_updater_backprop(glue_updater_t *glue_updater,
             goto ERR;
         }
 
-        safe_free(segs);
+        safe_st_free(segs);
     }
 
     ow_args.glue_updater = glue_updater;
@@ -190,19 +210,20 @@ int out_glue_updater_backprop(glue_updater_t *glue_updater,
     return 0;
 
 ERR:
-    safe_free(segs);
+    safe_st_free(segs);
     return -1;
 }
 
 int out_glue_updater_forward_out(glue_updater_t *glue_updater,
-        comp_updater_t *comp_updater, output_node_id_t node, real_t *in_ac)
+        comp_updater_t *comp_updater, output_node_id_t node,
+        real_t *in_ac, real_t *out_ac)
 {
     output_t *output;
 
     output_node_id_t child_s, child_e;
 
     ST_CHECK_PARAM(glue_updater == NULL || comp_updater == NULL
-            || node == OUTPUT_NODE_NONE, -1);
+            || node == OUTPUT_NODE_NONE || out_ac == NULL, -1);
 
     output = comp_updater->out_updater->output;
 
@@ -213,10 +234,34 @@ int out_glue_updater_forward_out(glue_updater_t *glue_updater,
         return 0;
     }
 
-    if (out_glue_updater_forward_node(glue_updater, output,
-                child_s, child_e, in_ac, comp_updater->out_updater->ac,
-                comp_updater->comp->comp_scale) < 0) {
+    if (out_glue_updater_forward_node(glue_updater, output, node,
+                child_s, child_e, in_ac, out_ac,
+                comp_updater->comp->comp_scale, NULL) < 0) {
         ST_WARNING("Failed to out_glue_updater_forward_node.");
+        return -1;
+    }
+
+    return 0;
+}
+
+int out_glue_updater_forward_out_word(glue_updater_t *glue_updater,
+        comp_updater_t *comp_updater, int word,
+        real_t *in_ac, real_t *out_ac)
+{
+    out_walker_args_t ow_args;
+
+    ST_CHECK_PARAM(glue_updater == NULL || comp_updater == NULL
+            || word < 0 || out_ac == NULL, -1);
+
+    ow_args.glue_updater = glue_updater;
+    ow_args.output = comp_updater->out_updater->output;
+    ow_args.in_ac = in_ac;
+    ow_args.out_ac = out_ac;
+    ow_args.scale = comp_updater->comp->comp_scale;
+    ow_args.forwarded = glue_updater->forwarded;
+    if (output_walk_through_path(comp_updater->out_updater->output,
+                word, out_forward_walker, (void *)&ow_args) < 0) {
+        ST_WARNING("Failed to output_walk_through_path.");
         return -1;
     }
 

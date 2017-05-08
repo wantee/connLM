@@ -74,7 +74,7 @@ typedef struct _driver_gen_opt_t_ {
 /**
  * Load eval option.
  * @ingroup g_driver
- * @param[out] eval_opt options loaded.
+ * @param[out] eval_opt options to be loaded.
  * @param[in] opt runtime options passed by caller.
  * @param[in] sec_name section name of runtime options to be loaded.
  * @return non-zero value if any error.
@@ -85,7 +85,7 @@ int driver_load_eval_opt(driver_eval_opt_t *eval_opt,
 /**
  * Load gen option.
  * @ingroup g_driver
- * @param[out] gen_opt options loaded.
+ * @param[out] gen_opt options to be loaded.
  * @param[in] opt runtime options passed by caller.
  * @param[in] sec_name section name of runtime options to be loaded.
  * @return non-zero value if any error.
@@ -124,7 +124,7 @@ typedef struct _driver_t_ {
 #define safe_driver_destroy(ptr) do {\
     if((ptr) != NULL) {\
         driver_destroy(ptr);\
-        safe_free(ptr);\
+        safe_st_free(ptr);\
         (ptr) = NULL;\
     }\
     } while(0)

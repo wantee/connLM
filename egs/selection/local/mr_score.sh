@@ -43,7 +43,7 @@ begin_ts=`date +%s`
 libs="libconnlm.so libstutils.so libmkl*"
 opts=""
 for lib in $libs; do
-  f=$(ldd `which connlm-test `| awk -F'>' '{print $NF}' | awk '{print $1}' \
+  f=$(ldd `which connlm-eval `| awk -F'>' '{print $NF}' | awk '{print $1}' \
       | grep $lib)
   opts+="-file $f "
 done
@@ -56,7 +56,7 @@ hadoop jar $HADOOP_HOME/contrib/streaming/hadoop-streaming*.jar \
            -output "$score_dir" \
            -mapper "./mr_score_mapper.sh `basename $inmdl` `basename $genmdl`" \
            -file "$(cd `dirname $0`; pwd)/mr_score_mapper.sh" \
-           -file `which connlm-test` \
+           -file `which connlm-eval` \
            -file $inmdl -file $genmdl $opts > "$log_dir/mr_score.log" 2>&1 \
            || exit 1
 

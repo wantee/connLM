@@ -41,6 +41,7 @@ extern "C" {
  * @ingroup g_updater_input
  */
 typedef struct _input_updater_t_ {
+    int bos_id; /**< word id of SENT_START. */
     int ctx_leftmost; /**< leftmost for all input contexts. */
     int ctx_rightmost; /**< rightmost for all input contexts. */
 
@@ -61,7 +62,7 @@ typedef struct _input_updater_t_ {
 #define safe_input_updater_destroy(ptr) do {\
     if((ptr) != NULL) {\
         input_updater_destroy(ptr);\
-        safe_free(ptr);\
+        safe_st_free(ptr);\
         (ptr) = NULL;\
     }\
     } while(0)
@@ -75,9 +76,10 @@ void input_updater_destroy(input_updater_t *input_updater);
 /**
  * Create a input_updater.
  * @ingroup g_updater_input
+ * @param[in] bos_id word id of SENT_START.
  * @return input_updater on success, otherwise NULL.
  */
-input_updater_t* input_updater_create();
+input_updater_t* input_updater_create(int bos_id);
 
 /**
  * Setup input_updater for running.
@@ -102,6 +104,14 @@ typedef struct _sentence_t_ {
 } sent_t;
 
 /**
+ * Clear input_updater.
+ * @ingroup g_updater_input
+ * @param[in] input_updater input_updater.
+ * @return non-zero value if any error.
+ */
+int input_updater_clear(input_updater_t *input_updater);
+
+/**
  * Feed input words to a input_updater.
  * @ingroup g_updater_input
  * @param[in] input_updater input_updater.
@@ -114,15 +124,6 @@ int input_updater_feed(input_updater_t *input_updater, int *words, int n_word,
         sent_t *sent);
 
 /**
- * Initialise a sentence buffer for moving.
- * @ingroup g_updater_input
- * @param[in] input_updater input_updater.
- * @param[out] sent sentence buffer.
- * @return non-zero value if any error.
- */
-int input_updater_init(input_updater_t *input_updater, sent_t *sent);
-
-/**
  * Move forward a input word and return the sentence buffer.
  * @ingroup g_updater_input
  * @param[in] input_updater input_updater.
@@ -130,6 +131,15 @@ int input_updater_init(input_updater_t *input_updater, sent_t *sent);
  * @return non-zero value if any error.
  */
 int input_updater_move(input_updater_t *input_updater, sent_t *sent);
+
+/**
+ * Move forward input word to the end and return the sentence buffer.
+ * @ingroup g_updater_input
+ * @param[in] input_updater input_updater.
+ * @param[out] sent sentence buffer.
+ * @return non-zero value if any error.
+ */
+int input_updater_move_to_end(input_updater_t *input_updater, sent_t *sent);
 
 #ifdef __cplusplus
 }

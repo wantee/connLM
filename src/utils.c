@@ -30,6 +30,7 @@
 #include <stutils/st_log.h>
 #include <stutils/st_utils.h>
 #include <stutils/st_mem.h>
+#include <stutils/st_string.h>
 
 #include "utils.h"
 #include "fastexp.h"
@@ -279,6 +280,22 @@ void softmax(real_t *vec, int vec_size)
     }
 }
 
+void tanH(real_t *vec, int vec_size)
+{
+    int a;
+
+    for (a = 0; a < vec_size; a++) {
+        if (vec[a] > 25) {
+            vec[a] = 25;
+        }
+        if (vec[a] < -25) {
+            vec[a] = -25;
+        }
+
+        vec[a] = fastertanh(vec[a]);
+    }
+}
+
 void propagate_error(real_t *dst, real_t *vec, real_t *mat,
         int mat_col, int in_vec_size, real_t er_cutoff, real_t scale)
 {
@@ -333,6 +350,9 @@ model_filter_t parse_model_filter(const char *mdl_filter,
     ST_CHECK_PARAM(mdl_filter == NULL || mdl_file == NULL ||
             comp_names == NULL || num_comp == NULL, MF_ERR);
 
+    *comp_names = NULL;
+    *num_comp = 0;
+
     if (strncmp(mdl_filter, "mdl,", 4) != 0) {
         ptr_fname = (char *)mdl_filter;
         mf = MF_ALL;
@@ -347,8 +367,6 @@ model_filter_t parse_model_filter(const char *mdl_filter,
         goto RET;
     }
 
-    *comp_names = NULL;
-    *num_comp = 0;
     if (*ptr == '-') {
         mf = MF_ALL;
         add = false;
@@ -402,10 +420,10 @@ model_filter_t parse_model_filter(const char *mdl_filter,
                         if (*num_comp == -1) { // already set all components with single 'c'
                             break;
                         }
-                        *comp_names = realloc(*comp_names,
+                        *comp_names = st_realloc(*comp_names,
                                 MAX_NAME_LEN*(*num_comp + 1));
                         if (*comp_names == NULL) {
-                            ST_WARNING("Failed to realloc comp_names");
+                            ST_WARNING("Failed to st_realloc comp_names");
                             goto ERR;
                         }
 
@@ -443,7 +461,7 @@ RET:
     return mf;
 
 ERR:
-    safe_free(*comp_names);
+    safe_st_free(*comp_names);
     *num_comp = 0;
     mdl_file[0] = '\0';
     return MF_ERR;
@@ -513,7 +531,7 @@ int concat_mat_add_row(concat_mat_t *mat, real_t *vec, int vec_size)
         sz = mat->cap_row * mat->col * sizeof(real_t);
         mat->val = (real_t *)st_aligned_realloc(mat->val, sz, ALIGN_SIZE);
         if (mat->val == NULL) {
-            ST_WARNING("Failed to realloc val");
+            ST_WARNING("Failed to st_realloc val");
             return -1;
         }
     }
@@ -540,7 +558,7 @@ int concat_mat_add_mat(concat_mat_t *dst, concat_mat_t *src)
         sz = dst->cap_row * dst->col * sizeof(real_t);
         dst->val = (real_t *)st_aligned_realloc(dst->val, sz, ALIGN_SIZE);
         if (dst->val == NULL) {
-            ST_WARNING("Failed to realloc val");
+            ST_WARNING("Failed to st_realloc val");
             return -1;
         }
     }
@@ -550,4 +568,195 @@ int concat_mat_add_mat(concat_mat_t *dst, concat_mat_t *src)
     dst->n_row += src->n_row;
 
     return 0;
+}
+
+connlm_fmt_t connlm_format_parse(const char *str)
+{
+    connlm_fmt_t fmt;
+
+    char buf[MAX_LINE_LEN];
+    int i;
+    const char *p;
+
+    ST_CHECK_PARAM(str == NULL, CONN_FMT_UNKNOWN);
+
+    fmt = CONN_FMT_UNKNOWN;
+    p = str;
+    while (*p != '\0') {
+        i = 0;
+        while (*p != '|' && *p != '\0') {
+            if (i >= MAX_LINE_LEN - 1) {
+                ST_WARNING("Too long name");
+                return CONN_FMT_UNKNOWN;
+            }
+            buf[i] = *p;
+            ++i;
+            ++p;
+        }
+        buf[i] = '\0';
+        trim(buf);
+
+        if (strcasecmp(buf, "Text") == 0
+                || strcasecmp(buf, "Txt") == 0
+                || strcasecmp(buf, "T") == 0) {
+            if (connlm_fmt_is_bin(fmt)) {
+                ST_WARNING("Text and Binary format can't exist simultaneously");
+                return CONN_FMT_UNKNOWN;
+            }
+            fmt = CONN_FMT_TXT;
+            continue;
+        }
+
+        if (fmt == CONN_FMT_TXT) {
+            ST_WARNING("Text and Binary format can't exist simultaneously");
+            return CONN_FMT_UNKNOWN;
+        }
+
+        if (strcasecmp(buf, "Binary") == 0
+                || strcasecmp(buf, "Bin") == 0
+                || strcasecmp(buf, "B") == 0) {
+            fmt |= CONN_FMT_BIN;
+        } else if (strcasecmp(buf, "Zeros-Compressed") == 0
+                || strcasecmp(buf, "Zeros-Compress") == 0
+                || strcasecmp(buf, "ZC") == 0) {
+            fmt |= CONN_FMT_ZEROS_COMPRESSED;
+        } else if (strcasecmp(buf, "Short-Quantization") == 0
+                || strcasecmp(buf, "Short-Q") == 0
+                || strcasecmp(buf, "SQ") == 0) {
+            fmt |= CONN_FMT_SHORT_QUANTIZATION;
+        }
+
+        if (*p == '\0') {
+            break;
+        }
+        ++p;
+    }
+
+    return fmt;
+}
+
+int16_t quantify_int16(real_t r, real_t multiple)
+{
+    r = r * multiple;
+    r = min(r, (1 << 15) - 1);
+    r = max(r, -(1 << 15));
+
+    return (int16_t)r;
+}
+
+int print_vec(FILE *fp, real_t *vec, size_t size, const char *name)
+{
+    size_t i;
+
+    ST_CHECK_PARAM(fp == NULL || vec == NULL || size <= 0, -1);
+
+    if (name != NULL) {
+        if (fprintf(fp, "%s: ", name) < 0) {
+            ST_WARNING("Failed to fprintf name, Disk full?");
+            return -1;
+        }
+    }
+    if (fprintf(fp, "[ ") < 0) {
+        ST_WARNING("Failed to fprintf, Disk full?");
+        return -1;
+    }
+
+    for (i = 0; i < size; i++) {
+        if (fprintf(fp, REAL_FMT" ", vec[i]) < 0) {
+            ST_WARNING("Failed to fprintf, Disk full?");
+            return -1;
+        }
+    }
+
+    if (fprintf(fp, "]\n") < 0) {
+        ST_WARNING("Failed to fprintf, Disk full?");
+        return -1;
+    }
+
+    return 0;
+}
+
+int parse_vec(const char *line, real_t **vec, char *name, size_t name_len)
+{
+    char token[MAX_NAME_LEN];
+    const char *p, *q, *r;
+    int i, size, cap;
+
+    ST_CHECK_PARAM(line == NULL || vec == NULL, -1);
+
+    *vec = NULL;
+    cap = 128;
+    size = 0;
+
+    p = strchr(line, '[');
+    if (p == NULL) {
+        ST_WARNING("Error vector format: '[' expected.");
+        return -1;
+    }
+
+    q = p;
+    while (q > line) {
+        if (*q == ':') {
+            break;
+        }
+        --q;
+    }
+
+    if (name != NULL && name_len > 0) {
+        i = 0;
+        r = line;
+        while (i < name_len && r < q) {
+            name[i] = *r;
+            ++i;
+            ++r;
+        }
+        if (i < name_len) {
+            name[i] = '\0';
+        } else {
+            name[name_len - 1] = '\0';
+        }
+    }
+
+    *vec = (real_t *)st_malloc(sizeof(real_t) * cap);
+    if (*vec == NULL) {
+        ST_WARNING("Failed to st_malloc vec");
+        goto ERR;
+    }
+
+    ++p;
+    while (*p == ' ' || *p == '\t') {
+        ++p;
+    }
+    while (true) {
+        p = get_next_token(p, token);
+        if (p == NULL || token[0] == ']') {
+            break;
+        }
+
+        if (size >= cap) {
+            *vec = (real_t *)st_realloc(*vec, sizeof(real_t) * (cap + 128));
+            if (*vec == NULL) {
+                ST_WARNING("Failed to st_realloc vec");
+                goto ERR;
+            }
+            cap += 128;
+        }
+
+        if (sscanf(token, REAL_FMT, *vec + size) != 1) {
+            ST_WARNING("Error vector format: Not a float numbers[%s]", token);
+            goto ERR;
+        }
+        ++size;
+    }
+
+    if (token[0] != ']') {
+        ST_WARNING("Error vector format: ']' expected.");
+        goto ERR;
+    }
+
+    return size;
+
+ERR:
+    safe_st_free(*vec);
+    return -1;
 }

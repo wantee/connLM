@@ -26,17 +26,21 @@
 
 #include <stutils/st_log.h>
 #include <stutils/st_io.h>
+#include <stutils/st_string.h>
+#include <stutils/st_mem.h>
 
 #include <connlm/utils.h>
 #include <connlm/connlm.h>
 
-bool g_binary;
+connlm_fmt_t g_fmt;
 
 st_opt_t *g_cmd_opt;
 
 int connlm_copy_parse_opt(int *argc, const char *argv[])
 {
     st_log_opt_t log_opt;
+
+    char str[MAX_ST_CONF_LEN];
     bool b;
 
     g_cmd_opt = st_opt_create();
@@ -60,8 +64,13 @@ int connlm_copy_parse_opt(int *argc, const char *argv[])
         goto ST_OPT_ERR;
     }
 
-    ST_OPT_GET_BOOL(g_cmd_opt, "BINARY", g_binary, true,
-            "Save file as binary format");
+    ST_OPT_GET_STR(g_cmd_opt, "FORMAT", str, MAX_ST_CONF_LEN, "Bin",
+            "storage format(Txt/Bin/Zeros-Compress/Short-Q)");
+    g_fmt = connlm_format_parse(str);
+    if (g_fmt == CONN_FMT_UNKNOWN) {
+        ST_WARNING("Unknown format[%s]", str);
+        goto ST_OPT_ERR;
+    }
 
     ST_OPT_GET_BOOL(g_cmd_opt, "help", b, false, "Print help");
 
@@ -76,12 +85,13 @@ void show_usage(const char *module_name)
     connlm_show_usage(module_name,
             "Copy Models",
             "<model-in-filter> <model-out>",
-            "--binary=false exp/final.clm exp/final.txt",
+            "--format=txt exp/final.clm exp/final.txt",
             g_cmd_opt, model_filter_help());
 }
 
 int main(int argc, const char *argv[])
 {
+    char args[1024] = "";
     char fname[MAX_DIR_LEN];
     FILE *fp = NULL;
     connlm_t *connlm = NULL;
@@ -90,6 +100,13 @@ int main(int argc, const char *argv[])
     int num_comp;
     model_filter_t mf;
     int ret;
+
+    if (st_mem_usage_init() < 0) {
+        ST_WARNING("Failed to st_mem_usage_init.");
+        goto ERR;
+    }
+
+    (void)st_escape_args(argc, argv, args, 1024);
 
     ret = connlm_copy_parse_opt(&argc, argv);
     if (ret < 0) {
@@ -109,8 +126,9 @@ int main(int argc, const char *argv[])
         goto ERR;
     }
 
+    ST_CLEAN("Command-line: %s", args);
     st_opt_show(g_cmd_opt, "connLM Copy Options");
-    ST_CLEAN("Model-in: %s, Model-out: %s", argv[1], argv[2]);
+    ST_CLEAN("Model-in: '%s', Model-out: '%s'", argv[1], argv[2]);
 
     mf = parse_model_filter(argv[1], fname, MAX_DIR_LEN,
             &comp_names, &num_comp);
@@ -143,25 +161,28 @@ int main(int argc, const char *argv[])
         goto ERR;
     }
 
-    if (connlm_save(connlm, fp, g_binary) < 0) {
+    if (connlm_save(connlm, fp, g_fmt) < 0) {
         ST_WARNING("Failed to connlm_save. [%s]", fname);
         goto ERR;
     }
 
-    safe_free(comp_names);
+    safe_st_free(comp_names);
     safe_st_fclose(fp);
     safe_st_opt_destroy(g_cmd_opt);
     safe_connlm_destroy(connlm);
 
+    st_mem_usage_report();
+    st_mem_usage_destroy();
     st_log_close(0);
     return 0;
 
 ERR:
-    safe_free(comp_names);
+    safe_st_free(comp_names);
     safe_st_fclose(fp);
     safe_st_opt_destroy(g_cmd_opt);
     safe_connlm_destroy(connlm);
 
+    st_mem_usage_destroy();
     st_log_close(1);
     return -1;
 }

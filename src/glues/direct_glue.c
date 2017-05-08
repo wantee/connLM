@@ -26,19 +26,22 @@
 
 #include <stutils/st_macro.h>
 #include <stutils/st_log.h>
+#include <stutils/st_io.h>
 #include <stutils/st_string.h>
 
 #include "direct_glue.h"
 
+static const int DIRECT_GLUE_MAGIC_NUM = 626140498 + 71;
+
 #define safe_direct_glue_data_destroy(ptr) do {\
     if((ptr) != NULL) {\
         direct_glue_data_destroy((direct_glue_data_t *)ptr);\
-        safe_free(ptr);\
+        safe_st_free(ptr);\
         (ptr) = NULL;\
     }\
     } while(0)
 
-void direct_glue_data_destroy(direct_glue_data_t *data)
+static void direct_glue_data_destroy(direct_glue_data_t *data)
 {
     if (data == NULL) {
         return;
@@ -47,13 +50,13 @@ void direct_glue_data_destroy(direct_glue_data_t *data)
     data->hash_sz = 0;
 }
 
-direct_glue_data_t* direct_glue_data_init()
+static direct_glue_data_t* direct_glue_data_init()
 {
     direct_glue_data_t *data = NULL;
 
-    data = (direct_glue_data_t *)malloc(sizeof(direct_glue_data_t));
+    data = (direct_glue_data_t *)st_malloc(sizeof(direct_glue_data_t));
     if (data == NULL) {
-        ST_WARNING("Failed to malloc direct_glue_data.");
+        ST_WARNING("Failed to st_malloc direct_glue_data.");
         goto ERR;
     }
     memset(data, 0, sizeof(direct_glue_data_t));
@@ -61,6 +64,25 @@ direct_glue_data_t* direct_glue_data_init()
     return data;
 ERR:
     safe_direct_glue_data_destroy(data);
+    return NULL;
+}
+
+static direct_glue_data_t* direct_glue_data_dup(direct_glue_data_t *src)
+{
+    direct_glue_data_t *dst = NULL;
+
+    ST_CHECK_PARAM(src == NULL, NULL);
+
+    dst = direct_glue_data_init();
+    if (dst == NULL) {
+        ST_WARNING("Failed to direct_glue_data_init.");
+        goto ERR;
+    }
+    dst->hash_sz = ((direct_glue_data_t *)src)->hash_sz;
+
+    return (void *)dst;
+ERR:
+    safe_direct_glue_data_destroy(dst);
     return NULL;
 }
 
@@ -95,23 +117,31 @@ ERR:
     return -1;
 }
 
-void* direct_glue_dup(void *src)
+int direct_glue_dup(glue_t *dst, glue_t *src)
 {
-    direct_glue_data_t *dst = NULL;
+    ST_CHECK_PARAM(dst == NULL || src == NULL, -1);
 
-    ST_CHECK_PARAM(src == NULL, NULL);
+    if (strcasecmp(dst->type, DIRECT_GLUE_NAME) != 0) {
+        ST_WARNING("dst is Not a direct glue. [%s]", dst->type);
+        return -1;
+    }
 
-    dst = direct_glue_data_init();
-    if (dst == NULL) {
-        ST_WARNING("Failed to direct_glue_data_init.");
+    if (strcasecmp(src->type, DIRECT_GLUE_NAME) != 0) {
+        ST_WARNING("src is Not a direct glue. [%s]", src->type);
+        return -1;
+    }
+
+    dst->extra = (void *)direct_glue_data_dup((direct_glue_data_t *)src->extra);
+    if (dst->extra == NULL) {
+        ST_WARNING("Failed to direct_glue_data_dup.");
         goto ERR;
     }
-    dst->hash_sz = ((direct_glue_data_t *)src)->hash_sz;
 
-    return (void *)dst;
+    return 0;
+
 ERR:
-    safe_direct_glue_data_destroy(dst);
-    return NULL;
+    safe_direct_glue_data_destroy(dst->extra);
+    return -1;
 }
 
 int direct_glue_parse_topo(glue_t *glue, const char *line)
@@ -139,7 +169,7 @@ int direct_glue_parse_topo(glue_t *glue, const char *line)
         }
 
         if (strcasecmp("size", keyvalue) == 0) {
-            data->hash_sz = (int)st_str2ll(keyvalue + MAX_LINE_LEN);
+            data->hash_sz = st_str2ll(keyvalue + MAX_LINE_LEN);
             if (data->hash_sz <= 0) {
                 ST_WARNING("Illegal size[%s]", keyvalue + MAX_LINE_LEN);
                 goto ERR;
@@ -198,6 +228,8 @@ bool direct_glue_check(glue_t *glue, layer_t **layers, int n_layer,
         glue->wt->init_param = 0;
     }
 
+    glue->wt->init_bias = INFINITY; // direct weight will not have bias
+
     return true;
 }
 
@@ -216,6 +248,135 @@ char* direct_glue_draw_label(glue_t *glue, char *label, size_t label_len)
     return label;
 }
 
+int direct_glue_load_header(void **extra, int version,
+        FILE *fp, connlm_fmt_t *fmt, FILE *fo_info)
+{
+    direct_glue_data_t *data = NULL;
+
+    union {
+        char str[4];
+        int magic_num;
+    } flag;
+
+    size_t hash_sz;
+
+    ST_CHECK_PARAM((extra == NULL && fo_info == NULL) || fp == NULL
+            || fmt == NULL, -1);
+
+    if (version < 9) {
+        ST_WARNING("Too old version of connlm file");
+        return -1;
+    }
+
+    if (fread(&flag.magic_num, sizeof(int), 1, fp) != 1) {
+        ST_WARNING("Failed to load magic num.");
+        return -1;
+    }
+
+    *fmt = CONN_FMT_UNKNOWN;
+    if (strncmp(flag.str, "    ", 4) == 0) {
+        *fmt = CONN_FMT_TXT;
+    } else if (DIRECT_GLUE_MAGIC_NUM != flag.magic_num) {
+        ST_WARNING("magic num wrong.");
+        return -2;
+    }
+
+    if (extra != NULL) {
+        *extra = NULL;
+    }
+
+    if (*fmt != CONN_FMT_TXT) {
+        if (version >= 12) {
+            if (fread(fmt, sizeof(connlm_fmt_t), 1, fp) != 1) {
+                ST_WARNING("Failed to read fmt.");
+                goto ERR;
+            }
+        } else {
+            *fmt = CONN_FMT_BIN;
+        }
+
+        if (fread(&hash_sz, sizeof(size_t), 1, fp) != 1) {
+            ST_WARNING("Failed to read hash_sz.");
+            return -1;
+        }
+    } else {
+        if (st_readline(fp, "") != 0) {
+            ST_WARNING("tag error.");
+            goto ERR;
+        }
+        if (st_readline(fp, "<DIRECT-GLUE>") != 0) {
+            ST_WARNING("tag error.");
+            goto ERR;
+        }
+
+        if (st_readline(fp, "Hash size: %zu", &hash_sz) != 1) {
+            ST_WARNING("Failed to parse hash_sz.");
+            goto ERR;
+        }
+    }
+
+    if (extra != NULL) {
+        data = direct_glue_data_init();
+        if (data == NULL) {
+            ST_WARNING("Failed to direct_glue_data_init.");
+            goto ERR;
+        }
+
+        *extra = (void *)data;
+        data->hash_sz = hash_sz;
+    }
+
+    if (fo_info != NULL) {
+        fprintf(fo_info, "\n<DIRECT-GLUE>\n");
+        fprintf(fo_info, "Hash size: %zu\n", hash_sz);
+    }
+
+    return 0;
+
+ERR:
+    if (extra != NULL) {
+        safe_direct_glue_data_destroy(*extra);
+    }
+    return -1;
+}
+
+int direct_glue_save_header(void *extra, FILE *fp, connlm_fmt_t fmt)
+{
+    direct_glue_data_t *data;
+
+    ST_CHECK_PARAM(extra == NULL || fp == NULL, -1);
+
+    data = (direct_glue_data_t *)extra;
+
+    if (connlm_fmt_is_bin(fmt)) {
+        if (fwrite(&DIRECT_GLUE_MAGIC_NUM, sizeof(int), 1, fp) != 1) {
+            ST_WARNING("Failed to write magic num.");
+            return -1;
+        }
+        if (fwrite(&fmt, sizeof(connlm_fmt_t), 1, fp) != 1) {
+            ST_WARNING("Failed to write fmt.");
+            return -1;
+        }
+
+        if (fwrite(&(data->hash_sz), sizeof(size_t), 1, fp) != 1) {
+            ST_WARNING("Failed to write hash_sz.");
+            return -1;
+        }
+    } else {
+        if (fprintf(fp, "    \n<DIRECT-GLUE>\n") < 0) {
+            ST_WARNING("Failed to fprintf header.");
+            return -1;
+        }
+
+        if (fprintf(fp, "Hash size: %zu\n", data->hash_sz) < 0) {
+            ST_WARNING("Failed to fprintf hash_sz.");
+            return -1;
+        }
+    }
+
+    return 0;
+}
+
 int direct_glue_init_data(glue_t *glue, input_t *input,
         layer_t **layers, output_t *output)
 {
@@ -231,7 +392,7 @@ int direct_glue_init_data(glue_t *glue, input_t *input,
 
     data = (direct_glue_data_t *)glue->extra;
 
-    if (wt_init(glue->wt, data->hash_sz, 0) < 0) {
+    if (wt_init(glue->wt, data->hash_sz, 1) < 0) {
         ST_WARNING("Failed to wt_init.");
         return -1;
     }
@@ -251,7 +412,8 @@ wt_updater_t* direct_glue_init_wt_updater(glue_t *glue, param_t *param)
     }
 
     wt_updater = wt_updater_create(param == NULL ? &glue->param : param,
-            glue->wt->mat, glue->wt->row, glue->wt->col, WT_UT_PART);
+            glue->wt->mat, glue->wt->bias,
+            glue->wt->row, glue->wt->col, WT_UT_PART);
     if (wt_updater == NULL) {
         ST_WARNING("Failed to wt_updater_create.");
         goto ERR;
@@ -262,4 +424,30 @@ wt_updater_t* direct_glue_init_wt_updater(glue_t *glue, param_t *param)
 ERR:
     safe_wt_updater_destroy(wt_updater);
     return NULL;
+}
+
+static float direct_glue_load_factor(glue_t *glue)
+{
+    size_t i;
+
+    size_t n;
+
+    ST_CHECK_PARAM(glue == NULL, 0.0);
+
+    n = 0;
+    for (i = 0; i < glue->wt->row; i++) {
+        if (glue->wt->mat[i] != 0) {
+            ++n;
+        }
+    }
+
+    return n / (float)(glue->wt->row);
+}
+
+void direct_glue_print_verbose_info(glue_t *glue, FILE *fo)
+{
+    ST_CHECK_PARAM_VOID(glue == NULL || fo == NULL);
+
+    fprintf(fo, "<DIRECT_GLUE>: %s\n", glue->name);
+    fprintf(fo, "Load factor: %.3f\n", direct_glue_load_factor(glue));
 }

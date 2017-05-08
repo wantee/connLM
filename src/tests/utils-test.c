@@ -167,7 +167,7 @@ static int unit_test_parse_model_filter()
         fprintf(stderr, "Failed\n");
         goto ERR;
     }
-    safe_free(comp_names);
+    safe_st_free(comp_names);
     fprintf(stderr, "Success\n");
 
     fprintf(stderr, "    Case %d...", ncase++);
@@ -178,7 +178,7 @@ static int unit_test_parse_model_filter()
         fprintf(stderr, "Failed\n");
         goto ERR;
     }
-    safe_free(comp_names);
+    safe_st_free(comp_names);
     fprintf(stderr, "Success\n");
 
     fprintf(stderr, "    Case %d...", ncase++);
@@ -189,7 +189,7 @@ static int unit_test_parse_model_filter()
         fprintf(stderr, "Failed\n");
         goto ERR;
     }
-    safe_free(comp_names);
+    safe_st_free(comp_names);
     fprintf(stderr, "Success\n");
 
     fprintf(stderr, "    Case %d...", ncase++);
@@ -200,7 +200,7 @@ static int unit_test_parse_model_filter()
         fprintf(stderr, "Failed\n");
         goto ERR;
     }
-    safe_free(comp_names);
+    safe_st_free(comp_names);
     fprintf(stderr, "Success\n");
 
     fprintf(stderr, "    Case %d...", ncase++);
@@ -213,7 +213,7 @@ static int unit_test_parse_model_filter()
             || num_comp != 0) {
         goto ERR;
     }
-    safe_free(comp_names);
+    safe_st_free(comp_names);
     fprintf(stderr, "Success\n");
 
     fprintf(stderr, "    Case %d...", ncase++);
@@ -227,7 +227,7 @@ static int unit_test_parse_model_filter()
         fprintf(stderr, "Failed\n");
         goto ERR;
     }
-    safe_free(comp_names);
+    safe_st_free(comp_names);
     fprintf(stderr, "Success\n");
 
     fprintf(stderr, "    Case %d...", ncase++);
@@ -241,7 +241,7 @@ static int unit_test_parse_model_filter()
         fprintf(stderr, "Failed\n");
         goto ERR;
     }
-    safe_free(comp_names);
+    safe_st_free(comp_names);
     fprintf(stderr, "Success\n");
 
     fprintf(stderr, "    Case %d...", ncase++);
@@ -256,7 +256,7 @@ static int unit_test_parse_model_filter()
         fprintf(stderr, "Failed\n");
         goto ERR;
     }
-    safe_free(comp_names);
+    safe_st_free(comp_names);
     fprintf(stderr, "Success\n");
 
     fprintf(stderr, "    Case %d...", ncase++);
@@ -271,7 +271,7 @@ static int unit_test_parse_model_filter()
         fprintf(stderr, "Failed\n");
         goto ERR;
     }
-    safe_free(comp_names);
+    safe_st_free(comp_names);
     fprintf(stderr, "Success\n");
 
     fprintf(stderr, "    Case %d...", ncase++);
@@ -286,7 +286,7 @@ static int unit_test_parse_model_filter()
         fprintf(stderr, "Failed\n");
         goto ERR;
     }
-    safe_free(comp_names);
+    safe_st_free(comp_names);
     fprintf(stderr, "Success\n");
 
     fprintf(stderr, "    Case %d...", ncase++);
@@ -302,7 +302,7 @@ static int unit_test_parse_model_filter()
         fprintf(stderr, "Failed\n");
         goto ERR;
     }
-    safe_free(comp_names);
+    safe_st_free(comp_names);
     fprintf(stderr, "Success\n");
 
     fprintf(stderr, "    Case %d...", ncase++);
@@ -319,7 +319,7 @@ static int unit_test_parse_model_filter()
         fprintf(stderr, "Failed\n");
         goto ERR;
     }
-    safe_free(comp_names);
+    safe_st_free(comp_names);
     fprintf(stderr, "Success\n");
 
     fprintf(stderr, "    Case %d...", ncase++);
@@ -335,7 +335,7 @@ static int unit_test_parse_model_filter()
         fprintf(stderr, "Failed\n");
         goto ERR;
     }
-    safe_free(comp_names);
+    safe_st_free(comp_names);
     fprintf(stderr, "Success\n");
 
     fprintf(stderr, "    Case %d...", ncase++);
@@ -351,7 +351,7 @@ static int unit_test_parse_model_filter()
         fprintf(stderr, "Failed\n");
         goto ERR;
     }
-    safe_free(comp_names);
+    safe_st_free(comp_names);
     fprintf(stderr, "Success\n");
 
     fprintf(stderr, "    Case %d...", ncase++);
@@ -366,7 +366,7 @@ static int unit_test_parse_model_filter()
         fprintf(stderr, "Failed\n");
         goto ERR;
     }
-    safe_free(comp_names);
+    safe_st_free(comp_names);
     fprintf(stderr, "Success\n");
 
     fprintf(stderr, "    Case %d...", ncase++);
@@ -381,13 +381,13 @@ static int unit_test_parse_model_filter()
         fprintf(stderr, "Failed\n");
         goto ERR;
     }
-    safe_free(comp_names);
+    safe_st_free(comp_names);
     fprintf(stderr, "Success\n");
 
     return 0;
 
 ERR:
-    safe_free(comp_names);
+    safe_st_free(comp_names);
     return -1;
 }
 

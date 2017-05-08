@@ -32,17 +32,20 @@ extern "C" {
 #include <stutils/st_opt.h>
 #include <stutils/st_int.h>
 #include <stutils/st_alphabet.h>
+#include <stutils/st_queue.h>
+#include <stutils/st_stack.h>
 
 #include <connlm/config.h>
 
+#include "utils.h"
 #include "layers/layer.h"
 
 /** @defgroup g_output Output Layer
  * Output Layer of NNet, structured as a tree.
  */
 
-typedef unsigned int output_node_id_t;
-#define OUTPUT_NODE_FMT "%u"
+typedef int output_node_id_t;
+#define OUTPUT_NODE_FMT "%d"
 
 #define OUTPUT_NODE_NONE ((output_node_id_t)-1)
 
@@ -68,6 +71,7 @@ typedef struct _output_opt_t_ {
 
 #define s_children(tree, node) (tree)->nodes[node].children_s
 #define e_children(tree, node) (tree)->nodes[node].children_e
+#define n_children(tree, node) (e_children(tree, node) - s_children(tree, node))
 #define is_leaf(tree, node) (s_children(tree, node) >= e_children(tree, node))
 
 /**
@@ -115,6 +119,101 @@ static inline output_node_id_t output_tree_word2leaf(output_tree_t *tree,
 }
 
 /**
+ * aux data for output tree BFS.
+ * @ingroup g_output
+ */
+typedef struct _output_tree_bfs_aux_t_ {
+    st_queue_t *node_queue; /**< queue for tree node. */
+} output_tree_bfs_aux_t;
+
+/**
+ * Create a output tree bfs aux.
+ * @ingroup g_output
+ * @param[in] tree output tree.
+ * @return a new output tree bfs aux.
+ */
+output_tree_bfs_aux_t *output_tree_bfs_aux_create(output_tree_t *tree);
+/**
+ * Destroy a output tree bfs aux and set the pointer to NULL.
+ * @ingroup g_output
+ * @param[in] ptr pointer to output_tree_bfs_aux_t.
+ */
+#define safe_output_tree_bfs_aux_destroy(ptr) do {\
+    if((ptr) != NULL) {\
+        output_tree_bfs_aux_destroy(ptr);\
+        safe_st_free(ptr);\
+        (ptr) = NULL;\
+    }\
+    } while(0)
+/**
+ * Destroy a output tree bfs aux.
+ * @ingroup g_output
+ * @param[in] bfs_aux output tree bfs aux to be destroyed.
+ */
+void output_tree_bfs_aux_destroy(output_tree_bfs_aux_t *bfs_aux);
+
+/**
+ * Do BFS on a output tree.
+ * @ingroup g_output
+ * @param[in] tree the output tree.
+ * @param[in] bfs_aux aux for bfs.
+ * @param[in] visitor visitor callback called on every node in path.
+ * @param[in] args args passed to visitor.
+ * @return non-zero value if any error.
+ */
+int output_tree_bfs(output_tree_t *tree, output_tree_bfs_aux_t *bfs_aux,
+        int (*visitor)(output_tree_t *tree,
+            output_node_id_t node, void *args), void *args);
+
+/**
+ * aux data for output tree DFS.
+ * @ingroup g_output
+ */
+typedef struct _output_tree_dfs_aux_t_ {
+    st_stack_t *node_stack; /**< stack for tree node. */
+    output_node_id_t *child_in_stack; /**< current child in the stack for every node*/
+} output_tree_dfs_aux_t;
+
+/**
+ * Create a output tree dfs aux.
+ * @ingroup g_output
+ * @param[in] tree output tree.
+ * @return a new output tree dfs aux.
+ */
+output_tree_dfs_aux_t *output_tree_dfs_aux_create(output_tree_t *tree);
+/**
+ * Destroy a output tree dfs aux and set the pointer to NULL.
+ * @ingroup g_output
+ * @param[in] ptr pointer to output_tree_dfs_aux_t.
+ */
+#define safe_output_tree_dfs_aux_destroy(ptr) do {\
+    if((ptr) != NULL) {\
+        output_tree_dfs_aux_destroy(ptr);\
+        safe_st_free(ptr);\
+        (ptr) = NULL;\
+    }\
+    } while(0)
+/**
+ * Destroy a output tree dfs aux.
+ * @ingroup g_output
+ * @param[in] dfs_aux output tree dfs aux to be destroyed.
+ */
+void output_tree_dfs_aux_destroy(output_tree_dfs_aux_t *dfs_aux);
+
+/**
+ * Do DFS on a output tree.
+ * @ingroup g_output
+ * @param[in] tree the output tree.
+ * @param[in] dfs_aux aux for dfs.
+ * @param[in] visitor visitor callback called on every node in path.
+ * @param[in] args args passed to visitor.
+ * @return non-zero value if any error.
+ */
+int output_tree_dfs(output_tree_t *tree, output_tree_dfs_aux_t *dfs_aux,
+        int (*visitor)(output_tree_t *tree, output_node_id_t node,
+            st_stack_t* stack, void *args), void *args);
+
+/**
  * Output tree path.
  * @ingroup g_output
  */
@@ -140,11 +239,12 @@ typedef enum _output_normalization_method_t_ {
 typedef struct _output_t_ {
     output_opt_t output_opt; /**< output tree options. */
 
-    int output_size; /**< size of output tree. */
+    int output_size; /**< size of output layer. */
     output_norm_t norm; /**< normalization method. */
 
     output_tree_t *tree; /**< output tree. */
     output_path_t *paths; /**< Store a path for every leaf(word) node. */
+    output_node_id_t unk_root; /**< root of subtree with only one path towards \<unk\>. */
 
     output_node_id_t *param_map; /**< map a node to index in param weight(used by Softmax). */
     output_node_id_t num_param_map; /**< number of param maps. */
@@ -162,14 +262,6 @@ int output_load_opt(output_opt_t *output_opt, st_opt_t *opt,
         const char *sec_name);
 
 /**
- * Create a output tree with options.
- * @ingroup g_output
- * @param[in] output_opt options.
- * @param[in] output_size size of output tree.
- * @return a new output tree.
- */
-output_t *output_create(output_opt_t *output_opt, int output_size);
-/**
  * Destroy a output tree and set the pointer to NULL.
  * @ingroup g_output
  * @param[in] ptr pointer to output_t.
@@ -177,7 +269,7 @@ output_t *output_create(output_opt_t *output_opt, int output_size);
 #define safe_output_destroy(ptr) do {\
     if((ptr) != NULL) {\
         output_destroy(ptr);\
-        safe_free(ptr);\
+        safe_st_free(ptr);\
         (ptr) = NULL;\
     }\
     } while(0)
@@ -201,48 +293,48 @@ output_t* output_dup(output_t *o);
  * @param[out] output output tree initialised.
  * @param[in] version file version of loading file.
  * @param[in] fp file stream loaded from.
- * @param[out] binary whether the file stream is in binary format.
- * @param[in] fo file stream used to print information, if it is not NULL.
+ * @param[out] fmt storage format.
+ * @param[out] fo file stream used to print information, if it is not NULL.
  * @see output_load_body
  * @see output_save_header, output_save_body
  * @return non-zero value if any error.
  */
 int output_load_header(output_t **output, int version, FILE *fp,
-        bool *binary, FILE *fo);
+        connlm_fmt_t *fmt, FILE *fo);
 /**
  * Load output tree body.
  * @ingroup g_output
  * @param[in] output output tree to be loaded.
  * @param[in] version file version of loading file.
  * @param[in] fp file stream loaded from.
- * @param[in] binary whether to use binary format.
+ * @param[in] fmt storage format.
  * @see output_load_header
  * @see output_save_header, output_save_body
  * @return non-zero value if any error.
  */
-int output_load_body(output_t *output, int version, FILE *fp, bool binary);
+int output_load_body(output_t *output, int version, FILE *fp, connlm_fmt_t fmt);
 /**
  * Save output tree header.
  * @ingroup g_output
  * @param[in] output output tree to be saved.
  * @param[in] fp file stream saved to.
- * @param[in] binary whether to use binary format.
+ * @param[in] fmt storage format.
  * @see output_save_body
  * @see output_load_header, output_load_body
  * @return non-zero value if any error.
  */
-int output_save_header(output_t *output, FILE *fp, bool binary);
+int output_save_header(output_t *output, FILE *fp, connlm_fmt_t fmt);
 /**
  * Save output tree body.
  * @ingroup g_output
  * @param[in] output output tree to be saved.
  * @param[in] fp file stream saved to.
- * @param[in] binary whether to use binary format.
+ * @param[in] fmt storage format.
  * @see output_save_header
  * @see output_load_header, output_load_body
  * @return non-zero value if any error.
  */
-int output_save_body(output_t *output, FILE *fp, bool binary);
+int output_save_body(output_t *output, FILE *fp, connlm_fmt_t fmt);
 
 /**
  * Generate output tree with word counts.

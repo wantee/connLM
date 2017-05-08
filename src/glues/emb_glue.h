@@ -42,6 +42,50 @@ extern "C" {
 #define EMB_GLUE_NAME "emb"
 
 /**
+ * Type of index methods.
+ * @ingroup g_glue_emb
+ */
+typedef enum _emb_index_method_t_ {
+    EI_UNKNOWN = -1, /**< Unknown index method. */
+    EI_UNDEFINED = 0, /**< Undefined index method. */
+    EI_WORD = 1, /**< index by word id. */
+    EI_POS, /**< index by position. */
+} emb_index_method_t;
+
+/**
+ * Data for emb glue
+ * @ingroup g_glue_emb
+ */
+typedef struct _emb_glue_data_t_ {
+    emb_index_method_t index_method; /**< index method. */
+    int num_vecs; /**< size of hash wt. */
+} emb_glue_data_t;
+
+/**
+ * Destroy a emb glue.
+ * @ingroup g_glue_emb
+ * @param[in] glue emb glue to be destroyed.
+ */
+void emb_glue_destroy(glue_t* glue);
+
+/**
+ * Initialize a emb glue.
+ * @ingroup g_glue_emb
+ * @param[in] glue emb glue to be initialized.
+ * @return non-zero if any error
+ */
+int emb_glue_init(glue_t *glue);
+
+/**
+ * Duplicate a emb glue.
+ * @ingroup g_glue_emb
+ * @param[out] dst dst glue to be duplicated.
+ * @param[in] src src glue to be duplicated.
+ * @return non-zero if any error
+ */
+int emb_glue_dup(glue_t *dst, glue_t *src);
+
+/**
  * Parse a topo config line.
  * @ingroup g_glue_emb
  * @param[in] glue specific glue.
@@ -62,6 +106,41 @@ int emb_glue_parse_topo(glue_t *glue, const char *line);
  */
 bool emb_glue_check(glue_t *glue, layer_t **layers, int n_layer,
         input_t *input, output_t *output);
+
+/**
+ * Provide label string for drawing emb glue.
+ * @ingroup g_glue_emb
+ * @param[in] glue glue.
+ * @param[out] label buffer to write string.
+ * @param[in] label_len length of label.
+ * @return label on success, NULL if any error.
+ */
+char* emb_glue_draw_label(glue_t *glue, char *label, size_t label_len);
+
+/**
+ * Load emb glue header and initialise a new emb_glue.
+ * @ingroup g_glue_emb
+ * @param[out] extra extra data to be initialised.
+ * @param[in] version file version of loading file.
+ * @param[in] fp file stream loaded from.
+ * @param[out] fmt storage format.
+ * @param[out] fo_info file stream used to print information, if it is not NULL.
+ * @see emb_glue_save_header
+ * @return non-zero value if any error.
+ */
+int emb_glue_load_header(void **extra, int version,
+        FILE *fp, connlm_fmt_t *fmt, FILE *fo_info);
+
+/**
+ * Save emb glue header.
+ * @ingroup g_glue_emb
+ * @param[in] extra extra data to be saved.
+ * @param[in] fp file stream saved to.
+ * @param[in] fmt storage format.
+ * @see emb_glue_load_header
+ * @return non-zero value if any error.
+ */
+int emb_glue_save_header(void *extra, FILE *fp, connlm_fmt_t fmt);
 
 /**
  * Initialise data of emb glue.

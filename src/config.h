@@ -29,9 +29,9 @@
 extern "C" {
 #endif
 
-#define CONNLM_VERSION   "2.0.0"
+#define CONNLM_VERSION   "2.0.1"
 
-#define CONNLM_FILE_VERSION   3
+#define CONNLM_FILE_VERSION   12
 
 #define CONNLM_GIT_COMMIT "0"
 
@@ -51,19 +51,16 @@ typedef unsigned long count_t;
 #define COUNT_FMT "%lu"
 #define COUNT_MAX ((count_t)-1)
 
-typedef unsigned long long hash_t;
-#define HASH_FMT "%llu"
-
 #define ALIGN_SIZE 128
-
-#define _BATCH_UPDATE_
 
 #define SENT_END "</s>"
 #define SENT_END_ID 0
 #define SENT_START "<s>"
-#define SENT_START_ID 1
 #define UNK "<unk>"
-#define UNK_ID 2
+#define UNK_ID 1
+
+#define EPS "<eps>"
+#define PHI "#phi"
 
 #ifdef __cplusplus
 }

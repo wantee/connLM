@@ -42,7 +42,7 @@
 void connlm_egs_destroy(connlm_egs_t *egs)
 {
     if (egs != NULL) {
-        safe_free(egs->words);
+        safe_st_free(egs->words);
         egs->capacity = 0;
         egs->size = 0;
     }
@@ -55,9 +55,9 @@ static int connlm_egs_ensure(connlm_egs_t *egs, int capacity)
     ST_CHECK_PARAM(egs == NULL, -1);
 
     if (egs->capacity < capacity) {
-        egs->words = realloc(egs->words, sizeof(int)*capacity);
+        egs->words = st_realloc(egs->words, sizeof(int)*capacity);
         if (egs->words == NULL) {
-            ST_WARNING("Failed to realloc egs->words. capacity[%d]",
+            ST_WARNING("Failed to st_realloc egs->words. capacity[%d]",
                     capacity);
             return -1;
         }
@@ -84,7 +84,7 @@ static int connlm_egs_print(FILE *fp, pthread_mutex_t *fp_lock,
         fprintf(fp, "<EGS>: ");
         while (egs->words[i] != SENT_END_ID && i < egs->size) {
             word = egs->words[i];
-            if (word == SENT_START_ID) {
+            if (vocab != NULL && word == vocab_get_id(vocab, SENT_START)) {
                 i++;
                 continue;
             }
@@ -109,7 +109,8 @@ static int connlm_egs_print(FILE *fp, pthread_mutex_t *fp_lock,
 }
 
 int connlm_egs_read(connlm_egs_t *egs, int *sent_ends,
-        int epoch_size, FILE *text_fp, vocab_t *vocab, int *oovs)
+        int epoch_size, FILE *text_fp, vocab_t *vocab, int *oovs,
+        bool drop_empty_line)
 {
     char *line = NULL;
     size_t line_sz = 0;
@@ -133,7 +134,7 @@ int connlm_egs_read(connlm_egs_t *egs, int *sent_ends,
     while (st_fgets(&line, &line_sz, text_fp, &err)) {
         remove_newline(line);
 
-        if (line[0] == '\0') {
+        if (line[0] == '\0' && drop_empty_line) {
             continue;
         }
 
@@ -143,7 +144,7 @@ int connlm_egs_read(connlm_egs_t *egs, int *sent_ends,
                 goto ERR;
             }
         }
-        egs->words[egs->size] = SENT_START_ID;
+        egs->words[egs->size] = vocab_get_id(vocab, SENT_START);
         egs->size++;
 
         p = line;
@@ -211,7 +212,7 @@ int connlm_egs_read(connlm_egs_t *egs, int *sent_ends,
         }
     }
 
-    safe_free(line);
+    safe_st_free(line);
 
     if (err) {
         return -1;
@@ -225,7 +226,7 @@ int connlm_egs_read(connlm_egs_t *egs, int *sent_ends,
 
 ERR:
 
-    safe_free(line);
+    safe_st_free(line);
     return -1;
 }
 
@@ -238,15 +239,16 @@ void reader_destroy(reader_t *reader)
         return;
     }
 
-    p = reader->full_egs;
+    p = reader->full_egs_head;
     while (p != NULL) {
         q = p;
         p = p->next;
 
         connlm_egs_destroy(q);
-        safe_free(q);
+        safe_st_free(q);
     }
-    reader->full_egs = NULL;
+    reader->full_egs_head = NULL;
+    reader->full_egs_tail = NULL;
 
     p = reader->empty_egs;
     while (p != NULL) {
@@ -254,7 +256,7 @@ void reader_destroy(reader_t *reader)
         p = p->next;
 
         connlm_egs_destroy(q);
-        safe_free(q);
+        safe_st_free(q);
     }
     reader->empty_egs = NULL;
 
@@ -297,6 +299,10 @@ int reader_load_opt(reader_opt_t *reader_opt,
     ST_OPT_SEC_GET_BOOL(opt, name, "SHUFFLE",
             reader_opt->shuffle, true, "Shuffle after reading");
 
+    ST_OPT_SEC_GET_BOOL(opt, name, "DROP_EMPTY_LINE",
+            reader_opt->drop_empty_line, true,
+            "whether drop empty lines in text");
+
     ST_OPT_SEC_GET_STR(opt, name, "DEBUG_FILE",
             reader_opt->debug_file, MAX_DIR_LEN, "",
             "file to print out debug infos.");
@@ -319,9 +325,9 @@ reader_t* reader_create(reader_opt_t *opt, int num_thrs,
     ST_CHECK_PARAM(opt == NULL || num_thrs < 0 || vocab == NULL
             || text_file == NULL, NULL);
 
-    reader = (reader_t *)malloc(sizeof(reader_t));
+    reader = (reader_t *)st_malloc(sizeof(reader_t));
     if (reader == NULL) {
-        ST_WARNING("Failed to malloc reader.");
+        ST_WARNING("Failed to st_malloc reader.");
         return NULL;
     }
     memset(reader, 0, sizeof(reader_t));
@@ -333,12 +339,13 @@ reader_t* reader_create(reader_opt_t *opt, int num_thrs,
     reader->text_file[MAX_DIR_LEN - 1] = '\0';
 
     pool_size = 2 * num_thrs;
-    reader->full_egs = NULL;
+    reader->full_egs_head = NULL;
+    reader->full_egs_tail = NULL;
     reader->empty_egs = NULL;;
     for (i = 0; i < pool_size; i++) {
-        egs = (connlm_egs_t *)malloc(sizeof(connlm_egs_t));
+        egs = (connlm_egs_t *)st_malloc(sizeof(connlm_egs_t));
         if (egs == NULL) {
-            ST_WARNING("Failed to malloc egs.");
+            ST_WARNING("Failed to st_malloc egs.");
             goto ERR;
         }
         memset(egs, 0, sizeof(connlm_egs_t));
@@ -441,15 +448,15 @@ static void* reader_read_thread(void *args)
     }
 
     if (reader->opt.shuffle) {
-        shuffle_buf = (int *)malloc(sizeof(int) * epoch_size);
+        shuffle_buf = (int *)st_malloc(sizeof(int) * epoch_size);
         if (shuffle_buf == NULL) {
-            ST_WARNING("Failed to malloc shuffle_buf");
+            ST_WARNING("Failed to st_malloc shuffle_buf");
             goto ERR;
         }
 
-        sent_ends = (int *)malloc(sizeof(int) * epoch_size);
+        sent_ends = (int *)st_malloc(sizeof(int) * epoch_size);
         if (sent_ends == NULL) {
-            ST_WARNING("Failed to malloc sent_ends");
+            ST_WARNING("Failed to st_malloc sent_ends");
             goto ERR;
         }
     }
@@ -475,8 +482,8 @@ static void* reader_read_thread(void *args)
 #ifdef _TIME_PROF_
         gettimeofday(&tts_io, NULL);
 #endif
-        num_sents = connlm_egs_read(&egs, sent_ends,
-                epoch_size, text_fp, reader->vocab, &oovs);
+        num_sents = connlm_egs_read(&egs, sent_ends, epoch_size, text_fp,
+                reader->vocab, &oovs, reader->opt.drop_empty_line);
         if (num_sents < 0) {
             ST_WARNING("Failed to connlm_egs_read.");
             goto ERR;
@@ -490,7 +497,7 @@ static void* reader_read_thread(void *args)
 
         reader->oovs += oovs;
         reader->sents += num_sents;
-        reader->words += egs.size - num_sents; // Do not accumulate <s>
+        reader->words += egs.size - num_sents; // Do not accumulate <s
 
 #ifdef _TIME_PROF_
         gettimeofday(&tts_shuf, NULL);
@@ -563,8 +570,14 @@ static void* reader_read_thread(void *args)
             ST_WARNING("Failed to pthread_mutex_lock full_egs_lock.");
             goto ERR;
         }
-        egs_in_pool->next = reader->full_egs;
-        reader->full_egs = egs_in_pool;
+        egs_in_pool->next = NULL;
+        if (reader->full_egs_tail != NULL) {
+            reader->full_egs_tail->next = egs_in_pool;
+        }
+        reader->full_egs_tail = egs_in_pool;
+        if (reader->full_egs_head == NULL) {
+            reader->full_egs_head = egs_in_pool;
+        }
         //ST_DEBUG("IN: %p, %d", egs_in_pool, egs_in_pool->size);
         if (pthread_mutex_unlock(&reader->full_egs_lock) != 0) {
             ST_WARNING("Failed to pthread_mutex_unlock full_egs_lock.");
@@ -614,8 +627,8 @@ static void* reader_read_thread(void *args)
                             ftell(text_fp) / (fsize / 100.0),
                             total_words, total_sents, reader->oovs,
                             total_words / ((double) ms / 1000.0),
-                            logp, -logp / log10(2) / total_words,
-                            exp10(-logp / (double) total_words),
+                            logp, -logp / log(2) / total_words,
+                            exp(-logp / (double) total_words),
                             ms / 1000.0);
                 } else {
                     ST_TRACE("Words: " COUNT_FMT ", Sentences: " COUNT_FMT
@@ -623,8 +636,8 @@ static void* reader_read_thread(void *args)
                             "LogP: %f, Entropy: %f, PPL: %f, Time: %.3fs",
                             total_words, total_sents, reader->oovs,
                             total_words / ((double) ms / 1000.0),
-                            logp, -logp / log10(2) / total_words,
-                            exp10(-logp / (double) total_words),
+                            logp, -logp / log(2) / total_words,
+                            exp(-logp / (double) total_words),
                             ms / 1000.0);
                 }
             }
@@ -641,8 +654,8 @@ static void* reader_read_thread(void *args)
 
     connlm_egs_destroy(&egs);
     safe_fclose(text_fp);
-    safe_free(shuffle_buf);
-    safe_free(sent_ends);
+    safe_st_free(shuffle_buf);
+    safe_st_free(sent_ends);
 
     return NULL;
 
@@ -651,8 +664,8 @@ ERR:
 
     connlm_egs_destroy(&egs);
     safe_fclose(text_fp);
-    safe_free(shuffle_buf);
-    safe_free(sent_ends);
+    safe_st_free(shuffle_buf);
+    safe_st_free(sent_ends);
 
     for (i = 0; i < num_thrs; i++) {
         /* posting semaphore without adding data indicates finish. */
@@ -695,7 +708,7 @@ int reader_wait(reader_t *reader)
     return 0;
 }
 
-connlm_egs_t* reader_hold_egs(reader_t *reader, bool fifo)
+connlm_egs_t* reader_hold_egs(reader_t *reader)
 {
     connlm_egs_t *egs;
 
@@ -710,26 +723,12 @@ connlm_egs_t* reader_hold_egs(reader_t *reader, bool fifo)
         return NULL;
     }
 
-    if (reader->full_egs == NULL) {
-        egs = NULL;
-    } else {
-        if (fifo) {
-            connlm_egs_t *prev_egs = NULL;
-            egs = reader->full_egs;
-            while (egs->next != NULL) {
-                prev_egs = egs;
-                egs = egs->next;
-            }
-
-            if (prev_egs == NULL) {
-                reader->full_egs = NULL;
-            } else {
-                prev_egs->next = NULL;
-            }
-        } else {
-            egs = reader->full_egs;
-            reader->full_egs = reader->full_egs->next;
-        }
+    egs = reader->full_egs_head;
+    if (egs != NULL) {
+        reader->full_egs_head = egs->next;
+    }
+    if (egs == reader->full_egs_tail) {
+        reader->full_egs_tail = NULL;
     }
 
     if (pthread_mutex_unlock(&reader->full_egs_lock) != 0) {

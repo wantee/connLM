@@ -33,6 +33,7 @@
 #include "linear_layer.h"
 #include "sigmoid_layer.h"
 #include "tanh_layer.h"
+#include "relu_layer.h"
 #include "layer.h"
 
 static const int LAYER_MAGIC_NUM = 626140498 + 60;
@@ -40,19 +41,21 @@ static const int LAYER_MAGIC_NUM = 626140498 + 60;
 static layer_impl_t LAYER_IMPL[] = {
     /* pseudo-layers. */
     {INPUT_LAYER_NAME, NULL, NULL, NULL, NULL, NULL, NULL,
-        NULL, NULL, NULL},
+        NULL, NULL, NULL, NULL},
     {OUTPUT_LAYER_NAME, NULL, NULL, NULL, NULL, NULL, NULL,
-        NULL, NULL, NULL},
+        NULL, NULL, NULL, NULL},
 
     /* register-layers. */
     {LINEAR_NAME, linear_init, linear_destroy, linear_dup,
         linear_parse_topo, NULL, linear_load_header,
-        linear_load_body, linear_save_header, linear_save_body},
+        linear_load_body, linear_save_header, NULL, NULL},
     {SIGMOID_NAME, sigmoid_init, sigmoid_destroy, sigmoid_dup,
         sigmoid_parse_topo, NULL, sigmoid_load_header,
-        sigmoid_load_body, sigmoid_save_header, sigmoid_save_body},
-    {TANH_NAME, tanh_init, tanh_destroy, tanh_dup,
-        tanh_parse_topo, NULL, NULL, NULL, NULL, NULL},
+        sigmoid_load_body, sigmoid_save_header, NULL, NULL},
+    {TANH_NAME, NULL, NULL, NULL,
+        NULL, NULL, NULL, NULL, NULL, NULL, NULL},
+    {RELU_NAME, NULL, NULL, NULL,
+        NULL, NULL, NULL, NULL, NULL, NULL, NULL},
 };
 
 static layer_impl_t* layer_get_impl(const char *type)
@@ -94,9 +97,9 @@ layer_t* layer_parse_topo(const char *line)
 
     ST_CHECK_PARAM(line == NULL, NULL);
 
-    layer = (layer_t *)malloc(sizeof(layer_t));
+    layer = (layer_t *)st_malloc(sizeof(layer_t));
     if (layer == NULL) {
-        ST_WARNING("Failed to malloc layer_t.");
+        ST_WARNING("Failed to st_malloc layer_t.");
         goto ERR;
     }
     memset(layer, 0, sizeof(layer_t));
@@ -137,9 +140,11 @@ layer_t* layer_parse_topo(const char *line)
                 ST_WARNING("Unknown type of layer [%s].", layer->type);
                 goto ERR;
             }
-            if (layer->impl->init(layer) < 0) {
-                ST_WARNING("Failed to layer->impl->init.");
-                goto ERR;
+            if (layer->impl->init != NULL) {
+                if (layer->impl->init(layer) < 0) {
+                    ST_WARNING("Failed to layer->impl->init.");
+                    goto ERR;
+                }
             }
         } else if (strcasecmp("size", keyvalue) == 0) {
             if (layer->size != 0) {
@@ -193,9 +198,9 @@ layer_t* layer_dup(layer_t *l)
 
     ST_CHECK_PARAM(l == NULL, NULL);
 
-    layer = (layer_t *) malloc(sizeof(layer_t));
+    layer = (layer_t *)st_malloc(sizeof(layer_t));
     if (layer == NULL) {
-        ST_WARNING("Falied to malloc layer_t.");
+        ST_WARNING("Failed to st_malloc layer_t.");
         goto ERR;
     }
     memset(layer, 0, sizeof(layer_t));
@@ -206,6 +211,14 @@ layer_t* layer_dup(layer_t *l)
     layer->type[MAX_NAME_LEN - 1] = '\0';
     layer->size = l->size;
 
+    layer->impl = l->impl;
+    if (layer->impl != NULL && layer->impl->dup != NULL) {
+        if (layer->impl->dup(layer, l) < 0) {
+            ST_WARNING("Failed to layer->impl->dup[%s].", layer->name);
+            goto ERR;
+        }
+    }
+
     return layer;
 
 ERR:
@@ -214,7 +227,7 @@ ERR:
 }
 
 int layer_load_header(layer_t **layer, int version,
-        FILE *fp, bool *binary, FILE *fo_info)
+        FILE *fp, connlm_fmt_t *fmt, FILE *fo_info)
 {
     layer_impl_t *impl;
 
@@ -226,10 +239,10 @@ int layer_load_header(layer_t **layer, int version,
     char name[MAX_NAME_LEN];
     char type[MAX_NAME_LEN];
     int size;
-    bool b;
+    connlm_fmt_t f;
 
     ST_CHECK_PARAM((layer == NULL && fo_info == NULL) || fp == NULL
-            || binary == NULL, -1);
+            || fmt == NULL, -1);
 
     if (version < 3) {
         ST_WARNING("Too old version of connlm file");
@@ -241,20 +254,28 @@ int layer_load_header(layer_t **layer, int version,
         return -1;
     }
 
+    *fmt = CONN_FMT_UNKNOWN;
     if (strncmp(flag.str, "    ", 4) == 0) {
-        *binary = false;
+        *fmt = CONN_FMT_TXT;
     } else if (LAYER_MAGIC_NUM != flag.magic_num) {
         ST_WARNING("magic num wrong.");
         return -2;
-    } else {
-        *binary = true;
     }
 
     if (layer != NULL) {
         *layer = NULL;
     }
 
-    if (*binary) {
+    if (*fmt != CONN_FMT_TXT) {
+        if (version >= 12) {
+            if (fread(fmt, sizeof(connlm_fmt_t), 1, fp) != 1) {
+                ST_WARNING("Failed to read fmt.");
+                goto ERR;
+            }
+        } else {
+            *fmt = CONN_FMT_BIN;
+        }
+
         if (fread(name, sizeof(char), MAX_NAME_LEN, fp) != MAX_NAME_LEN) {
             ST_WARNING("Failed to read name.");
             return -1;
@@ -303,9 +324,9 @@ int layer_load_header(layer_t **layer, int version,
     }
 
     if (layer != NULL) {
-        *layer = (layer_t *)malloc(sizeof(layer_t));
+        *layer = (layer_t *)st_malloc(sizeof(layer_t));
         if (*layer == NULL) {
-            ST_WARNING("Failed to malloc layer_t");
+            ST_WARNING("Failed to st_malloc layer_t");
             goto ERR;
         }
         memset(*layer, 0, sizeof(layer_t));
@@ -324,14 +345,14 @@ int layer_load_header(layer_t **layer, int version,
 
     if (impl->load_header != NULL) {
         if (impl->load_header(layer != NULL ? &((*layer)->extra) : NULL,
-                    version, fp, &b, fo_info) < 0) {
+                    version, fp, &f, fo_info) < 0) {
             ST_WARNING("Failed to impl->load_header.");
             goto ERR;
         }
 
-        if (b != *binary) {
-            ST_WARNING("Tree binary not match with output binary");
-            goto ERR;
+        if (*fmt != f) {
+            ST_WARNING("Multiple formats in one file.");
+            return -1;
         }
     }
 
@@ -344,7 +365,7 @@ ERR:
     return -1;
 }
 
-int layer_load_body(layer_t *layer, int version, FILE *fp, bool binary)
+int layer_load_body(layer_t *layer, int version, FILE *fp, connlm_fmt_t fmt)
 {
     int n;
 
@@ -355,7 +376,7 @@ int layer_load_body(layer_t *layer, int version, FILE *fp, bool binary)
         return -1;
     }
 
-    if (binary) {
+    if (connlm_fmt_is_bin(fmt)) {
         if (fread(&n, sizeof(int), 1, fp) != 1) {
             ST_WARNING("Failed to read magic num.");
             goto ERR;
@@ -373,7 +394,7 @@ int layer_load_body(layer_t *layer, int version, FILE *fp, bool binary)
     }
 
     if (layer->impl->load_body != NULL) {
-        if (layer->impl->load_body(layer->extra, version, fp, binary) < 0) {
+        if (layer->impl->load_body(layer->extra, version, fp, fmt) < 0) {
             ST_WARNING("Failed to glue->impl->load_body.");
             goto ERR;
         }
@@ -385,13 +406,17 @@ ERR:
     return -1;
 }
 
-int layer_save_header(layer_t *layer, FILE *fp, bool binary)
+int layer_save_header(layer_t *layer, FILE *fp, connlm_fmt_t fmt)
 {
     ST_CHECK_PARAM(layer == NULL || fp == NULL, -1);
 
-    if (binary) {
+    if (connlm_fmt_is_bin(fmt)) {
         if (fwrite(&LAYER_MAGIC_NUM, sizeof(int), 1, fp) != 1) {
             ST_WARNING("Failed to write magic num.");
+            return -1;
+        }
+        if (fwrite(&fmt, sizeof(connlm_fmt_t), 1, fp) != 1) {
+            ST_WARNING("Failed to write fmt.");
             return -1;
         }
 
@@ -430,7 +455,7 @@ int layer_save_header(layer_t *layer, FILE *fp, bool binary)
     }
 
     if (layer->impl != NULL && layer->impl->save_header != NULL) {
-        if (layer->impl->save_header(layer->extra, fp, binary) < 0) {
+        if (layer->impl->save_header(layer->extra, fp, fmt) < 0) {
             ST_WARNING("Failed to glue->impl->save_header.");
             return -1;
         }
@@ -439,13 +464,13 @@ int layer_save_header(layer_t *layer, FILE *fp, bool binary)
     return 0;
 }
 
-int layer_save_body(layer_t *layer, FILE *fp, bool binary)
+int layer_save_body(layer_t *layer, FILE *fp, connlm_fmt_t fmt)
 {
     int n;
 
     ST_CHECK_PARAM(layer == NULL || fp == NULL, -1);
 
-    if (binary) {
+    if (connlm_fmt_is_bin(fmt)) {
         n = -LAYER_MAGIC_NUM;
         if (fwrite(&n, sizeof(int), 1, fp) != 1) {
             ST_WARNING("Failed to write magic num.");
@@ -460,7 +485,7 @@ int layer_save_body(layer_t *layer, FILE *fp, bool binary)
     }
 
     if (layer->impl != NULL && layer->impl->save_body != NULL) {
-        if (layer->impl->save_body(layer->extra, fp, binary) < 0) {
+        if (layer->impl->save_body(layer->extra, fp, fmt) < 0) {
             ST_WARNING("Failed to layer->impl->save_body.");
             return -1;
         }
@@ -482,4 +507,13 @@ char* layer_draw_label(layer_t *layer, char *label, size_t label_len)
                 : "");
 
     return label;
+}
+
+void layer_print_verbose_info(layer_t *layer, FILE *fo)
+{
+    ST_CHECK_PARAM_VOID(layer == NULL || fo == NULL);
+
+    if (layer->impl != NULL && layer->impl->print_verbose_info != NULL) {
+        layer->impl->print_verbose_info(layer, fo);
+    }
 }

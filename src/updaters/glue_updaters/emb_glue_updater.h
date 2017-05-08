@@ -47,10 +47,12 @@ extern "C" {
  * @param[in] comp_updater the comp_updater.
  * @param[in] input_sent input sentence buffer.
  * @param[in] in_ac [unused] activation of in layer.
+ * @param[out] out_ac activation of out layer.
  * @return non-zero value if any error.
  */
 int emb_glue_updater_forward(glue_updater_t *glue_updater,
-        comp_updater_t *comp_updater, sent_t *input_sent, real_t *in_ac);
+        comp_updater_t *comp_updater, sent_t *input_sent,
+        real_t *in_ac, real_t *out_ac);
 
 /**
  * Back-prop one word for a emb_glue_updater.

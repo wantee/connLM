@@ -23,13 +23,13 @@ digraph network {
     layer_rnn_hidden4 [label="hidden4/type=sigmoid,size=16"];
 
     node[shape=circle];
-    glue_rnn_emb [label="emb/type=emb\n0"];
+    glue_rnn_emb [label="emb/type=emb,in=(0,3722),out=(0,16),index=Word,num_vecs=3722\n0"];
     input_rnn -> glue_rnn_emb [label=""];
     glue_rnn_emb -> layer_rnn_hidden1 [label=""];
 
     node[color=blue,fontcolor=blue];
     edge[color=blue];
-    glue_rnn_ff1 [label="ff1/type=fc\n4"];
+    glue_rnn_ff1 [label="ff1/type=fc,in=(0,16),out=(0,16)\n4"];
     layer_rnn_hidden1 -> glue_rnn_ff1 [label=""];
     glue_rnn_ff1 -> layer_rnn_hidden2 [label=""];
     node[color=black,fontcolor=black];
@@ -37,7 +37,7 @@ digraph network {
 
     node[color=blue,fontcolor=blue];
     edge[color=blue];
-    glue_rnn_ff2 [label="ff2/type=fc\n7"];
+    glue_rnn_ff2 [label="ff2/type=fc,in=(0,16),out=(0,16)\n7"];
     layer_rnn_hidden2 -> glue_rnn_ff2 [label=""];
     glue_rnn_ff2 -> layer_rnn_hidden3 [label=""];
     node[color=black,fontcolor=black];
@@ -45,7 +45,7 @@ digraph network {
 
     node[color=blue,fontcolor=blue];
     edge[color=blue];
-    glue_rnn_ff3 [label="ff3/type=fc\n8"];
+    glue_rnn_ff3 [label="ff3/type=fc,in=(0,16),out=(0,16)\n8"];
     layer_rnn_hidden3 -> glue_rnn_ff3 [label=""];
     glue_rnn_ff3 -> layer_rnn_hidden4 [label=""];
     node[color=black,fontcolor=black];
@@ -53,7 +53,7 @@ digraph network {
 
     node[color=red,fontcolor=red];
     edge[color=red];
-    glue_rnn_recur1 [label="recur1/type=fc\n1"];
+    glue_rnn_recur1 [label="recur1/type=fc,in=(0,16),out=(0,16)\n1"];
     layer_rnn_hidden1 -> glue_rnn_recur1 [label=""];
     glue_rnn_recur1 -> layer_rnn_hidden1 [label=""];
     node[color=black,fontcolor=black];
@@ -61,7 +61,7 @@ digraph network {
 
     node[color=red,fontcolor=red];
     edge[color=red];
-    glue_rnn_recur2 [label="recur2/type=fc\n3"];
+    glue_rnn_recur2 [label="recur2/type=fc,in=(0,16),out=(0,16)\n3"];
     layer_rnn_hidden3 -> glue_rnn_recur2 [label=""];
     glue_rnn_recur2 -> layer_rnn_hidden1 [label=""];
     node[color=black,fontcolor=black];
@@ -69,7 +69,7 @@ digraph network {
 
     node[color=red,fontcolor=red];
     edge[color=red];
-    glue_rnn_recur3 [label="recur3/type=fc\n6"];
+    glue_rnn_recur3 [label="recur3/type=fc,in=(0,16),out=(0,16)\n6"];
     layer_rnn_hidden4 -> glue_rnn_recur3 [label=""];
     glue_rnn_recur3 -> layer_rnn_hidden2 [label=""];
     node[color=black,fontcolor=black];
@@ -77,7 +77,7 @@ digraph network {
 
     node[color=red,fontcolor=red];
     edge[color=red];
-    glue_rnn_recur4 [label="recur4/type=fc\n2"];
+    glue_rnn_recur4 [label="recur4/type=fc,in=(0,16),out=(0,16)\n2"];
     layer_rnn_hidden4 -> glue_rnn_recur4 [label=""];
     glue_rnn_recur4 -> layer_rnn_hidden3 [label=""];
     node[color=black,fontcolor=black];
@@ -85,13 +85,13 @@ digraph network {
 
     node[color=red,fontcolor=red];
     edge[color=red];
-    glue_rnn_recur5 [label="recur5/type=fc\n5"];
+    glue_rnn_recur5 [label="recur5/type=fc,in=(0,16),out=(0,16)\n5"];
     layer_rnn_hidden3 -> glue_rnn_recur5 [label=""];
     glue_rnn_recur5 -> layer_rnn_hidden2 [label=""];
     node[color=black,fontcolor=black];
     edge[color=black];
 
-    glue_rnn_out [label="out/type=out\n9"];
+    glue_rnn_out [label="out/type=out,in=(0,16),out=(0,3822)\n9"];
     layer_rnn_hidden4 -> glue_rnn_out [label=""];
     glue_rnn_out -> output [label=""];
 

@@ -5,6 +5,8 @@
 train_thr=1
 eval_thr=1
 stage=""
+start_halving_impr=0.003
+end_halving_impr=0.0003
 # end configuration sections
 
 echo "$0 $@"  # Print the command line for logging
@@ -15,7 +17,9 @@ function print_help()
   echo "options: "
   echo "     --train-thr <threads>    # default: 1."
   echo "     --eval-thr <threads>     # default: 1."
-  echo "     --stage <stags>          # default: \"\"."
+  echo "     --stage <stages>         # default: \"\"."
+  echo "     --start-halving-impr <value>         # default: 0.003, improvement starting halving"
+  echo "     --end-halving-impr <value>           # default: 0.0003, improvement ending halving"
 }
 
 help_message=`print_help`
@@ -60,6 +64,8 @@ echo "$0: Stage $st --- Training model..."
         --eval-config "$conf_dir/eval.conf" \
         --train-threads "$train_thr" \
         --eval-threads "$eval_thr" \
+        --start-halving-impr "$start_halving_impr" \
+        --end-halving-impr "$end_halving_impr" \
         "$train_file" "$valid_file" "$dir" || exit 1;
 fi
 ((st++))

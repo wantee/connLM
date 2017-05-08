@@ -37,7 +37,7 @@ fi
 
 if [ -f $data/$archive ]; then
   size=$(/bin/ls -l $data/$archive | awk '{print $5}')
-  if [ $archive_size != $size ]; then 
+  if [ $archive_size != $size ]; then
     echo "$0: removing existing file $data/$archive because its has wrong size"
     rm $data/$archive
   else
@@ -58,37 +58,17 @@ if [ ! -f $data/$archive ]; then
   fi
 fi
 
-#echo "$0: Un-tarring data."
-#( 
-#  cd $data && \
-#  if [ ! -d 1-billion-word-language-modeling-benchmark ]; then \
-#    git clone https://github.com/ciprian-chelba/1-billion-word-language-modeling-benchmark.git; \
-#  fi && \
-#  cd 1-billion-word-language-modeling-benchmark && \
-#  patch -p0 scripts/get-data.sh < $data/get-data.sh.patch && \
-#  patch -p0 scripts/normalize-punctuation.perl  < $data/normalize-punctuation.perl.patch && \
-#  ln -sf $data/$archive tar_archives/$archive && \
-#  tar -xvf $data/$archive --wildcards training-monolingual/news.20??.en.shuffled
-#)
-#if [ $? -ne 0 ]; then
-#    echo "$0: error un-tarring data."
-#    exit 1;
-#fi
-
-echo "$0: Generating corpus from data."
-( 
-  cd $data/1-billion-word-language-modeling-benchmark && \
-  ./scripts/get-data.sh \
-#  && md5sum -c README.corpus_generation_checkpoints
-)
+echo "$0: Un-tarring data."
+tar -xvf $data/$archive -C $data \
+    --wildcards training-monolingual/news.20??.en.shuffled
 if [ $? -ne 0 ]; then
-    echo "$0: error generating corpus."
+    echo "$0: error un-tarring data."
     exit 1;
 fi
 
 touch $data/.complete
 
-echo "$0: Successfully downloaded and generated corpus."
+echo "$0: Successfully downloaded and un-tar data."
 
 if $remove_archive; then
   echo "$0: removing $data/$archive file since --remove-archive option was supplied."

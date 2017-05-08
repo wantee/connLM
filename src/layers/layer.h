@@ -29,7 +29,11 @@
 extern "C" {
 #endif
 
+#include <stutils/st_mem.h>
+
 #include <connlm/config.h>
+
+#include "utils.h"
 
 /** @defgroup g_layer NNet hidden layer
  * Hidden layer for NNet with various activation types.
@@ -56,16 +60,19 @@ typedef struct _layer_implementation_t_ {
             size_t label_len); /**< label for drawing layer. */
 
     int (*load_header)(void **extra, int version, FILE *fp,
-            bool *binary, FILE *fo_info); /**< load header of layer. */
+            connlm_fmt_t *fmt, FILE *fo_info); /**< load header of layer. */
 
     int (*load_body)(void *extra, int version, FILE *fp,
-            bool binary); /**< load body of layer. */
+            connlm_fmt_t fmt); /**< load body of layer. */
 
     int (*save_header)(void *extra, FILE *fp,
-            bool binary); /**< save header of layer. */
+            connlm_fmt_t fmt); /**< save header of layer. */
 
     int (*save_body)(void *extra, FILE *fp,
-            bool binary); /**< save body layer. */
+            connlm_fmt_t fmt); /**< save body layer. */
+
+    void (*print_verbose_info)(layer_t *layer, FILE *fo); /**< print info. */
+
 } layer_impl_t;
 
 /**
@@ -89,7 +96,7 @@ typedef struct _layer_t_ {
 #define safe_layer_destroy(ptr) do {\
     if((ptr) != NULL) {\
         layer_destroy(ptr);\
-        safe_free(ptr);\
+        safe_st_free(ptr);\
         (ptr) = NULL;\
     }\
     } while(0)
@@ -122,14 +129,14 @@ layer_t* layer_parse_topo(const char *line);
  * @param[out] layer layer initialised.
  * @param[in] version file version of loading file.
  * @param[in] fp file stream loaded from.
- * @param[out] binary whether the file stream is in binary format.
- * @param[in] fo_info file stream used to print information, if it is not NULL.
+ * @param[out] fmt storage format.
+ * @param[out] fo_info file stream used to print information, if it is not NULL.
  * @see layer_load_body
  * @see layer_save_header, layer_save_body
  * @return non-zero value if any error.
  */
 int layer_load_header(layer_t **layer, int version,
-        FILE *fp, bool *binary, FILE *fo_info);
+        FILE *fp, connlm_fmt_t *fmt, FILE *fo_info);
 
 /**
  * Load layer body.
@@ -137,36 +144,36 @@ int layer_load_header(layer_t **layer, int version,
  * @param[in] layer layer to be loaded.
  * @param[in] version file version of loading file.
  * @param[in] fp file stream loaded from.
- * @param[in] binary whether to use binary format.
+ * @param[in] fmt storage format.
  * @see layer_load_header
  * @see layer_save_header, layer_save_body
  * @return non-zero value if any error.
  */
-int layer_load_body(layer_t *layer, int version, FILE *fp, bool binary);
+int layer_load_body(layer_t *layer, int version, FILE *fp, connlm_fmt_t fmt);
 
 /**
  * Save layer header.
  * @ingroup g_layer
  * @param[in] layer layer to be saved.
  * @param[in] fp file stream saved to.
- * @param[in] binary whether to use binary format.
+ * @param[in] fmt storage format.
  * @see layer_save_body
  * @see layer_load_header, layer_load_body
  * @return non-zero value if any error.
  */
-int layer_save_header(layer_t *layer, FILE *fp, bool binary);
+int layer_save_header(layer_t *layer, FILE *fp, connlm_fmt_t fmt);
 
 /**
  * Save layer body.
  * @ingroup g_layer
  * @param[in] layer layer to be saved.
  * @param[in] fp file stream saved to.
- * @param[in] binary whether to use binary format.
+ * @param[in] fmt storage format.
  * @see layer_save_header
  * @see layer_load_header, layer_load_body
  * @return non-zero value if any error.
  */
-int layer_save_body(layer_t *layer, FILE *fp, bool binary);
+int layer_save_body(layer_t *layer, FILE *fp, connlm_fmt_t fmt);
 
 /**
  * Provide label string for drawing layer.
@@ -177,6 +184,14 @@ int layer_save_body(layer_t *layer, FILE *fp, bool binary);
  * @return label on success, NULL if any error.
  */
 char* layer_draw_label(layer_t *layer, char *label, size_t label_len);
+
+/**
+ * Print verbose info of a layer.
+ * @ingroup g_layer
+ * @param[in] layer the layer.
+ * @param[in] fo file stream print info to.
+ */
+void layer_print_verbose_info(layer_t *layer, FILE *fo);
 
 #ifdef __cplusplus
 }

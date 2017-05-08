@@ -1,0 +1,7 @@
+<component>
+property name=maxent
+
+input context=-4,-3,-2,-1
+
+glue name=direct type=direct size=2G in=input out=output
+</component>
