@@ -6,23 +6,29 @@ connLM is a Connectionist Language Modelling Toolkit, with fast training speed a
 
 ## Features
 
-* CPU-only, but can reach the speed of GPU programs
+* CPU-only, with reasonable speed
 * Configurable neural network structure
 * Tree-like output layer
 * Asynchronous SGD training
 
 ## Benchmark
 
-Main performance for several dataset are shown in following table. Detail results please see `RESULTS.txt` under the egs directories.
+Main performance for som dataset are shown in following table. Detail results please see `RESULTS.txt` under the egs directories.
 
 ```
-+-------------+------------+-------+---------------+---------------------------------+-------+
-|             |            |       |               |           Entropy/PPL           |       |
-+    Corpus   +    Model   + Algo. +   Time/Speed  +---------------------------------+ Iter. +
-|             |            |       |               |  Train |  Valid |      Test     |       |
-+-------------+------------+-------+---------------+--------+--------+---------------+-------+
-| librispeech | RNN+MaxEnt |  ASGD | 32hr9m9s/95k  | 6.8693 | 7.1583 | 7.1008/137.27 |   13  |
-+-------------+------------+-------+---------------+--------+--------+---------------+-------+
++-------------+------------+------------+---------------+----------+
+|    Corpus   |   Model    | Parameters |   Time/Speed  | Test PPL |
++-------------+------------+------------+---------------+----------+
+|    SWBD1    | RNN+MaxEnt | 200+4/128M |    -/400k     |     76   |
++-------------+------------+------------+---------------+----------+
+|     PTB     | RNN+MaxEnt | 200+4/128M |    -/340k     |    132   |
++-------------+------------+------------+---------------+----------+
+|   Tedlium   | RNN+MaxEnt | 400+4/2G   |  14hrs/47k    |    127   |
++-------------+------------+------------+---------------+----------+
+| LibriSpeech | RNN+MaxEnt | 300+4/2G   |               |          |
++-------------+------------+------------+---------------+----------+
+|  1-Billion  | RNN+MaxEnt |            |               |          |
++-------------+------------+------------+---------------+----------+
 ```
 
 ## Usage

@@ -30,8 +30,12 @@
   own project.
 
   Currently, examples included with connLM are:
+  - <a href="https://catalog.ldc.upenn.edu/ldc97s62">Switchboard 1 (SWBD1)</a>,
+    downloaded from <a href="http://www.openslr.org/resources/5/switchboard_word_alignments.tar.gz">openslr.org</a>.
   - <a href="http://www.cis.upenn.edu/~treebank/">Penn Tree Bank (PTB)</a>,
     downloaded from <a href="http://www.fit.vutbr.cz/~imikolov/rnnlm/simple-examples.tgz">Tomas Mikolov's webpage</a>.
+  - <a href="http://www-lium.univ-lemans.fr/en/content/ted-lium-corpus">Tedlium</a>,
+    downloaded from <a href="http://www.openslr.org/resources/19/TEDLIUM_release2.tar.gz">openslr.org</a>.
   - <a href="http://www.danielpovey.com/files/2015_icassp_librispeech.pdf">LibriSpeech</a>,
     downloaded from <a href="http://www.openslr.org/12/">openslr.org</a>.
   - <a href="http://www.statmt.org/lm-benchmark/">1 Billion Word Language Model Benchmark</a>,
