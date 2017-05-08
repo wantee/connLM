@@ -31,7 +31,6 @@
 });
 </script><script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js"></script>
 <link href="doxygen.css" rel="stylesheet" type="text/css" />
-<link href="table.css" rel="stylesheet" type="text/css"/>
 </head>
 <body>
 <div id="top"><!-- do not remove this div, it is closed by doxygen! -->
@@ -147,18 +146,21 @@ Data Fields</h2></td></tr>
 <tr class="memitem:ac2c8d4bc492923e57640898617acedd7"><td class="memItemLeft" align="right" valign="top">char *(*&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structlayer__impl__t.html#ac2c8d4bc492923e57640898617acedd7">draw_label</a> )(<a class="el" href="structlayer__t.html">layer_t</a> *layer, char *label, size_t label_len)</td></tr>
 <tr class="memdesc:ac2c8d4bc492923e57640898617acedd7"><td class="mdescLeft">&#160;</td><td class="mdescRight">label for drawing layer.  <a href="#ac2c8d4bc492923e57640898617acedd7">More...</a><br /></td></tr>
 <tr class="separator:ac2c8d4bc492923e57640898617acedd7"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a5a95505de23adb6a1cea2587b5f5db82"><td class="memItemLeft" align="right" valign="top">int(*&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structlayer__impl__t.html#a5a95505de23adb6a1cea2587b5f5db82">load_header</a> )(void **extra, int version, FILE *fp, bool *binary, FILE *fo_info)</td></tr>
-<tr class="memdesc:a5a95505de23adb6a1cea2587b5f5db82"><td class="mdescLeft">&#160;</td><td class="mdescRight">load header of layer.  <a href="#a5a95505de23adb6a1cea2587b5f5db82">More...</a><br /></td></tr>
-<tr class="separator:a5a95505de23adb6a1cea2587b5f5db82"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a6f4107e302e86592b36000a6c3eea16c"><td class="memItemLeft" align="right" valign="top">int(*&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structlayer__impl__t.html#a6f4107e302e86592b36000a6c3eea16c">load_body</a> )(void *extra, int version, FILE *fp, bool binary)</td></tr>
-<tr class="memdesc:a6f4107e302e86592b36000a6c3eea16c"><td class="mdescLeft">&#160;</td><td class="mdescRight">load body of layer.  <a href="#a6f4107e302e86592b36000a6c3eea16c">More...</a><br /></td></tr>
-<tr class="separator:a6f4107e302e86592b36000a6c3eea16c"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ad0a3a5b2f30dcd5a7242c5bea78c3d86"><td class="memItemLeft" align="right" valign="top">int(*&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structlayer__impl__t.html#ad0a3a5b2f30dcd5a7242c5bea78c3d86">save_header</a> )(void *extra, FILE *fp, bool binary)</td></tr>
-<tr class="memdesc:ad0a3a5b2f30dcd5a7242c5bea78c3d86"><td class="mdescLeft">&#160;</td><td class="mdescRight">save header of layer.  <a href="#ad0a3a5b2f30dcd5a7242c5bea78c3d86">More...</a><br /></td></tr>
-<tr class="separator:ad0a3a5b2f30dcd5a7242c5bea78c3d86"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a4e2d9f50824e9e08f7c03e97ee78afa2"><td class="memItemLeft" align="right" valign="top">int(*&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structlayer__impl__t.html#a4e2d9f50824e9e08f7c03e97ee78afa2">save_body</a> )(void *extra, FILE *fp, bool binary)</td></tr>
-<tr class="memdesc:a4e2d9f50824e9e08f7c03e97ee78afa2"><td class="mdescLeft">&#160;</td><td class="mdescRight">save body layer.  <a href="#a4e2d9f50824e9e08f7c03e97ee78afa2">More...</a><br /></td></tr>
-<tr class="separator:a4e2d9f50824e9e08f7c03e97ee78afa2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0529fc3ed664e5ccb60898010db973d3"><td class="memItemLeft" align="right" valign="top">int(*&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structlayer__impl__t.html#a0529fc3ed664e5ccb60898010db973d3">load_header</a> )(void **extra, int version, FILE *fp, <a class="el" href="group__g__connlm.html#ga27bb4962c19c1ac9c66c27d5d2de9a73">connlm_fmt_t</a> *fmt, FILE *fo_info)</td></tr>
+<tr class="memdesc:a0529fc3ed664e5ccb60898010db973d3"><td class="mdescLeft">&#160;</td><td class="mdescRight">load header of layer.  <a href="#a0529fc3ed664e5ccb60898010db973d3">More...</a><br /></td></tr>
+<tr class="separator:a0529fc3ed664e5ccb60898010db973d3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa133ca91d7876af44505e0cd1024b1fb"><td class="memItemLeft" align="right" valign="top">int(*&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structlayer__impl__t.html#aa133ca91d7876af44505e0cd1024b1fb">load_body</a> )(void *extra, int version, FILE *fp, <a class="el" href="group__g__connlm.html#ga27bb4962c19c1ac9c66c27d5d2de9a73">connlm_fmt_t</a> fmt)</td></tr>
+<tr class="memdesc:aa133ca91d7876af44505e0cd1024b1fb"><td class="mdescLeft">&#160;</td><td class="mdescRight">load body of layer.  <a href="#aa133ca91d7876af44505e0cd1024b1fb">More...</a><br /></td></tr>
+<tr class="separator:aa133ca91d7876af44505e0cd1024b1fb"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:acdb6faf2d0e424dcb8f5e56c14cac45d"><td class="memItemLeft" align="right" valign="top">int(*&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structlayer__impl__t.html#acdb6faf2d0e424dcb8f5e56c14cac45d">save_header</a> )(void *extra, FILE *fp, <a class="el" href="group__g__connlm.html#ga27bb4962c19c1ac9c66c27d5d2de9a73">connlm_fmt_t</a> fmt)</td></tr>
+<tr class="memdesc:acdb6faf2d0e424dcb8f5e56c14cac45d"><td class="mdescLeft">&#160;</td><td class="mdescRight">save header of layer.  <a href="#acdb6faf2d0e424dcb8f5e56c14cac45d">More...</a><br /></td></tr>
+<tr class="separator:acdb6faf2d0e424dcb8f5e56c14cac45d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a428a237f60b7eaa16a1d66a3a6bf1fa7"><td class="memItemLeft" align="right" valign="top">int(*&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structlayer__impl__t.html#a428a237f60b7eaa16a1d66a3a6bf1fa7">save_body</a> )(void *extra, FILE *fp, <a class="el" href="group__g__connlm.html#ga27bb4962c19c1ac9c66c27d5d2de9a73">connlm_fmt_t</a> fmt)</td></tr>
+<tr class="memdesc:a428a237f60b7eaa16a1d66a3a6bf1fa7"><td class="mdescLeft">&#160;</td><td class="mdescRight">save body layer.  <a href="#a428a237f60b7eaa16a1d66a3a6bf1fa7">More...</a><br /></td></tr>
+<tr class="separator:a428a237f60b7eaa16a1d66a3a6bf1fa7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5e01ef6694717903f70a3f14cde29e9c"><td class="memItemLeft" align="right" valign="top">void(*&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structlayer__impl__t.html#a5e01ef6694717903f70a3f14cde29e9c">print_verbose_info</a> )(<a class="el" href="structlayer__t.html">layer_t</a> *layer, FILE *fo)</td></tr>
+<tr class="memdesc:a5e01ef6694717903f70a3f14cde29e9c"><td class="mdescLeft">&#160;</td><td class="mdescRight">print info.  <a href="#a5e01ef6694717903f70a3f14cde29e9c">More...</a><br /></td></tr>
+<tr class="separator:a5e01ef6694717903f70a3f14cde29e9c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>NNet hidden layer implementaion. </p>
@@ -219,12 +221,12 @@ Data Fields</h2></td></tr>
 
 </div>
 </div>
-<a class="anchor" id="a6f4107e302e86592b36000a6c3eea16c"></a>
+<a class="anchor" id="aa133ca91d7876af44505e0cd1024b1fb"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">int(* layer_impl_t::load_body) (void *extra, int version, FILE *fp, bool binary)</td>
+          <td class="memname">int(* layer_impl_t::load_body) (void *extra, int version, FILE *fp, <a class="el" href="group__g__connlm.html#ga27bb4962c19c1ac9c66c27d5d2de9a73">connlm_fmt_t</a> fmt)</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -233,12 +235,12 @@ Data Fields</h2></td></tr>
 
 </div>
 </div>
-<a class="anchor" id="a5a95505de23adb6a1cea2587b5f5db82"></a>
+<a class="anchor" id="a0529fc3ed664e5ccb60898010db973d3"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">int(* layer_impl_t::load_header) (void **extra, int version, FILE *fp, bool *binary, FILE *fo_info)</td>
+          <td class="memname">int(* layer_impl_t::load_header) (void **extra, int version, FILE *fp, <a class="el" href="group__g__connlm.html#ga27bb4962c19c1ac9c66c27d5d2de9a73">connlm_fmt_t</a> *fmt, FILE *fo_info)</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -261,12 +263,26 @@ Data Fields</h2></td></tr>
 
 </div>
 </div>
-<a class="anchor" id="a4e2d9f50824e9e08f7c03e97ee78afa2"></a>
+<a class="anchor" id="a5e01ef6694717903f70a3f14cde29e9c"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">int(* layer_impl_t::save_body) (void *extra, FILE *fp, bool binary)</td>
+          <td class="memname">void(* layer_impl_t::print_verbose_info) (<a class="el" href="structlayer__t.html">layer_t</a> *layer, FILE *fo)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>print info. </p>
+
+</div>
+</div>
+<a class="anchor" id="a428a237f60b7eaa16a1d66a3a6bf1fa7"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int(* layer_impl_t::save_body) (void *extra, FILE *fp, <a class="el" href="group__g__connlm.html#ga27bb4962c19c1ac9c66c27d5d2de9a73">connlm_fmt_t</a> fmt)</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -275,12 +291,12 @@ Data Fields</h2></td></tr>
 
 </div>
 </div>
-<a class="anchor" id="ad0a3a5b2f30dcd5a7242c5bea78c3d86"></a>
+<a class="anchor" id="acdb6faf2d0e424dcb8f5e56c14cac45d"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">int(* layer_impl_t::save_header) (void *extra, FILE *fp, bool binary)</td>
+          <td class="memname">int(* layer_impl_t::save_header) (void *extra, FILE *fp, <a class="el" href="group__g__connlm.html#ga27bb4962c19c1ac9c66c27d5d2de9a73">connlm_fmt_t</a> fmt)</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -312,7 +328,7 @@ Data Fields</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="structlayer__impl__t.html">layer_impl_t</a></li>
-    <li class="footer">Generated on Fri Oct 28 2016 22:37:23 for connLM by
+    <li class="footer">Generated on Mon May 8 2017 22:10:28 for connLM by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.10 </li>
   </ul>

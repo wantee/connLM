@@ -31,7 +31,6 @@
 });
 </script><script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js"></script>
 <link href="doxygen.css" rel="stylesheet" type="text/css" />
-<link href="table.css" rel="stylesheet" type="text/css"/>
 </head>
 <body>
 <div id="top"><!-- do not remove this div, it is closed by doxygen! -->
@@ -198,7 +197,7 @@ $(document).ready(function(){initNavTree('driver_8h_source.html','');});
 <div class="line"><a name="l00124"></a><span class="lineno"><a class="line" href="group__g__driver.html#gacb7e4b8a66183abb164c504fbe9d0752">  124</a></span>&#160;<span class="preprocessor">#define safe_driver_destroy(ptr) do {\</span></div>
 <div class="line"><a name="l00125"></a><span class="lineno">  125</span>&#160;<span class="preprocessor">    if((ptr) != NULL) {\</span></div>
 <div class="line"><a name="l00126"></a><span class="lineno">  126</span>&#160;<span class="preprocessor">        driver_destroy(ptr);\</span></div>
-<div class="line"><a name="l00127"></a><span class="lineno">  127</span>&#160;<span class="preprocessor">        safe_free(ptr);\</span></div>
+<div class="line"><a name="l00127"></a><span class="lineno">  127</span>&#160;<span class="preprocessor">        safe_st_free(ptr);\</span></div>
 <div class="line"><a name="l00128"></a><span class="lineno">  128</span>&#160;<span class="preprocessor">        (ptr) = NULL;\</span></div>
 <div class="line"><a name="l00129"></a><span class="lineno">  129</span>&#160;<span class="preprocessor">    }\</span></div>
 <div class="line"><a name="l00130"></a><span class="lineno">  130</span>&#160;<span class="preprocessor">    } while(0)</span></div>
@@ -242,7 +241,7 @@ $(document).ready(function(){initNavTree('driver_8h_source.html','');});
 <div class="ttc" id="structdriver__t_html_ab0436070bce7a05ee62a0396c5181756"><div class="ttname"><a href="structdriver__t.html#ab0436070bce7a05ee62a0396c5181756">driver_t::gen_num_sents</a></div><div class="ttdeci">int gen_num_sents</div><div class="ttdoc">number of sentences to be generated. </div><div class="ttdef"><b>Definition:</b> driver.h:116</div></div>
 <div class="ttc" id="group__g__driver_html_gada9b7f3b6a1cd676f8fa9bfd259ec659"><div class="ttname"><a href="group__g__driver.html#gada9b7f3b6a1cd676f8fa9bfd259ec659">driver_run</a></div><div class="ttdeci">int driver_run(driver_t *driver)</div><div class="ttdoc">Start running driver. </div></div>
 <div class="ttc" id="structdriver__t_html_a2864cea3bb016038c488afedd9046e35"><div class="ttname"><a href="structdriver__t.html#a2864cea3bb016038c488afedd9046e35">driver_t::updaters</a></div><div class="ttdeci">updater_t ** updaters</div><div class="ttdoc">the updaters. </div><div class="ttdef"><b>Definition:</b> driver.h:104</div></div>
-<div class="ttc" id="structreader__t_html"><div class="ttname"><a href="structreader__t.html">reader_t</a></div><div class="ttdoc">Sample reader. </div><div class="ttdef"><b>Definition:</b> reader.h:123</div></div>
+<div class="ttc" id="structreader__t_html"><div class="ttname"><a href="structreader__t.html">reader_t</a></div><div class="ttdoc">Sample reader. </div><div class="ttdef"><b>Definition:</b> reader.h:126</div></div>
 <div class="ttc" id="structdriver__eval__opt__t_html"><div class="ttname"><a href="structdriver__eval__opt__t.html">driver_eval_opt_t</a></div><div class="ttdoc">Options for evaluating connLM model. </div><div class="ttdef"><b>Definition:</b> driver.h:60</div></div>
 <div class="ttc" id="structdriver__gen__opt__t_html"><div class="ttname"><a href="structdriver__gen__opt__t.html">driver_gen_opt_t</a></div><div class="ttdoc">Options for generate text. </div><div class="ttdef"><b>Definition:</b> driver.h:69</div></div>
 <div class="ttc" id="group__g__driver_html_gga21eeeb986c6bffaf1818974a800cf2fca2c187eb0f9186a8e5c1b1f2d272cfab9"><div class="ttname"><a href="group__g__driver.html#gga21eeeb986c6bffaf1818974a800cf2fca2c187eb0f9186a8e5c1b1f2d272cfab9">DRIVER_EVAL</a></div><div class="ttdoc">evaluate. </div><div class="ttdef"><b>Definition:</b> driver.h:52</div></div>
@@ -259,7 +258,7 @@ $(document).ready(function(){initNavTree('driver_8h_source.html','');});
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><b>driver.h</b></li>
-    <li class="footer">Generated on Fri Oct 28 2016 22:37:22 for connLM by
+    <li class="footer">Generated on Mon May 8 2017 22:10:25 for connLM by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.10 </li>
   </ul>

@@ -31,7 +31,6 @@
 });
 </script><script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js"></script>
 <link href="doxygen.css" rel="stylesheet" type="text/css" />
-<link href="table.css" rel="stylesheet" type="text/css"/>
 </head>
 <body>
 <div id="top"><!-- do not remove this div, it is closed by doxygen! -->
@@ -173,6 +172,36 @@ Functions</h2></td></tr>
 <tr class="memitem:gab7072545867f5ded924c84fc6f42b212"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__g__updater__comp.html#gab7072545867f5ded924c84fc6f42b212">comp_updater_forward_out</a> (<a class="el" href="structcomp__updater__t.html">comp_updater_t</a> *comp_updater, output_node_id_t node)</td></tr>
 <tr class="memdesc:gab7072545867f5ded924c84fc6f42b212"><td class="mdescLeft">&#160;</td><td class="mdescRight">Feed-forward one node of output layer.  <a href="#gab7072545867f5ded924c84fc6f42b212">More...</a><br /></td></tr>
 <tr class="separator:gab7072545867f5ded924c84fc6f42b212"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gaedf8055845b41c323e36005f55725e5d"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__g__updater__comp.html#gaedf8055845b41c323e36005f55725e5d">comp_updater_forward_out_word</a> (<a class="el" href="structcomp__updater__t.html">comp_updater_t</a> *comp_updater, int word)</td></tr>
+<tr class="memdesc:gaedf8055845b41c323e36005f55725e5d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Feed-forward one word of output layer.  <a href="#gaedf8055845b41c323e36005f55725e5d">More...</a><br /></td></tr>
+<tr class="separator:gaedf8055845b41c323e36005f55725e5d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga9bb995d73d17fa18b955adb50ae8a821"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__g__updater__comp.html#ga9bb995d73d17fa18b955adb50ae8a821">comp_updater_state_size</a> (<a class="el" href="structcomp__updater__t.html">comp_updater_t</a> *comp_updater)</td></tr>
+<tr class="memdesc:ga9bb995d73d17fa18b955adb50ae8a821"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the size of state in comp_updater.  <a href="#ga9bb995d73d17fa18b955adb50ae8a821">More...</a><br /></td></tr>
+<tr class="separator:ga9bb995d73d17fa18b955adb50ae8a821"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gae197e16965debba102591d13181336b4"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__g__updater__comp.html#gae197e16965debba102591d13181336b4">comp_updater_dump_state</a> (<a class="el" href="structcomp__updater__t.html">comp_updater_t</a> *comp_updater, real_t *state)</td></tr>
+<tr class="memdesc:gae197e16965debba102591d13181336b4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Dump the state of comp_updater.  <a href="#gae197e16965debba102591d13181336b4">More...</a><br /></td></tr>
+<tr class="separator:gae197e16965debba102591d13181336b4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gaba006a201c2c8b400e4dbe5da378ef87"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__g__updater__comp.html#gaba006a201c2c8b400e4dbe5da378ef87">comp_updater_dump_pre_ac_state</a> (<a class="el" href="structcomp__updater__t.html">comp_updater_t</a> *comp_updater, real_t *state)</td></tr>
+<tr class="memdesc:gaba006a201c2c8b400e4dbe5da378ef87"><td class="mdescLeft">&#160;</td><td class="mdescRight">Dump the pre-activation state of comp_updater.  <a href="#gaba006a201c2c8b400e4dbe5da378ef87">More...</a><br /></td></tr>
+<tr class="separator:gaba006a201c2c8b400e4dbe5da378ef87"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga12f076e2566076bbdfbcb98882336921"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__g__updater__comp.html#ga12f076e2566076bbdfbcb98882336921">comp_updater_feed_state</a> (<a class="el" href="structcomp__updater__t.html">comp_updater_t</a> *comp_updater, real_t *state)</td></tr>
+<tr class="memdesc:ga12f076e2566076bbdfbcb98882336921"><td class="mdescLeft">&#160;</td><td class="mdescRight">Feed the state of comp_updater.  <a href="#ga12f076e2566076bbdfbcb98882336921">More...</a><br /></td></tr>
+<tr class="separator:ga12f076e2566076bbdfbcb98882336921"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gaf07720729edad13fdee47f5bf86c8f7e"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__g__updater__comp.html#gaf07720729edad13fdee47f5bf86c8f7e">comp_updater_random_state</a> (<a class="el" href="structcomp__updater__t.html">comp_updater_t</a> *comp_updater, real_t *state)</td></tr>
+<tr class="memdesc:gaf07720729edad13fdee47f5bf86c8f7e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Generate random state of comp_updater.  <a href="#gaf07720729edad13fdee47f5bf86c8f7e">More...</a><br /></td></tr>
+<tr class="separator:gaf07720729edad13fdee47f5bf86c8f7e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga5c1833e8ec6f90ae7c9642b12fcdac20"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__g__updater__comp.html#ga5c1833e8ec6f90ae7c9642b12fcdac20">comp_updater_init_multicall</a> (<a class="el" href="structcomp__updater__t.html">comp_updater_t</a> *comp_updater, <a class="el" href="structoutput__t.html">output_t</a> *output)</td></tr>
+<tr class="memdesc:ga5c1833e8ec6f90ae7c9642b12fcdac20"><td class="mdescLeft">&#160;</td><td class="mdescRight">Initialize multi-call of forward_out_word.  <a href="#ga5c1833e8ec6f90ae7c9642b12fcdac20">More...</a><br /></td></tr>
+<tr class="separator:ga5c1833e8ec6f90ae7c9642b12fcdac20"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gabb6e65ede371646c091861c6fa4682f6"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__g__updater__comp.html#gabb6e65ede371646c091861c6fa4682f6">comp_updater_clear_multicall</a> (<a class="el" href="structcomp__updater__t.html">comp_updater_t</a> *comp_updater, <a class="el" href="structoutput__t.html">output_t</a> *output)</td></tr>
+<tr class="memdesc:gabb6e65ede371646c091861c6fa4682f6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Clear multi-call of forward_out_word.  <a href="#gabb6e65ede371646c091861c6fa4682f6">More...</a><br /></td></tr>
+<tr class="separator:gabb6e65ede371646c091861c6fa4682f6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga0418b64b6fd923e48cd68eabfceb9d62"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__g__updater__comp.html#ga0418b64b6fd923e48cd68eabfceb9d62">comp_updater_activate_state</a> (<a class="el" href="structcomp__updater__t.html">comp_updater_t</a> *comp_updater, real_t *state)</td></tr>
+<tr class="memdesc:ga0418b64b6fd923e48cd68eabfceb9d62"><td class="mdescLeft">&#160;</td><td class="mdescRight">Activate state with comp_updater.  <a href="#ga0418b64b6fd923e48cd68eabfceb9d62">More...</a><br /></td></tr>
+<tr class="separator:ga0418b64b6fd923e48cd68eabfceb9d62"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga93f01d8f870b7a8e90f647b109f29575"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__g__updater__comp.html#ga93f01d8f870b7a8e90f647b109f29575">comp_updater_setup_pre_ac_state</a> (<a class="el" href="structcomp__updater__t.html">comp_updater_t</a> *comp_updater)</td></tr>
+<tr class="memdesc:ga93f01d8f870b7a8e90f647b109f29575"><td class="mdescLeft">&#160;</td><td class="mdescRight">Setup pre-activation state for comp_updater.  <a href="#ga93f01d8f870b7a8e90f647b109f29575">More...</a><br /></td></tr>
+<tr class="separator:ga93f01d8f870b7a8e90f647b109f29575"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <p>Perform forward and backprop on a component. </p>
@@ -193,7 +222,7 @@ Functions</h2></td></tr>
 <b>Value:</b><div class="fragment"><div class="line"><span class="keywordflow">do</span> {\</div>
 <div class="line">    if((ptr) != NULL) {\</div>
 <div class="line">        comp_updater_destroy(ptr);\</div>
-<div class="line">        safe_free(ptr);\</div>
+<div class="line">        safe_st_free(ptr);\</div>
 <div class="line">        (ptr) = NULL;\</div>
 <div class="line">    }\</div>
 <div class="line">    } <span class="keywordflow">while</span>(0)</div>
@@ -209,6 +238,42 @@ Functions</h2></td></tr>
 </div>
 </div>
 <h2 class="groupheader">Function Documentation</h2>
+<a class="anchor" id="ga0418b64b6fd923e48cd68eabfceb9d62"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int comp_updater_activate_state </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structcomp__updater__t.html">comp_updater_t</a> *&#160;</td>
+          <td class="paramname"><em>comp_updater</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">real_t *&#160;</td>
+          <td class="paramname"><em>state</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Activate state with comp_updater. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">comp_updater</td><td>the comp_updater with activatation functions. </td></tr>
+    <tr><td class="paramdir">[out]</td><td class="paramname">state</td><td>pointer to activated state. Size of state must be larger than or equal to the state_size returned by comp_updater_state_size. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>non-zero value if any error. </dd></dl>
+
+</div>
+</div>
 <a class="anchor" id="ga5bcb2cf5c8b1e8fc8a1a7c36cc82f44c"></a>
 <div class="memitem">
 <div class="memproto">
@@ -264,6 +329,42 @@ Functions</h2></td></tr>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramdir">[in]</td><td class="paramname">comp_updater</td><td>comp_updater. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>non-zero value if any error. </dd></dl>
+
+</div>
+</div>
+<a class="anchor" id="gabb6e65ede371646c091861c6fa4682f6"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int comp_updater_clear_multicall </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structcomp__updater__t.html">comp_updater_t</a> *&#160;</td>
+          <td class="paramname"><em>comp_updater</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="structoutput__t.html">output_t</a> *&#160;</td>
+          <td class="paramname"><em>output</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Clear multi-call of forward_out_word. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">comp_updater</td><td>the comp_updater. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">output</td><td>the output layer. </td></tr>
   </table>
   </dd>
 </dl>
@@ -328,6 +429,114 @@ Functions</h2></td></tr>
   </table>
   </dd>
 </dl>
+
+</div>
+</div>
+<a class="anchor" id="gaba006a201c2c8b400e4dbe5da378ef87"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int comp_updater_dump_pre_ac_state </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structcomp__updater__t.html">comp_updater_t</a> *&#160;</td>
+          <td class="paramname"><em>comp_updater</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">real_t *&#160;</td>
+          <td class="paramname"><em>state</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Dump the pre-activation state of comp_updater. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">comp_updater</td><td>the comp_updater. </td></tr>
+    <tr><td class="paramdir">[out]</td><td class="paramname">state</td><td>pointer to store the dumped state. Size of state must be larger than or equal to the state_size returned by comp_updater_state_size. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>non-zero value if any error. </dd></dl>
+
+</div>
+</div>
+<a class="anchor" id="gae197e16965debba102591d13181336b4"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int comp_updater_dump_state </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structcomp__updater__t.html">comp_updater_t</a> *&#160;</td>
+          <td class="paramname"><em>comp_updater</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">real_t *&#160;</td>
+          <td class="paramname"><em>state</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Dump the state of comp_updater. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">comp_updater</td><td>the comp_updater. </td></tr>
+    <tr><td class="paramdir">[out]</td><td class="paramname">state</td><td>pointer to store the dumped state. Size of state must be larger than or equal to the state_size returned by comp_updater_state_size. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>non-zero value if any error. </dd></dl>
+
+</div>
+</div>
+<a class="anchor" id="ga12f076e2566076bbdfbcb98882336921"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int comp_updater_feed_state </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structcomp__updater__t.html">comp_updater_t</a> *&#160;</td>
+          <td class="paramname"><em>comp_updater</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">real_t *&#160;</td>
+          <td class="paramname"><em>state</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Feed the state of comp_updater. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">comp_updater</td><td>the comp_updater. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">state</td><td>pointer to values to be fed into state. Size of state must be larger than or equal to the state_size returned by comp_updater_state_size. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>non-zero value if any error. </dd></dl>
 
 </div>
 </div>
@@ -430,6 +639,42 @@ Functions</h2></td></tr>
 
 </div>
 </div>
+<a class="anchor" id="gaedf8055845b41c323e36005f55725e5d"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int comp_updater_forward_out_word </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structcomp__updater__t.html">comp_updater_t</a> *&#160;</td>
+          <td class="paramname"><em>comp_updater</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>word</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Feed-forward one word of output layer. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">comp_updater</td><td>the comp_updater. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">word</td><td>the word. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>non-zero value if any error. </dd></dl>
+
+</div>
+</div>
 <a class="anchor" id="ga0bd4af7880c1d1c708bd83063d440305"></a>
 <div class="memitem">
 <div class="memproto">
@@ -459,6 +704,78 @@ Functions</h2></td></tr>
   <table class="params">
     <tr><td class="paramdir">[in]</td><td class="paramname">comp_updater</td><td>the comp_updater. </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">input_sent</td><td>input sentence buffer. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>non-zero value if any error. </dd></dl>
+
+</div>
+</div>
+<a class="anchor" id="ga5c1833e8ec6f90ae7c9642b12fcdac20"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int comp_updater_init_multicall </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structcomp__updater__t.html">comp_updater_t</a> *&#160;</td>
+          <td class="paramname"><em>comp_updater</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="structoutput__t.html">output_t</a> *&#160;</td>
+          <td class="paramname"><em>output</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Initialize multi-call of forward_out_word. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">comp_updater</td><td>the comp_updater. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">output</td><td>the output layer. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>non-zero value if any error. </dd></dl>
+
+</div>
+</div>
+<a class="anchor" id="gaf07720729edad13fdee47f5bf86c8f7e"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int comp_updater_random_state </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structcomp__updater__t.html">comp_updater_t</a> *&#160;</td>
+          <td class="paramname"><em>comp_updater</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">real_t *&#160;</td>
+          <td class="paramname"><em>state</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Generate random state of comp_updater. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">comp_updater</td><td>the comp_updater. </td></tr>
+    <tr><td class="paramdir">[out]</td><td class="paramname">state</td><td>pointer to generated state. Size of state must be larger than or equal to the state_size returned by comp_updater_state_size. </td></tr>
   </table>
   </dd>
 </dl>
@@ -528,12 +845,62 @@ Functions</h2></td></tr>
 
 </div>
 </div>
+<a class="anchor" id="ga93f01d8f870b7a8e90f647b109f29575"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int comp_updater_setup_pre_ac_state </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structcomp__updater__t.html">comp_updater_t</a> *&#160;</td>
+          <td class="paramname"><em>comp_updater</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Setup pre-activation state for comp_updater. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">comp_updater</td><td>comp_updater. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>non-zero value if any error. </dd></dl>
+
+</div>
+</div>
+<a class="anchor" id="ga9bb995d73d17fa18b955adb50ae8a821"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int comp_updater_state_size </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structcomp__updater__t.html">comp_updater_t</a> *&#160;</td>
+          <td class="paramname"><em>comp_updater</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Get the size of state in comp_updater. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">comp_updater</td><td>the comp_updater. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>state size of comp_updater, -1 if any error. </dd></dl>
+
+</div>
+</div>
 </div><!-- contents -->
 </div><!-- doc-content -->
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on Fri Oct 28 2016 22:37:23 for connLM by
+    <li class="footer">Generated on Mon May 8 2017 22:10:28 for connLM by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.10 </li>
   </ul>

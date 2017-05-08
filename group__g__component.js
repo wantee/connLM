@@ -20,9 +20,11 @@ var group__g__component =
     [ "comp_dup", "group__g__component.html#gaec451b3b858df8a8261eaf2d04bce566", null ],
     [ "comp_init_from_topo", "group__g__component.html#gaae69c37606f06e33cccbc3b59d1d2ef9", null ],
     [ "comp_input_nodename", "group__g__component.html#ga3c7f08c939d4df506fda3d9ef96f5aa2", null ],
-    [ "comp_load_body", "group__g__component.html#gaa75e2fb190981b9b19010a91c2d0358a", null ],
-    [ "comp_load_header", "group__g__component.html#ga0b44d2c6cb2284f30c0de2caea49027b", null ],
+    [ "comp_load_body", "group__g__component.html#gaff7784fc0f69a82511126d0f35362558", null ],
+    [ "comp_load_header", "group__g__component.html#ga6d9e06287a230d32f6d7a67fb6b08ba2", null ],
     [ "comp_load_train_opt", "group__g__component.html#gae04c975c34d90c37e9ee863144748ad7", null ],
-    [ "comp_save_body", "group__g__component.html#gac10ae6b3c4c27c20bbae936f5e38fb5b", null ],
-    [ "comp_save_header", "group__g__component.html#ga7134ec9c8634f2d214a93fae3799ef46", null ]
+    [ "comp_print_verbose_info", "group__g__component.html#gafbbd58c613d017d874c23a0608740f9c", null ],
+    [ "comp_sanity_check", "group__g__component.html#ga126da01627780e228f08092a0aba1af0", null ],
+    [ "comp_save_body", "group__g__component.html#ga15342f2253e09a031f4344ac8bd4f53b", null ],
+    [ "comp_save_header", "group__g__component.html#ga896b27b2cf0cb54370a03338e1149174", null ]
 ];

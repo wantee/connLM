@@ -31,7 +31,6 @@
 });
 </script><script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js"></script>
 <link href="doxygen.css" rel="stylesheet" type="text/css" />
-<link href="table.css" rel="stylesheet" type="text/css"/>
 </head>
 <body>
 <div id="top"><!-- do not remove this div, it is closed by doxygen! -->
@@ -137,6 +136,9 @@ Functions</h2></td></tr>
 void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__g__param.html#ga0e365877d58a2f3e852d85f3249afe13">param_show_usage</a> ()</td></tr>
 <tr class="memdesc:ga0e365877d58a2f3e852d85f3249afe13"><td class="mdescLeft">&#160;</td><td class="mdescRight">Show param usage to stderr. <br /></td></tr>
 <tr class="separator:ga0e365877d58a2f3e852d85f3249afe13"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga50e21a92368e71d4382900cc735ea67a"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__g__param.html#ga50e21a92368e71d4382900cc735ea67a">param_equal</a> (<a class="el" href="structparam__t.html">param_t</a> *param1, <a class="el" href="structparam__t.html">param_t</a> *param2)</td></tr>
+<tr class="memdesc:ga50e21a92368e71d4382900cc735ea67a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Check param equality.  <a href="#ga50e21a92368e71d4382900cc735ea67a">More...</a><br /></td></tr>
+<tr class="separator:ga50e21a92368e71d4382900cc735ea67a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:gac112dbbe9542f37b947f76ebf2f6fe83"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__g__param.html#gac112dbbe9542f37b947f76ebf2f6fe83">bptt_opt_load</a> (<a class="el" href="structbptt__opt__t.html">bptt_opt_t</a> *bptt_opt, st_opt_t *opt, const char *sec_name, <a class="el" href="structbptt__opt__t.html">bptt_opt_t</a> *parent_bptt_opt)</td></tr>
 <tr class="memdesc:gac112dbbe9542f37b947f76ebf2f6fe83"><td class="mdescLeft">&#160;</td><td class="mdescRight">Load BPTT option.  <a href="#gac112dbbe9542f37b947f76ebf2f6fe83">More...</a><br /></td></tr>
 <tr class="separator:gac112dbbe9542f37b947f76ebf2f6fe83"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -144,10 +146,49 @@ void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="grou
 void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__g__param.html#ga062786e7b87037a69c1865ef894ad5f6">bptt_opt_show_usage</a> ()</td></tr>
 <tr class="memdesc:ga062786e7b87037a69c1865ef894ad5f6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Show bptt_opt usage to stderr. <br /></td></tr>
 <tr class="separator:ga062786e7b87037a69c1865ef894ad5f6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga5cf1915cc8ff2c2869b80e0e1e45ed1e"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__g__param.html#ga5cf1915cc8ff2c2869b80e0e1e45ed1e">bptt_opt_equal</a> (<a class="el" href="structbptt__opt__t.html">bptt_opt_t</a> *bptt_opt1, <a class="el" href="structbptt__opt__t.html">bptt_opt_t</a> *bptt_opt2)</td></tr>
+<tr class="memdesc:ga5cf1915cc8ff2c2869b80e0e1e45ed1e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Check bptt_opt equality.  <a href="#ga5cf1915cc8ff2c2869b80e0e1e45ed1e">More...</a><br /></td></tr>
+<tr class="separator:ga5cf1915cc8ff2c2869b80e0e1e45ed1e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <p>(Hyper)parameters for training a connLM model. </p>
 <h2 class="groupheader">Function Documentation</h2>
+<a class="anchor" id="ga5cf1915cc8ff2c2869b80e0e1e45ed1e"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool bptt_opt_equal </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structbptt__opt__t.html">bptt_opt_t</a> *&#160;</td>
+          <td class="paramname"><em>bptt_opt1</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="structbptt__opt__t.html">bptt_opt_t</a> *&#160;</td>
+          <td class="paramname"><em>bptt_opt2</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Check bptt_opt equality. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">bptt_opt1</td><td>the first bptt_opt. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">bptt_opt2</td><td>the second bptt_opt. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true if they are equal, otherwise false </dd></dl>
+
+</div>
+</div>
 <a class="anchor" id="gac112dbbe9542f37b947f76ebf2f6fe83"></a>
 <div class="memitem">
 <div class="memproto">
@@ -195,6 +236,42 @@ void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="grou
   </dd>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>non-zero value if any error. </dd></dl>
+
+</div>
+</div>
+<a class="anchor" id="ga50e21a92368e71d4382900cc735ea67a"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool param_equal </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structparam__t.html">param_t</a> *&#160;</td>
+          <td class="paramname"><em>param1</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="structparam__t.html">param_t</a> *&#160;</td>
+          <td class="paramname"><em>param2</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Check param equality. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">param1</td><td>the first param. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">param2</td><td>the second param. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true if they are equal, otherwise false </dd></dl>
 
 </div>
 </div>
@@ -253,7 +330,7 @@ void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="grou
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on Fri Oct 28 2016 22:37:23 for connLM by
+    <li class="footer">Generated on Mon May 8 2017 22:10:28 for connLM by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.10 </li>
   </ul>

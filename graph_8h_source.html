@@ -31,7 +31,6 @@
 });
 </script><script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js"></script>
 <link href="doxygen.css" rel="stylesheet" type="text/css" />
-<link href="table.css" rel="stylesheet" type="text/css"/>
 </head>
 <body>
 <div id="top"><!-- do not remove this div, it is closed by doxygen! -->
@@ -176,7 +175,7 @@ $(document).ready(function(){initNavTree('graph_8h_source.html','');});
 <div class="line"><a name="l00084"></a><span class="lineno"><a class="line" href="group__g__graph.html#gaf8406de9cecfeb30bf2640f1267699fb">   84</a></span>&#160;<span class="preprocessor">#define safe_graph_destroy(ptr) do {\</span></div>
 <div class="line"><a name="l00085"></a><span class="lineno">   85</span>&#160;<span class="preprocessor">    if((ptr) != NULL) {\</span></div>
 <div class="line"><a name="l00086"></a><span class="lineno">   86</span>&#160;<span class="preprocessor">        graph_destroy(ptr);\</span></div>
-<div class="line"><a name="l00087"></a><span class="lineno">   87</span>&#160;<span class="preprocessor">        safe_free(ptr);\</span></div>
+<div class="line"><a name="l00087"></a><span class="lineno">   87</span>&#160;<span class="preprocessor">        safe_st_free(ptr);\</span></div>
 <div class="line"><a name="l00088"></a><span class="lineno">   88</span>&#160;<span class="preprocessor">        (ptr) = NULL;\</span></div>
 <div class="line"><a name="l00089"></a><span class="lineno">   89</span>&#160;<span class="preprocessor">    }\</span></div>
 <div class="line"><a name="l00090"></a><span class="lineno">   90</span>&#160;<span class="preprocessor">    } while(0)</span></div>
@@ -199,10 +198,10 @@ $(document).ready(function(){initNavTree('graph_8h_source.html','');});
 <div class="ttc" id="structnode__t_html"><div class="ttname"><a href="structnode__t.html">node_t</a></div><div class="ttdoc">NNet graph node. </div><div class="ttdef"><b>Definition:</b> graph.h:54</div></div>
 <div class="ttc" id="structgraph__t_html_a153743d59a6f59b19043e5ef40b4dad9"><div class="ttname"><a href="structgraph__t.html#a153743d59a6f59b19043e5ef40b4dad9">graph_t::root</a></div><div class="ttdeci">int root</div><div class="ttdoc">root of graph. </div><div class="ttdef"><b>Definition:</b> graph.h:70</div></div>
 <div class="ttc" id="group__g__graph_html_gab540babaea70d2b1d27a38acecb42cbf"><div class="ttname"><a href="group__g__graph.html#gab540babaea70d2b1d27a38acecb42cbf">graph_dup</a></div><div class="ttdeci">graph_t * graph_dup(graph_t *g)</div><div class="ttdoc">Duplicate a graph. </div></div>
-<div class="ttc" id="structglue__t_html"><div class="ttname"><a href="structglue__t.html">glue_t</a></div><div class="ttdoc">NNet glue. </div><div class="ttdef"><b>Definition:</b> glue.h:109</div></div>
+<div class="ttc" id="structglue__t_html"><div class="ttname"><a href="structglue__t.html">glue_t</a></div><div class="ttdoc">NNet glue. </div><div class="ttdef"><b>Definition:</b> glue.h:112</div></div>
 <div class="ttc" id="structnode__t_html_a57aeaf0f63a417b6852911d9971d8e5a"><div class="ttname"><a href="structnode__t.html#a57aeaf0f63a417b6852911d9971d8e5a">node_t::links</a></div><div class="ttdeci">int * links</div><div class="ttdoc">links from this node. </div><div class="ttdef"><b>Definition:</b> graph.h:55</div></div>
 <div class="ttc" id="structgraph__t_html_a72039e844a4683dab72725e20bc744a9"><div class="ttname"><a href="structgraph__t.html#a72039e844a4683dab72725e20bc744a9">graph_t::cycles</a></div><div class="ttdeci">int ** cycles</div><div class="ttdoc">cycles of links for graph. </div><div class="ttdef"><b>Definition:</b> graph.h:74</div></div>
-<div class="ttc" id="structlayer__t_html"><div class="ttname"><a href="structlayer__t.html">layer_t</a></div><div class="ttdoc">NNet hidden layer. </div><div class="ttdef"><b>Definition:</b> layer.h:75</div></div>
+<div class="ttc" id="structlayer__t_html"><div class="ttname"><a href="structlayer__t.html">layer_t</a></div><div class="ttdoc">NNet hidden layer. </div><div class="ttdef"><b>Definition:</b> layer.h:82</div></div>
 <div class="ttc" id="structgraph__t_html_aea865a8b5c3bcff284d92b6274308a06"><div class="ttname"><a href="structgraph__t.html#aea865a8b5c3bcff284d92b6274308a06">graph_t::num_node</a></div><div class="ttdeci">int num_node</div><div class="ttdoc">number of nodes. </div><div class="ttdef"><b>Definition:</b> graph.h:65</div></div>
 <div class="ttc" id="group__g__graph_html_ga862e40239c1b0249a8aea7a25361e2c8"><div class="ttname"><a href="group__g__graph.html#ga862e40239c1b0249a8aea7a25361e2c8">graph_destroy</a></div><div class="ttdeci">void graph_destroy(graph_t *graph)</div><div class="ttdoc">Destroy a graph. </div></div>
 <div class="ttc" id="structgraph__t_html_a66d12d7a107c9a124861fa3f529c214c"><div class="ttname"><a href="structgraph__t.html#a66d12d7a107c9a124861fa3f529c214c">graph_t::num_cycle</a></div><div class="ttdeci">int num_cycle</div><div class="ttdoc">number of cycles. </div><div class="ttdef"><b>Definition:</b> graph.h:76</div></div>
@@ -221,7 +220,7 @@ $(document).ready(function(){initNavTree('graph_8h_source.html','');});
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><b>graph.h</b></li>
-    <li class="footer">Generated on Fri Oct 28 2016 22:37:22 for connLM by
+    <li class="footer">Generated on Mon May 8 2017 22:10:25 for connLM by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.10 </li>
   </ul>

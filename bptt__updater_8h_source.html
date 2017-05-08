@@ -31,7 +31,6 @@
 });
 </script><script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js"></script>
 <link href="doxygen.css" rel="stylesheet" type="text/css" />
-<link href="table.css" rel="stylesheet" type="text/css"/>
 </head>
 <body>
 <div id="top"><!-- do not remove this div, it is closed by doxygen! -->
@@ -151,7 +150,7 @@ $(document).ready(function(){initNavTree('bptt__updater_8h_source.html','');});
 <div class="line"><a name="l00032"></a><span class="lineno">   32</span>&#160;<span class="preprocessor">#include &lt;connlm/config.h&gt;</span></div>
 <div class="line"><a name="l00033"></a><span class="lineno">   33</span>&#160;</div>
 <div class="line"><a name="l00034"></a><span class="lineno">   34</span>&#160;<span class="preprocessor">#include &quot;component.h&quot;</span></div>
-<div class="line"><a name="l00035"></a><span class="lineno">   35</span>&#160;<span class="preprocessor">#include &quot;param.h&quot;</span></div>
+<div class="line"><a name="l00035"></a><span class="lineno">   35</span>&#160;<span class="preprocessor">#include &quot;updaters/glue_updaters/glue_updater.h&quot;</span></div>
 <div class="line"><a name="l00036"></a><span class="lineno">   36</span>&#160;</div>
 <div class="line"><a name="l00047"></a><span class="lineno"><a class="line" href="structbptt__updater__t.html">   47</a></span>&#160;<span class="keyword">typedef</span> <span class="keyword">struct </span>_bptt_updater_t_ {</div>
 <div class="line"><a name="l00048"></a><span class="lineno"><a class="line" href="structbptt__updater__t.html#ad432a03ccf57c22f8f5bdd0fbf863e12">   48</a></span>&#160;    <a class="code" href="structbptt__opt__t.html">bptt_opt_t</a> <a class="code" href="structbptt__updater__t.html#ad432a03ccf57c22f8f5bdd0fbf863e12">bptt_opt</a>; </div>
@@ -166,32 +165,34 @@ $(document).ready(function(){initNavTree('bptt__updater_8h_source.html','');});
 <div class="line"><a name="l00063"></a><span class="lineno"><a class="line" href="group__g__updater__bptt.html#ga2e53628b9261f2354e63ac1a64be817b">   63</a></span>&#160;<span class="preprocessor">#define safe_bptt_updater_destroy(ptr) do {\</span></div>
 <div class="line"><a name="l00064"></a><span class="lineno">   64</span>&#160;<span class="preprocessor">    if((ptr) != NULL) {\</span></div>
 <div class="line"><a name="l00065"></a><span class="lineno">   65</span>&#160;<span class="preprocessor">        bptt_updater_destroy(ptr);\</span></div>
-<div class="line"><a name="l00066"></a><span class="lineno">   66</span>&#160;<span class="preprocessor">        safe_free(ptr);\</span></div>
+<div class="line"><a name="l00066"></a><span class="lineno">   66</span>&#160;<span class="preprocessor">        safe_st_free(ptr);\</span></div>
 <div class="line"><a name="l00067"></a><span class="lineno">   67</span>&#160;<span class="preprocessor">        (ptr) = NULL;\</span></div>
 <div class="line"><a name="l00068"></a><span class="lineno">   68</span>&#160;<span class="preprocessor">    }\</span></div>
 <div class="line"><a name="l00069"></a><span class="lineno">   69</span>&#160;<span class="preprocessor">    } while(0)</span></div>
 <div class="line"><a name="l00070"></a><span class="lineno">   70</span>&#160;</div>
 <div class="line"><a name="l00075"></a><span class="lineno">   75</span>&#160;<span class="keywordtype">void</span> <a class="code" href="group__g__updater__bptt.html#ga78d8edf78ddbeb532fc48bddab5b7acf">bptt_updater_destroy</a>(<a class="code" href="structbptt__updater__t.html">bptt_updater_t</a> *bptt_updater);</div>
 <div class="line"><a name="l00076"></a><span class="lineno">   76</span>&#160;</div>
-<div class="line"><a name="l00084"></a><span class="lineno">   84</span>&#160;<a class="code" href="structbptt__updater__t.html">bptt_updater_t</a>* <a class="code" href="group__g__updater__bptt.html#ga4bd1b4c2a4f85bd6943c0ab046778f42">bptt_updater_create</a>(<a class="code" href="structcomponent__t.html">component_t</a> *comp, <span class="keywordtype">int</span> cycle_id);</div>
-<div class="line"><a name="l00085"></a><span class="lineno">   85</span>&#160;</div>
-<div class="line"><a name="l00092"></a><span class="lineno">   92</span>&#160;<span class="keywordtype">int</span> <a class="code" href="group__g__updater__bptt.html#gadd1b5413719ef2ffcaa952364e45bee9">bptt_updater_reset</a>(<a class="code" href="structbptt__updater__t.html">bptt_updater_t</a> *bptt_updater);</div>
-<div class="line"><a name="l00093"></a><span class="lineno">   93</span>&#160;</div>
-<div class="line"><a name="l00094"></a><span class="lineno">   94</span>&#160;<span class="preprocessor">#ifdef __cplusplus</span></div>
-<div class="line"><a name="l00095"></a><span class="lineno">   95</span>&#160;}</div>
-<div class="line"><a name="l00096"></a><span class="lineno">   96</span>&#160;<span class="preprocessor">#endif</span></div>
-<div class="line"><a name="l00097"></a><span class="lineno">   97</span>&#160;</div>
+<div class="line"><a name="l00085"></a><span class="lineno">   85</span>&#160;<a class="code" href="structbptt__updater__t.html">bptt_updater_t</a>* <a class="code" href="group__g__updater__bptt.html#gaf75adcdacdebf45b61893bee7a1333d9">bptt_updater_create</a>(<a class="code" href="structcomponent__t.html">component_t</a> *comp, <span class="keywordtype">int</span> cycle_id,</div>
+<div class="line"><a name="l00086"></a><span class="lineno">   86</span>&#160;        <a class="code" href="structglue__updater__t.html">glue_updater_t</a> **glue_updaters);</div>
+<div class="line"><a name="l00087"></a><span class="lineno">   87</span>&#160;</div>
+<div class="line"><a name="l00094"></a><span class="lineno">   94</span>&#160;<span class="keywordtype">int</span> <a class="code" href="group__g__updater__bptt.html#gadd1b5413719ef2ffcaa952364e45bee9">bptt_updater_reset</a>(<a class="code" href="structbptt__updater__t.html">bptt_updater_t</a> *bptt_updater);</div>
+<div class="line"><a name="l00095"></a><span class="lineno">   95</span>&#160;</div>
+<div class="line"><a name="l00096"></a><span class="lineno">   96</span>&#160;<span class="preprocessor">#ifdef __cplusplus</span></div>
+<div class="line"><a name="l00097"></a><span class="lineno">   97</span>&#160;}</div>
 <div class="line"><a name="l00098"></a><span class="lineno">   98</span>&#160;<span class="preprocessor">#endif</span></div>
+<div class="line"><a name="l00099"></a><span class="lineno">   99</span>&#160;</div>
+<div class="line"><a name="l00100"></a><span class="lineno">  100</span>&#160;<span class="preprocessor">#endif</span></div>
+<div class="ttc" id="group__g__updater__bptt_html_gaf75adcdacdebf45b61893bee7a1333d9"><div class="ttname"><a href="group__g__updater__bptt.html#gaf75adcdacdebf45b61893bee7a1333d9">bptt_updater_create</a></div><div class="ttdeci">bptt_updater_t * bptt_updater_create(component_t *comp, int cycle_id, glue_updater_t **glue_updaters)</div><div class="ttdoc">Create a bptt_updater. </div></div>
 <div class="ttc" id="structbptt__updater__t_html_a75e99b0b9a458e699d6913f4b3975e31"><div class="ttname"><a href="structbptt__updater__t.html#a75e99b0b9a458e699d6913f4b3975e31">bptt_updater_t::num_glue</a></div><div class="ttdeci">int num_glue</div><div class="ttdoc">number of glue in this cycle. </div><div class="ttdef"><b>Definition:</b> bptt_updater.h:51</div></div>
 <div class="ttc" id="structbptt__updater__t_html_aa50f4463c2714994946491c5d3cebc7a"><div class="ttname"><a href="structbptt__updater__t.html#aa50f4463c2714994946491c5d3cebc7a">bptt_updater_t::num_ac_bptt</a></div><div class="ttdeci">int num_ac_bptt</div><div class="ttdoc">number time stpes filled in ac_bptt. </div><div class="ttdef"><b>Definition:</b> bptt_updater.h:53</div></div>
 <div class="ttc" id="group__g__updater__bptt_html_ga78d8edf78ddbeb532fc48bddab5b7acf"><div class="ttname"><a href="group__g__updater__bptt.html#ga78d8edf78ddbeb532fc48bddab5b7acf">bptt_updater_destroy</a></div><div class="ttdeci">void bptt_updater_destroy(bptt_updater_t *bptt_updater)</div><div class="ttdoc">Destroy a bptt_updater. </div></div>
-<div class="ttc" id="structwt__updater__t_html"><div class="ttname"><a href="structwt__updater__t.html">wt_updater_t</a></div><div class="ttdoc">Output updater. </div><div class="ttdef"><b>Definition:</b> wt_updater.h:84</div></div>
+<div class="ttc" id="structwt__updater__t_html"><div class="ttname"><a href="structwt__updater__t.html">wt_updater_t</a></div><div class="ttdoc">Output updater. </div><div class="ttdef"><b>Definition:</b> wt_updater.h:89</div></div>
 <div class="ttc" id="structbptt__updater__t_html_a171693b4ed803e14e188d53ba2c8c36e"><div class="ttname"><a href="structbptt__updater__t.html#a171693b4ed803e14e188d53ba2c8c36e">bptt_updater_t::er_bptt</a></div><div class="ttdeci">real_t ** er_bptt</div><div class="ttdoc">buffer of error for BPTT in cycle. </div><div class="ttdef"><b>Definition:</b> bptt_updater.h:54</div></div>
 <div class="ttc" id="structbptt__updater__t_html"><div class="ttname"><a href="structbptt__updater__t.html">bptt_updater_t</a></div><div class="ttdoc">BPTT updater. </div><div class="ttdef"><b>Definition:</b> bptt_updater.h:47</div></div>
+<div class="ttc" id="structglue__updater__t_html"><div class="ttname"><a href="structglue__updater__t.html">glue_updater_t</a></div><div class="ttdoc">Glue updater. </div><div class="ttdef"><b>Definition:</b> glue_updater.h:86</div></div>
 <div class="ttc" id="structbptt__updater__t_html_abd57760b004db8cfb90094139751f31f"><div class="ttname"><a href="structbptt__updater__t.html#abd57760b004db8cfb90094139751f31f">bptt_updater_t::wt_updaters</a></div><div class="ttdeci">wt_updater_t ** wt_updaters</div><div class="ttdoc">wt_updater for every glue. </div><div class="ttdef"><b>Definition:</b> bptt_updater.h:50</div></div>
-<div class="ttc" id="group__g__updater__bptt_html_ga4bd1b4c2a4f85bd6943c0ab046778f42"><div class="ttname"><a href="group__g__updater__bptt.html#ga4bd1b4c2a4f85bd6943c0ab046778f42">bptt_updater_create</a></div><div class="ttdeci">bptt_updater_t * bptt_updater_create(component_t *comp, int cycle_id)</div><div class="ttdoc">Create a bptt_updater. </div></div>
-<div class="ttc" id="structbptt__opt__t_html"><div class="ttname"><a href="structbptt__opt__t.html">bptt_opt_t</a></div><div class="ttdoc">BPTT options. </div><div class="ttdef"><b>Definition:</b> param.h:77</div></div>
-<div class="ttc" id="structcomponent__t_html"><div class="ttname"><a href="structcomponent__t.html">component_t</a></div><div class="ttdoc">NNet component. </div><div class="ttdef"><b>Definition:</b> component.h:56</div></div>
+<div class="ttc" id="structbptt__opt__t_html"><div class="ttname"><a href="structbptt__opt__t.html">bptt_opt_t</a></div><div class="ttdoc">BPTT options. </div><div class="ttdef"><b>Definition:</b> param.h:86</div></div>
+<div class="ttc" id="structcomponent__t_html"><div class="ttname"><a href="structcomponent__t.html">component_t</a></div><div class="ttdoc">NNet component. </div><div class="ttdef"><b>Definition:</b> component.h:57</div></div>
 <div class="ttc" id="structbptt__updater__t_html_a816927727e5ee13bf99da58f8a149919"><div class="ttname"><a href="structbptt__updater__t.html#a816927727e5ee13bf99da58f8a149919">bptt_updater_t::ac_bptt</a></div><div class="ttdeci">real_t ** ac_bptt</div><div class="ttdoc">buffer of activation for BPTT in cycle. </div><div class="ttdef"><b>Definition:</b> bptt_updater.h:52</div></div>
 <div class="ttc" id="structbptt__updater__t_html_a4e7b0ebf131063725672595906209184"><div class="ttname"><a href="structbptt__updater__t.html#a4e7b0ebf131063725672595906209184">bptt_updater_t::num_er_bptt</a></div><div class="ttdeci">int num_er_bptt</div><div class="ttdoc">number time stpes filled in er_bptt. </div><div class="ttdef"><b>Definition:</b> bptt_updater.h:55</div></div>
 <div class="ttc" id="structbptt__updater__t_html_ad432a03ccf57c22f8f5bdd0fbf863e12"><div class="ttname"><a href="structbptt__updater__t.html#ad432a03ccf57c22f8f5bdd0fbf863e12">bptt_updater_t::bptt_opt</a></div><div class="ttdeci">bptt_opt_t bptt_opt</div><div class="ttdoc">bptt option. </div><div class="ttdef"><b>Definition:</b> bptt_updater.h:48</div></div>
@@ -202,7 +203,7 @@ $(document).ready(function(){initNavTree('bptt__updater_8h_source.html','');});
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="dir_c79ed6257dc91f2d0b97e6539a6fc635.html">updaters</a></li><li class="navelem"><b>bptt_updater.h</b></li>
-    <li class="footer">Generated on Fri Oct 28 2016 22:37:22 for connLM by
+    <li class="footer">Generated on Mon May 8 2017 22:10:25 for connLM by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.10 </li>
   </ul>

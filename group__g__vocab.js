@@ -1,7 +1,8 @@
 var group__g__vocab =
 [
     [ "vocab_opt_t", "structvocab__opt__t.html", [
-      [ "max_alphabet_size", "structvocab__opt__t.html#a7c5a1c50ecc9abad0d80d6d7dc8d3526", null ]
+      [ "max_alphabet_size", "structvocab__opt__t.html#a7c5a1c50ecc9abad0d80d6d7dc8d3526", null ],
+      [ "wordlist", "structvocab__opt__t.html#aac2cf33b0c1a3499b082a388e1faeeb9", null ]
     ] ],
     [ "vocab_t", "structvocab__t.html", [
       [ "alphabet", "structvocab__t.html#a26298a595b28e809d4c2d439ffff86f7", null ],
@@ -23,10 +24,11 @@ var group__g__vocab =
     [ "vocab_get_id", "group__g__vocab.html#gab9ccab0c8afb58ef65357356b470c7fd", null ],
     [ "vocab_get_word", "group__g__vocab.html#ga2c4a395692c4291436693e0a5ad0912d", null ],
     [ "vocab_learn", "group__g__vocab.html#gada8a43dcf1095da62ba2d161439c84af", null ],
-    [ "vocab_load_body", "group__g__vocab.html#ga13f826d51f51f3556dca5631a541ac33", null ],
-    [ "vocab_load_header", "group__g__vocab.html#ga52a5c341a8da3f7e3eb6d742de174133", null ],
+    [ "vocab_load_body", "group__g__vocab.html#ga2be047546e6aee2ac45ce54e5a92203f", null ],
+    [ "vocab_load_header", "group__g__vocab.html#ga2e127a86130e37e9183da5a490160358", null ],
     [ "vocab_load_learn_opt", "group__g__vocab.html#gafd0c159ff7804f28527d6027e092c731", null ],
     [ "vocab_load_opt", "group__g__vocab.html#ga234fadc293195484f61fc8fe7c17b138", null ],
-    [ "vocab_save_body", "group__g__vocab.html#gafe0e19ff216e228fc48eecff0f84df41", null ],
-    [ "vocab_save_header", "group__g__vocab.html#gac1541778f49a1024a87b65a45b53755d", null ]
+    [ "vocab_save_body", "group__g__vocab.html#gad8946dcd523fbe4eb352a002ec189138", null ],
+    [ "vocab_save_header", "group__g__vocab.html#ga55410633b03e7532c6dcbbc98ffa25a1", null ],
+    [ "vocab_save_syms", "group__g__vocab.html#ga0b69c67e237d4da8a90838671534b0ec", null ]
 ];

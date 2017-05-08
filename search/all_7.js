@@ -1,5 +1,6 @@
 var searchData=
 [
   ['hyperbolic_20tangent_20layer',['Hyperbolic Tangent Layer',['../group__g__layer__tanh.html',1,'']]],
-  ['hash_5fsz',['hash_sz',['../structdirect__glue__data__t.html#a5b0bfecd4fcd6ac3abb7b639d9fc56a9',1,'direct_glue_data_t']]]
+  ['hash_5fsz',['hash_sz',['../structdirect__glue__data__t.html#a904de3d53b24ab13aa86c151bf7c716c',1,'direct_glue_data_t']]],
+  ['hash_5fvals',['hash_vals',['../structbloom__filter__buf__t.html#a0bf909108a251faba67711415f19cd39',1,'bloom_filter_buf_t']]]
 ];

@@ -31,7 +31,6 @@
 });
 </script><script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js"></script>
 <link href="doxygen.css" rel="stylesheet" type="text/css" />
-<link href="table.css" rel="stylesheet" type="text/css"/>
 </head>
 <body>
 <div id="top"><!-- do not remove this div, it is closed by doxygen! -->
@@ -138,18 +137,21 @@ Functions</h2></td></tr>
 <tr class="memitem:ga1afae4c72781a75cca0ec1cd0c35c57e"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__g__glue__updater__direct.html#ga1afae4c72781a75cca0ec1cd0c35c57e">direct_glue_updater_setup</a> (<a class="el" href="structglue__updater__t.html">glue_updater_t</a> *glue_updater, <a class="el" href="structcomp__updater__t.html">comp_updater_t</a> *comp_updater, bool backprop)</td></tr>
 <tr class="memdesc:ga1afae4c72781a75cca0ec1cd0c35c57e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Setup direct_glue_updater for running.  <a href="#ga1afae4c72781a75cca0ec1cd0c35c57e">More...</a><br /></td></tr>
 <tr class="separator:ga1afae4c72781a75cca0ec1cd0c35c57e"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:gacce244279374d196a17a5284b150111d"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__g__glue__updater__direct.html#gacce244279374d196a17a5284b150111d">direct_glue_updater_forward</a> (<a class="el" href="structglue__updater__t.html">glue_updater_t</a> *glue_updater, <a class="el" href="structcomp__updater__t.html">comp_updater_t</a> *comp_updater, <a class="el" href="structsent__t.html">sent_t</a> *input_sent, real_t *in_ac)</td></tr>
-<tr class="memdesc:gacce244279374d196a17a5284b150111d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Feed-forward one word for a direct_glue_updater.  <a href="#gacce244279374d196a17a5284b150111d">More...</a><br /></td></tr>
-<tr class="separator:gacce244279374d196a17a5284b150111d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gad268f7051ac65bfbcf2e1a5af6063950"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__g__glue__updater__direct.html#gad268f7051ac65bfbcf2e1a5af6063950">direct_glue_updater_forward</a> (<a class="el" href="structglue__updater__t.html">glue_updater_t</a> *glue_updater, <a class="el" href="structcomp__updater__t.html">comp_updater_t</a> *comp_updater, <a class="el" href="structsent__t.html">sent_t</a> *input_sent, real_t *in_ac, real_t *out_ac)</td></tr>
+<tr class="memdesc:gad268f7051ac65bfbcf2e1a5af6063950"><td class="mdescLeft">&#160;</td><td class="mdescRight">Feed-forward one word for a direct_glue_updater.  <a href="#gad268f7051ac65bfbcf2e1a5af6063950">More...</a><br /></td></tr>
+<tr class="separator:gad268f7051ac65bfbcf2e1a5af6063950"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga282e6e6e824f20d0f46e881dfef4fb25"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__g__glue__updater__direct.html#ga282e6e6e824f20d0f46e881dfef4fb25">direct_glue_updater_backprop</a> (<a class="el" href="structglue__updater__t.html">glue_updater_t</a> *glue_updater, <a class="el" href="structcomp__updater__t.html">comp_updater_t</a> *comp_updater, <a class="el" href="structsent__t.html">sent_t</a> *input_sent, real_t *in_ac, real_t *out_er, real_t *in_er)</td></tr>
 <tr class="memdesc:ga282e6e6e824f20d0f46e881dfef4fb25"><td class="mdescLeft">&#160;</td><td class="mdescRight">Back-prop one word for a direct_glue_updater.  <a href="#ga282e6e6e824f20d0f46e881dfef4fb25">More...</a><br /></td></tr>
 <tr class="separator:ga282e6e6e824f20d0f46e881dfef4fb25"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:gad17f5ef426a8719d652638fa1b09b111"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__g__glue__updater__direct.html#gad17f5ef426a8719d652638fa1b09b111">direct_glue_updater_forward_util_out</a> (<a class="el" href="structglue__updater__t.html">glue_updater_t</a> *glue_updater, <a class="el" href="structcomp__updater__t.html">comp_updater_t</a> *comp_updater, <a class="el" href="structsent__t.html">sent_t</a> *input_sent, real_t *in_ac)</td></tr>
-<tr class="memdesc:gad17f5ef426a8719d652638fa1b09b111"><td class="mdescLeft">&#160;</td><td class="mdescRight">Feed-forward util output layer.  <a href="#gad17f5ef426a8719d652638fa1b09b111">More...</a><br /></td></tr>
-<tr class="separator:gad17f5ef426a8719d652638fa1b09b111"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:gaa0d833c8fd846a568b9d13509d4dea6d"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__g__glue__updater__direct.html#gaa0d833c8fd846a568b9d13509d4dea6d">direct_glue_updater_forward_out</a> (<a class="el" href="structglue__updater__t.html">glue_updater_t</a> *glue_updater, <a class="el" href="structcomp__updater__t.html">comp_updater_t</a> *comp_updater, output_node_id_t node, real_t *in_ac)</td></tr>
-<tr class="memdesc:gaa0d833c8fd846a568b9d13509d4dea6d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Feed-forward one node of output layer.  <a href="#gaa0d833c8fd846a568b9d13509d4dea6d">More...</a><br /></td></tr>
-<tr class="separator:gaa0d833c8fd846a568b9d13509d4dea6d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga5c92a195f2fcef0e23b2656b92a361b6"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__g__glue__updater__direct.html#ga5c92a195f2fcef0e23b2656b92a361b6">direct_glue_updater_forward_util_out</a> (<a class="el" href="structglue__updater__t.html">glue_updater_t</a> *glue_updater, <a class="el" href="structcomp__updater__t.html">comp_updater_t</a> *comp_updater, <a class="el" href="structsent__t.html">sent_t</a> *input_sent, real_t *in_ac, real_t *out_ac)</td></tr>
+<tr class="memdesc:ga5c92a195f2fcef0e23b2656b92a361b6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Feed-forward util output layer.  <a href="#ga5c92a195f2fcef0e23b2656b92a361b6">More...</a><br /></td></tr>
+<tr class="separator:ga5c92a195f2fcef0e23b2656b92a361b6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gadbb498a18597ba992ebbafee7978e95b"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__g__glue__updater__direct.html#gadbb498a18597ba992ebbafee7978e95b">direct_glue_updater_forward_out</a> (<a class="el" href="structglue__updater__t.html">glue_updater_t</a> *glue_updater, <a class="el" href="structcomp__updater__t.html">comp_updater_t</a> *comp_updater, output_node_id_t node, real_t *in_ac, real_t *out_ac)</td></tr>
+<tr class="memdesc:gadbb498a18597ba992ebbafee7978e95b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Feed-forward one node of output layer.  <a href="#gadbb498a18597ba992ebbafee7978e95b">More...</a><br /></td></tr>
+<tr class="separator:gadbb498a18597ba992ebbafee7978e95b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga169f872aa5727695b51126286756f0c2"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__g__glue__updater__direct.html#ga169f872aa5727695b51126286756f0c2">direct_glue_updater_forward_out_word</a> (<a class="el" href="structglue__updater__t.html">glue_updater_t</a> *glue_updater, <a class="el" href="structcomp__updater__t.html">comp_updater_t</a> *comp_updater, int word, real_t *in_ac, real_t *out_ac)</td></tr>
+<tr class="memdesc:ga169f872aa5727695b51126286756f0c2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Feed-forward one word of output layer.  <a href="#ga169f872aa5727695b51126286756f0c2">More...</a><br /></td></tr>
+<tr class="separator:ga169f872aa5727695b51126286756f0c2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <p>Perform forward and backprop on a direct glue. </p>
@@ -242,7 +244,7 @@ Functions</h2></td></tr>
 
 </div>
 </div>
-<a class="anchor" id="gacce244279374d196a17a5284b150111d"></a>
+<a class="anchor" id="gad268f7051ac65bfbcf2e1a5af6063950"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
@@ -268,7 +270,13 @@ Functions</h2></td></tr>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">real_t *&#160;</td>
-          <td class="paramname"><em>in_ac</em>&#160;</td>
+          <td class="paramname"><em>in_ac</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">real_t *&#160;</td>
+          <td class="paramname"><em>out_ac</em>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -285,6 +293,7 @@ Functions</h2></td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">comp_updater</td><td>the comp_updater. </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">input_sent</td><td>input sentence buffer. </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">in_ac</td><td>[unused] activation of in layer. </td></tr>
+    <tr><td class="paramdir">[out]</td><td class="paramname">out_ac</td><td>activation of out layer. </td></tr>
   </table>
   </dd>
 </dl>
@@ -292,7 +301,7 @@ Functions</h2></td></tr>
 
 </div>
 </div>
-<a class="anchor" id="gaa0d833c8fd846a568b9d13509d4dea6d"></a>
+<a class="anchor" id="gadbb498a18597ba992ebbafee7978e95b"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
@@ -318,7 +327,13 @@ Functions</h2></td></tr>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">real_t *&#160;</td>
-          <td class="paramname"><em>in_ac</em>&#160;</td>
+          <td class="paramname"><em>in_ac</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">real_t *&#160;</td>
+          <td class="paramname"><em>out_ac</em>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -335,6 +350,7 @@ Functions</h2></td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">comp_updater</td><td>the comp_updater. </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">node</td><td>node of output tree. </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">in_ac</td><td>[unused] activation of in layer. </td></tr>
+    <tr><td class="paramdir">[out]</td><td class="paramname">out_ac</td><td>activation of out layer. </td></tr>
   </table>
   </dd>
 </dl>
@@ -342,7 +358,64 @@ Functions</h2></td></tr>
 
 </div>
 </div>
-<a class="anchor" id="gad17f5ef426a8719d652638fa1b09b111"></a>
+<a class="anchor" id="ga169f872aa5727695b51126286756f0c2"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int direct_glue_updater_forward_out_word </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structglue__updater__t.html">glue_updater_t</a> *&#160;</td>
+          <td class="paramname"><em>glue_updater</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="structcomp__updater__t.html">comp_updater_t</a> *&#160;</td>
+          <td class="paramname"><em>comp_updater</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>word</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">real_t *&#160;</td>
+          <td class="paramname"><em>in_ac</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">real_t *&#160;</td>
+          <td class="paramname"><em>out_ac</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Feed-forward one word of output layer. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">glue_updater</td><td>the glue_updater. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">comp_updater</td><td>the comp_updater. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">word</td><td>the word. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">in_ac</td><td>[unused] activation of in layer. </td></tr>
+    <tr><td class="paramdir">[out]</td><td class="paramname">out_ac</td><td>activation of out layer. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>non-zero value if any error. </dd></dl>
+
+</div>
+</div>
+<a class="anchor" id="ga5c92a195f2fcef0e23b2656b92a361b6"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
@@ -368,7 +441,13 @@ Functions</h2></td></tr>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">real_t *&#160;</td>
-          <td class="paramname"><em>in_ac</em>&#160;</td>
+          <td class="paramname"><em>in_ac</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">real_t *&#160;</td>
+          <td class="paramname"><em>out_ac</em>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -385,6 +464,7 @@ Functions</h2></td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">comp_updater</td><td>the comp_updater. </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">input_sent</td><td>input sentence buffer. </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">in_ac</td><td>[unused] activation of in layer. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">out_ac</td><td>[unused] activation of out layer. </td></tr>
   </table>
   </dd>
 </dl>
@@ -465,7 +545,7 @@ Functions</h2></td></tr>
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on Fri Oct 28 2016 22:37:23 for connLM by
+    <li class="footer">Generated on Mon May 8 2017 22:10:28 for connLM by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.10 </li>
   </ul>

@@ -31,7 +31,6 @@
 });
 </script><script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js"></script>
 <link href="doxygen.css" rel="stylesheet" type="text/css" />
-<link href="table.css" rel="stylesheet" type="text/css"/>
 </head>
 <body>
 <div id="top"><!-- do not remove this div, it is closed by doxygen! -->
@@ -131,9 +130,10 @@ Collaboration diagram for glue_impl_t:</div>
 <div class="dyncontent">
 <div class="center"><img src="structglue__impl__t__coll__graph.png" border="0" usemap="#glue__impl__t_coll__map" alt="Collaboration graph"/></div>
 <map name="glue__impl__t_coll__map" id="glue__impl__t_coll__map">
-<area shape="rect" id="node2" href="structwt__updater__t.html" title="Output updater. " alt="" coords="65,109,163,136"/>
-<area shape="rect" id="node3" href="structwt__dirty__buf__t.html" title="Store the dirty part of weight. " alt="" coords="5,5,111,32"/>
-<area shape="rect" id="node4" href="structparam__t.html" title="Parameter. " alt="" coords="135,5,205,32"/>
+<area shape="rect" id="node2" href="structwt__updater__t.html" title="Output updater. " alt="" coords="74,213,173,240"/>
+<area shape="rect" id="node3" href="structwt__dirty__buf__t.html" title="Store the dirty part of weight. " alt="" coords="5,109,111,136"/>
+<area shape="rect" id="node4" href="structconcat__mat__t.html" title="Concatable Matrix. " alt="" coords="7,5,109,32"/>
+<area shape="rect" id="node5" href="structparam__t.html" title="Parameter. " alt="" coords="135,109,205,136"/>
 </map>
 <center><span class="legend">[<a target="top" href="graph_legend.html">legend</a>]</span></center></div>
 <table class="memberdecls">
@@ -160,24 +160,27 @@ Data Fields</h2></td></tr>
 <tr class="memitem:a922b45ace44cabdc1b172c695d7d7875"><td class="memItemLeft" align="right" valign="top">char *(*&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structglue__impl__t.html#a922b45ace44cabdc1b172c695d7d7875">draw_label</a> )(<a class="el" href="structglue__t.html">glue_t</a> *glue, char *label, size_t label_len)</td></tr>
 <tr class="memdesc:a922b45ace44cabdc1b172c695d7d7875"><td class="mdescLeft">&#160;</td><td class="mdescRight">label for drawing a glue.  <a href="#a922b45ace44cabdc1b172c695d7d7875">More...</a><br /></td></tr>
 <tr class="separator:a922b45ace44cabdc1b172c695d7d7875"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae6eddd4ff3c7aaabec5e0203f45cfc8f"><td class="memItemLeft" align="right" valign="top">int(*&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structglue__impl__t.html#ae6eddd4ff3c7aaabec5e0203f45cfc8f">load_header</a> )(void **extra, int version, FILE *fp, bool *binary, FILE *fo_info)</td></tr>
-<tr class="memdesc:ae6eddd4ff3c7aaabec5e0203f45cfc8f"><td class="mdescLeft">&#160;</td><td class="mdescRight">load header of glue.  <a href="#ae6eddd4ff3c7aaabec5e0203f45cfc8f">More...</a><br /></td></tr>
-<tr class="separator:ae6eddd4ff3c7aaabec5e0203f45cfc8f"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ad0ad98275fac9b3bc91b74d81b9c22ba"><td class="memItemLeft" align="right" valign="top">int(*&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structglue__impl__t.html#ad0ad98275fac9b3bc91b74d81b9c22ba">load_body</a> )(void *extra, int version, FILE *fp, bool binary)</td></tr>
-<tr class="memdesc:ad0ad98275fac9b3bc91b74d81b9c22ba"><td class="mdescLeft">&#160;</td><td class="mdescRight">load body of glue.  <a href="#ad0ad98275fac9b3bc91b74d81b9c22ba">More...</a><br /></td></tr>
-<tr class="separator:ad0ad98275fac9b3bc91b74d81b9c22ba"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:afc051f35be62b47e68c9db167bad80f5"><td class="memItemLeft" align="right" valign="top">int(*&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structglue__impl__t.html#afc051f35be62b47e68c9db167bad80f5">save_header</a> )(void *extra, FILE *fp, bool binary)</td></tr>
-<tr class="memdesc:afc051f35be62b47e68c9db167bad80f5"><td class="mdescLeft">&#160;</td><td class="mdescRight">save header of glue.  <a href="#afc051f35be62b47e68c9db167bad80f5">More...</a><br /></td></tr>
-<tr class="separator:afc051f35be62b47e68c9db167bad80f5"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ad77e6a0200a7203d9ea044c12a8c32d2"><td class="memItemLeft" align="right" valign="top">int(*&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structglue__impl__t.html#ad77e6a0200a7203d9ea044c12a8c32d2">save_body</a> )(void *extra, FILE *fp, bool binary)</td></tr>
-<tr class="memdesc:ad77e6a0200a7203d9ea044c12a8c32d2"><td class="mdescLeft">&#160;</td><td class="mdescRight">save body of glue.  <a href="#ad77e6a0200a7203d9ea044c12a8c32d2">More...</a><br /></td></tr>
-<tr class="separator:ad77e6a0200a7203d9ea044c12a8c32d2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a869aa2213773450a705a02493c895e33"><td class="memItemLeft" align="right" valign="top">int(*&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structglue__impl__t.html#a869aa2213773450a705a02493c895e33">load_header</a> )(void **extra, int version, FILE *fp, <a class="el" href="group__g__connlm.html#ga27bb4962c19c1ac9c66c27d5d2de9a73">connlm_fmt_t</a> *fmt, FILE *fo_info)</td></tr>
+<tr class="memdesc:a869aa2213773450a705a02493c895e33"><td class="mdescLeft">&#160;</td><td class="mdescRight">load header of glue.  <a href="#a869aa2213773450a705a02493c895e33">More...</a><br /></td></tr>
+<tr class="separator:a869aa2213773450a705a02493c895e33"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa24df9943d99310cf1f9d221bcb3fa0c"><td class="memItemLeft" align="right" valign="top">int(*&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structglue__impl__t.html#aa24df9943d99310cf1f9d221bcb3fa0c">load_body</a> )(void *extra, int version, FILE *fp, <a class="el" href="group__g__connlm.html#ga27bb4962c19c1ac9c66c27d5d2de9a73">connlm_fmt_t</a> fmt)</td></tr>
+<tr class="memdesc:aa24df9943d99310cf1f9d221bcb3fa0c"><td class="mdescLeft">&#160;</td><td class="mdescRight">load body of glue.  <a href="#aa24df9943d99310cf1f9d221bcb3fa0c">More...</a><br /></td></tr>
+<tr class="separator:aa24df9943d99310cf1f9d221bcb3fa0c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4a184dce3db2a20d7a2664ac147045d9"><td class="memItemLeft" align="right" valign="top">int(*&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structglue__impl__t.html#a4a184dce3db2a20d7a2664ac147045d9">save_header</a> )(void *extra, FILE *fp, <a class="el" href="group__g__connlm.html#ga27bb4962c19c1ac9c66c27d5d2de9a73">connlm_fmt_t</a> fmt)</td></tr>
+<tr class="memdesc:a4a184dce3db2a20d7a2664ac147045d9"><td class="mdescLeft">&#160;</td><td class="mdescRight">save header of glue.  <a href="#a4a184dce3db2a20d7a2664ac147045d9">More...</a><br /></td></tr>
+<tr class="separator:a4a184dce3db2a20d7a2664ac147045d9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a203ae6b9be52a35b9ea62c2997c0e151"><td class="memItemLeft" align="right" valign="top">int(*&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structglue__impl__t.html#a203ae6b9be52a35b9ea62c2997c0e151">save_body</a> )(void *extra, FILE *fp, <a class="el" href="group__g__connlm.html#ga27bb4962c19c1ac9c66c27d5d2de9a73">connlm_fmt_t</a> fmt)</td></tr>
+<tr class="memdesc:a203ae6b9be52a35b9ea62c2997c0e151"><td class="mdescLeft">&#160;</td><td class="mdescRight">save body of glue.  <a href="#a203ae6b9be52a35b9ea62c2997c0e151">More...</a><br /></td></tr>
+<tr class="separator:a203ae6b9be52a35b9ea62c2997c0e151"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a93a376870ae787e89583d4379912727e"><td class="memItemLeft" align="right" valign="top">int(*&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structglue__impl__t.html#a93a376870ae787e89583d4379912727e">init_data</a> )(<a class="el" href="structglue__t.html">glue_t</a> *glue, <a class="el" href="structinput__t.html">input_t</a> *input, <a class="el" href="structlayer__t.html">layer_t</a> **layers, <a class="el" href="structoutput__t.html">output_t</a> *output)</td></tr>
 <tr class="memdesc:a93a376870ae787e89583d4379912727e"><td class="mdescLeft">&#160;</td><td class="mdescRight">init data of glue.  <a href="#a93a376870ae787e89583d4379912727e">More...</a><br /></td></tr>
 <tr class="separator:a93a376870ae787e89583d4379912727e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab2e8a29216f70a239d74ae80c3152dc4"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structwt__updater__t.html">wt_updater_t</a> *(*&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structglue__impl__t.html#ab2e8a29216f70a239d74ae80c3152dc4">init_wt_updater</a> )(<a class="el" href="structglue__t.html">glue_t</a> *glue, <a class="el" href="structparam__t.html">param_t</a> *param)</td></tr>
 <tr class="memdesc:ab2e8a29216f70a239d74ae80c3152dc4"><td class="mdescLeft">&#160;</td><td class="mdescRight">init wt_updater for glue.  <a href="#ab2e8a29216f70a239d74ae80c3152dc4">More...</a><br /></td></tr>
 <tr class="separator:ab2e8a29216f70a239d74ae80c3152dc4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0130a4cda068cb0b21ee38219e255264"><td class="memItemLeft" align="right" valign="top">void(*&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structglue__impl__t.html#a0130a4cda068cb0b21ee38219e255264">print_verbose_info</a> )(<a class="el" href="structglue__t.html">glue_t</a> *glue, FILE *fo)</td></tr>
+<tr class="memdesc:a0130a4cda068cb0b21ee38219e255264"><td class="mdescLeft">&#160;</td><td class="mdescRight">print info.  <a href="#a0130a4cda068cb0b21ee38219e255264">More...</a><br /></td></tr>
+<tr class="separator:a0130a4cda068cb0b21ee38219e255264"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Implementation of a NNet glue. </p>
@@ -280,12 +283,12 @@ Data Fields</h2></td></tr>
 
 </div>
 </div>
-<a class="anchor" id="ad0ad98275fac9b3bc91b74d81b9c22ba"></a>
+<a class="anchor" id="aa24df9943d99310cf1f9d221bcb3fa0c"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">int(* glue_impl_t::load_body) (void *extra, int version, FILE *fp, bool binary)</td>
+          <td class="memname">int(* glue_impl_t::load_body) (void *extra, int version, FILE *fp, <a class="el" href="group__g__connlm.html#ga27bb4962c19c1ac9c66c27d5d2de9a73">connlm_fmt_t</a> fmt)</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -294,12 +297,12 @@ Data Fields</h2></td></tr>
 
 </div>
 </div>
-<a class="anchor" id="ae6eddd4ff3c7aaabec5e0203f45cfc8f"></a>
+<a class="anchor" id="a869aa2213773450a705a02493c895e33"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">int(* glue_impl_t::load_header) (void **extra, int version, FILE *fp, bool *binary, FILE *fo_info)</td>
+          <td class="memname">int(* glue_impl_t::load_header) (void **extra, int version, FILE *fp, <a class="el" href="group__g__connlm.html#ga27bb4962c19c1ac9c66c27d5d2de9a73">connlm_fmt_t</a> *fmt, FILE *fo_info)</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -322,12 +325,26 @@ Data Fields</h2></td></tr>
 
 </div>
 </div>
-<a class="anchor" id="ad77e6a0200a7203d9ea044c12a8c32d2"></a>
+<a class="anchor" id="a0130a4cda068cb0b21ee38219e255264"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">int(* glue_impl_t::save_body) (void *extra, FILE *fp, bool binary)</td>
+          <td class="memname">void(* glue_impl_t::print_verbose_info) (<a class="el" href="structglue__t.html">glue_t</a> *glue, FILE *fo)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>print info. </p>
+
+</div>
+</div>
+<a class="anchor" id="a203ae6b9be52a35b9ea62c2997c0e151"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int(* glue_impl_t::save_body) (void *extra, FILE *fp, <a class="el" href="group__g__connlm.html#ga27bb4962c19c1ac9c66c27d5d2de9a73">connlm_fmt_t</a> fmt)</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -336,12 +353,12 @@ Data Fields</h2></td></tr>
 
 </div>
 </div>
-<a class="anchor" id="afc051f35be62b47e68c9db167bad80f5"></a>
+<a class="anchor" id="a4a184dce3db2a20d7a2664ac147045d9"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">int(* glue_impl_t::save_header) (void *extra, FILE *fp, bool binary)</td>
+          <td class="memname">int(* glue_impl_t::save_header) (void *extra, FILE *fp, <a class="el" href="group__g__connlm.html#ga27bb4962c19c1ac9c66c27d5d2de9a73">connlm_fmt_t</a> fmt)</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -373,7 +390,7 @@ Data Fields</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="structglue__impl__t.html">glue_impl_t</a></li>
-    <li class="footer">Generated on Fri Oct 28 2016 22:37:23 for connLM by
+    <li class="footer">Generated on Mon May 8 2017 22:10:28 for connLM by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.10 </li>
   </ul>

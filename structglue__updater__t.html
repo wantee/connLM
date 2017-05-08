@@ -31,7 +31,6 @@
 });
 </script><script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js"></script>
 <link href="doxygen.css" rel="stylesheet" type="text/css" />
-<link href="table.css" rel="stylesheet" type="text/css"/>
 </head>
 <body>
 <div id="top"><!-- do not remove this div, it is closed by doxygen! -->
@@ -131,14 +130,15 @@ Collaboration diagram for glue_updater_t:</div>
 <div class="dyncontent">
 <div class="center"><img src="structglue__updater__t__coll__graph.png" border="0" usemap="#glue__updater__t_coll__map" alt="Collaboration graph"/></div>
 <map name="glue__updater__t_coll__map" id="glue__updater__t_coll__map">
-<area shape="rect" id="node2" href="structglue__t.html" title="NNet glue. " alt="" coords="183,288,242,315"/>
-<area shape="rect" id="node3" href="structglue__impl__t.html" title="Implementation of a NNet glue. " alt="" coords="83,199,174,225"/>
-<area shape="rect" id="node4" href="structwt__updater__t.html" title="Output updater. " alt="" coords="23,109,122,136"/>
-<area shape="rect" id="node5" href="structwt__dirty__buf__t.html" title="Store the dirty part of weight. " alt="" coords="5,5,111,32"/>
-<area shape="rect" id="node6" href="structparam__t.html" title="Parameter. " alt="" coords="156,5,227,32"/>
-<area shape="rect" id="node7" href="structweight__t.html" title="NNet weight. " alt="" coords="250,199,322,225"/>
-<area shape="rect" id="node8" href="structbptt__opt__t.html" title="BPTT options. " alt="" coords="347,199,428,225"/>
-<area shape="rect" id="node9" href="structglue__updater__impl__t.html" title="Implementation of a NNet glue updater. " alt="" coords="267,288,409,315"/>
+<area shape="rect" id="node2" href="structglue__t.html" title="NNet glue. " alt="" coords="183,392,242,419"/>
+<area shape="rect" id="node3" href="structglue__impl__t.html" title="Implementation of a NNet glue. " alt="" coords="83,303,174,329"/>
+<area shape="rect" id="node4" href="structwt__updater__t.html" title="Output updater. " alt="" coords="23,213,122,240"/>
+<area shape="rect" id="node5" href="structwt__dirty__buf__t.html" title="Store the dirty part of weight. " alt="" coords="5,109,111,136"/>
+<area shape="rect" id="node6" href="structconcat__mat__t.html" title="Concatable Matrix. " alt="" coords="7,5,109,32"/>
+<area shape="rect" id="node7" href="structparam__t.html" title="Parameter. " alt="" coords="156,109,227,136"/>
+<area shape="rect" id="node8" href="structweight__t.html" title="NNet weight. " alt="" coords="250,303,322,329"/>
+<area shape="rect" id="node9" href="structbptt__opt__t.html" title="BPTT options. " alt="" coords="347,303,428,329"/>
+<area shape="rect" id="node10" href="structglue__updater__impl__t.html" title="Implementation of a NNet glue updater. " alt="" coords="267,392,409,419"/>
 </map>
 <center><span class="legend">[<a target="top" href="graph_legend.html">legend</a>]</span></center></div>
 <table class="memberdecls">
@@ -153,6 +153,9 @@ Data Fields</h2></td></tr>
 <tr class="memitem:a23c3f8488442d24b994bb8a28f3f4c06"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structglue__updater__impl__t.html">glue_updater_impl_t</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structglue__updater__t.html#a23c3f8488442d24b994bb8a28f3f4c06">impl</a></td></tr>
 <tr class="memdesc:a23c3f8488442d24b994bb8a28f3f4c06"><td class="mdescLeft">&#160;</td><td class="mdescRight">implementation for glue.  <a href="#a23c3f8488442d24b994bb8a28f3f4c06">More...</a><br /></td></tr>
 <tr class="separator:a23c3f8488442d24b994bb8a28f3f4c06"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a00ad248e74750a7753870f4b60572e82"><td class="memItemLeft" align="right" valign="top">bool *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structglue__updater__t.html#a00ad248e74750a7753870f4b60572e82">forwarded</a></td></tr>
+<tr class="memdesc:a00ad248e74750a7753870f4b60572e82"><td class="mdescLeft">&#160;</td><td class="mdescRight">whether a node is forwarded already.  <a href="#a00ad248e74750a7753870f4b60572e82">More...</a><br /></td></tr>
+<tr class="separator:a00ad248e74750a7753870f4b60572e82"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a5eaf96bafb4beeac2f90239a994294d9"><td class="memItemLeft" align="right" valign="top">void *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structglue__updater__t.html#a5eaf96bafb4beeac2f90239a994294d9">extra</a></td></tr>
 <tr class="memdesc:a5eaf96bafb4beeac2f90239a994294d9"><td class="mdescLeft">&#160;</td><td class="mdescRight">hook to store extra data.  <a href="#a5eaf96bafb4beeac2f90239a994294d9">More...</a><br /></td></tr>
 <tr class="separator:a5eaf96bafb4beeac2f90239a994294d9"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -171,6 +174,21 @@ Data Fields</h2></td></tr>
 </div><div class="memdoc">
 
 <p>hook to store extra data. </p>
+
+</div>
+</div>
+<a class="anchor" id="a00ad248e74750a7753870f4b60572e82"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool* glue_updater_t::forwarded</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>whether a node is forwarded already. </p>
+<p>For support of multi-call. </p>
 
 </div>
 </div>
@@ -225,7 +243,7 @@ Data Fields</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="structglue__updater__t.html">glue_updater_t</a></li>
-    <li class="footer">Generated on Fri Oct 28 2016 22:37:23 for connLM by
+    <li class="footer">Generated on Mon May 8 2017 22:10:28 for connLM by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.10 </li>
   </ul>

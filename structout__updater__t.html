@@ -31,7 +31,6 @@
 });
 </script><script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js"></script>
 <link href="doxygen.css" rel="stylesheet" type="text/css" />
-<link href="table.css" rel="stylesheet" type="text/css"/>
 </head>
 <body>
 <div id="top"><!-- do not remove this div, it is closed by doxygen! -->
@@ -131,11 +130,12 @@ Collaboration diagram for out_updater_t:</div>
 <div class="dyncontent">
 <div class="center"><img src="structout__updater__t__coll__graph.png" border="0" usemap="#out__updater__t_coll__map" alt="Collaboration graph"/></div>
 <map name="out__updater__t_coll__map" id="out__updater__t_coll__map">
-<area shape="rect" id="node2" href="structoutput__t.html" title="Output Layer. " alt="" coords="141,184,211,211"/>
-<area shape="rect" id="node3" href="structoutput__opt__t.html" title="Parameters for output tree. " alt="" coords="5,95,101,121"/>
-<area shape="rect" id="node4" href="structoutput__tree__t.html" title="Output tree. " alt="" coords="126,95,226,121"/>
-<area shape="rect" id="node5" href="structoutput__tree__node__t.html" title="Output tree Node. " alt="" coords="107,5,245,32"/>
-<area shape="rect" id="node6" href="structoutput__path__t.html" title="Output tree path. " alt="" coords="251,95,355,121"/>
+<area shape="rect" id="node2" href="structoutput__tree__bfs__aux__t.html" title="aux data for output tree BFS. " alt="" coords="5,184,160,211"/>
+<area shape="rect" id="node3" href="structoutput__t.html" title="Output Layer. " alt="" coords="185,184,255,211"/>
+<area shape="rect" id="node4" href="structoutput__opt__t.html" title="Parameters for output tree. " alt="" coords="49,95,145,121"/>
+<area shape="rect" id="node5" href="structoutput__tree__t.html" title="Output tree. " alt="" coords="170,95,270,121"/>
+<area shape="rect" id="node6" href="structoutput__tree__node__t.html" title="Output tree Node. " alt="" coords="151,5,289,32"/>
+<area shape="rect" id="node7" href="structoutput__path__t.html" title="Output tree path. " alt="" coords="295,95,399,121"/>
 </map>
 <center><span class="legend">[<a target="top" href="graph_legend.html">legend</a>]</span></center></div>
 <table class="memberdecls">
@@ -150,6 +150,15 @@ Data Fields</h2></td></tr>
 <tr class="memitem:ab48d227422f835540cb9bd945d8062cb"><td class="memItemLeft" align="right" valign="top">real_t *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structout__updater__t.html#ab48d227422f835540cb9bd945d8062cb">er</a></td></tr>
 <tr class="memdesc:ab48d227422f835540cb9bd945d8062cb"><td class="mdescLeft">&#160;</td><td class="mdescRight">error of output layer.  <a href="#ab48d227422f835540cb9bd945d8062cb">More...</a><br /></td></tr>
 <tr class="separator:ab48d227422f835540cb9bd945d8062cb"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae648ba1619c7b988f7b58c95980dc021"><td class="memItemLeft" align="right" valign="top">double *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structout__updater__t.html#ae648ba1619c7b988f7b58c95980dc021">node_probs</a></td></tr>
+<tr class="memdesc:ae648ba1619c7b988f7b58c95980dc021"><td class="mdescLeft">&#160;</td><td class="mdescRight">buffer for probablity of nodes in output tree.  <a href="#ae648ba1619c7b988f7b58c95980dc021">More...</a><br /></td></tr>
+<tr class="separator:ae648ba1619c7b988f7b58c95980dc021"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a28e1c5a29ce2ce2bb131b82eb7d13516"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structoutput__tree__bfs__aux__t.html">output_tree_bfs_aux_t</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structout__updater__t.html#a28e1c5a29ce2ce2bb131b82eb7d13516">bfs_aux</a></td></tr>
+<tr class="memdesc:a28e1c5a29ce2ce2bb131b82eb7d13516"><td class="mdescLeft">&#160;</td><td class="mdescRight">aux for output tree BFS.  <a href="#a28e1c5a29ce2ce2bb131b82eb7d13516">More...</a><br /></td></tr>
+<tr class="separator:a28e1c5a29ce2ce2bb131b82eb7d13516"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac12d80c2f021113498b895125c5b2513"><td class="memItemLeft" align="right" valign="top">bool *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structout__updater__t.html#ac12d80c2f021113498b895125c5b2513">forwarded</a></td></tr>
+<tr class="memdesc:ac12d80c2f021113498b895125c5b2513"><td class="mdescLeft">&#160;</td><td class="mdescRight">whether a node is forwarded already.  <a href="#ac12d80c2f021113498b895125c5b2513">More...</a><br /></td></tr>
+<tr class="separator:ac12d80c2f021113498b895125c5b2513"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Output layer updater. </p>
@@ -168,6 +177,20 @@ Data Fields</h2></td></tr>
 
 </div>
 </div>
+<a class="anchor" id="a28e1c5a29ce2ce2bb131b82eb7d13516"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="structoutput__tree__bfs__aux__t.html">output_tree_bfs_aux_t</a>* out_updater_t::bfs_aux</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>aux for output tree BFS. </p>
+
+</div>
+</div>
 <a class="anchor" id="ab48d227422f835540cb9bd945d8062cb"></a>
 <div class="memitem">
 <div class="memproto">
@@ -179,6 +202,35 @@ Data Fields</h2></td></tr>
 </div><div class="memdoc">
 
 <p>error of output layer. </p>
+
+</div>
+</div>
+<a class="anchor" id="ac12d80c2f021113498b895125c5b2513"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool* out_updater_t::forwarded</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>whether a node is forwarded already. </p>
+<p>For support of multi-call. </p>
+
+</div>
+</div>
+<a class="anchor" id="ae648ba1619c7b988f7b58c95980dc021"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">double* out_updater_t::node_probs</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>buffer for probablity of nodes in output tree. </p>
 
 </div>
 </div>
@@ -205,7 +257,7 @@ Data Fields</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="structout__updater__t.html">out_updater_t</a></li>
-    <li class="footer">Generated on Fri Oct 28 2016 22:37:23 for connLM by
+    <li class="footer">Generated on Mon May 8 2017 22:10:28 for connLM by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.10 </li>
   </ul>

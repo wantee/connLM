@@ -1,10 +1,6 @@
 var searchData=
 [
-  ['om_5fbottom_5fup',['OM_BOTTOM_UP',['../group__g__output.html#gga650276dff821cd16b390a89c12e57fdea36d123a38a8a996276630f1284827102',1,'output.h']]],
-  ['om_5ftop_5fdown',['OM_TOP_DOWN',['../group__g__output.html#gga650276dff821cd16b390a89c12e57fdea806142743676656eb37b51776f9d5b5c',1,'output.h']]],
-  ['om_5funknown',['OM_UNKNOWN',['../group__g__output.html#gga650276dff821cd16b390a89c12e57fdea026bf94ebb3c1787385e44e3e582622e',1,'output.h']]],
-  ['on_5fnce',['ON_NCE',['../group__g__output.html#gga4da767c47935a3d8240cb0a1572c35d4aeaf44ac41f3bcef765e6ec35436ec565',1,'output.h']]],
-  ['on_5fsoftmax',['ON_SOFTMAX',['../group__g__output.html#gga4da767c47935a3d8240cb0a1572c35d4a5f457d86b4af6492825a7c11aa57fb45',1,'output.h']]],
-  ['on_5fundefined',['ON_UNDEFINED',['../group__g__output.html#gga4da767c47935a3d8240cb0a1572c35d4a1b6299493da3ae06abfe7fc29d3eee7a',1,'output.h']]],
-  ['on_5funknown',['ON_UNKNOWN',['../group__g__output.html#gga4da767c47935a3d8240cb0a1572c35d4a52038aacd1703f3bd33cd913f519740e',1,'output.h']]]
+  ['driver_5feval',['DRIVER_EVAL',['../group__g__driver.html#gga21eeeb986c6bffaf1818974a800cf2fca2c187eb0f9186a8e5c1b1f2d272cfab9',1,'driver.h']]],
+  ['driver_5fgen',['DRIVER_GEN',['../group__g__driver.html#gga21eeeb986c6bffaf1818974a800cf2fca236eb9bbf5f104bcbccd2f23a75df0d7',1,'driver.h']]],
+  ['driver_5ftrain',['DRIVER_TRAIN',['../group__g__driver.html#gga21eeeb986c6bffaf1818974a800cf2fcade22674d4447301b310fa3001719d65c',1,'driver.h']]]
 ];

@@ -18,9 +18,10 @@ var group__g__input =
     [ "input_draw_label", "group__g__input.html#gae608235b9d1a27e3a75ca8291b642ff5", null ],
     [ "input_dup", "group__g__input.html#ga23f1f60848fbf99e8ea51538e9e1d4d8", null ],
     [ "input_get_layer", "group__g__input.html#gab13cf6ae7758ec693bf164ca3ec604e6", null ],
-    [ "input_load_body", "group__g__input.html#gaae23bce8bb80d41125c8d938a460c0f8", null ],
-    [ "input_load_header", "group__g__input.html#gaa96a294e63ea83db32576bac3b3ba87b", null ],
+    [ "input_load_body", "group__g__input.html#ga5a394183ddfd583ca98eda9e30ef0da0", null ],
+    [ "input_load_header", "group__g__input.html#ga603d81db231c9abe667e3ab26cf0c218", null ],
     [ "input_parse_topo", "group__g__input.html#gae41bbf0c7eace4c41b597ca3383b1f35", null ],
-    [ "input_save_body", "group__g__input.html#gab50ef08173c082ef8a40fc139e75a037", null ],
-    [ "input_save_header", "group__g__input.html#gae13e033f049530ab5e0407a3923187f7", null ]
+    [ "input_print_verbose_info", "group__g__input.html#gaf7e0475fb4cc28f04600f4731baf2ef2", null ],
+    [ "input_save_body", "group__g__input.html#gafc8998bfa93978e72ae793cfc4cb0ff2", null ],
+    [ "input_save_header", "group__g__input.html#gaedc4c666e05c77520197c110b2442fd9", null ]
 ];

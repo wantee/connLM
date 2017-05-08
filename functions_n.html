@@ -31,7 +31,6 @@
 });
 </script><script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js"></script>
 <link href="doxygen.css" rel="stylesheet" type="text/css" />
-<link href="table.css" rel="stylesheet" type="text/css"/>
 </head>
 <body>
 <div id="top"><!-- do not remove this div, it is closed by doxygen! -->
@@ -148,14 +147,23 @@ $(document).ready(function(){initNavTree('functions_n.html','');});
 <div class="textblock">Here is a list of all documented struct and union fields with links to the struct/union documentation for each field:</div>
 
 <h3><a class="anchor" id="index_n"></a>- n -</h3><ul>
+<li>n_buf
+: <a class="el" href="structwt__dirty__buf__t.html#a9adb72a9af070ebc61802f2c0dd378b6">wt_dirty_buf_t</a>
+</li>
 <li>n_ctx
 : <a class="el" href="structinput__t.html#a0274cec0093f35ca8ff23bfba0447878">input_t</a>
 </li>
 <li>n_flush_step
 : <a class="el" href="structwt__updater__t.html#a0f18932dc1246da5f73aaa16a982dfb2">wt_updater_t</a>
 </li>
+<li>n_fst_state
+: <a class="el" href="structfst__conv__t.html#a222cd5154dad6cf6b9c92e2dcf5ccafd">fst_conv_t</a>
+</li>
 <li>n_id
 : <a class="el" href="structwt__dirty__buf__t.html#a495d197684aa9689a9f9738c19a2c548">wt_dirty_buf_t</a>
+</li>
+<li>n_parts
+: <a class="el" href="structwt__dirty__buf__t.html#a5938f1b519a4b97112c1daec28d98e83">wt_dirty_buf_t</a>
 </li>
 <li>n_row
 : <a class="el" href="structconcat__mat__t.html#a10a360a7f059d0329364654795a38093">concat_mat_t</a>
@@ -169,7 +177,7 @@ $(document).ready(function(){initNavTree('functions_n.html','');});
 </li>
 <li>n_thr
 : <a class="el" href="structdriver__t.html#ac4cd08edd2d3cd40a2b19141c52a5315">driver_t</a>
-, <a class="el" href="structfst__converter__t.html#a54ecf67f265b6ae09ff83fcfd0a14b7d">fst_converter_t</a>
+, <a class="el" href="structfst__conv__t.html#a55993626d80e1c0d5703fed914b695d1">fst_conv_t</a>
 </li>
 <li>n_word
 : <a class="el" href="structinput__updater__t.html#ab61884ca655791324f82b12e40faea85">input_updater_t</a>
@@ -183,6 +191,18 @@ $(document).ready(function(){initNavTree('functions_n.html','');});
 <li>next
 : <a class="el" href="structconnlm__egs__t.html#a1ef939c1831359f6535559d8f7c97e35">connlm_egs_t</a>
 </li>
+<li>nghashes
+: <a class="el" href="structbloom__filter__t.html#a09f27c039318faca681f9444595abb2a">bloom_filter_t</a>
+</li>
+<li>node_probs
+: <a class="el" href="structout__updater__t.html#ae648ba1619c7b988f7b58c95980dc021">out_updater_t</a>
+</li>
+<li>node_queue
+: <a class="el" href="structoutput__tree__bfs__aux__t.html#af4482cc7635c9161a4e002f44e87db87">output_tree_bfs_aux_t</a>
+</li>
+<li>node_stack
+: <a class="el" href="structoutput__tree__dfs__aux__t.html#a2a2c1ccbcdc15e05c3cb9ef5d2a06297">output_tree_dfs_aux_t</a>
+</li>
 <li>nodes
 : <a class="el" href="structgraph__t.html#a37a2dfa6641d28d2d42b0ee21bf2739c">graph_t</a>
 , <a class="el" href="structoutput__path__t.html#a7d48d387110a0bab6f9bada56f065cbe">output_path_t</a>
@@ -193,6 +213,9 @@ $(document).ready(function(){initNavTree('functions_n.html','');});
 </li>
 <li>num_ac_bptt
 : <a class="el" href="structbptt__updater__t.html#aa50f4463c2714994946491c5d3cebc7a">bptt_updater_t</a>
+</li>
+<li>num_children
+: <a class="el" href="structfst__state__children__t.html#aa21c012618ce0c3e04878537b7fb6996">fst_state_children_t</a>
 </li>
 <li>num_comp
 : <a class="el" href="structconnlm__t.html#aa2b53cd9ffdea835958486763256221f">connlm_t</a>
@@ -209,6 +232,9 @@ $(document).ready(function(){initNavTree('functions_n.html','');});
 </li>
 <li>num_glue_cycle
 : <a class="el" href="structcomponent__t.html#ac59c06299a5f75d5250c6a1485fec7ac">component_t</a>
+</li>
+<li>num_hashes
+: <a class="el" href="structbloom__filter__opt__t.html#ac1ca082ba17ba0b52f5720d9a72e8613">bloom_filter_opt_t</a>
 </li>
 <li>num_layer
 : <a class="el" href="structcomponent__t.html#a295b463cce231f92078806fdbcc5b14e">component_t</a>
@@ -228,8 +254,14 @@ $(document).ready(function(){initNavTree('functions_n.html','');});
 <li>num_param_map
 : <a class="el" href="structoutput__t.html#a3ad13b0f37e85623819aba3eeaf5fe0f">output_t</a>
 </li>
+<li>num_samplings
+: <a class="el" href="structwildcard__state__opt__t.html#aa8ceb183413cc45338ac5f371903e70b">wildcard_state_opt_t</a>
+</li>
 <li>num_thrs
 : <a class="el" href="structreader__t.html#a6f9bbd36d2299ab2bb72e3c4be206b93">reader_t</a>
+</li>
+<li>num_vecs
+: <a class="el" href="structemb__glue__data__t.html#a5884ad34dcb369bdd97f29037c4fcb81">emb_glue_data_t</a>
 </li>
 </ul>
 </div><!-- contents -->
@@ -237,7 +269,7 @@ $(document).ready(function(){initNavTree('functions_n.html','');});
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on Fri Oct 28 2016 22:37:23 for connLM by
+    <li class="footer">Generated on Mon May 8 2017 22:10:28 for connLM by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.10 </li>
   </ul>

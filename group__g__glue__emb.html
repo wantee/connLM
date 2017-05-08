@@ -31,7 +31,6 @@
 });
 </script><script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js"></script>
 <link href="doxygen.css" rel="stylesheet" type="text/css" />
-<link href="table.css" rel="stylesheet" type="text/css"/>
 </head>
 <body>
 <div id="top"><!-- do not remove this div, it is closed by doxygen! -->
@@ -109,6 +108,8 @@ $(document).ready(function(){initNavTree('group__g__glue__emb.html','');});
 
 <div class="header">
   <div class="summary">
+<a href="#nested-classes">Data Structures</a> &#124;
+<a href="#enum-members">Enumerations</a> &#124;
 <a href="#func-members">Functions</a>  </div>
   <div class="headertitle">
 <div class="title">Embedding Glue<div class="ingroups"><a class="el" href="group__g__glue.html">NNet Glue</a></div></div>  </div>
@@ -127,14 +128,48 @@ Collaboration diagram for Embedding Glue:</div>
 </td></tr></table></center>
 </div>
 <table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="nested-classes"></a>
+Data Structures</h2></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structemb__glue__data__t.html">emb_glue_data_t</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Data for emb glue.  <a href="structemb__glue__data__t.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="enum-members"></a>
+Enumerations</h2></td></tr>
+<tr class="memitem:gab305fbcce77d63940bcfa0b8b54600b9"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__g__glue__emb.html#gab305fbcce77d63940bcfa0b8b54600b9">emb_index_method_t</a> { <a class="el" href="group__g__glue__emb.html#ggab305fbcce77d63940bcfa0b8b54600b9a23aa6e85ddc8b05f069ec02c22ee54aa">EI_UNKNOWN</a> = -1, 
+<a class="el" href="group__g__glue__emb.html#ggab305fbcce77d63940bcfa0b8b54600b9a94496111a41dec68dd6fd5910071cf1b">EI_UNDEFINED</a> = 0, 
+<a class="el" href="group__g__glue__emb.html#ggab305fbcce77d63940bcfa0b8b54600b9aaa880cc029bbf53a1753742975c75bfb">EI_WORD</a> = 1, 
+<a class="el" href="group__g__glue__emb.html#ggab305fbcce77d63940bcfa0b8b54600b9a814e58953ac48b6e7d32da4bb2570b2c">EI_POS</a>
+ }<tr class="memdesc:gab305fbcce77d63940bcfa0b8b54600b9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Type of index methods.  <a href="group__g__glue__emb.html#gab305fbcce77d63940bcfa0b8b54600b9">More...</a><br /></td></tr>
+<tr class="separator:gab305fbcce77d63940bcfa0b8b54600b9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</td></tr>
+</table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="func-members"></a>
 Functions</h2></td></tr>
+<tr class="memitem:gae135525b19a8bea7e52f259daeceaa80"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__g__glue__emb.html#gae135525b19a8bea7e52f259daeceaa80">emb_glue_destroy</a> (<a class="el" href="structglue__t.html">glue_t</a> *glue)</td></tr>
+<tr class="memdesc:gae135525b19a8bea7e52f259daeceaa80"><td class="mdescLeft">&#160;</td><td class="mdescRight">Destroy a emb glue.  <a href="#gae135525b19a8bea7e52f259daeceaa80">More...</a><br /></td></tr>
+<tr class="separator:gae135525b19a8bea7e52f259daeceaa80"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gab304a2ae005f8960d56b5ca7c7058dd5"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__g__glue__emb.html#gab304a2ae005f8960d56b5ca7c7058dd5">emb_glue_init</a> (<a class="el" href="structglue__t.html">glue_t</a> *glue)</td></tr>
+<tr class="memdesc:gab304a2ae005f8960d56b5ca7c7058dd5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Initialize a emb glue.  <a href="#gab304a2ae005f8960d56b5ca7c7058dd5">More...</a><br /></td></tr>
+<tr class="separator:gab304a2ae005f8960d56b5ca7c7058dd5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gabe617b7e0654368d6750aef347c69dbd"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__g__glue__emb.html#gabe617b7e0654368d6750aef347c69dbd">emb_glue_dup</a> (<a class="el" href="structglue__t.html">glue_t</a> *dst, <a class="el" href="structglue__t.html">glue_t</a> *src)</td></tr>
+<tr class="memdesc:gabe617b7e0654368d6750aef347c69dbd"><td class="mdescLeft">&#160;</td><td class="mdescRight">Duplicate a emb glue.  <a href="#gabe617b7e0654368d6750aef347c69dbd">More...</a><br /></td></tr>
+<tr class="separator:gabe617b7e0654368d6750aef347c69dbd"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga21c8653abfff889c8278ee416956aebe"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__g__glue__emb.html#ga21c8653abfff889c8278ee416956aebe">emb_glue_parse_topo</a> (<a class="el" href="structglue__t.html">glue_t</a> *glue, const char *line)</td></tr>
 <tr class="memdesc:ga21c8653abfff889c8278ee416956aebe"><td class="mdescLeft">&#160;</td><td class="mdescRight">Parse a topo config line.  <a href="#ga21c8653abfff889c8278ee416956aebe">More...</a><br /></td></tr>
 <tr class="separator:ga21c8653abfff889c8278ee416956aebe"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga81a6c9859b1deae4dc43230e727f63c8"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__g__glue__emb.html#ga81a6c9859b1deae4dc43230e727f63c8">emb_glue_check</a> (<a class="el" href="structglue__t.html">glue_t</a> *glue, <a class="el" href="structlayer__t.html">layer_t</a> **layers, int n_layer, <a class="el" href="structinput__t.html">input_t</a> *input, <a class="el" href="structoutput__t.html">output_t</a> *output)</td></tr>
 <tr class="memdesc:ga81a6c9859b1deae4dc43230e727f63c8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Check a emb glue is valid.  <a href="#ga81a6c9859b1deae4dc43230e727f63c8">More...</a><br /></td></tr>
 <tr class="separator:ga81a6c9859b1deae4dc43230e727f63c8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gaee1332e1a2782417d048b5d9e2d02867"><td class="memItemLeft" align="right" valign="top">char *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__g__glue__emb.html#gaee1332e1a2782417d048b5d9e2d02867">emb_glue_draw_label</a> (<a class="el" href="structglue__t.html">glue_t</a> *glue, char *label, size_t label_len)</td></tr>
+<tr class="memdesc:gaee1332e1a2782417d048b5d9e2d02867"><td class="mdescLeft">&#160;</td><td class="mdescRight">Provide label string for drawing emb glue.  <a href="#gaee1332e1a2782417d048b5d9e2d02867">More...</a><br /></td></tr>
+<tr class="separator:gaee1332e1a2782417d048b5d9e2d02867"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gad1c6cbfa5c5b3cb53b246ac4d5bffa35"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__g__glue__emb.html#gad1c6cbfa5c5b3cb53b246ac4d5bffa35">emb_glue_load_header</a> (void **extra, int version, FILE *fp, <a class="el" href="group__g__connlm.html#ga27bb4962c19c1ac9c66c27d5d2de9a73">connlm_fmt_t</a> *fmt, FILE *fo_info)</td></tr>
+<tr class="memdesc:gad1c6cbfa5c5b3cb53b246ac4d5bffa35"><td class="mdescLeft">&#160;</td><td class="mdescRight">Load emb glue header and initialise a new emb_glue.  <a href="#gad1c6cbfa5c5b3cb53b246ac4d5bffa35">More...</a><br /></td></tr>
+<tr class="separator:gad1c6cbfa5c5b3cb53b246ac4d5bffa35"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gae6a37537702ee4a03d0afc7e77cf5f3b"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__g__glue__emb.html#gae6a37537702ee4a03d0afc7e77cf5f3b">emb_glue_save_header</a> (void *extra, FILE *fp, <a class="el" href="group__g__connlm.html#ga27bb4962c19c1ac9c66c27d5d2de9a73">connlm_fmt_t</a> fmt)</td></tr>
+<tr class="memdesc:gae6a37537702ee4a03d0afc7e77cf5f3b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Save emb glue header.  <a href="#gae6a37537702ee4a03d0afc7e77cf5f3b">More...</a><br /></td></tr>
+<tr class="separator:gae6a37537702ee4a03d0afc7e77cf5f3b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga702d0e5b4b1ccb822bc37cea3d847439"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__g__glue__emb.html#ga702d0e5b4b1ccb822bc37cea3d847439">emb_glue_init_data</a> (<a class="el" href="structglue__t.html">glue_t</a> *glue, <a class="el" href="structinput__t.html">input_t</a> *input, <a class="el" href="structlayer__t.html">layer_t</a> **layers, <a class="el" href="structoutput__t.html">output_t</a> *output)</td></tr>
 <tr class="memdesc:ga702d0e5b4b1ccb822bc37cea3d847439"><td class="mdescLeft">&#160;</td><td class="mdescRight">Initialise data of emb glue.  <a href="#ga702d0e5b4b1ccb822bc37cea3d847439">More...</a><br /></td></tr>
 <tr class="separator:ga702d0e5b4b1ccb822bc37cea3d847439"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -144,6 +179,35 @@ Functions</h2></td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <p>Glue connects the input layer and a hidden layer. </p>
+<h2 class="groupheader">Enumeration Type Documentation</h2>
+<a class="anchor" id="gab305fbcce77d63940bcfa0b8b54600b9"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">enum <a class="el" href="group__g__glue__emb.html#gab305fbcce77d63940bcfa0b8b54600b9">emb_index_method_t</a></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Type of index methods. </p>
+<table class="fieldtable">
+<tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a class="anchor" id="ggab305fbcce77d63940bcfa0b8b54600b9a23aa6e85ddc8b05f069ec02c22ee54aa"></a>EI_UNKNOWN&#160;</td><td class="fielddoc">
+<p>Unknown index method. </p>
+</td></tr>
+<tr><td class="fieldname"><a class="anchor" id="ggab305fbcce77d63940bcfa0b8b54600b9a94496111a41dec68dd6fd5910071cf1b"></a>EI_UNDEFINED&#160;</td><td class="fielddoc">
+<p>Undefined index method. </p>
+</td></tr>
+<tr><td class="fieldname"><a class="anchor" id="ggab305fbcce77d63940bcfa0b8b54600b9aaa880cc029bbf53a1753742975c75bfb"></a>EI_WORD&#160;</td><td class="fielddoc">
+<p>index by word id. </p>
+</td></tr>
+<tr><td class="fieldname"><a class="anchor" id="ggab305fbcce77d63940bcfa0b8b54600b9a814e58953ac48b6e7d32da4bb2570b2c"></a>EI_POS&#160;</td><td class="fielddoc">
+<p>index by position. </p>
+</td></tr>
+</table>
+
+</div>
+</div>
 <h2 class="groupheader">Function Documentation</h2>
 <a class="anchor" id="ga81a6c9859b1deae4dc43230e727f63c8"></a>
 <div class="memitem">
@@ -195,6 +259,134 @@ Functions</h2></td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">n_layer</td><td>number of layers. </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">input</td><td>input layer. </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">output</td><td>output layer. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>non-zero if any error </dd></dl>
+
+</div>
+</div>
+<a class="anchor" id="gae135525b19a8bea7e52f259daeceaa80"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void emb_glue_destroy </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structglue__t.html">glue_t</a> *&#160;</td>
+          <td class="paramname"><em>glue</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Destroy a emb glue. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">glue</td><td>emb glue to be destroyed. </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a class="anchor" id="gaee1332e1a2782417d048b5d9e2d02867"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">char* emb_glue_draw_label </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structglue__t.html">glue_t</a> *&#160;</td>
+          <td class="paramname"><em>glue</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">char *&#160;</td>
+          <td class="paramname"><em>label</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">size_t&#160;</td>
+          <td class="paramname"><em>label_len</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Provide label string for drawing emb glue. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">glue</td><td>glue. </td></tr>
+    <tr><td class="paramdir">[out]</td><td class="paramname">label</td><td>buffer to write string. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">label_len</td><td>length of label. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>label on success, NULL if any error. </dd></dl>
+
+</div>
+</div>
+<a class="anchor" id="gabe617b7e0654368d6750aef347c69dbd"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int emb_glue_dup </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structglue__t.html">glue_t</a> *&#160;</td>
+          <td class="paramname"><em>dst</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="structglue__t.html">glue_t</a> *&#160;</td>
+          <td class="paramname"><em>src</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Duplicate a emb glue. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[out]</td><td class="paramname">dst</td><td>dst glue to be duplicated. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">src</td><td>src glue to be duplicated. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>non-zero if any error </dd></dl>
+
+</div>
+</div>
+<a class="anchor" id="gab304a2ae005f8960d56b5ca7c7058dd5"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int emb_glue_init </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structglue__t.html">glue_t</a> *&#160;</td>
+          <td class="paramname"><em>glue</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Initialize a emb glue. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">glue</td><td>emb glue to be initialized. </td></tr>
   </table>
   </dd>
 </dl>
@@ -288,6 +480,64 @@ Functions</h2></td></tr>
 
 </div>
 </div>
+<a class="anchor" id="gad1c6cbfa5c5b3cb53b246ac4d5bffa35"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int emb_glue_load_header </td>
+          <td>(</td>
+          <td class="paramtype">void **&#160;</td>
+          <td class="paramname"><em>extra</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>version</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">FILE *&#160;</td>
+          <td class="paramname"><em>fp</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="group__g__connlm.html#ga27bb4962c19c1ac9c66c27d5d2de9a73">connlm_fmt_t</a> *&#160;</td>
+          <td class="paramname"><em>fmt</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">FILE *&#160;</td>
+          <td class="paramname"><em>fo_info</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Load emb glue header and initialise a new emb_glue. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[out]</td><td class="paramname">extra</td><td>extra data to be initialised. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">version</td><td>file version of loading file. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">fp</td><td>file stream loaded from. </td></tr>
+    <tr><td class="paramdir">[out]</td><td class="paramname">fmt</td><td>storage format. </td></tr>
+    <tr><td class="paramdir">[out]</td><td class="paramname">fo_info</td><td>file stream used to print information, if it is not NULL. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section see"><dt>See also</dt><dd><a class="el" href="group__g__glue__emb.html#gae6a37537702ee4a03d0afc7e77cf5f3b" title="Save emb glue header. ">emb_glue_save_header</a> </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>non-zero value if any error. </dd></dl>
+
+</div>
+</div>
 <a class="anchor" id="ga21c8653abfff889c8278ee416956aebe"></a>
 <div class="memitem">
 <div class="memproto">
@@ -324,12 +574,56 @@ Functions</h2></td></tr>
 
 </div>
 </div>
+<a class="anchor" id="gae6a37537702ee4a03d0afc7e77cf5f3b"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int emb_glue_save_header </td>
+          <td>(</td>
+          <td class="paramtype">void *&#160;</td>
+          <td class="paramname"><em>extra</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">FILE *&#160;</td>
+          <td class="paramname"><em>fp</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="group__g__connlm.html#ga27bb4962c19c1ac9c66c27d5d2de9a73">connlm_fmt_t</a>&#160;</td>
+          <td class="paramname"><em>fmt</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Save emb glue header. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">extra</td><td>extra data to be saved. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">fp</td><td>file stream saved to. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">fmt</td><td>storage format. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section see"><dt>See also</dt><dd><a class="el" href="group__g__glue__emb.html#gad1c6cbfa5c5b3cb53b246ac4d5bffa35" title="Load emb glue header and initialise a new emb_glue. ">emb_glue_load_header</a> </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>non-zero value if any error. </dd></dl>
+
+</div>
+</div>
 </div><!-- contents -->
 </div><!-- doc-content -->
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on Fri Oct 28 2016 22:37:23 for connLM by
+    <li class="footer">Generated on Mon May 8 2017 22:10:28 for connLM by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.10 </li>
   </ul>

@@ -31,7 +31,6 @@
 });
 </script><script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js"></script>
 <link href="doxygen.css" rel="stylesheet" type="text/css" />
-<link href="table.css" rel="stylesheet" type="text/css"/>
 </head>
 <body>
 <div id="top"><!-- do not remove this div, it is closed by doxygen! -->
@@ -159,12 +158,18 @@ Data Fields</h2></td></tr>
 <tr class="memitem:a79e789e25e7f743ffa273a7bd8cef312"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structlayer__updater__t.html#a79e789e25e7f743ffa273a7bd8cef312">derived</a></td></tr>
 <tr class="memdesc:a79e789e25e7f743ffa273a7bd8cef312"><td class="mdescLeft">&#160;</td><td class="mdescRight">derived indicator.  <a href="#a79e789e25e7f743ffa273a7bd8cef312">More...</a><br /></td></tr>
 <tr class="separator:a79e789e25e7f743ffa273a7bd8cef312"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8c7c91c914d9afb7136e85eb378dc400"><td class="memItemLeft" align="right" valign="top">random_state_func_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structlayer__updater__t.html#a8c7c91c914d9afb7136e85eb378dc400">random_state</a></td></tr>
+<tr class="memdesc:a8c7c91c914d9afb7136e85eb378dc400"><td class="mdescLeft">&#160;</td><td class="mdescRight">random state function.  <a href="#a8c7c91c914d9afb7136e85eb378dc400">More...</a><br /></td></tr>
+<tr class="separator:a8c7c91c914d9afb7136e85eb378dc400"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8b2c9734a456c494e56110deb7153104"><td class="memItemLeft" align="right" valign="top">real_t *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structlayer__updater__t.html#a8b2c9734a456c494e56110deb7153104">ac_state</a></td></tr>
 <tr class="memdesc:a8b2c9734a456c494e56110deb7153104"><td class="mdescLeft">&#160;</td><td class="mdescRight">state of activation(for prev timestep).  <a href="#a8b2c9734a456c494e56110deb7153104">More...</a><br /></td></tr>
 <tr class="separator:a8b2c9734a456c494e56110deb7153104"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af0b7b7f003f90b2640d81cf990689685"><td class="memItemLeft" align="right" valign="top">real_t *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structlayer__updater__t.html#af0b7b7f003f90b2640d81cf990689685">er_raw</a></td></tr>
 <tr class="memdesc:af0b7b7f003f90b2640d81cf990689685"><td class="mdescLeft">&#160;</td><td class="mdescRight">raw value of error(before derived).  <a href="#af0b7b7f003f90b2640d81cf990689685">More...</a><br /></td></tr>
 <tr class="separator:af0b7b7f003f90b2640d81cf990689685"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa1ee8848bb5b07d2fb52956fc1054b2d"><td class="memItemLeft" align="right" valign="top">real_t *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structlayer__updater__t.html#aa1ee8848bb5b07d2fb52956fc1054b2d">pre_ac_state</a></td></tr>
+<tr class="memdesc:aa1ee8848bb5b07d2fb52956fc1054b2d"><td class="mdescLeft">&#160;</td><td class="mdescRight">state of pre-activation.  <a href="#aa1ee8848bb5b07d2fb52956fc1054b2d">More...</a><br /></td></tr>
+<tr class="separator:aa1ee8848bb5b07d2fb52956fc1054b2d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Layer updater. </p>
@@ -295,6 +300,34 @@ Data Fields</h2></td></tr>
 
 </div>
 </div>
+<a class="anchor" id="aa1ee8848bb5b07d2fb52956fc1054b2d"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">real_t* layer_updater_t::pre_ac_state</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>state of pre-activation. </p>
+
+</div>
+</div>
+<a class="anchor" id="a8c7c91c914d9afb7136e85eb378dc400"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">random_state_func_t layer_updater_t::random_state</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>random state function. </p>
+
+</div>
+</div>
 <hr/>The documentation for this struct was generated from the following file:<ul>
 <li>updaters/<a class="el" href="layer__updater_8h_source.html">layer_updater.h</a></li>
 </ul>
@@ -304,7 +337,7 @@ Data Fields</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="structlayer__updater__t.html">layer_updater_t</a></li>
-    <li class="footer">Generated on Fri Oct 28 2016 22:37:23 for connLM by
+    <li class="footer">Generated on Mon May 8 2017 22:10:28 for connLM by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.10 </li>
   </ul>

@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['updater_5ft',['updater_t',['../structupdater__t.html',1,'']]]
+  ['thr_5fstat_5ft',['thr_stat_t',['../structthr__stat__t.html',1,'']]]
 ];

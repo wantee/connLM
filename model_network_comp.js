@@ -2,6 +2,10 @@ var model_network_comp =
 [
     [ "Overview", "model_network_comp.html#model_network_comp_overview", null ],
     [ "The Topology Configurations", "model_network_comp.html#model_network_comp_topo", null ],
+    [ "The Input Layer", "model_network_comp_input.html", [
+      [ "Introduction", "model_network_comp_input.html#model_network_comp_input_intro", null ],
+      [ "Topology Configurations", "model_network_comp_input.html#model_network_comp_input_topo", null ]
+    ] ],
     [ "The Layer", "model_network_comp_layer.html", [
       [ "Introduction", "model_network_comp_layer.html#model_network_comp_layer_intro", null ],
       [ "Topology Configurations", "model_network_comp_layer.html#model_network_comp_layer_topo", null ],

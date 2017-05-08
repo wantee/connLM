@@ -1,6 +1,7 @@
 var searchData=
 [
-  ['recur_5fbody',['RECUR_BODY',['../group__g__glue.html#gga26831e8f9944ff1c155036264220bd51a9373398fa8334be5dcec6f0feecce93d',1,'glue.h']]],
-  ['recur_5fhead',['RECUR_HEAD',['../group__g__glue.html#gga26831e8f9944ff1c155036264220bd51a527922e567820b5afe574b0d98adb8b9',1,'glue.h']]],
-  ['recur_5fnon',['RECUR_NON',['../group__g__glue.html#gga26831e8f9944ff1c155036264220bd51afde448090bf87ce844c6058c73cb700c',1,'glue.h']]]
+  ['ei_5fpos',['EI_POS',['../group__g__glue__emb.html#ggab305fbcce77d63940bcfa0b8b54600b9a814e58953ac48b6e7d32da4bb2570b2c',1,'emb_glue.h']]],
+  ['ei_5fundefined',['EI_UNDEFINED',['../group__g__glue__emb.html#ggab305fbcce77d63940bcfa0b8b54600b9a94496111a41dec68dd6fd5910071cf1b',1,'emb_glue.h']]],
+  ['ei_5funknown',['EI_UNKNOWN',['../group__g__glue__emb.html#ggab305fbcce77d63940bcfa0b8b54600b9a23aa6e85ddc8b05f069ec02c22ee54aa',1,'emb_glue.h']]],
+  ['ei_5fword',['EI_WORD',['../group__g__glue__emb.html#ggab305fbcce77d63940bcfa0b8b54600b9aaa880cc029bbf53a1753742975c75bfb',1,'emb_glue.h']]]
 ];

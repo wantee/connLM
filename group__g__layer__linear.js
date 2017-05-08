@@ -8,8 +8,9 @@ var group__g__layer__linear =
     [ "linear_destroy", "group__g__layer__linear.html#gacb138782e8a3dde57e38d86543312af6", null ],
     [ "linear_dup", "group__g__layer__linear.html#ga8efa56ab3aa38d0c2271292579763521", null ],
     [ "linear_init", "group__g__layer__linear.html#gaa288156f43a136ce6ecf75255f9b611e", null ],
-    [ "linear_load_body", "group__g__layer__linear.html#gaa3c55d3aa34074eae43918fb2c2ec6a0", null ],
-    [ "linear_load_header", "group__g__layer__linear.html#gab7805aa928916ab30a088d63070a0bfe", null ],
+    [ "linear_load_body", "group__g__layer__linear.html#gad8db417b5a04d3b916d4e3e5249e7ed0", null ],
+    [ "linear_load_header", "group__g__layer__linear.html#ga791a9eaa572c23baa06ce216b1c288d2", null ],
     [ "linear_parse_topo", "group__g__layer__linear.html#ga5fa4ca9f2896b69cdaa78d3aad7fb2b3", null ],
-    [ "linear_save_header", "group__g__layer__linear.html#gafdca23c2ae46f86e9b01198e560b9f9d", null ]
+    [ "linear_random_state", "group__g__layer__linear.html#ga215ff0d067e390f5bbfbf100043c9f83", null ],
+    [ "linear_save_header", "group__g__layer__linear.html#ga42956c9f23da37cf3a06f4f7153cc502", null ]
 ];

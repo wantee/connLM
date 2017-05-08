@@ -14,8 +14,10 @@ var group__g__param =
       [ "bptt", "structbptt__opt__t.html#aeca532a6d71654832eb77e06a3e03c7d", null ],
       [ "bptt_delay", "structbptt__opt__t.html#ab06952856396ea06be2930602d51e4cf", null ]
     ] ],
+    [ "bptt_opt_equal", "group__g__param.html#ga5cf1915cc8ff2c2869b80e0e1e45ed1e", null ],
     [ "bptt_opt_load", "group__g__param.html#gac112dbbe9542f37b947f76ebf2f6fe83", null ],
     [ "bptt_opt_show_usage", "group__g__param.html#ga062786e7b87037a69c1865ef894ad5f6", null ],
+    [ "param_equal", "group__g__param.html#ga50e21a92368e71d4382900cc735ea67a", null ],
     [ "param_load", "group__g__param.html#gab498621a1e50e70afbdec5fad367d641", null ],
     [ "param_show_usage", "group__g__param.html#ga0e365877d58a2f3e852d85f3249afe13", null ]
 ];

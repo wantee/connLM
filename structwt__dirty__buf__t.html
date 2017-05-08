@@ -31,7 +31,6 @@
 });
 </script><script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js"></script>
 <link href="doxygen.css" rel="stylesheet" type="text/css" />
-<link href="table.css" rel="stylesheet" type="text/css"/>
 </head>
 <body>
 <div id="top"><!-- do not remove this div, it is closed by doxygen! -->
@@ -126,9 +125,26 @@ $(document).ready(function(){initNavTree('structwt__dirty__buf__t.html','');});
  <a href="structwt__dirty__buf__t.html#details">More...</a></p>
 
 <p><code>#include &lt;<a class="el" href="wt__updater_8h_source.html">wt_updater.h</a>&gt;</code></p>
+<div class="dynheader">
+Collaboration diagram for wt_dirty_buf_t:</div>
+<div class="dyncontent">
+<div class="center"><img src="structwt__dirty__buf__t__coll__graph.png" border="0" usemap="#wt__dirty__buf__t_coll__map" alt="Collaboration graph"/></div>
+<map name="wt__dirty__buf__t_coll__map" id="wt__dirty__buf__t_coll__map">
+<area shape="rect" id="node2" href="structconcat__mat__t.html" title="Concatable Matrix. " alt="" coords="7,5,109,32"/>
+</map>
+<center><span class="legend">[<a target="top" href="graph_legend.html">legend</a>]</span></center></div>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-attribs"></a>
 Data Fields</h2></td></tr>
+<tr class="memitem:add32e4b15808e515c3630f1a85fa0e61"><td class="memItemLeft" align="right" valign="top">st_size_seg_t *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structwt__dirty__buf__t.html#add32e4b15808e515c3630f1a85fa0e61">parts</a></td></tr>
+<tr class="memdesc:add32e4b15808e515c3630f1a85fa0e61"><td class="mdescLeft">&#160;</td><td class="mdescRight">buffer for segements.  <a href="#add32e4b15808e515c3630f1a85fa0e61">More...</a><br /></td></tr>
+<tr class="separator:add32e4b15808e515c3630f1a85fa0e61"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ade340ca6e9853ba64f2ccd00796cf3a2"><td class="memItemLeft" align="right" valign="top">size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structwt__dirty__buf__t.html#ade340ca6e9853ba64f2ccd00796cf3a2">cap_parts</a></td></tr>
+<tr class="memdesc:ade340ca6e9853ba64f2ccd00796cf3a2"><td class="mdescLeft">&#160;</td><td class="mdescRight">capacity of segements buffer.  <a href="#ade340ca6e9853ba64f2ccd00796cf3a2">More...</a><br /></td></tr>
+<tr class="separator:ade340ca6e9853ba64f2ccd00796cf3a2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5938f1b519a4b97112c1daec28d98e83"><td class="memItemLeft" align="right" valign="top">size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structwt__dirty__buf__t.html#a5938f1b519a4b97112c1daec28d98e83">n_parts</a></td></tr>
+<tr class="memdesc:a5938f1b519a4b97112c1daec28d98e83"><td class="mdescLeft">&#160;</td><td class="mdescRight">size of segements buffer.  <a href="#a5938f1b519a4b97112c1daec28d98e83">More...</a><br /></td></tr>
+<tr class="separator:a5938f1b519a4b97112c1daec28d98e83"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad4845cc2a1ab27aa936f7b1cc85010e9"><td class="memItemLeft" align="right" valign="top">st_int_seg_t *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structwt__dirty__buf__t.html#ad4845cc2a1ab27aa936f7b1cc85010e9">segs</a></td></tr>
 <tr class="memdesc:ad4845cc2a1ab27aa936f7b1cc85010e9"><td class="mdescLeft">&#160;</td><td class="mdescRight">buffer for segements.  <a href="#ad4845cc2a1ab27aa936f7b1cc85010e9">More...</a><br /></td></tr>
 <tr class="separator:ad4845cc2a1ab27aa936f7b1cc85010e9"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -147,10 +163,73 @@ Data Fields</h2></td></tr>
 <tr class="memitem:a495d197684aa9689a9f9738c19a2c548"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structwt__dirty__buf__t.html#a495d197684aa9689a9f9738c19a2c548">n_id</a></td></tr>
 <tr class="memdesc:a495d197684aa9689a9f9738c19a2c548"><td class="mdescLeft">&#160;</td><td class="mdescRight">size of ids.  <a href="#a495d197684aa9689a9f9738c19a2c548">More...</a><br /></td></tr>
 <tr class="separator:a495d197684aa9689a9f9738c19a2c548"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1fdc5e662aef58ef8325aafd84ba97e6"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structconcat__mat__t.html">concat_mat_t</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structwt__dirty__buf__t.html#a1fdc5e662aef58ef8325aafd84ba97e6">buf_in</a></td></tr>
+<tr class="memdesc:a1fdc5e662aef58ef8325aafd84ba97e6"><td class="mdescLeft">&#160;</td><td class="mdescRight">buffer for in_ac.  <a href="#a1fdc5e662aef58ef8325aafd84ba97e6">More...</a><br /></td></tr>
+<tr class="separator:a1fdc5e662aef58ef8325aafd84ba97e6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a487ca29f2b5384149041bd44aaa88fec"><td class="memItemLeft" align="right" valign="top">real_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structwt__dirty__buf__t.html#a487ca29f2b5384149041bd44aaa88fec">in_scale</a></td></tr>
+<tr class="memdesc:a487ca29f2b5384149041bd44aaa88fec"><td class="mdescLeft">&#160;</td><td class="mdescRight">scale of in_ac.  <a href="#a487ca29f2b5384149041bd44aaa88fec">More...</a><br /></td></tr>
+<tr class="separator:a487ca29f2b5384149041bd44aaa88fec"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:accc817537d338b5c71d6130e655a1c49"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structconcat__mat__t.html">concat_mat_t</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structwt__dirty__buf__t.html#accc817537d338b5c71d6130e655a1c49">buf_er</a></td></tr>
+<tr class="memdesc:accc817537d338b5c71d6130e655a1c49"><td class="mdescLeft">&#160;</td><td class="mdescRight">buffer for out_er.  <a href="#accc817537d338b5c71d6130e655a1c49">More...</a><br /></td></tr>
+<tr class="separator:accc817537d338b5c71d6130e655a1c49"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a955b7ec8451a5e5e5d372399aab094f6"><td class="memItemLeft" align="right" valign="top">real_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structwt__dirty__buf__t.html#a955b7ec8451a5e5e5d372399aab094f6">er_scale</a></td></tr>
+<tr class="memdesc:a955b7ec8451a5e5e5d372399aab094f6"><td class="mdescLeft">&#160;</td><td class="mdescRight">scale of out_er.  <a href="#a955b7ec8451a5e5e5d372399aab094f6">More...</a><br /></td></tr>
+<tr class="separator:a955b7ec8451a5e5e5d372399aab094f6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9adb72a9af070ebc61802f2c0dd378b6"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structwt__dirty__buf__t.html#a9adb72a9af070ebc61802f2c0dd378b6">n_buf</a></td></tr>
+<tr class="memdesc:a9adb72a9af070ebc61802f2c0dd378b6"><td class="mdescLeft">&#160;</td><td class="mdescRight">number of buffers.  <a href="#a9adb72a9af070ebc61802f2c0dd378b6">More...</a><br /></td></tr>
+<tr class="separator:a9adb72a9af070ebc61802f2c0dd378b6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0536b8a4d3fa6dd71bb3a0682b08495e"><td class="memItemLeft" align="right" valign="top">real_t *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structwt__dirty__buf__t.html#a0536b8a4d3fa6dd71bb3a0682b08495e">buf_grad</a></td></tr>
+<tr class="memdesc:a0536b8a4d3fa6dd71bb3a0682b08495e"><td class="mdescLeft">&#160;</td><td class="mdescRight">buffer for gradient.  <a href="#a0536b8a4d3fa6dd71bb3a0682b08495e">More...</a><br /></td></tr>
+<tr class="separator:a0536b8a4d3fa6dd71bb3a0682b08495e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Store the dirty part of weight. </p>
 </div><h2 class="groupheader">Field Documentation</h2>
+<a class="anchor" id="accc817537d338b5c71d6130e655a1c49"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="structconcat__mat__t.html">concat_mat_t</a>* wt_dirty_buf_t::buf_er</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>buffer for out_er. </p>
+<p>sized by n_id and cap_id. </p>
+
+</div>
+</div>
+<a class="anchor" id="a0536b8a4d3fa6dd71bb3a0682b08495e"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">real_t* wt_dirty_buf_t::buf_grad</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>buffer for gradient. </p>
+<p>sized as weight matrix. </p>
+
+</div>
+</div>
+<a class="anchor" id="a1fdc5e662aef58ef8325aafd84ba97e6"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="structconcat__mat__t.html">concat_mat_t</a>* wt_dirty_buf_t::buf_in</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>buffer for in_ac. </p>
+<p>sized by n_id and cap_id. </p>
+
+</div>
+</div>
 <a class="anchor" id="af078cdfbb21bda8e66dbce3dcd2c35fd"></a>
 <div class="memitem">
 <div class="memproto">
@@ -162,6 +241,20 @@ Data Fields</h2></td></tr>
 </div><div class="memdoc">
 
 <p>capacity of ids. </p>
+
+</div>
+</div>
+<a class="anchor" id="ade340ca6e9853ba64f2ccd00796cf3a2"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">size_t wt_dirty_buf_t::cap_parts</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>capacity of segements buffer. </p>
 
 </div>
 </div>
@@ -179,6 +272,20 @@ Data Fields</h2></td></tr>
 
 </div>
 </div>
+<a class="anchor" id="a955b7ec8451a5e5e5d372399aab094f6"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">real_t wt_dirty_buf_t::er_scale</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>scale of out_er. </p>
+
+</div>
+</div>
 <a class="anchor" id="a3c439da131e19d9e4946b1d70cfbf54b"></a>
 <div class="memitem">
 <div class="memproto">
@@ -190,6 +297,34 @@ Data Fields</h2></td></tr>
 </div><div class="memdoc">
 
 <p>buffer of ids. </p>
+
+</div>
+</div>
+<a class="anchor" id="a487ca29f2b5384149041bd44aaa88fec"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">real_t wt_dirty_buf_t::in_scale</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>scale of in_ac. </p>
+
+</div>
+</div>
+<a class="anchor" id="a9adb72a9af070ebc61802f2c0dd378b6"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int wt_dirty_buf_t::n_buf</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>number of buffers. </p>
 
 </div>
 </div>
@@ -207,6 +342,20 @@ Data Fields</h2></td></tr>
 
 </div>
 </div>
+<a class="anchor" id="a5938f1b519a4b97112c1daec28d98e83"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">size_t wt_dirty_buf_t::n_parts</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>size of segements buffer. </p>
+
+</div>
+</div>
 <a class="anchor" id="a4410b7f5a9b9dcef0b3190403010b1be"></a>
 <div class="memitem">
 <div class="memproto">
@@ -218,6 +367,20 @@ Data Fields</h2></td></tr>
 </div><div class="memdoc">
 
 <p>size of segements buffer. </p>
+
+</div>
+</div>
+<a class="anchor" id="add32e4b15808e515c3630f1a85fa0e61"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">st_size_seg_t* wt_dirty_buf_t::parts</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>buffer for segements. </p>
 
 </div>
 </div>
@@ -244,7 +407,7 @@ Data Fields</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="structwt__dirty__buf__t.html">wt_dirty_buf_t</a></li>
-    <li class="footer">Generated on Fri Oct 28 2016 22:37:23 for connLM by
+    <li class="footer">Generated on Mon May 8 2017 22:10:28 for connLM by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.10 </li>
   </ul>

@@ -31,7 +31,6 @@
 });
 </script><script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js"></script>
 <link href="doxygen.css" rel="stylesheet" type="text/css" />
-<link href="table.css" rel="stylesheet" type="text/css"/>
 </head>
 <body>
 <div id="top"><!-- do not remove this div, it is closed by doxygen! -->
@@ -155,6 +154,21 @@ Functions</h2></td></tr>
 <tr class="memitem:ga9a60fb84accc6546e34eb71d307b4cef"><td class="memItemLeft" align="right" valign="top">output_node_id_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__g__updater__output.html#ga9a60fb84accc6546e34eb71d307b4cef">out_updater_sample</a> (<a class="el" href="structout__updater__t.html">out_updater_t</a> *out_updater, output_node_id_t node)</td></tr>
 <tr class="memdesc:ga9a60fb84accc6546e34eb71d307b4cef"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sample a node from children.  <a href="#ga9a60fb84accc6546e34eb71d307b4cef">More...</a><br /></td></tr>
 <tr class="separator:ga9a60fb84accc6546e34eb71d307b4cef"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga32bbefe70a9fb3248bc7c777f183f236"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__g__updater__output.html#ga32bbefe70a9fb3248bc7c777f183f236">out_updater_init_all</a> (<a class="el" href="structout__updater__t.html">out_updater_t</a> *out_updater)</td></tr>
+<tr class="memdesc:ga32bbefe70a9fb3248bc7c777f183f236"><td class="mdescLeft">&#160;</td><td class="mdescRight">Initialize output updater for activating all words in one step.  <a href="#ga32bbefe70a9fb3248bc7c777f183f236">More...</a><br /></td></tr>
+<tr class="separator:ga32bbefe70a9fb3248bc7c777f183f236"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga6d9abdfb815687787bc078928ca078b7"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__g__updater__output.html#ga6d9abdfb815687787bc078928ca078b7">out_updater_clear_all</a> (<a class="el" href="structout__updater__t.html">out_updater_t</a> *out_updater)</td></tr>
+<tr class="memdesc:ga6d9abdfb815687787bc078928ca078b7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Clear buffer for all words.  <a href="#ga6d9abdfb815687787bc078928ca078b7">More...</a><br /></td></tr>
+<tr class="separator:ga6d9abdfb815687787bc078928ca078b7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gaba5053d37a1592c704d1ba59d48f4127"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__g__updater__output.html#gaba5053d37a1592c704d1ba59d48f4127">out_updater_activate_all</a> (<a class="el" href="structout__updater__t.html">out_updater_t</a> *out_updater, double *output_probs)</td></tr>
+<tr class="memdesc:gaba5053d37a1592c704d1ba59d48f4127"><td class="mdescLeft">&#160;</td><td class="mdescRight">Activate a all words in output layer.  <a href="#gaba5053d37a1592c704d1ba59d48f4127">More...</a><br /></td></tr>
+<tr class="separator:gaba5053d37a1592c704d1ba59d48f4127"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga79964735b74d558d2e053f4eb975f32f"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__g__updater__output.html#ga79964735b74d558d2e053f4eb975f32f">out_updater_init_multicall</a> (<a class="el" href="structout__updater__t.html">out_updater_t</a> *out_updater)</td></tr>
+<tr class="memdesc:ga79964735b74d558d2e053f4eb975f32f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Initialize multi-call of activate.  <a href="#ga79964735b74d558d2e053f4eb975f32f">More...</a><br /></td></tr>
+<tr class="separator:ga79964735b74d558d2e053f4eb975f32f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gab686156685b5b02795b9cc694e64cb37"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__g__updater__output.html#gab686156685b5b02795b9cc694e64cb37">out_updater_clear_multicall</a> (<a class="el" href="structout__updater__t.html">out_updater_t</a> *out_updater)</td></tr>
+<tr class="memdesc:gab686156685b5b02795b9cc694e64cb37"><td class="mdescLeft">&#160;</td><td class="mdescRight">Clear multi-call of activate.  <a href="#gab686156685b5b02795b9cc694e64cb37">More...</a><br /></td></tr>
+<tr class="separator:gab686156685b5b02795b9cc694e64cb37"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <p>Perform forward and backprop on a output layer. </p>
@@ -175,7 +189,7 @@ Functions</h2></td></tr>
 <b>Value:</b><div class="fragment"><div class="line"><span class="keywordflow">do</span> {\</div>
 <div class="line">    if((ptr) != NULL) {\</div>
 <div class="line">        out_updater_destroy(ptr);\</div>
-<div class="line">        safe_free(ptr);\</div>
+<div class="line">        safe_st_free(ptr);\</div>
 <div class="line">        (ptr) = NULL;\</div>
 <div class="line">    }\</div>
 <div class="line">    } <span class="keywordflow">while</span>(0)</div>
@@ -191,6 +205,92 @@ Functions</h2></td></tr>
 </div>
 </div>
 <h2 class="groupheader">Function Documentation</h2>
+<a class="anchor" id="gaba5053d37a1592c704d1ba59d48f4127"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int out_updater_activate_all </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structout__updater__t.html">out_updater_t</a> *&#160;</td>
+          <td class="paramname"><em>out_updater</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">double *&#160;</td>
+          <td class="paramname"><em>output_probs</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Activate a all words in output layer. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">out_updater</td><td>the out_updater. </td></tr>
+    <tr><td class="paramdir">[out]</td><td class="paramname">output_probs</td><td>log-probs for all words. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>non-zero value if any error. </dd></dl>
+
+</div>
+</div>
+<a class="anchor" id="ga6d9abdfb815687787bc078928ca078b7"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int out_updater_clear_all </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structout__updater__t.html">out_updater_t</a> *&#160;</td>
+          <td class="paramname"><em>out_updater</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Clear buffer for all words. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">out_updater</td><td>the out_updater. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>non-zero value if any error. </dd></dl>
+
+</div>
+</div>
+<a class="anchor" id="gab686156685b5b02795b9cc694e64cb37"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int out_updater_clear_multicall </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structout__updater__t.html">out_updater_t</a> *&#160;</td>
+          <td class="paramname"><em>out_updater</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Clear multi-call of activate. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">out_updater</td><td>the out_updater. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>non-zero value if any error. </dd></dl>
+
+</div>
+</div>
 <a class="anchor" id="ga745fd73715a431ae2ed70080b64af6e5"></a>
 <div class="memitem">
 <div class="memproto">
@@ -237,6 +337,56 @@ Functions</h2></td></tr>
   </table>
   </dd>
 </dl>
+
+</div>
+</div>
+<a class="anchor" id="ga32bbefe70a9fb3248bc7c777f183f236"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int out_updater_init_all </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structout__updater__t.html">out_updater_t</a> *&#160;</td>
+          <td class="paramname"><em>out_updater</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Initialize output updater for activating all words in one step. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">out_updater</td><td>the out_updater. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>non-zero value if any error. </dd></dl>
+
+</div>
+</div>
+<a class="anchor" id="ga79964735b74d558d2e053f4eb975f32f"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int out_updater_init_multicall </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structout__updater__t.html">out_updater_t</a> *&#160;</td>
+          <td class="paramname"><em>out_updater</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Initialize multi-call of activate. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">out_updater</td><td>the out_updater. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>non-zero value if any error. </dd></dl>
 
 </div>
 </div>
@@ -317,7 +467,7 @@ Functions</h2></td></tr>
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on Fri Oct 28 2016 22:37:23 for connLM by
+    <li class="footer">Generated on Mon May 8 2017 22:10:28 for connLM by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.10 </li>
   </ul>

@@ -31,7 +31,6 @@
 });
 </script><script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js"></script>
 <link href="doxygen.css" rel="stylesheet" type="text/css" />
-<link href="table.css" rel="stylesheet" type="text/css"/>
 </head>
 <body>
 <div id="top"><!-- do not remove this div, it is closed by doxygen! -->
@@ -174,21 +173,24 @@ Functions</h2></td></tr>
 <tr class="memitem:gacb82e38f1378187ac4146ebdf5696128"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structlayer__t.html">layer_t</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__g__layer.html#gacb82e38f1378187ac4146ebdf5696128">layer_parse_topo</a> (const char *line)</td></tr>
 <tr class="memdesc:gacb82e38f1378187ac4146ebdf5696128"><td class="mdescLeft">&#160;</td><td class="mdescRight">Parse a topo config line, and return a new layer.  <a href="#gacb82e38f1378187ac4146ebdf5696128">More...</a><br /></td></tr>
 <tr class="separator:gacb82e38f1378187ac4146ebdf5696128"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ga114781e04a411f6ab19fce6ef179b32b"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__g__layer.html#ga114781e04a411f6ab19fce6ef179b32b">layer_load_header</a> (<a class="el" href="structlayer__t.html">layer_t</a> **layer, int version, FILE *fp, bool *binary, FILE *fo_info)</td></tr>
-<tr class="memdesc:ga114781e04a411f6ab19fce6ef179b32b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Load layer header and initialise a new layer.  <a href="#ga114781e04a411f6ab19fce6ef179b32b">More...</a><br /></td></tr>
-<tr class="separator:ga114781e04a411f6ab19fce6ef179b32b"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ga502a1ef584b466ae2f86963a7b54d3cd"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__g__layer.html#ga502a1ef584b466ae2f86963a7b54d3cd">layer_load_body</a> (<a class="el" href="structlayer__t.html">layer_t</a> *layer, int version, FILE *fp, bool binary)</td></tr>
-<tr class="memdesc:ga502a1ef584b466ae2f86963a7b54d3cd"><td class="mdescLeft">&#160;</td><td class="mdescRight">Load layer body.  <a href="#ga502a1ef584b466ae2f86963a7b54d3cd">More...</a><br /></td></tr>
-<tr class="separator:ga502a1ef584b466ae2f86963a7b54d3cd"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ga6d4b3079387cbf4bb8eb163cf5915659"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__g__layer.html#ga6d4b3079387cbf4bb8eb163cf5915659">layer_save_header</a> (<a class="el" href="structlayer__t.html">layer_t</a> *layer, FILE *fp, bool binary)</td></tr>
-<tr class="memdesc:ga6d4b3079387cbf4bb8eb163cf5915659"><td class="mdescLeft">&#160;</td><td class="mdescRight">Save layer header.  <a href="#ga6d4b3079387cbf4bb8eb163cf5915659">More...</a><br /></td></tr>
-<tr class="separator:ga6d4b3079387cbf4bb8eb163cf5915659"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ga7190d3272e4139ffad30e867aa0e14ca"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__g__layer.html#ga7190d3272e4139ffad30e867aa0e14ca">layer_save_body</a> (<a class="el" href="structlayer__t.html">layer_t</a> *layer, FILE *fp, bool binary)</td></tr>
-<tr class="memdesc:ga7190d3272e4139ffad30e867aa0e14ca"><td class="mdescLeft">&#160;</td><td class="mdescRight">Save layer body.  <a href="#ga7190d3272e4139ffad30e867aa0e14ca">More...</a><br /></td></tr>
-<tr class="separator:ga7190d3272e4139ffad30e867aa0e14ca"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga99bce2f56b9a6273e7630423f2494331"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__g__layer.html#ga99bce2f56b9a6273e7630423f2494331">layer_load_header</a> (<a class="el" href="structlayer__t.html">layer_t</a> **layer, int version, FILE *fp, <a class="el" href="group__g__connlm.html#ga27bb4962c19c1ac9c66c27d5d2de9a73">connlm_fmt_t</a> *fmt, FILE *fo_info)</td></tr>
+<tr class="memdesc:ga99bce2f56b9a6273e7630423f2494331"><td class="mdescLeft">&#160;</td><td class="mdescRight">Load layer header and initialise a new layer.  <a href="#ga99bce2f56b9a6273e7630423f2494331">More...</a><br /></td></tr>
+<tr class="separator:ga99bce2f56b9a6273e7630423f2494331"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gaddd4a72fc20bc718063152c76bf4064d"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__g__layer.html#gaddd4a72fc20bc718063152c76bf4064d">layer_load_body</a> (<a class="el" href="structlayer__t.html">layer_t</a> *layer, int version, FILE *fp, <a class="el" href="group__g__connlm.html#ga27bb4962c19c1ac9c66c27d5d2de9a73">connlm_fmt_t</a> fmt)</td></tr>
+<tr class="memdesc:gaddd4a72fc20bc718063152c76bf4064d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Load layer body.  <a href="#gaddd4a72fc20bc718063152c76bf4064d">More...</a><br /></td></tr>
+<tr class="separator:gaddd4a72fc20bc718063152c76bf4064d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga79ca899e367cf272c5206549099f3d5d"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__g__layer.html#ga79ca899e367cf272c5206549099f3d5d">layer_save_header</a> (<a class="el" href="structlayer__t.html">layer_t</a> *layer, FILE *fp, <a class="el" href="group__g__connlm.html#ga27bb4962c19c1ac9c66c27d5d2de9a73">connlm_fmt_t</a> fmt)</td></tr>
+<tr class="memdesc:ga79ca899e367cf272c5206549099f3d5d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Save layer header.  <a href="#ga79ca899e367cf272c5206549099f3d5d">More...</a><br /></td></tr>
+<tr class="separator:ga79ca899e367cf272c5206549099f3d5d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga79ed552fc2d339e996710e90fa943e7e"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__g__layer.html#ga79ed552fc2d339e996710e90fa943e7e">layer_save_body</a> (<a class="el" href="structlayer__t.html">layer_t</a> *layer, FILE *fp, <a class="el" href="group__g__connlm.html#ga27bb4962c19c1ac9c66c27d5d2de9a73">connlm_fmt_t</a> fmt)</td></tr>
+<tr class="memdesc:ga79ed552fc2d339e996710e90fa943e7e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Save layer body.  <a href="#ga79ed552fc2d339e996710e90fa943e7e">More...</a><br /></td></tr>
+<tr class="separator:ga79ed552fc2d339e996710e90fa943e7e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga9ba702f316628111b6440f58e0a3864d"><td class="memItemLeft" align="right" valign="top">char *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__g__layer.html#ga9ba702f316628111b6440f58e0a3864d">layer_draw_label</a> (<a class="el" href="structlayer__t.html">layer_t</a> *layer, char *label, size_t label_len)</td></tr>
 <tr class="memdesc:ga9ba702f316628111b6440f58e0a3864d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Provide label string for drawing layer.  <a href="#ga9ba702f316628111b6440f58e0a3864d">More...</a><br /></td></tr>
 <tr class="separator:ga9ba702f316628111b6440f58e0a3864d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gac61c42c6490c81d7866070ed6364af22"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__g__layer.html#gac61c42c6490c81d7866070ed6364af22">layer_print_verbose_info</a> (<a class="el" href="structlayer__t.html">layer_t</a> *layer, FILE *fo)</td></tr>
+<tr class="memdesc:gac61c42c6490c81d7866070ed6364af22"><td class="mdescLeft">&#160;</td><td class="mdescRight">Print verbose info of a layer.  <a href="#gac61c42c6490c81d7866070ed6364af22">More...</a><br /></td></tr>
+<tr class="separator:gac61c42c6490c81d7866070ed6364af22"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <p>Hidden layer for NNet with various activation types. </p>
@@ -209,7 +211,7 @@ Functions</h2></td></tr>
 <b>Value:</b><div class="fragment"><div class="line"><span class="keywordflow">do</span> {\</div>
 <div class="line">    if((ptr) != NULL) {\</div>
 <div class="line">        layer_destroy(ptr);\</div>
-<div class="line">        safe_free(ptr);\</div>
+<div class="line">        safe_st_free(ptr);\</div>
 <div class="line">        (ptr) = NULL;\</div>
 <div class="line">    }\</div>
 <div class="line">    } <span class="keywordflow">while</span>(0)</div>
@@ -317,7 +319,7 @@ Functions</h2></td></tr>
 
 </div>
 </div>
-<a class="anchor" id="ga502a1ef584b466ae2f86963a7b54d3cd"></a>
+<a class="anchor" id="gaddd4a72fc20bc718063152c76bf4064d"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
@@ -342,8 +344,8 @@ Functions</h2></td></tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">bool&#160;</td>
-          <td class="paramname"><em>binary</em>&#160;</td>
+          <td class="paramtype"><a class="el" href="group__g__connlm.html#ga27bb4962c19c1ac9c66c27d5d2de9a73">connlm_fmt_t</a>&#160;</td>
+          <td class="paramname"><em>fmt</em>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -359,18 +361,18 @@ Functions</h2></td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">layer</td><td>layer to be loaded. </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">version</td><td>file version of loading file. </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">fp</td><td>file stream loaded from. </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">binary</td><td>whether to use binary format. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">fmt</td><td>storage format. </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section see"><dt>See also</dt><dd><a class="el" href="group__g__layer.html#ga114781e04a411f6ab19fce6ef179b32b" title="Load layer header and initialise a new layer. ">layer_load_header</a> </dd>
+<dl class="section see"><dt>See also</dt><dd><a class="el" href="group__g__layer.html#ga99bce2f56b9a6273e7630423f2494331" title="Load layer header and initialise a new layer. ">layer_load_header</a> </dd>
 <dd>
-<a class="el" href="group__g__layer.html#ga6d4b3079387cbf4bb8eb163cf5915659" title="Save layer header. ">layer_save_header</a>, <a class="el" href="group__g__layer.html#ga7190d3272e4139ffad30e867aa0e14ca" title="Save layer body. ">layer_save_body</a> </dd></dl>
+<a class="el" href="group__g__layer.html#ga79ca899e367cf272c5206549099f3d5d" title="Save layer header. ">layer_save_header</a>, <a class="el" href="group__g__layer.html#ga79ed552fc2d339e996710e90fa943e7e" title="Save layer body. ">layer_save_body</a> </dd></dl>
 <dl class="section return"><dt>Returns</dt><dd>non-zero value if any error. </dd></dl>
 
 </div>
 </div>
-<a class="anchor" id="ga114781e04a411f6ab19fce6ef179b32b"></a>
+<a class="anchor" id="ga99bce2f56b9a6273e7630423f2494331"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
@@ -395,8 +397,8 @@ Functions</h2></td></tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">bool *&#160;</td>
-          <td class="paramname"><em>binary</em>, </td>
+          <td class="paramtype"><a class="el" href="group__g__connlm.html#ga27bb4962c19c1ac9c66c27d5d2de9a73">connlm_fmt_t</a> *&#160;</td>
+          <td class="paramname"><em>fmt</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
@@ -418,14 +420,14 @@ Functions</h2></td></tr>
     <tr><td class="paramdir">[out]</td><td class="paramname">layer</td><td>layer initialised. </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">version</td><td>file version of loading file. </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">fp</td><td>file stream loaded from. </td></tr>
-    <tr><td class="paramdir">[out]</td><td class="paramname">binary</td><td>whether the file stream is in binary format. </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">fo_info</td><td>file stream used to print information, if it is not NULL. </td></tr>
+    <tr><td class="paramdir">[out]</td><td class="paramname">fmt</td><td>storage format. </td></tr>
+    <tr><td class="paramdir">[out]</td><td class="paramname">fo_info</td><td>file stream used to print information, if it is not NULL. </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section see"><dt>See also</dt><dd><a class="el" href="group__g__layer.html#ga502a1ef584b466ae2f86963a7b54d3cd" title="Load layer body. ">layer_load_body</a> </dd>
+<dl class="section see"><dt>See also</dt><dd><a class="el" href="group__g__layer.html#gaddd4a72fc20bc718063152c76bf4064d" title="Load layer body. ">layer_load_body</a> </dd>
 <dd>
-<a class="el" href="group__g__layer.html#ga6d4b3079387cbf4bb8eb163cf5915659" title="Save layer header. ">layer_save_header</a>, <a class="el" href="group__g__layer.html#ga7190d3272e4139ffad30e867aa0e14ca" title="Save layer body. ">layer_save_body</a> </dd></dl>
+<a class="el" href="group__g__layer.html#ga79ca899e367cf272c5206549099f3d5d" title="Save layer header. ">layer_save_header</a>, <a class="el" href="group__g__layer.html#ga79ed552fc2d339e996710e90fa943e7e" title="Save layer body. ">layer_save_body</a> </dd></dl>
 <dl class="section return"><dt>Returns</dt><dd>non-zero value if any error. </dd></dl>
 
 </div>
@@ -455,7 +457,42 @@ Functions</h2></td></tr>
 
 </div>
 </div>
-<a class="anchor" id="ga7190d3272e4139ffad30e867aa0e14ca"></a>
+<a class="anchor" id="gac61c42c6490c81d7866070ed6364af22"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void layer_print_verbose_info </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structlayer__t.html">layer_t</a> *&#160;</td>
+          <td class="paramname"><em>layer</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">FILE *&#160;</td>
+          <td class="paramname"><em>fo</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Print verbose info of a layer. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">layer</td><td>the layer. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">fo</td><td>file stream print info to. </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a class="anchor" id="ga79ed552fc2d339e996710e90fa943e7e"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
@@ -474,8 +511,8 @@ Functions</h2></td></tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">bool&#160;</td>
-          <td class="paramname"><em>binary</em>&#160;</td>
+          <td class="paramtype"><a class="el" href="group__g__connlm.html#ga27bb4962c19c1ac9c66c27d5d2de9a73">connlm_fmt_t</a>&#160;</td>
+          <td class="paramname"><em>fmt</em>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -490,18 +527,18 @@ Functions</h2></td></tr>
   <table class="params">
     <tr><td class="paramdir">[in]</td><td class="paramname">layer</td><td>layer to be saved. </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">fp</td><td>file stream saved to. </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">binary</td><td>whether to use binary format. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">fmt</td><td>storage format. </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section see"><dt>See also</dt><dd><a class="el" href="group__g__layer.html#ga6d4b3079387cbf4bb8eb163cf5915659" title="Save layer header. ">layer_save_header</a> </dd>
+<dl class="section see"><dt>See also</dt><dd><a class="el" href="group__g__layer.html#ga79ca899e367cf272c5206549099f3d5d" title="Save layer header. ">layer_save_header</a> </dd>
 <dd>
-<a class="el" href="group__g__layer.html#ga114781e04a411f6ab19fce6ef179b32b" title="Load layer header and initialise a new layer. ">layer_load_header</a>, <a class="el" href="group__g__layer.html#ga502a1ef584b466ae2f86963a7b54d3cd" title="Load layer body. ">layer_load_body</a> </dd></dl>
+<a class="el" href="group__g__layer.html#ga99bce2f56b9a6273e7630423f2494331" title="Load layer header and initialise a new layer. ">layer_load_header</a>, <a class="el" href="group__g__layer.html#gaddd4a72fc20bc718063152c76bf4064d" title="Load layer body. ">layer_load_body</a> </dd></dl>
 <dl class="section return"><dt>Returns</dt><dd>non-zero value if any error. </dd></dl>
 
 </div>
 </div>
-<a class="anchor" id="ga6d4b3079387cbf4bb8eb163cf5915659"></a>
+<a class="anchor" id="ga79ca899e367cf272c5206549099f3d5d"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
@@ -520,8 +557,8 @@ Functions</h2></td></tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">bool&#160;</td>
-          <td class="paramname"><em>binary</em>&#160;</td>
+          <td class="paramtype"><a class="el" href="group__g__connlm.html#ga27bb4962c19c1ac9c66c27d5d2de9a73">connlm_fmt_t</a>&#160;</td>
+          <td class="paramname"><em>fmt</em>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -536,13 +573,13 @@ Functions</h2></td></tr>
   <table class="params">
     <tr><td class="paramdir">[in]</td><td class="paramname">layer</td><td>layer to be saved. </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">fp</td><td>file stream saved to. </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">binary</td><td>whether to use binary format. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">fmt</td><td>storage format. </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section see"><dt>See also</dt><dd><a class="el" href="group__g__layer.html#ga7190d3272e4139ffad30e867aa0e14ca" title="Save layer body. ">layer_save_body</a> </dd>
+<dl class="section see"><dt>See also</dt><dd><a class="el" href="group__g__layer.html#ga79ed552fc2d339e996710e90fa943e7e" title="Save layer body. ">layer_save_body</a> </dd>
 <dd>
-<a class="el" href="group__g__layer.html#ga114781e04a411f6ab19fce6ef179b32b" title="Load layer header and initialise a new layer. ">layer_load_header</a>, <a class="el" href="group__g__layer.html#ga502a1ef584b466ae2f86963a7b54d3cd" title="Load layer body. ">layer_load_body</a> </dd></dl>
+<a class="el" href="group__g__layer.html#ga99bce2f56b9a6273e7630423f2494331" title="Load layer header and initialise a new layer. ">layer_load_header</a>, <a class="el" href="group__g__layer.html#gaddd4a72fc20bc718063152c76bf4064d" title="Load layer body. ">layer_load_body</a> </dd></dl>
 <dl class="section return"><dt>Returns</dt><dd>non-zero value if any error. </dd></dl>
 
 </div>
@@ -552,7 +589,7 @@ Functions</h2></td></tr>
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on Fri Oct 28 2016 22:37:23 for connLM by
+    <li class="footer">Generated on Mon May 8 2017 22:10:28 for connLM by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.10 </li>
   </ul>

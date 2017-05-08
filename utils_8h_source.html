@@ -31,7 +31,6 @@
 });
 </script><script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js"></script>
 <link href="doxygen.css" rel="stylesheet" type="text/css" />
-<link href="table.css" rel="stylesheet" type="text/css"/>
 </head>
 <body>
 <div id="top"><!-- do not remove this div, it is closed by doxygen! -->
@@ -148,107 +147,136 @@ $(document).ready(function(){initNavTree('utils_8h_source.html','');});
 <div class="line"><a name="l00029"></a><span class="lineno">   29</span>&#160;<span class="keyword">extern</span> <span class="stringliteral">&quot;C&quot;</span> {</div>
 <div class="line"><a name="l00030"></a><span class="lineno">   30</span>&#160;<span class="preprocessor">#endif</span></div>
 <div class="line"><a name="l00031"></a><span class="lineno">   31</span>&#160;</div>
-<div class="line"><a name="l00032"></a><span class="lineno">   32</span>&#160;<span class="preprocessor">#include &lt;math.h&gt;</span></div>
-<div class="line"><a name="l00033"></a><span class="lineno">   33</span>&#160;</div>
-<div class="line"><a name="l00034"></a><span class="lineno">   34</span>&#160;<span class="preprocessor">#include &lt;stutils/st_opt.h&gt;</span></div>
-<div class="line"><a name="l00035"></a><span class="lineno">   35</span>&#160;</div>
-<div class="line"><a name="l00036"></a><span class="lineno">   36</span>&#160;<span class="preprocessor">#include &lt;connlm/config.h&gt;</span></div>
-<div class="line"><a name="l00037"></a><span class="lineno">   37</span>&#160;</div>
-<div class="line"><a name="l00038"></a><span class="lineno">   38</span>&#160;<span class="preprocessor">#define exp10(a) pow(10.0, a)</span></div>
-<div class="line"><a name="l00039"></a><span class="lineno">   39</span>&#160;</div>
-<div class="line"><a name="l00040"></a><span class="lineno">   40</span>&#160;<span class="preprocessor">#define logn(a, base) ((base) == 0) ? log(a) : (log(a) / log(base))</span></div>
-<div class="line"><a name="l00041"></a><span class="lineno">   41</span>&#160;<span class="preprocessor">#define logn10(log10a, base) ((base) == 0) ? (log10a / M_LOG10E) : (log10a / log10(base))</span></div>
-<div class="line"><a name="l00042"></a><span class="lineno">   42</span>&#160;</div>
-<div class="line"><a name="l00043"></a><span class="lineno">   43</span>&#160;<span class="keywordtype">void</span> matXvec(real_t *dst, real_t *mat, real_t *vec,</div>
-<div class="line"><a name="l00044"></a><span class="lineno">   44</span>&#160;        <span class="keywordtype">int</span> mat_wid, <span class="keywordtype">int</span> vec_size, real_t scale);</div>
-<div class="line"><a name="l00045"></a><span class="lineno">   45</span>&#160;</div>
-<div class="line"><a name="l00046"></a><span class="lineno">   46</span>&#160;<span class="keywordtype">void</span> vecXmat(real_t *dst, real_t *vec, real_t *mat,</div>
-<div class="line"><a name="l00047"></a><span class="lineno">   47</span>&#160;        <span class="keywordtype">int</span> mat_col, <span class="keywordtype">int</span> vec_size, real_t scale);</div>
-<div class="line"><a name="l00048"></a><span class="lineno">   48</span>&#160;</div>
-<div class="line"><a name="l00049"></a><span class="lineno">   49</span>&#160;<span class="comment">/*</span></div>
-<div class="line"><a name="l00050"></a><span class="lineno">   50</span>&#160;<span class="comment"> * Computing C = alpha * A&#39; * B + beta * C</span></div>
-<div class="line"><a name="l00051"></a><span class="lineno">   51</span>&#160;<span class="comment"> * A is [k X m]; B is [k X n]; C is [m X n]</span></div>
-<div class="line"><a name="l00052"></a><span class="lineno">   52</span>&#160;<span class="comment"> * A&#39; is transpose of A.</span></div>
-<div class="line"><a name="l00053"></a><span class="lineno">   53</span>&#160;<span class="comment"> */</span></div>
-<div class="line"><a name="l00054"></a><span class="lineno">   54</span>&#160;<span class="keywordtype">void</span> matXmat(real_t *C, real_t *A, real_t *B, <span class="keywordtype">int</span> m, <span class="keywordtype">int</span> n, <span class="keywordtype">int</span> k,</div>
-<div class="line"><a name="l00055"></a><span class="lineno">   55</span>&#160;        real_t alpha, real_t beta);</div>
-<div class="line"><a name="l00056"></a><span class="lineno">   56</span>&#160;</div>
-<div class="line"><a name="l00057"></a><span class="lineno">   57</span>&#160;real_t dot_product(real_t *v1, real_t *v2, <span class="keywordtype">int</span> vec_size);</div>
-<div class="line"><a name="l00058"></a><span class="lineno">   58</span>&#160;</div>
-<div class="line"><a name="l00059"></a><span class="lineno">   59</span>&#160;<span class="keywordtype">void</span> sigmoid(real_t *vec, <span class="keywordtype">int</span> vec_size);</div>
-<div class="line"><a name="l00060"></a><span class="lineno">   60</span>&#160;</div>
-<div class="line"><a name="l00061"></a><span class="lineno">   61</span>&#160;<span class="keywordtype">void</span> softmax(real_t *vec, <span class="keywordtype">int</span> vec_size);</div>
-<div class="line"><a name="l00062"></a><span class="lineno">   62</span>&#160;</div>
-<div class="line"><a name="l00063"></a><span class="lineno">   63</span>&#160;<span class="keywordtype">void</span> tanH(real_t *vec, <span class="keywordtype">int</span> vec_size);</div>
-<div class="line"><a name="l00064"></a><span class="lineno">   64</span>&#160;</div>
-<div class="line"><a name="l00065"></a><span class="lineno">   65</span>&#160;<span class="keywordtype">void</span> propagate_error(real_t *dst, real_t *vec, real_t *mat,</div>
-<div class="line"><a name="l00066"></a><span class="lineno">   66</span>&#160;        <span class="keywordtype">int</span> mat_col, <span class="keywordtype">int</span> in_vec_size, real_t er_cutoff, real_t scale);</div>
-<div class="line"><a name="l00067"></a><span class="lineno">   67</span>&#160;</div>
-<div class="line"><a name="l00068"></a><span class="lineno">   68</span>&#160;<span class="keywordtype">void</span> connlm_show_usage(<span class="keyword">const</span> <span class="keywordtype">char</span> *module_name, <span class="keyword">const</span> <span class="keywordtype">char</span> *header,</div>
-<div class="line"><a name="l00069"></a><span class="lineno">   69</span>&#160;        <span class="keyword">const</span> <span class="keywordtype">char</span> *usage, <span class="keyword">const</span> <span class="keywordtype">char</span> *eg,</div>
-<div class="line"><a name="l00070"></a><span class="lineno">   70</span>&#160;        st_opt_t *opt, <span class="keyword">const</span> <span class="keywordtype">char</span> *trailer);</div>
-<div class="line"><a name="l00071"></a><span class="lineno">   71</span>&#160;</div>
-<div class="line"><a name="l00072"></a><span class="lineno">   72</span>&#160;<span class="keyword">typedef</span> <span class="keyword">enum</span> _model_filter_t_ {</div>
-<div class="line"><a name="l00073"></a><span class="lineno">   73</span>&#160;    MF_NONE       = 0x0000,</div>
-<div class="line"><a name="l00074"></a><span class="lineno">   74</span>&#160;    MF_VOCAB      = 0x0001,</div>
-<div class="line"><a name="l00075"></a><span class="lineno">   75</span>&#160;    MF_OUTPUT     = 0x0002,</div>
-<div class="line"><a name="l00076"></a><span class="lineno">   76</span>&#160;    MF_COMP_NEG   = 0x0004,</div>
-<div class="line"><a name="l00077"></a><span class="lineno">   77</span>&#160;    MF_ALL        = 0x0007,</div>
-<div class="line"><a name="l00078"></a><span class="lineno">   78</span>&#160;    MF_ERR        = 0x1000,</div>
-<div class="line"><a name="l00079"></a><span class="lineno">   79</span>&#160;} model_filter_t;</div>
-<div class="line"><a name="l00080"></a><span class="lineno">   80</span>&#160;</div>
-<div class="line"><a name="l00094"></a><span class="lineno">   94</span>&#160;model_filter_t parse_model_filter(<span class="keyword">const</span> <span class="keywordtype">char</span> *mdl_filter,</div>
-<div class="line"><a name="l00095"></a><span class="lineno">   95</span>&#160;        <span class="keywordtype">char</span> *mdl_file, <span class="keywordtype">size_t</span> mdl_file_len, <span class="keywordtype">char</span> **comp_names,</div>
-<div class="line"><a name="l00096"></a><span class="lineno">   96</span>&#160;        <span class="keywordtype">int</span> *num_comp);</div>
-<div class="line"><a name="l00097"></a><span class="lineno">   97</span>&#160;</div>
-<div class="line"><a name="l00098"></a><span class="lineno">   98</span>&#160;<span class="keyword">const</span> <span class="keywordtype">char</span>* model_filter_help();</div>
-<div class="line"><a name="l00099"></a><span class="lineno">   99</span>&#160;</div>
-<div class="line"><a name="l00100"></a><span class="lineno">  100</span>&#160;<span class="keywordtype">char</span>* escape_dot(<span class="keywordtype">char</span> *out, <span class="keywordtype">size_t</span> len, <span class="keyword">const</span> <span class="keywordtype">char</span> *str);</div>
-<div class="line"><a name="l00101"></a><span class="lineno">  101</span>&#160;</div>
-<div class="line"><a name="l00109"></a><span class="lineno"><a class="line" href="structconcat__mat__t.html">  109</a></span>&#160;<span class="keyword">typedef</span> <span class="keyword">struct </span>_concatable_matrix_t_ {</div>
-<div class="line"><a name="l00110"></a><span class="lineno"><a class="line" href="structconcat__mat__t.html#af7c0b1b5d5218a3f6007f62938a257e4">  110</a></span>&#160;    real_t *<a class="code" href="structconcat__mat__t.html#af7c0b1b5d5218a3f6007f62938a257e4">val</a>; </div>
-<div class="line"><a name="l00111"></a><span class="lineno"><a class="line" href="structconcat__mat__t.html#a5ed963d42e186a7650e976054e6994fa">  111</a></span>&#160;    <span class="keywordtype">int</span> <a class="code" href="structconcat__mat__t.html#a5ed963d42e186a7650e976054e6994fa">col</a>; </div>
-<div class="line"><a name="l00112"></a><span class="lineno"><a class="line" href="structconcat__mat__t.html#a10a360a7f059d0329364654795a38093">  112</a></span>&#160;    <span class="keywordtype">int</span> <a class="code" href="structconcat__mat__t.html#a10a360a7f059d0329364654795a38093">n_row</a>; </div>
-<div class="line"><a name="l00113"></a><span class="lineno"><a class="line" href="structconcat__mat__t.html#a27ca86bc71b510f4fa0d259c2104616a">  113</a></span>&#160;    <span class="keywordtype">int</span> <a class="code" href="structconcat__mat__t.html#a27ca86bc71b510f4fa0d259c2104616a">cap_row</a>; </div>
-<div class="line"><a name="l00114"></a><span class="lineno">  114</span>&#160;} <a class="code" href="structconcat__mat__t.html">concat_mat_t</a>;</div>
-<div class="line"><a name="l00115"></a><span class="lineno">  115</span>&#160;</div>
-<div class="line"><a name="l00116"></a><span class="lineno">  116</span>&#160;<span class="preprocessor">#define safe_concat_mat_destroy(ptr) do {\</span></div>
-<div class="line"><a name="l00117"></a><span class="lineno">  117</span>&#160;<span class="preprocessor">    if((ptr) != NULL) {\</span></div>
-<div class="line"><a name="l00118"></a><span class="lineno">  118</span>&#160;<span class="preprocessor">        concat_mat_destroy(ptr);\</span></div>
-<div class="line"><a name="l00119"></a><span class="lineno">  119</span>&#160;<span class="preprocessor">        safe_free(ptr);\</span></div>
-<div class="line"><a name="l00120"></a><span class="lineno">  120</span>&#160;<span class="preprocessor">        (ptr) = NULL;\</span></div>
-<div class="line"><a name="l00121"></a><span class="lineno">  121</span>&#160;<span class="preprocessor">    }\</span></div>
-<div class="line"><a name="l00122"></a><span class="lineno">  122</span>&#160;<span class="preprocessor">    } while(0)</span></div>
-<div class="line"><a name="l00123"></a><span class="lineno">  123</span>&#160;</div>
-<div class="line"><a name="l00124"></a><span class="lineno">  124</span>&#160;<span class="keywordtype">void</span> concat_mat_destroy(<a class="code" href="structconcat__mat__t.html">concat_mat_t</a> *mat);</div>
-<div class="line"><a name="l00125"></a><span class="lineno">  125</span>&#160;</div>
-<div class="line"><a name="l00126"></a><span class="lineno">  126</span>&#160;<span class="comment">/*</span></div>
-<div class="line"><a name="l00127"></a><span class="lineno">  127</span>&#160;<span class="comment"> * Add one row to concat_mat</span></div>
-<div class="line"><a name="l00128"></a><span class="lineno">  128</span>&#160;<span class="comment"> */</span></div>
-<div class="line"><a name="l00129"></a><span class="lineno">  129</span>&#160;<span class="keywordtype">int</span> concat_mat_add_row(<a class="code" href="structconcat__mat__t.html">concat_mat_t</a> *mat, real_t *vec, <span class="keywordtype">int</span> vec_size);</div>
-<div class="line"><a name="l00130"></a><span class="lineno">  130</span>&#160;</div>
-<div class="line"><a name="l00131"></a><span class="lineno">  131</span>&#160;<span class="comment">/*</span></div>
-<div class="line"><a name="l00132"></a><span class="lineno">  132</span>&#160;<span class="comment"> * Add all rows from src to dst</span></div>
-<div class="line"><a name="l00133"></a><span class="lineno">  133</span>&#160;<span class="comment"> */</span></div>
-<div class="line"><a name="l00134"></a><span class="lineno">  134</span>&#160;<span class="keywordtype">int</span> concat_mat_add_mat(<a class="code" href="structconcat__mat__t.html">concat_mat_t</a> *dst, <a class="code" href="structconcat__mat__t.html">concat_mat_t</a> *src);</div>
-<div class="line"><a name="l00135"></a><span class="lineno">  135</span>&#160;</div>
-<div class="line"><a name="l00136"></a><span class="lineno">  136</span>&#160;<span class="preprocessor">#ifdef __cplusplus</span></div>
-<div class="line"><a name="l00137"></a><span class="lineno">  137</span>&#160;}</div>
-<div class="line"><a name="l00138"></a><span class="lineno">  138</span>&#160;<span class="preprocessor">#endif</span></div>
-<div class="line"><a name="l00139"></a><span class="lineno">  139</span>&#160;</div>
-<div class="line"><a name="l00140"></a><span class="lineno">  140</span>&#160;<span class="preprocessor">#endif</span></div>
-<div class="ttc" id="structconcat__mat__t_html"><div class="ttname"><a href="structconcat__mat__t.html">concat_mat_t</a></div><div class="ttdoc">Concatable Matrix. </div><div class="ttdef"><b>Definition:</b> utils.h:109</div></div>
-<div class="ttc" id="structconcat__mat__t_html_af7c0b1b5d5218a3f6007f62938a257e4"><div class="ttname"><a href="structconcat__mat__t.html#af7c0b1b5d5218a3f6007f62938a257e4">concat_mat_t::val</a></div><div class="ttdeci">real_t * val</div><div class="ttdoc">values of matrix. </div><div class="ttdef"><b>Definition:</b> utils.h:110</div></div>
-<div class="ttc" id="structconcat__mat__t_html_a5ed963d42e186a7650e976054e6994fa"><div class="ttname"><a href="structconcat__mat__t.html#a5ed963d42e186a7650e976054e6994fa">concat_mat_t::col</a></div><div class="ttdeci">int col</div><div class="ttdoc">number of col. </div><div class="ttdef"><b>Definition:</b> utils.h:111</div></div>
-<div class="ttc" id="structconcat__mat__t_html_a27ca86bc71b510f4fa0d259c2104616a"><div class="ttname"><a href="structconcat__mat__t.html#a27ca86bc71b510f4fa0d259c2104616a">concat_mat_t::cap_row</a></div><div class="ttdeci">int cap_row</div><div class="ttdoc">capacity of row. </div><div class="ttdef"><b>Definition:</b> utils.h:113</div></div>
-<div class="ttc" id="structconcat__mat__t_html_a10a360a7f059d0329364654795a38093"><div class="ttname"><a href="structconcat__mat__t.html#a10a360a7f059d0329364654795a38093">concat_mat_t::n_row</a></div><div class="ttdeci">int n_row</div><div class="ttdoc">number of row. </div><div class="ttdef"><b>Definition:</b> utils.h:112</div></div>
+<div class="line"><a name="l00032"></a><span class="lineno">   32</span>&#160;<span class="preprocessor">#include &lt;inttypes.h&gt;</span></div>
+<div class="line"><a name="l00033"></a><span class="lineno">   33</span>&#160;<span class="preprocessor">#include &lt;math.h&gt;</span></div>
+<div class="line"><a name="l00034"></a><span class="lineno">   34</span>&#160;</div>
+<div class="line"><a name="l00035"></a><span class="lineno">   35</span>&#160;<span class="preprocessor">#include &lt;stutils/st_opt.h&gt;</span></div>
+<div class="line"><a name="l00036"></a><span class="lineno">   36</span>&#160;</div>
+<div class="line"><a name="l00037"></a><span class="lineno">   37</span>&#160;<span class="preprocessor">#include &lt;connlm/config.h&gt;</span></div>
+<div class="line"><a name="l00038"></a><span class="lineno">   38</span>&#160;</div>
+<div class="line"><a name="l00039"></a><span class="lineno">   39</span>&#160;<span class="preprocessor">#define exp10(a) pow(10.0, a)</span></div>
+<div class="line"><a name="l00040"></a><span class="lineno">   40</span>&#160;</div>
+<div class="line"><a name="l00041"></a><span class="lineno">   41</span>&#160;<span class="preprocessor">#define logn(loga, base) ((base) == 0) ? (loga) : ((loga) / log(base))</span></div>
+<div class="line"><a name="l00042"></a><span class="lineno">   42</span>&#160;<span class="preprocessor">#define logn10(log10a, base) ((base) == 0) ? (log10a / M_LOG10E) : (log10a / log10(base))</span></div>
+<div class="line"><a name="l00043"></a><span class="lineno">   43</span>&#160;</div>
+<div class="line"><a name="l00044"></a><span class="lineno">   44</span>&#160;<span class="keywordtype">void</span> matXvec(real_t *dst, real_t *mat, real_t *vec,</div>
+<div class="line"><a name="l00045"></a><span class="lineno">   45</span>&#160;        <span class="keywordtype">int</span> mat_wid, <span class="keywordtype">int</span> vec_size, real_t scale);</div>
+<div class="line"><a name="l00046"></a><span class="lineno">   46</span>&#160;</div>
+<div class="line"><a name="l00047"></a><span class="lineno">   47</span>&#160;<span class="keywordtype">void</span> vecXmat(real_t *dst, real_t *vec, real_t *mat,</div>
+<div class="line"><a name="l00048"></a><span class="lineno">   48</span>&#160;        <span class="keywordtype">int</span> mat_col, <span class="keywordtype">int</span> vec_size, real_t scale);</div>
+<div class="line"><a name="l00049"></a><span class="lineno">   49</span>&#160;</div>
+<div class="line"><a name="l00050"></a><span class="lineno">   50</span>&#160;<span class="comment">/*</span></div>
+<div class="line"><a name="l00051"></a><span class="lineno">   51</span>&#160;<span class="comment"> * Computing C = alpha * A&#39; * B + beta * C</span></div>
+<div class="line"><a name="l00052"></a><span class="lineno">   52</span>&#160;<span class="comment"> * A is [k X m]; B is [k X n]; C is [m X n]</span></div>
+<div class="line"><a name="l00053"></a><span class="lineno">   53</span>&#160;<span class="comment"> * A&#39; is transpose of A.</span></div>
+<div class="line"><a name="l00054"></a><span class="lineno">   54</span>&#160;<span class="comment"> */</span></div>
+<div class="line"><a name="l00055"></a><span class="lineno">   55</span>&#160;<span class="keywordtype">void</span> matXmat(real_t *C, real_t *A, real_t *B, <span class="keywordtype">int</span> m, <span class="keywordtype">int</span> n, <span class="keywordtype">int</span> k,</div>
+<div class="line"><a name="l00056"></a><span class="lineno">   56</span>&#160;        real_t alpha, real_t beta);</div>
+<div class="line"><a name="l00057"></a><span class="lineno">   57</span>&#160;</div>
+<div class="line"><a name="l00058"></a><span class="lineno">   58</span>&#160;real_t dot_product(real_t *v1, real_t *v2, <span class="keywordtype">int</span> vec_size);</div>
+<div class="line"><a name="l00059"></a><span class="lineno">   59</span>&#160;</div>
+<div class="line"><a name="l00060"></a><span class="lineno">   60</span>&#160;<span class="keywordtype">void</span> sigmoid(real_t *vec, <span class="keywordtype">int</span> vec_size);</div>
+<div class="line"><a name="l00061"></a><span class="lineno">   61</span>&#160;</div>
+<div class="line"><a name="l00062"></a><span class="lineno">   62</span>&#160;<span class="keywordtype">void</span> softmax(real_t *vec, <span class="keywordtype">int</span> vec_size);</div>
+<div class="line"><a name="l00063"></a><span class="lineno">   63</span>&#160;</div>
+<div class="line"><a name="l00064"></a><span class="lineno">   64</span>&#160;<span class="keywordtype">void</span> tanH(real_t *vec, <span class="keywordtype">int</span> vec_size);</div>
+<div class="line"><a name="l00065"></a><span class="lineno">   65</span>&#160;</div>
+<div class="line"><a name="l00066"></a><span class="lineno">   66</span>&#160;<span class="keywordtype">void</span> propagate_error(real_t *dst, real_t *vec, real_t *mat,</div>
+<div class="line"><a name="l00067"></a><span class="lineno">   67</span>&#160;        <span class="keywordtype">int</span> mat_col, <span class="keywordtype">int</span> in_vec_size, real_t er_cutoff, real_t scale);</div>
+<div class="line"><a name="l00068"></a><span class="lineno">   68</span>&#160;</div>
+<div class="line"><a name="l00069"></a><span class="lineno">   69</span>&#160;<span class="keywordtype">void</span> connlm_show_usage(<span class="keyword">const</span> <span class="keywordtype">char</span> *module_name, <span class="keyword">const</span> <span class="keywordtype">char</span> *header,</div>
+<div class="line"><a name="l00070"></a><span class="lineno">   70</span>&#160;        <span class="keyword">const</span> <span class="keywordtype">char</span> *usage, <span class="keyword">const</span> <span class="keywordtype">char</span> *eg,</div>
+<div class="line"><a name="l00071"></a><span class="lineno">   71</span>&#160;        st_opt_t *opt, <span class="keyword">const</span> <span class="keywordtype">char</span> *trailer);</div>
+<div class="line"><a name="l00072"></a><span class="lineno">   72</span>&#160;</div>
+<div class="line"><a name="l00073"></a><span class="lineno">   73</span>&#160;<span class="keyword">typedef</span> <span class="keyword">enum</span> _model_filter_t_ {</div>
+<div class="line"><a name="l00074"></a><span class="lineno">   74</span>&#160;    MF_NONE       = 0x0000,</div>
+<div class="line"><a name="l00075"></a><span class="lineno">   75</span>&#160;    MF_VOCAB      = 0x0001,</div>
+<div class="line"><a name="l00076"></a><span class="lineno">   76</span>&#160;    MF_OUTPUT     = 0x0002,</div>
+<div class="line"><a name="l00077"></a><span class="lineno">   77</span>&#160;    MF_COMP_NEG   = 0x0004,</div>
+<div class="line"><a name="l00078"></a><span class="lineno">   78</span>&#160;    MF_ALL        = 0x0007,</div>
+<div class="line"><a name="l00079"></a><span class="lineno">   79</span>&#160;    MF_ERR        = 0x1000,</div>
+<div class="line"><a name="l00080"></a><span class="lineno">   80</span>&#160;} model_filter_t;</div>
+<div class="line"><a name="l00081"></a><span class="lineno">   81</span>&#160;</div>
+<div class="line"><a name="l00095"></a><span class="lineno">   95</span>&#160;model_filter_t parse_model_filter(<span class="keyword">const</span> <span class="keywordtype">char</span> *mdl_filter,</div>
+<div class="line"><a name="l00096"></a><span class="lineno">   96</span>&#160;        <span class="keywordtype">char</span> *mdl_file, <span class="keywordtype">size_t</span> mdl_file_len, <span class="keywordtype">char</span> **comp_names,</div>
+<div class="line"><a name="l00097"></a><span class="lineno">   97</span>&#160;        <span class="keywordtype">int</span> *num_comp);</div>
+<div class="line"><a name="l00098"></a><span class="lineno">   98</span>&#160;</div>
+<div class="line"><a name="l00099"></a><span class="lineno">   99</span>&#160;<span class="keyword">const</span> <span class="keywordtype">char</span>* model_filter_help();</div>
+<div class="line"><a name="l00100"></a><span class="lineno">  100</span>&#160;</div>
+<div class="line"><a name="l00101"></a><span class="lineno">  101</span>&#160;<span class="keywordtype">char</span>* escape_dot(<span class="keywordtype">char</span> *out, <span class="keywordtype">size_t</span> len, <span class="keyword">const</span> <span class="keywordtype">char</span> *str);</div>
+<div class="line"><a name="l00102"></a><span class="lineno">  102</span>&#160;</div>
+<div class="line"><a name="l00110"></a><span class="lineno"><a class="line" href="structconcat__mat__t.html">  110</a></span>&#160;<span class="keyword">typedef</span> <span class="keyword">struct </span>_concatable_matrix_t_ {</div>
+<div class="line"><a name="l00111"></a><span class="lineno"><a class="line" href="structconcat__mat__t.html#af7c0b1b5d5218a3f6007f62938a257e4">  111</a></span>&#160;    real_t *<a class="code" href="structconcat__mat__t.html#af7c0b1b5d5218a3f6007f62938a257e4">val</a>; </div>
+<div class="line"><a name="l00112"></a><span class="lineno"><a class="line" href="structconcat__mat__t.html#a5ed963d42e186a7650e976054e6994fa">  112</a></span>&#160;    <span class="keywordtype">int</span> <a class="code" href="structconcat__mat__t.html#a5ed963d42e186a7650e976054e6994fa">col</a>; </div>
+<div class="line"><a name="l00113"></a><span class="lineno"><a class="line" href="structconcat__mat__t.html#a10a360a7f059d0329364654795a38093">  113</a></span>&#160;    <span class="keywordtype">int</span> <a class="code" href="structconcat__mat__t.html#a10a360a7f059d0329364654795a38093">n_row</a>; </div>
+<div class="line"><a name="l00114"></a><span class="lineno"><a class="line" href="structconcat__mat__t.html#a27ca86bc71b510f4fa0d259c2104616a">  114</a></span>&#160;    <span class="keywordtype">int</span> <a class="code" href="structconcat__mat__t.html#a27ca86bc71b510f4fa0d259c2104616a">cap_row</a>; </div>
+<div class="line"><a name="l00115"></a><span class="lineno">  115</span>&#160;} <a class="code" href="structconcat__mat__t.html">concat_mat_t</a>;</div>
+<div class="line"><a name="l00116"></a><span class="lineno">  116</span>&#160;</div>
+<div class="line"><a name="l00117"></a><span class="lineno">  117</span>&#160;<span class="preprocessor">#define safe_concat_mat_destroy(ptr) do {\</span></div>
+<div class="line"><a name="l00118"></a><span class="lineno">  118</span>&#160;<span class="preprocessor">    if((ptr) != NULL) {\</span></div>
+<div class="line"><a name="l00119"></a><span class="lineno">  119</span>&#160;<span class="preprocessor">        concat_mat_destroy(ptr);\</span></div>
+<div class="line"><a name="l00120"></a><span class="lineno">  120</span>&#160;<span class="preprocessor">        safe_st_free(ptr);\</span></div>
+<div class="line"><a name="l00121"></a><span class="lineno">  121</span>&#160;<span class="preprocessor">        (ptr) = NULL;\</span></div>
+<div class="line"><a name="l00122"></a><span class="lineno">  122</span>&#160;<span class="preprocessor">    }\</span></div>
+<div class="line"><a name="l00123"></a><span class="lineno">  123</span>&#160;<span class="preprocessor">    } while(0)</span></div>
+<div class="line"><a name="l00124"></a><span class="lineno">  124</span>&#160;</div>
+<div class="line"><a name="l00125"></a><span class="lineno">  125</span>&#160;<span class="keywordtype">void</span> concat_mat_destroy(<a class="code" href="structconcat__mat__t.html">concat_mat_t</a> *mat);</div>
+<div class="line"><a name="l00126"></a><span class="lineno">  126</span>&#160;</div>
+<div class="line"><a name="l00127"></a><span class="lineno">  127</span>&#160;<span class="comment">/*</span></div>
+<div class="line"><a name="l00128"></a><span class="lineno">  128</span>&#160;<span class="comment"> * Add one row to concat_mat</span></div>
+<div class="line"><a name="l00129"></a><span class="lineno">  129</span>&#160;<span class="comment"> */</span></div>
+<div class="line"><a name="l00130"></a><span class="lineno">  130</span>&#160;<span class="keywordtype">int</span> concat_mat_add_row(<a class="code" href="structconcat__mat__t.html">concat_mat_t</a> *mat, real_t *vec, <span class="keywordtype">int</span> vec_size);</div>
+<div class="line"><a name="l00131"></a><span class="lineno">  131</span>&#160;</div>
+<div class="line"><a name="l00132"></a><span class="lineno">  132</span>&#160;<span class="comment">/*</span></div>
+<div class="line"><a name="l00133"></a><span class="lineno">  133</span>&#160;<span class="comment"> * Add all rows from src to dst</span></div>
+<div class="line"><a name="l00134"></a><span class="lineno">  134</span>&#160;<span class="comment"> */</span></div>
+<div class="line"><a name="l00135"></a><span class="lineno">  135</span>&#160;<span class="keywordtype">int</span> concat_mat_add_mat(<a class="code" href="structconcat__mat__t.html">concat_mat_t</a> *dst, <a class="code" href="structconcat__mat__t.html">concat_mat_t</a> *src);</div>
+<div class="line"><a name="l00136"></a><span class="lineno">  136</span>&#160;</div>
+<div class="line"><a name="l00141"></a><span class="lineno"><a class="line" href="group__g__connlm.html#ga27bb4962c19c1ac9c66c27d5d2de9a73">  141</a></span>&#160;<span class="keyword">typedef</span> <span class="keyword">enum</span> _connlm_format_t_ {</div>
+<div class="line"><a name="l00142"></a><span class="lineno"><a class="line" href="group__g__connlm.html#gga27bb4962c19c1ac9c66c27d5d2de9a73a258d1ac5f3f6a6a3f3849f953d7e7634">  142</a></span>&#160;    <a class="code" href="group__g__connlm.html#gga27bb4962c19c1ac9c66c27d5d2de9a73a258d1ac5f3f6a6a3f3849f953d7e7634">CONN_FMT_UNKNOWN</a>             = 0x0000, </div>
+<div class="line"><a name="l00143"></a><span class="lineno"><a class="line" href="group__g__connlm.html#gga27bb4962c19c1ac9c66c27d5d2de9a73a11537eb65466bb2c643cc00e27859e7a">  143</a></span>&#160;    <a class="code" href="group__g__connlm.html#gga27bb4962c19c1ac9c66c27d5d2de9a73a11537eb65466bb2c643cc00e27859e7a">CONN_FMT_TXT</a>                 = 0x0001, </div>
+<div class="line"><a name="l00144"></a><span class="lineno"><a class="line" href="group__g__connlm.html#gga27bb4962c19c1ac9c66c27d5d2de9a73a037c038e7b95ded92e5a7ce8bd8fc928">  144</a></span>&#160;    <a class="code" href="group__g__connlm.html#gga27bb4962c19c1ac9c66c27d5d2de9a73a037c038e7b95ded92e5a7ce8bd8fc928">CONN_FMT_BIN</a>                 = 0x0002, </div>
+<div class="line"><a name="l00145"></a><span class="lineno"><a class="line" href="group__g__connlm.html#gga27bb4962c19c1ac9c66c27d5d2de9a73a58b8a531f0f90fc4c5376fa9aefd1719">  145</a></span>&#160;    <a class="code" href="group__g__connlm.html#gga27bb4962c19c1ac9c66c27d5d2de9a73a58b8a531f0f90fc4c5376fa9aefd1719">CONN_FMT_ZEROS_COMPRESSED</a>    = 0x0004, </div>
+<div class="line"><a name="l00146"></a><span class="lineno"><a class="line" href="group__g__connlm.html#gga27bb4962c19c1ac9c66c27d5d2de9a73a4f60e2535f7be69ae5acfdc61e3d95ae">  146</a></span>&#160;    <a class="code" href="group__g__connlm.html#gga27bb4962c19c1ac9c66c27d5d2de9a73a4f60e2535f7be69ae5acfdc61e3d95ae">CONN_FMT_SHORT_QUANTIZATION</a>  = 0x0008, </div>
+<div class="line"><a name="l00147"></a><span class="lineno">  147</span>&#160;} <a class="code" href="group__g__connlm.html#ga27bb4962c19c1ac9c66c27d5d2de9a73">connlm_fmt_t</a>;</div>
+<div class="line"><a name="l00148"></a><span class="lineno">  148</span>&#160;</div>
+<div class="line"><a name="l00149"></a><span class="lineno">  149</span>&#160;<span class="preprocessor">#define connlm_fmt_is_bin(fmt) ((fmt) &gt; 1)</span></div>
+<div class="line"><a name="l00150"></a><span class="lineno">  150</span>&#160;</div>
+<div class="line"><a name="l00157"></a><span class="lineno">  157</span>&#160;<a class="code" href="group__g__connlm.html#ga27bb4962c19c1ac9c66c27d5d2de9a73">connlm_fmt_t</a> <a class="code" href="group__g__connlm.html#gad1efa03f57dd697122bce54acd5e7377">connlm_format_parse</a>(<span class="keyword">const</span> <span class="keywordtype">char</span> *str);</div>
+<div class="line"><a name="l00158"></a><span class="lineno">  158</span>&#160;</div>
+<div class="line"><a name="l00166"></a><span class="lineno">  166</span>&#160;int16_t <a class="code" href="group__g__connlm.html#ga7a20f838fa64053fac13ece4b1287fdc">quantify_int16</a>(real_t r, real_t multiple);</div>
+<div class="line"><a name="l00167"></a><span class="lineno">  167</span>&#160;</div>
+<div class="line"><a name="l00177"></a><span class="lineno">  177</span>&#160;<span class="keywordtype">int</span> <a class="code" href="group__g__connlm.html#ga9446b7e3cfa0253769d3d2718f9d1f95">print_vec</a>(FILE *fp, real_t *vec, <span class="keywordtype">size_t</span> size, <span class="keyword">const</span> <span class="keywordtype">char</span> *name);</div>
+<div class="line"><a name="l00178"></a><span class="lineno">  178</span>&#160;</div>
+<div class="line"><a name="l00188"></a><span class="lineno">  188</span>&#160;<span class="keywordtype">int</span> <a class="code" href="group__g__connlm.html#ga91fce2b4610706f24de5bd1c050cd884">parse_vec</a>(<span class="keyword">const</span> <span class="keywordtype">char</span> *line, real_t **vec, <span class="keywordtype">char</span> *name, <span class="keywordtype">size_t</span> name_len);</div>
+<div class="line"><a name="l00189"></a><span class="lineno">  189</span>&#160;</div>
+<div class="line"><a name="l00190"></a><span class="lineno">  190</span>&#160;<span class="preprocessor">#ifdef __cplusplus</span></div>
+<div class="line"><a name="l00191"></a><span class="lineno">  191</span>&#160;}</div>
+<div class="line"><a name="l00192"></a><span class="lineno">  192</span>&#160;<span class="preprocessor">#endif</span></div>
+<div class="line"><a name="l00193"></a><span class="lineno">  193</span>&#160;</div>
+<div class="line"><a name="l00194"></a><span class="lineno">  194</span>&#160;<span class="preprocessor">#endif</span></div>
+<div class="ttc" id="group__g__connlm_html_gga27bb4962c19c1ac9c66c27d5d2de9a73a037c038e7b95ded92e5a7ce8bd8fc928"><div class="ttname"><a href="group__g__connlm.html#gga27bb4962c19c1ac9c66c27d5d2de9a73a037c038e7b95ded92e5a7ce8bd8fc928">CONN_FMT_BIN</a></div><div class="ttdoc">(flat) Binary format. </div><div class="ttdef"><b>Definition:</b> utils.h:144</div></div>
+<div class="ttc" id="group__g__connlm_html_ga7a20f838fa64053fac13ece4b1287fdc"><div class="ttname"><a href="group__g__connlm.html#ga7a20f838fa64053fac13ece4b1287fdc">quantify_int16</a></div><div class="ttdeci">int16_t quantify_int16(real_t r, real_t multiple)</div><div class="ttdoc">quantify a float number to sint16 </div></div>
+<div class="ttc" id="group__g__connlm_html_gga27bb4962c19c1ac9c66c27d5d2de9a73a4f60e2535f7be69ae5acfdc61e3d95ae"><div class="ttname"><a href="group__g__connlm.html#gga27bb4962c19c1ac9c66c27d5d2de9a73a4f60e2535f7be69ae5acfdc61e3d95ae">CONN_FMT_SHORT_QUANTIZATION</a></div><div class="ttdoc">quantify to short (binary) format. </div><div class="ttdef"><b>Definition:</b> utils.h:146</div></div>
+<div class="ttc" id="group__g__connlm_html_gga27bb4962c19c1ac9c66c27d5d2de9a73a258d1ac5f3f6a6a3f3849f953d7e7634"><div class="ttname"><a href="group__g__connlm.html#gga27bb4962c19c1ac9c66c27d5d2de9a73a258d1ac5f3f6a6a3f3849f953d7e7634">CONN_FMT_UNKNOWN</a></div><div class="ttdoc">Unknown format. </div><div class="ttdef"><b>Definition:</b> utils.h:142</div></div>
+<div class="ttc" id="group__g__connlm_html_ga27bb4962c19c1ac9c66c27d5d2de9a73"><div class="ttname"><a href="group__g__connlm.html#ga27bb4962c19c1ac9c66c27d5d2de9a73">connlm_fmt_t</a></div><div class="ttdeci">connlm_fmt_t</div><div class="ttdoc">Storage Format for connLM model. </div><div class="ttdef"><b>Definition:</b> utils.h:141</div></div>
+<div class="ttc" id="structconcat__mat__t_html"><div class="ttname"><a href="structconcat__mat__t.html">concat_mat_t</a></div><div class="ttdoc">Concatable Matrix. </div><div class="ttdef"><b>Definition:</b> utils.h:110</div></div>
+<div class="ttc" id="structconcat__mat__t_html_af7c0b1b5d5218a3f6007f62938a257e4"><div class="ttname"><a href="structconcat__mat__t.html#af7c0b1b5d5218a3f6007f62938a257e4">concat_mat_t::val</a></div><div class="ttdeci">real_t * val</div><div class="ttdoc">values of matrix. </div><div class="ttdef"><b>Definition:</b> utils.h:111</div></div>
+<div class="ttc" id="structconcat__mat__t_html_a5ed963d42e186a7650e976054e6994fa"><div class="ttname"><a href="structconcat__mat__t.html#a5ed963d42e186a7650e976054e6994fa">concat_mat_t::col</a></div><div class="ttdeci">int col</div><div class="ttdoc">number of col. </div><div class="ttdef"><b>Definition:</b> utils.h:112</div></div>
+<div class="ttc" id="structconcat__mat__t_html_a27ca86bc71b510f4fa0d259c2104616a"><div class="ttname"><a href="structconcat__mat__t.html#a27ca86bc71b510f4fa0d259c2104616a">concat_mat_t::cap_row</a></div><div class="ttdeci">int cap_row</div><div class="ttdoc">capacity of row. </div><div class="ttdef"><b>Definition:</b> utils.h:114</div></div>
+<div class="ttc" id="group__g__connlm_html_gad1efa03f57dd697122bce54acd5e7377"><div class="ttname"><a href="group__g__connlm.html#gad1efa03f57dd697122bce54acd5e7377">connlm_format_parse</a></div><div class="ttdeci">connlm_fmt_t connlm_format_parse(const char *str)</div><div class="ttdoc">Parse the string representation to a connlm_fmt_t. </div></div>
+<div class="ttc" id="group__g__connlm_html_ga91fce2b4610706f24de5bd1c050cd884"><div class="ttname"><a href="group__g__connlm.html#ga91fce2b4610706f24de5bd1c050cd884">parse_vec</a></div><div class="ttdeci">int parse_vec(const char *line, real_t **vec, char *name, size_t name_len)</div><div class="ttdoc">parse a real-valued vector from a string. </div></div>
+<div class="ttc" id="group__g__connlm_html_gga27bb4962c19c1ac9c66c27d5d2de9a73a58b8a531f0f90fc4c5376fa9aefd1719"><div class="ttname"><a href="group__g__connlm.html#gga27bb4962c19c1ac9c66c27d5d2de9a73a58b8a531f0f90fc4c5376fa9aefd1719">CONN_FMT_ZEROS_COMPRESSED</a></div><div class="ttdoc">zeros-compressed (binary) format. </div><div class="ttdef"><b>Definition:</b> utils.h:145</div></div>
+<div class="ttc" id="group__g__connlm_html_gga27bb4962c19c1ac9c66c27d5d2de9a73a11537eb65466bb2c643cc00e27859e7a"><div class="ttname"><a href="group__g__connlm.html#gga27bb4962c19c1ac9c66c27d5d2de9a73a11537eb65466bb2c643cc00e27859e7a">CONN_FMT_TXT</a></div><div class="ttdoc">Text format. </div><div class="ttdef"><b>Definition:</b> utils.h:143</div></div>
+<div class="ttc" id="structconcat__mat__t_html_a10a360a7f059d0329364654795a38093"><div class="ttname"><a href="structconcat__mat__t.html#a10a360a7f059d0329364654795a38093">concat_mat_t::n_row</a></div><div class="ttdeci">int n_row</div><div class="ttdoc">number of row. </div><div class="ttdef"><b>Definition:</b> utils.h:113</div></div>
+<div class="ttc" id="group__g__connlm_html_ga9446b7e3cfa0253769d3d2718f9d1f95"><div class="ttname"><a href="group__g__connlm.html#ga9446b7e3cfa0253769d3d2718f9d1f95">print_vec</a></div><div class="ttdeci">int print_vec(FILE *fp, real_t *vec, size_t size, const char *name)</div><div class="ttdoc">print a real-valued vector. </div></div>
 </div><!-- fragment --></div><!-- contents -->
 </div><!-- doc-content -->
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><b>utils.h</b></li>
-    <li class="footer">Generated on Fri Oct 28 2016 22:37:22 for connLM by
+    <li class="footer">Generated on Mon May 8 2017 22:10:25 for connLM by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.10 </li>
   </ul>

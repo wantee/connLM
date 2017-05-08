@@ -1,6 +1,7 @@
 var group__g__updater__input =
 [
     [ "input_updater_t", "structinput__updater__t.html", [
+      [ "bos_id", "structinput__updater__t.html#ad2ca90c1090695831afb30df2a1303ed", null ],
       [ "cap_word", "structinput__updater__t.html#ad9fa91c769abc6e5c5aad1f47e20df7d", null ],
       [ "ctx_leftmost", "structinput__updater__t.html#aa4bbe0e7b3a7a3a0553907282540f1be", null ],
       [ "ctx_rightmost", "structinput__updater__t.html#aadf2feba97dbbdbec54523b0bc31fb20", null ],
@@ -16,10 +17,11 @@ var group__g__updater__input =
       [ "words", "structsent__t.html#adda3b43a889668e0038799f813fe9b07", null ]
     ] ],
     [ "safe_input_updater_destroy", "group__g__updater__input.html#ga83d72c13c9774a2748c78a7ab0c9c851", null ],
-    [ "input_updater_create", "group__g__updater__input.html#ga5a4958dcd935cb5645f99a5beed5baf0", null ],
+    [ "input_updater_clear", "group__g__updater__input.html#gacb0350408fa96e25b1b6fe62b6ada7a3", null ],
+    [ "input_updater_create", "group__g__updater__input.html#ga47614feaba38cf7657d44b99dbb23bbe", null ],
     [ "input_updater_destroy", "group__g__updater__input.html#ga707b4c95f614f2849350ca22e0395446", null ],
     [ "input_updater_feed", "group__g__updater__input.html#ga67b1db77db66bc7d7b4696b52814ad7e", null ],
-    [ "input_updater_init", "group__g__updater__input.html#gafa8c60d9a4d33f67c39b4cf11b099dd7", null ],
     [ "input_updater_move", "group__g__updater__input.html#ga85ec046d0fe872694399c52078a612c1", null ],
+    [ "input_updater_move_to_end", "group__g__updater__input.html#ga1e24421c7ba92289134e80b4eb300c2c", null ],
     [ "input_updater_setup", "group__g__updater__input.html#ga50ba31cd91f236d64688679f3bd51e87", null ]
 ];

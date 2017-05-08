@@ -31,7 +31,6 @@
 });
 </script><script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js"></script>
 <link href="doxygen.css" rel="stylesheet" type="text/css" />
-<link href="table.css" rel="stylesheet" type="text/css"/>
 </head>
 <body>
 <div id="top"><!-- do not remove this div, it is closed by doxygen! -->
@@ -132,6 +131,12 @@ Data Structures</h2></td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structoutput__tree__t.html">output_tree_t</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Output tree.  <a href="structoutput__tree__t.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structoutput__tree__bfs__aux__t.html">output_tree_bfs_aux_t</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">aux data for output tree BFS.  <a href="structoutput__tree__bfs__aux__t.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structoutput__tree__dfs__aux__t.html">output_tree_dfs_aux_t</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">aux data for output tree DFS.  <a href="structoutput__tree__dfs__aux__t.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structoutput__path__t.html">output_path_t</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Output tree path.  <a href="structoutput__path__t.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -141,6 +146,12 @@ Data Structures</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="define-members"></a>
 Macros</h2></td></tr>
+<tr class="memitem:gac7c120379f8171f12ca88ff4cf79cd10"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__g__output.html#gac7c120379f8171f12ca88ff4cf79cd10">safe_output_tree_bfs_aux_destroy</a>(ptr)</td></tr>
+<tr class="memdesc:gac7c120379f8171f12ca88ff4cf79cd10"><td class="mdescLeft">&#160;</td><td class="mdescRight">Destroy a output tree bfs aux and set the pointer to NULL.  <a href="#gac7c120379f8171f12ca88ff4cf79cd10">More...</a><br /></td></tr>
+<tr class="separator:gac7c120379f8171f12ca88ff4cf79cd10"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga6738c53cc8d216e7dc49227704c9fc14"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__g__output.html#ga6738c53cc8d216e7dc49227704c9fc14">safe_output_tree_dfs_aux_destroy</a>(ptr)</td></tr>
+<tr class="memdesc:ga6738c53cc8d216e7dc49227704c9fc14"><td class="mdescLeft">&#160;</td><td class="mdescRight">Destroy a output tree dfs aux and set the pointer to NULL.  <a href="#ga6738c53cc8d216e7dc49227704c9fc14">More...</a><br /></td></tr>
+<tr class="separator:ga6738c53cc8d216e7dc49227704c9fc14"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga88c9fc5b1c8fc91e975fcc95b9c34359"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__g__output.html#ga88c9fc5b1c8fc91e975fcc95b9c34359">safe_output_destroy</a>(ptr)</td></tr>
 <tr class="memdesc:ga88c9fc5b1c8fc91e975fcc95b9c34359"><td class="mdescLeft">&#160;</td><td class="mdescRight">Destroy a output tree and set the pointer to NULL.  <a href="#ga88c9fc5b1c8fc91e975fcc95b9c34359">More...</a><br /></td></tr>
 <tr class="separator:ga88c9fc5b1c8fc91e975fcc95b9c34359"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -163,30 +174,45 @@ Enumerations</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="func-members"></a>
 Functions</h2></td></tr>
+<tr class="memitem:gac2437b82fd1f7cd36258d122b3e60f26"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structoutput__tree__bfs__aux__t.html">output_tree_bfs_aux_t</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__g__output.html#gac2437b82fd1f7cd36258d122b3e60f26">output_tree_bfs_aux_create</a> (<a class="el" href="structoutput__tree__t.html">output_tree_t</a> *tree)</td></tr>
+<tr class="memdesc:gac2437b82fd1f7cd36258d122b3e60f26"><td class="mdescLeft">&#160;</td><td class="mdescRight">Create a output tree bfs aux.  <a href="#gac2437b82fd1f7cd36258d122b3e60f26">More...</a><br /></td></tr>
+<tr class="separator:gac2437b82fd1f7cd36258d122b3e60f26"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gae0692af9c8c0936878ed2bfbb06162b2"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__g__output.html#gae0692af9c8c0936878ed2bfbb06162b2">output_tree_bfs_aux_destroy</a> (<a class="el" href="structoutput__tree__bfs__aux__t.html">output_tree_bfs_aux_t</a> *bfs_aux)</td></tr>
+<tr class="memdesc:gae0692af9c8c0936878ed2bfbb06162b2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Destroy a output tree bfs aux.  <a href="#gae0692af9c8c0936878ed2bfbb06162b2">More...</a><br /></td></tr>
+<tr class="separator:gae0692af9c8c0936878ed2bfbb06162b2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga5d3de33022b23d0f98707fa8277f7374"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__g__output.html#ga5d3de33022b23d0f98707fa8277f7374">output_tree_bfs</a> (<a class="el" href="structoutput__tree__t.html">output_tree_t</a> *tree, <a class="el" href="structoutput__tree__bfs__aux__t.html">output_tree_bfs_aux_t</a> *bfs_aux, int(*visitor)(<a class="el" href="structoutput__tree__t.html">output_tree_t</a> *tree,                                       output_node_id_t node, void *args), void *args)</td></tr>
+<tr class="memdesc:ga5d3de33022b23d0f98707fa8277f7374"><td class="mdescLeft">&#160;</td><td class="mdescRight">Do BFS on a output tree.  <a href="#ga5d3de33022b23d0f98707fa8277f7374">More...</a><br /></td></tr>
+<tr class="separator:ga5d3de33022b23d0f98707fa8277f7374"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga886f33efa8320da0305f827f131564ac"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structoutput__tree__dfs__aux__t.html">output_tree_dfs_aux_t</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__g__output.html#ga886f33efa8320da0305f827f131564ac">output_tree_dfs_aux_create</a> (<a class="el" href="structoutput__tree__t.html">output_tree_t</a> *tree)</td></tr>
+<tr class="memdesc:ga886f33efa8320da0305f827f131564ac"><td class="mdescLeft">&#160;</td><td class="mdescRight">Create a output tree dfs aux.  <a href="#ga886f33efa8320da0305f827f131564ac">More...</a><br /></td></tr>
+<tr class="separator:ga886f33efa8320da0305f827f131564ac"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga2282da8000e64bcc84e14f7b341ce476"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__g__output.html#ga2282da8000e64bcc84e14f7b341ce476">output_tree_dfs_aux_destroy</a> (<a class="el" href="structoutput__tree__dfs__aux__t.html">output_tree_dfs_aux_t</a> *dfs_aux)</td></tr>
+<tr class="memdesc:ga2282da8000e64bcc84e14f7b341ce476"><td class="mdescLeft">&#160;</td><td class="mdescRight">Destroy a output tree dfs aux.  <a href="#ga2282da8000e64bcc84e14f7b341ce476">More...</a><br /></td></tr>
+<tr class="separator:ga2282da8000e64bcc84e14f7b341ce476"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gae839cfce64214d23aec7c2a0cf809c3f"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__g__output.html#gae839cfce64214d23aec7c2a0cf809c3f">output_tree_dfs</a> (<a class="el" href="structoutput__tree__t.html">output_tree_t</a> *tree, <a class="el" href="structoutput__tree__dfs__aux__t.html">output_tree_dfs_aux_t</a> *dfs_aux, int(*visitor)(<a class="el" href="structoutput__tree__t.html">output_tree_t</a> *tree, output_node_id_t node,                                       st_stack_t *stack, void *args), void *args)</td></tr>
+<tr class="memdesc:gae839cfce64214d23aec7c2a0cf809c3f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Do DFS on a output tree.  <a href="#gae839cfce64214d23aec7c2a0cf809c3f">More...</a><br /></td></tr>
+<tr class="separator:gae839cfce64214d23aec7c2a0cf809c3f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga7180bc542158173b9a343d373e36f3a4"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__g__output.html#ga7180bc542158173b9a343d373e36f3a4">output_load_opt</a> (<a class="el" href="structoutput__opt__t.html">output_opt_t</a> *output_opt, st_opt_t *opt, const char *sec_name)</td></tr>
 <tr class="memdesc:ga7180bc542158173b9a343d373e36f3a4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Load output tree option.  <a href="#ga7180bc542158173b9a343d373e36f3a4">More...</a><br /></td></tr>
 <tr class="separator:ga7180bc542158173b9a343d373e36f3a4"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ga02349bb14d51c8d43f1fcc8435ff3701"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structoutput__t.html">output_t</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__g__output.html#ga02349bb14d51c8d43f1fcc8435ff3701">output_create</a> (<a class="el" href="structoutput__opt__t.html">output_opt_t</a> *output_opt, int output_size)</td></tr>
-<tr class="memdesc:ga02349bb14d51c8d43f1fcc8435ff3701"><td class="mdescLeft">&#160;</td><td class="mdescRight">Create a output tree with options.  <a href="#ga02349bb14d51c8d43f1fcc8435ff3701">More...</a><br /></td></tr>
-<tr class="separator:ga02349bb14d51c8d43f1fcc8435ff3701"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:gaaba46bcc5082c8209c35a2ffe1023c6d"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__g__output.html#gaaba46bcc5082c8209c35a2ffe1023c6d">output_destroy</a> (<a class="el" href="structoutput__t.html">output_t</a> *output)</td></tr>
 <tr class="memdesc:gaaba46bcc5082c8209c35a2ffe1023c6d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Destroy a output tree.  <a href="#gaaba46bcc5082c8209c35a2ffe1023c6d">More...</a><br /></td></tr>
 <tr class="separator:gaaba46bcc5082c8209c35a2ffe1023c6d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga49e6ab71aa890429cacabe7e34f1adcc"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structoutput__t.html">output_t</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__g__output.html#ga49e6ab71aa890429cacabe7e34f1adcc">output_dup</a> (<a class="el" href="structoutput__t.html">output_t</a> *o)</td></tr>
 <tr class="memdesc:ga49e6ab71aa890429cacabe7e34f1adcc"><td class="mdescLeft">&#160;</td><td class="mdescRight">Duplicate a output tree.  <a href="#ga49e6ab71aa890429cacabe7e34f1adcc">More...</a><br /></td></tr>
 <tr class="separator:ga49e6ab71aa890429cacabe7e34f1adcc"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:gab67c24ec2c919b6c9b5c97081624b758"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__g__output.html#gab67c24ec2c919b6c9b5c97081624b758">output_load_header</a> (<a class="el" href="structoutput__t.html">output_t</a> **output, int version, FILE *fp, bool *binary, FILE *fo)</td></tr>
-<tr class="memdesc:gab67c24ec2c919b6c9b5c97081624b758"><td class="mdescLeft">&#160;</td><td class="mdescRight">Load output tree header and initialise a new output tree.  <a href="#gab67c24ec2c919b6c9b5c97081624b758">More...</a><br /></td></tr>
-<tr class="separator:gab67c24ec2c919b6c9b5c97081624b758"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ga40b621b4ba8f802702502c3afe42ab97"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__g__output.html#ga40b621b4ba8f802702502c3afe42ab97">output_load_body</a> (<a class="el" href="structoutput__t.html">output_t</a> *output, int version, FILE *fp, bool binary)</td></tr>
-<tr class="memdesc:ga40b621b4ba8f802702502c3afe42ab97"><td class="mdescLeft">&#160;</td><td class="mdescRight">Load output tree body.  <a href="#ga40b621b4ba8f802702502c3afe42ab97">More...</a><br /></td></tr>
-<tr class="separator:ga40b621b4ba8f802702502c3afe42ab97"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:gafb8daf5070e9e18929c23a5852816615"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__g__output.html#gafb8daf5070e9e18929c23a5852816615">output_save_header</a> (<a class="el" href="structoutput__t.html">output_t</a> *output, FILE *fp, bool binary)</td></tr>
-<tr class="memdesc:gafb8daf5070e9e18929c23a5852816615"><td class="mdescLeft">&#160;</td><td class="mdescRight">Save output tree header.  <a href="#gafb8daf5070e9e18929c23a5852816615">More...</a><br /></td></tr>
-<tr class="separator:gafb8daf5070e9e18929c23a5852816615"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ga1b20d5d256d744b16105b8ab2c544122"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__g__output.html#ga1b20d5d256d744b16105b8ab2c544122">output_save_body</a> (<a class="el" href="structoutput__t.html">output_t</a> *output, FILE *fp, bool binary)</td></tr>
-<tr class="memdesc:ga1b20d5d256d744b16105b8ab2c544122"><td class="mdescLeft">&#160;</td><td class="mdescRight">Save output tree body.  <a href="#ga1b20d5d256d744b16105b8ab2c544122">More...</a><br /></td></tr>
-<tr class="separator:ga1b20d5d256d744b16105b8ab2c544122"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga8967195519c7016b7eab8c38756fffa4"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__g__output.html#ga8967195519c7016b7eab8c38756fffa4">output_load_header</a> (<a class="el" href="structoutput__t.html">output_t</a> **output, int version, FILE *fp, <a class="el" href="group__g__connlm.html#ga27bb4962c19c1ac9c66c27d5d2de9a73">connlm_fmt_t</a> *fmt, FILE *fo)</td></tr>
+<tr class="memdesc:ga8967195519c7016b7eab8c38756fffa4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Load output tree header and initialise a new output tree.  <a href="#ga8967195519c7016b7eab8c38756fffa4">More...</a><br /></td></tr>
+<tr class="separator:ga8967195519c7016b7eab8c38756fffa4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gaa9ea340d56052060e9196dc733e24cde"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__g__output.html#gaa9ea340d56052060e9196dc733e24cde">output_load_body</a> (<a class="el" href="structoutput__t.html">output_t</a> *output, int version, FILE *fp, <a class="el" href="group__g__connlm.html#ga27bb4962c19c1ac9c66c27d5d2de9a73">connlm_fmt_t</a> fmt)</td></tr>
+<tr class="memdesc:gaa9ea340d56052060e9196dc733e24cde"><td class="mdescLeft">&#160;</td><td class="mdescRight">Load output tree body.  <a href="#gaa9ea340d56052060e9196dc733e24cde">More...</a><br /></td></tr>
+<tr class="separator:gaa9ea340d56052060e9196dc733e24cde"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga088d921dd684c390936bf298884a74f6"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__g__output.html#ga088d921dd684c390936bf298884a74f6">output_save_header</a> (<a class="el" href="structoutput__t.html">output_t</a> *output, FILE *fp, <a class="el" href="group__g__connlm.html#ga27bb4962c19c1ac9c66c27d5d2de9a73">connlm_fmt_t</a> fmt)</td></tr>
+<tr class="memdesc:ga088d921dd684c390936bf298884a74f6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Save output tree header.  <a href="#ga088d921dd684c390936bf298884a74f6">More...</a><br /></td></tr>
+<tr class="separator:ga088d921dd684c390936bf298884a74f6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga5a769a40ca74c81b998ef28c494c7321"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__g__output.html#ga5a769a40ca74c81b998ef28c494c7321">output_save_body</a> (<a class="el" href="structoutput__t.html">output_t</a> *output, FILE *fp, <a class="el" href="group__g__connlm.html#ga27bb4962c19c1ac9c66c27d5d2de9a73">connlm_fmt_t</a> fmt)</td></tr>
+<tr class="memdesc:ga5a769a40ca74c81b998ef28c494c7321"><td class="mdescLeft">&#160;</td><td class="mdescRight">Save output tree body.  <a href="#ga5a769a40ca74c81b998ef28c494c7321">More...</a><br /></td></tr>
+<tr class="separator:ga5a769a40ca74c81b998ef28c494c7321"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga91742671d4d03a5a6a29417c4e4d1456"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structoutput__t.html">output_t</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__g__output.html#ga91742671d4d03a5a6a29417c4e4d1456">output_generate</a> (<a class="el" href="structoutput__opt__t.html">output_opt_t</a> *output_opt, count_t *word_cnts, int output_size)</td></tr>
 <tr class="memdesc:ga91742671d4d03a5a6a29417c4e4d1456"><td class="mdescLeft">&#160;</td><td class="mdescRight">Generate output tree with word counts.  <a href="#ga91742671d4d03a5a6a29417c4e4d1456">More...</a><br /></td></tr>
 <tr class="separator:ga91742671d4d03a5a6a29417c4e4d1456"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -231,7 +257,7 @@ Functions</h2></td></tr>
 <b>Value:</b><div class="fragment"><div class="line"><span class="keywordflow">do</span> {\</div>
 <div class="line">    if((ptr) != NULL) {\</div>
 <div class="line">        output_destroy(ptr);\</div>
-<div class="line">        safe_free(ptr);\</div>
+<div class="line">        safe_st_free(ptr);\</div>
 <div class="line">        (ptr) = NULL;\</div>
 <div class="line">    }\</div>
 <div class="line">    } <span class="keywordflow">while</span>(0)</div>
@@ -240,6 +266,68 @@ Functions</h2></td></tr>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramdir">[in]</td><td class="paramname">ptr</td><td>pointer to <a class="el" href="structoutput__t.html" title="Output Layer. ">output_t</a>. </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a class="anchor" id="gac7c120379f8171f12ca88ff4cf79cd10"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">#define safe_output_tree_bfs_aux_destroy</td>
+          <td>(</td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname">ptr</td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<b>Value:</b><div class="fragment"><div class="line"><span class="keywordflow">do</span> {\</div>
+<div class="line">    if((ptr) != NULL) {\</div>
+<div class="line">        output_tree_bfs_aux_destroy(ptr);\</div>
+<div class="line">        safe_st_free(ptr);\</div>
+<div class="line">        (ptr) = NULL;\</div>
+<div class="line">    }\</div>
+<div class="line">    } <span class="keywordflow">while</span>(0)</div>
+</div><!-- fragment -->
+<p>Destroy a output tree bfs aux and set the pointer to NULL. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">ptr</td><td>pointer to <a class="el" href="structoutput__tree__bfs__aux__t.html" title="aux data for output tree BFS. ">output_tree_bfs_aux_t</a>. </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a class="anchor" id="ga6738c53cc8d216e7dc49227704c9fc14"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">#define safe_output_tree_dfs_aux_destroy</td>
+          <td>(</td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname">ptr</td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<b>Value:</b><div class="fragment"><div class="line"><span class="keywordflow">do</span> {\</div>
+<div class="line">    if((ptr) != NULL) {\</div>
+<div class="line">        output_tree_dfs_aux_destroy(ptr);\</div>
+<div class="line">        safe_st_free(ptr);\</div>
+<div class="line">        (ptr) = NULL;\</div>
+<div class="line">    }\</div>
+<div class="line">    } <span class="keywordflow">while</span>(0)</div>
+</div><!-- fragment -->
+<p>Destroy a output tree dfs aux and set the pointer to NULL. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">ptr</td><td>pointer to <a class="el" href="structoutput__tree__dfs__aux__t.html" title="aux data for output tree DFS. ">output_tree_dfs_aux_t</a>. </td></tr>
   </table>
   </dd>
 </dl>
@@ -301,42 +389,6 @@ Functions</h2></td></tr>
 </div>
 </div>
 <h2 class="groupheader">Function Documentation</h2>
-<a class="anchor" id="ga02349bb14d51c8d43f1fcc8435ff3701"></a>
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname"><a class="el" href="structoutput__t.html">output_t</a>* output_create </td>
-          <td>(</td>
-          <td class="paramtype"><a class="el" href="structoutput__opt__t.html">output_opt_t</a> *&#160;</td>
-          <td class="paramname"><em>output_opt</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">int&#160;</td>
-          <td class="paramname"><em>output_size</em>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Create a output tree with options. </p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramdir">[in]</td><td class="paramname">output_opt</td><td>options. </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">output_size</td><td>size of output tree. </td></tr>
-  </table>
-  </dd>
-</dl>
-<dl class="section return"><dt>Returns</dt><dd>a new output tree. </dd></dl>
-
-</div>
-</div>
 <a class="anchor" id="gaaba46bcc5082c8209c35a2ffe1023c6d"></a>
 <div class="memitem">
 <div class="memproto">
@@ -576,7 +628,7 @@ Functions</h2></td></tr>
 
 </div>
 </div>
-<a class="anchor" id="ga40b621b4ba8f802702502c3afe42ab97"></a>
+<a class="anchor" id="gaa9ea340d56052060e9196dc733e24cde"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
@@ -601,8 +653,8 @@ Functions</h2></td></tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">bool&#160;</td>
-          <td class="paramname"><em>binary</em>&#160;</td>
+          <td class="paramtype"><a class="el" href="group__g__connlm.html#ga27bb4962c19c1ac9c66c27d5d2de9a73">connlm_fmt_t</a>&#160;</td>
+          <td class="paramname"><em>fmt</em>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -618,18 +670,18 @@ Functions</h2></td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">output</td><td>output tree to be loaded. </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">version</td><td>file version of loading file. </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">fp</td><td>file stream loaded from. </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">binary</td><td>whether to use binary format. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">fmt</td><td>storage format. </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section see"><dt>See also</dt><dd><a class="el" href="group__g__output.html#gab67c24ec2c919b6c9b5c97081624b758" title="Load output tree header and initialise a new output tree. ">output_load_header</a> </dd>
+<dl class="section see"><dt>See also</dt><dd><a class="el" href="group__g__output.html#ga8967195519c7016b7eab8c38756fffa4" title="Load output tree header and initialise a new output tree. ">output_load_header</a> </dd>
 <dd>
-<a class="el" href="group__g__output.html#gafb8daf5070e9e18929c23a5852816615" title="Save output tree header. ">output_save_header</a>, <a class="el" href="group__g__output.html#ga1b20d5d256d744b16105b8ab2c544122" title="Save output tree body. ">output_save_body</a> </dd></dl>
+<a class="el" href="group__g__output.html#ga088d921dd684c390936bf298884a74f6" title="Save output tree header. ">output_save_header</a>, <a class="el" href="group__g__output.html#ga5a769a40ca74c81b998ef28c494c7321" title="Save output tree body. ">output_save_body</a> </dd></dl>
 <dl class="section return"><dt>Returns</dt><dd>non-zero value if any error. </dd></dl>
 
 </div>
 </div>
-<a class="anchor" id="gab67c24ec2c919b6c9b5c97081624b758"></a>
+<a class="anchor" id="ga8967195519c7016b7eab8c38756fffa4"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
@@ -654,8 +706,8 @@ Functions</h2></td></tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">bool *&#160;</td>
-          <td class="paramname"><em>binary</em>, </td>
+          <td class="paramtype"><a class="el" href="group__g__connlm.html#ga27bb4962c19c1ac9c66c27d5d2de9a73">connlm_fmt_t</a> *&#160;</td>
+          <td class="paramname"><em>fmt</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
@@ -677,14 +729,14 @@ Functions</h2></td></tr>
     <tr><td class="paramdir">[out]</td><td class="paramname">output</td><td>output tree initialised. </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">version</td><td>file version of loading file. </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">fp</td><td>file stream loaded from. </td></tr>
-    <tr><td class="paramdir">[out]</td><td class="paramname">binary</td><td>whether the file stream is in binary format. </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">fo</td><td>file stream used to print information, if it is not NULL. </td></tr>
+    <tr><td class="paramdir">[out]</td><td class="paramname">fmt</td><td>storage format. </td></tr>
+    <tr><td class="paramdir">[out]</td><td class="paramname">fo</td><td>file stream used to print information, if it is not NULL. </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section see"><dt>See also</dt><dd><a class="el" href="group__g__output.html#ga40b621b4ba8f802702502c3afe42ab97" title="Load output tree body. ">output_load_body</a> </dd>
+<dl class="section see"><dt>See also</dt><dd><a class="el" href="group__g__output.html#gaa9ea340d56052060e9196dc733e24cde" title="Load output tree body. ">output_load_body</a> </dd>
 <dd>
-<a class="el" href="group__g__output.html#gafb8daf5070e9e18929c23a5852816615" title="Save output tree header. ">output_save_header</a>, <a class="el" href="group__g__output.html#ga1b20d5d256d744b16105b8ab2c544122" title="Save output tree body. ">output_save_body</a> </dd></dl>
+<a class="el" href="group__g__output.html#ga088d921dd684c390936bf298884a74f6" title="Save output tree header. ">output_save_header</a>, <a class="el" href="group__g__output.html#ga5a769a40ca74c81b998ef28c494c7321" title="Save output tree body. ">output_save_body</a> </dd></dl>
 <dl class="section return"><dt>Returns</dt><dd>non-zero value if any error. </dd></dl>
 
 </div>
@@ -768,7 +820,7 @@ Functions</h2></td></tr>
 
 </div>
 </div>
-<a class="anchor" id="ga1b20d5d256d744b16105b8ab2c544122"></a>
+<a class="anchor" id="ga5a769a40ca74c81b998ef28c494c7321"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
@@ -787,8 +839,8 @@ Functions</h2></td></tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">bool&#160;</td>
-          <td class="paramname"><em>binary</em>&#160;</td>
+          <td class="paramtype"><a class="el" href="group__g__connlm.html#ga27bb4962c19c1ac9c66c27d5d2de9a73">connlm_fmt_t</a>&#160;</td>
+          <td class="paramname"><em>fmt</em>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -803,18 +855,18 @@ Functions</h2></td></tr>
   <table class="params">
     <tr><td class="paramdir">[in]</td><td class="paramname">output</td><td>output tree to be saved. </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">fp</td><td>file stream saved to. </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">binary</td><td>whether to use binary format. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">fmt</td><td>storage format. </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section see"><dt>See also</dt><dd><a class="el" href="group__g__output.html#gafb8daf5070e9e18929c23a5852816615" title="Save output tree header. ">output_save_header</a> </dd>
+<dl class="section see"><dt>See also</dt><dd><a class="el" href="group__g__output.html#ga088d921dd684c390936bf298884a74f6" title="Save output tree header. ">output_save_header</a> </dd>
 <dd>
-<a class="el" href="group__g__output.html#gab67c24ec2c919b6c9b5c97081624b758" title="Load output tree header and initialise a new output tree. ">output_load_header</a>, <a class="el" href="group__g__output.html#ga40b621b4ba8f802702502c3afe42ab97" title="Load output tree body. ">output_load_body</a> </dd></dl>
+<a class="el" href="group__g__output.html#ga8967195519c7016b7eab8c38756fffa4" title="Load output tree header and initialise a new output tree. ">output_load_header</a>, <a class="el" href="group__g__output.html#gaa9ea340d56052060e9196dc733e24cde" title="Load output tree body. ">output_load_body</a> </dd></dl>
 <dl class="section return"><dt>Returns</dt><dd>non-zero value if any error. </dd></dl>
 
 </div>
 </div>
-<a class="anchor" id="gafb8daf5070e9e18929c23a5852816615"></a>
+<a class="anchor" id="ga088d921dd684c390936bf298884a74f6"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
@@ -833,8 +885,8 @@ Functions</h2></td></tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">bool&#160;</td>
-          <td class="paramname"><em>binary</em>&#160;</td>
+          <td class="paramtype"><a class="el" href="group__g__connlm.html#ga27bb4962c19c1ac9c66c27d5d2de9a73">connlm_fmt_t</a>&#160;</td>
+          <td class="paramname"><em>fmt</em>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -849,13 +901,13 @@ Functions</h2></td></tr>
   <table class="params">
     <tr><td class="paramdir">[in]</td><td class="paramname">output</td><td>output tree to be saved. </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">fp</td><td>file stream saved to. </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">binary</td><td>whether to use binary format. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">fmt</td><td>storage format. </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section see"><dt>See also</dt><dd><a class="el" href="group__g__output.html#ga1b20d5d256d744b16105b8ab2c544122" title="Save output tree body. ">output_save_body</a> </dd>
+<dl class="section see"><dt>See also</dt><dd><a class="el" href="group__g__output.html#ga5a769a40ca74c81b998ef28c494c7321" title="Save output tree body. ">output_save_body</a> </dd>
 <dd>
-<a class="el" href="group__g__output.html#gab67c24ec2c919b6c9b5c97081624b758" title="Load output tree header and initialise a new output tree. ">output_load_header</a>, <a class="el" href="group__g__output.html#ga40b621b4ba8f802702502c3afe42ab97" title="Load output tree body. ">output_load_body</a> </dd></dl>
+<a class="el" href="group__g__output.html#ga8967195519c7016b7eab8c38756fffa4" title="Load output tree header and initialise a new output tree. ">output_load_header</a>, <a class="el" href="group__g__output.html#gaa9ea340d56052060e9196dc733e24cde" title="Load output tree body. ">output_load_body</a> </dd></dl>
 <dl class="section return"><dt>Returns</dt><dd>non-zero value if any error. </dd></dl>
 
 </div>
@@ -882,6 +934,204 @@ Functions</h2></td></tr>
   </dd>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>non-zero value if any error. </dd></dl>
+
+</div>
+</div>
+<a class="anchor" id="ga5d3de33022b23d0f98707fa8277f7374"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int output_tree_bfs </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structoutput__tree__t.html">output_tree_t</a> *&#160;</td>
+          <td class="paramname"><em>tree</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="structoutput__tree__bfs__aux__t.html">output_tree_bfs_aux_t</a> *&#160;</td>
+          <td class="paramname"><em>bfs_aux</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int(*)(<a class="el" href="structoutput__tree__t.html">output_tree_t</a> *tree,                                                                                                                                                   output_node_id_t node, void *args)&#160;</td>
+          <td class="paramname"><em>visitor</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">void *&#160;</td>
+          <td class="paramname"><em>args</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Do BFS on a output tree. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">tree</td><td>the output tree. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">bfs_aux</td><td>aux for bfs. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">visitor</td><td>visitor callback called on every node in path. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">args</td><td>args passed to visitor. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>non-zero value if any error. </dd></dl>
+
+</div>
+</div>
+<a class="anchor" id="gac2437b82fd1f7cd36258d122b3e60f26"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="structoutput__tree__bfs__aux__t.html">output_tree_bfs_aux_t</a>* output_tree_bfs_aux_create </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structoutput__tree__t.html">output_tree_t</a> *&#160;</td>
+          <td class="paramname"><em>tree</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Create a output tree bfs aux. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">tree</td><td>output tree. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>a new output tree bfs aux. </dd></dl>
+
+</div>
+</div>
+<a class="anchor" id="gae0692af9c8c0936878ed2bfbb06162b2"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void output_tree_bfs_aux_destroy </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structoutput__tree__bfs__aux__t.html">output_tree_bfs_aux_t</a> *&#160;</td>
+          <td class="paramname"><em>bfs_aux</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Destroy a output tree bfs aux. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">bfs_aux</td><td>output tree bfs aux to be destroyed. </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a class="anchor" id="gae839cfce64214d23aec7c2a0cf809c3f"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int output_tree_dfs </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structoutput__tree__t.html">output_tree_t</a> *&#160;</td>
+          <td class="paramname"><em>tree</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="structoutput__tree__dfs__aux__t.html">output_tree_dfs_aux_t</a> *&#160;</td>
+          <td class="paramname"><em>dfs_aux</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int(*)(<a class="el" href="structoutput__tree__t.html">output_tree_t</a> *tree, output_node_id_t node,                                                                                                                                                   st_stack_t *stack, void *args)&#160;</td>
+          <td class="paramname"><em>visitor</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">void *&#160;</td>
+          <td class="paramname"><em>args</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Do DFS on a output tree. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">tree</td><td>the output tree. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">dfs_aux</td><td>aux for dfs. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">visitor</td><td>visitor callback called on every node in path. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">args</td><td>args passed to visitor. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>non-zero value if any error. </dd></dl>
+
+</div>
+</div>
+<a class="anchor" id="ga886f33efa8320da0305f827f131564ac"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="structoutput__tree__dfs__aux__t.html">output_tree_dfs_aux_t</a>* output_tree_dfs_aux_create </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structoutput__tree__t.html">output_tree_t</a> *&#160;</td>
+          <td class="paramname"><em>tree</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Create a output tree dfs aux. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">tree</td><td>output tree. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>a new output tree dfs aux. </dd></dl>
+
+</div>
+</div>
+<a class="anchor" id="ga2282da8000e64bcc84e14f7b341ce476"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void output_tree_dfs_aux_destroy </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structoutput__tree__dfs__aux__t.html">output_tree_dfs_aux_t</a> *&#160;</td>
+          <td class="paramname"><em>dfs_aux</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Destroy a output tree dfs aux. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">dfs_aux</td><td>output tree dfs aux to be destroyed. </td></tr>
+  </table>
+  </dd>
+</dl>
 
 </div>
 </div>
@@ -940,7 +1190,7 @@ Functions</h2></td></tr>
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on Fri Oct 28 2016 22:37:23 for connLM by
+    <li class="footer">Generated on Mon May 8 2017 22:10:28 for connLM by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.10 </li>
   </ul>

@@ -31,7 +31,6 @@
 });
 </script><script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js"></script>
 <link href="doxygen.css" rel="stylesheet" type="text/css" />
-<link href="table.css" rel="stylesheet" type="text/css"/>
 </head>
 <body>
 <div id="top"><!-- do not remove this div, it is closed by doxygen! -->
@@ -146,9 +145,9 @@ Functions</h2></td></tr>
 <tr class="memitem:ga78d8edf78ddbeb532fc48bddab5b7acf"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__g__updater__bptt.html#ga78d8edf78ddbeb532fc48bddab5b7acf">bptt_updater_destroy</a> (<a class="el" href="structbptt__updater__t.html">bptt_updater_t</a> *bptt_updater)</td></tr>
 <tr class="memdesc:ga78d8edf78ddbeb532fc48bddab5b7acf"><td class="mdescLeft">&#160;</td><td class="mdescRight">Destroy a bptt_updater.  <a href="#ga78d8edf78ddbeb532fc48bddab5b7acf">More...</a><br /></td></tr>
 <tr class="separator:ga78d8edf78ddbeb532fc48bddab5b7acf"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ga4bd1b4c2a4f85bd6943c0ab046778f42"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structbptt__updater__t.html">bptt_updater_t</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__g__updater__bptt.html#ga4bd1b4c2a4f85bd6943c0ab046778f42">bptt_updater_create</a> (<a class="el" href="structcomponent__t.html">component_t</a> *comp, int cycle_id)</td></tr>
-<tr class="memdesc:ga4bd1b4c2a4f85bd6943c0ab046778f42"><td class="mdescLeft">&#160;</td><td class="mdescRight">Create a bptt_updater.  <a href="#ga4bd1b4c2a4f85bd6943c0ab046778f42">More...</a><br /></td></tr>
-<tr class="separator:ga4bd1b4c2a4f85bd6943c0ab046778f42"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gaf75adcdacdebf45b61893bee7a1333d9"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structbptt__updater__t.html">bptt_updater_t</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__g__updater__bptt.html#gaf75adcdacdebf45b61893bee7a1333d9">bptt_updater_create</a> (<a class="el" href="structcomponent__t.html">component_t</a> *comp, int cycle_id, <a class="el" href="structglue__updater__t.html">glue_updater_t</a> **glue_updaters)</td></tr>
+<tr class="memdesc:gaf75adcdacdebf45b61893bee7a1333d9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Create a bptt_updater.  <a href="#gaf75adcdacdebf45b61893bee7a1333d9">More...</a><br /></td></tr>
+<tr class="separator:gaf75adcdacdebf45b61893bee7a1333d9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:gadd1b5413719ef2ffcaa952364e45bee9"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__g__updater__bptt.html#gadd1b5413719ef2ffcaa952364e45bee9">bptt_updater_reset</a> (<a class="el" href="structbptt__updater__t.html">bptt_updater_t</a> *bptt_updater)</td></tr>
 <tr class="memdesc:gadd1b5413719ef2ffcaa952364e45bee9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Reset a bptt_updater.  <a href="#gadd1b5413719ef2ffcaa952364e45bee9">More...</a><br /></td></tr>
 <tr class="separator:gadd1b5413719ef2ffcaa952364e45bee9"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -173,7 +172,7 @@ Functions</h2></td></tr>
 <b>Value:</b><div class="fragment"><div class="line"><span class="keywordflow">do</span> {\</div>
 <div class="line">    if((ptr) != NULL) {\</div>
 <div class="line">        bptt_updater_destroy(ptr);\</div>
-<div class="line">        safe_free(ptr);\</div>
+<div class="line">        safe_st_free(ptr);\</div>
 <div class="line">        (ptr) = NULL;\</div>
 <div class="line">    }\</div>
 <div class="line">    } <span class="keywordflow">while</span>(0)</div>
@@ -189,7 +188,7 @@ Functions</h2></td></tr>
 </div>
 </div>
 <h2 class="groupheader">Function Documentation</h2>
-<a class="anchor" id="ga4bd1b4c2a4f85bd6943c0ab046778f42"></a>
+<a class="anchor" id="gaf75adcdacdebf45b61893bee7a1333d9"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
@@ -203,7 +202,13 @@ Functions</h2></td></tr>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">int&#160;</td>
-          <td class="paramname"><em>cycle_id</em>&#160;</td>
+          <td class="paramname"><em>cycle_id</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="structglue__updater__t.html">glue_updater_t</a> **&#160;</td>
+          <td class="paramname"><em>glue_updaters</em>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -218,6 +223,7 @@ Functions</h2></td></tr>
   <table class="params">
     <tr><td class="paramdir">[in]</td><td class="paramname">comp</td><td>the component including all glue_cycles. </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">cycle_id</td><td>the id in glue_cycles. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">glue_updaters</td><td>glue updaters. </td></tr>
   </table>
   </dd>
 </dl>
@@ -279,7 +285,7 @@ Functions</h2></td></tr>
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on Fri Oct 28 2016 22:37:23 for connLM by
+    <li class="footer">Generated on Mon May 8 2017 22:10:28 for connLM by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.10 </li>
   </ul>

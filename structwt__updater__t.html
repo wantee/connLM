@@ -31,7 +31,6 @@
 });
 </script><script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js"></script>
 <link href="doxygen.css" rel="stylesheet" type="text/css" />
-<link href="table.css" rel="stylesheet" type="text/css"/>
 </head>
 <body>
 <div id="top"><!-- do not remove this div, it is closed by doxygen! -->
@@ -131,8 +130,9 @@ Collaboration diagram for wt_updater_t:</div>
 <div class="dyncontent">
 <div class="center"><img src="structwt__updater__t__coll__graph.png" border="0" usemap="#wt__updater__t_coll__map" alt="Collaboration graph"/></div>
 <map name="wt__updater__t_coll__map" id="wt__updater__t_coll__map">
-<area shape="rect" id="node2" href="structwt__dirty__buf__t.html" title="Store the dirty part of weight. " alt="" coords="5,5,111,32"/>
-<area shape="rect" id="node3" href="structparam__t.html" title="Parameter. " alt="" coords="135,5,205,32"/>
+<area shape="rect" id="node2" href="structwt__dirty__buf__t.html" title="Store the dirty part of weight. " alt="" coords="5,109,111,136"/>
+<area shape="rect" id="node3" href="structconcat__mat__t.html" title="Concatable Matrix. " alt="" coords="7,5,109,32"/>
+<area shape="rect" id="node4" href="structparam__t.html" title="Parameter. " alt="" coords="135,109,205,136"/>
 </map>
 <center><span class="legend">[<a target="top" href="graph_legend.html">legend</a>]</span></center></div>
 <table class="memberdecls">
@@ -142,23 +142,35 @@ Data Fields</h2></td></tr>
 <tr class="memdesc:a846446d23627fcea36ac2184a4e18e68"><td class="mdescLeft">&#160;</td><td class="mdescRight">the param.  <a href="#a846446d23627fcea36ac2184a4e18e68">More...</a><br /></td></tr>
 <tr class="separator:a846446d23627fcea36ac2184a4e18e68"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a39ec9b10d6150191e665f049812fcbbf"><td class="memItemLeft" align="right" valign="top">real_t *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structwt__updater__t.html#a39ec9b10d6150191e665f049812fcbbf">shared_wt</a></td></tr>
-<tr class="memdesc:a39ec9b10d6150191e665f049812fcbbf"><td class="mdescLeft">&#160;</td><td class="mdescRight">shared weight maxtrix for all updaters.  <a href="#a39ec9b10d6150191e665f049812fcbbf">More...</a><br /></td></tr>
+<tr class="memdesc:a39ec9b10d6150191e665f049812fcbbf"><td class="mdescLeft">&#160;</td><td class="mdescRight">shared weight matrix for all updaters.  <a href="#a39ec9b10d6150191e665f049812fcbbf">More...</a><br /></td></tr>
 <tr class="separator:a39ec9b10d6150191e665f049812fcbbf"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a088b677a4e83998ad8bdc68e76ac46da"><td class="memItemLeft" align="right" valign="top">real_t *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structwt__updater__t.html#a088b677a4e83998ad8bdc68e76ac46da">wt</a></td></tr>
-<tr class="memdesc:a088b677a4e83998ad8bdc68e76ac46da"><td class="mdescLeft">&#160;</td><td class="mdescRight">local weight maxtrix of this updater.  <a href="#a088b677a4e83998ad8bdc68e76ac46da">More...</a><br /></td></tr>
+<tr class="memdesc:a088b677a4e83998ad8bdc68e76ac46da"><td class="mdescLeft">&#160;</td><td class="mdescRight">local weight matrix of this updater.  <a href="#a088b677a4e83998ad8bdc68e76ac46da">More...</a><br /></td></tr>
 <tr class="separator:a088b677a4e83998ad8bdc68e76ac46da"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad286c5c26b20400527b9af29577b1ea1"><td class="memItemLeft" align="right" valign="top">real_t *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structwt__updater__t.html#ad286c5c26b20400527b9af29577b1ea1">ori_wt</a></td></tr>
-<tr class="memdesc:ad286c5c26b20400527b9af29577b1ea1"><td class="mdescLeft">&#160;</td><td class="mdescRight">origin weight maxtrix for sync.  <a href="#ad286c5c26b20400527b9af29577b1ea1">More...</a><br /></td></tr>
+<tr class="memdesc:ad286c5c26b20400527b9af29577b1ea1"><td class="mdescLeft">&#160;</td><td class="mdescRight">origin weight matrix for sync.  <a href="#ad286c5c26b20400527b9af29577b1ea1">More...</a><br /></td></tr>
 <tr class="separator:ad286c5c26b20400527b9af29577b1ea1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af7728de1fd76da1918d3ec5a7e212680"><td class="memItemLeft" align="right" valign="top">real_t *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structwt__updater__t.html#af7728de1fd76da1918d3ec5a7e212680">delta_wt</a></td></tr>
-<tr class="memdesc:af7728de1fd76da1918d3ec5a7e212680"><td class="mdescLeft">&#160;</td><td class="mdescRight">delta weight maxtrix for mini-batch.  <a href="#af7728de1fd76da1918d3ec5a7e212680">More...</a><br /></td></tr>
+<tr class="memdesc:af7728de1fd76da1918d3ec5a7e212680"><td class="mdescLeft">&#160;</td><td class="mdescRight">buffer for delta weight.  <a href="#af7728de1fd76da1918d3ec5a7e212680">More...</a><br /></td></tr>
 <tr class="separator:af7728de1fd76da1918d3ec5a7e212680"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aad60623d36ff5cadf5ab8195d5bb4319"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structwt__updater__t.html#aad60623d36ff5cadf5ab8195d5bb4319">row</a></td></tr>
-<tr class="memdesc:aad60623d36ff5cadf5ab8195d5bb4319"><td class="mdescLeft">&#160;</td><td class="mdescRight">row of weight maxtrix.  <a href="#aad60623d36ff5cadf5ab8195d5bb4319">More...</a><br /></td></tr>
-<tr class="separator:aad60623d36ff5cadf5ab8195d5bb4319"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a27c0ba34686860394212718320872b66"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structwt__updater__t.html#a27c0ba34686860394212718320872b66">col</a></td></tr>
-<tr class="memdesc:a27c0ba34686860394212718320872b66"><td class="mdescLeft">&#160;</td><td class="mdescRight">col of weight maxtrix.  <a href="#a27c0ba34686860394212718320872b66">More...</a><br /></td></tr>
-<tr class="separator:a27c0ba34686860394212718320872b66"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad25a84799aed00ab38ad0f8bacd08a23"><td class="memItemLeft" align="right" valign="top">real_t *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structwt__updater__t.html#ad25a84799aed00ab38ad0f8bacd08a23">shared_bias</a></td></tr>
+<tr class="memdesc:ad25a84799aed00ab38ad0f8bacd08a23"><td class="mdescLeft">&#160;</td><td class="mdescRight">shared bias for all updaters.  <a href="#ad25a84799aed00ab38ad0f8bacd08a23">More...</a><br /></td></tr>
+<tr class="separator:ad25a84799aed00ab38ad0f8bacd08a23"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aae231f8845d9920c9ad709dfc90b3485"><td class="memItemLeft" align="right" valign="top">real_t *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structwt__updater__t.html#aae231f8845d9920c9ad709dfc90b3485">bias</a></td></tr>
+<tr class="memdesc:aae231f8845d9920c9ad709dfc90b3485"><td class="mdescLeft">&#160;</td><td class="mdescRight">local bias of this updater.  <a href="#aae231f8845d9920c9ad709dfc90b3485">More...</a><br /></td></tr>
+<tr class="separator:aae231f8845d9920c9ad709dfc90b3485"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa106b342a691b2eeb23ca16f7b5cf239"><td class="memItemLeft" align="right" valign="top">real_t *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structwt__updater__t.html#aa106b342a691b2eeb23ca16f7b5cf239">ori_bias</a></td></tr>
+<tr class="memdesc:aa106b342a691b2eeb23ca16f7b5cf239"><td class="mdescLeft">&#160;</td><td class="mdescRight">origin bias for sync.  <a href="#aa106b342a691b2eeb23ca16f7b5cf239">More...</a><br /></td></tr>
+<tr class="separator:aa106b342a691b2eeb23ca16f7b5cf239"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a38fdc1036ed1ba47dd70dfa2d4d68f00"><td class="memItemLeft" align="right" valign="top">real_t *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structwt__updater__t.html#a38fdc1036ed1ba47dd70dfa2d4d68f00">delta_bias</a></td></tr>
+<tr class="memdesc:a38fdc1036ed1ba47dd70dfa2d4d68f00"><td class="mdescLeft">&#160;</td><td class="mdescRight">buffer for delta bias.  <a href="#a38fdc1036ed1ba47dd70dfa2d4d68f00">More...</a><br /></td></tr>
+<tr class="separator:a38fdc1036ed1ba47dd70dfa2d4d68f00"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a621f0a552a2c51ecf5acb46b9d83fd69"><td class="memItemLeft" align="right" valign="top">size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structwt__updater__t.html#a621f0a552a2c51ecf5acb46b9d83fd69">row</a></td></tr>
+<tr class="memdesc:a621f0a552a2c51ecf5acb46b9d83fd69"><td class="mdescLeft">&#160;</td><td class="mdescRight">row of weight maxtrix.  <a href="#a621f0a552a2c51ecf5acb46b9d83fd69">More...</a><br /></td></tr>
+<tr class="separator:a621f0a552a2c51ecf5acb46b9d83fd69"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aaed28bae4058183119bb69c203cd4eac"><td class="memItemLeft" align="right" valign="top">size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structwt__updater__t.html#aaed28bae4058183119bb69c203cd4eac">col</a></td></tr>
+<tr class="memdesc:aaed28bae4058183119bb69c203cd4eac"><td class="mdescLeft">&#160;</td><td class="mdescRight">col of weight maxtrix.  <a href="#aaed28bae4058183119bb69c203cd4eac">More...</a><br /></td></tr>
+<tr class="separator:aaed28bae4058183119bb69c203cd4eac"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a135a3914c5790c3ce7f5683c4936e387"><td class="memItemLeft" align="right" valign="top"><a class="el" href="group__g__updater__wt.html#gaf5348900d21226b512f98a9f4f22f8d0">wt_update_type_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structwt__updater__t.html#a135a3914c5790c3ce7f5683c4936e387">type</a></td></tr>
 <tr class="memdesc:a135a3914c5790c3ce7f5683c4936e387"><td class="mdescLeft">&#160;</td><td class="mdescRight">updating type.  <a href="#a135a3914c5790c3ce7f5683c4936e387">More...</a><br /></td></tr>
 <tr class="separator:a135a3914c5790c3ce7f5683c4936e387"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -184,17 +196,46 @@ Data Fields</h2></td></tr>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Output updater. </p>
 </div><h2 class="groupheader">Field Documentation</h2>
-<a class="anchor" id="a27c0ba34686860394212718320872b66"></a>
+<a class="anchor" id="aae231f8845d9920c9ad709dfc90b3485"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">int wt_updater_t::col</td>
+          <td class="memname">real_t* wt_updater_t::bias</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>local bias of this updater. </p>
+
+</div>
+</div>
+<a class="anchor" id="aaed28bae4058183119bb69c203cd4eac"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">size_t wt_updater_t::col</td>
         </tr>
       </table>
 </div><div class="memdoc">
 
 <p>col of weight maxtrix. </p>
+
+</div>
+</div>
+<a class="anchor" id="a38fdc1036ed1ba47dd70dfa2d4d68f00"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">real_t* wt_updater_t::delta_bias</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>buffer for delta bias. </p>
+<p>used by momentum. </p>
 
 </div>
 </div>
@@ -208,7 +249,8 @@ Data Fields</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>delta weight maxtrix for mini-batch. </p>
+<p>buffer for delta weight. </p>
+<p>used by momentum. </p>
 
 </div>
 </div>
@@ -268,6 +310,20 @@ Data Fields</h2></td></tr>
 
 </div>
 </div>
+<a class="anchor" id="aa106b342a691b2eeb23ca16f7b5cf239"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">real_t* wt_updater_t::ori_bias</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>origin bias for sync. </p>
+
+</div>
+</div>
 <a class="anchor" id="ad286c5c26b20400527b9af29577b1ea1"></a>
 <div class="memitem">
 <div class="memproto">
@@ -278,7 +334,7 @@ Data Fields</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>origin weight maxtrix for sync. </p>
+<p>origin weight matrix for sync. </p>
 
 </div>
 </div>
@@ -296,12 +352,12 @@ Data Fields</h2></td></tr>
 
 </div>
 </div>
-<a class="anchor" id="aad60623d36ff5cadf5ab8195d5bb4319"></a>
+<a class="anchor" id="a621f0a552a2c51ecf5acb46b9d83fd69"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">int wt_updater_t::row</td>
+          <td class="memname">size_t wt_updater_t::row</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -324,6 +380,20 @@ Data Fields</h2></td></tr>
 
 </div>
 </div>
+<a class="anchor" id="ad25a84799aed00ab38ad0f8bacd08a23"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">real_t* wt_updater_t::shared_bias</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>shared bias for all updaters. </p>
+
+</div>
+</div>
 <a class="anchor" id="a39ec9b10d6150191e665f049812fcbbf"></a>
 <div class="memitem">
 <div class="memproto">
@@ -334,7 +404,7 @@ Data Fields</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>shared weight maxtrix for all updaters. </p>
+<p>shared weight matrix for all updaters. </p>
 
 </div>
 </div>
@@ -376,7 +446,7 @@ Data Fields</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>local weight maxtrix of this updater. </p>
+<p>local weight matrix of this updater. </p>
 
 </div>
 </div>
@@ -389,7 +459,7 @@ Data Fields</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="structwt__updater__t.html">wt_updater_t</a></li>
-    <li class="footer">Generated on Fri Oct 28 2016 22:37:23 for connLM by
+    <li class="footer">Generated on Mon May 8 2017 22:10:28 for connLM by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.10 </li>
   </ul>

@@ -31,7 +31,6 @@
 });
 </script><script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js"></script>
 <link href="doxygen.css" rel="stylesheet" type="text/css" />
-<link href="table.css" rel="stylesheet" type="text/css"/>
 </head>
 <body>
 <div id="top"><!-- do not remove this div, it is closed by doxygen! -->
@@ -144,7 +143,7 @@ Data Fields</h2></td></tr>
 <tr class="memdesc:a25a8ee731394d8b205ae7742c1397a3a"><td class="mdescLeft">&#160;</td><td class="mdescRight">output tree options.  <a href="#a25a8ee731394d8b205ae7742c1397a3a">More...</a><br /></td></tr>
 <tr class="separator:a25a8ee731394d8b205ae7742c1397a3a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8dadbf2b03d5cf2b1ee248be00c197bc"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structoutput__t.html#a8dadbf2b03d5cf2b1ee248be00c197bc">output_size</a></td></tr>
-<tr class="memdesc:a8dadbf2b03d5cf2b1ee248be00c197bc"><td class="mdescLeft">&#160;</td><td class="mdescRight">size of output tree.  <a href="#a8dadbf2b03d5cf2b1ee248be00c197bc">More...</a><br /></td></tr>
+<tr class="memdesc:a8dadbf2b03d5cf2b1ee248be00c197bc"><td class="mdescLeft">&#160;</td><td class="mdescRight">size of output layer.  <a href="#a8dadbf2b03d5cf2b1ee248be00c197bc">More...</a><br /></td></tr>
 <tr class="separator:a8dadbf2b03d5cf2b1ee248be00c197bc"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a7693dbc1c41c501f5e3ebf97a8708c5a"><td class="memItemLeft" align="right" valign="top"><a class="el" href="group__g__output.html#ga4da767c47935a3d8240cb0a1572c35d4">output_norm_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structoutput__t.html#a7693dbc1c41c501f5e3ebf97a8708c5a">norm</a></td></tr>
 <tr class="memdesc:a7693dbc1c41c501f5e3ebf97a8708c5a"><td class="mdescLeft">&#160;</td><td class="mdescRight">normalization method.  <a href="#a7693dbc1c41c501f5e3ebf97a8708c5a">More...</a><br /></td></tr>
@@ -155,6 +154,9 @@ Data Fields</h2></td></tr>
 <tr class="memitem:a6897e78e6d43a343abfbca6dcb5763bf"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structoutput__path__t.html">output_path_t</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structoutput__t.html#a6897e78e6d43a343abfbca6dcb5763bf">paths</a></td></tr>
 <tr class="memdesc:a6897e78e6d43a343abfbca6dcb5763bf"><td class="mdescLeft">&#160;</td><td class="mdescRight">Store a path for every leaf(word) node.  <a href="#a6897e78e6d43a343abfbca6dcb5763bf">More...</a><br /></td></tr>
 <tr class="separator:a6897e78e6d43a343abfbca6dcb5763bf"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a77f42b565a5f58d6d7f1f8f12487140e"><td class="memItemLeft" align="right" valign="top">output_node_id_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structoutput__t.html#a77f42b565a5f58d6d7f1f8f12487140e">unk_root</a></td></tr>
+<tr class="memdesc:a77f42b565a5f58d6d7f1f8f12487140e"><td class="mdescLeft">&#160;</td><td class="mdescRight">root of subtree with only one path towards &lt;unk&gt;.  <a href="#a77f42b565a5f58d6d7f1f8f12487140e">More...</a><br /></td></tr>
+<tr class="separator:a77f42b565a5f58d6d7f1f8f12487140e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aee96c36dbcece0597746703babbff2d7"><td class="memItemLeft" align="right" valign="top">output_node_id_t *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structoutput__t.html#aee96c36dbcece0597746703babbff2d7">param_map</a></td></tr>
 <tr class="memdesc:aee96c36dbcece0597746703babbff2d7"><td class="mdescLeft">&#160;</td><td class="mdescRight">map a node to index in param weight(used by Softmax).  <a href="#aee96c36dbcece0597746703babbff2d7">More...</a><br /></td></tr>
 <tr class="separator:aee96c36dbcece0597746703babbff2d7"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -217,7 +219,7 @@ Data Fields</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>size of output tree. </p>
+<p>size of output layer. </p>
 
 </div>
 </div>
@@ -263,6 +265,20 @@ Data Fields</h2></td></tr>
 
 </div>
 </div>
+<a class="anchor" id="a77f42b565a5f58d6d7f1f8f12487140e"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">output_node_id_t output_t::unk_root</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>root of subtree with only one path towards &lt;unk&gt;. </p>
+
+</div>
+</div>
 <hr/>The documentation for this struct was generated from the following file:<ul>
 <li><a class="el" href="output_8h_source.html">output.h</a></li>
 </ul>
@@ -272,7 +288,7 @@ Data Fields</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="structoutput__t.html">output_t</a></li>
-    <li class="footer">Generated on Fri Oct 28 2016 22:37:23 for connLM by
+    <li class="footer">Generated on Mon May 8 2017 22:10:28 for connLM by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.10 </li>
   </ul>

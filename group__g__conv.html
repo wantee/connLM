@@ -31,7 +31,6 @@
 });
 </script><script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js"></script>
 <link href="doxygen.css" rel="stylesheet" type="text/css" />
-<link href="table.css" rel="stylesheet" type="text/css"/>
 </head>
 <body>
 <div id="top"><!-- do not remove this div, it is closed by doxygen! -->
@@ -90,7 +89,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
   </div>
 </div>
 <script type="text/javascript">
-$(document).ready(function(){initNavTree('group__g__converter.html','');});
+$(document).ready(function(){initNavTree('group__g__conv.html','');});
 </script>
 <div id="doc-content">
 <!-- window showing the filter options -->
@@ -111,6 +110,7 @@ $(document).ready(function(){initNavTree('group__g__converter.html','');});
   <div class="summary">
 <a href="#nested-classes">Data Structures</a> &#124;
 <a href="#define-members">Macros</a> &#124;
+<a href="#enum-members">Enumerations</a> &#124;
 <a href="#func-members">Functions</a>  </div>
   <div class="headertitle">
 <div class="title">connLM to WFST Converter</div>  </div>
@@ -122,43 +122,58 @@ $(document).ready(function(){initNavTree('group__g__converter.html','');});
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="nested-classes"></a>
 Data Structures</h2></td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structfst__converter__opt__t.html">fst_converter_opt_t</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Options for converter.  <a href="structfst__converter__opt__t.html#details">More...</a><br /></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structfst__conv__opt__t.html">fst_conv_opt_t</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Options for converter.  <a href="structfst__conv__opt__t.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structfst__converter__t.html">fst_converter_t</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">FST Converter.  <a href="structfst__converter__t.html#details">More...</a><br /></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structfst__state__t.html">fst_state_t</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">FST State.  <a href="structfst__state__t.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structfst__state__children__t.html">fst_state_children_t</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">children states of a FST State.  <a href="structfst__state__children__t.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structfst__conv__t.html">fst_conv_t</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">FST Converter.  <a href="structfst__conv__t.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="define-members"></a>
 Macros</h2></td></tr>
-<tr class="memitem:gaaa2d84061620805e6b019a0484142585"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__g__converter.html#gaaa2d84061620805e6b019a0484142585">safe_fst_converter_destroy</a>(ptr)</td></tr>
-<tr class="memdesc:gaaa2d84061620805e6b019a0484142585"><td class="mdescLeft">&#160;</td><td class="mdescRight">Destroy a fst converter and set the pointer to NULL.  <a href="#gaaa2d84061620805e6b019a0484142585">More...</a><br /></td></tr>
-<tr class="separator:gaaa2d84061620805e6b019a0484142585"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gac365f31a98018b95ae71e50716b43735"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__g__conv.html#gac365f31a98018b95ae71e50716b43735">safe_fst_conv_destroy</a>(ptr)</td></tr>
+<tr class="memdesc:gac365f31a98018b95ae71e50716b43735"><td class="mdescLeft">&#160;</td><td class="mdescRight">Destroy a fst converter and set the pointer to NULL.  <a href="#gac365f31a98018b95ae71e50716b43735">More...</a><br /></td></tr>
+<tr class="separator:gac365f31a98018b95ae71e50716b43735"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="enum-members"></a>
+Enumerations</h2></td></tr>
+<tr class="memitem:ga4ba7e85411d65f860c375a2e46f377b3"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__g__conv.html#ga4ba7e85411d65f860c375a2e46f377b3">ws_method_t</a> { <a class="el" href="group__g__conv.html#gga4ba7e85411d65f860c375a2e46f377b3acc450ac0e2db39f6a1d64dcedb306043">WSM_UNKNOWN</a> = -1, 
+<a class="el" href="group__g__conv.html#gga4ba7e85411d65f860c375a2e46f377b3aeabb23fa2af4e59215aaffbf5ec281a0">WSM_BEAM</a> = 0, 
+<a class="el" href="group__g__conv.html#gga4ba7e85411d65f860c375a2e46f377b3ad185db167664cd02f798f9778502625e">WSM_MAJORITY</a> = 1
+ }<tr class="memdesc:ga4ba7e85411d65f860c375a2e46f377b3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Type of word selection method.  <a href="group__g__conv.html#ga4ba7e85411d65f860c375a2e46f377b3">More...</a><br /></td></tr>
+<tr class="separator:ga4ba7e85411d65f860c375a2e46f377b3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="func-members"></a>
 Functions</h2></td></tr>
-<tr class="memitem:ga8a128fdabc27d15bac7c1990abb5e5f4"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__g__converter.html#ga8a128fdabc27d15bac7c1990abb5e5f4">fst_converter_load_opt</a> (<a class="el" href="structfst__converter__opt__t.html">fst_converter_opt_t</a> *converter_opt, st_opt_t *opt, const char *sec_name)</td></tr>
-<tr class="memdesc:ga8a128fdabc27d15bac7c1990abb5e5f4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Load converter option.  <a href="#ga8a128fdabc27d15bac7c1990abb5e5f4">More...</a><br /></td></tr>
-<tr class="separator:ga8a128fdabc27d15bac7c1990abb5e5f4"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ga10ac7243aacd083c1c42d77619559588"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__g__converter.html#ga10ac7243aacd083c1c42d77619559588">fst_converter_destroy</a> (<a class="el" href="structfst__converter__t.html">fst_converter_t</a> *converter)</td></tr>
-<tr class="memdesc:ga10ac7243aacd083c1c42d77619559588"><td class="mdescLeft">&#160;</td><td class="mdescRight">Destroy a fst converter.  <a href="#ga10ac7243aacd083c1c42d77619559588">More...</a><br /></td></tr>
-<tr class="separator:ga10ac7243aacd083c1c42d77619559588"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ga346ce93a80836c62d3a9f5a7161f331f"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structfst__converter__t.html">fst_converter_t</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__g__converter.html#ga346ce93a80836c62d3a9f5a7161f331f">fst_converter_create</a> (<a class="el" href="structconnlm__t.html">connlm_t</a> *connlm, int n_thr, <a class="el" href="structfst__converter__opt__t.html">fst_converter_opt_t</a> *converter_opt)</td></tr>
-<tr class="memdesc:ga346ce93a80836c62d3a9f5a7161f331f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Create a fst converter.  <a href="#ga346ce93a80836c62d3a9f5a7161f331f">More...</a><br /></td></tr>
-<tr class="separator:ga346ce93a80836c62d3a9f5a7161f331f"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ga1fd452106513fcf4f3940f02c80dfec5"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__g__converter.html#ga1fd452106513fcf4f3940f02c80dfec5">fst_converter_convert</a> (<a class="el" href="structfst__converter__t.html">fst_converter_t</a> *converter, FILE *fst_fp)</td></tr>
-<tr class="memdesc:ga1fd452106513fcf4f3940f02c80dfec5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Convert the connLM model to WFST.  <a href="#ga1fd452106513fcf4f3940f02c80dfec5">More...</a><br /></td></tr>
-<tr class="separator:ga1fd452106513fcf4f3940f02c80dfec5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga8eeca96157774a996ae4cdbba2647183"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__g__conv.html#ga8eeca96157774a996ae4cdbba2647183">fst_conv_load_opt</a> (<a class="el" href="structfst__conv__opt__t.html">fst_conv_opt_t</a> *conv_opt, st_opt_t *opt, const char *sec_name)</td></tr>
+<tr class="memdesc:ga8eeca96157774a996ae4cdbba2647183"><td class="mdescLeft">&#160;</td><td class="mdescRight">Load converter option.  <a href="#ga8eeca96157774a996ae4cdbba2647183">More...</a><br /></td></tr>
+<tr class="separator:ga8eeca96157774a996ae4cdbba2647183"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gae802006c2cb7a9e3b32c478c66f77858"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__g__conv.html#gae802006c2cb7a9e3b32c478c66f77858">fst_conv_destroy</a> (<a class="el" href="structfst__conv__t.html">fst_conv_t</a> *conv)</td></tr>
+<tr class="memdesc:gae802006c2cb7a9e3b32c478c66f77858"><td class="mdescLeft">&#160;</td><td class="mdescRight">Destroy a fst converter.  <a href="#gae802006c2cb7a9e3b32c478c66f77858">More...</a><br /></td></tr>
+<tr class="separator:gae802006c2cb7a9e3b32c478c66f77858"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga24afe850866a383c5cac8d1e66e1c7e5"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structfst__conv__t.html">fst_conv_t</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__g__conv.html#ga24afe850866a383c5cac8d1e66e1c7e5">fst_conv_create</a> (<a class="el" href="structconnlm__t.html">connlm_t</a> *connlm, int n_thr, <a class="el" href="structfst__conv__opt__t.html">fst_conv_opt_t</a> *conv_opt)</td></tr>
+<tr class="memdesc:ga24afe850866a383c5cac8d1e66e1c7e5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Create a fst converter.  <a href="#ga24afe850866a383c5cac8d1e66e1c7e5">More...</a><br /></td></tr>
+<tr class="separator:ga24afe850866a383c5cac8d1e66e1c7e5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gab80f077aea08f82d3d06de674fb734b6"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__g__conv.html#gab80f077aea08f82d3d06de674fb734b6">fst_conv_convert</a> (<a class="el" href="structfst__conv__t.html">fst_conv_t</a> *conv, FILE *fst_fp)</td></tr>
+<tr class="memdesc:gab80f077aea08f82d3d06de674fb734b6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Convert the connLM model to WFST.  <a href="#gab80f077aea08f82d3d06de674fb734b6">More...</a><br /></td></tr>
+<tr class="separator:gab80f077aea08f82d3d06de674fb734b6"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <p>Convert a connLM model to WFST. </p>
 <h2 class="groupheader">Macro Definition Documentation</h2>
-<a class="anchor" id="gaaa2d84061620805e6b019a0484142585"></a>
+<a class="anchor" id="gac365f31a98018b95ae71e50716b43735"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">#define safe_fst_converter_destroy</td>
+          <td class="memname">#define safe_fst_conv_destroy</td>
           <td>(</td>
           <td class="paramtype">&#160;</td>
           <td class="paramname">ptr</td><td>)</td>
@@ -168,8 +183,8 @@ Functions</h2></td></tr>
 </div><div class="memdoc">
 <b>Value:</b><div class="fragment"><div class="line"><span class="keywordflow">do</span> {\</div>
 <div class="line">    if((ptr) != NULL) {\</div>
-<div class="line">        fst_converter_destroy(ptr);\</div>
-<div class="line">        safe_free(ptr);\</div>
+<div class="line">        fst_conv_destroy(ptr);\</div>
+<div class="line">        safe_st_free(ptr);\</div>
 <div class="line">        (ptr) = NULL;\</div>
 <div class="line">    }\</div>
 <div class="line">    } <span class="keywordflow">while</span>(0)</div>
@@ -177,23 +192,51 @@ Functions</h2></td></tr>
 <p>Destroy a fst converter and set the pointer to NULL. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramdir">[in]</td><td class="paramname">ptr</td><td>pointer to <a class="el" href="structfst__converter__t.html" title="FST Converter. ">fst_converter_t</a>. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">ptr</td><td>pointer to <a class="el" href="structfst__conv__t.html" title="FST Converter. ">fst_conv_t</a>. </td></tr>
   </table>
   </dd>
 </dl>
 
 </div>
 </div>
-<h2 class="groupheader">Function Documentation</h2>
-<a class="anchor" id="ga1fd452106513fcf4f3940f02c80dfec5"></a>
+<h2 class="groupheader">Enumeration Type Documentation</h2>
+<a class="anchor" id="ga4ba7e85411d65f860c375a2e46f377b3"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">int fst_converter_convert </td>
+          <td class="memname">enum <a class="el" href="group__g__conv.html#ga4ba7e85411d65f860c375a2e46f377b3">ws_method_t</a></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Type of word selection method. </p>
+<table class="fieldtable">
+<tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a class="anchor" id="gga4ba7e85411d65f860c375a2e46f377b3acc450ac0e2db39f6a1d64dcedb306043"></a>WSM_UNKNOWN&#160;</td><td class="fielddoc">
+<p>Unknown method. </p>
+</td></tr>
+<tr><td class="fieldname"><a class="anchor" id="gga4ba7e85411d65f860c375a2e46f377b3aeabb23fa2af4e59215aaffbf5ec281a0"></a>WSM_BEAM&#160;</td><td class="fielddoc">
+<p>Beam method. </p>
+<p>Select words with probabilty larger than max_prob - beam. </p>
+</td></tr>
+<tr><td class="fieldname"><a class="anchor" id="gga4ba7e85411d65f860c375a2e46f377b3ad185db167664cd02f798f9778502625e"></a>WSM_MAJORITY&#160;</td><td class="fielddoc">
+<p>Majority method. </p>
+<p>Select words with total probabilty larger than a threshold. </p>
+</td></tr>
+</table>
+
+</div>
+</div>
+<h2 class="groupheader">Function Documentation</h2>
+<a class="anchor" id="gab80f077aea08f82d3d06de674fb734b6"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int fst_conv_convert </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="structfst__converter__t.html">fst_converter_t</a> *&#160;</td>
-          <td class="paramname"><em>converter</em>, </td>
+          <td class="paramtype"><a class="el" href="structfst__conv__t.html">fst_conv_t</a> *&#160;</td>
+          <td class="paramname"><em>conv</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
@@ -212,7 +255,7 @@ Functions</h2></td></tr>
 <p>Convert the connLM model to WFST. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramdir">[in]</td><td class="paramname">converter</td><td>the fst converter. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">conv</td><td>the fst converter. </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">fst_fp</td><td>stream to print out the WFST. </td></tr>
   </table>
   </dd>
@@ -221,12 +264,12 @@ Functions</h2></td></tr>
 
 </div>
 </div>
-<a class="anchor" id="ga346ce93a80836c62d3a9f5a7161f331f"></a>
+<a class="anchor" id="ga24afe850866a383c5cac8d1e66e1c7e5"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="structfst__converter__t.html">fst_converter_t</a>* fst_converter_create </td>
+          <td class="memname"><a class="el" href="structfst__conv__t.html">fst_conv_t</a>* fst_conv_create </td>
           <td>(</td>
           <td class="paramtype"><a class="el" href="structconnlm__t.html">connlm_t</a> *&#160;</td>
           <td class="paramname"><em>connlm</em>, </td>
@@ -240,8 +283,8 @@ Functions</h2></td></tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="structfst__converter__opt__t.html">fst_converter_opt_t</a> *&#160;</td>
-          <td class="paramname"><em>converter_opt</em>&#160;</td>
+          <td class="paramtype"><a class="el" href="structfst__conv__opt__t.html">fst_conv_opt_t</a> *&#160;</td>
+          <td class="paramname"><em>conv_opt</em>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -256,7 +299,7 @@ Functions</h2></td></tr>
   <table class="params">
     <tr><td class="paramdir">[in]</td><td class="paramname">connlm</td><td>the connlm model. </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">n_thr</td><td>number of worker threads. </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">converter_opt</td><td>options for convert. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">conv_opt</td><td>options for convert. </td></tr>
   </table>
   </dd>
 </dl>
@@ -264,15 +307,15 @@ Functions</h2></td></tr>
 
 </div>
 </div>
-<a class="anchor" id="ga10ac7243aacd083c1c42d77619559588"></a>
+<a class="anchor" id="gae802006c2cb7a9e3b32c478c66f77858"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">void fst_converter_destroy </td>
+          <td class="memname">void fst_conv_destroy </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="structfst__converter__t.html">fst_converter_t</a> *&#160;</td>
-          <td class="paramname"><em>converter</em></td><td>)</td>
+          <td class="paramtype"><a class="el" href="structfst__conv__t.html">fst_conv_t</a> *&#160;</td>
+          <td class="paramname"><em>conv</em></td><td>)</td>
           <td></td>
         </tr>
       </table>
@@ -281,22 +324,22 @@ Functions</h2></td></tr>
 <p>Destroy a fst converter. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramdir">[in]</td><td class="paramname">converter</td><td>converter to be destroyed. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">conv</td><td>converter to be destroyed. </td></tr>
   </table>
   </dd>
 </dl>
 
 </div>
 </div>
-<a class="anchor" id="ga8a128fdabc27d15bac7c1990abb5e5f4"></a>
+<a class="anchor" id="ga8eeca96157774a996ae4cdbba2647183"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">int fst_converter_load_opt </td>
+          <td class="memname">int fst_conv_load_opt </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="structfst__converter__opt__t.html">fst_converter_opt_t</a> *&#160;</td>
-          <td class="paramname"><em>converter_opt</em>, </td>
+          <td class="paramtype"><a class="el" href="structfst__conv__opt__t.html">fst_conv_opt_t</a> *&#160;</td>
+          <td class="paramname"><em>conv_opt</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
@@ -321,7 +364,7 @@ Functions</h2></td></tr>
 <p>Load converter option. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramdir">[out]</td><td class="paramname">converter_opt</td><td>options to be loaded. </td></tr>
+    <tr><td class="paramdir">[out]</td><td class="paramname">conv_opt</td><td>options to be loaded. </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">opt</td><td>runtime options passed by caller. </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">sec_name</td><td>section name of runtime options to be loaded. </td></tr>
   </table>
@@ -336,7 +379,7 @@ Functions</h2></td></tr>
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on Fri Oct 28 2016 22:37:23 for connLM by
+    <li class="footer">Generated on Mon May 8 2017 22:10:28 for connLM by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.10 </li>
   </ul>

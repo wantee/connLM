@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['driver_5fmode_5ft',['driver_mode_t',['../group__g__driver.html#ga21eeeb986c6bffaf1818974a800cf2fc',1,'driver.h']]]
+  ['bloom_5ffilter_5fformat_5ft',['bloom_filter_format_t',['../group__g__bloom__filter.html#gaecc1469e655ca96c3c738dac5f57ad4c',1,'bloom_filter.h']]]
 ];

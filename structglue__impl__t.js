@@ -7,10 +7,11 @@ var structglue__impl__t =
     [ "init", "structglue__impl__t.html#af1ec004f53aec63850652c40897b6911", null ],
     [ "init_data", "structglue__impl__t.html#a93a376870ae787e89583d4379912727e", null ],
     [ "init_wt_updater", "structglue__impl__t.html#ab2e8a29216f70a239d74ae80c3152dc4", null ],
-    [ "load_body", "structglue__impl__t.html#ad0ad98275fac9b3bc91b74d81b9c22ba", null ],
-    [ "load_header", "structglue__impl__t.html#ae6eddd4ff3c7aaabec5e0203f45cfc8f", null ],
+    [ "load_body", "structglue__impl__t.html#aa24df9943d99310cf1f9d221bcb3fa0c", null ],
+    [ "load_header", "structglue__impl__t.html#a869aa2213773450a705a02493c895e33", null ],
     [ "parse_topo", "structglue__impl__t.html#a56047588ab9dd968e1f3ab2430aa2c57", null ],
-    [ "save_body", "structglue__impl__t.html#ad77e6a0200a7203d9ea044c12a8c32d2", null ],
-    [ "save_header", "structglue__impl__t.html#afc051f35be62b47e68c9db167bad80f5", null ],
+    [ "print_verbose_info", "structglue__impl__t.html#a0130a4cda068cb0b21ee38219e255264", null ],
+    [ "save_body", "structglue__impl__t.html#a203ae6b9be52a35b9ea62c2997c0e151", null ],
+    [ "save_header", "structglue__impl__t.html#a4a184dce3db2a20d7a2664ac147045d9", null ],
     [ "type", "structglue__impl__t.html#a08cb4b5778c02e5895001e4e9816b700", null ]
 ];

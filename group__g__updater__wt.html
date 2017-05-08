@@ -31,7 +31,6 @@
 });
 </script><script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js"></script>
 <link href="doxygen.css" rel="stylesheet" type="text/css" />
-<link href="table.css" rel="stylesheet" type="text/css"/>
 </head>
 <body>
 <div id="top"><!-- do not remove this div, it is closed by doxygen! -->
@@ -167,9 +166,9 @@ Functions</h2></td></tr>
 <tr class="memitem:ga9bbb66927dd0cb3ad5e34902563a3675"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__g__updater__wt.html#ga9bbb66927dd0cb3ad5e34902563a3675">wt_updater_destroy</a> (<a class="el" href="structwt__updater__t.html">wt_updater_t</a> *wt_updater)</td></tr>
 <tr class="memdesc:ga9bbb66927dd0cb3ad5e34902563a3675"><td class="mdescLeft">&#160;</td><td class="mdescRight">Destroy a wt_updater.  <a href="#ga9bbb66927dd0cb3ad5e34902563a3675">More...</a><br /></td></tr>
 <tr class="separator:ga9bbb66927dd0cb3ad5e34902563a3675"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ga69dc0532c924f32c2eea80adbbba4c5a"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structwt__updater__t.html">wt_updater_t</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__g__updater__wt.html#ga69dc0532c924f32c2eea80adbbba4c5a">wt_updater_create</a> (<a class="el" href="structparam__t.html">param_t</a> *param, real_t *wt, int row, int col, <a class="el" href="group__g__updater__wt.html#gaf5348900d21226b512f98a9f4f22f8d0">wt_update_type_t</a> type)</td></tr>
-<tr class="memdesc:ga69dc0532c924f32c2eea80adbbba4c5a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Create a wt_updater.  <a href="#ga69dc0532c924f32c2eea80adbbba4c5a">More...</a><br /></td></tr>
-<tr class="separator:ga69dc0532c924f32c2eea80adbbba4c5a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gab1ed4a96da3a5ad75fed903c39be2f67"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structwt__updater__t.html">wt_updater_t</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__g__updater__wt.html#gab1ed4a96da3a5ad75fed903c39be2f67">wt_updater_create</a> (<a class="el" href="structparam__t.html">param_t</a> *param, real_t *wt, real_t *bias, size_t row, size_t col, <a class="el" href="group__g__updater__wt.html#gaf5348900d21226b512f98a9f4f22f8d0">wt_update_type_t</a> type)</td></tr>
+<tr class="memdesc:gab1ed4a96da3a5ad75fed903c39be2f67"><td class="mdescLeft">&#160;</td><td class="mdescRight">Create a wt_updater.  <a href="#gab1ed4a96da3a5ad75fed903c39be2f67">More...</a><br /></td></tr>
+<tr class="separator:gab1ed4a96da3a5ad75fed903c39be2f67"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga0bec54d1393cf474fcf42412c12f2a5f"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__g__updater__wt.html#ga0bec54d1393cf474fcf42412c12f2a5f">wt_updater_init</a> (<a class="el" href="structwt__updater__t.html">wt_updater_t</a> *wt_updater)</td></tr>
 <tr class="memdesc:ga0bec54d1393cf474fcf42412c12f2a5f"><td class="mdescLeft">&#160;</td><td class="mdescRight">(Re)init a wt_updater.  <a href="#ga0bec54d1393cf474fcf42412c12f2a5f">More...</a><br /></td></tr>
 <tr class="separator:ga0bec54d1393cf474fcf42412c12f2a5f"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -179,9 +178,9 @@ Functions</h2></td></tr>
 <tr class="memitem:ga28baeb2f93686970e9a652bcc44ccb80"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__g__updater__wt.html#ga28baeb2f93686970e9a652bcc44ccb80">wt_updater_clear</a> (<a class="el" href="structwt__updater__t.html">wt_updater_t</a> *wt_updater)</td></tr>
 <tr class="memdesc:ga28baeb2f93686970e9a652bcc44ccb80"><td class="mdescLeft">&#160;</td><td class="mdescRight">Clear wt_updater.  <a href="#ga28baeb2f93686970e9a652bcc44ccb80">More...</a><br /></td></tr>
 <tr class="separator:ga28baeb2f93686970e9a652bcc44ccb80"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ga4c8646a18226efcb845267a00e2c1fbf"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__g__updater__wt.html#ga4c8646a18226efcb845267a00e2c1fbf">wt_update</a> (<a class="el" href="structwt__updater__t.html">wt_updater_t</a> *wt_updater, st_int_seg_t *row_seg, int row_seg_id, real_t *er, real_t er_scale, real_t *in, real_t in_scale, st_wt_int_t *in_idx)</td></tr>
-<tr class="memdesc:ga4c8646a18226efcb845267a00e2c1fbf"><td class="mdescLeft">&#160;</td><td class="mdescRight">Update weights.  <a href="#ga4c8646a18226efcb845267a00e2c1fbf">More...</a><br /></td></tr>
-<tr class="separator:ga4c8646a18226efcb845267a00e2c1fbf"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga0ed0fbb061ada3fd77312895c6db3fbd"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__g__updater__wt.html#ga0ed0fbb061ada3fd77312895c6db3fbd">wt_update</a> (<a class="el" href="structwt__updater__t.html">wt_updater_t</a> *wt_updater, st_size_seg_t *part, int row_seg_id, real_t *er, real_t er_scale, real_t *in, real_t in_scale, st_wt_int_t *in_idx)</td></tr>
+<tr class="memdesc:ga0ed0fbb061ada3fd77312895c6db3fbd"><td class="mdescLeft">&#160;</td><td class="mdescRight">Update weights.  <a href="#ga0ed0fbb061ada3fd77312895c6db3fbd">More...</a><br /></td></tr>
+<tr class="separator:ga0ed0fbb061ada3fd77312895c6db3fbd"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:gad5f2e4c8a6be592a2c04be313eff2bd4"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__g__updater__wt.html#gad5f2e4c8a6be592a2c04be313eff2bd4">wt_flush</a> (<a class="el" href="structwt__updater__t.html">wt_updater_t</a> *wt_updater, bool force)</td></tr>
 <tr class="memdesc:gad5f2e4c8a6be592a2c04be313eff2bd4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Flush weights from mini-batch or sync buffer, according to mini-batch size and sync_size.  <a href="#gad5f2e4c8a6be592a2c04be313eff2bd4">More...</a><br /></td></tr>
 <tr class="separator:gad5f2e4c8a6be592a2c04be313eff2bd4"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -205,7 +204,7 @@ Functions</h2></td></tr>
 <b>Value:</b><div class="fragment"><div class="line"><span class="keywordflow">do</span> {\</div>
 <div class="line">    if((ptr) != NULL) {\</div>
 <div class="line">        wt_updater_destroy(ptr);\</div>
-<div class="line">        safe_free(ptr);\</div>
+<div class="line">        safe_st_free(ptr);\</div>
 <div class="line">        (ptr) = NULL;\</div>
 <div class="line">    }\</div>
 <div class="line">    } <span class="keywordflow">while</span>(0)</div>
@@ -292,7 +291,7 @@ Functions</h2></td></tr>
 
 </div>
 </div>
-<a class="anchor" id="ga4c8646a18226efcb845267a00e2c1fbf"></a>
+<a class="anchor" id="ga0ed0fbb061ada3fd77312895c6db3fbd"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
@@ -305,8 +304,8 @@ Functions</h2></td></tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">st_int_seg_t *&#160;</td>
-          <td class="paramname"><em>row_seg</em>, </td>
+          <td class="paramtype">st_size_seg_t *&#160;</td>
+          <td class="paramname"><em>part</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
@@ -353,11 +352,11 @@ Functions</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Update weights. </p>
-<p>For WT_UT_FULL: in is [ col x 1 ]; er is [ 1 x row ]; For WT_UT_PART: in is [ col x 1 ]; er is [ 1 x row_seg.n ]; For WT_UT_SEG: in is [ col x 1 ]; er is [ 1 x updater-&gt;segs[row_seg_id].n ]; For WT_UT_ONE_SHOT: in is NULL; er is [ 1 x row ]; updating cols in in_idx of wt;</p>
+<p>For WT_UT_FULL: in is [ col x 1 ]; er is [ 1 x row ]; For WT_UT_PART: in is [ col x 1 ]; er is [ 1 x part.n ]; For WT_UT_SEG: in is [ col x 1 ]; er is [ 1 x updater-&gt;segs[row_seg_id].n ]; For WT_UT_ONE_SHOT: in is NULL; er is [ 1 x row ]; updating cols in in_idx of wt;</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramdir">[in]</td><td class="paramname">wt_updater</td><td>the wt_updater. </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">row_seg</td><td>segment of wt row corresponding to error vector. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">part</td><td>segment of wt row corresponding to error vector. </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">row_seg_id</td><td>id of segment of wt row, used by WT_UT_SEG. </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">er</td><td>the error vector. </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">er_scale</td><td>scale of error vector. </td></tr>
@@ -395,7 +394,7 @@ Functions</h2></td></tr>
 
 </div>
 </div>
-<a class="anchor" id="ga69dc0532c924f32c2eea80adbbba4c5a"></a>
+<a class="anchor" id="gab1ed4a96da3a5ad75fed903c39be2f67"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
@@ -414,13 +413,19 @@ Functions</h2></td></tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">int&#160;</td>
+          <td class="paramtype">real_t *&#160;</td>
+          <td class="paramname"><em>bias</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">size_t&#160;</td>
           <td class="paramname"><em>row</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">int&#160;</td>
+          <td class="paramtype">size_t&#160;</td>
           <td class="paramname"><em>col</em>, </td>
         </tr>
         <tr>
@@ -438,11 +443,12 @@ Functions</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Create a wt_updater. </p>
-<p>row &gt; 0 &amp;&amp; col &gt; 0: wt is [ row x col ]; row &gt; 0 &amp;&amp; col &lt; 0: wt is hash based 1d vector [ row ];</p>
+<p>row &gt; 0 &amp;&amp; col &gt; 0: wt is [ row x col ]; row &gt; 0 &amp;&amp; col == 0: wt is hash based 1d vector [ row ];</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramdir">[in]</td><td class="paramname">param</td><td>the param. </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">wt</td><td>the weight maxtrix. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">bias</td><td>the bias vector. </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">row</td><td>row of weight maxtrix. </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">col</td><td>col of weight maxtrix. </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">type</td><td>updating type of weight maxtrix. </td></tr>
@@ -552,7 +558,7 @@ Functions</h2></td></tr>
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on Fri Oct 28 2016 22:37:23 for connLM by
+    <li class="footer">Generated on Mon May 8 2017 22:10:28 for connLM by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.10 </li>
   </ul>

@@ -1,10 +1,11 @@
 <map id="glue_updater_t" name="glue_updater_t">
-<area shape="rect" id="node2" href="$structglue__t.html" title="NNet glue. " alt="" coords="183,288,242,315"/>
-<area shape="rect" id="node3" href="$structglue__impl__t.html" title="Implementation of a NNet glue. " alt="" coords="83,199,174,225"/>
-<area shape="rect" id="node4" href="$structwt__updater__t.html" title="Output updater. " alt="" coords="23,109,122,136"/>
-<area shape="rect" id="node5" href="$structwt__dirty__buf__t.html" title="Store the dirty part of weight. " alt="" coords="5,5,111,32"/>
-<area shape="rect" id="node6" href="$structparam__t.html" title="Parameter. " alt="" coords="156,5,227,32"/>
-<area shape="rect" id="node7" href="$structweight__t.html" title="NNet weight. " alt="" coords="250,199,322,225"/>
-<area shape="rect" id="node8" href="$structbptt__opt__t.html" title="BPTT options. " alt="" coords="347,199,428,225"/>
-<area shape="rect" id="node9" href="$structglue__updater__impl__t.html" title="Implementation of a NNet glue updater. " alt="" coords="267,288,409,315"/>
+<area shape="rect" id="node2" href="$structglue__t.html" title="NNet glue. " alt="" coords="183,392,242,419"/>
+<area shape="rect" id="node3" href="$structglue__impl__t.html" title="Implementation of a NNet glue. " alt="" coords="83,303,174,329"/>
+<area shape="rect" id="node4" href="$structwt__updater__t.html" title="Output updater. " alt="" coords="23,213,122,240"/>
+<area shape="rect" id="node5" href="$structwt__dirty__buf__t.html" title="Store the dirty part of weight. " alt="" coords="5,109,111,136"/>
+<area shape="rect" id="node6" href="$structconcat__mat__t.html" title="Concatable Matrix. " alt="" coords="7,5,109,32"/>
+<area shape="rect" id="node7" href="$structparam__t.html" title="Parameter. " alt="" coords="156,109,227,136"/>
+<area shape="rect" id="node8" href="$structweight__t.html" title="NNet weight. " alt="" coords="250,303,322,329"/>
+<area shape="rect" id="node9" href="$structbptt__opt__t.html" title="BPTT options. " alt="" coords="347,303,428,329"/>
+<area shape="rect" id="node10" href="$structglue__updater__impl__t.html" title="Implementation of a NNet glue updater. " alt="" coords="267,392,409,419"/>
 </map>

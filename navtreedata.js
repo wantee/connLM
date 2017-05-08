@@ -10,8 +10,13 @@ var NAVTREE =
       [ "Running the examples", "get_started.html#get_started_example", null ]
     ] ],
     [ "Benchmark of the connLM toolkit", "benchmark.html", [
-      [ "Summary of the performance", "benchmark.html#summary", null ],
-      [ "Details of training process", "benchmark.html#detail", null ]
+      [ "Experiment Environment", "benchmark.html#env", null ],
+      [ "Perplexity", "benchmark.html#ppl", [
+        [ "FST Perplexity", "benchmark.html#fst_converter", null ]
+      ] ],
+      [ "WER for ASR", "benchmark.html#wer", [
+        [ "Tedlium Release 2", "benchmark.html#ted", null ]
+      ] ]
     ] ],
     [ "The Example Recipes", "examples.html", [
       [ "Recipe Internal", "examples.html#examples_tiny", [
@@ -31,7 +36,8 @@ var NAVTREE =
       [ "The Model filter", "cmd.html#cmd_filter", null ],
       [ "The Configurations and Options", "cmd.html#cmd_config", null ],
       [ "The connlm-vocab", "cmd.html#cmd_vocab", [
-        [ "Limited Vocabulary", "cmd.html#cmd_vocab_limited", null ]
+        [ "Limited Vocabulary", "cmd.html#cmd_vocab_limited", null ],
+        [ "Fixed Vocabulary", "cmd.html#cmd_vocab_fixed", null ]
       ] ],
       [ "The connlm-output", "cmd.html#cmd_output", null ]
     ] ],
@@ -64,9 +70,10 @@ var NAVTREE =
 var NAVTREEINDEX =
 [
 "about.html",
-"group__g__layer__sigmoid.html#ga44c4ca5c61364f4a676337c511208acd",
-"structcomponent__t.html#ac96d9e4b98711a3da8a45a67c7bfc2f3",
-"structwt__updater__t.html#a135a3914c5790c3ce7f5683c4936e387"
+"group__g__glue__updater__direct.html#gae222946cc249c4fe3a1105f50f21de96",
+"group__g__updater__wt.html#gaf5348900d21226b512f98a9f4f22f8d0",
+"structglue__t.html#aa3545338c1244030130b0c358f9fd08d",
+"structwt__updater__t.html#ad25a84799aed00ab38ad0f8bacd08a23"
 ];
 
 var SYNCONMSG = 'click to disable panel synchronisation';

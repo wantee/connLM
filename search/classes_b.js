@@ -1,5 +1,5 @@
 var searchData=
 [
-  ['sent_5ft',['sent_t',['../structsent__t.html',1,'']]],
-  ['sigmoid_5fdata_5ft',['sigmoid_data_t',['../structsigmoid__data__t.html',1,'']]]
+  ['reader_5fopt_5ft',['reader_opt_t',['../structreader__opt__t.html',1,'']]],
+  ['reader_5ft',['reader_t',['../structreader__t.html',1,'']]]
 ];

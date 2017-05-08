@@ -31,7 +31,6 @@
 });
 </script><script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js"></script>
 <link href="doxygen.css" rel="stylesheet" type="text/css" />
-<link href="table.css" rel="stylesheet" type="text/css"/>
 </head>
 <body>
 <div id="top"><!-- do not remove this div, it is closed by doxygen! -->
@@ -149,9 +148,9 @@ Functions</h2></td></tr>
 <tr class="memitem:gaa465c340683a58c3582205b4d8f556ea"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__g__reader.html#gaa465c340683a58c3582205b4d8f556ea">connlm_egs_destroy</a> (<a class="el" href="structconnlm__egs__t.html">connlm_egs_t</a> *egs)</td></tr>
 <tr class="memdesc:gaa465c340683a58c3582205b4d8f556ea"><td class="mdescLeft">&#160;</td><td class="mdescRight">Destroy a connlm_egs.  <a href="#gaa465c340683a58c3582205b4d8f556ea">More...</a><br /></td></tr>
 <tr class="separator:gaa465c340683a58c3582205b4d8f556ea"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ga1d87b8217356477c796a5285edb39923"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__g__reader.html#ga1d87b8217356477c796a5285edb39923">connlm_egs_read</a> (<a class="el" href="structconnlm__egs__t.html">connlm_egs_t</a> *egs, int *sent_ends, int epoch_size, FILE *text_fp, <a class="el" href="structvocab__t.html">vocab_t</a> *vocab, int *oovs)</td></tr>
-<tr class="memdesc:ga1d87b8217356477c796a5285edb39923"><td class="mdescLeft">&#160;</td><td class="mdescRight">Read words into egs.  <a href="#ga1d87b8217356477c796a5285edb39923">More...</a><br /></td></tr>
-<tr class="separator:ga1d87b8217356477c796a5285edb39923"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gab20a574ed37a2aff05d7ae62bfd023b0"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__g__reader.html#gab20a574ed37a2aff05d7ae62bfd023b0">connlm_egs_read</a> (<a class="el" href="structconnlm__egs__t.html">connlm_egs_t</a> *egs, int *sent_ends, int epoch_size, FILE *text_fp, <a class="el" href="structvocab__t.html">vocab_t</a> *vocab, int *oovs, bool drop_empty_line)</td></tr>
+<tr class="memdesc:gab20a574ed37a2aff05d7ae62bfd023b0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Read words into egs.  <a href="#gab20a574ed37a2aff05d7ae62bfd023b0">More...</a><br /></td></tr>
+<tr class="separator:gab20a574ed37a2aff05d7ae62bfd023b0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga092e7c977337823956c2980ad4ebbb1f"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__g__reader.html#ga092e7c977337823956c2980ad4ebbb1f">reader_load_opt</a> (<a class="el" href="structreader__opt__t.html">reader_opt_t</a> *reader_opt, st_opt_t *opt, const char *sec_name)</td></tr>
 <tr class="memdesc:ga092e7c977337823956c2980ad4ebbb1f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Load reader option.  <a href="#ga092e7c977337823956c2980ad4ebbb1f">More...</a><br /></td></tr>
 <tr class="separator:ga092e7c977337823956c2980ad4ebbb1f"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -167,9 +166,9 @@ Functions</h2></td></tr>
 <tr class="memitem:gaf5f65cdca97b70e8f7e71305b4504582"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__g__reader.html#gaf5f65cdca97b70e8f7e71305b4504582">reader_wait</a> (<a class="el" href="structreader__t.html">reader_t</a> *reader)</td></tr>
 <tr class="memdesc:gaf5f65cdca97b70e8f7e71305b4504582"><td class="mdescLeft">&#160;</td><td class="mdescRight">Wait reading thread.  <a href="#gaf5f65cdca97b70e8f7e71305b4504582">More...</a><br /></td></tr>
 <tr class="separator:gaf5f65cdca97b70e8f7e71305b4504582"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ga36c1d7a6b266df6f7d6741a48452d4bf"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structconnlm__egs__t.html">connlm_egs_t</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__g__reader.html#ga36c1d7a6b266df6f7d6741a48452d4bf">reader_hold_egs</a> (<a class="el" href="structreader__t.html">reader_t</a> *reader, bool fifo)</td></tr>
-<tr class="memdesc:ga36c1d7a6b266df6f7d6741a48452d4bf"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get and hold a egs in reading pool.  <a href="#ga36c1d7a6b266df6f7d6741a48452d4bf">More...</a><br /></td></tr>
-<tr class="separator:ga36c1d7a6b266df6f7d6741a48452d4bf"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga24d78b2957fb4b923ce15e20b41f6d66"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structconnlm__egs__t.html">connlm_egs_t</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__g__reader.html#ga24d78b2957fb4b923ce15e20b41f6d66">reader_hold_egs</a> (<a class="el" href="structreader__t.html">reader_t</a> *reader)</td></tr>
+<tr class="memdesc:ga24d78b2957fb4b923ce15e20b41f6d66"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get and hold a egs in reading pool.  <a href="#ga24d78b2957fb4b923ce15e20b41f6d66">More...</a><br /></td></tr>
+<tr class="separator:ga24d78b2957fb4b923ce15e20b41f6d66"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga4c5607d9851d47d207fdcc97e4530c51"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__g__reader.html#ga4c5607d9851d47d207fdcc97e4530c51">reader_release_egs</a> (<a class="el" href="structreader__t.html">reader_t</a> *reader, <a class="el" href="structconnlm__egs__t.html">connlm_egs_t</a> *egs)</td></tr>
 <tr class="memdesc:ga4c5607d9851d47d207fdcc97e4530c51"><td class="mdescLeft">&#160;</td><td class="mdescRight">Relase a egs to reading pool.  <a href="#ga4c5607d9851d47d207fdcc97e4530c51">More...</a><br /></td></tr>
 <tr class="separator:ga4c5607d9851d47d207fdcc97e4530c51"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -193,7 +192,7 @@ Functions</h2></td></tr>
 <b>Value:</b><div class="fragment"><div class="line"><span class="keywordflow">do</span> {\</div>
 <div class="line">    if((ptr) != NULL) {\</div>
 <div class="line">        connlm_egs_destroy(ptr);\</div>
-<div class="line">        safe_free(ptr);\</div>
+<div class="line">        safe_st_free(ptr);\</div>
 <div class="line">        (ptr) = NULL;\</div>
 <div class="line">    }\</div>
 <div class="line">    } <span class="keywordflow">while</span>(0)</div>
@@ -224,7 +223,7 @@ Functions</h2></td></tr>
 <b>Value:</b><div class="fragment"><div class="line"><span class="keywordflow">do</span> {\</div>
 <div class="line">    if((ptr) != NULL) {\</div>
 <div class="line">        reader_destroy(ptr);\</div>
-<div class="line">        safe_free(ptr);\</div>
+<div class="line">        safe_st_free(ptr);\</div>
 <div class="line">        (ptr) = NULL;\</div>
 <div class="line">    }\</div>
 <div class="line">    } <span class="keywordflow">while</span>(0)</div>
@@ -264,7 +263,7 @@ Functions</h2></td></tr>
 
 </div>
 </div>
-<a class="anchor" id="ga1d87b8217356477c796a5285edb39923"></a>
+<a class="anchor" id="gab20a574ed37a2aff05d7ae62bfd023b0"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
@@ -302,7 +301,13 @@ Functions</h2></td></tr>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">int *&#160;</td>
-          <td class="paramname"><em>oovs</em>&#160;</td>
+          <td class="paramname"><em>oovs</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">bool&#160;</td>
+          <td class="paramname"><em>drop_empty_line</em>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -316,11 +321,12 @@ Functions</h2></td></tr>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramdir">[in]</td><td class="paramname">egs</td><td>connlm_egs. </td></tr>
-    <tr><td class="paramdir">[out]</td><td class="paramname">sent_ends</td><td>postion of &lt;/s&gt;s. </td></tr>
+    <tr><td class="paramdir">[out]</td><td class="paramname">sent_ends</td><td>contains postion of &lt;/s&gt;s, if not NULL. </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">epoch_size</td><td>number sents read one time. </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">text_fp</td><td>text file. </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">vocab</td><td>vocab. </td></tr>
-    <tr><td class="paramdir">[out]</td><td class="paramname">oovs</td><td>number of oovs. </td></tr>
+    <tr><td class="paramdir">[out]</td><td class="paramname">oovs</td><td>number of oovs, if not NULL. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">drop_empty_line</td><td>whether drop the empty lines. </td></tr>
   </table>
   </dd>
 </dl>
@@ -402,7 +408,7 @@ Functions</h2></td></tr>
 
 </div>
 </div>
-<a class="anchor" id="ga36c1d7a6b266df6f7d6741a48452d4bf"></a>
+<a class="anchor" id="ga24d78b2957fb4b923ce15e20b41f6d66"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
@@ -410,18 +416,8 @@ Functions</h2></td></tr>
           <td class="memname"><a class="el" href="structconnlm__egs__t.html">connlm_egs_t</a>* reader_hold_egs </td>
           <td>(</td>
           <td class="paramtype"><a class="el" href="structreader__t.html">reader_t</a> *&#160;</td>
-          <td class="paramname"><em>reader</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
+          <td class="paramname"><em>reader</em></td><td>)</td>
           <td></td>
-          <td class="paramtype">bool&#160;</td>
-          <td class="paramname"><em>fifo</em>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -430,7 +426,6 @@ Functions</h2></td></tr>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramdir">[in]</td><td class="paramname">reader</td><td>reader. </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">fifo</td><td>hold egs in FIFO order. </td></tr>
   </table>
   </dd>
 </dl>
@@ -591,7 +586,7 @@ Functions</h2></td></tr>
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on Fri Oct 28 2016 22:37:23 for connLM by
+    <li class="footer">Generated on Mon May 8 2017 22:10:28 for connLM by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.10 </li>
   </ul>

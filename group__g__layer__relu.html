@@ -31,7 +31,6 @@
 });
 </script><script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js"></script>
 <link href="doxygen.css" rel="stylesheet" type="text/css" />
-<link href="table.css" rel="stylesheet" type="text/css"/>
 </head>
 <body>
 <div id="top"><!-- do not remove this div, it is closed by doxygen! -->
@@ -135,6 +134,9 @@ Functions</h2></td></tr>
 <tr class="memitem:gae590c3713749872a3ba957bc6109b65e"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__g__layer__relu.html#gae590c3713749872a3ba957bc6109b65e">relu_deriv</a> (<a class="el" href="structlayer__t.html">layer_t</a> *layer, real_t *er, real_t *ac, int size)</td></tr>
 <tr class="memdesc:gae590c3713749872a3ba957bc6109b65e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Deriv relu layer.  <a href="#gae590c3713749872a3ba957bc6109b65e">More...</a><br /></td></tr>
 <tr class="separator:gae590c3713749872a3ba957bc6109b65e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga8eee750d857f3feb854229d8d62d2bb2"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__g__layer__relu.html#ga8eee750d857f3feb854229d8d62d2bb2">relu_random_state</a> (<a class="el" href="structlayer__t.html">layer_t</a> *layer, real_t *state, int size)</td></tr>
+<tr class="memdesc:ga8eee750d857f3feb854229d8d62d2bb2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Generated random state for relu layer.  <a href="#ga8eee750d857f3feb854229d8d62d2bb2">More...</a><br /></td></tr>
+<tr class="separator:ga8eee750d857f3feb854229d8d62d2bb2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <p>Hidden layer with relu activation. </p>
@@ -232,12 +234,55 @@ Functions</h2></td></tr>
 
 </div>
 </div>
+<a class="anchor" id="ga8eee750d857f3feb854229d8d62d2bb2"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int relu_random_state </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structlayer__t.html">layer_t</a> *&#160;</td>
+          <td class="paramname"><em>layer</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">real_t *&#160;</td>
+          <td class="paramname"><em>state</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>size</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Generated random state for relu layer. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">layer</td><td>the relu layer. </td></tr>
+    <tr><td class="paramdir">[out]</td><td class="paramname">state</td><td>the state. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">size</td><td>size of state. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>non-zero value if any error. </dd></dl>
+
+</div>
+</div>
 </div><!-- contents -->
 </div><!-- doc-content -->
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on Fri Oct 28 2016 22:37:23 for connLM by
+    <li class="footer">Generated on Mon May 8 2017 22:10:28 for connLM by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.10 </li>
   </ul>

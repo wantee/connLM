@@ -31,7 +31,6 @@
 });
 </script><script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js"></script>
 <link href="doxygen.css" rel="stylesheet" type="text/css" />
-<link href="table.css" rel="stylesheet" type="text/css"/>
 </head>
 <body>
 <div id="top"><!-- do not remove this div, it is closed by doxygen! -->
@@ -153,9 +152,12 @@ Data Fields</h2></td></tr>
 <tr class="memitem:a6f9bbd36d2299ab2bb72e3c4be206b93"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structreader__t.html#a6f9bbd36d2299ab2bb72e3c4be206b93">num_thrs</a></td></tr>
 <tr class="memdesc:a6f9bbd36d2299ab2bb72e3c4be206b93"><td class="mdescLeft">&#160;</td><td class="mdescRight">number of working threads.  <a href="#a6f9bbd36d2299ab2bb72e3c4be206b93">More...</a><br /></td></tr>
 <tr class="separator:a6f9bbd36d2299ab2bb72e3c4be206b93"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a87847cd08b8a22c25bdddb68b206fa80"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structconnlm__egs__t.html">connlm_egs_t</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structreader__t.html#a87847cd08b8a22c25bdddb68b206fa80">full_egs</a></td></tr>
-<tr class="memdesc:a87847cd08b8a22c25bdddb68b206fa80"><td class="mdescLeft">&#160;</td><td class="mdescRight">pool for egs filled with data.  <a href="#a87847cd08b8a22c25bdddb68b206fa80">More...</a><br /></td></tr>
-<tr class="separator:a87847cd08b8a22c25bdddb68b206fa80"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af974867118dd83e3866527c505a1b1cf"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structconnlm__egs__t.html">connlm_egs_t</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structreader__t.html#af974867118dd83e3866527c505a1b1cf">full_egs_head</a></td></tr>
+<tr class="memdesc:af974867118dd83e3866527c505a1b1cf"><td class="mdescLeft">&#160;</td><td class="mdescRight">head of pool for egs filled with data.  <a href="#af974867118dd83e3866527c505a1b1cf">More...</a><br /></td></tr>
+<tr class="separator:af974867118dd83e3866527c505a1b1cf"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a86a7788dbf0405eda1e3aa5e7bfee3a7"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structconnlm__egs__t.html">connlm_egs_t</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structreader__t.html#a86a7788dbf0405eda1e3aa5e7bfee3a7">full_egs_tail</a></td></tr>
+<tr class="memdesc:a86a7788dbf0405eda1e3aa5e7bfee3a7"><td class="mdescLeft">&#160;</td><td class="mdescRight">head of pool for egs filled with data.  <a href="#a86a7788dbf0405eda1e3aa5e7bfee3a7">More...</a><br /></td></tr>
+<tr class="separator:a86a7788dbf0405eda1e3aa5e7bfee3a7"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8d359f8eaad18687e5cfd7e191104d73"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structconnlm__egs__t.html">connlm_egs_t</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structreader__t.html#a8d359f8eaad18687e5cfd7e191104d73">empty_egs</a></td></tr>
 <tr class="memdesc:a8d359f8eaad18687e5cfd7e191104d73"><td class="mdescLeft">&#160;</td><td class="mdescRight">pool for egs with data consumed.  <a href="#a8d359f8eaad18687e5cfd7e191104d73">More...</a><br /></td></tr>
 <tr class="separator:a8d359f8eaad18687e5cfd7e191104d73"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -272,17 +274,17 @@ Data Fields</h2></td></tr>
 
 </div>
 </div>
-<a class="anchor" id="a87847cd08b8a22c25bdddb68b206fa80"></a>
+<a class="anchor" id="af974867118dd83e3866527c505a1b1cf"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="structconnlm__egs__t.html">connlm_egs_t</a>* reader_t::full_egs</td>
+          <td class="memname"><a class="el" href="structconnlm__egs__t.html">connlm_egs_t</a>* reader_t::full_egs_head</td>
         </tr>
       </table>
 </div><div class="memdoc">
 
-<p>pool for egs filled with data. </p>
+<p>head of pool for egs filled with data. </p>
 
 </div>
 </div>
@@ -297,6 +299,20 @@ Data Fields</h2></td></tr>
 </div><div class="memdoc">
 
 <p>lock for full egs pool. </p>
+
+</div>
+</div>
+<a class="anchor" id="a86a7788dbf0405eda1e3aa5e7bfee3a7"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="structconnlm__egs__t.html">connlm_egs_t</a>* reader_t::full_egs_tail</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>head of pool for egs filled with data. </p>
 
 </div>
 </div>
@@ -477,7 +493,7 @@ Data Fields</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="structreader__t.html">reader_t</a></li>
-    <li class="footer">Generated on Fri Oct 28 2016 22:37:23 for connLM by
+    <li class="footer">Generated on Mon May 8 2017 22:10:28 for connLM by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.10 </li>
   </ul>

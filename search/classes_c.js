@@ -1,4 +1,5 @@
 var searchData=
 [
-  ['thr_5fstat_5ft',['thr_stat_t',['../structthr__stat__t.html',1,'']]]
+  ['sent_5ft',['sent_t',['../structsent__t.html',1,'']]],
+  ['sigmoid_5fdata_5ft',['sigmoid_data_t',['../structsigmoid__data__t.html',1,'']]]
 ];

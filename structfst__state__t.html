@@ -5,7 +5,7 @@
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.10"/>
-<title>connLM: fst_converter_opt_t Struct Reference</title>
+<title>connLM: fst_state_t Struct Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <link rel="shortcut icon" href="connlm.ico" type="image/x-icon" />
 <script type="text/javascript" src="jquery.js"></script>
@@ -31,7 +31,6 @@
 });
 </script><script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js"></script>
 <link href="doxygen.css" rel="stylesheet" type="text/css" />
-<link href="table.css" rel="stylesheet" type="text/css"/>
 </head>
 <body>
 <div id="top"><!-- do not remove this div, it is closed by doxygen! -->
@@ -97,7 +96,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
   </div>
 </div>
 <script type="text/javascript">
-$(document).ready(function(){initNavTree('structfst__converter__opt__t.html','');});
+$(document).ready(function(){initNavTree('structfst__state__t.html','');});
 </script>
 <div id="doc-content">
 <!-- window showing the filter options -->
@@ -118,35 +117,70 @@ $(document).ready(function(){initNavTree('structfst__converter__opt__t.html','')
   <div class="summary">
 <a href="#pub-attribs">Data Fields</a>  </div>
   <div class="headertitle">
-<div class="title">fst_converter_opt_t Struct Reference<div class="ingroups"><a class="el" href="group__g__converter.html">connLM to WFST Converter</a></div></div>  </div>
+<div class="title">fst_state_t Struct Reference<div class="ingroups"><a class="el" href="group__g__conv.html">connLM to WFST Converter</a></div></div>  </div>
 </div><!--header-->
 <div class="contents">
 
-<p>Options for converter.  
- <a href="structfst__converter__opt__t.html#details">More...</a></p>
+<p>FST State.  
+ <a href="structfst__state__t.html#details">More...</a></p>
 
 <p><code>#include &lt;<a class="el" href="fst__converter_8h_source.html">fst_converter.h</a>&gt;</code></p>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-attribs"></a>
 Data Fields</h2></td></tr>
-<tr class="memitem:ae17cf97604a890c24f339312e23581b8"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structfst__converter__opt__t.html#ae17cf97604a890c24f339312e23581b8">print_syms</a></td></tr>
-<tr class="memdesc:ae17cf97604a890c24f339312e23581b8"><td class="mdescLeft">&#160;</td><td class="mdescRight">print symbols instead of id, if true.  <a href="#ae17cf97604a890c24f339312e23581b8">More...</a><br /></td></tr>
-<tr class="separator:ae17cf97604a890c24f339312e23581b8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a961dc590ef6a261623038d8695d0142a"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structfst__state__t.html#a961dc590ef6a261623038d8695d0142a">word_id</a></td></tr>
+<tr class="memdesc:a961dc590ef6a261623038d8695d0142a"><td class="mdescLeft">&#160;</td><td class="mdescRight">word id.  <a href="#a961dc590ef6a261623038d8695d0142a">More...</a><br /></td></tr>
+<tr class="separator:a961dc590ef6a261623038d8695d0142a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1c085f3a31d0d78d682b9304924035eb"><td class="memItemLeft" align="right" valign="top">bcache_id_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structfst__state__t.html#a1c085f3a31d0d78d682b9304924035eb">model_state_id</a></td></tr>
+<tr class="memdesc:a1c085f3a31d0d78d682b9304924035eb"><td class="mdescLeft">&#160;</td><td class="mdescRight">model state id.  <a href="#a1c085f3a31d0d78d682b9304924035eb">More...</a><br /></td></tr>
+<tr class="separator:a1c085f3a31d0d78d682b9304924035eb"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad8a3b322b04584da6e8d52e4fb3767a3"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structfst__state__t.html#ad8a3b322b04584da6e8d52e4fb3767a3">parent</a></td></tr>
+<tr class="memdesc:ad8a3b322b04584da6e8d52e4fb3767a3"><td class="mdescLeft">&#160;</td><td class="mdescRight">parent state id of fst state.  <a href="#ad8a3b322b04584da6e8d52e4fb3767a3">More...</a><br /></td></tr>
+<tr class="separator:ad8a3b322b04584da6e8d52e4fb3767a3"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p>Options for converter. </p>
+<div class="textblock"><p>FST State. </p>
+<p>Contain the information for fst state. </p>
 </div><h2 class="groupheader">Field Documentation</h2>
-<a class="anchor" id="ae17cf97604a890c24f339312e23581b8"></a>
+<a class="anchor" id="a1c085f3a31d0d78d682b9304924035eb"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">bool fst_converter_opt_t::print_syms</td>
+          <td class="memname">bcache_id_t fst_state_t::model_state_id</td>
         </tr>
       </table>
 </div><div class="memdoc">
 
-<p>print symbols instead of id, if true. </p>
+<p>model state id. </p>
+
+</div>
+</div>
+<a class="anchor" id="ad8a3b322b04584da6e8d52e4fb3767a3"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int fst_state_t::parent</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>parent state id of fst state. </p>
+
+</div>
+</div>
+<a class="anchor" id="a961dc590ef6a261623038d8695d0142a"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int fst_state_t::word_id</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>word id. </p>
 
 </div>
 </div>
@@ -158,8 +192,8 @@ Data Fields</h2></td></tr>
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="navelem"><a class="el" href="structfst__converter__opt__t.html">fst_converter_opt_t</a></li>
-    <li class="footer">Generated on Fri Oct 28 2016 22:37:23 for connLM by
+    <li class="navelem"><a class="el" href="structfst__state__t.html">fst_state_t</a></li>
+    <li class="footer">Generated on Mon May 8 2017 22:10:28 for connLM by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.10 </li>
   </ul>

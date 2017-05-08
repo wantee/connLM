@@ -1,8 +1,7 @@
 var searchData=
 [
-  ['glue_5fimpl_5ft',['glue_impl_t',['../structglue__impl__t.html',1,'']]],
-  ['glue_5ft',['glue_t',['../structglue__t.html',1,'']]],
-  ['glue_5fupdater_5fimpl_5ft',['glue_updater_impl_t',['../structglue__updater__impl__t.html',1,'']]],
-  ['glue_5fupdater_5ft',['glue_updater_t',['../structglue__updater__t.html',1,'']]],
-  ['graph_5ft',['graph_t',['../structgraph__t.html',1,'']]]
+  ['fst_5fconv_5fopt_5ft',['fst_conv_opt_t',['../structfst__conv__opt__t.html',1,'']]],
+  ['fst_5fconv_5ft',['fst_conv_t',['../structfst__conv__t.html',1,'']]],
+  ['fst_5fstate_5fchildren_5ft',['fst_state_children_t',['../structfst__state__children__t.html',1,'']]],
+  ['fst_5fstate_5ft',['fst_state_t',['../structfst__state__t.html',1,'']]]
 ];

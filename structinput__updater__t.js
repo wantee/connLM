@@ -1,5 +1,6 @@
 var structinput__updater__t =
 [
+    [ "bos_id", "structinput__updater__t.html#ad2ca90c1090695831afb30df2a1303ed", null ],
     [ "cap_word", "structinput__updater__t.html#ad9fa91c769abc6e5c5aad1f47e20df7d", null ],
     [ "ctx_leftmost", "structinput__updater__t.html#aa4bbe0e7b3a7a3a0553907282540f1be", null ],
     [ "ctx_rightmost", "structinput__updater__t.html#aadf2feba97dbbdbec54523b0bc31fb20", null ],

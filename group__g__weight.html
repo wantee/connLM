@@ -31,7 +31,6 @@
 });
 </script><script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js"></script>
 <link href="doxygen.css" rel="stylesheet" type="text/css" />
-<link href="table.css" rel="stylesheet" type="text/css"/>
 </head>
 <body>
 <div id="top"><!-- do not remove this div, it is closed by doxygen! -->
@@ -142,7 +141,8 @@ Enumerations</h2></td></tr>
 <a class="el" href="group__g__weight.html#gga5e8f4548e57bf1f418a4b0d6c5dc3964a2d078268fcd0d9a7ab77ca83f609e29f">WT_INIT_UNIFORM</a>, 
 <br />
 &#160;&#160;<a class="el" href="group__g__weight.html#gga5e8f4548e57bf1f418a4b0d6c5dc3964ac0f6f008073e743e1884a8f5ba1cc8a6">WT_INIT_NORM</a>, 
-<a class="el" href="group__g__weight.html#gga5e8f4548e57bf1f418a4b0d6c5dc3964a41aaad1aeaf0455c6ec01abb2e7d8c83">WT_INIT_TRUNC_NORM</a>
+<a class="el" href="group__g__weight.html#gga5e8f4548e57bf1f418a4b0d6c5dc3964a41aaad1aeaf0455c6ec01abb2e7d8c83">WT_INIT_TRUNC_NORM</a>, 
+<a class="el" href="group__g__weight.html#gga5e8f4548e57bf1f418a4b0d6c5dc3964adc1d51ab3e8b015f680537ad9559977a">WT_INIT_IDENTITY</a>
 <br />
  }<tr class="memdesc:ga5e8f4548e57bf1f418a4b0d6c5dc3964"><td class="mdescLeft">&#160;</td><td class="mdescRight">NNet weight init type.  <a href="group__g__weight.html#ga5e8f4548e57bf1f418a4b0d6c5dc3964">More...</a><br /></td></tr>
 <tr class="separator:ga5e8f4548e57bf1f418a4b0d6c5dc3964"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -159,21 +159,24 @@ Functions</h2></td></tr>
 <tr class="memitem:gaeee7c60aa49d6e91e6d6a90f7b5f6b23"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__g__weight.html#gaeee7c60aa49d6e91e6d6a90f7b5f6b23">wt_parse_topo</a> (<a class="el" href="structweight__t.html">weight_t</a> *wt, char *line, size_t line_len)</td></tr>
 <tr class="memdesc:gaeee7c60aa49d6e91e6d6a90f7b5f6b23"><td class="mdescLeft">&#160;</td><td class="mdescRight">Parse a topo config line, and return a new glue.  <a href="#gaeee7c60aa49d6e91e6d6a90f7b5f6b23">More...</a><br /></td></tr>
 <tr class="separator:gaeee7c60aa49d6e91e6d6a90f7b5f6b23"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ga64062ed38156507c3aa8d7d068277672"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__g__weight.html#ga64062ed38156507c3aa8d7d068277672">wt_load_header</a> (<a class="el" href="structweight__t.html">weight_t</a> **wt, int version, FILE *fp, bool *binary, FILE *fo_info)</td></tr>
-<tr class="memdesc:ga64062ed38156507c3aa8d7d068277672"><td class="mdescLeft">&#160;</td><td class="mdescRight">Load wt header and initialise a new wt.  <a href="#ga64062ed38156507c3aa8d7d068277672">More...</a><br /></td></tr>
-<tr class="separator:ga64062ed38156507c3aa8d7d068277672"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:gaf872a49b9e986eb13758a7671125b72a"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__g__weight.html#gaf872a49b9e986eb13758a7671125b72a">wt_load_body</a> (<a class="el" href="structweight__t.html">weight_t</a> *wt, int version, FILE *fp, bool binary)</td></tr>
-<tr class="memdesc:gaf872a49b9e986eb13758a7671125b72a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Load wt body.  <a href="#gaf872a49b9e986eb13758a7671125b72a">More...</a><br /></td></tr>
-<tr class="separator:gaf872a49b9e986eb13758a7671125b72a"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:gae47a3c4653bf1ef97f055b4b3c1d738e"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__g__weight.html#gae47a3c4653bf1ef97f055b4b3c1d738e">wt_save_header</a> (<a class="el" href="structweight__t.html">weight_t</a> *wt, FILE *fp, bool binary)</td></tr>
-<tr class="memdesc:gae47a3c4653bf1ef97f055b4b3c1d738e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Save wt header.  <a href="#gae47a3c4653bf1ef97f055b4b3c1d738e">More...</a><br /></td></tr>
-<tr class="separator:gae47a3c4653bf1ef97f055b4b3c1d738e"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ga3f74e83ed5f89954fc26aabaaee3c25e"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__g__weight.html#ga3f74e83ed5f89954fc26aabaaee3c25e">wt_save_body</a> (<a class="el" href="structweight__t.html">weight_t</a> *wt, FILE *fp, bool binary)</td></tr>
-<tr class="memdesc:ga3f74e83ed5f89954fc26aabaaee3c25e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Save wt body.  <a href="#ga3f74e83ed5f89954fc26aabaaee3c25e">More...</a><br /></td></tr>
-<tr class="separator:ga3f74e83ed5f89954fc26aabaaee3c25e"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ga7bb7a28415f845711688cbacd098b7e0"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__g__weight.html#ga7bb7a28415f845711688cbacd098b7e0">wt_init</a> (<a class="el" href="structweight__t.html">weight_t</a> *wt, int row, int col)</td></tr>
-<tr class="memdesc:ga7bb7a28415f845711688cbacd098b7e0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Initialise weight.  <a href="#ga7bb7a28415f845711688cbacd098b7e0">More...</a><br /></td></tr>
-<tr class="separator:ga7bb7a28415f845711688cbacd098b7e0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga15ce606a40f2c4fb523ef580ad7d4055"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__g__weight.html#ga15ce606a40f2c4fb523ef580ad7d4055">wt_load_header</a> (<a class="el" href="structweight__t.html">weight_t</a> **wt, int version, FILE *fp, <a class="el" href="group__g__connlm.html#ga27bb4962c19c1ac9c66c27d5d2de9a73">connlm_fmt_t</a> *fmt, FILE *fo_info)</td></tr>
+<tr class="memdesc:ga15ce606a40f2c4fb523ef580ad7d4055"><td class="mdescLeft">&#160;</td><td class="mdescRight">Load wt header and initialise a new wt.  <a href="#ga15ce606a40f2c4fb523ef580ad7d4055">More...</a><br /></td></tr>
+<tr class="separator:ga15ce606a40f2c4fb523ef580ad7d4055"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga47ec6786ec9488dd7805d84f38bff8f5"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__g__weight.html#ga47ec6786ec9488dd7805d84f38bff8f5">wt_load_body</a> (<a class="el" href="structweight__t.html">weight_t</a> *wt, int version, FILE *fp, <a class="el" href="group__g__connlm.html#ga27bb4962c19c1ac9c66c27d5d2de9a73">connlm_fmt_t</a> fmt)</td></tr>
+<tr class="memdesc:ga47ec6786ec9488dd7805d84f38bff8f5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Load wt body.  <a href="#ga47ec6786ec9488dd7805d84f38bff8f5">More...</a><br /></td></tr>
+<tr class="separator:ga47ec6786ec9488dd7805d84f38bff8f5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga4af124de9b22ff8b2c67bf50a80bee4f"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__g__weight.html#ga4af124de9b22ff8b2c67bf50a80bee4f">wt_save_header</a> (<a class="el" href="structweight__t.html">weight_t</a> *wt, FILE *fp, <a class="el" href="group__g__connlm.html#ga27bb4962c19c1ac9c66c27d5d2de9a73">connlm_fmt_t</a> fmt)</td></tr>
+<tr class="memdesc:ga4af124de9b22ff8b2c67bf50a80bee4f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Save wt header.  <a href="#ga4af124de9b22ff8b2c67bf50a80bee4f">More...</a><br /></td></tr>
+<tr class="separator:ga4af124de9b22ff8b2c67bf50a80bee4f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga58e38387fce7f23d19a9b1f3fe8a72f9"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__g__weight.html#ga58e38387fce7f23d19a9b1f3fe8a72f9">wt_save_body</a> (<a class="el" href="structweight__t.html">weight_t</a> *wt, FILE *fp, <a class="el" href="group__g__connlm.html#ga27bb4962c19c1ac9c66c27d5d2de9a73">connlm_fmt_t</a> fmt, char *name)</td></tr>
+<tr class="memdesc:ga58e38387fce7f23d19a9b1f3fe8a72f9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Save wt body.  <a href="#ga58e38387fce7f23d19a9b1f3fe8a72f9">More...</a><br /></td></tr>
+<tr class="separator:ga58e38387fce7f23d19a9b1f3fe8a72f9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gaad6458a9519a50f695289eb23bc94aa4"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__g__weight.html#gaad6458a9519a50f695289eb23bc94aa4">wt_init</a> (<a class="el" href="structweight__t.html">weight_t</a> *wt, size_t row, size_t col)</td></tr>
+<tr class="memdesc:gaad6458a9519a50f695289eb23bc94aa4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Initialise weight.  <a href="#gaad6458a9519a50f695289eb23bc94aa4">More...</a><br /></td></tr>
+<tr class="separator:gaad6458a9519a50f695289eb23bc94aa4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga53dbee9ae45c4b64585b3dfc6089a408"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__g__weight.html#ga53dbee9ae45c4b64585b3dfc6089a408">wt_sanity_check</a> (<a class="el" href="structweight__t.html">weight_t</a> *wt, const char *name)</td></tr>
+<tr class="memdesc:ga53dbee9ae45c4b64585b3dfc6089a408"><td class="mdescLeft">&#160;</td><td class="mdescRight">Do sanity check on a weight and print warnings.  <a href="#ga53dbee9ae45c4b64585b3dfc6089a408">More...</a><br /></td></tr>
+<tr class="separator:ga53dbee9ae45c4b64585b3dfc6089a408"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <p>Weight for NNet, with various types. </p>
@@ -194,7 +197,7 @@ Functions</h2></td></tr>
 <b>Value:</b><div class="fragment"><div class="line"><span class="keywordflow">do</span> {\</div>
 <div class="line">    if((ptr) != NULL) {\</div>
 <div class="line">        wt_destroy(ptr);\</div>
-<div class="line">        safe_free(ptr);\</div>
+<div class="line">        safe_st_free(ptr);\</div>
 <div class="line">        (ptr) = NULL;\</div>
 <div class="line">    }\</div>
 <div class="line">    } <span class="keywordflow">while</span>(0)</div>
@@ -239,6 +242,9 @@ Functions</h2></td></tr>
 </td></tr>
 <tr><td class="fieldname"><a class="anchor" id="gga5e8f4548e57bf1f418a4b0d6c5dc3964a41aaad1aeaf0455c6ec01abb2e7d8c83"></a>WT_INIT_TRUNC_NORM&#160;</td><td class="fielddoc">
 <p>truncated normal distribution. </p>
+</td></tr>
+<tr><td class="fieldname"><a class="anchor" id="gga5e8f4548e57bf1f418a4b0d6c5dc3964adc1d51ab3e8b015f680537ad9559977a"></a>WT_INIT_IDENTITY&#160;</td><td class="fielddoc">
+<p>indentity matrix. </p>
 </td></tr>
 </table>
 
@@ -294,7 +300,7 @@ Functions</h2></td></tr>
 
 </div>
 </div>
-<a class="anchor" id="ga7bb7a28415f845711688cbacd098b7e0"></a>
+<a class="anchor" id="gaad6458a9519a50f695289eb23bc94aa4"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
@@ -307,13 +313,13 @@ Functions</h2></td></tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">int&#160;</td>
+          <td class="paramtype">size_t&#160;</td>
           <td class="paramname"><em>row</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">int&#160;</td>
+          <td class="paramtype">size_t&#160;</td>
           <td class="paramname"><em>col</em>&#160;</td>
         </tr>
         <tr>
@@ -337,7 +343,7 @@ Functions</h2></td></tr>
 
 </div>
 </div>
-<a class="anchor" id="gaf872a49b9e986eb13758a7671125b72a"></a>
+<a class="anchor" id="ga47ec6786ec9488dd7805d84f38bff8f5"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
@@ -362,8 +368,8 @@ Functions</h2></td></tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">bool&#160;</td>
-          <td class="paramname"><em>binary</em>&#160;</td>
+          <td class="paramtype"><a class="el" href="group__g__connlm.html#ga27bb4962c19c1ac9c66c27d5d2de9a73">connlm_fmt_t</a>&#160;</td>
+          <td class="paramname"><em>fmt</em>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -379,18 +385,18 @@ Functions</h2></td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">wt</td><td>wt to be loaded. </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">version</td><td>file version of loading file. </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">fp</td><td>file stream loaded from. </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">binary</td><td>whether to use binary format. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">fmt</td><td>storage format. </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section see"><dt>See also</dt><dd><a class="el" href="group__g__weight.html#ga64062ed38156507c3aa8d7d068277672" title="Load wt header and initialise a new wt. ">wt_load_header</a> </dd>
+<dl class="section see"><dt>See also</dt><dd><a class="el" href="group__g__weight.html#ga15ce606a40f2c4fb523ef580ad7d4055" title="Load wt header and initialise a new wt. ">wt_load_header</a> </dd>
 <dd>
-<a class="el" href="group__g__weight.html#gae47a3c4653bf1ef97f055b4b3c1d738e" title="Save wt header. ">wt_save_header</a>, <a class="el" href="group__g__weight.html#ga3f74e83ed5f89954fc26aabaaee3c25e" title="Save wt body. ">wt_save_body</a> </dd></dl>
+<a class="el" href="group__g__weight.html#ga4af124de9b22ff8b2c67bf50a80bee4f" title="Save wt header. ">wt_save_header</a>, <a class="el" href="group__g__weight.html#ga58e38387fce7f23d19a9b1f3fe8a72f9" title="Save wt body. ">wt_save_body</a> </dd></dl>
 <dl class="section return"><dt>Returns</dt><dd>non-zero value if any error. </dd></dl>
 
 </div>
 </div>
-<a class="anchor" id="ga64062ed38156507c3aa8d7d068277672"></a>
+<a class="anchor" id="ga15ce606a40f2c4fb523ef580ad7d4055"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
@@ -415,8 +421,8 @@ Functions</h2></td></tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">bool *&#160;</td>
-          <td class="paramname"><em>binary</em>, </td>
+          <td class="paramtype"><a class="el" href="group__g__connlm.html#ga27bb4962c19c1ac9c66c27d5d2de9a73">connlm_fmt_t</a> *&#160;</td>
+          <td class="paramname"><em>fmt</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
@@ -438,14 +444,14 @@ Functions</h2></td></tr>
     <tr><td class="paramdir">[out]</td><td class="paramname">wt</td><td>wt initialised. </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">version</td><td>file version of loading file. </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">fp</td><td>file stream loaded from. </td></tr>
-    <tr><td class="paramdir">[out]</td><td class="paramname">binary</td><td>whether the file stream is in binary format. </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">fo_info</td><td>file stream used to print information, if it is not NULL. </td></tr>
+    <tr><td class="paramdir">[out]</td><td class="paramname">fmt</td><td>storage format. </td></tr>
+    <tr><td class="paramdir">[out]</td><td class="paramname">fo_info</td><td>file stream used to print information, if it is not NULL. </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section see"><dt>See also</dt><dd><a class="el" href="group__g__weight.html#gaf872a49b9e986eb13758a7671125b72a" title="Load wt body. ">wt_load_body</a> </dd>
+<dl class="section see"><dt>See also</dt><dd><a class="el" href="group__g__weight.html#ga47ec6786ec9488dd7805d84f38bff8f5" title="Load wt body. ">wt_load_body</a> </dd>
 <dd>
-<a class="el" href="group__g__weight.html#gae47a3c4653bf1ef97f055b4b3c1d738e" title="Save wt header. ">wt_save_header</a>, <a class="el" href="group__g__weight.html#ga3f74e83ed5f89954fc26aabaaee3c25e" title="Save wt body. ">wt_save_body</a> </dd></dl>
+<a class="el" href="group__g__weight.html#ga4af124de9b22ff8b2c67bf50a80bee4f" title="Save wt header. ">wt_save_header</a>, <a class="el" href="group__g__weight.html#ga58e38387fce7f23d19a9b1f3fe8a72f9" title="Save wt body. ">wt_save_body</a> </dd></dl>
 <dl class="section return"><dt>Returns</dt><dd>non-zero value if any error. </dd></dl>
 
 </div>
@@ -493,7 +499,42 @@ Functions</h2></td></tr>
 
 </div>
 </div>
-<a class="anchor" id="ga3f74e83ed5f89954fc26aabaaee3c25e"></a>
+<a class="anchor" id="ga53dbee9ae45c4b64585b3dfc6089a408"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void wt_sanity_check </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structweight__t.html">weight_t</a> *&#160;</td>
+          <td class="paramname"><em>wt</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const char *&#160;</td>
+          <td class="paramname"><em>name</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Do sanity check on a weight and print warnings. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">wt</td><td>the weight </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">name</td><td>name of the weight </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a class="anchor" id="ga58e38387fce7f23d19a9b1f3fe8a72f9"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
@@ -512,8 +553,14 @@ Functions</h2></td></tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">bool&#160;</td>
-          <td class="paramname"><em>binary</em>&#160;</td>
+          <td class="paramtype"><a class="el" href="group__g__connlm.html#ga27bb4962c19c1ac9c66c27d5d2de9a73">connlm_fmt_t</a>&#160;</td>
+          <td class="paramname"><em>fmt</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">char *&#160;</td>
+          <td class="paramname"><em>name</em>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -528,18 +575,19 @@ Functions</h2></td></tr>
   <table class="params">
     <tr><td class="paramdir">[in]</td><td class="paramname">wt</td><td>wt to be saved. </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">fp</td><td>file stream saved to. </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">binary</td><td>whether to use binary format. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">fmt</td><td>storage format. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">name</td><td>name of the weight. </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section see"><dt>See also</dt><dd><a class="el" href="group__g__weight.html#gae47a3c4653bf1ef97f055b4b3c1d738e" title="Save wt header. ">wt_save_header</a> </dd>
+<dl class="section see"><dt>See also</dt><dd><a class="el" href="group__g__weight.html#ga4af124de9b22ff8b2c67bf50a80bee4f" title="Save wt header. ">wt_save_header</a> </dd>
 <dd>
-<a class="el" href="group__g__weight.html#ga64062ed38156507c3aa8d7d068277672" title="Load wt header and initialise a new wt. ">wt_load_header</a>, <a class="el" href="group__g__weight.html#gaf872a49b9e986eb13758a7671125b72a" title="Load wt body. ">wt_load_body</a> </dd></dl>
+<a class="el" href="group__g__weight.html#ga15ce606a40f2c4fb523ef580ad7d4055" title="Load wt header and initialise a new wt. ">wt_load_header</a>, <a class="el" href="group__g__weight.html#ga47ec6786ec9488dd7805d84f38bff8f5" title="Load wt body. ">wt_load_body</a> </dd></dl>
 <dl class="section return"><dt>Returns</dt><dd>non-zero value if any error. </dd></dl>
 
 </div>
 </div>
-<a class="anchor" id="gae47a3c4653bf1ef97f055b4b3c1d738e"></a>
+<a class="anchor" id="ga4af124de9b22ff8b2c67bf50a80bee4f"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
@@ -558,8 +606,8 @@ Functions</h2></td></tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">bool&#160;</td>
-          <td class="paramname"><em>binary</em>&#160;</td>
+          <td class="paramtype"><a class="el" href="group__g__connlm.html#ga27bb4962c19c1ac9c66c27d5d2de9a73">connlm_fmt_t</a>&#160;</td>
+          <td class="paramname"><em>fmt</em>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -574,13 +622,13 @@ Functions</h2></td></tr>
   <table class="params">
     <tr><td class="paramdir">[in]</td><td class="paramname">wt</td><td>wt to be saved. </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">fp</td><td>file stream saved to. </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">binary</td><td>whether to use binary format. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">fmt</td><td>storage format. </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section see"><dt>See also</dt><dd><a class="el" href="group__g__weight.html#ga3f74e83ed5f89954fc26aabaaee3c25e" title="Save wt body. ">wt_save_body</a> </dd>
+<dl class="section see"><dt>See also</dt><dd><a class="el" href="group__g__weight.html#ga58e38387fce7f23d19a9b1f3fe8a72f9" title="Save wt body. ">wt_save_body</a> </dd>
 <dd>
-<a class="el" href="group__g__weight.html#ga64062ed38156507c3aa8d7d068277672" title="Load wt header and initialise a new wt. ">wt_load_header</a>, <a class="el" href="group__g__weight.html#gaf872a49b9e986eb13758a7671125b72a" title="Load wt body. ">wt_load_body</a> </dd></dl>
+<a class="el" href="group__g__weight.html#ga15ce606a40f2c4fb523ef580ad7d4055" title="Load wt header and initialise a new wt. ">wt_load_header</a>, <a class="el" href="group__g__weight.html#ga47ec6786ec9488dd7805d84f38bff8f5" title="Load wt body. ">wt_load_body</a> </dd></dl>
 <dl class="section return"><dt>Returns</dt><dd>non-zero value if any error. </dd></dl>
 
 </div>
@@ -590,7 +638,7 @@ Functions</h2></td></tr>
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on Fri Oct 28 2016 22:37:23 for connLM by
+    <li class="footer">Generated on Mon May 8 2017 22:10:28 for connLM by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.10 </li>
   </ul>

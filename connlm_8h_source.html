@@ -31,7 +31,6 @@
 });
 </script><script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js"></script>
 <link href="doxygen.css" rel="stylesheet" type="text/css" />
-<link href="table.css" rel="stylesheet" type="text/css"/>
 </head>
 <body>
 <div id="top"><!-- do not remove this div, it is closed by doxygen! -->
@@ -178,7 +177,7 @@ $(document).ready(function(){initNavTree('connlm_8h_source.html','');});
 <div class="line"><a name="l00086"></a><span class="lineno"><a class="line" href="group__g__connlm.html#ga16dcbc48f3bfe8113401a3dae776c76a">   86</a></span>&#160;<span class="preprocessor">#define safe_connlm_destroy(ptr) do {\</span></div>
 <div class="line"><a name="l00087"></a><span class="lineno">   87</span>&#160;<span class="preprocessor">    if((ptr) != NULL) {\</span></div>
 <div class="line"><a name="l00088"></a><span class="lineno">   88</span>&#160;<span class="preprocessor">        connlm_destroy(ptr);\</span></div>
-<div class="line"><a name="l00089"></a><span class="lineno">   89</span>&#160;<span class="preprocessor">        safe_free(ptr);\</span></div>
+<div class="line"><a name="l00089"></a><span class="lineno">   89</span>&#160;<span class="preprocessor">        safe_st_free(ptr);\</span></div>
 <div class="line"><a name="l00090"></a><span class="lineno">   90</span>&#160;<span class="preprocessor">        (ptr) = NULL;\</span></div>
 <div class="line"><a name="l00091"></a><span class="lineno">   91</span>&#160;<span class="preprocessor">    }\</span></div>
 <div class="line"><a name="l00092"></a><span class="lineno">   92</span>&#160;<span class="preprocessor">    } while(0)</span></div>
@@ -192,7 +191,7 @@ $(document).ready(function(){initNavTree('connlm_8h_source.html','');});
 <div class="line"><a name="l00120"></a><span class="lineno">  120</span>&#160;</div>
 <div class="line"><a name="l00127"></a><span class="lineno">  127</span>&#160;<a class="code" href="structconnlm__t.html">connlm_t</a>* <a class="code" href="group__g__connlm.html#gacee942effbb944fa0decd86022062f21">connlm_load</a>(FILE *fp);</div>
 <div class="line"><a name="l00128"></a><span class="lineno">  128</span>&#160;</div>
-<div class="line"><a name="l00137"></a><span class="lineno">  137</span>&#160;<span class="keywordtype">int</span> <a class="code" href="group__g__connlm.html#ga2c70408a38b927b4122d18e1ad0d5ebe">connlm_save</a>(<a class="code" href="structconnlm__t.html">connlm_t</a> *connlm, FILE *fp, <span class="keywordtype">bool</span> binary);</div>
+<div class="line"><a name="l00137"></a><span class="lineno">  137</span>&#160;<span class="keywordtype">int</span> <a class="code" href="group__g__connlm.html#ga5938ee659b017cadd2a399ec1174e75a">connlm_save</a>(<a class="code" href="structconnlm__t.html">connlm_t</a> *connlm, FILE *fp, <a class="code" href="group__g__connlm.html#ga27bb4962c19c1ac9c66c27d5d2de9a73">connlm_fmt_t</a> fmt);</div>
 <div class="line"><a name="l00138"></a><span class="lineno">  138</span>&#160;</div>
 <div class="line"><a name="l00147"></a><span class="lineno">  147</span>&#160;<span class="keywordtype">int</span> <a class="code" href="group__g__connlm.html#ga4983965b989463b868c888a44527a54f">connlm_draw</a>(<a class="code" href="structconnlm__t.html">connlm_t</a> *connlm, FILE *fp, <span class="keywordtype">bool</span> verbose);</div>
 <div class="line"><a name="l00148"></a><span class="lineno">  148</span>&#160;</div>
@@ -205,38 +204,45 @@ $(document).ready(function(){initNavTree('connlm_8h_source.html','');});
 <div class="line"><a name="l00177"></a><span class="lineno">  177</span>&#160;</div>
 <div class="line"><a name="l00185"></a><span class="lineno">  185</span>&#160;<span class="keywordtype">int</span> <a class="code" href="group__g__connlm.html#ga79845e351867a750f21bbf2dbaa1ba06">connlm_add_comp</a>(<a class="code" href="structconnlm__t.html">connlm_t</a> *connlm, <a class="code" href="structcomponent__t.html">component_t</a> *comp);</div>
 <div class="line"><a name="l00186"></a><span class="lineno">  186</span>&#160;</div>
-<div class="line"><a name="l00187"></a><span class="lineno">  187</span>&#160;<span class="preprocessor">#ifdef __cplusplus</span></div>
-<div class="line"><a name="l00188"></a><span class="lineno">  188</span>&#160;}</div>
-<div class="line"><a name="l00189"></a><span class="lineno">  189</span>&#160;<span class="preprocessor">#endif</span></div>
-<div class="line"><a name="l00190"></a><span class="lineno">  190</span>&#160;</div>
-<div class="line"><a name="l00191"></a><span class="lineno">  191</span>&#160;<span class="preprocessor">#endif</span></div>
+<div class="line"><a name="l00192"></a><span class="lineno">  192</span>&#160;<span class="keywordtype">void</span> <a class="code" href="group__g__connlm.html#ga77bdfd3e4d297aeefaecc93175d18708">connlm_sanity_check</a>(<a class="code" href="structconnlm__t.html">connlm_t</a> *connlm);</div>
+<div class="line"><a name="l00193"></a><span class="lineno">  193</span>&#160;</div>
+<div class="line"><a name="l00200"></a><span class="lineno">  200</span>&#160;<span class="keywordtype">void</span> <a class="code" href="group__g__connlm.html#gac12f3179799bb159c296110499ad8677">connlm_print_verbose_info</a>(<a class="code" href="structconnlm__t.html">connlm_t</a> *connlm, FILE *fo);</div>
+<div class="line"><a name="l00201"></a><span class="lineno">  201</span>&#160;</div>
+<div class="line"><a name="l00202"></a><span class="lineno">  202</span>&#160;<span class="preprocessor">#ifdef __cplusplus</span></div>
+<div class="line"><a name="l00203"></a><span class="lineno">  203</span>&#160;}</div>
+<div class="line"><a name="l00204"></a><span class="lineno">  204</span>&#160;<span class="preprocessor">#endif</span></div>
+<div class="line"><a name="l00205"></a><span class="lineno">  205</span>&#160;</div>
+<div class="line"><a name="l00206"></a><span class="lineno">  206</span>&#160;<span class="preprocessor">#endif</span></div>
 <div class="ttc" id="group__g__connlm_html_ga4983965b989463b868c888a44527a54f"><div class="ttname"><a href="group__g__connlm.html#ga4983965b989463b868c888a44527a54f">connlm_draw</a></div><div class="ttdeci">int connlm_draw(connlm_t *connlm, FILE *fp, bool verbose)</div><div class="ttdoc">Convert a connlm model into graphviz format. </div></div>
+<div class="ttc" id="group__g__connlm_html_ga77bdfd3e4d297aeefaecc93175d18708"><div class="ttname"><a href="group__g__connlm.html#ga77bdfd3e4d297aeefaecc93175d18708">connlm_sanity_check</a></div><div class="ttdeci">void connlm_sanity_check(connlm_t *connlm)</div><div class="ttdoc">Do sanity check on a component and print warnings. </div></div>
 <div class="ttc" id="group__g__connlm_html_ga1efaff732711dd1e436c8d6b574b8d3c"><div class="ttname"><a href="group__g__connlm.html#ga1efaff732711dd1e436c8d6b574b8d3c">connlm_revision</a></div><div class="ttdeci">const char * connlm_revision()</div><div class="ttdoc">Return connLM git revision. </div></div>
-<div class="ttc" id="group__g__connlm_html_ga2c70408a38b927b4122d18e1ad0d5ebe"><div class="ttname"><a href="group__g__connlm.html#ga2c70408a38b927b4122d18e1ad0d5ebe">connlm_save</a></div><div class="ttdeci">int connlm_save(connlm_t *connlm, FILE *fp, bool binary)</div><div class="ttdoc">Save a connlm model. </div></div>
 <div class="ttc" id="group__g__connlm_html_ga16cc86da5bd225c176db09b440e2e338"><div class="ttname"><a href="group__g__connlm.html#ga16cc86da5bd225c176db09b440e2e338">connlm_destroy</a></div><div class="ttdeci">void connlm_destroy(connlm_t *connlm)</div><div class="ttdoc">Destroy a connlm model. </div></div>
 <div class="ttc" id="structconnlm__t_html_aa2b53cd9ffdea835958486763256221f"><div class="ttname"><a href="structconnlm__t.html#aa2b53cd9ffdea835958486763256221f">connlm_t::num_comp</a></div><div class="ttdeci">int num_comp</div><div class="ttdoc">number of components. </div><div class="ttdef"><b>Definition:</b> connlm.h:67</div></div>
+<div class="ttc" id="group__g__connlm_html_gac12f3179799bb159c296110499ad8677"><div class="ttname"><a href="group__g__connlm.html#gac12f3179799bb159c296110499ad8677">connlm_print_verbose_info</a></div><div class="ttdeci">void connlm_print_verbose_info(connlm_t *connlm, FILE *fo)</div><div class="ttdoc">Print verbose info of a connlm model. </div></div>
 <div class="ttc" id="structconnlm__t_html_a681c42a987c2811d0c8202418ed49927"><div class="ttname"><a href="structconnlm__t.html#a681c42a987c2811d0c8202418ed49927">connlm_t::comps</a></div><div class="ttdeci">component_t ** comps</div><div class="ttdoc">components. </div><div class="ttdef"><b>Definition:</b> connlm.h:66</div></div>
 <div class="ttc" id="group__g__connlm_html_ga60196fd9f69cdc43b5d55bd9de3609e6"><div class="ttname"><a href="group__g__connlm.html#ga60196fd9f69cdc43b5d55bd9de3609e6">connlm_load_train_opt</a></div><div class="ttdeci">int connlm_load_train_opt(connlm_t *connlm, st_opt_t *opt, const char *sec_name)</div><div class="ttdoc">Load connlm train param. </div></div>
 <div class="ttc" id="group__g__connlm_html_ga724461f3d93c88ae38b7962ead35aa97"><div class="ttname"><a href="group__g__connlm.html#ga724461f3d93c88ae38b7962ead35aa97">connlm_init</a></div><div class="ttdeci">int connlm_init(connlm_t *connlm, FILE *topo_fp)</div><div class="ttdoc">Initialise a connlm model. </div></div>
 <div class="ttc" id="group__g__connlm_html_gacee942effbb944fa0decd86022062f21"><div class="ttname"><a href="group__g__connlm.html#gacee942effbb944fa0decd86022062f21">connlm_load</a></div><div class="ttdeci">connlm_t * connlm_load(FILE *fp)</div><div class="ttdoc">Load a connlm model from file stream. </div></div>
+<div class="ttc" id="group__g__connlm_html_ga5938ee659b017cadd2a399ec1174e75a"><div class="ttname"><a href="group__g__connlm.html#ga5938ee659b017cadd2a399ec1174e75a">connlm_save</a></div><div class="ttdeci">int connlm_save(connlm_t *connlm, FILE *fp, connlm_fmt_t fmt)</div><div class="ttdoc">Save a connlm model. </div></div>
+<div class="ttc" id="group__g__connlm_html_ga27bb4962c19c1ac9c66c27d5d2de9a73"><div class="ttname"><a href="group__g__connlm.html#ga27bb4962c19c1ac9c66c27d5d2de9a73">connlm_fmt_t</a></div><div class="ttdeci">connlm_fmt_t</div><div class="ttdoc">Storage Format for connLM model. </div><div class="ttdef"><b>Definition:</b> utils.h:141</div></div>
 <div class="ttc" id="structconnlm__t_html"><div class="ttname"><a href="structconnlm__t.html">connlm_t</a></div><div class="ttdoc">connLM model. </div><div class="ttdef"><b>Definition:</b> connlm.h:62</div></div>
 <div class="ttc" id="structconnlm__t_html_a5ce1d69db833748652d0020d6e549739"><div class="ttname"><a href="structconnlm__t.html#a5ce1d69db833748652d0020d6e549739">connlm_t::vocab</a></div><div class="ttdeci">vocab_t * vocab</div><div class="ttdoc">vocab </div><div class="ttdef"><b>Definition:</b> connlm.h:64</div></div>
 <div class="ttc" id="group__g__connlm_html_ga25b96fcfd940cc3f9dd85388b8ed5658"><div class="ttname"><a href="group__g__connlm.html#ga25b96fcfd940cc3f9dd85388b8ed5658">connlm_new</a></div><div class="ttdeci">connlm_t * connlm_new(vocab_t *vocab, output_t *output, component_t **comps, int n_comp)</div><div class="ttdoc">New a connlm model with some components. </div></div>
 <div class="ttc" id="group__g__connlm_html_gaf56201caabafa301c6d477b1d8f2d5a2"><div class="ttname"><a href="group__g__connlm.html#gaf56201caabafa301c6d477b1d8f2d5a2">connlm_print_info</a></div><div class="ttdeci">int connlm_print_info(FILE *model_fp, FILE *fo)</div><div class="ttdoc">Print info of a connlm model file stream. </div></div>
-<div class="ttc" id="structcomponent__t_html"><div class="ttname"><a href="structcomponent__t.html">component_t</a></div><div class="ttdoc">NNet component. </div><div class="ttdef"><b>Definition:</b> component.h:56</div></div>
+<div class="ttc" id="structcomponent__t_html"><div class="ttname"><a href="structcomponent__t.html">component_t</a></div><div class="ttdoc">NNet component. </div><div class="ttdef"><b>Definition:</b> component.h:57</div></div>
 <div class="ttc" id="group__g__connlm_html_ga1151d2f9d2490ca55a114c2193fe7c81"><div class="ttname"><a href="group__g__connlm.html#ga1151d2f9d2490ca55a114c2193fe7c81">connlm_filter</a></div><div class="ttdeci">int connlm_filter(connlm_t *connlm, model_filter_t mf, const char *comp_names, int num_comp)</div><div class="ttdoc">Filter a connlm model according to filter. </div></div>
 <div class="ttc" id="group__g__connlm_html_ga5186f358259e296a90e5c18b7d57100b"><div class="ttname"><a href="group__g__connlm.html#ga5186f358259e296a90e5c18b7d57100b">connlm_setup</a></div><div class="ttdeci">int connlm_setup(connlm_t *connlm)</div><div class="ttdoc">Setup a connlm model for running. </div></div>
-<div class="ttc" id="structoutput__t_html"><div class="ttname"><a href="structoutput__t.html">output_t</a></div><div class="ttdoc">Output Layer. </div><div class="ttdef"><b>Definition:</b> output.h:140</div></div>
+<div class="ttc" id="structoutput__t_html"><div class="ttname"><a href="structoutput__t.html">output_t</a></div><div class="ttdoc">Output Layer. </div><div class="ttdef"><b>Definition:</b> output.h:239</div></div>
 <div class="ttc" id="group__g__connlm_html_ga79845e351867a750f21bbf2dbaa1ba06"><div class="ttname"><a href="group__g__connlm.html#ga79845e351867a750f21bbf2dbaa1ba06">connlm_add_comp</a></div><div class="ttdeci">int connlm_add_comp(connlm_t *connlm, component_t *comp)</div><div class="ttdoc">Add a component to connlm model. </div></div>
 <div class="ttc" id="structconnlm__t_html_acb30c474d8738764497837d6edca976e"><div class="ttname"><a href="structconnlm__t.html#acb30c474d8738764497837d6edca976e">connlm_t::output</a></div><div class="ttdeci">output_t * output</div><div class="ttdoc">output layer </div><div class="ttdef"><b>Definition:</b> connlm.h:63</div></div>
-<div class="ttc" id="structvocab__t_html"><div class="ttname"><a href="structvocab__t.html">vocab_t</a></div><div class="ttdoc">Vocab. </div><div class="ttdef"><b>Definition:</b> vocab.h:54</div></div>
+<div class="ttc" id="structvocab__t_html"><div class="ttname"><a href="structvocab__t.html">vocab_t</a></div><div class="ttdoc">Vocab. </div><div class="ttdef"><b>Definition:</b> vocab.h:58</div></div>
 </div><!-- fragment --></div><!-- contents -->
 </div><!-- doc-content -->
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><b>connlm.h</b></li>
-    <li class="footer">Generated on Fri Oct 28 2016 22:37:22 for connLM by
+    <li class="footer">Generated on Mon May 8 2017 22:10:25 for connLM by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.10 </li>
   </ul>

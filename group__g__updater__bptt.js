@@ -10,7 +10,7 @@ var group__g__updater__bptt =
       [ "wt_updaters", "structbptt__updater__t.html#abd57760b004db8cfb90094139751f31f", null ]
     ] ],
     [ "safe_bptt_updater_destroy", "group__g__updater__bptt.html#ga2e53628b9261f2354e63ac1a64be817b", null ],
-    [ "bptt_updater_create", "group__g__updater__bptt.html#ga4bd1b4c2a4f85bd6943c0ab046778f42", null ],
+    [ "bptt_updater_create", "group__g__updater__bptt.html#gaf75adcdacdebf45b61893bee7a1333d9", null ],
     [ "bptt_updater_destroy", "group__g__updater__bptt.html#ga78d8edf78ddbeb532fc48bddab5b7acf", null ],
     [ "bptt_updater_reset", "group__g__updater__bptt.html#gadd1b5413719ef2ffcaa952364e45bee9", null ]
 ];

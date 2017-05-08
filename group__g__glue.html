@@ -31,7 +31,6 @@
 });
 </script><script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js"></script>
 <link href="doxygen.css" rel="stylesheet" type="text/css" />
-<link href="table.css" rel="stylesheet" type="text/css"/>
 </head>
 <body>
 <div id="top"><!-- do not remove this div, it is closed by doxygen! -->
@@ -187,21 +186,21 @@ Functions</h2></td></tr>
 <tr class="memitem:gaec577eb438e93e792da017b7b0ca106a"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structglue__t.html">glue_t</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__g__glue.html#gaec577eb438e93e792da017b7b0ca106a">glue_parse_topo</a> (const char *line, <a class="el" href="structlayer__t.html">layer_t</a> **layers, int n_layer, <a class="el" href="structinput__t.html">input_t</a> *input, <a class="el" href="structoutput__t.html">output_t</a> *output)</td></tr>
 <tr class="memdesc:gaec577eb438e93e792da017b7b0ca106a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Parse a topo config line, and return a new glue.  <a href="#gaec577eb438e93e792da017b7b0ca106a">More...</a><br /></td></tr>
 <tr class="separator:gaec577eb438e93e792da017b7b0ca106a"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ga434f6beae182acd708d5ea2947eb269a"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__g__glue.html#ga434f6beae182acd708d5ea2947eb269a">glue_check</a> (<a class="el" href="structglue__t.html">glue_t</a> *glue)</td></tr>
-<tr class="memdesc:ga434f6beae182acd708d5ea2947eb269a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Check a glue after loading from topo line.  <a href="#ga434f6beae182acd708d5ea2947eb269a">More...</a><br /></td></tr>
-<tr class="separator:ga434f6beae182acd708d5ea2947eb269a"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ga774612673229baf7345dda9d24713419"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__g__glue.html#ga774612673229baf7345dda9d24713419">glue_load_header</a> (<a class="el" href="structglue__t.html">glue_t</a> **glue, int version, FILE *fp, bool *binary, FILE *fo_info)</td></tr>
-<tr class="memdesc:ga774612673229baf7345dda9d24713419"><td class="mdescLeft">&#160;</td><td class="mdescRight">Load glue header and initialise a new glue.  <a href="#ga774612673229baf7345dda9d24713419">More...</a><br /></td></tr>
-<tr class="separator:ga774612673229baf7345dda9d24713419"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:gacffa2c53d9746f67c31f031fd951e626"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__g__glue.html#gacffa2c53d9746f67c31f031fd951e626">glue_load_body</a> (<a class="el" href="structglue__t.html">glue_t</a> *glue, int version, FILE *fp, bool binary)</td></tr>
-<tr class="memdesc:gacffa2c53d9746f67c31f031fd951e626"><td class="mdescLeft">&#160;</td><td class="mdescRight">Load glue body.  <a href="#gacffa2c53d9746f67c31f031fd951e626">More...</a><br /></td></tr>
-<tr class="separator:gacffa2c53d9746f67c31f031fd951e626"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:gafaa6fe372ec8a34b06ebd04e7abb1b07"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__g__glue.html#gafaa6fe372ec8a34b06ebd04e7abb1b07">glue_save_header</a> (<a class="el" href="structglue__t.html">glue_t</a> *glue, FILE *fp, bool binary)</td></tr>
-<tr class="memdesc:gafaa6fe372ec8a34b06ebd04e7abb1b07"><td class="mdescLeft">&#160;</td><td class="mdescRight">Save glue header.  <a href="#gafaa6fe372ec8a34b06ebd04e7abb1b07">More...</a><br /></td></tr>
-<tr class="separator:gafaa6fe372ec8a34b06ebd04e7abb1b07"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ga4d26169423cd040c7556239b33934068"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__g__glue.html#ga4d26169423cd040c7556239b33934068">glue_save_body</a> (<a class="el" href="structglue__t.html">glue_t</a> *glue, FILE *fp, bool binary)</td></tr>
-<tr class="memdesc:ga4d26169423cd040c7556239b33934068"><td class="mdescLeft">&#160;</td><td class="mdescRight">Save glue body.  <a href="#ga4d26169423cd040c7556239b33934068">More...</a><br /></td></tr>
-<tr class="separator:ga4d26169423cd040c7556239b33934068"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gacbc8651a0f7f0a1a6becedf6f299de61"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__g__glue.html#gacbc8651a0f7f0a1a6becedf6f299de61">glue_check</a> (<a class="el" href="structglue__t.html">glue_t</a> *glue, <a class="el" href="structlayer__t.html">layer_t</a> **layers, int n_layer, <a class="el" href="structinput__t.html">input_t</a> *input, <a class="el" href="structoutput__t.html">output_t</a> *output)</td></tr>
+<tr class="memdesc:gacbc8651a0f7f0a1a6becedf6f299de61"><td class="mdescLeft">&#160;</td><td class="mdescRight">Check a glue after loading from topo line.  <a href="#gacbc8651a0f7f0a1a6becedf6f299de61">More...</a><br /></td></tr>
+<tr class="separator:gacbc8651a0f7f0a1a6becedf6f299de61"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gadecd13de62e71bf17eaf5e23bd09a012"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__g__glue.html#gadecd13de62e71bf17eaf5e23bd09a012">glue_load_header</a> (<a class="el" href="structglue__t.html">glue_t</a> **glue, int version, FILE *fp, <a class="el" href="group__g__connlm.html#ga27bb4962c19c1ac9c66c27d5d2de9a73">connlm_fmt_t</a> *fmt, FILE *fo_info)</td></tr>
+<tr class="memdesc:gadecd13de62e71bf17eaf5e23bd09a012"><td class="mdescLeft">&#160;</td><td class="mdescRight">Load glue header and initialise a new glue.  <a href="#gadecd13de62e71bf17eaf5e23bd09a012">More...</a><br /></td></tr>
+<tr class="separator:gadecd13de62e71bf17eaf5e23bd09a012"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gadb22a9bae92a4bfdfc822d40722c9a19"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__g__glue.html#gadb22a9bae92a4bfdfc822d40722c9a19">glue_load_body</a> (<a class="el" href="structglue__t.html">glue_t</a> *glue, int version, FILE *fp, <a class="el" href="group__g__connlm.html#ga27bb4962c19c1ac9c66c27d5d2de9a73">connlm_fmt_t</a> fmt)</td></tr>
+<tr class="memdesc:gadb22a9bae92a4bfdfc822d40722c9a19"><td class="mdescLeft">&#160;</td><td class="mdescRight">Load glue body.  <a href="#gadb22a9bae92a4bfdfc822d40722c9a19">More...</a><br /></td></tr>
+<tr class="separator:gadb22a9bae92a4bfdfc822d40722c9a19"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gad5739e6f0fb593692b32f64875d8a3b7"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__g__glue.html#gad5739e6f0fb593692b32f64875d8a3b7">glue_save_header</a> (<a class="el" href="structglue__t.html">glue_t</a> *glue, FILE *fp, <a class="el" href="group__g__connlm.html#ga27bb4962c19c1ac9c66c27d5d2de9a73">connlm_fmt_t</a> fmt)</td></tr>
+<tr class="memdesc:gad5739e6f0fb593692b32f64875d8a3b7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Save glue header.  <a href="#gad5739e6f0fb593692b32f64875d8a3b7">More...</a><br /></td></tr>
+<tr class="separator:gad5739e6f0fb593692b32f64875d8a3b7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gaec2808e775b42c0fda1c5c284d9009b8"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__g__glue.html#gaec2808e775b42c0fda1c5c284d9009b8">glue_save_body</a> (<a class="el" href="structglue__t.html">glue_t</a> *glue, FILE *fp, <a class="el" href="group__g__connlm.html#ga27bb4962c19c1ac9c66c27d5d2de9a73">connlm_fmt_t</a> fmt)</td></tr>
+<tr class="memdesc:gaec2808e775b42c0fda1c5c284d9009b8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Save glue body.  <a href="#gaec2808e775b42c0fda1c5c284d9009b8">More...</a><br /></td></tr>
+<tr class="separator:gaec2808e775b42c0fda1c5c284d9009b8"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga6b5f5f75a7eab871fee9208abf3ab365"><td class="memItemLeft" align="right" valign="top">char *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__g__glue.html#ga6b5f5f75a7eab871fee9208abf3ab365">glue_draw_label</a> (<a class="el" href="structglue__t.html">glue_t</a> *glue, char *label, size_t label_len, bool verbose)</td></tr>
 <tr class="memdesc:ga6b5f5f75a7eab871fee9208abf3ab365"><td class="mdescLeft">&#160;</td><td class="mdescRight">Provide label string for drawing glue.  <a href="#ga6b5f5f75a7eab871fee9208abf3ab365">More...</a><br /></td></tr>
 <tr class="separator:ga6b5f5f75a7eab871fee9208abf3ab365"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -223,6 +222,12 @@ Functions</h2></td></tr>
 <tr class="memitem:ga8d7bb1dc6aad02038f8ad29033d623aa"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__g__glue.html#ga8d7bb1dc6aad02038f8ad29033d623aa">glue_backprop</a> (<a class="el" href="structglue__t.html">glue_t</a> *glue, <a class="el" href="structcomp__updater__t.html">comp_updater_t</a> *comp_updater, <a class="el" href="structout__updater__t.html">out_updater_t</a> *out_updater)</td></tr>
 <tr class="memdesc:ga8d7bb1dc6aad02038f8ad29033d623aa"><td class="mdescLeft">&#160;</td><td class="mdescRight">Back-propagate one word for a thread of component.  <a href="#ga8d7bb1dc6aad02038f8ad29033d623aa">More...</a><br /></td></tr>
 <tr class="separator:ga8d7bb1dc6aad02038f8ad29033d623aa"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gad6bdef2d3eb63bed54aa5936e1ad3ae6"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__g__glue.html#gad6bdef2d3eb63bed54aa5936e1ad3ae6">glue_sanity_check</a> (<a class="el" href="structglue__t.html">glue_t</a> *glue)</td></tr>
+<tr class="memdesc:gad6bdef2d3eb63bed54aa5936e1ad3ae6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Do sanity check on a glue and print warnings.  <a href="#gad6bdef2d3eb63bed54aa5936e1ad3ae6">More...</a><br /></td></tr>
+<tr class="separator:gad6bdef2d3eb63bed54aa5936e1ad3ae6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gab5eb8c09fdae2dc91ef6bdbeb7bfdba5"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__g__glue.html#gab5eb8c09fdae2dc91ef6bdbeb7bfdba5">glue_print_verbose_info</a> (<a class="el" href="structglue__t.html">glue_t</a> *glue, FILE *fo)</td></tr>
+<tr class="memdesc:gab5eb8c09fdae2dc91ef6bdbeb7bfdba5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Print verbose info of a glue.  <a href="#gab5eb8c09fdae2dc91ef6bdbeb7bfdba5">More...</a><br /></td></tr>
+<tr class="separator:gab5eb8c09fdae2dc91ef6bdbeb7bfdba5"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <p>Glue to connect two layers. </p>
@@ -243,7 +248,7 @@ Functions</h2></td></tr>
 <b>Value:</b><div class="fragment"><div class="line"><span class="keywordflow">do</span> {\</div>
 <div class="line">    if((ptr) != NULL) {\</div>
 <div class="line">        glue_destroy(ptr);\</div>
-<div class="line">        safe_free(ptr);\</div>
+<div class="line">        safe_st_free(ptr);\</div>
 <div class="line">        (ptr) = NULL;\</div>
 <div class="line">    }\</div>
 <div class="line">    } <span class="keywordflow">while</span>(0)</div>
@@ -328,7 +333,7 @@ Functions</h2></td></tr>
 
 </div>
 </div>
-<a class="anchor" id="ga434f6beae182acd708d5ea2947eb269a"></a>
+<a class="anchor" id="gacbc8651a0f7f0a1a6becedf6f299de61"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
@@ -336,8 +341,36 @@ Functions</h2></td></tr>
           <td class="memname">bool glue_check </td>
           <td>(</td>
           <td class="paramtype"><a class="el" href="structglue__t.html">glue_t</a> *&#160;</td>
-          <td class="paramname"><em>glue</em></td><td>)</td>
+          <td class="paramname"><em>glue</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
           <td></td>
+          <td class="paramtype"><a class="el" href="structlayer__t.html">layer_t</a> **&#160;</td>
+          <td class="paramname"><em>layers</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>n_layer</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="structinput__t.html">input_t</a> *&#160;</td>
+          <td class="paramname"><em>input</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="structoutput__t.html">output_t</a> *&#160;</td>
+          <td class="paramname"><em>output</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -345,7 +378,11 @@ Functions</h2></td></tr>
 <p>Check a glue after loading from topo line. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramdir">[in]</td><td class="paramname">glue</td><td>the loaded glue. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">glue</td><td>the glue. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">layers</td><td>named layers. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">n_layer</td><td>number of named layers. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">input</td><td>input layer. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">output</td><td>output layer. </td></tr>
   </table>
   </dd>
 </dl>
@@ -638,7 +675,7 @@ Functions</h2></td></tr>
 
 </div>
 </div>
-<a class="anchor" id="gacffa2c53d9746f67c31f031fd951e626"></a>
+<a class="anchor" id="gadb22a9bae92a4bfdfc822d40722c9a19"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
@@ -663,8 +700,8 @@ Functions</h2></td></tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">bool&#160;</td>
-          <td class="paramname"><em>binary</em>&#160;</td>
+          <td class="paramtype"><a class="el" href="group__g__connlm.html#ga27bb4962c19c1ac9c66c27d5d2de9a73">connlm_fmt_t</a>&#160;</td>
+          <td class="paramname"><em>fmt</em>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -680,18 +717,18 @@ Functions</h2></td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">glue</td><td>glue to be loaded. </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">version</td><td>file version of loading file. </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">fp</td><td>file stream loaded from. </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">binary</td><td>whether to use binary format. </td></tr>
+    <tr><td class="paramdir">[out]</td><td class="paramname">fmt</td><td>storage format. </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section see"><dt>See also</dt><dd><a class="el" href="group__g__glue.html#ga774612673229baf7345dda9d24713419" title="Load glue header and initialise a new glue. ">glue_load_header</a> </dd>
+<dl class="section see"><dt>See also</dt><dd><a class="el" href="group__g__glue.html#gadecd13de62e71bf17eaf5e23bd09a012" title="Load glue header and initialise a new glue. ">glue_load_header</a> </dd>
 <dd>
-<a class="el" href="group__g__glue.html#gafaa6fe372ec8a34b06ebd04e7abb1b07" title="Save glue header. ">glue_save_header</a>, <a class="el" href="group__g__glue.html#ga4d26169423cd040c7556239b33934068" title="Save glue body. ">glue_save_body</a> </dd></dl>
+<a class="el" href="group__g__glue.html#gad5739e6f0fb593692b32f64875d8a3b7" title="Save glue header. ">glue_save_header</a>, <a class="el" href="group__g__glue.html#gaec2808e775b42c0fda1c5c284d9009b8" title="Save glue body. ">glue_save_body</a> </dd></dl>
 <dl class="section return"><dt>Returns</dt><dd>non-zero value if any error. </dd></dl>
 
 </div>
 </div>
-<a class="anchor" id="ga774612673229baf7345dda9d24713419"></a>
+<a class="anchor" id="gadecd13de62e71bf17eaf5e23bd09a012"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
@@ -716,8 +753,8 @@ Functions</h2></td></tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">bool *&#160;</td>
-          <td class="paramname"><em>binary</em>, </td>
+          <td class="paramtype"><a class="el" href="group__g__connlm.html#ga27bb4962c19c1ac9c66c27d5d2de9a73">connlm_fmt_t</a> *&#160;</td>
+          <td class="paramname"><em>fmt</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
@@ -739,14 +776,14 @@ Functions</h2></td></tr>
     <tr><td class="paramdir">[out]</td><td class="paramname">glue</td><td>glue initialised. </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">version</td><td>file version of loading file. </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">fp</td><td>file stream loaded from. </td></tr>
-    <tr><td class="paramdir">[out]</td><td class="paramname">binary</td><td>whether the file stream is in binary format. </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">fo_info</td><td>file stream used to print information, if it is not NULL. </td></tr>
+    <tr><td class="paramdir">[out]</td><td class="paramname">fmt</td><td>storage format. </td></tr>
+    <tr><td class="paramdir">[out]</td><td class="paramname">fo_info</td><td>file stream used to print information, if it is not NULL. </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section see"><dt>See also</dt><dd><a class="el" href="group__g__glue.html#gacffa2c53d9746f67c31f031fd951e626" title="Load glue body. ">glue_load_body</a> </dd>
+<dl class="section see"><dt>See also</dt><dd><a class="el" href="group__g__glue.html#gadb22a9bae92a4bfdfc822d40722c9a19" title="Load glue body. ">glue_load_body</a> </dd>
 <dd>
-<a class="el" href="group__g__glue.html#gafaa6fe372ec8a34b06ebd04e7abb1b07" title="Save glue header. ">glue_save_header</a>, <a class="el" href="group__g__glue.html#ga4d26169423cd040c7556239b33934068" title="Save glue body. ">glue_save_body</a> </dd></dl>
+<a class="el" href="group__g__glue.html#gad5739e6f0fb593692b32f64875d8a3b7" title="Save glue header. ">glue_save_header</a>, <a class="el" href="group__g__glue.html#gaec2808e775b42c0fda1c5c284d9009b8" title="Save glue body. ">glue_save_body</a> </dd></dl>
 <dl class="section return"><dt>Returns</dt><dd>non-zero value if any error. </dd></dl>
 
 </div>
@@ -865,7 +902,66 @@ Functions</h2></td></tr>
 
 </div>
 </div>
-<a class="anchor" id="ga4d26169423cd040c7556239b33934068"></a>
+<a class="anchor" id="gab5eb8c09fdae2dc91ef6bdbeb7bfdba5"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void glue_print_verbose_info </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structglue__t.html">glue_t</a> *&#160;</td>
+          <td class="paramname"><em>glue</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">FILE *&#160;</td>
+          <td class="paramname"><em>fo</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Print verbose info of a glue. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">glue</td><td>the glue. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">fo</td><td>file stream print info to. </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a class="anchor" id="gad6bdef2d3eb63bed54aa5936e1ad3ae6"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void glue_sanity_check </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structglue__t.html">glue_t</a> *&#160;</td>
+          <td class="paramname"><em>glue</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Do sanity check on a glue and print warnings. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">glue</td><td>glue </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a class="anchor" id="gaec2808e775b42c0fda1c5c284d9009b8"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
@@ -884,8 +980,8 @@ Functions</h2></td></tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">bool&#160;</td>
-          <td class="paramname"><em>binary</em>&#160;</td>
+          <td class="paramtype"><a class="el" href="group__g__connlm.html#ga27bb4962c19c1ac9c66c27d5d2de9a73">connlm_fmt_t</a>&#160;</td>
+          <td class="paramname"><em>fmt</em>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -900,18 +996,18 @@ Functions</h2></td></tr>
   <table class="params">
     <tr><td class="paramdir">[in]</td><td class="paramname">glue</td><td>glue to be saved. </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">fp</td><td>file stream saved to. </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">binary</td><td>whether to use binary format. </td></tr>
+    <tr><td class="paramdir">[out]</td><td class="paramname">fmt</td><td>storage format. </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section see"><dt>See also</dt><dd><a class="el" href="group__g__glue.html#gafaa6fe372ec8a34b06ebd04e7abb1b07" title="Save glue header. ">glue_save_header</a> </dd>
+<dl class="section see"><dt>See also</dt><dd><a class="el" href="group__g__glue.html#gad5739e6f0fb593692b32f64875d8a3b7" title="Save glue header. ">glue_save_header</a> </dd>
 <dd>
-<a class="el" href="group__g__glue.html#ga774612673229baf7345dda9d24713419" title="Load glue header and initialise a new glue. ">glue_load_header</a>, <a class="el" href="group__g__glue.html#gacffa2c53d9746f67c31f031fd951e626" title="Load glue body. ">glue_load_body</a> </dd></dl>
+<a class="el" href="group__g__glue.html#gadecd13de62e71bf17eaf5e23bd09a012" title="Load glue header and initialise a new glue. ">glue_load_header</a>, <a class="el" href="group__g__glue.html#gadb22a9bae92a4bfdfc822d40722c9a19" title="Load glue body. ">glue_load_body</a> </dd></dl>
 <dl class="section return"><dt>Returns</dt><dd>non-zero value if any error. </dd></dl>
 
 </div>
 </div>
-<a class="anchor" id="gafaa6fe372ec8a34b06ebd04e7abb1b07"></a>
+<a class="anchor" id="gad5739e6f0fb593692b32f64875d8a3b7"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
@@ -930,8 +1026,8 @@ Functions</h2></td></tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">bool&#160;</td>
-          <td class="paramname"><em>binary</em>&#160;</td>
+          <td class="paramtype"><a class="el" href="group__g__connlm.html#ga27bb4962c19c1ac9c66c27d5d2de9a73">connlm_fmt_t</a>&#160;</td>
+          <td class="paramname"><em>fmt</em>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -946,13 +1042,13 @@ Functions</h2></td></tr>
   <table class="params">
     <tr><td class="paramdir">[in]</td><td class="paramname">glue</td><td>glue to be saved. </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">fp</td><td>file stream saved to. </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">binary</td><td>whether to use binary format. </td></tr>
+    <tr><td class="paramdir">[out]</td><td class="paramname">fmt</td><td>storage format. </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section see"><dt>See also</dt><dd><a class="el" href="group__g__glue.html#ga4d26169423cd040c7556239b33934068" title="Save glue body. ">glue_save_body</a> </dd>
+<dl class="section see"><dt>See also</dt><dd><a class="el" href="group__g__glue.html#gaec2808e775b42c0fda1c5c284d9009b8" title="Save glue body. ">glue_save_body</a> </dd>
 <dd>
-<a class="el" href="group__g__glue.html#ga774612673229baf7345dda9d24713419" title="Load glue header and initialise a new glue. ">glue_load_header</a>, <a class="el" href="group__g__glue.html#gacffa2c53d9746f67c31f031fd951e626" title="Load glue body. ">glue_load_body</a> </dd></dl>
+<a class="el" href="group__g__glue.html#gadecd13de62e71bf17eaf5e23bd09a012" title="Load glue header and initialise a new glue. ">glue_load_header</a>, <a class="el" href="group__g__glue.html#gadb22a9bae92a4bfdfc822d40722c9a19" title="Load glue body. ">glue_load_body</a> </dd></dl>
 <dl class="section return"><dt>Returns</dt><dd>non-zero value if any error. </dd></dl>
 
 </div>
@@ -962,7 +1058,7 @@ Functions</h2></td></tr>
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on Fri Oct 28 2016 22:37:23 for connLM by
+    <li class="footer">Generated on Mon May 8 2017 22:10:28 for connLM by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.10 </li>
   </ul>
