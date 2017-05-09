@@ -1,9 +1,9 @@
 <map id="glue_t" name="glue_t">
-<area shape="rect" id="node2" href="$structglue__impl__t.html" title="Implementation of a NNet glue. " alt="" coords="61,303,149,329"/>
-<area shape="rect" id="node3" href="$structwt__updater__t.html" title="Output updater. " alt="" coords="38,213,135,240"/>
-<area shape="rect" id="node4" href="$structwt__dirty__buf__t.html" title="Store the dirty part of weight. " alt="" coords="5,109,109,136"/>
-<area shape="rect" id="node5" href="$structconcat__mat__t.html" title="Concatable Matrix. " alt="" coords="7,5,108,32"/>
-<area shape="rect" id="node6" href="$structparam__t.html" title="Parameter. " alt="" coords="155,109,224,136"/>
-<area shape="rect" id="node7" href="$structweight__t.html" title="NNet weight. " alt="" coords="249,303,319,329"/>
-<area shape="rect" id="node8" href="$structbptt__opt__t.html" title="BPTT options. " alt="" coords="344,303,424,329"/>
+<area shape="rect" id="node2" href="$structglue__impl__t.html" title="Implementation of a NNet glue. " alt="" coords="61,303,151,329"/>
+<area shape="rect" id="node3" href="$structwt__updater__t.html" title="Output updater. " alt="" coords="38,213,137,240"/>
+<area shape="rect" id="node4" href="$structwt__dirty__buf__t.html" title="Store the dirty part of weight. " alt="" coords="5,109,111,136"/>
+<area shape="rect" id="node5" href="$structconcat__mat__t.html" title="Concatable Matrix. " alt="" coords="7,5,109,32"/>
+<area shape="rect" id="node6" href="$structparam__t.html" title="Parameter. " alt="" coords="156,109,227,136"/>
+<area shape="rect" id="node7" href="$structweight__t.html" title="NNet weight. " alt="" coords="250,303,322,329"/>
+<area shape="rect" id="node8" href="$structbptt__opt__t.html" title="BPTT options. " alt="" coords="347,303,428,329"/>
 </map>

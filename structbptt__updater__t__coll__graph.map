@@ -1,7 +1,7 @@
 <map id="bptt_updater_t" name="bptt_updater_t">
-<area shape="rect" id="node2" href="$structwt__updater__t.html" title="Output updater. " alt="" coords="73,213,170,240"/>
-<area shape="rect" id="node3" href="$structwt__dirty__buf__t.html" title="Store the dirty part of weight. " alt="" coords="5,109,109,136"/>
-<area shape="rect" id="node4" href="$structconcat__mat__t.html" title="Concatable Matrix. " alt="" coords="7,5,108,32"/>
-<area shape="rect" id="node5" href="$structparam__t.html" title="Parameter. " alt="" coords="133,109,203,136"/>
-<area shape="rect" id="node6" href="$structbptt__opt__t.html" title="BPTT options. " alt="" coords="195,213,275,240"/>
+<area shape="rect" id="node2" href="$structwt__updater__t.html" title="Output updater. " alt="" coords="74,213,173,240"/>
+<area shape="rect" id="node3" href="$structwt__dirty__buf__t.html" title="Store the dirty part of weight. " alt="" coords="5,109,111,136"/>
+<area shape="rect" id="node4" href="$structconcat__mat__t.html" title="Concatable Matrix. " alt="" coords="7,5,109,32"/>
+<area shape="rect" id="node5" href="$structparam__t.html" title="Parameter. " alt="" coords="135,109,205,136"/>
+<area shape="rect" id="node6" href="$structbptt__opt__t.html" title="BPTT options. " alt="" coords="197,213,279,240"/>
 </map>

@@ -1,26 +1,26 @@
 <map id="comp_updater_t" name="comp_updater_t">
-<area shape="rect" id="node2" href="$structglue__updater__t.html" title="Glue updater. " alt="" coords="1182,89,1289,116"/>
-<area shape="rect" id="node3" href="$structglue__t.html" title="NNet glue. " alt="" coords="948,189,1005,216"/>
-<area shape="rect" id="node12" href="$structcomponent__t.html" title="NNet component. " alt="" coords="1187,263,1284,289"/>
-<area shape="rect" id="node4" href="$structglue__impl__t.html" title="Implementation of a NNet glue. " alt="" coords="689,223,777,249"/>
-<area shape="rect" id="node5" href="$structwt__updater__t.html" title="Output updater. " alt="" coords="426,147,523,173"/>
-<area shape="rect" id="node24" href="$structbptt__updater__t.html" title="BPTT updater. " alt="" coords="924,139,1029,165"/>
-<area shape="rect" id="node6" href="$structwt__dirty__buf__t.html" title="Store the dirty part of weight. " alt="" coords="195,147,299,173"/>
-<area shape="rect" id="node7" href="$structconcat__mat__t.html" title="Concatable Matrix. " alt="" coords="5,147,107,173"/>
-<area shape="rect" id="node8" href="$structparam__t.html" title="Parameter. " alt="" coords="212,236,281,263"/>
-<area shape="rect" id="node9" href="$structweight__t.html" title="NNet weight. " alt="" coords="698,327,769,353"/>
-<area shape="rect" id="node10" href="$structbptt__opt__t.html" title="BPTT options. " alt="" coords="693,171,773,197"/>
-<area shape="rect" id="node11" href="$structglue__updater__impl__t.html" title="Implementation of a NNet glue updater. " alt="" coords="907,5,1046,32"/>
-<area shape="rect" id="node13" href="$structinput__t.html" title="Input Layer. " alt="" coords="946,291,1007,317"/>
-<area shape="rect" id="node14" href="$structlayer__t.html" title="NNet hidden layer. " alt="" coords="946,396,1007,423"/>
-<area shape="rect" id="node25" href="$structlayer__updater__t.html" title="Layer updater. " alt="" coords="1180,375,1291,401"/>
-<area shape="rect" id="node15" href="$structlayer__impl__t.html" title="NNet hidden layer implementaion. " alt="" coords="687,396,779,423"/>
-<area shape="rect" id="node16" href="$structcomp__train__opt__t.html" title="Parameters for training component. " alt="" coords="915,240,1038,267"/>
-<area shape="rect" id="node17" href="$structout__updater__t.html" title="Output layer updater. " alt="" coords="1185,465,1286,492"/>
-<area shape="rect" id="node18" href="$structoutput__tree__bfs__aux__t.html" title="aux data for output tree BFS. " alt="" coords="901,465,1052,492"/>
-<area shape="rect" id="node19" href="$structoutput__t.html" title="Output Layer. " alt="" coords="942,516,1011,543"/>
-<area shape="rect" id="node20" href="$structoutput__opt__t.html" title="Parameters for output tree. " alt="" coords="686,567,781,593"/>
-<area shape="rect" id="node21" href="$structoutput__tree__t.html" title="Output tree. " alt="" coords="684,465,783,492"/>
-<area shape="rect" id="node22" href="$structoutput__tree__node__t.html" title="Output tree Node. " alt="" coords="408,465,541,492"/>
-<area shape="rect" id="node23" href="$structoutput__path__t.html" title="Output tree path. " alt="" coords="683,516,784,543"/>
+<area shape="rect" id="node2" href="$structglue__updater__t.html" title="Glue updater. " alt="" coords="1202,89,1313,116"/>
+<area shape="rect" id="node3" href="$structglue__t.html" title="NNet glue. " alt="" coords="963,189,1021,216"/>
+<area shape="rect" id="node12" href="$structcomponent__t.html" title="NNet component. " alt="" coords="1208,263,1307,289"/>
+<area shape="rect" id="node4" href="$structglue__impl__t.html" title="Implementation of a NNet glue. " alt="" coords="699,223,789,249"/>
+<area shape="rect" id="node5" href="$structwt__updater__t.html" title="Output updater. " alt="" coords="431,147,530,173"/>
+<area shape="rect" id="node24" href="$structbptt__updater__t.html" title="BPTT updater. " alt="" coords="938,139,1046,165"/>
+<area shape="rect" id="node6" href="$structwt__dirty__buf__t.html" title="Store the dirty part of weight. " alt="" coords="197,147,303,173"/>
+<area shape="rect" id="node7" href="$structconcat__mat__t.html" title="Concatable Matrix. " alt="" coords="5,147,108,173"/>
+<area shape="rect" id="node8" href="$structparam__t.html" title="Parameter. " alt="" coords="215,236,285,263"/>
+<area shape="rect" id="node9" href="$structweight__t.html" title="NNet weight. " alt="" coords="708,327,780,353"/>
+<area shape="rect" id="node10" href="$structbptt__opt__t.html" title="BPTT options. " alt="" coords="703,171,785,197"/>
+<area shape="rect" id="node11" href="$structglue__updater__impl__t.html" title="Implementation of a NNet glue updater. " alt="" coords="921,5,1063,32"/>
+<area shape="rect" id="node13" href="$structinput__t.html" title="Input Layer. " alt="" coords="961,291,1023,317"/>
+<area shape="rect" id="node14" href="$structlayer__t.html" title="NNet hidden layer. " alt="" coords="961,396,1023,423"/>
+<area shape="rect" id="node25" href="$structlayer__updater__t.html" title="Layer updater. " alt="" coords="1200,375,1315,401"/>
+<area shape="rect" id="node15" href="$structlayer__impl__t.html" title="NNet hidden layer implementaion. " alt="" coords="697,396,791,423"/>
+<area shape="rect" id="node16" href="$structcomp__train__opt__t.html" title="Parameters for training component. " alt="" coords="929,240,1055,267"/>
+<area shape="rect" id="node17" href="$structout__updater__t.html" title="Output layer updater. " alt="" coords="1205,465,1309,492"/>
+<area shape="rect" id="node18" href="$structoutput__tree__bfs__aux__t.html" title="aux data for output tree BFS. " alt="" coords="915,465,1069,492"/>
+<area shape="rect" id="node19" href="$structoutput__t.html" title="Output Layer. " alt="" coords="957,516,1027,543"/>
+<area shape="rect" id="node20" href="$structoutput__opt__t.html" title="Parameters for output tree. " alt="" coords="696,567,792,593"/>
+<area shape="rect" id="node21" href="$structoutput__tree__t.html" title="Output tree. " alt="" coords="694,465,794,492"/>
+<area shape="rect" id="node22" href="$structoutput__tree__node__t.html" title="Output tree Node. " alt="" coords="412,465,549,492"/>
+<area shape="rect" id="node23" href="$structoutput__path__t.html" title="Output tree path. " alt="" coords="692,516,796,543"/>
 </map>

@@ -1,8 +1,8 @@
 <map id="out_updater_t" name="out_updater_t">
-<area shape="rect" id="node2" href="$structoutput__tree__bfs__aux__t.html" title="aux data for output tree BFS. " alt="" coords="5,184,156,211"/>
-<area shape="rect" id="node3" href="$structoutput__t.html" title="Output Layer. " alt="" coords="181,184,250,211"/>
-<area shape="rect" id="node4" href="$structoutput__opt__t.html" title="Parameters for output tree. " alt="" coords="47,95,141,121"/>
-<area shape="rect" id="node5" href="$structoutput__tree__t.html" title="Output tree. " alt="" coords="166,95,265,121"/>
-<area shape="rect" id="node6" href="$structoutput__tree__node__t.html" title="Output tree Node. " alt="" coords="149,5,282,32"/>
-<area shape="rect" id="node7" href="$structoutput__path__t.html" title="Output tree path. " alt="" coords="289,95,390,121"/>
+<area shape="rect" id="node2" href="$structoutput__tree__bfs__aux__t.html" title="aux data for output tree BFS. " alt="" coords="5,184,160,211"/>
+<area shape="rect" id="node3" href="$structoutput__t.html" title="Output Layer. " alt="" coords="185,184,255,211"/>
+<area shape="rect" id="node4" href="$structoutput__opt__t.html" title="Parameters for output tree. " alt="" coords="49,95,145,121"/>
+<area shape="rect" id="node5" href="$structoutput__tree__t.html" title="Output tree. " alt="" coords="170,95,270,121"/>
+<area shape="rect" id="node6" href="$structoutput__tree__node__t.html" title="Output tree Node. " alt="" coords="151,5,289,32"/>
+<area shape="rect" id="node7" href="$structoutput__path__t.html" title="Output tree path. " alt="" coords="295,95,399,121"/>
 </map>
