@@ -3,11 +3,11 @@ BLAS: MKL
 Thread: 16
 config commit: c2da796ba636bc8d77baada4a24230a985dbb720
 
-Model        Parameters         PPL    Speed(word/sec)
-========================================================
-MaxEnt       4/128M             91     4000k
-RNN          200                82      440k
-RNN+MaxEnt   200+4/128M         76      400k
+Model        Parameters         PPL    Speed(word/sec)    Time
+=================================================================
+MaxEnt       4/128M             91     4000k              2min
+RNN          200                82      440k              3min
+RNN+MaxEnt   200+4/128M         76      400k              7min
 
 Environment: Intel(R) Core(TM) i5-5200U CPU @ 2.20GHz
 BLAS: MKL

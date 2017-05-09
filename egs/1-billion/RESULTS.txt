@@ -3,8 +3,8 @@ BLAS: MKL
 Thread: 16
 config commit: 8b517cbf7cb24cf7880f6c0f4604ea601ceb8fac
 
-Model        Parameters         PPL    Speed(word/sec)
-========================================================
+Model        Parameters         PPL    Speed(word/sec)    Time
+================================================================
 MaxEnt       4/128M             227     2300k
 RNN          300
 RNN+MaxEnt   300+4/128M

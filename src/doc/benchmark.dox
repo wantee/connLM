@@ -50,20 +50,20 @@
 </tr>
 <tr>
   <!-- Corpus               --> <td>SWBD1</td>
-  <!-- Words                --> <td></td>
-  <!-- Vocab Size           --> <td></td>
+  <!-- Words                --> <td>3.3M</td>
+  <!-- Vocab Size           --> <td>20k</td>
   <!-- Model                --> <td>RNN+MaxEnt</td>
   <!-- Parameters           --> <td>200+4/128M</td>
-  <!-- Time/Speed           --> <td>-/400k</td>
+  <!-- Time/Speed           --> <td>7min/400k</td>
   <!-- PPL                  --> <td>76</td>
 </tr>
 <tr>
   <!-- Corpus               --> <td>PTB</td>
-  <!-- Words                --> <td></td>
-  <!-- Vocab Size           --> <td></td>
+  <!-- Words                --> <td>0.9M</td>
+  <!-- Vocab Size           --> <td>10k</td>
   <!-- Model                --> <td>RNN+MaxEnt</td>
   <!-- Parameters           --> <td>200+4/128M</td>
-  <!-- Time/Speed           --> <td>-/340k</td>
+  <!-- Time/Speed           --> <td>4min/340k</td>
   <!-- PPL                  --> <td>132</td>
 </tr>
 <tr>
@@ -86,7 +86,7 @@
 </tr>
 <tr>
   <!-- Corpus               --> <td>1-Billion</td>
-  <!-- Words                --> <td></td>
+  <!-- Words                --> <td>800M</td>
   <!-- Vocab Size           --> <td>1M</td>
   <!-- Model                --> <td>RNN+MaxEnt</td>
   <!-- Parameters           --> <td></td>
