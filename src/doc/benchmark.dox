@@ -80,9 +80,9 @@
   <!-- Words                --> <td>844M</td>
   <!-- Vocab Size           --> <td>200k</td>
   <!-- Model                --> <td>RNN+MaxEnt</td>
-  <!-- Parameters           --> <td>300+4/2G</td>
-  <!-- Time/Speed           --> <td></td>
-  <!-- PPL                  --> <td></td>
+  <!-- Parameters           --> <td>400+4/2G</td>
+  <!-- Time/Speed           --> <td>66hrs/46k</td>
+  <!-- PPL                  --> <td>158</td>
 </tr>
 <tr>
   <!-- Corpus               --> <td>1-Billion</td>

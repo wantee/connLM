@@ -6,7 +6,6 @@ connLM is a Connectionist Language Modelling Toolkit, with fast training speed a
 
 ## Features
 
-* CPU-only, with reasonable speed
 * Configurable neural network structure
 * Tree-like output layer
 * Asynchronous SGD training
@@ -25,7 +24,7 @@ Main performance for som dataset are shown in following table. Detail results pl
 +-------------+------------+------------+---------------+----------+
 |   Tedlium   | RNN+MaxEnt | 400+4/2G   |   14hrs/47k   |    127   |
 +-------------+------------+------------+---------------+----------+
-| LibriSpeech | RNN+MaxEnt | 300+4/2G   |               |          |
+| LibriSpeech | RNN+MaxEnt | 400+4/2G   |   66hrs/46k   |    158   |
 +-------------+------------+------------+---------------+----------+
 |  1-Billion  | RNN+MaxEnt |            |               |          |
 +-------------+------------+------------+---------------+----------+
