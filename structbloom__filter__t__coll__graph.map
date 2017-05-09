@@ -1,6 +1,6 @@
 <map id="bloom_filter_t" name="bloom_filter_t">
-<area shape="rect" id="node2" href="$structngram__hash__t.html" title="N&#45;gram Hash. " alt="" coords="5,95,112,121"/>
-<area shape="rect" id="node3" href="$structvocab__t.html" title="Vocab. " alt="" coords="136,95,205,121"/>
-<area shape="rect" id="node4" href="$structvocab__opt__t.html" title="Parameters for Vocab. " alt="" coords="123,5,218,32"/>
-<area shape="rect" id="node5" href="$structbloom__filter__opt__t.html" title="Options for bloom_filter. " alt="" coords="229,95,357,121"/>
+<area shape="rect" id="node2" href="$structngram__hash__t.html" title="N&#45;gram Hash. " alt="" coords="5,95,109,121"/>
+<area shape="rect" id="node3" href="$structvocab__t.html" title="Vocab. " alt="" coords="134,95,202,121"/>
+<area shape="rect" id="node4" href="$structvocab__opt__t.html" title="Parameters for Vocab. " alt="" coords="121,5,215,32"/>
+<area shape="rect" id="node5" href="$structbloom__filter__opt__t.html" title="Options for bloom_filter. " alt="" coords="227,95,352,121"/>
 </map>

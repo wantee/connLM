@@ -1,9 +1,9 @@
 <map id="Updater" name="Updater">
-<area shape="rect" id="node1" href="$group__g__updater__glue.html" title="Perform forward and backprop on a glue. " alt="" coords="143,5,263,32"/>
-<area shape="rect" id="node3" href="$group__g__updater__comp.html" title="Perform forward and backprop on a component. " alt="" coords="123,56,284,83"/>
-<area shape="rect" id="node4" href="$group__g__updater__layer.html" title="Perform forward and backprop on a hidden layer. " alt="" coords="136,107,271,149"/>
-<area shape="rect" id="node5" href="$group__g__updater__wt.html" title="Update values of a weight. " alt="" coords="137,173,270,200"/>
-<area shape="rect" id="node6" href="$group__g__updater__bptt.html" title="Perform BPTT training on recurrent glues. " alt="" coords="140,224,267,251"/>
-<area shape="rect" id="node7" href="$group__g__updater__output.html" title="Perform forward and backprop on a output layer. " alt="" coords="137,275,269,317"/>
-<area shape="rect" id="node8" href="$group__g__updater__input.html" title="Perform forward and backprop on input layer. " alt="" coords="124,341,283,368"/>
+<area shape="rect" id="node1" href="$group__g__updater__glue.html" title="Perform forward and backprop on a glue. " alt="" coords="141,5,260,32"/>
+<area shape="rect" id="node3" href="$group__g__updater__comp.html" title="Perform forward and backprop on a component. " alt="" coords="121,56,280,83"/>
+<area shape="rect" id="node4" href="$group__g__updater__layer.html" title="Perform forward and backprop on a hidden layer. " alt="" coords="135,107,267,149"/>
+<area shape="rect" id="node5" href="$group__g__updater__wt.html" title="Update values of a weight. " alt="" coords="135,173,267,200"/>
+<area shape="rect" id="node6" href="$group__g__updater__bptt.html" title="Perform BPTT training on recurrent glues. " alt="" coords="138,224,263,251"/>
+<area shape="rect" id="node7" href="$group__g__updater__output.html" title="Perform forward and backprop on a output layer. " alt="" coords="135,275,266,317"/>
+<area shape="rect" id="node8" href="$group__g__updater__input.html" title="Perform forward and backprop on input layer. " alt="" coords="123,341,279,368"/>
 </map>

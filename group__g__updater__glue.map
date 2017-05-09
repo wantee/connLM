@@ -1,7 +1,7 @@
 <map id="Updater for Glue" name="Updater for Glue">
-<area shape="rect" id="node1" href="$group__g__glue__updater__direct.html" title="Perform forward and backprop on a direct glue. " alt="" coords="319,5,477,32"/>
-<area shape="rect" id="node3" href="$group__g__glue__updater__fc.html" title="Perform forward and backprop on a full&#45;connected glue. " alt="" coords="291,56,505,83"/>
-<area shape="rect" id="node4" href="$group__g__glue__updater__emb.html" title="Perform forward and backprop on a embedding glue. " alt="" coords="302,107,494,133"/>
-<area shape="rect" id="node6" href="$group__g__glue__updater__out.html" title="Perform forward and backprop on a output glue. " alt="" coords="316,157,480,184"/>
-<area shape="rect" id="node5" href="$group__g__updater.html" title="Perform forward and backprop on a connlm model. " alt="" coords="5,81,75,108"/>
+<area shape="rect" id="node1" href="$group__g__glue__updater__direct.html" title="Perform forward and backprop on a direct glue. " alt="" coords="315,5,472,32"/>
+<area shape="rect" id="node3" href="$group__g__glue__updater__fc.html" title="Perform forward and backprop on a full&#45;connected glue. " alt="" coords="288,56,499,83"/>
+<area shape="rect" id="node4" href="$group__g__glue__updater__emb.html" title="Perform forward and backprop on a embedding glue. " alt="" coords="300,107,487,133"/>
+<area shape="rect" id="node6" href="$group__g__glue__updater__out.html" title="Perform forward and backprop on a output glue. " alt="" coords="313,157,474,184"/>
+<area shape="rect" id="node5" href="$group__g__updater.html" title="Perform forward and backprop on a connlm model. " alt="" coords="5,81,73,108"/>
 </map>
