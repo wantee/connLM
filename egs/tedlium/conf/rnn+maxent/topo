@@ -10,7 +10,7 @@ property name=rnn
 
 input context=-1
 
-layer name=hidden size=400 type=tanh
+layer name=hidden size=1024 type=tanh
 
 glue name=emb type=emb in=input out=hidden init=uniform init_param=0.1
 glue name=recur type=fc in=hidden out=hidden init=trunc_norm init_param=0.01
