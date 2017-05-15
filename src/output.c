@@ -990,6 +990,16 @@ output_t* output_dup(output_t *o)
             ST_WARNING("Failed to output_tree_dup.");
             goto ERR;
         }
+
+        if (o->param_map != NULL) {
+            sz = sizeof(output_node_id_t) * (output->tree->num_node);
+            output->param_map = (output_node_id_t *)st_malloc(sz);
+            if (output->param_map == NULL) {
+                ST_WARNING("Failed to st_malloc param_map.");
+                goto ERR;
+            }
+            memcpy(output->param_map, o->param_map, sz);
+        }
     }
 
     if (o->paths != NULL) {
@@ -1938,7 +1948,9 @@ static int output_tree_bfs_trav_gen_param_map(output_tree_t *tree,
 
     ogpm_args = (output_gen_param_map_args_t *)args;
 
-    if (ogpm_args->param_map[node] != OUTPUT_NODE_NONE) {
+    if (node == tree->root) {
+        ogpm_args->param_map[node] = OUTPUT_NODE_NONE;
+    } else if (ogpm_args->param_map[node] != OUTPUT_NODE_NONE) {
         ogpm_args->param_map[node] = ogpm_args->acc;
         ogpm_args->acc += 1;
     }

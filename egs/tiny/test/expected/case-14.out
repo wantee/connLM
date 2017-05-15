@@ -6,7 +6,7 @@ Step 1: Learn Vocab ...
 Words: 81350
 Vocab size: 3722
 =================================
-../steps/learn_vocab.sh: Elapse time: 1s
+../steps/learn_vocab.sh: Elapse time: 0s
 
 Step 4: Train FFNN model ...
 ../steps/run_standalone.sh --train-thr 1 --eval-thr 1 ffnn test/tmp/case-14/exp/conf test/tmp/case-14/exp ./data/train ./data/valid ./data/test
@@ -16,38 +16,34 @@ Step 4: Train FFNN model ...
 ../steps/init_model.sh: Elapse time: 0s
 ../steps/run_standalone.sh: Stage 2 --- Training model...
 ../steps/train_model.sh --train-config test/tmp/case-14/exp/conf/ffnn/train.conf --eval-config test/tmp/case-14/exp/conf/eval.conf --train-threads 1 --eval-threads 1 --start-halving-impr 0.003 --end-halving-impr 0.0003 ./data/train ./data/valid test/tmp/case-14/exp/ffnn
-Prerun Valid Entropy: 8.858248
-ITERATION 01: LR(ffnn^emb=0.01 ffnn^fc=0.15 ffnn^out=0.15), TrEnt 7.225519, W/s 29.1k, CVEnt: 7.267995
+Prerun Valid Entropy: 8.857815
+ITERATION 01: LR(ffnn^emb=0.01 ffnn^fc=0.15 ffnn^out=0.15), TrEnt 7.226088, W/s 34.8k, CVEnt: 7.264850
 nnet accepted (01.clm)
-ITERATION 02: LR(ffnn^emb=0.01 ffnn^fc=0.15 ffnn^out=0.15), TrEnt 6.961360, W/s 28.4k, CVEnt: 7.234731
-nnet accepted (02.clm)
-ITERATION 03: LR(ffnn^emb=0.01 ffnn^fc=0.15 ffnn^out=0.15), TrEnt 6.873414, W/s 29.2k, CVEnt: 7.206151
+ITERATION 02: LR(ffnn^emb=0.01 ffnn^fc=0.15 ffnn^out=0.15), TrEnt 6.974862, W/s 34.9k, CVEnt: 7.283081
+nnet rejected (02.clm)
+ITERATION 03: LR(ffnn^emb=0.005 ffnn^fc=0.075 ffnn^out=0.075), TrEnt 6.739366, W/s 34.8k, CVEnt: 7.084487
 nnet accepted (03.clm)
-ITERATION 04: LR(ffnn^emb=0.01 ffnn^fc=0.15 ffnn^out=0.15), TrEnt 6.818778, W/s 28.2k, CVEnt: 7.212842
-nnet rejected (04.clm)
-ITERATION 05: LR(ffnn^emb=0.005 ffnn^fc=0.075 ffnn^out=0.075), TrEnt 6.540292, W/s 28.7k, CVEnt: 7.022349
+ITERATION 04: LR(ffnn^emb=0.0025 ffnn^fc=0.0375 ffnn^out=0.0375), TrEnt 6.539051, W/s 34.8k, CVEnt: 6.933142
+nnet accepted (04.clm)
+ITERATION 05: LR(ffnn^emb=0.00125 ffnn^fc=0.01875 ffnn^out=0.01875), TrEnt 6.446666, W/s 34.9k, CVEnt: 6.865054
 nnet accepted (05.clm)
-ITERATION 06: LR(ffnn^emb=0.0025 ffnn^fc=0.0375 ffnn^out=0.0375), TrEnt 6.371184, W/s 28.3k, CVEnt: 6.863172
+ITERATION 06: LR(ffnn^emb=0.000625 ffnn^fc=0.009375 ffnn^out=0.009375), TrEnt 6.403059, W/s 34.8k, CVEnt: 6.815346
 nnet accepted (06.clm)
-ITERATION 07: LR(ffnn^emb=0.00125 ffnn^fc=0.01875 ffnn^out=0.01875), TrEnt 6.288622, W/s 29.1k, CVEnt: 6.816395
+ITERATION 07: LR(ffnn^emb=0.0003125 ffnn^fc=0.0046875 ffnn^out=0.0046875), TrEnt 6.389590, W/s 33.3k, CVEnt: 6.795663
 nnet accepted (07.clm)
-ITERATION 08: LR(ffnn^emb=0.000625 ffnn^fc=0.009375 ffnn^out=0.009375), TrEnt 6.251490, W/s 28.1k, CVEnt: 6.770727
-nnet accepted (08.clm)
-ITERATION 09: LR(ffnn^emb=0.0003125 ffnn^fc=0.0046875 ffnn^out=0.0046875), TrEnt 6.240451, W/s 29.1k, CVEnt: 6.751581
-nnet accepted (09.clm)
-ITERATION 10: LR(ffnn^emb=0.00015625 ffnn^fc=0.00234375 ffnn^out=0.00234375), TrEnt 6.250469, W/s 28.7k, CVEnt: 6.752844
-nnet rejected (10.clm)
+ITERATION 08: LR(ffnn^emb=0.00015625 ffnn^fc=0.00234375 ffnn^out=0.00234375), TrEnt 6.397877, W/s 34.8k, CVEnt: 6.802054
+nnet rejected (08.clm)
 ../steps/train_model.sh: finished, too small rel. improvement 0
 ../steps/train_model.sh: Succeeded training the Neural Network : test/tmp/case-14/exp/ffnn/final.clm
-../steps/train_model.sh: Elapse time: 32s
-../steps/train_model.sh: Effective speed: 25.4k words/sec
+../steps/train_model.sh: Elapse time: 20s
+../steps/train_model.sh: Effective speed: 32.5k words/sec
 ../steps/run_standalone.sh: Stage 3 --- Testing model...
 ../steps/eval_model.sh --config-file test/tmp/case-14/exp/conf/eval.conf --eval-threads 1 test/tmp/case-14/exp/ffnn ./data/test
 ../steps/eval_model.sh: Evaluating model test/tmp/case-14/exp/ffnn/final.clm ...
 =================================
-Eval Entropy: 6.647188
-Eval PPL: 100.231228
-Eval Speed: 104.9k words/sec
+Eval Entropy: 6.693899
+Eval PPL: 103.529587
+Eval Speed: 160.3k words/sec
 =================================
 ../steps/eval_model.sh: Elapse time: 0s
-../steps/run_standalone.sh: Elapse time: 32s
+../steps/run_standalone.sh: Elapse time: 20s
