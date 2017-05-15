@@ -263,15 +263,7 @@ void softmax(real_t *vec, int vec_size)
     }
 
     for (i = 0; i < vec_size; i++) {
-#ifdef _SOFTMAX_NO_CLIP_
         vec[i] = fasterexp(vec[i] - max);
-#else
-        vec[i] = vec[i] - max;
-        if (vec[i] < -50) {
-            vec[i] = -50;
-        }
-        vec[i] = fasterexp(vec[i]);
-#endif
         sum += vec[i];
     }
 
