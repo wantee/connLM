@@ -163,6 +163,11 @@ int connlm_init(connlm_t *connlm, FILE *topo_fp)
                 /* Set default output normalization. */
                 if (connlm->output->norm == ON_UNDEFINED) {
                     connlm->output->norm = ON_SOFTMAX;
+
+                    if (output_setup(connlm->output) < 0) {
+                        ST_WARNING("Failed to output_setup.");
+                        goto ERR;
+                    }
                 }
             } else if (strcasecmp("<output>", line) == 0) {
                 if (has_comp) {

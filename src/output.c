@@ -2072,14 +2072,18 @@ int output_setup(output_t *output)
 {
     ST_CHECK_PARAM(output == NULL, -1);
 
-    if (output_generate_path(output) < 0) {
-        ST_WARNING("Failed to output_generate_path.");
-        return -1;
+    if (output->paths == NULL) {
+        if (output_generate_path(output) < 0) {
+            ST_WARNING("Failed to output_generate_path.");
+            return -1;
+        }
     }
 
-    if (output_generate_param_map(output) < 0) {
-        ST_WARNING("Failed to output_generate_param_map.");
-        return -1;
+    if (output->param_map == NULL) {
+        if (output_generate_param_map(output) < 0) {
+            ST_WARNING("Failed to output_generate_param_map.");
+            return -1;
+        }
     }
 
     return 0;
@@ -2313,6 +2317,11 @@ int output_load_body(output_t *output, int version, FILE *fp, connlm_fmt_t fmt)
 
     if (output_tree_load_body(output->tree, version, fp, fmt) < 0) {
         ST_WARNING("Failed to output_tree_load_body.");
+        goto ERR;
+    }
+
+    if (output_setup(output) < 0) {
+        ST_WARNING("Failed to output_setup");
         goto ERR;
     }
 
@@ -2628,6 +2637,11 @@ int output_parse_topo(output_t *output, const char *topo)
         } else {
             ST_WARNING("Unknown key[%s].", keyvalue);
         }
+    }
+
+    if (output_setup(output) < 0) {
+        ST_WARNING("Failed to output_setup.");
+        return -1;
     }
 
     return 0;
