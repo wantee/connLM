@@ -25,6 +25,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <float.h>
+#include <math.h>
 
 #include <stutils/st_macro.h>
 #include <stutils/st_log.h>
@@ -292,7 +293,8 @@ void tanH(real_t *vec, int vec_size)
             vec[a] = -25;
         }
 
-        vec[a] = fastertanh(vec[a]);
+//        vec[a] = fastertanh(vec[a]);
+        vec[a] = tanh(vec[a]);
     }
 }
 
