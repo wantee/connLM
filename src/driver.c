@@ -435,12 +435,12 @@ static int driver_do_run(driver_t *driver)
         }
     }
 
-    if(reader_wait(driver->reader) != 0) {
-        ST_WARNING("Failed to reader_wait.");
+    if (driver->err != 0) {
         goto ERR;
     }
 
-    if (driver->err != 0) {
+    if(reader_wait(driver->reader) != 0) {
+        ST_WARNING("Failed to reader_wait.");
         goto ERR;
     }
 
