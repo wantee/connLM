@@ -469,7 +469,7 @@ static int wt_updater_mini_update(wt_updater_t *wt_updater)
                                     dirty->buf_er[idx].val,
                                     dirty->buf_in[idx].val, seg->n, col,
                                     dirty->buf_er[idx].n_row,
-                                    lr, momentum);
+                                    lr / dirty->buf_er[idx].n_row, momentum);
                             i = seg->s * col;
                             for (; i < (seg->s + seg->n) * col; i++) {
                                 delta_wt[i] -= l2 * wt[i];
@@ -481,7 +481,7 @@ static int wt_updater_mini_update(wt_updater_t *wt_updater)
                                     for (j = 0; j < dirty->buf_er[idx].n_row; j++) {
                                         sum += dirty->buf_er[idx].val[j * seg->n + i - seg->s];
                                     }
-                                    delta_bias[i] = lr * sum - l2 * bias[i] + momentum * delta_bias[i];
+                                    delta_bias[i] = lr / dirty->buf_er[idx].n_row * sum - l2 * bias[i] + momentum * delta_bias[i];
                                     bias[i] += delta_bias[i];
                                 }
                             }
@@ -490,14 +490,14 @@ static int wt_updater_mini_update(wt_updater_t *wt_updater)
                                     dirty->buf_er[idx].val,
                                     dirty->buf_in[idx].val, seg->n, col,
                                     dirty->buf_er[idx].n_row,
-                                    lr, 1.0 - l2);
+                                    lr / dirty->buf_er[idx].n_row, 1.0 - l2);
                             if (bias != NULL) {
                                 for (i = seg->s; i < (seg->s + seg->n); i++) {
                                     sum = 0.0;
                                     for (j = 0; j < dirty->buf_er[idx].n_row; j++) {
                                         sum += dirty->buf_er[idx].val[j * seg->n + i - seg->s];
                                     }
-                                    bias[i] += lr * sum - l2 * bias[i];
+                                    bias[i] += lr / dirty->buf_er[idx].n_row * sum - l2 * bias[i];
                                 }
                             }
                         }
