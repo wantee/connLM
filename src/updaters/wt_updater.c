@@ -49,6 +49,7 @@ void wt_dirty_destroy(wt_dirty_buf_t *dirty)
     dirty->n_seg = 0;
 
     safe_st_free(dirty->ids);
+    safe_st_free(dirty->ids_hit);
     dirty->cap_id = 0;
     dirty->n_id = 0;
 
@@ -384,6 +385,40 @@ static inline real_t get_l2(wt_updater_t *wt_updater)
     }
 }
 
+static int wt_dirty_insert_ids(wt_dirty_buf_t *dirty, int id, int num_hit)
+{
+    int pos;
+    int n;
+
+    ST_CHECK_PARAM(dirty == NULL || id < 0, -1);
+
+    n = dirty->n_id;
+    pos = st_int_insert(dirty->ids, dirty->cap_id, &dirty->n_id, id);
+    if (pos < 0) {
+        ST_WARNING("Failed to st_int_insert.");
+        return -1;
+    }
+
+    if (dirty->ids_hit != NULL) {
+        if (num_hit <= 0) {
+            ST_WARNING("Invalid num_hit[%d]", num_hit);
+            return -1;
+        }
+
+        if (n == dirty->n_id) { // not new elem
+            dirty->ids_hit[pos] += num_hit;
+        } else {
+            if (pos < n) {
+                memmove(dirty->ids_hit + pos + 1, dirty->ids_hit + pos,
+                        sizeof(int) * (n - pos));
+            }
+            dirty->ids_hit[pos] = num_hit;
+        }
+    }
+
+    return 0;
+}
+
 static int wt_updater_mini_update(wt_updater_t *wt_updater)
 {
     wt_dirty_buf_t *dirty;
@@ -397,7 +432,7 @@ static int wt_updater_mini_update(wt_updater_t *wt_updater)
     int idx;
     real_t sum;
 
-    real_t lr, l2;
+    real_t lr, l2, llr;
     real_t momentum;
 
     dirty = &wt_updater->mini_dirty;
@@ -464,12 +499,13 @@ static int wt_updater_mini_update(wt_updater_t *wt_updater)
                     idx = dirty->ids[a];
                     seg = wt_updater->segs + idx;
                     if (dirty->buf_er[idx].n_row > 0) {
+                        llr = lr / dirty->buf_er[idx].n_row;
                         if (momentum != 0.0) {
                             matXmat(delta_wt + seg->s * col,
                                     dirty->buf_er[idx].val,
                                     dirty->buf_in[idx].val, seg->n, col,
                                     dirty->buf_er[idx].n_row,
-                                    lr, momentum);
+                                    llr, momentum);
                             i = seg->s * col;
                             for (; i < (seg->s + seg->n) * col; i++) {
                                 delta_wt[i] -= l2 * wt[i];
@@ -481,7 +517,7 @@ static int wt_updater_mini_update(wt_updater_t *wt_updater)
                                     for (j = 0; j < dirty->buf_er[idx].n_row; j++) {
                                         sum += dirty->buf_er[idx].val[j * seg->n + i - seg->s];
                                     }
-                                    delta_bias[i] = lr * sum - l2 * bias[i] + momentum * delta_bias[i];
+                                    delta_bias[i] = llr * sum - l2 * bias[i] + momentum * delta_bias[i];
                                     bias[i] += delta_bias[i];
                                 }
                             }
@@ -490,14 +526,14 @@ static int wt_updater_mini_update(wt_updater_t *wt_updater)
                                     dirty->buf_er[idx].val,
                                     dirty->buf_in[idx].val, seg->n, col,
                                     dirty->buf_er[idx].n_row,
-                                    lr, 1.0 - l2);
+                                    llr, 1.0 - l2);
                             if (bias != NULL) {
                                 for (i = seg->s; i < (seg->s + seg->n); i++) {
                                     sum = 0.0;
                                     for (j = 0; j < dirty->buf_er[idx].n_row; j++) {
                                         sum += dirty->buf_er[idx].val[j * seg->n + i - seg->s];
                                     }
-                                    bias[i] += lr * sum - l2 * bias[i];
+                                    bias[i] += llr * sum - l2 * bias[i];
                                 }
                             }
                         }
@@ -531,8 +567,9 @@ static int wt_updater_mini_update(wt_updater_t *wt_updater)
             if (momentum != 0.0) {
                 for (a = 0; a < dirty->n_id; a++) {
                     i = dirty->ids[a] * col;
+                    llr = lr / dirty->ids_hit[a];
                     for (; i < (dirty->ids[a] + 1) * col; i++) {
-                        delta_wt[i] = lr * dirty->buf_grad[i] - l2 * wt[i]
+                        delta_wt[i] = llr * dirty->buf_grad[i] - l2 * wt[i]
                             + momentum * delta_wt[i];
                         wt[i] += delta_wt[i];
                         dirty->buf_grad[i] = 0.0;
@@ -541,8 +578,9 @@ static int wt_updater_mini_update(wt_updater_t *wt_updater)
             } else {
                 for (a = 0; a < dirty->n_id; a++) {
                     i = dirty->ids[a] * col;
+                    llr = lr / dirty->ids_hit[a];
                     for (; i < (dirty->ids[a] + 1) * col; i++) {
-                        wt[i] += lr * dirty->buf_grad[i] - l2 * wt[i];
+                        wt[i] += llr * dirty->buf_grad[i] - l2 * wt[i];
                         dirty->buf_grad[i] = 0.0;
                     }
                 }
@@ -884,10 +922,14 @@ static int wt_updater_dirty(wt_updater_t *wt_updater, wt_dirty_buf_t *dirty,
                     ST_WARNING("Failed to st_realloc ids");
                     return -1;
                 }
+                dirty->ids_hit = (int *)st_realloc(dirty->ids_hit, sz);
+                if (dirty->ids_hit == NULL) {
+                    ST_WARNING("Failed to st_realloc ids_hit");
+                    return -1;
+                }
             }
-            if (st_int_insert(dirty->ids, dirty->cap_id,
-                        &dirty->n_id, in_idx->i) < 0) {
-                ST_WARNING("Failed to st_int_insert.");
+            if (wt_dirty_insert_ids(dirty, in_idx->i, 1) < 0) {
+                ST_WARNING("Failed to wt_dirty_insert_ids.");
                 return -1;
             }
 
@@ -1043,8 +1085,7 @@ static int wt_updater_dirty_cpy(wt_updater_t *wt_updater,
                     }
                 }
             }
-            /* FALL THROUGH */
-        case WT_UT_ONE_SHOT:
+
             if (dst->n_id + src->n_id > dst->cap_id) {
                 dst->cap_id += src->n_id;
                 sz = dst->cap_id * sizeof(int);
@@ -1059,6 +1100,31 @@ static int wt_updater_dirty_cpy(wt_updater_t *wt_updater,
                 if (st_int_insert(dst->ids, dst->cap_id,
                             &dst->n_id, src->ids[i]) < 0) {
                     ST_WARNING("Failed to st_int_insert.");
+                    return -1;
+                }
+            }
+            break;
+
+        case WT_UT_ONE_SHOT:
+            if (dst->n_id + src->n_id > dst->cap_id) {
+                dst->cap_id += src->n_id;
+                sz = dst->cap_id * sizeof(int);
+                dst->ids = (int *)st_realloc(dst->ids, sz);
+                if (dst->ids == NULL) {
+                    ST_WARNING("Failed to st_realloc ids");
+                    return -1;
+                }
+                dst->ids_hit = (int *)st_realloc(dst->ids_hit, sz);
+                if (dst->ids_hit == NULL) {
+                    ST_WARNING("Failed to st_realloc ids_hit");
+                    return -1;
+                }
+            }
+            /* TODO: We could use merge sort here. */
+            for (i = 0; i < src->n_id; i++) {
+                if (wt_dirty_insert_ids(dst, src->ids[i],
+                            src->ids_hit[i]) < 0) {
+                    ST_WARNING("Failed to wt_dirty_insert_ids.");
                     return -1;
                 }
             }

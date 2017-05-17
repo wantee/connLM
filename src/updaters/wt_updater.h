@@ -70,6 +70,7 @@ typedef struct _weight_dirty_buffer_t_ {
 
     // WT_UT_ONE_SHOT or WT_UT_SEG
     int *ids; /**< buffer of ids. */
+    int *ids_hit; /**< hit times of ids. */
     int cap_id; /**< capacity of ids. */
     int n_id; /**< size of ids. */
 
