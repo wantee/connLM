@@ -33,7 +33,6 @@
 #include <stutils/st_string.h>
 
 #include "utils.h"
-#include "fastexp.h"
 #include "blas.h"
 
 #define REALLOC_NUM 100
@@ -230,6 +229,16 @@ real_t dot_product(real_t *v1, real_t *v2, int vec_size)
     return (real_t)s;
 }
 
+double sigmoidd(double x)
+{
+    return 1.0 / (1.0 + exp(-x));
+}
+
+float sigmoidf(float x)
+{
+    return 1.0f / (1.0f + expf(-x));
+}
+
 void sigmoid(real_t *vec, int vec_size)
 {
     int a;
@@ -242,7 +251,7 @@ void sigmoid(real_t *vec, int vec_size)
             vec[a] = -50;
         }
 
-        vec[a] = fastersigmoid(vec[a]);
+        vec[a] = sigmoidr(vec[a]);
     }
 }
 
@@ -263,7 +272,7 @@ void softmax(real_t *vec, int vec_size)
     }
 
     for (i = 0; i < vec_size; i++) {
-        vec[i] = fasterexp(vec[i] - max);
+        vec[i] = expr(vec[i] - max);
         sum += vec[i];
     }
 
@@ -284,7 +293,7 @@ void tanH(real_t *vec, int vec_size)
             vec[a] = -25;
         }
 
-        vec[a] = fastertanh(vec[a]);
+        vec[a] = tanhr(vec[a]);
     }
 }
 

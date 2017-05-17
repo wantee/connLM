@@ -36,6 +36,24 @@ extern "C" {
 
 #include <connlm/config.h>
 
+#if _CONNLM_MATH_ == 0 // fast math
+#  include "fastexp.h"
+#  define sigmoidr fastersigmoid
+#  define expr fasterexp
+#  define logr fasterlog
+#  define tanhr fastertanh
+#elif _CONNLM_MATH_ == 1 // single math
+#  define sigmoidr sigmoidf
+#  define expr expf
+#  define logr logf
+#  define tanhr tanhf
+#else // double math
+#  define sigmoidr sigmoidd
+#  define expr exp
+#  define logr log
+#  define tanhr tanh
+#endif // _CONNLM_MATH_
+
 #define exp10(a) pow(10.0, a)
 
 #define logn(loga, base) ((base) == 0) ? (loga) : ((loga) / log(base))

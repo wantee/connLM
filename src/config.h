@@ -42,10 +42,17 @@ extern "C" {
 #if _USE_DOUBLE_ == 1
    typedef double real_t;
 #  define REAL_FMT "%lf"
+#  undef _CONNLM_MATH_
+#  define _CONNLM_MATH_ 2
 #else
    typedef float real_t;
 #  define REAL_FMT "%f"
 #endif
+
+#ifndef _CONNLM_MATH_
+#  define _CONNLM_MATH_ 0 // fast math
+#endif
+
 
 typedef unsigned long count_t;
 #define COUNT_FMT "%lu"
