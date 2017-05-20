@@ -27,6 +27,7 @@
 #include <stutils/st_macro.h>
 #include <stutils/st_log.h>
 #include <stutils/st_mem.h>
+#include <stutils/st_rand.h>
 
 #include "../layers/linear_layer.h"
 #include "../layers/sigmoid_layer.h"
@@ -43,6 +44,7 @@ void layer_updater_destroy(layer_updater_t *layer_updater)
 
     safe_st_aligned_free(layer_updater->ac);
     safe_st_aligned_free(layer_updater->er);
+    safe_st_free(layer_updater->dropout_mask);
 
     safe_st_aligned_free(layer_updater->ac_state);
     safe_st_aligned_free(layer_updater->er_raw);
@@ -97,6 +99,8 @@ layer_updater_t* layer_updater_create(layer_t *layer)
     layer_updater->deriv = layer_get_act(layer->type)->deriv;
     layer_updater->random_state = layer_get_act(layer->type)->random_state;
 
+    layer_updater->dropout = layer->dropout;
+
     return layer_updater;
 
 ERR:
@@ -128,6 +132,17 @@ int layer_updater_setup(layer_updater_t *layer_updater, bool backprop)
             goto ERR;
         }
         memset(layer_updater->er, 0, sz);
+    } else {
+        layer_updater->dropout = 0.0;
+    }
+
+    if (layer_updater->dropout > 0) {
+        layer_updater->dropout_mask = (bool *)st_malloc(sizeof(bool)
+                * layer_updater->layer->size);
+        if (layer_updater->dropout_mask == NULL) {
+            ST_WARNING("Failed to st_malloc dropout_mask");
+            goto ERR;
+        }
     }
 
     return 0;
@@ -136,6 +151,7 @@ ERR:
 
     safe_st_aligned_free(layer_updater->ac);
     safe_st_aligned_free(layer_updater->er);
+    safe_st_free(layer_updater->dropout_mask);
 
     return -1;
 }
@@ -214,8 +230,20 @@ ERR:
     return -1;
 }
 
+int layer_updater_set_rand_seed(layer_updater_t *layer_updater, unsigned int *seed)
+{
+    ST_CHECK_PARAM(layer_updater == NULL, -1);
+
+    layer_updater->rand_seed = seed;
+
+    return 0;
+}
+
 int layer_updater_activate(layer_updater_t *layer_updater)
 {
+    double p;
+    int i;
+
     ST_CHECK_PARAM(layer_updater == NULL, -1);
 
     if (layer_updater->activated) {
@@ -238,6 +266,19 @@ int layer_updater_activate(layer_updater_t *layer_updater)
                     layer_updater->layer->name);
             return -1;
         }
+
+        if (layer_updater->dropout > 0.0) {
+            for (i = 0; i < layer_updater->layer->size; i++) {
+                p = st_random_r(0, 1, layer_updater->rand_seed);
+                if (p < layer_updater->dropout) {
+                    layer_updater->dropout_mask[i] = 0;
+                    layer_updater->ac[i] = 0.0;
+                } else {
+                    layer_updater->dropout_mask[i] = 1;
+                    layer_updater->ac[i] /= layer_updater->dropout; // scale down
+                }
+            }
+        }
     }
 
     layer_updater->activated = true;
@@ -247,6 +288,8 @@ int layer_updater_activate(layer_updater_t *layer_updater)
 
 int layer_updater_deriv(layer_updater_t *layer_updater)
 {
+    int i;
+
     ST_CHECK_PARAM(layer_updater == NULL, -1);
 
     if (layer_updater->derived) {
@@ -268,6 +311,14 @@ int layer_updater_deriv(layer_updater_t *layer_updater)
             ST_WARNING("Failed to layer_updater->deriv.[%s]",
                     layer_updater->layer->name);
             return -1;
+        }
+
+        if (layer_updater->dropout > 0.0) {
+            for (i = 0; i < layer_updater->layer->size; i++) {
+                if (layer_updater->dropout_mask[i] == 0) {
+                    layer_updater->er[i] = 0.0;
+                }
+            }
         }
     }
 

@@ -54,6 +54,8 @@ typedef struct _updater_t_ {
     bool finalized; /**< whether finalized by caller. */
     bool backprop; /**< whether do backpropagation. */
 
+    unsigned int rand_seed; /**< rand seed. */
+
     sent_t sent; /**< current sentence, filled by input_updater. */
     double logp; /**< logp for current target word. */
 } updater_t;
@@ -93,6 +95,15 @@ updater_t* updater_create(connlm_t *connlm);
  * @return non-zero value if any error.
  */
 int updater_setup(updater_t *updater, bool backprop);
+
+/**
+ * Set rand_seed for updater.
+ * @ingroup g_updater
+ * @param[in] updater the updater.
+ * @param[in] seed the rand seed.
+ * @return non-zero value if any error.
+ */
+int updater_set_rand_seed(updater_t *updater, unsigned int seed);
 
 /**
  * Feed input words to a updater.

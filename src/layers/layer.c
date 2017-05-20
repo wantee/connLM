@@ -110,6 +110,7 @@ layer_t* layer_parse_topo(const char *line)
         goto ERR;
     }
 
+    layer->dropout = NAN;
     impl_topo[0] = '\0';
     while (p != NULL) {
         p = get_next_token(p, token);
@@ -156,6 +157,15 @@ layer_t* layer_parse_topo(const char *line)
                         keyvalue + MAX_LINE_LEN);
                 goto ERR;
             }
+        } else if (strcasecmp("dropout", keyvalue) == 0) {
+            if (! isnan(layer->dropout)) {
+                ST_WARNING("Duplicated dropout.");
+            }
+            layer->dropout = atof(keyvalue + MAX_LINE_LEN);
+            if (layer->dropout < 0.0 || layer->dropout >= 1.0) {
+                ST_WARNING("Invalid dropout [%s].", keyvalue + MAX_LINE_LEN);
+                goto ERR;
+            }
         } else {
             strncpy(impl_topo + strlen(impl_topo), token,
                     MAX_LINE_LEN - strlen(impl_topo));
@@ -177,6 +187,9 @@ layer_t* layer_parse_topo(const char *line)
     if (layer->size <= 0) {
         ST_WARNING("No layer size found.");
         goto ERR;
+    }
+    if (isnan(layer->dropout)) {
+        layer->dropout = 0.0;
     }
     if (layer->impl->parse_topo != NULL) {
         if (layer->impl->parse_topo(layer, impl_topo) < 0) {

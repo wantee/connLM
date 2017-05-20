@@ -83,6 +83,7 @@ typedef struct _layer_t_ {
     char name[MAX_NAME_LEN]; /**< layer name. */
     char type[MAX_NAME_LEN]; /**< layer type. */
     int size; /**< layer size. */
+    real_t dropout; /** dropout probability. */
 
     layer_impl_t *impl; /**< implementaion of the layer. */
     void *extra; /**< hook to store extra data. */

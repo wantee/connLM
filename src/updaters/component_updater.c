@@ -130,6 +130,24 @@ ERR:
     return NULL;
 }
 
+int comp_updater_set_rand_seed(comp_updater_t *comp_updater, unsigned int *seed)
+{
+    int i;
+
+    ST_CHECK_PARAM(comp_updater == NULL, -1);
+
+    for (i = 2; i < comp_updater->comp->num_layer; i++) {
+        if (layer_updater_set_rand_seed(comp_updater->layer_updaters[i],
+                    seed) < 0) {
+            ST_WARNING("Failed to layer_updater_set_rand_seed[%s].",
+                    comp_updater->comp->layers[i]->name);
+            return -1;
+        }
+    }
+
+    return 0;
+}
+
 int comp_updater_setup(comp_updater_t *comp_updater, bool backprop)
 {
     component_t *comp;

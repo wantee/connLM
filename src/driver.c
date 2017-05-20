@@ -35,6 +35,21 @@
 
 #include "driver.h"
 
+int driver_load_train_opt(driver_train_opt_t *train_opt,
+        st_opt_t *opt, const char *sec_name)
+{
+    ST_CHECK_PARAM(train_opt == NULL || opt == NULL, -1);
+
+    ST_OPT_SEC_GET_UINT(opt, sec_name, "RANDOM_SEED",
+            train_opt->rand_seed, (unsigned int)time(NULL),
+            "Initial Random seed. Default is value of time(NULl).");
+
+    return 0;
+
+ST_OPT_ERR:
+    return -1;
+}
+
 int driver_load_eval_opt(driver_eval_opt_t *eval_opt,
         st_opt_t *opt, const char *sec_name)
 {
@@ -174,7 +189,24 @@ int driver_setup(driver_t *driver, driver_mode_t mode)
             ST_WARNING("Can not generating: future words in input context.");
             return -1;
         }
+    } else if (mode == DRIVER_TRAIN) {
+        for (i = 0; i < driver->n_thr; i++) {
+            if (updater_set_rand_seed(driver->updaters[i],
+                        driver->train_opt.rand_seed + i) < 0) {
+                ST_WARNING("Failed to updater_set_rand_seed.");
+                return -1;
+            }
+        }
     }
+
+    return 0;
+}
+
+int driver_set_train(driver_t *driver, driver_train_opt_t *train_opt)
+{
+    ST_CHECK_PARAM(driver == NULL || train_opt == NULL, -1);
+
+    driver->train_opt = *train_opt;
 
     return 0;
 }

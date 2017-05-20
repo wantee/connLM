@@ -316,6 +316,26 @@ ERR:
     return -1;
 }
 
+int updater_set_rand_seed(updater_t *updater, unsigned int seed)
+{
+    int c;
+
+    ST_CHECK_PARAM(updater == NULL, -1);
+
+    updater->rand_seed = seed;
+
+    for (c = 0; c < updater->connlm->num_comp; c++) {
+        if (comp_updater_set_rand_seed(updater->comp_updaters[c],
+                    &updater->rand_seed) < 0) {
+            ST_WARNING("Failed to comp_updater_set_rand_seed[%s].",
+                    updater->connlm->comps[c]->name);
+            return -1;
+        }
+    }
+
+    return 0;
+}
+
 int updater_feed(updater_t *updater, int *words, int n_word)
 {
     ST_CHECK_PARAM(updater == NULL, -1);

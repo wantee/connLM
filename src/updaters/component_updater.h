@@ -101,6 +101,15 @@ comp_updater_t* comp_updater_create(component_t *comp,
 int comp_updater_setup(comp_updater_t *comp_updater, bool backprop);
 
 /**
+ * Set rand seed for comp_updater.
+ * @ingroup g_updater_comp
+ * @param[in] comp_updater comp_updater.
+ * @param[in] seed the rand seed pointer.
+ * @return non-zero value if any error.
+ */
+int comp_updater_set_rand_seed(comp_updater_t *comp_updater, unsigned int *seed);
+
+/**
  * Reset running for comp_updater.
  * Called before every input sentence to be performed.
  * @ingroup g_updater_comp

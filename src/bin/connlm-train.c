@@ -45,6 +45,7 @@ int g_num_thr;
 st_opt_t *g_cmd_opt;
 
 reader_opt_t g_reader_opt;
+driver_train_opt_t g_train_opt;
 
 int connlm_train_parse_opt(int *argc, const char *argv[])
 {
@@ -76,6 +77,11 @@ int connlm_train_parse_opt(int *argc, const char *argv[])
 
     if (reader_load_opt(&g_reader_opt, g_cmd_opt, NULL) < 0) {
         ST_WARNING("Failed to reader_load_opt");
+        goto ST_OPT_ERR;
+    }
+
+    if (driver_load_train_opt(&g_train_opt, g_cmd_opt, NULL) < 0) {
+        ST_WARNING("Failed to driver_load_train_opt");
         goto ST_OPT_ERR;
     }
 
@@ -200,6 +206,11 @@ int main(int argc, const char *argv[])
     driver = driver_create(connlm, reader, g_num_thr);
     if (driver == NULL) {
         ST_WARNING("Failed to driver_create.");
+        goto ERR;
+    }
+
+    if (driver_set_train(driver, &g_train_opt) < 0) {
+        ST_WARNING("Failed to driver_set_train.");
         goto ERR;
     }
 

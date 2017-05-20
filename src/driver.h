@@ -54,6 +54,14 @@ typedef enum _driver_mode_t_ {
 } driver_mode_t;
 
 /**
+ * Options for training connLM model.
+ * @ingroup g_driver
+ */
+typedef struct _driver_train_opt_t_ {
+    unsigned int rand_seed;   /**< initial seed for random function. */
+} driver_train_opt_t;
+
+/**
  * Options for evaluating connLM model.
  * @ingroup g_driver
  */
@@ -70,6 +78,17 @@ typedef struct _driver_gen_opt_t_ {
     char prefix_file[MAX_DIR_LEN]; /**< file storing the prefix(es) for generating text. */
     unsigned int rand_seed;   /**< seed for random function. */
 } driver_gen_opt_t;
+
+/**
+ * Load train option.
+ * @ingroup g_driver
+ * @param[out] train_opt options to be loaded.
+ * @param[in] opt runtime options passed by caller.
+ * @param[in] sec_name section name of runtime options to be loaded.
+ * @return non-zero value if any error.
+ */
+int driver_load_train_opt(driver_train_opt_t *train_opt,
+        st_opt_t *opt, const char *sec_name);
 
 /**
  * Load eval option.
@@ -107,6 +126,8 @@ typedef struct _driver_t_ {
     int err; /**< error indicator. */
 
     driver_mode_t mode; /**< driver mode. */
+    // for trian
+    driver_train_opt_t train_opt; /**< Train options. */
     // for eval
     driver_eval_opt_t eval_opt; /**< Eval options. */
     FILE *fp_log;    /**< file pointer to print out log. */
@@ -161,6 +182,15 @@ int driver_setup(driver_t *driver, driver_mode_t mode);
  * @return non-zero value if any error.
  */
 int driver_run(driver_t *driver);
+
+/**
+ * Set options for train.
+ * @ingroup g_driver
+ * @param[in] driver driver.
+ * @param[in] train_opt train option.
+ * @return non-zero value if any error.
+ */
+int driver_set_train(driver_t *driver, driver_train_opt_t *train_opt);
 
 /**
  * Set options for eval.
