@@ -230,6 +230,10 @@ bool direct_glue_check(glue_t *glue, layer_t **layers, int n_layer,
 
     glue->wt->init_bias = INFINITY; // direct weight will not have bias
 
+    if (glue->dropout != 0.0) {
+        ST_WARNING("Dropout on direct_glue will take no effect.");
+    }
+
     return true;
 }
 
