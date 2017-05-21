@@ -136,11 +136,11 @@ int comp_updater_set_rand_seed(comp_updater_t *comp_updater, unsigned int *seed)
 
     ST_CHECK_PARAM(comp_updater == NULL, -1);
 
-    for (i = 2; i < comp_updater->comp->num_layer; i++) {
-        if (layer_updater_set_rand_seed(comp_updater->layer_updaters[i],
+    for (i = 0; i < comp_updater->comp->num_glue; i++) {
+        if (glue_updater_set_rand_seed(comp_updater->glue_updaters[i],
                     seed) < 0) {
-            ST_WARNING("Failed to layer_updater_set_rand_seed[%s].",
-                    comp_updater->comp->layers[i]->name);
+            ST_WARNING("Failed to glue_updater_set_rand_seed[%s].",
+                    comp_updater->comp->glues[i]->name);
             return -1;
         }
     }

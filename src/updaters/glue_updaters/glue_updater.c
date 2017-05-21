@@ -27,6 +27,7 @@
 #include <stutils/st_macro.h>
 #include <stutils/st_log.h>
 #include <stutils/st_mem.h>
+#include <stutils/st_rand.h>
 
 #include "../../glues/direct_glue.h"
 #include "../../glues/fc_glue.h"
@@ -87,6 +88,8 @@ void glue_updater_destroy(glue_updater_t *glue_updater)
     }
 
     safe_st_free(glue_updater->forwarded);
+    safe_st_free(glue_updater->keep_mask);
+    safe_st_free(glue_updater->in_ac);
 
     safe_wt_updater_destroy(glue_updater->wt_updater);
     glue_updater->glue = NULL;
@@ -106,6 +109,8 @@ glue_updater_t* glue_updater_create(glue_t *glue)
     memset(glue_updater, 0, sizeof(glue_updater_t));
 
     glue_updater->glue = glue;
+
+    glue_updater->keep_prob = 1.0 - glue->dropout;
 
     glue_updater->impl = glue_updater_get_impl(glue->type);
     if (glue_updater->impl == NULL) {
@@ -132,6 +137,15 @@ ERR:
     return NULL;
 }
 
+int glue_updater_set_rand_seed(glue_updater_t *glue_updater, unsigned int *seed)
+{
+    ST_CHECK_PARAM(glue_updater == NULL, -1);
+
+    glue_updater->rand_seed = seed;
+
+    return 0;
+}
+
 int glue_updater_setup(glue_updater_t *glue_updater,
         comp_updater_t *comp_updater, bool backprop)
 {
@@ -141,6 +155,26 @@ int glue_updater_setup(glue_updater_t *glue_updater,
     ST_CHECK_PARAM(glue_updater == NULL, -1);
 
     wt_updater_clear(glue_updater->wt_updater);
+
+    if (! backprop) {
+        glue_updater->keep_prob = 1.0;
+    }
+
+    if (glue_updater->keep_prob < 1.0) {
+        glue_updater->keep_mask = (bool *)st_malloc(sizeof(bool)
+                * glue_updater->glue->in_length);
+        if (glue_updater->keep_mask == NULL) {
+            ST_WARNING("Failed to st_malloc keep_mask");
+            goto ERR;
+        }
+
+        glue_updater->in_ac = (real_t *)st_malloc(sizeof(real_t)
+                * glue_updater->glue->in_length);
+        if (glue_updater->in_ac == NULL) {
+            ST_WARNING("Failed to st_malloc in_ac");
+            goto ERR;
+        }
+    }
 
     if (glue_updater->impl != NULL && glue_updater->impl->setup != NULL) {
         if (glue_updater->impl->setup(glue_updater,
@@ -208,7 +242,8 @@ int glue_updater_forward(glue_updater_t *glue_updater,
     layer_updater_t **layer_updaters;
     real_t *in_ac;
     real_t *out_ac;
-    int lid;
+    double p;
+    int lid, i;
 
     ST_CHECK_PARAM(glue_updater == NULL || comp_updater == NULL, -1);
 
@@ -232,6 +267,20 @@ int glue_updater_forward(glue_updater_t *glue_updater,
                 return -1;
             }
             in_ac = layer_updaters[lid]->ac + glue->in_offset;
+
+            if (glue_updater->keep_prob < 1.0) {
+                for (i = 0; i < glue->in_length; i++) {
+                    p = st_random_r(0, 1, glue_updater->rand_seed);
+                    if (p < glue_updater->keep_prob) {
+                        glue_updater->keep_mask[i] = 1;
+                        glue_updater->in_ac[i] = in_ac[i] / glue_updater->keep_prob; // scale
+                    } else {
+                        glue_updater->keep_mask[i] = 0;
+                        glue_updater->in_ac[i] = 0.0;
+                    }
+                }
+                in_ac = glue_updater->in_ac;
+            }
         }
     }
     if (glue->out_layer == 0) { // output layer
@@ -261,6 +310,7 @@ int glue_updater_backprop(glue_updater_t *glue_updater,
     real_t *out_er = NULL;
     real_t *in_er = NULL;
     int out_lid;
+    int i;
 
     ST_CHECK_PARAM(glue_updater == NULL, -1);
 
@@ -288,7 +338,12 @@ int glue_updater_backprop(glue_updater_t *glue_updater,
             }
             if (glue->recur_type == RECUR_NON) {
                 // recur glues will be updated in bptt_updater
-                in_ac = layer_updaters[glue->in_layer]->ac + glue->in_offset;
+                if (glue_updater->keep_prob < 1.0) {
+                    // scaled version of in_ac should be filled during forward pass
+                    in_ac = glue_updater->in_ac;
+                } else {
+                    in_ac = layer_updaters[glue->in_layer]->ac + glue->in_offset;
+                }
             }
         }
         if (out_lid == 0) { // output layer
@@ -307,6 +362,14 @@ int glue_updater_backprop(glue_updater_t *glue_updater,
             if (wt_flush(glue_updater->wt_updater, false) < 0) {
                 ST_WARNING("Failed to wt_flush.");
                 return -1;
+            }
+        }
+
+        if (glue_updater->keep_prob > 1.0 && in_er != NULL) {
+            for (i = 0; i < glue->in_length; i++) {
+                if (glue_updater->keep_mask[i] == 0) {
+                    in_er[i] = 0.0;
+                }
             }
         }
     }

@@ -180,6 +180,7 @@ glue_t* glue_parse_topo(const char *line, layer_t **layers,
     glue->out_layer = -1;
     glue->out_offset = -1;
     glue->out_length = -1;
+    glue->dropout = NAN;
     untouch_topo[0] = '\0';
     while (p != NULL) {
         p = get_next_token(p, token);
@@ -276,6 +277,15 @@ glue_t* glue_parse_topo(const char *line, layer_t **layers,
                         keyvalue + MAX_LINE_LEN);
                 goto ERR;
             }
+        } else if (strcasecmp("dropout", keyvalue) == 0) {
+            if (! isnan(glue->dropout)) {
+                ST_WARNING("Duplicated dropout.");
+            }
+            glue->dropout = atof(keyvalue + MAX_LINE_LEN);
+            if (glue->dropout < 0.0 || glue->dropout >= 1.0) {
+                ST_WARNING("Invalid dropout [%s].", keyvalue + MAX_LINE_LEN);
+                goto ERR;
+            }
         } else {
             strncpy(untouch_topo + strlen(untouch_topo), token,
                     MAX_LINE_LEN - strlen(untouch_topo));
@@ -289,6 +299,9 @@ glue_t* glue_parse_topo(const char *line, layer_t **layers,
     if (glue->name[0] == '\0') {
         ST_WARNING("No glue name found.");
         goto ERR;
+    }
+    if (isnan(glue->dropout)) {
+        glue->dropout = 0.0;
     }
 
     glue->wt = (weight_t *)st_malloc(sizeof(weight_t));
@@ -354,6 +367,11 @@ glue_t* glue_dup(glue_t *g)
 
     glue->in_layer = g->in_layer;
     glue->out_layer = g->out_layer;
+    glue->in_offset = g->in_offset;
+    glue->in_length = g->in_length;
+    glue->out_offset = g->out_offset;
+    glue->out_length = g->out_length;
+    glue->dropout = g->dropout;
 
     glue->recur_type = g->recur_type;
 
@@ -397,6 +415,7 @@ int glue_load_header(glue_t **glue, int version,
     int out_layer;
     int out_offset;
     int out_length;
+    real_t dropout = 0.0;
 
     glue_impl_t *impl;
     connlm_fmt_t f;
@@ -470,6 +489,12 @@ int glue_load_header(glue_t **glue, int version,
             ST_WARNING("Failed to read out_length.");
             return -1;
         }
+        if (version >= 13) {
+            if (fread(&dropout, sizeof(real_t), 1, fp) != 1) {
+                ST_WARNING("Failed to read dropout.");
+                return -1;
+            }
+        }
     } else {
         if (st_readline(fp, "") != 0) {
             ST_WARNING("tag error.");
@@ -515,6 +540,12 @@ int glue_load_header(glue_t **glue, int version,
             ST_WARNING("Failed to parse out_length.");
             goto ERR;
         }
+        if (version >=13) {
+            if (st_readline(fp, "Dropout: "REAL_FMT, &dropout) != 1) {
+                ST_WARNING("Failed to parse dropout.");
+                goto ERR;
+            }
+        }
     }
 
     impl = glue_get_impl(type);
@@ -539,6 +570,7 @@ int glue_load_header(glue_t **glue, int version,
         (*glue)->out_layer = out_layer;
         (*glue)->out_offset = out_offset;
         (*glue)->out_length = out_length;
+        (*glue)->dropout = dropout;
         (*glue)->impl = impl;
     }
 
@@ -551,6 +583,7 @@ int glue_load_header(glue_t **glue, int version,
         fprintf(fo_info, "out layer: %d\n", out_layer);
         fprintf(fo_info, "out offset: %d\n", out_offset);
         fprintf(fo_info, "out length: %d\n", out_length);
+        fprintf(fo_info, "dropout: "REAL_FMT"\n", dropout);
     }
 
     if (wt_load_header(glue != NULL ? &((*glue)->wt) : NULL,
@@ -700,6 +733,10 @@ int glue_save_header(glue_t *glue, FILE *fp, connlm_fmt_t fmt)
             ST_WARNING("Failed to write out_length.");
             return -1;
         }
+        if (fwrite(&glue->dropout, sizeof(real_t), 1, fp) != 1) {
+            ST_WARNING("Failed to write dropout.");
+            return -1;
+        }
     } else {
         if (fprintf(fp, "    \n<GLUE>\n") < 0) {
             ST_WARNING("Failed to fprintf header.");
@@ -736,6 +773,10 @@ int glue_save_header(glue_t *glue, FILE *fp, connlm_fmt_t fmt)
         }
         if (fprintf(fp, "Out layer length: %d\n", glue->out_length) < 0) {
             ST_WARNING("Failed to fprintf out_length.");
+            return -1;
+        }
+        if (fprintf(fp, "Dropout: "REAL_FMT"\n", glue->dropout) < 0) {
+            ST_WARNING("Failed to fprintf dropout.");
             return -1;
         }
     }

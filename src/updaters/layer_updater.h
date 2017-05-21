@@ -58,10 +58,6 @@ typedef struct _layer_updater_t_ {
     bool derived; /**< derived indicator. */
     random_state_func_t random_state; /**< random state function. */
 
-    real_t dropout; /**< dropout probability. */
-    bool *dropout_mask; /**< dropout mask. */
-    unsigned int *rand_seed; /**< rand seed. */
-
     real_t *ac_state; /**< state of activation(for prev timestep). */
     real_t *er_raw; /**< raw value of error(before derived). */
 
@@ -128,15 +124,6 @@ int layer_updater_setup_er_raw(layer_updater_t *layer_updater);
  * @return non-zero value if any error.
  */
 int layer_updater_setup_pre_ac_state(layer_updater_t *layer_updater);
-
-/**
- * Set rand seed for layer_updater.
- * @ingroup g_updater_layer
- * @param[in] layer_updater layer_updater.
- * @param[in] seed the rand seed pointer.
- * @return non-zero value if any error.
- */
-int layer_updater_set_rand_seed(layer_updater_t *layer_updater, unsigned int *seed);
 
 /**
  * Activate a layer_updater.

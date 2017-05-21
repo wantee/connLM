@@ -118,6 +118,7 @@ typedef struct _glue_t_ {
     int out_layer; /**< output layer id. */
     int out_offset; /**< offset of output layer. */
     int out_length; /**< lenght of output layer. */
+    real_t dropout; /** dropout probability for in layer. */
     glue_recur_type_t recur_type; /**< recur_type of this glue. */
     bptt_opt_t bptt_opt; /**< options for BPTT, only relevant with recur glue. */
 
