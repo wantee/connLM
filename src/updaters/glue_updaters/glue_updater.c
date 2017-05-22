@@ -365,7 +365,7 @@ int glue_updater_backprop(glue_updater_t *glue_updater,
             }
         }
 
-        if (glue_updater->keep_prob > 1.0 && in_er != NULL) {
+        if (glue_updater->keep_prob < 1.0 && in_er != NULL) {
             for (i = 0; i < glue->in_length; i++) {
                 if (glue_updater->keep_mask[i] == 0) {
                     in_er[i] = 0.0;
