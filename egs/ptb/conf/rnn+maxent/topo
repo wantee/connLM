@@ -1,12 +1,12 @@
 <component>
-property name=maxent
+property name=maxent scale=0.6
 
 input context=-4,-3,-2,-1
 
 glue name=direct type=direct size=128M in=input out=output
 </component>
 <component>
-property name=rnn
+property name=rnn scale=0.4
 
 input context=-1
 
