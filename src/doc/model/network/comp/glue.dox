@@ -52,6 +52,9 @@
   The benefit is that the forward pass of test time become the same no matter
   with or without dropout.
 
+  Due to this scaling, we will set the effective learning rate as
+  lr = lr * q, if q < 1.0.
+
   At first sight, the dropout should be implemented as a per-layer
   hyper-parameter, However, some papers, e.g.
   <a href=https://arxiv.org/abs/1409.2329> this </a>
