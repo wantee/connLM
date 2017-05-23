@@ -212,6 +212,14 @@ void comp_sanity_check(component_t *comp);
  */
 void comp_print_verbose_info(component_t *comp, FILE *fo);
 
+/**
+ * Validate properties for cycles in a component.
+ * @ingroup g_component
+ * @param[in] comp the component.
+ * @return true if OK, false otherwise.
+ */
+bool comp_check_glue_cycles(component_t *comp);
+
 #ifdef __cplusplus
 }
 #endif

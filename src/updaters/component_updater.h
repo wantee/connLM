@@ -60,6 +60,8 @@ typedef struct _component_updater_t_ {
 
     real_t *bptt_er0; /**< buffer for er used by BPTT. */
     real_t *bptt_er1; /**< buffer for er used by BPTT. */
+
+    unsigned int *rand_seed; /**< random seed. */
 } comp_updater_t;
 
 /**

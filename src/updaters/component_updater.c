@@ -132,16 +132,70 @@ ERR:
 
 int comp_updater_set_rand_seed(comp_updater_t *comp_updater, unsigned int *seed)
 {
-    int i;
+    ST_CHECK_PARAM(comp_updater == NULL, -1);
+
+    comp_updater->rand_seed = seed;
+
+    return 0;
+}
+
+static int comp_updater_setup_dropout(comp_updater_t *comp_updater)
+{
+    component_t *comp;
+    glue_t *glue;
+    glue_updater_t *head, *glue_updater;
+    int i, j, g;
+    real_t d;
 
     ST_CHECK_PARAM(comp_updater == NULL, -1);
 
-    for (i = 0; i < comp_updater->comp->num_glue; i++) {
-        if (glue_updater_set_rand_seed(comp_updater->glue_updaters[i],
-                    seed) < 0) {
-            ST_WARNING("Failed to glue_updater_set_rand_seed[%s].",
-                    comp_updater->comp->glues[i]->name);
+    comp = comp_updater->comp;
+
+    for (i = 0; i < comp->num_glue_cycle; i++) {
+        g = comp->glue_cycles[i][1];
+        glue = comp->glues[g];
+        d = glue->dropout;
+        head = comp_updater->glue_updaters[g];
+        if (glue_updater_setup_dropout(head, d, NULL) < 0) {
+            ST_WARNING("Failed to glue_updater_setup_dropout[%s] of recur_head.",
+                    glue->name);
             return -1;
+        }
+        for (j = 2; j <= comp->glue_cycles[i][0]; j++) {
+            g = comp->glue_cycles[i][j];
+            glue_updater = comp_updater->glue_updaters[g];
+            if (glue_updater_setup_dropout(glue_updater, d,
+                        head->keep_mask) < 0) {
+                ST_WARNING("Failed to glue_updater_setup_dropout[%s] of recur_body.",
+                        glue->name);
+                return -1;
+            }
+        }
+    }
+
+    for (i = 0; i < comp->num_glue; i++) {
+        glue = comp->glues[i];
+        glue_updater = comp_updater->glue_updaters[i];
+        if (glue->recur_type == RECUR_NON && glue->dropout > 0.0) {
+            if (glue_updater_setup_dropout(glue_updater,
+                        glue->dropout, NULL) < 0) {
+                ST_WARNING("Failed to glue_updater_setup_dropout[%s] of recur_non.",
+                        glue->name);
+                return -1;
+            }
+            // set effective learning rate
+            glue_updater->wt_updater->param.learn_rate *= (1 - glue->dropout);
+        }
+    }
+
+    if (comp->num_glue_cycle > 0) {
+        for (i = 0; i < comp->num_glue; i++) {
+            glue_updater = comp_updater->glue_updaters[i];
+            if (glue_updater_gen_keep_mask(glue_updater,
+                        comp_updater->rand_seed) < 0) {
+                ST_WARNING("Failed to glue_updater_gen_keep_mask.");
+                return -1;
+            }
         }
     }
 
@@ -179,6 +233,11 @@ int comp_updater_setup(comp_updater_t *comp_updater, bool backprop)
 
     if (backprop) {
         if (comp->num_glue_cycle > 0) {
+            if (comp_check_glue_cycles(comp) < 0) {
+                ST_WARNING("Failed to comp_updater_check_glue_cycles.");
+                goto ERR;
+            }
+
             comp_updater->bptt_updaters = (bptt_updater_t **)st_malloc(
                     sizeof(bptt_updater_t*) * comp->num_glue_cycle);
             if (comp_updater->bptt_updaters == NULL) {
@@ -219,6 +278,11 @@ int comp_updater_setup(comp_updater_t *comp_updater, bool backprop)
                 ST_WARNING("Failed to st_aligned_malloc bptt_er1.");
                 goto ERR;
             }
+        }
+
+        if (comp_updater_setup_dropout(comp_updater) < 0) {
+            ST_WARNING("Failed to comp_updater_setup_dropout.");
+            goto ERR;
         }
     }
 
@@ -452,6 +516,17 @@ static int comp_updater_bptt(comp_updater_t *comp_updater, bool clear)
         }
     }
 
+    if (comp->num_glue_cycle > 0
+            && (comp_updater->bptt_step % bptt_delay == 0 || clear)) {
+        for (i = 0; i < comp->num_glue; i++) {
+            if (glue_updater_gen_keep_mask(comp_updater->glue_updaters[i],
+                        comp_updater->rand_seed) < 0) {
+                ST_WARNING("Failed to glue_updater_gen_keep_mask.");
+                return -1;
+            }
+        }
+    }
+
     return 0;
 }
 
@@ -514,6 +589,15 @@ int comp_updater_forward(comp_updater_t *comp_updater, sent_t *input_sent)
 
     for (g = 0; g < comp->num_glue; g++) {
         glue_updater = comp_updater->glue_updaters[comp->fwd_order[g]];
+
+        if (comp_updater->bptt_updaters == NULL) {
+            if (glue_updater_gen_keep_mask(glue_updater,
+                        comp_updater->rand_seed) < 0) {
+                ST_WARNING("Failed to glue_updater_gen_keep_mask.");
+                return -1;
+            }
+        }
+
         if (glue_updater_forward(glue_updater, comp_updater, input_sent) < 0) {
             ST_WARNING("Failed to forward glue[%s].",
                     glue_updater->glue->name);
