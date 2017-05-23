@@ -1,13 +1,15 @@
 Environment: AWS c3.4xlarge with 16vCPU @ 2.90GHz
 BLAS: MKL
 Thread: 16
-config commit: fb5c461abd18ed7afdc937f1a09df6f5d68dc0fb
+config commit: b399235a413d709ca9811c8f776531f3940c8ed3
 
 Model        Parameters         PPL    Speed(word/sec)    Time
 ================================================================
 MaxEnt       4/128M             160    3300k              1min
-RNN          200                139     370k              1min
-RNN+MaxEnt   200+4/128M         119     340k              1min
+RNN          200                137     330k              1min
+RNN+MaxEnt   200+4/128M         117     310k              1min
+RNN          1024               123     21k              10min
+RNN+MaxEnt   1024+4/128M        114     21k              10min
 
 Environment: Intel(R) Core(TM) i5-5200U CPU @ 2.20GHz
 BLAS: MKL
