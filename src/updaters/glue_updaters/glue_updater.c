@@ -291,17 +291,17 @@ int glue_updater_forward(glue_updater_t *glue_updater,
                 return -1;
             }
             in_ac = layer_updaters[lid]->ac + glue->in_offset;
+        }
 
-            if (glue_updater->keep_prob < 1.0) {
-                for (i = 0; i < glue->in_length; i++) {
-                    if(glue_updater->keep_mask[i] == 1) {
-                        glue_updater->dropout_ac[i] = in_ac[i] / glue_updater->keep_prob; // scale
-                    } else {
-                        glue_updater->dropout_ac[i] = 0.0;
-                    }
+        if (glue_updater->keep_prob < 1.0) {
+            for (i = 0; i < glue->in_length; i++) {
+                if(glue_updater->keep_mask[i] == 1) {
+                    glue_updater->dropout_ac[i] = in_ac[i] / glue_updater->keep_prob; // scale
+                } else {
+                    glue_updater->dropout_ac[i] = 0.0;
                 }
-                in_ac = glue_updater->dropout_ac;
             }
+            in_ac = glue_updater->dropout_ac;
         }
     }
     if (glue->out_layer == 0) { // output layer
