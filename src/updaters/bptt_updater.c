@@ -46,6 +46,13 @@ void bptt_updater_destroy(bptt_updater_t *bptt_updater)
         safe_st_free(bptt_updater->ac_bptt);
     }
 
+    if (bptt_updater->dropout_ac_bptt != NULL) {
+        for (i = 1; i <= bptt_updater->num_glue; i++) {
+            safe_st_aligned_free(bptt_updater->dropout_ac_bptt[i]);
+        }
+        safe_st_free(bptt_updater->dropout_ac_bptt);
+    }
+
     if (bptt_updater->er_bptt != NULL) {
         for (i = 1; i <= bptt_updater->num_glue; i++) {
             safe_st_aligned_free(bptt_updater->er_bptt[i]);
@@ -90,6 +97,15 @@ bptt_updater_t* bptt_updater_create(component_t *comp, int cycle_id,
     }
     memset(bptt_updater->ac_bptt, 0, sz);
 
+    if (comp->glues[g]->dropout > 0.0) {
+        bptt_updater->dropout_ac_bptt = (real_t **)st_malloc(sz);
+        if (bptt_updater->dropout_ac_bptt == NULL) {
+            ST_WARNING("Failed to st_malloc dropout_ac_bptt.");
+            goto ERR;
+        }
+        memset(bptt_updater->dropout_ac_bptt, 0, sz);
+    }
+
     bptt_updater->er_bptt = (real_t **)st_malloc(sz);
     if (bptt_updater->er_bptt == NULL) {
         ST_WARNING("Failed to st_malloc er_bptt.");
@@ -116,6 +132,15 @@ bptt_updater_t* bptt_updater_create(component_t *comp, int cycle_id,
             goto ERR;
         }
         memset(bptt_updater->ac_bptt[i], 0, sz);
+
+        if (glue->dropout > 0.0) {
+            bptt_updater->dropout_ac_bptt[i] = st_aligned_malloc(sz, ALIGN_SIZE);
+            if (bptt_updater->dropout_ac_bptt[i] == NULL) {
+                ST_WARNING("Failed to st_aligned_malloc dropout_ac_bptt[%d].", i);
+                goto ERR;
+            }
+            memset(bptt_updater->dropout_ac_bptt[i], 0, sz);
+        }
 
         sz = sizeof(real_t) * comp->layers[glue->out_layer]->size
             * bptt_delay;

@@ -210,35 +210,27 @@ int glue_updater_reset(glue_updater_t *glue_updater)
     return 0;
 }
 
-int glue_updater_setup_dropout(glue_updater_t *glue_updater, real_t dropout,
-        bool *keep_mask)
+int glue_updater_setup_dropout(glue_updater_t *glue_updater, real_t dropout)
 {
     ST_CHECK_PARAM(glue_updater == NULL, -1);
 
     glue_updater->keep_prob = 1.0 - dropout;
 
     if (glue_updater->keep_prob < 1.0) {
-        if (glue_updater->glue->recur_type == RECUR_BODY) {
-            if (keep_mask == NULL) {
-                ST_WARNING("keep_mask not given to RECUR_BODY glue[%s].",
-                        glue_updater->glue->name);
-                return -1;
-            }
-            glue_updater->keep_mask = keep_mask;
-        } else {
-            glue_updater->keep_mask = (bool *)st_malloc(sizeof(bool)
-                    * glue_updater->glue->in_length);
-            if (glue_updater->keep_mask == NULL) {
-                ST_WARNING("Failed to st_malloc keep_mask");
-                return -1;
-            }
+        glue_updater->keep_mask = (bool *)st_malloc(sizeof(bool)
+                * glue_updater->glue->in_length);
+        if (glue_updater->keep_mask == NULL) {
+            ST_WARNING("Failed to st_malloc keep_mask");
+            return -1;
         }
 
-        glue_updater->dropout_ac = (real_t *)st_malloc(sizeof(real_t)
-                * glue_updater->glue->in_length);
-        if (glue_updater->dropout_ac == NULL) {
-            ST_WARNING("Failed to st_malloc dropout_ac");
-            return -1;
+        if (glue_updater->glue->recur_type == RECUR_NON) {
+            glue_updater->dropout_ac = (real_t *)st_malloc(sizeof(real_t)
+                    * glue_updater->glue->in_length);
+            if (glue_updater->dropout_ac == NULL) {
+                ST_WARNING("Failed to st_malloc dropout_ac");
+                return -1;
+            }
         }
     }
 
@@ -253,10 +245,6 @@ int glue_updater_gen_keep_mask(glue_updater_t *glue_updater, unsigned int *seed)
     ST_CHECK_PARAM(glue_updater == NULL, -1);
 
     if (glue_updater->keep_prob >= 1.0) {
-        return 0;
-    }
-
-    if (glue_updater->glue->recur_type == RECUR_BODY) {
         return 0;
     }
 

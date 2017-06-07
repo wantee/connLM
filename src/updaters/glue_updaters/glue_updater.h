@@ -128,11 +128,9 @@ glue_updater_t* glue_updater_create(glue_t *glue);
  * @ingroup g_updater_glue
  * @param[in] glue_updater glue_updater.
  * @param[in] dropout dropout probability
- * @param[in] keep_mask keep mask for recurrent glue.
  * @return non-zero value if any error.
  */
-int glue_updater_setup_dropout(glue_updater_t *glue_updater, real_t dropout,
-        bool *keep_mask);
+int glue_updater_setup_dropout(glue_updater_t *glue_updater, real_t dropout);
 
 /**
  * Generate keep mask of dropout for glue_updater.

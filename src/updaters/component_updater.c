@@ -145,7 +145,6 @@ static int comp_updater_setup_dropout(comp_updater_t *comp_updater)
     glue_t *glue;
     glue_updater_t *head, *glue_updater;
     int i, j, g;
-    real_t d;
 
     ST_CHECK_PARAM(comp_updater == NULL, -1);
 
@@ -154,18 +153,33 @@ static int comp_updater_setup_dropout(comp_updater_t *comp_updater)
     for (i = 0; i < comp->num_glue_cycle; i++) {
         g = comp->glue_cycles[i][1];
         glue = comp->glues[g];
-        d = glue->dropout;
         head = comp_updater->glue_updaters[g];
-        if (glue_updater_setup_dropout(head, d, NULL) < 0) {
+
+        // following check is necessary for the glues that may be
+        // contained in multiple cycles
+        if (head->keep_mask == NULL) {
+            // set effective learning rate
+            head->wt_updater->param.learn_rate *= (1 - glue->dropout);
+        }
+
+        if (glue_updater_setup_dropout(head, glue->dropout) < 0) {
             ST_WARNING("Failed to glue_updater_setup_dropout[%s] of recur_head.",
                     glue->name);
             return -1;
         }
+
         for (j = 2; j <= comp->glue_cycles[i][0]; j++) {
             g = comp->glue_cycles[i][j];
             glue_updater = comp_updater->glue_updaters[g];
-            if (glue_updater_setup_dropout(glue_updater, d,
-                        head->keep_mask) < 0) {
+
+            // following check is necessary for the glues that may be
+            // contained in multiple cycles
+            if (glue_updater->keep_mask == NULL) {
+                // set effective learning rate
+                glue_updater->wt_updater->param.learn_rate *= (1 - glue->dropout);
+            }
+
+            if (glue_updater_setup_dropout(glue_updater, glue->dropout) < 0) {
                 ST_WARNING("Failed to glue_updater_setup_dropout[%s] of recur_body.",
                         glue->name);
                 return -1;
@@ -177,8 +191,7 @@ static int comp_updater_setup_dropout(comp_updater_t *comp_updater)
         glue = comp->glues[i];
         glue_updater = comp_updater->glue_updaters[i];
         if (glue->recur_type == RECUR_NON && glue->dropout > 0.0) {
-            if (glue_updater_setup_dropout(glue_updater,
-                        glue->dropout, NULL) < 0) {
+            if (glue_updater_setup_dropout(glue_updater, glue->dropout) < 0) {
                 ST_WARNING("Failed to glue_updater_setup_dropout[%s] of recur_non.",
                         glue->name);
                 return -1;
@@ -330,6 +343,9 @@ static int comp_updater_bptt(comp_updater_t *comp_updater, bool clear)
     wt_updater_t *wt_updater;
     glue_t *glue;
     bptt_updater_t *bptt_updater;
+    bool *keep_mask;
+    real_t keep_prob;
+    real_t *d_ac;
 
     real_t *in_er = NULL, *out_er = NULL, *in_ac = NULL, *out_ac, *tmp;
     int bptt, bptt_delay;
@@ -367,6 +383,8 @@ static int comp_updater_bptt(comp_updater_t *comp_updater, bool clear)
             for (j = 1; j <= comp->glue_cycles[i][0]; j++) {
                 g = comp->glue_cycles[i][j];
                 glue = comp->glues[g];
+                keep_mask = comp_updater->glue_updaters[g]->keep_mask;
+                keep_prob = comp_updater->glue_updaters[g]->keep_prob;
                 in_sz = layer_updaters[glue->in_layer]->layer->size;
                 out_sz = layer_updaters[glue->out_layer]->layer->size;
 
@@ -384,10 +402,35 @@ static int comp_updater_bptt(comp_updater_t *comp_updater, bool clear)
                     memcpy(bptt_updater->ac_bptt[j]
                             + (bptt_updater->num_ac_bptt - 1) * in_sz,
                             in_ac, sizeof(real_t) * in_sz);
+                    if (keep_prob < 1.0) {
+                        memmove(bptt_updater->dropout_ac_bptt[j],
+                                bptt_updater->dropout_ac_bptt[j] + in_sz,
+                                sizeof(real_t)*in_sz*(bptt_updater->num_ac_bptt-1));
+                        d_ac = bptt_updater->dropout_ac_bptt[j]
+                               + (bptt_updater->num_ac_bptt - 1) * in_sz;
+                        for (ii = 0; ii < in_sz; ii++) {
+                            if (keep_mask[ii] == 1) {
+                                d_ac[ii] = in_ac[ii] / keep_prob;
+                            } else {
+                                d_ac[ii] = 0.0;
+                            }
+                        }
+                    }
                 } else {
                     memcpy(bptt_updater->ac_bptt[j]
                             + bptt_updater->num_ac_bptt * in_sz,
                             in_ac, sizeof(real_t) * in_sz);
+                    if (keep_prob < 1.0) {
+                        d_ac = bptt_updater->dropout_ac_bptt[j]
+                               + bptt_updater->num_ac_bptt * in_sz;
+                        for (ii = 0; ii < in_sz; ii++) {
+                            if (keep_mask[ii] == 1) {
+                                d_ac[ii] = in_ac[ii] / keep_prob;
+                            } else {
+                                d_ac[ii] = 0.0;
+                            }
+                        }
+                    }
                 }
 
                 if (bptt_updater->num_er_bptt >= bptt_delay) {
@@ -417,6 +460,8 @@ static int comp_updater_bptt(comp_updater_t *comp_updater, bool clear)
                 for (j = 1; j <= comp->glue_cycles[i][0]; j++) {
                     g = comp->glue_cycles[i][j];
                     glue = comp->glues[g];
+                    keep_mask = comp_updater->glue_updaters[g]->keep_mask;
+                    keep_prob = comp_updater->glue_updaters[g]->keep_prob;
 
                     in_sz = layer_updaters[glue->in_layer]->layer->size;
                     out_sz = layer_updaters[glue->out_layer]->layer->size;
@@ -442,7 +487,11 @@ static int comp_updater_bptt(comp_updater_t *comp_updater, bool clear)
                         out_er = in_er;
                         in_er = tmp;
                     }
-                    in_ac = bptt_updater->ac_bptt[j] + (t * in_sz);
+                    if (keep_prob < 1.0) {
+                        in_ac = bptt_updater->dropout_ac_bptt[j] + (t * in_sz);
+                    } else {
+                        in_ac = bptt_updater->ac_bptt[j] + (t * in_sz);
+                    }
 
                     er_t = t - bptt_updater->num_ac_bptt
                              + bptt_updater->num_er_bptt;
@@ -481,6 +530,15 @@ static int comp_updater_bptt(comp_updater_t *comp_updater, bool clear)
                                 wt_updater->wt,
                                 wt_updater->col, wt_updater->row,
                                 wt_updater->param.er_cutoff, 1.0);
+                    }
+
+                    // dropout in_er
+                    if (keep_prob < 1.0) {
+                        for (ii = 0; ii < in_sz; ii++) {
+                            if (keep_mask[ii] == 0) {
+                                in_er[ii] = 0.0;
+                            }
+                        }
                     }
 
                     // update weight
