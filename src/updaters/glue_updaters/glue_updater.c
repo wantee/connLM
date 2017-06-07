@@ -224,13 +224,11 @@ int glue_updater_setup_dropout(glue_updater_t *glue_updater, real_t dropout)
             return -1;
         }
 
-        if (glue_updater->glue->recur_type == RECUR_NON) {
-            glue_updater->dropout_ac = (real_t *)st_malloc(sizeof(real_t)
-                    * glue_updater->glue->in_length);
-            if (glue_updater->dropout_ac == NULL) {
-                ST_WARNING("Failed to st_malloc dropout_ac");
-                return -1;
-            }
+        glue_updater->dropout_ac = (real_t *)st_malloc(sizeof(real_t)
+                * glue_updater->glue->in_length);
+        if (glue_updater->dropout_ac == NULL) {
+            ST_WARNING("Failed to st_malloc dropout_ac");
+            return -1;
         }
     }
 

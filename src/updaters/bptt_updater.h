@@ -50,7 +50,6 @@ typedef struct _bptt_updater_t_ {
     wt_updater_t **wt_updaters; /**< wt_updater for every glue. */
     int num_glue; /**< number of glue in this cycle. */
     real_t **ac_bptt; /**< buffer of activation for BPTT in cycle. one-based. */
-    real_t **dropout_ac_bptt; /**< dropouted version of ac_bptt. */
     int num_ac_bptt; /**< number time stpes filled in ac_bptt. */
     real_t **er_bptt; /**< buffer of error for BPTT in cycle. one-based.*/
     int num_er_bptt; /**< number time stpes filled in er_bptt. */

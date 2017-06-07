@@ -345,7 +345,6 @@ static int comp_updater_bptt(comp_updater_t *comp_updater, bool clear)
     bptt_updater_t *bptt_updater;
     bool *keep_mask;
     real_t keep_prob;
-    real_t *d_ac;
 
     real_t *in_er = NULL, *out_er = NULL, *in_ac = NULL, *out_ac, *tmp;
     int bptt, bptt_delay;
@@ -383,16 +382,20 @@ static int comp_updater_bptt(comp_updater_t *comp_updater, bool clear)
             for (j = 1; j <= comp->glue_cycles[i][0]; j++) {
                 g = comp->glue_cycles[i][j];
                 glue = comp->glues[g];
-                keep_mask = comp_updater->glue_updaters[g]->keep_mask;
                 keep_prob = comp_updater->glue_updaters[g]->keep_prob;
                 in_sz = layer_updaters[glue->in_layer]->layer->size;
                 out_sz = layer_updaters[glue->out_layer]->layer->size;
 
                 out_er = layer_updaters[glue->out_layer]->er_raw;
-                if (j == 1) {
-                    in_ac = layer_updaters[glue->in_layer]->ac_state;
+                if (keep_prob < 1.0) {
+                    // dropout_ac should be filled during forward pass
+                    in_ac = comp_updater->glue_updaters[g]->dropout_ac;
                 } else {
-                    in_ac = layer_updaters[glue->in_layer]->ac;
+                    if (j == 1) {
+                        in_ac = layer_updaters[glue->in_layer]->ac_state + glue->in_offset;
+                    } else {
+                        in_ac = layer_updaters[glue->in_layer]->ac + glue->in_offset;
+                    }
                 }
 
                 if (bptt_updater->num_ac_bptt >= bptt + bptt_delay) {
@@ -402,35 +405,10 @@ static int comp_updater_bptt(comp_updater_t *comp_updater, bool clear)
                     memcpy(bptt_updater->ac_bptt[j]
                             + (bptt_updater->num_ac_bptt - 1) * in_sz,
                             in_ac, sizeof(real_t) * in_sz);
-                    if (keep_prob < 1.0) {
-                        memmove(bptt_updater->dropout_ac_bptt[j],
-                                bptt_updater->dropout_ac_bptt[j] + in_sz,
-                                sizeof(real_t)*in_sz*(bptt_updater->num_ac_bptt-1));
-                        d_ac = bptt_updater->dropout_ac_bptt[j]
-                               + (bptt_updater->num_ac_bptt - 1) * in_sz;
-                        for (ii = 0; ii < in_sz; ii++) {
-                            if (keep_mask[ii] == 1) {
-                                d_ac[ii] = in_ac[ii] / keep_prob;
-                            } else {
-                                d_ac[ii] = 0.0;
-                            }
-                        }
-                    }
                 } else {
                     memcpy(bptt_updater->ac_bptt[j]
                             + bptt_updater->num_ac_bptt * in_sz,
                             in_ac, sizeof(real_t) * in_sz);
-                    if (keep_prob < 1.0) {
-                        d_ac = bptt_updater->dropout_ac_bptt[j]
-                               + bptt_updater->num_ac_bptt * in_sz;
-                        for (ii = 0; ii < in_sz; ii++) {
-                            if (keep_mask[ii] == 1) {
-                                d_ac[ii] = in_ac[ii] / keep_prob;
-                            } else {
-                                d_ac[ii] = 0.0;
-                            }
-                        }
-                    }
                 }
 
                 if (bptt_updater->num_er_bptt >= bptt_delay) {
@@ -487,11 +465,7 @@ static int comp_updater_bptt(comp_updater_t *comp_updater, bool clear)
                         out_er = in_er;
                         in_er = tmp;
                     }
-                    if (keep_prob < 1.0) {
-                        in_ac = bptt_updater->dropout_ac_bptt[j] + (t * in_sz);
-                    } else {
-                        in_ac = bptt_updater->ac_bptt[j] + (t * in_sz);
-                    }
+                    in_ac = bptt_updater->ac_bptt[j] + (t * in_sz);
 
                     er_t = t - bptt_updater->num_ac_bptt
                              + bptt_updater->num_er_bptt;
