@@ -927,11 +927,6 @@ int glue_load_train_opt(glue_t *glue, st_opt_t *opt, const char *sec_name,
             goto ST_OPT_ERR;
         }
 
-        if (glue->dropout > 0.0) {
-            // set effective learning rate
-            glue->param.learn_rate *= (1 - glue->dropout);
-        }
-
         if (glue->recur_type == RECUR_HEAD) {
             if (bptt_opt_load(&glue->bptt_opt, opt, name,
                         parent_bptt_opt) < 0) {

@@ -88,8 +88,7 @@ typedef struct _glue_updater_t_ {
 
     real_t keep_prob; /**< keep probability, i.e., 1 - dropout probability. */
     bool *keep_mask; /**< keep mask. */
-    unsigned int *rand_seed; /**< rand seed. */
-    real_t *in_ac; /**< transformed activation after dropout. */
+    real_t *dropout_ac; /**< transformed activation after dropout. */
 
     wt_updater_t *wt_updater; /**< the wt_updater. */
     glue_updater_impl_t *impl; /**< implementation for glue. */
@@ -125,13 +124,22 @@ void glue_updater_destroy(glue_updater_t *glue_updater);
 glue_updater_t* glue_updater_create(glue_t *glue);
 
 /**
- * Set rand seed for glue_updater.
+ * Setup dropout for glue_updater.
+ * @ingroup g_updater_glue
+ * @param[in] glue_updater glue_updater.
+ * @param[in] dropout dropout probability
+ * @return non-zero value if any error.
+ */
+int glue_updater_setup_dropout(glue_updater_t *glue_updater, real_t dropout);
+
+/**
+ * Generate keep mask of dropout for glue_updater.
  * @ingroup g_updater_glue
  * @param[in] glue_updater glue_updater.
  * @param[in] seed the rand seed pointer.
  * @return non-zero value if any error.
  */
-int glue_updater_set_rand_seed(glue_updater_t *glue_updater, unsigned int *seed);
+int glue_updater_gen_keep_mask(glue_updater_t *glue_updater, unsigned int *seed);
 
 /**
  * Setup glue_updater for running.

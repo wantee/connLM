@@ -178,6 +178,14 @@ int driver_setup(driver_t *driver, driver_mode_t mode)
     }
 
     for (i = 0; i < driver->n_thr; i++) {
+        if (mode == DRIVER_TRAIN) {
+            if (updater_set_rand_seed(driver->updaters[i],
+                        driver->train_opt.rand_seed + i) < 0) {
+                ST_WARNING("Failed to updater_set_rand_seed.");
+                return -1;
+            }
+        }
+
         if (updater_setup(driver->updaters[i], backprop) < 0) {
             ST_WARNING("Failed to updater_setup.");
             return -1;
@@ -188,14 +196,6 @@ int driver_setup(driver_t *driver, driver_mode_t mode)
         if (driver->updaters[0]->input_updater->ctx_rightmost > 0) {
             ST_WARNING("Can not generating: future words in input context.");
             return -1;
-        }
-    } else if (mode == DRIVER_TRAIN) {
-        for (i = 0; i < driver->n_thr; i++) {
-            if (updater_set_rand_seed(driver->updaters[i],
-                        driver->train_opt.rand_seed + i) < 0) {
-                ST_WARNING("Failed to updater_set_rand_seed.");
-                return -1;
-            }
         }
     }
 

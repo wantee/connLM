@@ -62,4 +62,8 @@
   we should differently deal with recurrent and non-recurrent weights.
   Thus, we have to make dropout a property of the glue.
 
+  We enforce the dropout mask be constant within a BPTT block, when there is
+  a recurrent glue in a component, otherwise the mask is changed for every
+  forward pass.
+
 */
