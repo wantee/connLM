@@ -49,17 +49,18 @@ static glue_updater_impl_t GLUE_UPDATER_IMPL[] = {
         direct_glue_updater_forward, direct_glue_updater_backprop,
         direct_glue_updater_forward_util_out, direct_glue_updater_forward_out,
         direct_glue_updater_forward_out_word,
+        direct_glue_updater_gen_keep_mask,
         true},
     {FC_GLUE_NAME, NULL, NULL,
         NULL, fc_glue_updater_forward, fc_glue_updater_backprop,
-        fc_glue_updater_forward, NULL, false},
+        fc_glue_updater_forward, NULL, NULL, false},
     {EMB_GLUE_NAME, NULL, NULL,
         NULL, emb_glue_updater_forward, emb_glue_updater_backprop,
-        emb_glue_updater_forward, NULL, false},
+        emb_glue_updater_forward, NULL, NULL, false},
     {OUT_GLUE_NAME, NULL, NULL,
         NULL, out_glue_updater_forward, out_glue_updater_backprop,
         NULL, out_glue_updater_forward_out, out_glue_updater_forward_out_word,
-        true},
+        NULL, true},
 };
 
 static glue_updater_impl_t* glue_updater_get_impl(const char *type)
@@ -203,6 +204,15 @@ int glue_updater_setup_pre_ac_state(glue_updater_t *glue_updater,
     return 0;
 }
 
+int glue_updater_set_rand_seed(glue_updater_t *glue_updater, unsigned int *seed)
+{
+    ST_CHECK_PARAM(glue_updater == NULL, -1);
+
+    glue_updater->rand_seed = seed;
+
+    return 0;
+}
+
 int glue_updater_reset(glue_updater_t *glue_updater)
 {
     ST_CHECK_PARAM(glue_updater == NULL, -1);
@@ -229,6 +239,9 @@ int glue_updater_setup_dropout(glue_updater_t *glue_updater, real_t dropout)
             ST_WARNING("Failed to st_malloc keep_mask");
             return -1;
         }
+        // set to UNSET state, will be used by direct_glue_updater
+        memset(glue_updater->keep_mask, 2,
+                sizeof(bool) * glue_updater->keep_mask_len);
 
         glue_updater->dropout_val = (real_t *)st_malloc(sizeof(real_t)
                 * glue_updater->keep_mask_len);
@@ -241,7 +254,7 @@ int glue_updater_setup_dropout(glue_updater_t *glue_updater, real_t dropout)
     return 0;
 }
 
-int glue_updater_gen_keep_mask(glue_updater_t *glue_updater, unsigned int *seed)
+int glue_updater_gen_keep_mask(glue_updater_t *glue_updater)
 {
     double p;
     int i;
@@ -252,10 +265,24 @@ int glue_updater_gen_keep_mask(glue_updater_t *glue_updater, unsigned int *seed)
         return 0;
     }
 
-    ST_CHECK_PARAM(seed == NULL, -1);
+    if (glue_updater->impl != NULL
+            && glue_updater->impl->gen_keep_mask != NULL) {
+        if (glue_updater->impl->gen_keep_mask(glue_updater) < 0) {
+            ST_WARNING("Failed to glue_updater->impl->gen_keep_mask.[%s]",
+                    glue_updater->glue->name);
+            return -1;
+        }
+
+        return 0;
+    }
+
+    if(glue_updater->rand_seed == NULL) {
+        ST_WARNING("rand_seed not set for glue[%s]", glue_updater->glue->name);
+        return -1;
+    }
 
     for (i = 0; i < glue_updater->keep_mask_len; i++) {
-        p = st_random_r(0, 1, seed);
+        p = st_random_r(0, 1, glue_updater->rand_seed);
         if (p < glue_updater->keep_prob) {
             glue_updater->keep_mask[i] = 1;
         } else {

@@ -132,9 +132,20 @@ ERR:
 
 int comp_updater_set_rand_seed(comp_updater_t *comp_updater, unsigned int *seed)
 {
+    int g;
+
     ST_CHECK_PARAM(comp_updater == NULL, -1);
 
     comp_updater->rand_seed = seed;
+
+    for (g = 0; g < comp_updater->comp->num_glue; g++) {
+        if (glue_updater_set_rand_seed(comp_updater->glue_updaters[g],
+                    seed) < 0) {
+            ST_WARNING("Failed to glue_updater_set_rand_seed for glue[%s].",
+                    comp_updater->glue_updaters[g]->glue->name);
+            return -1;
+        }
+    }
 
     return 0;
 }
@@ -204,8 +215,7 @@ static int comp_updater_setup_dropout(comp_updater_t *comp_updater)
     if (comp->num_glue_cycle > 0) {
         for (i = 0; i < comp->num_glue; i++) {
             glue_updater = comp_updater->glue_updaters[i];
-            if (glue_updater_gen_keep_mask(glue_updater,
-                        comp_updater->rand_seed) < 0) {
+            if (glue_updater_gen_keep_mask(glue_updater) < 0) {
                 ST_WARNING("Failed to glue_updater_gen_keep_mask.");
                 return -1;
             }
@@ -551,8 +561,7 @@ static int comp_updater_bptt(comp_updater_t *comp_updater, bool clear)
     if (comp->num_glue_cycle > 0
             && (comp_updater->bptt_step % bptt_delay == 0 || clear)) {
         for (i = 0; i < comp->num_glue; i++) {
-            if (glue_updater_gen_keep_mask(comp_updater->glue_updaters[i],
-                        comp_updater->rand_seed) < 0) {
+            if (glue_updater_gen_keep_mask(comp_updater->glue_updaters[i]) < 0) {
                 ST_WARNING("Failed to glue_updater_gen_keep_mask.");
                 return -1;
             }
@@ -623,8 +632,7 @@ int comp_updater_forward(comp_updater_t *comp_updater, sent_t *input_sent)
         glue_updater = comp_updater->glue_updaters[comp->fwd_order[g]];
 
         if (comp_updater->bptt_updaters == NULL) {
-            if (glue_updater_gen_keep_mask(glue_updater,
-                        comp_updater->rand_seed) < 0) {
+            if (glue_updater_gen_keep_mask(glue_updater) < 0) {
                 ST_WARNING("Failed to glue_updater_gen_keep_mask.");
                 return -1;
             }

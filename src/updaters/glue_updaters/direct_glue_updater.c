@@ -27,6 +27,7 @@
 #include <stutils/st_macro.h>
 #include <stutils/st_utils.h>
 #include <stutils/st_log.h>
+#include <stutils/st_rand.h>
 
 #include "ngram_hash.h"
 #include "output.h"
@@ -273,10 +274,12 @@ static int direct_glue_updater_forward_node(output_t *output,
         output_node_id_t child_s, output_node_id_t child_e,
         real_t *hash_wt, size_t hash_sz,
         hash_t *hash_vals, int hash_order, real_t *out_ac, real_t scale,
-        bool *forwarded)
+        bool *forwarded,
+        bool *keep_mask, real_t keep_prob, unsigned int *rand_seed)
 {
     hash_t h;
     output_node_id_t ch;
+    double p;
     int a;
 
     ST_CHECK_PARAM(output == NULL || out_ac == NULL, -1);
@@ -295,16 +298,48 @@ static int direct_glue_updater_forward_node(output_t *output,
                 h -= hash_sz;
             }
 
-            if (h + child_e - child_s - 1 > hash_sz) {
-                for (ch = child_s; h < hash_sz; ch++, h++) {
-                    out_ac[ch] += scale * hash_wt[h];
+            if (keep_mask != NULL) {
+                for (ch = child_s; ch < child_e - 1; ch++) {
+                    if (keep_mask[ch] == 2) { // not set
+                        p = st_random_r(0, 1, rand_seed);
+                        if (p < keep_prob) {
+                            keep_mask[ch] = 1;
+                        } else {
+                            keep_mask[ch] = 0;
+                        }
+                    }
                 }
-                for (h = 0; ch < child_e - 1; ch++, h++) {
-                    out_ac[ch] += scale * hash_wt[h];
+
+                if (h + child_e - child_s - 1 > hash_sz) {
+                    for (ch = child_s; h < hash_sz; ch++, h++) {
+                        if (keep_mask[ch]) {
+                            out_ac[ch] += scale * hash_wt[h];
+                        }
+                    }
+                    for (h = 0; ch < child_e - 1; ch++, h++) {
+                        if (keep_mask[ch]) {
+                            out_ac[ch] += scale * hash_wt[h];
+                        }
+                    }
+                } else {
+                    for (ch = child_s; ch < child_e - 1; ch++, h++) {
+                        if (keep_mask[ch]) {
+                            out_ac[ch] += scale * hash_wt[h];
+                        }
+                    }
                 }
             } else {
-                for (ch = child_s; ch < child_e - 1; ch++, h++) {
-                    out_ac[ch] += scale * hash_wt[h];
+                if (h + child_e - child_s - 1 > hash_sz) {
+                    for (ch = child_s; h < hash_sz; ch++, h++) {
+                        out_ac[ch] += scale * hash_wt[h];
+                    }
+                    for (h = 0; ch < child_e - 1; ch++, h++) {
+                        out_ac[ch] += scale * hash_wt[h];
+                    }
+                } else {
+                    for (ch = child_s; ch < child_e - 1; ch++, h++) {
+                        out_ac[ch] += scale * hash_wt[h];
+                    }
                 }
             }
         }
@@ -326,6 +361,11 @@ typedef struct _direct_walker_args_t_ {
     wt_updater_t *wt_updater;
 
     bool *forwarded;
+
+    bool *keep_mask;
+    real_t keep_prob;
+    unsigned int *rand_seed;
+    real_t *dropout_val;
 } direct_walker_args_t;
 
 static int direct_forward_walker(output_t *output, output_node_id_t node,
@@ -339,7 +379,9 @@ static int direct_forward_walker(output_t *output, output_node_id_t node,
     if (direct_glue_updater_forward_node(output, node,
                 child_s, child_e, dw_args->hash_wt, dw_args->hash_sz,
                 dw_args->hash_vals, dw_args->hash_order,
-                dw_args->out_ac, dw_args->comp_scale, dw_args->forwarded) < 0) {
+                dw_args->out_ac, dw_args->comp_scale, dw_args->forwarded,
+                dw_args->keep_mask, dw_args->keep_prob,
+                dw_args->rand_seed) < 0) {
         ST_WARNING("Failed to direct_glue_updater_forward_node");
         return -1;
     }
@@ -422,6 +464,9 @@ int direct_glue_updater_forward(glue_updater_t *glue_updater,
     dw_args.hash_vals = data->hash_vals;
     dw_args.hash_order = data->hash_order;
     dw_args.forwarded = NULL;
+    dw_args.keep_mask = glue_updater->keep_mask;
+    dw_args.keep_prob = glue_updater->keep_prob;
+    dw_args.rand_seed = glue_updater->rand_seed;
     if (output_walk_through_path(out_updater->output,
                 input_sent->words[input_sent->tgt_pos],
                 direct_forward_walker, (void *)&dw_args) < 0) {
@@ -437,10 +482,12 @@ static int direct_backprop_walker(output_t *output, output_node_id_t node,
         output_node_id_t child_s, output_node_id_t child_e, void *args)
 {
     direct_walker_args_t *dw_args;
+    real_t *out_er;
+
     st_size_seg_t seg;
     hash_t h;
     size_t hash_sz;
-    int a;
+    int a, ch;
 
     dw_args = (direct_walker_args_t *) args;
 
@@ -451,6 +498,19 @@ static int direct_backprop_walker(output_t *output, output_node_id_t node,
 
         hash_sz = dw_args->wt_updater->row;
 
+        if (dw_args->keep_mask != NULL) {
+            out_er = dw_args->dropout_val;
+            for (ch = child_s; ch < child_e - 1; ch++) {
+                if (dw_args->keep_mask[ch]) {
+                    out_er[ch] = dw_args->out_er[ch];
+                } else {
+                    out_er[ch] = 0.0;
+                }
+            }
+        } else {
+            out_er = dw_args->out_er;
+        }
+
         for (a = 0; a < dw_args->hash_order; a++) {
             h = dw_args->hash_vals[a] + child_s;
             if (h >= hash_sz) {
@@ -460,10 +520,16 @@ static int direct_backprop_walker(output_t *output, output_node_id_t node,
             seg.s = h;
             seg.n = child_e - child_s - 1;
             if (wt_update(dw_args->wt_updater, &seg, -1,
-                        dw_args->out_er + child_s, dw_args->comp_scale,
+                        out_er + child_s, dw_args->comp_scale,
                         NULL, 1.0, NULL) < 0) {
                 ST_WARNING("Failed to wt_update.");
                 return -1;
+            }
+        }
+
+        if (dw_args->keep_mask != NULL) {
+            for (ch = child_s; ch < child_e - 1; ch++) {
+                dw_args->keep_mask[ch] = 2; // reset
             }
         }
     }
@@ -491,6 +557,8 @@ int direct_glue_updater_backprop(glue_updater_t *glue_updater,
     dw_args.wt_updater = glue_updater->wt_updater;
     dw_args.hash_vals = data->hash_vals;
     dw_args.hash_order = data->hash_order;
+    dw_args.keep_mask = glue_updater->keep_mask;
+    dw_args.dropout_val = glue_updater->dropout_val;
     if (output_walk_through_path(out_updater->output,
                 input_sent->words[input_sent->tgt_pos],
                 direct_backprop_walker, (void *)&dw_args) < 0) {
@@ -542,7 +610,9 @@ int direct_glue_updater_forward_out(glue_updater_t *glue_updater,
                 child_s, child_e,
                 glue_updater->wt_updater->wt, glue_updater->glue->wt->row,
                 data->hash_vals, data->hash_order,
-                out_ac, comp_updater->comp->comp_scale, NULL) < 0) {
+                out_ac, comp_updater->comp->comp_scale,
+                NULL, glue_updater->keep_mask,
+                glue_updater->keep_prob, glue_updater->rand_seed) < 0) {
         ST_WARNING("Failed to direct_glue_updater_forward_node");
         return -1;
     }
@@ -573,11 +643,20 @@ int direct_glue_updater_forward_out_word(glue_updater_t *glue_updater,
     dw_args.hash_vals = data->hash_vals;
     dw_args.hash_order = data->hash_order;
     dw_args.forwarded = glue_updater->forwarded;
+    dw_args.keep_mask = glue_updater->keep_mask;
+    dw_args.keep_prob = glue_updater->keep_prob;
+    dw_args.rand_seed = glue_updater->rand_seed;
     if (output_walk_through_path(out_updater->output,
                 word, direct_forward_walker, (void *)&dw_args) < 0) {
         ST_WARNING("Failed to output_walk_through_path.");
         return -1;
     }
 
+    return 0;
+}
+
+int direct_glue_updater_gen_keep_mask(glue_updater_t *glue_updater)
+{
+    /* Do nothing, will be generated on the fly. */
     return 0;
 }

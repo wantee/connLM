@@ -76,6 +76,8 @@ typedef struct _glue_updater_implementation_t_ {
             comp_updater_t *comp_updater, int word,
             real_t *in_ac, real_t *out_ac); /**< forward_out_word glue updater.*/
 
+    int (*gen_keep_mask)(glue_updater_t *glue_updater); /**< gen_keep_mask glue updater.*/
+
     bool multicall; /**< whether need multi-call of forword_out_word.*/
 } glue_updater_impl_t;
 
@@ -86,6 +88,7 @@ typedef struct _glue_updater_implementation_t_ {
 typedef struct _glue_updater_t_ {
     glue_t *glue; /**< the glue. */
 
+    unsigned int *rand_seed; /**< random seed. */
     real_t keep_prob; /**< keep probability, i.e., 1 - dropout probability. */
     bool *keep_mask; /**< keep mask. */
     int keep_mask_len; /**< length of keep_mask. */
@@ -137,10 +140,9 @@ int glue_updater_setup_dropout(glue_updater_t *glue_updater, real_t dropout);
  * Generate keep mask of dropout for glue_updater.
  * @ingroup g_updater_glue
  * @param[in] glue_updater glue_updater.
- * @param[in] seed the rand seed pointer.
  * @return non-zero value if any error.
  */
-int glue_updater_gen_keep_mask(glue_updater_t *glue_updater, unsigned int *seed);
+int glue_updater_gen_keep_mask(glue_updater_t *glue_updater);
 
 /**
  * Setup glue_updater for running.
@@ -162,6 +164,15 @@ int glue_updater_setup(glue_updater_t *glue_updater,
  */
 int glue_updater_setup_pre_ac_state(glue_updater_t *glue_updater,
         comp_updater_t *comp_updater);
+
+/**
+ * Set rand seed for glue_updater.
+ * @ingroup g_updater_glue
+ * @param[in] glue_updater glue_updater.
+ * @param[in] seed the rand seed pointer.
+ * @return non-zero value if any error.
+ */
+int glue_updater_set_rand_seed(glue_updater_t *glue_updater, unsigned int *seed);
 
 /**
  * Reset a glue_updater.
