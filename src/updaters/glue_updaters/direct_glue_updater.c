@@ -313,18 +313,18 @@ static int direct_glue_updater_forward_node(output_t *output,
                 if (h + child_e - child_s - 1 > hash_sz) {
                     for (ch = child_s; h < hash_sz; ch++, h++) {
                         if (keep_mask[ch]) {
-                            out_ac[ch] += scale * hash_wt[h];
+                            out_ac[ch] += scale * hash_wt[h] / keep_prob;
                         }
                     }
                     for (h = 0; ch < child_e - 1; ch++, h++) {
                         if (keep_mask[ch]) {
-                            out_ac[ch] += scale * hash_wt[h];
+                            out_ac[ch] += scale * hash_wt[h] / keep_prob;
                         }
                     }
                 } else {
                     for (ch = child_s; ch < child_e - 1; ch++, h++) {
                         if (keep_mask[ch]) {
-                            out_ac[ch] += scale * hash_wt[h];
+                            out_ac[ch] += scale * hash_wt[h] / keep_prob;
                         }
                     }
                 }

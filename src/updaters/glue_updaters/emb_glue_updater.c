@@ -86,7 +86,7 @@ int emb_glue_updater_forward(glue_updater_t *glue_updater,
                 if (glue_updater->keep_mask != NULL) {
                     for (b = 0; b < col; b++, j++) {
                         if (glue_updater->keep_mask[b]) {
-                            out_ac[b] += scale * wt[j];
+                            out_ac[b] += scale * wt[j] / glue_updater->keep_prob;
                         }
                     }
                 } else {
@@ -132,7 +132,11 @@ int emb_glue_updater_forward(glue_updater_t *glue_updater,
 
                     ac += scale * wt[j];
                 }
-                out_ac[b] += ac / input->n_ctx;
+                if (glue_updater->keep_mask != NULL) {
+                    out_ac[b] += ac / input->n_ctx / glue_updater->keep_prob;
+                } else {
+                    out_ac[b] += ac / input->n_ctx;
+                }
             }
             break;
         case IC_CONCAT:
@@ -165,7 +169,7 @@ int emb_glue_updater_forward(glue_updater_t *glue_updater,
                 if (glue_updater->keep_mask != NULL) {
                     for (b = a * col; b < (a + 1) * col; b++, j++) {
                         if (glue_updater->keep_mask[b]) {
-                            out_ac[b] += scale * wt[j];
+                            out_ac[b] += scale * wt[j] / glue_updater->keep_prob;
                         }
                     }
                 } else {
