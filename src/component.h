@@ -50,6 +50,9 @@ extern "C" {
 typedef struct _component_train_opt_t_ {
 } comp_train_opt_t;
 
+#define OUTPUT_LAYER_ID 0
+#define INPUT_LAYER_ID  1
+
 /**
  * NNet component.
  * @ingroup g_component

@@ -298,7 +298,7 @@ component_t *comp_init_from_topo(const char* topo_content,
         goto ERR;
     }
 
-    if (comp->num_layer != 0) {
+    if (comp->num_layer != OUTPUT_LAYER_ID) {
         ST_WARNING("output layer must be the 0-layer.");
         goto ERR;
     }
@@ -353,7 +353,7 @@ component_t *comp_init_from_topo(const char* topo_content,
                 goto ERR;
             }
 
-            if (comp->num_layer != 1) {
+            if (comp->num_layer != INPUT_LAYER_ID) {
                 ST_WARNING("input layer must be the 1-layer.");
                 goto ERR;
             }

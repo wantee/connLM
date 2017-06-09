@@ -88,7 +88,8 @@ typedef struct _glue_updater_t_ {
 
     real_t keep_prob; /**< keep probability, i.e., 1 - dropout probability. */
     bool *keep_mask; /**< keep mask. */
-    real_t *dropout_ac; /**< transformed activation after dropout. */
+    int keep_mask_len; /**< length of keep_mask. */
+    real_t *dropout_val; /**< transformed activation/error after dropout. */
 
     wt_updater_t *wt_updater; /**< the wt_updater. */
     glue_updater_impl_t *impl; /**< implementation for glue. */

@@ -83,13 +83,26 @@ int emb_glue_updater_forward(glue_updater_t *glue_updater,
                         return -1;
                 }
 
-                for (b = 0; b < col; b++, j++) {
-                    out_ac[b] += scale * wt[j];
+                if (glue_updater->keep_mask != NULL) {
+                    for (b = 0; b < col; b++, j++) {
+                        if (glue_updater->keep_mask[b]) {
+                            out_ac[b] += scale * wt[j];
+                        }
+                    }
+                } else {
+                    for (b = 0; b < col; b++, j++) {
+                        out_ac[b] += scale * wt[j];
+                    }
                 }
             }
             break;
         case IC_AVG:
             for (b = 0; b < col; b++) {
+                if (glue_updater->keep_mask != NULL
+                        && ! glue_updater->keep_mask[b]) {
+                    continue;
+                }
+
                 ac = 0;
                 for (a = 0; a < input->n_ctx; a++) {
                     pos = input_sent->tgt_pos + input->context[a].i;
@@ -149,8 +162,16 @@ int emb_glue_updater_forward(glue_updater_t *glue_updater,
                         return -1;
                 }
 
-                for (b = a * col; b < (a + 1) * col; b++, j++) {
-                    out_ac[b] += scale * wt[j];
+                if (glue_updater->keep_mask != NULL) {
+                    for (b = a * col; b < (a + 1) * col; b++, j++) {
+                        if (glue_updater->keep_mask[b]) {
+                            out_ac[b] += scale * wt[j];
+                        }
+                    }
+                } else {
+                    for (b = a * col; b < (a + 1) * col; b++, j++) {
+                        out_ac[b] += scale * wt[j];
+                    }
                 }
             }
             break;
@@ -170,6 +191,8 @@ int emb_glue_updater_backprop(glue_updater_t *glue_updater,
     emb_glue_data_t *data;
     input_t *input;
 
+    real_t *er;
+
     st_wt_int_t in_idx;
     int pos;
     int a;
@@ -181,7 +204,18 @@ int emb_glue_updater_backprop(glue_updater_t *glue_updater,
     data = (emb_glue_data_t *)glue->extra;
     input = comp_updater->comp->input;
 
-    // backprop words should not contain <any>
+    if (glue_updater->keep_mask != NULL) {
+        er = glue_updater->dropout_val;
+        for (a = 0; a < glue_updater->keep_mask_len; a++) {
+            if (glue_updater->keep_mask[a]) {
+                er[a] = out_er[a];
+            } else {
+                er[a] = 0.0;
+            }
+        }
+    } else {
+        er = out_er;
+    }
 
     if (input->combine == IC_CONCAT) {
         for (a = 0; a < input->n_ctx; a++) {
@@ -207,7 +241,7 @@ int emb_glue_updater_backprop(glue_updater_t *glue_updater,
                     return -1;
             }
             if (wt_update(glue_updater->wt_updater, NULL, -1,
-                        out_er + a * glue->wt->col,
+                        er + a * glue->wt->col,
                         1.0, NULL, 1.0, &in_idx) < 0) {
                 ST_WARNING("Failed to wt_update.");
                 return -1;
@@ -237,7 +271,7 @@ int emb_glue_updater_backprop(glue_updater_t *glue_updater,
                     return -1;
             }
             if (wt_update(glue_updater->wt_updater, NULL, -1,
-                        out_er, 1.0, NULL, 1.0, &in_idx) < 0) {
+                        er, 1.0, NULL, 1.0, &in_idx) < 0) {
                 ST_WARNING("Failed to wt_update.");
                 return -1;
             }

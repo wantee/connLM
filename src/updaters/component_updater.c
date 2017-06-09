@@ -388,8 +388,8 @@ static int comp_updater_bptt(comp_updater_t *comp_updater, bool clear)
 
                 out_er = layer_updaters[glue->out_layer]->er_raw;
                 if (keep_prob < 1.0) {
-                    // dropout_ac should be filled during forward pass
-                    in_ac = comp_updater->glue_updaters[g]->dropout_ac;
+                    // dropout_val should be filled during forward pass
+                    in_ac = comp_updater->glue_updaters[g]->dropout_val;
                 } else {
                     if (j == 1) {
                         in_ac = layer_updaters[glue->in_layer]->ac_state + glue->in_offset;

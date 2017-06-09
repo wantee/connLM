@@ -93,7 +93,7 @@ void glue_updater_destroy(glue_updater_t *glue_updater)
     } else {
         glue_updater->keep_mask = NULL;
     }
-    safe_st_free(glue_updater->dropout_ac);
+    safe_st_free(glue_updater->dropout_val);
 
     safe_wt_updater_destroy(glue_updater->wt_updater);
     glue_updater->glue = NULL;
@@ -217,17 +217,23 @@ int glue_updater_setup_dropout(glue_updater_t *glue_updater, real_t dropout)
     glue_updater->keep_prob = 1.0 - dropout;
 
     if (glue_updater->keep_prob < 1.0) {
+        if (glue_updater->glue->in_layer == INPUT_LAYER_ID) {
+            glue_updater->keep_mask_len = glue_updater->glue->out_length;
+        } else {
+            glue_updater->keep_mask_len = glue_updater->glue->in_length;
+        }
+
         glue_updater->keep_mask = (bool *)st_malloc(sizeof(bool)
-                * glue_updater->glue->in_length);
+                * glue_updater->keep_mask_len);
         if (glue_updater->keep_mask == NULL) {
             ST_WARNING("Failed to st_malloc keep_mask");
             return -1;
         }
 
-        glue_updater->dropout_ac = (real_t *)st_malloc(sizeof(real_t)
-                * glue_updater->glue->in_length);
-        if (glue_updater->dropout_ac == NULL) {
-            ST_WARNING("Failed to st_malloc dropout_ac");
+        glue_updater->dropout_val = (real_t *)st_malloc(sizeof(real_t)
+                * glue_updater->keep_mask_len);
+        if (glue_updater->dropout_val == NULL) {
+            ST_WARNING("Failed to st_malloc dropout_val");
             return -1;
         }
     }
@@ -248,7 +254,7 @@ int glue_updater_gen_keep_mask(glue_updater_t *glue_updater, unsigned int *seed)
 
     ST_CHECK_PARAM(seed == NULL, -1);
 
-    for (i = 0; i < glue_updater->glue->in_length; i++) {
+    for (i = 0; i < glue_updater->keep_mask_len; i++) {
         p = st_random_r(0, 1, seed);
         if (p < glue_updater->keep_prob) {
             glue_updater->keep_mask[i] = 1;
@@ -295,13 +301,13 @@ int glue_updater_forward(glue_updater_t *glue_updater,
 
         if (glue_updater->keep_prob < 1.0) {
             for (i = 0; i < glue->in_length; i++) {
-                if(glue_updater->keep_mask[i] == 1) {
-                    glue_updater->dropout_ac[i] = in_ac[i] / glue_updater->keep_prob; // scale
+                if(glue_updater->keep_mask[i]) {
+                    glue_updater->dropout_val[i] = in_ac[i] / glue_updater->keep_prob; // scale
                 } else {
-                    glue_updater->dropout_ac[i] = 0.0;
+                    glue_updater->dropout_val[i] = 0.0;
                 }
             }
-            in_ac = glue_updater->dropout_ac;
+            in_ac = glue_updater->dropout_val;
         }
     }
     if (glue->out_layer == 0) { // output layer
@@ -360,8 +366,8 @@ int glue_updater_backprop(glue_updater_t *glue_updater,
             if (glue->recur_type == RECUR_NON) {
                 // recur glues will be updated in bptt_updater
                 if (glue_updater->keep_prob < 1.0) {
-                    // dropout_ac should be filled during forward pass
-                    in_ac = glue_updater->dropout_ac;
+                    // dropout_val should be filled during forward pass
+                    in_ac = glue_updater->dropout_val;
                 } else {
                     in_ac = layer_updaters[glue->in_layer]->ac + glue->in_offset;
                 }
@@ -388,7 +394,7 @@ int glue_updater_backprop(glue_updater_t *glue_updater,
 
         if (glue_updater->keep_prob < 1.0 && in_er != NULL) {
             for (i = 0; i < glue->in_length; i++) {
-                if (glue_updater->keep_mask[i] == 0) {
+                if (! glue_updater->keep_mask[i]) {
                     in_er[i] = 0.0;
                 }
             }
