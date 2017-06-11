@@ -215,9 +215,11 @@ static int comp_updater_setup_dropout(comp_updater_t *comp_updater)
     if (comp->num_glue_cycle > 0) {
         for (i = 0; i < comp->num_glue; i++) {
             glue_updater = comp_updater->glue_updaters[i];
-            if (glue_updater_gen_keep_mask(glue_updater) < 0) {
-                ST_WARNING("Failed to glue_updater_gen_keep_mask.");
-                return -1;
+            if (glue_updater->glue->recur_type != RECUR_NON) {
+                if (glue_updater_gen_keep_mask(glue_updater) < 0) {
+                    ST_WARNING("Failed to glue_updater_gen_keep_mask.");
+                    return -1;
+                }
             }
         }
     }
@@ -554,16 +556,12 @@ static int comp_updater_bptt(comp_updater_t *comp_updater, bool clear)
                     ST_WARNING("Failed to wt_flush.");
                     return -1;
                 }
-            }
-        }
-    }
 
-    if (comp->num_glue_cycle > 0
-            && (comp_updater->bptt_step % bptt_delay == 0 || clear)) {
-        for (i = 0; i < comp->num_glue; i++) {
-            if (glue_updater_gen_keep_mask(comp_updater->glue_updaters[i]) < 0) {
-                ST_WARNING("Failed to glue_updater_gen_keep_mask.");
-                return -1;
+                g = comp->glue_cycles[i][j];
+                if (glue_updater_gen_keep_mask(comp_updater->glue_updaters[g]) < 0) {
+                    ST_WARNING("Failed to glue_updater_gen_keep_mask.");
+                    return -1;
+                }
             }
         }
     }
@@ -631,7 +629,7 @@ int comp_updater_forward(comp_updater_t *comp_updater, sent_t *input_sent)
     for (g = 0; g < comp->num_glue; g++) {
         glue_updater = comp_updater->glue_updaters[comp->fwd_order[g]];
 
-        if (comp_updater->bptt_updaters == NULL) {
+        if (glue_updater->glue->recur_type == RECUR_NON) {
             if (glue_updater_gen_keep_mask(glue_updater) < 0) {
                 ST_WARNING("Failed to glue_updater_gen_keep_mask.");
                 return -1;
