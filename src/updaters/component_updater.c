@@ -540,6 +540,19 @@ static int comp_updater_bptt(comp_updater_t *comp_updater, bool clear)
             }
 
             bptt_updater->num_er_bptt = 0;
+            if (bptt_updater->num_ac_bptt > bptt) {
+                for (j = 1; j <= comp->glue_cycles[i][0]; j++) {
+                    g = comp->glue_cycles[i][j];
+                    glue = comp->glues[g];
+                    in_sz = layer_updaters[glue->in_layer]->layer->size;
+
+                    memmove(bptt_updater->ac_bptt[j],
+                            bptt_updater->ac_bptt[j]
+                              + in_sz * (bptt_updater->num_ac_bptt - bptt),
+                            sizeof(real_t) * in_sz * bptt);
+                }
+                bptt_updater->num_ac_bptt = bptt;
+            }
         }
     }
 
