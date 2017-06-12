@@ -34,6 +34,7 @@
 
 static param_t def_param = {
     .learn_rate = 0.1,
+    .dropout = 0.0,
     .l1_penalty = 0.0,
     .l2_penalty = 0.0,
     .l2_delay = 0,
@@ -84,6 +85,11 @@ int param_load(param_t *param, st_opt_t *opt, const char *sec_name,
             "Learning rate");
     param->learn_rate = (real_t)d;
 
+    ST_OPT_SEC_GET_DOUBLE(opt, sec_name, "DROPOUT", d,
+            (double)param->dropout,
+            "Dropout probability");
+    param->dropout = (real_t)d;
+
     ST_OPT_SEC_GET_DOUBLE(opt, sec_name, "L1_PENALTY", d,
             (double)param->l1_penalty,
             "L1 penalty (promote sparsity)");
@@ -127,6 +133,10 @@ bool param_equal(param_t *param1, param_t *param2)
     ST_CHECK_PARAM(param1 == NULL || param2 == NULL, false);
 
     if (param1->learn_rate != param2->learn_rate) {
+        return false;
+    }
+
+    if (param1->dropout != param2->dropout) {
         return false;
     }
 

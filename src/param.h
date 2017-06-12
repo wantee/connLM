@@ -43,6 +43,7 @@ extern "C" {
  */
 typedef struct _param_t_ {
     real_t learn_rate; /**< value of learning rate */
+    real_t dropout; /**< dropout probability for in/out layer. */
     real_t l1_penalty; /**< value of L1 penalty */
     real_t l2_penalty; /**< value of L2 penalty */
     int l2_delay; /**< delayed step of applying L2 penalty */

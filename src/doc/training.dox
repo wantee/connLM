@@ -24,4 +24,40 @@
 /**
   @page training The Training Procedure
 
+  @section training_param Parameters
+
+  @subsection training_param_dropout Dropout
+
+  Dropout is proposed in <a href=https://arxiv.org/abs/1207.0580> this paper </a>
+  as an effective regularization technique. The idea is that during training
+  phase we turn off the neurons with a probability p, while in testing
+  time, do not turn off any neurons but scale them by q = 1 - p to keep
+  the expected activation equal.
+
+  In our implementation, we use a slightly different approach called
+  <a href=http://cs231n.github.io/neural-networks-2/#reg> Inverted Dropout </a>,
+  which only scales the activation by 1 / q in train time.
+  The benefit is that the forward pass of test time become the same no matter
+  with or without dropout.
+
+  Due to this scaling, we will set the effective learning rate as
+  lr = lr * q, if q < 1.0.
+
+  At first sight, the dropout should be implemented as a per-layer
+  hyper-parameter, However, some papers, e.g.
+  <a href=https://arxiv.org/abs/1409.2329> this </a>
+  and <a href=https://arxiv.org/abs/1512.05287> this </a>, suggest that
+  we should differently deal with recurrent and non-recurrent weights.
+  Thus, we have to make dropout a property of the glue.
+
+  For most type of glues, the in_layer of the glue will be dropouted before
+  forwarding. However, for glues whose in_layer is input layer, e.g., emb_glue
+  and direct_glue, the dropout is applied on out_layer of the glue. Thus,
+  there could be a double dropouted layer if one set dropout prob for both
+  emb_glue and its succeeding glue.
+
+  We enforce the dropout mask be constant within a BPTT block, when there is
+  a recurrent glue in a component, otherwise the mask is changed for every
+  forward pass.
+
 */

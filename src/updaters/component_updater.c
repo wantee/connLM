@@ -170,10 +170,10 @@ static int comp_updater_setup_dropout(comp_updater_t *comp_updater)
         // contained in multiple cycles
         if (head->keep_mask == NULL) {
             // set effective learning rate
-            head->wt_updater->param.learn_rate *= (1 - glue->dropout);
+            head->wt_updater->param.learn_rate *= (1 - glue->param.dropout);
         }
 
-        if (glue_updater_setup_dropout(head, glue->dropout) < 0) {
+        if (glue_updater_setup_dropout(head, glue->param.dropout) < 0) {
             ST_WARNING("Failed to glue_updater_setup_dropout[%s] of recur_head.",
                     glue->name);
             return -1;
@@ -187,10 +187,10 @@ static int comp_updater_setup_dropout(comp_updater_t *comp_updater)
             // contained in multiple cycles
             if (glue_updater->keep_mask == NULL) {
                 // set effective learning rate
-                glue_updater->wt_updater->param.learn_rate *= (1 - glue->dropout);
+                glue_updater->wt_updater->param.learn_rate *= (1 - glue->param.dropout);
             }
 
-            if (glue_updater_setup_dropout(glue_updater, glue->dropout) < 0) {
+            if (glue_updater_setup_dropout(glue_updater, glue->param.dropout) < 0) {
                 ST_WARNING("Failed to glue_updater_setup_dropout[%s] of recur_body.",
                         glue->name);
                 return -1;
@@ -201,14 +201,14 @@ static int comp_updater_setup_dropout(comp_updater_t *comp_updater)
     for (i = 0; i < comp->num_glue; i++) {
         glue = comp->glues[i];
         glue_updater = comp_updater->glue_updaters[i];
-        if (glue->recur_type == RECUR_NON && glue->dropout > 0.0) {
-            if (glue_updater_setup_dropout(glue_updater, glue->dropout) < 0) {
+        if (glue->recur_type == RECUR_NON && glue->param.dropout > 0.0) {
+            if (glue_updater_setup_dropout(glue_updater, glue->param.dropout) < 0) {
                 ST_WARNING("Failed to glue_updater_setup_dropout[%s] of recur_non.",
                         glue->name);
                 return -1;
             }
             // set effective learning rate
-            glue_updater->wt_updater->param.learn_rate *= (1 - glue->dropout);
+            glue_updater->wt_updater->param.learn_rate *= (1 - glue->param.dropout);
         }
     }
 
@@ -259,7 +259,7 @@ int comp_updater_setup(comp_updater_t *comp_updater, bool backprop)
     if (backprop) {
         if (comp->num_glue_cycle > 0) {
             if (comp_check_glue_cycles(comp) < 0) {
-                ST_WARNING("Failed to comp_updater_check_glue_cycles.");
+                ST_WARNING("Failed to comp_check_glue_cycles.");
                 goto ERR;
             }
 

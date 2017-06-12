@@ -1068,7 +1068,7 @@ bool comp_check_glue_cycles(component_t *comp)
     for (i = 0; i < comp->num_glue_cycle; i++) {
         g = comp->glue_cycles[i][1];
         glue = comp->glues[g];
-        if (glue->dropout > 0.0) {
+        if (glue->param.dropout > 0.0) {
             // since we enforce the dropout mask to be constant
             // within one bptt update, bptt must be 1.
             glue->bptt_opt.bptt = 1;
@@ -1079,13 +1079,13 @@ bool comp_check_glue_cycles(component_t *comp)
     for (i = 0; i < comp->num_glue_cycle; i++) {
         g = comp->glue_cycles[i][1];
         glue = comp->glues[g];
-        d = glue->dropout;
+        d = glue->param.dropout;
         for (j = 1; j <= comp->glue_cycles[i][0]; j++) {
             g = comp->glue_cycles[i][j];
             for (ii = i + 1; ii < comp->num_glue_cycle; ii++) {
                 gg = comp->glue_cycles[ii][1];
                 glue = comp->glues[gg];
-                dd = glue->dropout;
+                dd = glue->param.dropout;
                 for (jj = 1; jj <= comp->glue_cycles[ii][0]; jj++) {
                     gg = comp->glue_cycles[ii][jj];
                     if (g == gg) {
