@@ -17,35 +17,35 @@ Step 5: Train RNN model ...
 ../steps/run_standalone.sh: Stage 2 --- Training model...
 ../steps/train_model.sh --train-config test/tmp/case-16/exp/conf/rnn/train.conf --eval-config test/tmp/case-16/exp/conf/eval.conf --train-threads 1 --eval-threads 1 --start-halving-impr 0.003 --end-halving-impr 0.0003 ./data/train ./data/valid test/tmp/case-16/exp/rnn
 Prerun Valid Entropy: 8.858606
-ITERATION 01: LR(rnn^emb=0.2 rnn^out=0.05 rnn^recur=0.02), TrEnt 6.901337, W/s 24.9k, CVEnt: 6.927768
+ITERATION 01: LR(rnn^emb=0.2 rnn^out=0.05 rnn^recur=0.02), TrEnt 6.912756, W/s 24.2k, CVEnt: 6.958793
 nnet accepted (01.clm)
-ITERATION 02: LR(rnn^emb=0.2 rnn^out=0.05 rnn^recur=0.02), TrEnt 6.591054, W/s 24.7k, CVEnt: 6.917014
+ITERATION 02: LR(rnn^emb=0.2 rnn^out=0.05 rnn^recur=0.02), TrEnt 6.608827, W/s 23.9k, CVEnt: 6.953668
 nnet accepted (02.clm)
-ITERATION 03: LR(rnn^emb=0.1 rnn^out=0.025 rnn^recur=0.01), TrEnt 6.358750, W/s 24.9k, CVEnt: 6.844403
+ITERATION 03: LR(rnn^emb=0.1 rnn^out=0.025 rnn^recur=0.01), TrEnt 6.373646, W/s 23.6k, CVEnt: 6.857107
 nnet accepted (03.clm)
-ITERATION 04: LR(rnn^emb=0.05 rnn^out=0.0125 rnn^recur=0.005), TrEnt 6.242343, W/s 24.9k, CVEnt: 6.765407
+ITERATION 04: LR(rnn^emb=0.05 rnn^out=0.0125 rnn^recur=0.005), TrEnt 6.253939, W/s 24.8k, CVEnt: 6.778372
 nnet accepted (04.clm)
-ITERATION 05: LR(rnn^emb=0.025 rnn^out=0.00625 rnn^recur=0.0025), TrEnt 6.185473, W/s 24.9k, CVEnt: 6.715662
+ITERATION 05: LR(rnn^emb=0.025 rnn^out=0.00625 rnn^recur=0.0025), TrEnt 6.196932, W/s 25.1k, CVEnt: 6.727419
 nnet accepted (05.clm)
-ITERATION 06: LR(rnn^emb=0.0125 rnn^out=0.003125 rnn^recur=0.00125), TrEnt 6.155835, W/s 24.9k, CVEnt: 6.698411
+ITERATION 06: LR(rnn^emb=0.0125 rnn^out=0.003125 rnn^recur=0.00125), TrEnt 6.167627, W/s 24.6k, CVEnt: 6.712204
 nnet accepted (06.clm)
-ITERATION 07: LR(rnn^emb=0.00625 rnn^out=0.0015625 rnn^recur=0.000625), TrEnt 6.140562, W/s 24.6k, CVEnt: 6.682224
+ITERATION 07: LR(rnn^emb=0.00625 rnn^out=0.0015625 rnn^recur=0.000625), TrEnt 6.152467, W/s 23.2k, CVEnt: 6.693937
 nnet accepted (07.clm)
-ITERATION 08: LR(rnn^emb=0.003125 rnn^out=0.00078125 rnn^recur=0.0003125), TrEnt 6.132639, W/s 24.9k, CVEnt: 6.678220
+ITERATION 08: LR(rnn^emb=0.003125 rnn^out=0.00078125 rnn^recur=0.0003125), TrEnt 6.144683, W/s 25.1k, CVEnt: 6.689295
 nnet accepted (08.clm)
-ITERATION 09: LR(rnn^emb=0.0015625 rnn^out=0.000390625 rnn^recur=0.00015625), TrEnt 6.128131, W/s 24.9k, CVEnt: 6.676578
+ITERATION 09: LR(rnn^emb=0.0015625 rnn^out=0.000390625 rnn^recur=0.00015625), TrEnt 6.140379, W/s 25.0k, CVEnt: 6.687469
 nnet accepted (09.clm)
-../steps/train_model.sh: finished, too small rel. improvement .0002458739
+../steps/train_model.sh: finished, too small rel. improvement .0002729734
 ../steps/train_model.sh: Succeeded training the Neural Network : test/tmp/case-16/exp/rnn/final.clm
-../steps/train_model.sh: Elapse time: 31s
-../steps/train_model.sh: Effective speed: 23.6k words/sec
+../steps/train_model.sh: Elapse time: 32s
+../steps/train_model.sh: Effective speed: 22.8k words/sec
 ../steps/run_standalone.sh: Stage 3 --- Testing model...
 ../steps/eval_model.sh --config-file test/tmp/case-16/exp/conf/eval.conf --eval-threads 1 test/tmp/case-16/exp/rnn ./data/test
 ../steps/eval_model.sh: Evaluating model test/tmp/case-16/exp/rnn/final.clm ...
 =================================
-Eval Entropy: 6.523558
-Eval PPL: 91.999763
-Eval Speed: 116.4k words/sec
+Eval Entropy: 6.531640
+Eval PPL: 92.516569
+Eval Speed: 118.0k words/sec
 =================================
 ../steps/eval_model.sh: Elapse time: 0s
-../steps/run_standalone.sh: Elapse time: 31s
+../steps/run_standalone.sh: Elapse time: 32s

@@ -13,7 +13,7 @@ Train size: 900
 Valid size: 99
 Test size: 0
 =================================
-./local/prep_data.sh: Elapse time: 1s
+./local/prep_data.sh: Elapse time: 0s
 
 Step 2: Train in-domain model ...
 ../steps/learn_vocab.sh --config-file test/tmp/case-SHU_CASE/exp/conf/vocab.conf test/tmp/data/indomain/train test/tmp/case-SHU_CASE/exp/indomain
@@ -22,7 +22,7 @@ Step 2: Train in-domain model ...
 Words: 6349
 Vocab size: 933
 =================================
-../steps/learn_vocab.sh: Elapse time: 0s
+../steps/learn_vocab.sh: Elapse time: 1s
 ../steps/run_standalone.sh --train-thr 1 --eval-thr 1 rnn+maxent test/tmp/case-SHU_CASE/exp/conf test/tmp/case-SHU_CASE/exp/indomain test/tmp/data/indomain/train test/tmp/data/indomain/valid test/tmp/data/test
 ../steps/run_standalone.sh: Stage 1 --- Initialising model...
 ../steps/init_model.sh --init-config-file test/tmp/case-SHU_CASE/exp/conf/rnn+maxent/init.conf --output-config-file test/tmp/case-SHU_CASE/exp/conf/rnn+maxent/output.conf test/tmp/case-SHU_CASE/exp/indomain/vocab.clm test/tmp/case-SHU_CASE/exp/conf/rnn+maxent/topo test/tmp/case-SHU_CASE/exp/indomain/rnn+maxent
@@ -31,28 +31,28 @@ Vocab size: 933
 ../steps/run_standalone.sh: Stage 2 --- Training model...
 ../steps/train_model.sh --train-config test/tmp/case-SHU_CASE/exp/conf/rnn+maxent/train.conf --eval-config test/tmp/case-SHU_CASE/exp/conf/eval.conf --train-threads 1 --eval-threads 1 --start-halving-impr 0.003 --end-halving-impr 0.0003 test/tmp/data/indomain/train test/tmp/data/indomain/valid test/tmp/case-SHU_CASE/exp/indomain/rnn+maxent
 Prerun Valid Entropy: 8.156190
-ITERATION 01: LR(maxent^direct=0.1 rnn^emb=0.3 rnn^out=0.05 rnn^recur=0.1), TrEnt 7.184531, W/s 25.7k, CVEnt: 6.956682
+ITERATION 01: LR(maxent^direct=0.1 rnn^emb=0.3 rnn^out=0.05 rnn^recur=0.1), TrEnt 7.190731, W/s 24.7k, CVEnt: 6.959372
 nnet accepted (01.clm)
-ITERATION 02: LR(maxent^direct=0.1 rnn^emb=0.3 rnn^out=0.05 rnn^recur=0.1), TrEnt 6.501216, W/s 25.6k, CVEnt: 7.027339
+ITERATION 02: LR(maxent^direct=0.1 rnn^emb=0.3 rnn^out=0.05 rnn^recur=0.1), TrEnt 6.516341, W/s 26.9k, CVEnt: 7.064463
 nnet rejected (02.clm)
-ITERATION 03: LR(maxent^direct=0.05 rnn^emb=0.15 rnn^out=0.025 rnn^recur=0.05), TrEnt 6.464460, W/s 25.0k, CVEnt: 6.886556
+ITERATION 03: LR(maxent^direct=0.05 rnn^emb=0.15 rnn^out=0.025 rnn^recur=0.05), TrEnt 6.476733, W/s 24.8k, CVEnt: 6.899809
 nnet accepted (03.clm)
-ITERATION 04: LR(maxent^direct=0.025 rnn^emb=0.075 rnn^out=0.0125 rnn^recur=0.025), TrEnt 6.158460, W/s 25.7k, CVEnt: 6.904574
+ITERATION 04: LR(maxent^direct=0.025 rnn^emb=0.075 rnn^out=0.0125 rnn^recur=0.025), TrEnt 6.170787, W/s 25.6k, CVEnt: 6.916064
 nnet rejected (04.clm)
 ../steps/train_model.sh: finished, too small rel. improvement 0
 ../steps/train_model.sh: Succeeded training the Neural Network : test/tmp/case-SHU_CASE/exp/indomain/rnn+maxent/final.clm
-../steps/train_model.sh: Elapse time: 2s
-../steps/train_model.sh: Effective speed: 12.6k words/sec
+../steps/train_model.sh: Elapse time: 3s
+../steps/train_model.sh: Effective speed: 8.4k words/sec
 ../steps/run_standalone.sh: Stage 3 --- Testing model...
 ../steps/eval_model.sh --config-file test/tmp/case-SHU_CASE/exp/conf/eval.conf --eval-threads 1 test/tmp/case-SHU_CASE/exp/indomain/rnn+maxent test/tmp/data/test
 ../steps/eval_model.sh: Evaluating model test/tmp/case-SHU_CASE/exp/indomain/rnn+maxent/final.clm ...
 =================================
-Eval Entropy: 6.975145
-Eval PPL: 125.813715
-Eval Speed: 106.2k words/sec
+Eval Entropy: 6.989732
+Eval PPL: 127.092250
+Eval Speed: 90.4k words/sec
 =================================
 ../steps/eval_model.sh: Elapse time: 0s
-../steps/run_standalone.sh: Elapse time: 2s
+../steps/run_standalone.sh: Elapse time: 3s
 
 Step 3: Train general model ...
 ../steps/learn_vocab.sh --config-file test/tmp/case-SHU_CASE/exp/conf/vocab.conf test/tmp/data/general/train test/tmp/case-SHU_CASE/exp/general
@@ -70,26 +70,26 @@ Vocab size: 1063
 ../steps/run_standalone.sh: Stage 2 --- Training model...
 ../steps/train_model.sh --train-config test/tmp/case-SHU_CASE/exp/conf/rnn+maxent/train.conf --eval-config test/tmp/case-SHU_CASE/exp/conf/eval.conf --train-threads 1 --eval-threads 1 --start-halving-impr 0.003 --end-halving-impr 0.0003 test/tmp/data/general/train test/tmp/data/general/valid test/tmp/case-SHU_CASE/exp/general/rnn+maxent
 Prerun Valid Entropy: 8.148352
-ITERATION 01: LR(maxent^direct=0.1 rnn^emb=0.3 rnn^out=0.05 rnn^recur=0.1), TrEnt 7.260490, W/s 25.3k, CVEnt: 6.895444
+ITERATION 01: LR(maxent^direct=0.1 rnn^emb=0.3 rnn^out=0.05 rnn^recur=0.1), TrEnt 7.264913, W/s 25.7k, CVEnt: 6.903195
 nnet accepted (01.clm)
-ITERATION 02: LR(maxent^direct=0.1 rnn^emb=0.3 rnn^out=0.05 rnn^recur=0.1), TrEnt 6.561791, W/s 25.6k, CVEnt: 6.961858
+ITERATION 02: LR(maxent^direct=0.1 rnn^emb=0.3 rnn^out=0.05 rnn^recur=0.1), TrEnt 6.570811, W/s 27.3k, CVEnt: 6.963332
 nnet rejected (02.clm)
-ITERATION 03: LR(maxent^direct=0.05 rnn^emb=0.15 rnn^out=0.025 rnn^recur=0.05), TrEnt 6.513552, W/s 25.4k, CVEnt: 6.927939
+ITERATION 03: LR(maxent^direct=0.05 rnn^emb=0.15 rnn^out=0.025 rnn^recur=0.05), TrEnt 6.518352, W/s 26.1k, CVEnt: 6.948647
 nnet rejected (03.clm)
 ../steps/train_model.sh: finished, too small rel. improvement 0
 ../steps/train_model.sh: Succeeded training the Neural Network : test/tmp/case-SHU_CASE/exp/general/rnn+maxent/final.clm
-../steps/train_model.sh: Elapse time: 2s
-../steps/train_model.sh: Effective speed: 10.9k words/sec
+../steps/train_model.sh: Elapse time: 3s
+../steps/train_model.sh: Effective speed: 7.2k words/sec
 ../steps/run_standalone.sh: Stage 3 --- Testing model...
 ../steps/eval_model.sh --config-file test/tmp/case-SHU_CASE/exp/conf/eval.conf --eval-threads 1 test/tmp/case-SHU_CASE/exp/general/rnn+maxent test/tmp/data/test
 ../steps/eval_model.sh: Evaluating model test/tmp/case-SHU_CASE/exp/general/rnn+maxent/final.clm ...
 =================================
-Eval Entropy: 6.886430
-Eval PPL: 118.310129
-Eval Speed: 103.6k words/sec
+Eval Entropy: 6.895124
+Eval PPL: 119.025237
+Eval Speed: 96.5k words/sec
 =================================
 ../steps/eval_model.sh: Elapse time: 0s
-../steps/run_standalone.sh: Elapse time: 2s
+../steps/run_standalone.sh: Elapse time: 3s
 
 Step 4: Score general corpus ...
 ./local/score.sh --eval-conf test/tmp/case-SHU_CASE/exp/conf/eval.conf test/tmp/data/general.corpus test/tmp/case-SHU_CASE/exp/indomain/rnn+maxent/ test/tmp/case-SHU_CASE/exp/general/rnn+maxent/ 4
@@ -99,36 +99,36 @@ Step 4: Score general corpus ...
 ../steps/eval_model.sh --eval-threads 1 --out-prob test/tmp/case-SHU_CASE/exp/indomain/rnn+maxent//score//score.1.prob --eval-opts --print-sent-prob=true --out-log-base=10 --log-file test/tmp/case-SHU_CASE/exp/indomain/rnn+maxent//score//log/score.1.log test/tmp/case-SHU_CASE/exp/indomain/rnn+maxent/ sed -n '1,2500p' test/tmp/data/general.corpus |
 ../steps/eval_model.sh: Evaluating model test/tmp/case-SHU_CASE/exp/indomain/rnn+maxent//final.clm ...
 =================================
-Eval Entropy: 6.837070
-Eval PPL: 114.330763
-Eval Speed: 52.5k words/sec
+Eval Entropy: 6.853958
+Eval PPL: 115.676943
+Eval Speed: 58.3k words/sec
 =================================
 ../steps/eval_model.sh: Elapse time: 1s
 ./local/score.sh: Score job 2 log:
 ../steps/eval_model.sh --eval-threads 1 --out-prob test/tmp/case-SHU_CASE/exp/indomain/rnn+maxent//score//score.2.prob --eval-opts --print-sent-prob=true --out-log-base=10 --log-file test/tmp/case-SHU_CASE/exp/indomain/rnn+maxent//score//log/score.2.log test/tmp/case-SHU_CASE/exp/indomain/rnn+maxent/ sed -n '2501,5000p' test/tmp/data/general.corpus |
 ../steps/eval_model.sh: Evaluating model test/tmp/case-SHU_CASE/exp/indomain/rnn+maxent//final.clm ...
 =================================
-Eval Entropy: 6.857560
-Eval PPL: 115.966162
-Eval Speed: 54.0k words/sec
+Eval Entropy: 6.874703
+Eval PPL: 117.352316
+Eval Speed: 56.5k words/sec
 =================================
 ../steps/eval_model.sh: Elapse time: 1s
 ./local/score.sh: Score job 3 log:
 ../steps/eval_model.sh --eval-threads 1 --out-prob test/tmp/case-SHU_CASE/exp/indomain/rnn+maxent//score//score.3.prob --eval-opts --print-sent-prob=true --out-log-base=10 --log-file test/tmp/case-SHU_CASE/exp/indomain/rnn+maxent//score//log/score.3.log test/tmp/case-SHU_CASE/exp/indomain/rnn+maxent/ sed -n '5001,7500p' test/tmp/data/general.corpus |
 ../steps/eval_model.sh: Evaluating model test/tmp/case-SHU_CASE/exp/indomain/rnn+maxent//final.clm ...
 =================================
-Eval Entropy: 6.907165
-Eval PPL: 120.022849
-Eval Speed: 51.9k words/sec
+Eval Entropy: 6.924033
+Eval PPL: 121.434406
+Eval Speed: 59.2k words/sec
 =================================
 ../steps/eval_model.sh: Elapse time: 1s
 ./local/score.sh: Score job 4 log:
 ../steps/eval_model.sh --eval-threads 1 --out-prob test/tmp/case-SHU_CASE/exp/indomain/rnn+maxent//score//score.4.prob --eval-opts --print-sent-prob=true --out-log-base=10 --log-file test/tmp/case-SHU_CASE/exp/indomain/rnn+maxent//score//log/score.4.log test/tmp/case-SHU_CASE/exp/indomain/rnn+maxent/ sed -n '7501,10000p' test/tmp/data/general.corpus |
 ../steps/eval_model.sh: Evaluating model test/tmp/case-SHU_CASE/exp/indomain/rnn+maxent//final.clm ...
 =================================
-Eval Entropy: 6.813991
-Eval PPL: 112.516365
-Eval Speed: 53.3k words/sec
+Eval Entropy: 6.830290
+Eval PPL: 113.794754
+Eval Speed: 61.3k words/sec
 =================================
 ../steps/eval_model.sh: Elapse time: 1s
 ./local/score.sh: Stage 2 --- Scoring general corpus...
@@ -136,51 +136,51 @@ Eval Speed: 53.3k words/sec
 ../steps/eval_model.sh --eval-threads 1 --out-prob test/tmp/case-SHU_CASE/exp/general/rnn+maxent//score//score.1.prob --eval-opts --print-sent-prob=true --out-log-base=10 --log-file test/tmp/case-SHU_CASE/exp/general/rnn+maxent//score//log/score.1.log test/tmp/case-SHU_CASE/exp/general/rnn+maxent/ sed -n '1,2500p' test/tmp/data/general.corpus |
 ../steps/eval_model.sh: Evaluating model test/tmp/case-SHU_CASE/exp/general/rnn+maxent//final.clm ...
 =================================
-Eval Entropy: 6.671538
-Eval PPL: 101.937297
-Eval Speed: 53.3k words/sec
+Eval Entropy: 6.679627
+Eval PPL: 102.510416
+Eval Speed: 55.3k words/sec
 =================================
-../steps/eval_model.sh: Elapse time: 0s
+../steps/eval_model.sh: Elapse time: 1s
 ./local/score.sh: Score job 2 log:
 ../steps/eval_model.sh --eval-threads 1 --out-prob test/tmp/case-SHU_CASE/exp/general/rnn+maxent//score//score.2.prob --eval-opts --print-sent-prob=true --out-log-base=10 --log-file test/tmp/case-SHU_CASE/exp/general/rnn+maxent//score//log/score.2.log test/tmp/case-SHU_CASE/exp/general/rnn+maxent/ sed -n '2501,5000p' test/tmp/data/general.corpus |
 ../steps/eval_model.sh: Evaluating model test/tmp/case-SHU_CASE/exp/general/rnn+maxent//final.clm ...
 =================================
-Eval Entropy: 6.702307
-Eval PPL: 104.134662
-Eval Speed: 52.6k words/sec
+Eval Entropy: 6.710745
+Eval PPL: 104.745528
+Eval Speed: 49.6k words/sec
 =================================
-../steps/eval_model.sh: Elapse time: 0s
+../steps/eval_model.sh: Elapse time: 1s
 ./local/score.sh: Score job 3 log:
 ../steps/eval_model.sh --eval-threads 1 --out-prob test/tmp/case-SHU_CASE/exp/general/rnn+maxent//score//score.3.prob --eval-opts --print-sent-prob=true --out-log-base=10 --log-file test/tmp/case-SHU_CASE/exp/general/rnn+maxent//score//log/score.3.log test/tmp/case-SHU_CASE/exp/general/rnn+maxent/ sed -n '5001,7500p' test/tmp/data/general.corpus |
 ../steps/eval_model.sh: Evaluating model test/tmp/case-SHU_CASE/exp/general/rnn+maxent//final.clm ...
 =================================
-Eval Entropy: 6.747474
-Eval PPL: 107.446485
-Eval Speed: 51.9k words/sec
+Eval Entropy: 6.754659
+Eval PPL: 107.982881
+Eval Speed: 49.4k words/sec
 =================================
-../steps/eval_model.sh: Elapse time: 0s
+../steps/eval_model.sh: Elapse time: 1s
 ./local/score.sh: Score job 4 log:
 ../steps/eval_model.sh --eval-threads 1 --out-prob test/tmp/case-SHU_CASE/exp/general/rnn+maxent//score//score.4.prob --eval-opts --print-sent-prob=true --out-log-base=10 --log-file test/tmp/case-SHU_CASE/exp/general/rnn+maxent//score//log/score.4.log test/tmp/case-SHU_CASE/exp/general/rnn+maxent/ sed -n '7501,10000p' test/tmp/data/general.corpus |
 ../steps/eval_model.sh: Evaluating model test/tmp/case-SHU_CASE/exp/general/rnn+maxent//final.clm ...
 =================================
-Eval Entropy: 6.676965
-Eval PPL: 102.321457
-Eval Speed: 53.7k words/sec
+Eval Entropy: 6.685548
+Eval PPL: 102.932001
+Eval Speed: 60.9k words/sec
 =================================
-../steps/eval_model.sh: Elapse time: 0s
-./local/score.sh: Elapse time: 1s
+../steps/eval_model.sh: Elapse time: 1s
+./local/score.sh: Elapse time: 2s
 
 Step 5: Select data ...
 ./local/select.sh test/tmp/data/general.corpus test/tmp/case-SHU_CASE/exp/indomain/rnn+maxent/score test/tmp/case-SHU_CASE/exp/general/rnn+maxent/score 0.0 test/tmp/case-SHU_CASE/exp/selected.rnn+maxent.0.0
 Total Sentences: 9981
-Selected Sentences: 4512
+Selected Sentences: 4446
 ./local/select.sh: Elapse time: 0s
 
 Step 5: Select data ...
 ./local/select.sh test/tmp/data/general.corpus test/tmp/case-SHU_CASE/exp/indomain/rnn+maxent/score test/tmp/case-SHU_CASE/exp/general/rnn+maxent/score 0.5 test/tmp/case-SHU_CASE/exp/selected.rnn+maxent.0.5
 Total Sentences: 9981
 Selected Sentences: 31
-./local/select.sh: Elapse time: 1s
+./local/select.sh: Elapse time: 0s
 
 Step 5: Select data ...
 ./local/select.sh test/tmp/data/general.corpus test/tmp/case-SHU_CASE/exp/indomain/rnn+maxent/score test/tmp/case-SHU_CASE/exp/general/rnn+maxent/score 1.0 test/tmp/case-SHU_CASE/exp/selected.rnn+maxent.1.0
