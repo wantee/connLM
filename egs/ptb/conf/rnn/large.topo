@@ -7,5 +7,5 @@ layer name=hidden size=1024 type=relu
 
 glue name=emb type=emb in=input out=hidden init=uniform init_param=0.01
 glue name=recur type=fc in=hidden out=hidden init=uniform init_param=0.01
-glue name=out type=out in=hidden out=output init=uniform init_param=0.01 dropout=0.2
+glue name=out type=out in=hidden out=output init=uniform init_param=0.01
 </component>
