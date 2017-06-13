@@ -15,6 +15,7 @@ var annotated_dup =
     [ "driver_eval_opt_t", "structdriver__eval__opt__t.html", "structdriver__eval__opt__t" ],
     [ "driver_gen_opt_t", "structdriver__gen__opt__t.html", "structdriver__gen__opt__t" ],
     [ "driver_t", "structdriver__t.html", "structdriver__t" ],
+    [ "driver_train_opt_t", "structdriver__train__opt__t.html", "structdriver__train__opt__t" ],
     [ "emb_glue_data_t", "structemb__glue__data__t.html", "structemb__glue__data__t" ],
     [ "fst_conv_opt_t", "structfst__conv__opt__t.html", "structfst__conv__opt__t" ],
     [ "fst_conv_t", "structfst__conv__t.html", "structfst__conv__t" ],

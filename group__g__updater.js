@@ -15,6 +15,7 @@ var group__g__updater =
       [ "input_updater", "structupdater__t.html#a3a3d70f3d6b865791ab0fee1cd905b1d", null ],
       [ "logp", "structupdater__t.html#a75dec82ac6514ba92194c42135c55eae", null ],
       [ "out_updater", "structupdater__t.html#aaa2f9c89c8895885ba16a48fc4152de0", null ],
+      [ "rand_seed", "structupdater__t.html#aa7ed3542b52156ea212a13857eb4aaab", null ],
       [ "sent", "structupdater__t.html#a072d70aa92b1bae906f07507559963ba", null ]
     ] ],
     [ "safe_updater_destroy", "group__g__updater.html#ga8d0a0cdf6a02e961e71f1a1baa9bcdf5", null ],
@@ -30,6 +31,7 @@ var group__g__updater =
     [ "updater_random_state", "group__g__updater.html#ga5737995b3dd6473052bc100ba863be8f", null ],
     [ "updater_sampling", "group__g__updater.html#ga668bfb1d716f02f47d93c74fa30c4de7", null ],
     [ "updater_sampling_state", "group__g__updater.html#ga17a18d2df24e3072a9b0aa8b67066010", null ],
+    [ "updater_set_rand_seed", "group__g__updater.html#gac62421dee10a61eb7a9992c3773d64cc", null ],
     [ "updater_setup", "group__g__updater.html#ga0eed15a50f2be24ff19178897c07f561", null ],
     [ "updater_setup_all", "group__g__updater.html#ga78b6d7592c9213ffa919a5e805ccbb3f", null ],
     [ "updater_setup_multicall", "group__g__updater.html#ga7b521151ca83811c790eef43c78a57c7", null ],

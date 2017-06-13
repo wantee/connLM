@@ -1,5 +1,8 @@
 var group__g__driver =
 [
+    [ "driver_train_opt_t", "structdriver__train__opt__t.html", [
+      [ "rand_seed", "structdriver__train__opt__t.html#a2e47913967260b34b0f42b7f26c66ae0", null ]
+    ] ],
     [ "driver_eval_opt_t", "structdriver__eval__opt__t.html", [
       [ "out_log_base", "structdriver__eval__opt__t.html#a71df00149137cc6b9ea599394d14458b", null ],
       [ "print_sent_prob", "structdriver__eval__opt__t.html#a39aba55cc395dfa742b8828e67d8a811", null ]
@@ -18,6 +21,7 @@ var group__g__driver =
       [ "mode", "structdriver__t.html#a2181493ac9681f7bfc86aa75193657a3", null ],
       [ "n_thr", "structdriver__t.html#ac4cd08edd2d3cd40a2b19141c52a5315", null ],
       [ "reader", "structdriver__t.html#a8f7a5f4128505f6a5e722854cb51bd49", null ],
+      [ "train_opt", "structdriver__t.html#a77820df1e0bf3021926dbbbbc52de468", null ],
       [ "updaters", "structdriver__t.html#a2864cea3bb016038c488afedd9046e35", null ]
     ] ],
     [ "safe_driver_destroy", "group__g__driver.html#gacb7e4b8a66183abb164c504fbe9d0752", null ],
@@ -30,8 +34,10 @@ var group__g__driver =
     [ "driver_destroy", "group__g__driver.html#gaa8a5b8f327865f7b8613961bf9de6823", null ],
     [ "driver_load_eval_opt", "group__g__driver.html#gac9dae2bd2cb358084471d2ff97ec6404", null ],
     [ "driver_load_gen_opt", "group__g__driver.html#ga872935899d5b25f1e2adc444814d7d37", null ],
+    [ "driver_load_train_opt", "group__g__driver.html#gade8357d023e301621906ef2ce12be1cb", null ],
     [ "driver_run", "group__g__driver.html#gada9b7f3b6a1cd676f8fa9bfd259ec659", null ],
     [ "driver_set_eval", "group__g__driver.html#ga6236b2623939a0f701ff2adb389d6942", null ],
     [ "driver_set_gen", "group__g__driver.html#gac157fbe0e00852408c619a2f8f47b1a0", null ],
+    [ "driver_set_train", "group__g__driver.html#ga75dbfb86e7829e2a03493c82c828984a", null ],
     [ "driver_setup", "group__g__driver.html#ga39c50eeb98bb893ee5ad3375eef78557", null ]
 ];

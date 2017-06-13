@@ -9,5 +9,6 @@ var structdriver__t =
     [ "mode", "structdriver__t.html#a2181493ac9681f7bfc86aa75193657a3", null ],
     [ "n_thr", "structdriver__t.html#ac4cd08edd2d3cd40a2b19141c52a5315", null ],
     [ "reader", "structdriver__t.html#a8f7a5f4128505f6a5e722854cb51bd49", null ],
+    [ "train_opt", "structdriver__t.html#a77820df1e0bf3021926dbbbbc52de468", null ],
     [ "updaters", "structdriver__t.html#a2864cea3bb016038c488afedd9046e35", null ]
 ];

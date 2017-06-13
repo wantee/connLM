@@ -15,6 +15,7 @@ var group__g__component =
       [ "train_opt", "structcomponent__t.html#a1f0925d2751c0a09d94a7216e90870a4", null ]
     ] ],
     [ "safe_comp_destroy", "group__g__component.html#gae9dd59a714729dd37a9835611e131976", null ],
+    [ "comp_check_glue_cycles", "group__g__component.html#gacc7208007edcbbf798ee040e29f986a7", null ],
     [ "comp_destroy", "group__g__component.html#ga6a9dbfc1f0dd7deb66bec07ed002a060", null ],
     [ "comp_draw", "group__g__component.html#ga0c4992c2c460510a66b8ff45a1c685fd", null ],
     [ "comp_dup", "group__g__component.html#gaec451b3b858df8a8261eaf2d04bce566", null ],

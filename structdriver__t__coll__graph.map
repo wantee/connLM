@@ -1,11 +1,11 @@
 <map id="driver_t" name="driver_t">
-<area shape="rect" id="node2" href="$structupdater__t.html" title="Updater. " alt="" coords="1740,467,1819,493"/>
-<area shape="rect" id="node3" href="$structconnlm__t.html" title="connLM model. " alt="" coords="1476,612,1552,639"/>
-<area shape="rect" id="node4" href="$structcomponent__t.html" title="NNet component. " alt="" coords="1208,505,1307,532"/>
-<area shape="rect" id="node27" href="$structcomp__updater__t.html" title="Component updater. " alt="" coords="1455,420,1573,447"/>
+<area shape="rect" id="node2" href="$structupdater__t.html" title="Updater. " alt="" coords="1741,465,1819,492"/>
+<area shape="rect" id="node3" href="$structconnlm__t.html" title="connLM model. " alt="" coords="1476,601,1552,628"/>
+<area shape="rect" id="node4" href="$structcomponent__t.html" title="NNet component. " alt="" coords="1208,503,1307,529"/>
+<area shape="rect" id="node27" href="$structcomp__updater__t.html" title="Component updater. " alt="" coords="1455,419,1573,445"/>
 <area shape="rect" id="node5" href="$structinput__t.html" title="Input Layer. " alt="" coords="961,497,1023,524"/>
 <area shape="rect" id="node6" href="$structlayer__t.html" title="NNet hidden layer. " alt="" coords="961,344,1023,371"/>
-<area shape="rect" id="node31" href="$structlayer__updater__t.html" title="Layer updater. " alt="" coords="1200,349,1315,376"/>
+<area shape="rect" id="node31" href="$structlayer__updater__t.html" title="Layer updater. " alt="" coords="1200,347,1315,373"/>
 <area shape="rect" id="node7" href="$structlayer__impl__t.html" title="NNet hidden layer implementaion. " alt="" coords="697,385,791,412"/>
 <area shape="rect" id="node8" href="$structglue__t.html" title="NNet glue. " alt="" coords="963,175,1021,201"/>
 <area shape="rect" id="node28" href="$structglue__updater__t.html" title="Glue updater. " alt="" coords="1202,119,1313,145"/>
@@ -19,21 +19,22 @@
 <area shape="rect" id="node15" href="$structbptt__opt__t.html" title="BPTT options. " alt="" coords="703,335,785,361"/>
 <area shape="rect" id="node16" href="$structcomp__train__opt__t.html" title="Parameters for training component. " alt="" coords="929,599,1055,625"/>
 <area shape="rect" id="node17" href="$structvocab__t.html" title="Vocab. " alt="" coords="1223,683,1292,709"/>
-<area shape="rect" id="node34" href="$structreader__t.html" title="Sample reader. " alt="" coords="1478,740,1550,767"/>
+<area shape="rect" id="node35" href="$structreader__t.html" title="Sample reader. " alt="" coords="1478,740,1550,767"/>
 <area shape="rect" id="node18" href="$structvocab__opt__t.html" title="Parameters for Vocab. " alt="" coords="945,683,1039,709"/>
 <area shape="rect" id="node19" href="$structoutput__t.html" title="Output Layer. " alt="" coords="957,548,1027,575"/>
-<area shape="rect" id="node24" href="$structout__updater__t.html" title="Output layer updater. " alt="" coords="1205,424,1309,451"/>
+<area shape="rect" id="node24" href="$structout__updater__t.html" title="Output layer updater. " alt="" coords="1205,404,1309,431"/>
 <area shape="rect" id="node20" href="$structoutput__opt__t.html" title="Parameters for output tree. " alt="" coords="696,497,792,524"/>
 <area shape="rect" id="node21" href="$structoutput__tree__t.html" title="Output tree. " alt="" coords="694,548,794,575"/>
 <area shape="rect" id="node22" href="$structoutput__tree__node__t.html" title="Output tree Node. " alt="" coords="412,548,549,575"/>
 <area shape="rect" id="node23" href="$structoutput__path__t.html" title="Output tree path. " alt="" coords="692,599,796,625"/>
 <area shape="rect" id="node25" href="$structoutput__tree__bfs__aux__t.html" title="aux data for output tree BFS. " alt="" coords="915,395,1069,421"/>
-<area shape="rect" id="node26" href="$structinput__updater__t.html" title="Input updater. " alt="" coords="1457,319,1571,345"/>
+<area shape="rect" id="node26" href="$structinput__updater__t.html" title="Input updater. " alt="" coords="1457,317,1571,344"/>
 <area shape="rect" id="node29" href="$structglue__updater__impl__t.html" title="Implementation of a NNet glue updater. " alt="" coords="921,5,1063,32"/>
-<area shape="rect" id="node32" href="$structsent__t.html" title="Buffer of a (partial) sentence with the position of target word. " alt="" coords="1485,369,1543,396"/>
-<area shape="rect" id="node33" href="$structdriver__gen__opt__t.html" title="Options for generate text. " alt="" coords="1718,736,1841,763"/>
-<area shape="rect" id="node35" href="$structthr__stat__t.html" title="Startistics for single thread. " alt="" coords="1219,740,1296,767"/>
-<area shape="rect" id="node36" href="$structconnlm__egs__t.html" title="A bunch of word. " alt="" coords="1205,815,1310,841"/>
-<area shape="rect" id="node37" href="$structreader__opt__t.html" title="Options for reader. " alt="" coords="1209,865,1306,892"/>
-<area shape="rect" id="node38" href="$structdriver__eval__opt__t.html" title="Options for evaluating connLM model. " alt="" coords="1717,787,1841,813"/>
+<area shape="rect" id="node32" href="$structsent__t.html" title="Buffer of a (partial) sentence with the position of target word. " alt="" coords="1485,368,1543,395"/>
+<area shape="rect" id="node33" href="$structdriver__train__opt__t.html" title="Options for training connLM model. " alt="" coords="1717,725,1843,752"/>
+<area shape="rect" id="node34" href="$structdriver__gen__opt__t.html" title="Options for generate text. " alt="" coords="1719,776,1841,803"/>
+<area shape="rect" id="node36" href="$structthr__stat__t.html" title="Startistics for single thread. " alt="" coords="1219,740,1296,767"/>
+<area shape="rect" id="node37" href="$structconnlm__egs__t.html" title="A bunch of word. " alt="" coords="1205,815,1310,841"/>
+<area shape="rect" id="node38" href="$structreader__opt__t.html" title="Options for reader. " alt="" coords="1209,865,1306,892"/>
+<area shape="rect" id="node39" href="$structdriver__eval__opt__t.html" title="Options for evaluating connLM model. " alt="" coords="1718,827,1842,853"/>
 </map>

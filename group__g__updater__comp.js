@@ -8,7 +8,8 @@ var group__g__updater__comp =
       [ "comp", "structcomp__updater__t.html#a012b7b75ec739ffe30b8b08b40888afa", null ],
       [ "glue_updaters", "structcomp__updater__t.html#a7c58e9a46b88fe4af6c33c417fafca66", null ],
       [ "layer_updaters", "structcomp__updater__t.html#a644b6f1c7d1d72feacfcc4ab8f6e0aae", null ],
-      [ "out_updater", "structcomp__updater__t.html#a26a058a0f8af5923c9f48108bc684f52", null ]
+      [ "out_updater", "structcomp__updater__t.html#a26a058a0f8af5923c9f48108bc684f52", null ],
+      [ "rand_seed", "structcomp__updater__t.html#ae1cef671bcb53dc923c5732e14eafd38", null ]
     ] ],
     [ "safe_comp_updater_destroy", "group__g__updater__comp.html#gae027264ad82607cc93f396f66eb34d99", null ],
     [ "comp_updater_activate_state", "group__g__updater__comp.html#ga0418b64b6fd923e48cd68eabfceb9d62", null ],
@@ -28,6 +29,7 @@ var group__g__updater__comp =
     [ "comp_updater_init_multicall", "group__g__updater__comp.html#ga5c1833e8ec6f90ae7c9642b12fcdac20", null ],
     [ "comp_updater_random_state", "group__g__updater__comp.html#gaf07720729edad13fdee47f5bf86c8f7e", null ],
     [ "comp_updater_reset", "group__g__updater__comp.html#gab9fffd57612b7df80f0c23b9f14cefde", null ],
+    [ "comp_updater_set_rand_seed", "group__g__updater__comp.html#ga8f57a3b7c05b7e91537bd225a6949275", null ],
     [ "comp_updater_setup", "group__g__updater__comp.html#gac333d8ef154d9d9f9246bceb75d0fc3b", null ],
     [ "comp_updater_setup_pre_ac_state", "group__g__updater__comp.html#ga93f01d8f870b7a8e90f647b109f29575", null ],
     [ "comp_updater_state_size", "group__g__updater__comp.html#ga9bb995d73d17fa18b955adb50ae8a821", null ]

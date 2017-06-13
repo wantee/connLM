@@ -147,6 +147,21 @@ Data Fields</h2></td></tr>
 <tr class="memitem:aacc9d1fa5f9760d09ad0620d38f6f907"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structglue__t.html">glue_t</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structglue__updater__t.html#aacc9d1fa5f9760d09ad0620d38f6f907">glue</a></td></tr>
 <tr class="memdesc:aacc9d1fa5f9760d09ad0620d38f6f907"><td class="mdescLeft">&#160;</td><td class="mdescRight">the glue.  <a href="#aacc9d1fa5f9760d09ad0620d38f6f907">More...</a><br /></td></tr>
 <tr class="separator:aacc9d1fa5f9760d09ad0620d38f6f907"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a84ea19c349f1c2560a4a558debce48fc"><td class="memItemLeft" align="right" valign="top">unsigned int *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structglue__updater__t.html#a84ea19c349f1c2560a4a558debce48fc">rand_seed</a></td></tr>
+<tr class="memdesc:a84ea19c349f1c2560a4a558debce48fc"><td class="mdescLeft">&#160;</td><td class="mdescRight">random seed.  <a href="#a84ea19c349f1c2560a4a558debce48fc">More...</a><br /></td></tr>
+<tr class="separator:a84ea19c349f1c2560a4a558debce48fc"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:add09fd8d526cb27a505e57197a8056c3"><td class="memItemLeft" align="right" valign="top">real_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structglue__updater__t.html#add09fd8d526cb27a505e57197a8056c3">keep_prob</a></td></tr>
+<tr class="memdesc:add09fd8d526cb27a505e57197a8056c3"><td class="mdescLeft">&#160;</td><td class="mdescRight">keep probability, i.e., 1 - dropout probability.  <a href="#add09fd8d526cb27a505e57197a8056c3">More...</a><br /></td></tr>
+<tr class="separator:add09fd8d526cb27a505e57197a8056c3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aae293b0829035cd72ad55f08a1ba257c"><td class="memItemLeft" align="right" valign="top">bool *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structglue__updater__t.html#aae293b0829035cd72ad55f08a1ba257c">keep_mask</a></td></tr>
+<tr class="memdesc:aae293b0829035cd72ad55f08a1ba257c"><td class="mdescLeft">&#160;</td><td class="mdescRight">keep mask.  <a href="#aae293b0829035cd72ad55f08a1ba257c">More...</a><br /></td></tr>
+<tr class="separator:aae293b0829035cd72ad55f08a1ba257c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6df4481bd59e5099e7f2d0a249edbdcd"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structglue__updater__t.html#a6df4481bd59e5099e7f2d0a249edbdcd">keep_mask_len</a></td></tr>
+<tr class="memdesc:a6df4481bd59e5099e7f2d0a249edbdcd"><td class="mdescLeft">&#160;</td><td class="mdescRight">length of keep_mask.  <a href="#a6df4481bd59e5099e7f2d0a249edbdcd">More...</a><br /></td></tr>
+<tr class="separator:a6df4481bd59e5099e7f2d0a249edbdcd"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aeaead01d9ed69dc8f756486fc2b0ba3f"><td class="memItemLeft" align="right" valign="top">real_t *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structglue__updater__t.html#aeaead01d9ed69dc8f756486fc2b0ba3f">dropout_val</a></td></tr>
+<tr class="memdesc:aeaead01d9ed69dc8f756486fc2b0ba3f"><td class="mdescLeft">&#160;</td><td class="mdescRight">transformed activation/error after dropout.  <a href="#aeaead01d9ed69dc8f756486fc2b0ba3f">More...</a><br /></td></tr>
+<tr class="separator:aeaead01d9ed69dc8f756486fc2b0ba3f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9a9daf4ecd9b27acfbe7443070a89e82"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structwt__updater__t.html">wt_updater_t</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structglue__updater__t.html#a9a9daf4ecd9b27acfbe7443070a89e82">wt_updater</a></td></tr>
 <tr class="memdesc:a9a9daf4ecd9b27acfbe7443070a89e82"><td class="mdescLeft">&#160;</td><td class="mdescRight">the wt_updater.  <a href="#a9a9daf4ecd9b27acfbe7443070a89e82">More...</a><br /></td></tr>
 <tr class="separator:a9a9daf4ecd9b27acfbe7443070a89e82"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -163,6 +178,20 @@ Data Fields</h2></td></tr>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Glue updater. </p>
 </div><h2 class="groupheader">Field Documentation</h2>
+<a class="anchor" id="aeaead01d9ed69dc8f756486fc2b0ba3f"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">real_t* glue_updater_t::dropout_val</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>transformed activation/error after dropout. </p>
+
+</div>
+</div>
 <a class="anchor" id="a5eaf96bafb4beeac2f90239a994294d9"></a>
 <div class="memitem">
 <div class="memproto">
@@ -220,6 +249,62 @@ Data Fields</h2></td></tr>
 
 </div>
 </div>
+<a class="anchor" id="aae293b0829035cd72ad55f08a1ba257c"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool* glue_updater_t::keep_mask</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>keep mask. </p>
+
+</div>
+</div>
+<a class="anchor" id="a6df4481bd59e5099e7f2d0a249edbdcd"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int glue_updater_t::keep_mask_len</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>length of keep_mask. </p>
+
+</div>
+</div>
+<a class="anchor" id="add09fd8d526cb27a505e57197a8056c3"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">real_t glue_updater_t::keep_prob</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>keep probability, i.e., 1 - dropout probability. </p>
+
+</div>
+</div>
+<a class="anchor" id="a84ea19c349f1c2560a4a558debce48fc"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">unsigned int* glue_updater_t::rand_seed</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>random seed. </p>
+
+</div>
+</div>
 <a class="anchor" id="a9a9daf4ecd9b27acfbe7443070a89e82"></a>
 <div class="memitem">
 <div class="memproto">
@@ -243,7 +328,7 @@ Data Fields</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="structglue__updater__t.html">glue_updater_t</a></li>
-    <li class="footer">Generated on Tue May 9 2017 22:56:40 for connLM by
+    <li class="footer">Generated on Tue Jun 13 2017 20:48:24 for connLM by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.10 </li>
   </ul>

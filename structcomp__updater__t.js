@@ -7,5 +7,6 @@ var structcomp__updater__t =
     [ "comp", "structcomp__updater__t.html#a012b7b75ec739ffe30b8b08b40888afa", null ],
     [ "glue_updaters", "structcomp__updater__t.html#a7c58e9a46b88fe4af6c33c417fafca66", null ],
     [ "layer_updaters", "structcomp__updater__t.html#a644b6f1c7d1d72feacfcc4ab8f6e0aae", null ],
-    [ "out_updater", "structcomp__updater__t.html#a26a058a0f8af5923c9f48108bc684f52", null ]
+    [ "out_updater", "structcomp__updater__t.html#a26a058a0f8af5923c9f48108bc684f52", null ],
+    [ "rand_seed", "structcomp__updater__t.html#ae1cef671bcb53dc923c5732e14eafd38", null ]
 ];

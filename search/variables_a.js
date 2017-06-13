@@ -1,21 +1,15 @@
 var searchData=
 [
-  ['mat',['mat',['../structweight__t.html#a215e70dbb767a24a6819523c85a1de75',1,'weight_t']]],
-  ['max_5falphabet_5fsize',['max_alphabet_size',['../structvocab__opt__t.html#a7c5a1c50ecc9abad0d80d6d7dc8d3526',1,'vocab_opt_t']]],
-  ['max_5fbranch',['max_branch',['../structoutput__opt__t.html#aa910c648175a4ec92875c62dae15ded8',1,'output_opt_t']]],
-  ['max_5fdepth',['max_depth',['../structoutput__opt__t.html#ac834dfa804a34f34d29e6b3ee24e2ab7',1,'output_opt_t']]],
-  ['max_5fgram',['max_gram',['../structfst__conv__opt__t.html#a4fd8573a429c1385627ed940c4ec2455',1,'fst_conv_opt_t']]],
-  ['max_5forder',['max_order',['../structbloom__filter__opt__t.html#a769f5aebf0241985f1f831f072910739',1,'bloom_filter_opt_t']]],
-  ['max_5fvocab_5fsize',['max_vocab_size',['../structvocab__learn__opt__t.html#a55577abf5e81e0bbd95348082777eb2e',1,'vocab_learn_opt_t']]],
-  ['max_5fword_5fnum',['max_word_num',['../structvocab__learn__opt__t.html#aaf298129c00f00f326b0d57028f54bbc',1,'vocab_learn_opt_t']]],
-  ['method',['method',['../structoutput__opt__t.html#ae9605ee84a56b0b312c980362f7cece7',1,'output_opt_t']]],
-  ['min_5fcount',['min_count',['../structvocab__learn__opt__t.html#a61ae3b3824f0b6ece42049359251af26',1,'vocab_learn_opt_t']]],
-  ['min_5fcounts',['min_counts',['../structbloom__filter__opt__t.html#afb5b0b82a94701b79a4fc4f374f770a5',1,'bloom_filter_opt_t']]],
-  ['mini_5fbatch',['mini_batch',['../structparam__t.html#a5b43cd8951a73581f8217695ba8908e8',1,'param_t']]],
-  ['mini_5fdirty',['mini_dirty',['../structwt__updater__t.html#abb81dc43ee91628ec90c32d85516a7dc',1,'wt_updater_t']]],
-  ['mode',['mode',['../structdriver__t.html#a2181493ac9681f7bfc86aa75193657a3',1,'driver_t']]],
-  ['model_5fstate_5fcache',['model_state_cache',['../structfst__conv__t.html#a8d527d16b20b0a5d69b099354012eeb3',1,'fst_conv_t']]],
-  ['model_5fstate_5fid',['model_state_id',['../structfst__state__t.html#a1c085f3a31d0d78d682b9304924035eb',1,'fst_state_t']]],
-  ['momentum',['momentum',['../structparam__t.html#ada2d53933fd9b7e546a09329cfd8c962',1,'param_t']]],
-  ['multicall',['multicall',['../structglue__updater__impl__t.html#aba2731d3dfc29660c1bc9eceb7a81e31',1,'glue_updater_impl_t']]]
+  ['l1_5fpenalty',['l1_penalty',['../structparam__t.html#ad83d07035bdca5333a370855e7fba842',1,'param_t']]],
+  ['l2_5fdelay',['l2_delay',['../structparam__t.html#af0b7070f8c86891cf1a0e5cbcf9c0c17',1,'param_t']]],
+  ['l2_5fpenalty',['l2_penalty',['../structparam__t.html#a5741f83992fef9b08de7b265b97b8d88',1,'param_t']]],
+  ['layer',['layer',['../structlayer__updater__t.html#a0e013cd75897d6af6504847c76d82905',1,'layer_updater_t']]],
+  ['layer_5fupdaters',['layer_updaters',['../structcomp__updater__t.html#a644b6f1c7d1d72feacfcc4ab8f6e0aae',1,'comp_updater_t']]],
+  ['layers',['layers',['../structcomponent__t.html#ab4df64bdf1e740dd22853ae6419c45fd',1,'component_t']]],
+  ['leaf2word',['leaf2word',['../structoutput__tree__t.html#add22f774710c92d12c67f4a56a280493',1,'output_tree_t']]],
+  ['learn_5frate',['learn_rate',['../structparam__t.html#a664f28c5bfefe413adf7fa29e3fd6365',1,'param_t']]],
+  ['links',['links',['../structnode__t.html#a57aeaf0f63a417b6852911d9971d8e5a',1,'node_t::links()'],['../structgraph__t.html#a8fb142fb6c9519301a5d4714af8c094a',1,'graph_t::links()']]],
+  ['load_5fbody',['load_body',['../structglue__impl__t.html#aa24df9943d99310cf1f9d221bcb3fa0c',1,'glue_impl_t::load_body()'],['../structlayer__impl__t.html#aa133ca91d7876af44505e0cd1024b1fb',1,'layer_impl_t::load_body()']]],
+  ['load_5fheader',['load_header',['../structglue__impl__t.html#a869aa2213773450a705a02493c895e33',1,'glue_impl_t::load_header()'],['../structlayer__impl__t.html#a0529fc3ed664e5ccb60898010db973d3',1,'layer_impl_t::load_header()']]],
+  ['logp',['logp',['../structthr__stat__t.html#a40e0ce28b61ad486fd981270f9c411d7',1,'thr_stat_t::logp()'],['../structupdater__t.html#a75dec82ac6514ba92194c42135c55eae',1,'updater_t::logp()']]]
 ];

@@ -151,6 +151,9 @@ Functions</h2></td></tr>
 <tr class="memitem:gac333d8ef154d9d9f9246bceb75d0fc3b"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__g__updater__comp.html#gac333d8ef154d9d9f9246bceb75d0fc3b">comp_updater_setup</a> (<a class="el" href="structcomp__updater__t.html">comp_updater_t</a> *comp_updater, bool backprop)</td></tr>
 <tr class="memdesc:gac333d8ef154d9d9f9246bceb75d0fc3b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Setup comp_updater for running.  <a href="#gac333d8ef154d9d9f9246bceb75d0fc3b">More...</a><br /></td></tr>
 <tr class="separator:gac333d8ef154d9d9f9246bceb75d0fc3b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga8f57a3b7c05b7e91537bd225a6949275"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__g__updater__comp.html#ga8f57a3b7c05b7e91537bd225a6949275">comp_updater_set_rand_seed</a> (<a class="el" href="structcomp__updater__t.html">comp_updater_t</a> *comp_updater, unsigned int *seed)</td></tr>
+<tr class="memdesc:ga8f57a3b7c05b7e91537bd225a6949275"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set rand seed for comp_updater.  <a href="#ga8f57a3b7c05b7e91537bd225a6949275">More...</a><br /></td></tr>
+<tr class="separator:ga8f57a3b7c05b7e91537bd225a6949275"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:gab9fffd57612b7df80f0c23b9f14cefde"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__g__updater__comp.html#gab9fffd57612b7df80f0c23b9f14cefde">comp_updater_reset</a> (<a class="el" href="structcomp__updater__t.html">comp_updater_t</a> *comp_updater)</td></tr>
 <tr class="memdesc:gab9fffd57612b7df80f0c23b9f14cefde"><td class="mdescLeft">&#160;</td><td class="mdescRight">Reset running for comp_updater.  <a href="#gab9fffd57612b7df80f0c23b9f14cefde">More...</a><br /></td></tr>
 <tr class="separator:gab9fffd57612b7df80f0c23b9f14cefde"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -809,6 +812,42 @@ Functions</h2></td></tr>
 
 </div>
 </div>
+<a class="anchor" id="ga8f57a3b7c05b7e91537bd225a6949275"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int comp_updater_set_rand_seed </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structcomp__updater__t.html">comp_updater_t</a> *&#160;</td>
+          <td class="paramname"><em>comp_updater</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">unsigned int *&#160;</td>
+          <td class="paramname"><em>seed</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Set rand seed for comp_updater. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">comp_updater</td><td>comp_updater. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">seed</td><td>the rand seed pointer. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>non-zero value if any error. </dd></dl>
+
+</div>
+</div>
 <a class="anchor" id="gac333d8ef154d9d9f9246bceb75d0fc3b"></a>
 <div class="memitem">
 <div class="memproto">
@@ -900,7 +939,7 @@ Functions</h2></td></tr>
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on Tue May 9 2017 22:56:40 for connLM by
+    <li class="footer">Generated on Tue Jun 13 2017 20:48:24 for connLM by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.10 </li>
   </ul>

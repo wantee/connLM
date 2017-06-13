@@ -17,14 +17,17 @@ var searchData=
   ['direct_5fglue_5fupdater_5fforward_5fout',['direct_glue_updater_forward_out',['../group__g__glue__updater__direct.html#gadbb498a18597ba992ebbafee7978e95b',1,'direct_glue_updater.h']]],
   ['direct_5fglue_5fupdater_5fforward_5fout_5fword',['direct_glue_updater_forward_out_word',['../group__g__glue__updater__direct.html#ga169f872aa5727695b51126286756f0c2',1,'direct_glue_updater.h']]],
   ['direct_5fglue_5fupdater_5fforward_5futil_5fout',['direct_glue_updater_forward_util_out',['../group__g__glue__updater__direct.html#ga5c92a195f2fcef0e23b2656b92a361b6',1,'direct_glue_updater.h']]],
+  ['direct_5fglue_5fupdater_5fgen_5fkeep_5fmask',['direct_glue_updater_gen_keep_mask',['../group__g__glue__updater__direct.html#ga68d10b769e7843088adfff462f0b8fbc',1,'direct_glue_updater.h']]],
   ['direct_5fglue_5fupdater_5finit',['direct_glue_updater_init',['../group__g__glue__updater__direct.html#gae222946cc249c4fe3a1105f50f21de96',1,'direct_glue_updater.h']]],
   ['direct_5fglue_5fupdater_5fsetup',['direct_glue_updater_setup',['../group__g__glue__updater__direct.html#ga1afae4c72781a75cca0ec1cd0c35c57e',1,'direct_glue_updater.h']]],
   ['driver_5fcreate',['driver_create',['../group__g__driver.html#ga660c432c029e114fe4ae8479b3d90eb1',1,'driver.h']]],
   ['driver_5fdestroy',['driver_destroy',['../group__g__driver.html#gaa8a5b8f327865f7b8613961bf9de6823',1,'driver.h']]],
   ['driver_5fload_5feval_5fopt',['driver_load_eval_opt',['../group__g__driver.html#gac9dae2bd2cb358084471d2ff97ec6404',1,'driver.h']]],
   ['driver_5fload_5fgen_5fopt',['driver_load_gen_opt',['../group__g__driver.html#ga872935899d5b25f1e2adc444814d7d37',1,'driver.h']]],
+  ['driver_5fload_5ftrain_5fopt',['driver_load_train_opt',['../group__g__driver.html#gade8357d023e301621906ef2ce12be1cb',1,'driver.h']]],
   ['driver_5frun',['driver_run',['../group__g__driver.html#gada9b7f3b6a1cd676f8fa9bfd259ec659',1,'driver.h']]],
   ['driver_5fset_5feval',['driver_set_eval',['../group__g__driver.html#ga6236b2623939a0f701ff2adb389d6942',1,'driver.h']]],
   ['driver_5fset_5fgen',['driver_set_gen',['../group__g__driver.html#gac157fbe0e00852408c619a2f8f47b1a0',1,'driver.h']]],
+  ['driver_5fset_5ftrain',['driver_set_train',['../group__g__driver.html#ga75dbfb86e7829e2a03493c82c828984a',1,'driver.h']]],
   ['driver_5fsetup',['driver_setup',['../group__g__driver.html#ga39c50eeb98bb893ee5ad3375eef78557',1,'driver.h']]]
 ];

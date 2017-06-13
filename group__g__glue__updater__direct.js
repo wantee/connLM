@@ -6,6 +6,7 @@ var group__g__glue__updater__direct =
     [ "direct_glue_updater_forward_out", "group__g__glue__updater__direct.html#gadbb498a18597ba992ebbafee7978e95b", null ],
     [ "direct_glue_updater_forward_out_word", "group__g__glue__updater__direct.html#ga169f872aa5727695b51126286756f0c2", null ],
     [ "direct_glue_updater_forward_util_out", "group__g__glue__updater__direct.html#ga5c92a195f2fcef0e23b2656b92a361b6", null ],
+    [ "direct_glue_updater_gen_keep_mask", "group__g__glue__updater__direct.html#ga68d10b769e7843088adfff462f0b8fbc", null ],
     [ "direct_glue_updater_init", "group__g__glue__updater__direct.html#gae222946cc249c4fe3a1105f50f21de96", null ],
     [ "direct_glue_updater_setup", "group__g__glue__updater__direct.html#ga1afae4c72781a75cca0ec1cd0c35c57e", null ]
 ];

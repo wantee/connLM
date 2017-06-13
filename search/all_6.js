@@ -1,5 +1,6 @@
 var searchData=
 [
+  ['gen_5fkeep_5fmask',['gen_keep_mask',['../structglue__updater__impl__t.html#aaa4625daa9eefb79d46f713117f6f4dd',1,'glue_updater_impl_t']]],
   ['gen_5fnum_5fsents',['gen_num_sents',['../structdriver__t.html#ab0436070bce7a05ee62a0396c5181756',1,'driver_t']]],
   ['gen_5fopt',['gen_opt',['../structdriver__t.html#aa02ec3dd35f571fc0f1a8cf93223a6ea',1,'driver_t']]],
   ['get_20started',['Get Started',['../get_started.html',1,'index']]],
@@ -34,10 +35,13 @@ var searchData=
   ['glue_5fupdater_5fforward_5fout',['glue_updater_forward_out',['../group__g__updater__glue.html#ga6371f62e1b045f07e5f24e1e69a8e587',1,'glue_updater.h']]],
   ['glue_5fupdater_5fforward_5fout_5fword',['glue_updater_forward_out_word',['../group__g__updater__glue.html#ga33d879b924ddee0e6153f940fc8b9f07',1,'glue_updater.h']]],
   ['glue_5fupdater_5fforward_5futil_5fout',['glue_updater_forward_util_out',['../group__g__updater__glue.html#gaf1f8d53264892bcd041a78684c09bca5',1,'glue_updater.h']]],
+  ['glue_5fupdater_5fgen_5fkeep_5fmask',['glue_updater_gen_keep_mask',['../group__g__updater__glue.html#ga7956f4b1d537ec68ae09e536ba1c3dc2',1,'glue_updater.h']]],
   ['glue_5fupdater_5fimpl_5ft',['glue_updater_impl_t',['../structglue__updater__impl__t.html',1,'']]],
   ['glue_5fupdater_5finit_5fmulticall',['glue_updater_init_multicall',['../group__g__updater__glue.html#gabcdbe864376361b8e3104be47288b030',1,'glue_updater.h']]],
   ['glue_5fupdater_5freset',['glue_updater_reset',['../group__g__updater__glue.html#ga46e9c5b45272bb0365cadf6c54a71918',1,'glue_updater.h']]],
+  ['glue_5fupdater_5fset_5frand_5fseed',['glue_updater_set_rand_seed',['../group__g__updater__glue.html#gac5594ba34143679685453ad4ea439638',1,'glue_updater.h']]],
   ['glue_5fupdater_5fsetup',['glue_updater_setup',['../group__g__updater__glue.html#ga17988c9b80ce5bad31533a8c40ea7a24',1,'glue_updater.h']]],
+  ['glue_5fupdater_5fsetup_5fdropout',['glue_updater_setup_dropout',['../group__g__updater__glue.html#gace318b5d692c94881a79f2d2611a317c',1,'glue_updater.h']]],
   ['glue_5fupdater_5fsetup_5fpre_5fac_5fstate',['glue_updater_setup_pre_ac_state',['../group__g__updater__glue.html#ga61548717fc477e81cb191edf396998e9',1,'glue_updater.h']]],
   ['glue_5fupdater_5ft',['glue_updater_t',['../structglue__updater__t.html',1,'']]],
   ['glue_5fupdaters',['glue_updaters',['../structcomp__updater__t.html#a7c58e9a46b88fe4af6c33c417fafca66',1,'comp_updater_t']]],

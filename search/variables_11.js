@@ -1,7 +1,13 @@
 var searchData=
 [
-  ['unit_5fbits',['unit_bits',['../structbloom__filter__buf__t.html#a52a746d8b5f323c50be532a1807d1c0a',1,'bloom_filter_buf_t']]],
-  ['unk_5froot',['unk_root',['../structoutput__t.html#a77f42b565a5f58d6d7f1f8f12487140e',1,'output_t']]],
-  ['updater',['updater',['../structwildcard__state__t.html#a5f47175873fc2af4bf46cda4da9d5924',1,'wildcard_state_t']]],
-  ['updaters',['updaters',['../structdriver__t.html#a2864cea3bb016038c488afedd9046e35',1,'driver_t::updaters()'],['../structfst__conv__t.html#a43eb5ed10a78b69be4f41b6d71e2c2bc',1,'fst_conv_t::updaters()']]]
+  ['text_5ffile',['text_file',['../structreader__t.html#a67356b9cfa7d3c3cdd1261c596474b79',1,'reader_t']]],
+  ['tgt_5fpos',['tgt_pos',['../structsent__t.html#a59097c81986a789cf255826371ee736c',1,'sent_t']]],
+  ['threshold',['threshold',['../structfst__conv__opt__t.html#ad4cc776da5ae1b101e51f10cc737fcd2',1,'fst_conv_opt_t']]],
+  ['tid',['tid',['../structreader__t.html#a92e50e7d3d706a70d867773242d833dd',1,'reader_t']]],
+  ['tmp_5fpre_5fac_5fstate',['tmp_pre_ac_state',['../structwildcard__state__t.html#aa2d857fc192c7fafcf76f45e4cb613ce',1,'wildcard_state_t']]],
+  ['tmp_5fstate',['tmp_state',['../structwildcard__state__t.html#aef852ec412ab4df630acbe3a25f99503',1,'wildcard_state_t']]],
+  ['to',['to',['../structlink__t.html#ab9bd1774bc520fb5be8d832a825fa4c5',1,'link_t']]],
+  ['train_5fopt',['train_opt',['../structcomponent__t.html#a1f0925d2751c0a09d94a7216e90870a4',1,'component_t::train_opt()'],['../structdriver__t.html#a77820df1e0bf3021926dbbbbc52de468',1,'driver_t::train_opt()']]],
+  ['tree',['tree',['../structoutput__t.html#a568284af15cccc83de0aaf5c0adfe6e6',1,'output_t']]],
+  ['type',['type',['../structglue__impl__t.html#a08cb4b5778c02e5895001e4e9816b700',1,'glue_impl_t::type()'],['../structglue__t.html#aa9c457c53d372dfb164cc96feed442a9',1,'glue_t::type()'],['../structlayer__impl__t.html#a355f11419b4beeb64217a00532854ef0',1,'layer_impl_t::type()'],['../structlayer__t.html#a14356ebf4762843b027324c0cf05d617',1,'layer_t::type()'],['../structglue__updater__impl__t.html#a3500fe01c7ea05d2a74eff1877237f15',1,'glue_updater_impl_t::type()'],['../structwt__updater__t.html#a135a3914c5790c3ce7f5683c4936e387',1,'wt_updater_t::type()']]]
 ];

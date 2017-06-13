@@ -1,5 +1,6 @@
 var structparam__t =
 [
+    [ "dropout", "structparam__t.html#ac30131813aa1609fa69800d1e46200f2", null ],
     [ "er_cutoff", "structparam__t.html#a3730dd75accd4c1726325f59e263e9af", null ],
     [ "l1_penalty", "structparam__t.html#ad83d07035bdca5333a370855e7fba842", null ],
     [ "l2_delay", "structparam__t.html#af0b7070f8c86891cf1a0e5cbcf9c0c17", null ],

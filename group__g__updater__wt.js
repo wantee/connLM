@@ -9,6 +9,7 @@ var group__g__updater__wt =
       [ "cap_seg", "structwt__dirty__buf__t.html#adf44f47c6a1c138bab43271633117a46", null ],
       [ "er_scale", "structwt__dirty__buf__t.html#a955b7ec8451a5e5e5d372399aab094f6", null ],
       [ "ids", "structwt__dirty__buf__t.html#a3c439da131e19d9e4946b1d70cfbf54b", null ],
+      [ "ids_hit", "structwt__dirty__buf__t.html#ab05c65d78114e49e25e047b41d32cad0", null ],
       [ "in_scale", "structwt__dirty__buf__t.html#a487ca29f2b5384149041bd44aaa88fec", null ],
       [ "n_buf", "structwt__dirty__buf__t.html#a9adb72a9af070ebc61802f2c0dd378b6", null ],
       [ "n_id", "structwt__dirty__buf__t.html#a495d197684aa9689a9f9738c19a2c548", null ],

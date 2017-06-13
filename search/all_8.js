@@ -7,6 +7,7 @@ var searchData=
   ['ic_5fundefined',['IC_UNDEFINED',['../group__g__input.html#gga3218c6871f19e209f68d530ee73c710caef5d4acf660d825a18f84fd96650493d',1,'input.h']]],
   ['ic_5funknown',['IC_UNKNOWN',['../group__g__input.html#gga3218c6871f19e209f68d530ee73c710ca50dd438e5113252e8015ba1fa79f8708',1,'input.h']]],
   ['ids',['ids',['../structwt__dirty__buf__t.html#a3c439da131e19d9e4946b1d70cfbf54b',1,'wt_dirty_buf_t']]],
+  ['ids_5fhit',['ids_hit',['../structwt__dirty__buf__t.html#ab05c65d78114e49e25e047b41d32cad0',1,'wt_dirty_buf_t']]],
   ['impl',['impl',['../structglue__t.html#ad9f0b6a6215a0e0bafaa7875e25b1035',1,'glue_t::impl()'],['../structlayer__t.html#a2bf926c61e39cc7a1084b8402cd1a2ab',1,'layer_t::impl()'],['../structglue__updater__t.html#a23c3f8488442d24b994bb8a28f3f4c06',1,'glue_updater_t::impl()']]],
   ['in_5flayer',['in_layer',['../structglue__t.html#a7ad3b6c1d0cb743383d53aa60015a0de',1,'glue_t']]],
   ['in_5flength',['in_length',['../structglue__t.html#a4d9b49a33080f3b70ec4641cc6905c67',1,'glue_t']]],

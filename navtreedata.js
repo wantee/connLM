@@ -31,7 +31,11 @@ var NAVTREE =
       ] ]
     ] ],
     [ "The connLM Model", "model.html", "model" ],
-    [ "The Training Procedure", "training.html", null ],
+    [ "The Training Procedure", "training.html", [
+      [ "Parameters", "training.html#training_param", [
+        [ "Dropout", "training.html#training_param_dropout", null ]
+      ] ]
+    ] ],
     [ "Command Line Tools in connLM", "cmd.html", [
       [ "The Model filter", "cmd.html#cmd_filter", null ],
       [ "The Configurations and Options", "cmd.html#cmd_config", null ],
@@ -70,10 +74,10 @@ var NAVTREE =
 var NAVTREEINDEX =
 [
 "about.html",
-"group__g__glue__updater__direct.html#gae222946cc249c4fe3a1105f50f21de96",
-"group__g__updater__wt.html#gaf5348900d21226b512f98a9f4f22f8d0",
-"structglue__t.html#aa3545338c1244030130b0c358f9fd08d",
-"structwt__updater__t.html#ad25a84799aed00ab38ad0f8bacd08a23"
+"group__g__glue__updater__direct.html#ga282e6e6e824f20d0f46e881dfef4fb25",
+"group__g__updater__output.html#gab686156685b5b02795b9cc694e64cb37",
+"structglue__impl__t.html#a869aa2213773450a705a02493c895e33",
+"structwt__dirty__buf__t.html#a9adb72a9af070ebc61802f2c0dd378b6"
 ];
 
 var SYNCONMSG = 'click to disable panel synchronisation';

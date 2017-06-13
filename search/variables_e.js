@@ -1,10 +1,16 @@
 var searchData=
 [
-  ['rand_5fseed',['rand_seed',['../structdriver__gen__opt__t.html#a206be08a4d7d3290c6e2047ba6b34ac1',1,'driver_gen_opt_t::rand_seed()'],['../structreader__opt__t.html#a30d3100636e4fbc9a20b2b91572f7300',1,'reader_opt_t::rand_seed()']]],
-  ['random',['random',['../structreader__t.html#a3a47a25230addb009cd9b6f388ff7080',1,'reader_t::random()'],['../structwildcard__state__opt__t.html#af115c684340dc8cf4b8fe7ccb0ec2fad',1,'wildcard_state_opt_t::random()']]],
-  ['random_5fstate',['random_state',['../structlayer__updater__t.html#a8c7c91c914d9afb7136e85eb378dc400',1,'layer_updater_t::random_state()'],['../structwildcard__state__t.html#a5b11193b6fb56db73d9cece484acab4c',1,'wildcard_state_t::random_state()']]],
-  ['reader',['reader',['../structdriver__t.html#a8f7a5f4128505f6a5e722854cb51bd49',1,'driver_t']]],
-  ['recur_5ftype',['recur_type',['../structglue__t.html#abd37a3b4b08d23540ba6d5ef443e23f4',1,'glue_t']]],
-  ['root',['root',['../structgraph__t.html#a153743d59a6f59b19043e5ef40b4dad9',1,'graph_t::root()'],['../structoutput__tree__t.html#a36186ccc632baf1e0537953fa40702f1',1,'output_tree_t::root()']]],
-  ['row',['row',['../structwt__updater__t.html#a621f0a552a2c51ecf5acb46b9d83fd69',1,'wt_updater_t::row()'],['../structweight__t.html#ab8c6a5860ea4a2927c7514232b82dd10',1,'weight_t::row()']]]
+  ['p',['P',['../structngram__hash__t.html#a5de4162dcab96b661cc0c5a9a995b54b',1,'ngram_hash_t']]],
+  ['param',['param',['../structglue__t.html#aa3545338c1244030130b0c358f9fd08d',1,'glue_t::param()'],['../structwt__updater__t.html#a846446d23627fcea36ac2184a4e18e68',1,'wt_updater_t::param()']]],
+  ['param_5fmap',['param_map',['../structoutput__t.html#aee96c36dbcece0597746703babbff2d7',1,'output_t']]],
+  ['parent',['parent',['../structfst__state__t.html#ad8a3b322b04584da6e8d52e4fb3767a3',1,'fst_state_t']]],
+  ['parse_5ftopo',['parse_topo',['../structglue__impl__t.html#a56047588ab9dd968e1f3ab2430aa2c57',1,'glue_impl_t::parse_topo()'],['../structlayer__impl__t.html#a7f5200ed60736d6a2016edf927a07c57',1,'layer_impl_t::parse_topo()']]],
+  ['parts',['parts',['../structwt__dirty__buf__t.html#add32e4b15808e515c3630f1a85fa0e61',1,'wt_dirty_buf_t']]],
+  ['paths',['paths',['../structoutput__t.html#a6897e78e6d43a343abfbca6dcb5763bf',1,'output_t']]],
+  ['pre_5fac_5fstate',['pre_ac_state',['../structlayer__updater__t.html#aa1ee8848bb5b07d2fb52956fc1054b2d',1,'layer_updater_t']]],
+  ['pre_5factivation',['pre_activation',['../structwildcard__state__opt__t.html#ad29153f68d08bc7955dfbc9cbe9b37c8',1,'wildcard_state_opt_t']]],
+  ['prefix_5ffile',['prefix_file',['../structdriver__gen__opt__t.html#a7c6575d0a94a08cc6db685d93b224b40',1,'driver_gen_opt_t']]],
+  ['print_5fsent_5fprob',['print_sent_prob',['../structdriver__eval__opt__t.html#a39aba55cc395dfa742b8828e67d8a811',1,'driver_eval_opt_t']]],
+  ['print_5fsyms',['print_syms',['../structfst__conv__opt__t.html#a2394050c555a4d86af071eb45c292aa0',1,'fst_conv_opt_t']]],
+  ['print_5fverbose_5finfo',['print_verbose_info',['../structglue__impl__t.html#a0130a4cda068cb0b21ee38219e255264',1,'glue_impl_t::print_verbose_info()'],['../structlayer__impl__t.html#a5e01ef6694717903f70a3f14cde29e9c',1,'layer_impl_t::print_verbose_info()']]]
 ];

@@ -122,6 +122,9 @@ $(document).ready(function(){initNavTree('group__g__driver.html','');});
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="nested-classes"></a>
 Data Structures</h2></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structdriver__train__opt__t.html">driver_train_opt_t</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Options for training connLM model.  <a href="structdriver__train__opt__t.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structdriver__eval__opt__t.html">driver_eval_opt_t</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Options for evaluating connLM model.  <a href="structdriver__eval__opt__t.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -149,6 +152,9 @@ Enumerations</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="func-members"></a>
 Functions</h2></td></tr>
+<tr class="memitem:gade8357d023e301621906ef2ce12be1cb"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__g__driver.html#gade8357d023e301621906ef2ce12be1cb">driver_load_train_opt</a> (<a class="el" href="structdriver__train__opt__t.html">driver_train_opt_t</a> *train_opt, st_opt_t *opt, const char *sec_name)</td></tr>
+<tr class="memdesc:gade8357d023e301621906ef2ce12be1cb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Load train option.  <a href="#gade8357d023e301621906ef2ce12be1cb">More...</a><br /></td></tr>
+<tr class="separator:gade8357d023e301621906ef2ce12be1cb"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:gac9dae2bd2cb358084471d2ff97ec6404"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__g__driver.html#gac9dae2bd2cb358084471d2ff97ec6404">driver_load_eval_opt</a> (<a class="el" href="structdriver__eval__opt__t.html">driver_eval_opt_t</a> *eval_opt, st_opt_t *opt, const char *sec_name)</td></tr>
 <tr class="memdesc:gac9dae2bd2cb358084471d2ff97ec6404"><td class="mdescLeft">&#160;</td><td class="mdescRight">Load eval option.  <a href="#gac9dae2bd2cb358084471d2ff97ec6404">More...</a><br /></td></tr>
 <tr class="separator:gac9dae2bd2cb358084471d2ff97ec6404"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -167,6 +173,9 @@ Functions</h2></td></tr>
 <tr class="memitem:gada9b7f3b6a1cd676f8fa9bfd259ec659"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__g__driver.html#gada9b7f3b6a1cd676f8fa9bfd259ec659">driver_run</a> (<a class="el" href="structdriver__t.html">driver_t</a> *driver)</td></tr>
 <tr class="memdesc:gada9b7f3b6a1cd676f8fa9bfd259ec659"><td class="mdescLeft">&#160;</td><td class="mdescRight">Start running driver.  <a href="#gada9b7f3b6a1cd676f8fa9bfd259ec659">More...</a><br /></td></tr>
 <tr class="separator:gada9b7f3b6a1cd676f8fa9bfd259ec659"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga75dbfb86e7829e2a03493c82c828984a"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__g__driver.html#ga75dbfb86e7829e2a03493c82c828984a">driver_set_train</a> (<a class="el" href="structdriver__t.html">driver_t</a> *driver, <a class="el" href="structdriver__train__opt__t.html">driver_train_opt_t</a> *train_opt)</td></tr>
+<tr class="memdesc:ga75dbfb86e7829e2a03493c82c828984a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set options for train.  <a href="#ga75dbfb86e7829e2a03493c82c828984a">More...</a><br /></td></tr>
+<tr class="separator:ga75dbfb86e7829e2a03493c82c828984a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga6236b2623939a0f701ff2adb389d6942"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__g__driver.html#ga6236b2623939a0f701ff2adb389d6942">driver_set_eval</a> (<a class="el" href="structdriver__t.html">driver_t</a> *driver, <a class="el" href="structdriver__eval__opt__t.html">driver_eval_opt_t</a> *eval_opt, FILE *fp_log)</td></tr>
 <tr class="memdesc:ga6236b2623939a0f701ff2adb389d6942"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set options for eval.  <a href="#ga6236b2623939a0f701ff2adb389d6942">More...</a><br /></td></tr>
 <tr class="separator:ga6236b2623939a0f701ff2adb389d6942"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -388,6 +397,49 @@ Functions</h2></td></tr>
 
 </div>
 </div>
+<a class="anchor" id="gade8357d023e301621906ef2ce12be1cb"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int driver_load_train_opt </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structdriver__train__opt__t.html">driver_train_opt_t</a> *&#160;</td>
+          <td class="paramname"><em>train_opt</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">st_opt_t *&#160;</td>
+          <td class="paramname"><em>opt</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const char *&#160;</td>
+          <td class="paramname"><em>sec_name</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Load train option. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[out]</td><td class="paramname">train_opt</td><td>options to be loaded. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">opt</td><td>runtime options passed by caller. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">sec_name</td><td>section name of runtime options to be loaded. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>non-zero value if any error. </dd></dl>
+
+</div>
+</div>
 <a class="anchor" id="gada9b7f3b6a1cd676f8fa9bfd259ec659"></a>
 <div class="memitem">
 <div class="memproto">
@@ -499,6 +551,42 @@ Functions</h2></td></tr>
 
 </div>
 </div>
+<a class="anchor" id="ga75dbfb86e7829e2a03493c82c828984a"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int driver_set_train </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structdriver__t.html">driver_t</a> *&#160;</td>
+          <td class="paramname"><em>driver</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="structdriver__train__opt__t.html">driver_train_opt_t</a> *&#160;</td>
+          <td class="paramname"><em>train_opt</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Set options for train. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">driver</td><td>driver. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">train_opt</td><td>train option. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>non-zero value if any error. </dd></dl>
+
+</div>
+</div>
 <a class="anchor" id="ga39c50eeb98bb893ee5ad3375eef78557"></a>
 <div class="memitem">
 <div class="memproto">
@@ -540,7 +628,7 @@ Functions</h2></td></tr>
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on Tue May 9 2017 22:56:40 for connLM by
+    <li class="footer">Generated on Tue Jun 13 2017 20:48:23 for connLM by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.10 </li>
   </ul>
