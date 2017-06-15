@@ -56,6 +56,7 @@ typedef struct _thread_statistics_t_ {
  */
 typedef struct _reader_opt_t_ {
     int epoch_size;  /**< number sentences read one time per thread. */
+    int mini_batch;  /**< mini-batch size. */
     unsigned int rand_seed;   /**< seed for random function. */
     bool shuffle;             /**< whether shuffle the sentences. */
     bool drop_empty_line;     /**< whether drop empty lines in text. */
@@ -70,6 +71,8 @@ typedef struct _connlm_egs_t_ {
     int *words; /**< word ids. */
     int size; /**< size of words. */
     int capacity; /**< capacity of words. */
+    int *batch_idx; /**< start index of mini-batches. */
+    int num_batches; /**< number of batches. */
     struct _connlm_egs_t_ *next; /**< pointer to the next list element. */
 } connlm_egs_t;
 

@@ -45,6 +45,8 @@ void connlm_egs_destroy(connlm_egs_t *egs)
         safe_st_free(egs->words);
         egs->capacity = 0;
         egs->size = 0;
+        safe_st_free(egs->batch_idx);
+        egs->num_batches = 0;
     }
 }
 
@@ -104,6 +106,52 @@ static int connlm_egs_print(FILE *fp, pthread_mutex_t *fp_lock,
         i++;
         (void)pthread_mutex_unlock(fp_lock);
     }
+
+    return 0;
+}
+
+static int connlm_egs_build_mini_batch(connlm_egs_t *egs, int num_batches)
+{
+    int i, n;
+    int cnt, eos;
+    int words_per_batch;
+
+    ST_CHECK_PARAM(egs == NULL || num_batches <= 1, -1);
+
+    if (num_batches > egs->num_batches) {
+        egs->batch_idx = (int *)st_realloc(egs->batch_idx,
+                sizeof(int) * (num_batches + 1));
+        if (egs->batch_idx == NULL) {
+            ST_WARNING("Failed to st_realloc batch_idx.");
+            return -1;
+        }
+    }
+    egs->num_batches = num_batches;
+
+    words_per_batch = egs->size / num_batches + 1;
+
+    egs->batch_idx[0] = 0;
+    n = 1;
+
+    i = 0;
+    cnt = 0;
+    while (i < egs->size) {
+        if (egs->words[i] == SENT_END_ID) {
+            eos = i;
+        }
+        ++cnt;
+        if (cnt >= words_per_batch) {
+            egs->batch_idx[n] = eos + 1;
+            ++n;
+            if (n >= egs->num_batches) {
+                break;
+            }
+            cnt = i - eos;
+        }
+
+        ++i;
+    }
+    egs->batch_idx[egs->num_batches] = egs->size;
 
     return 0;
 }
@@ -296,6 +344,14 @@ int reader_load_opt(reader_opt_t *reader_opt,
         goto ST_OPT_ERR;
     }
 
+    ST_OPT_SEC_GET_INT(opt, name, "MINI_BATCH_SIZE", reader_opt->mini_batch,
+            1, "Size of mini-batch.");
+    if (reader_opt->mini_batch <= 0) {
+        ST_WARNING("mini batch size must be at least 1, get [%d]",
+                reader_opt->mini_batch);
+        goto ST_OPT_ERR;
+    }
+
     ST_OPT_SEC_GET_BOOL(opt, name, "SHUFFLE",
             reader_opt->shuffle, true, "Shuffle after reading");
 
@@ -409,7 +465,7 @@ static void* reader_read_thread(void *args)
         .capacity = 0,
     };
     int num_thrs;
-    int epoch_size;
+    int epoch_size, mini_batch;
 
     connlm_egs_t *egs_in_pool;
     int num_sents;
@@ -441,6 +497,7 @@ static void* reader_read_thread(void *args)
     stats = reader->stats;
     num_thrs = reader->num_thrs;
     epoch_size = reader->opt.epoch_size;
+    mini_batch = reader->opt.mini_batch;
 
     if (connlm_egs_ensure(&egs, NUM_WORD_PER_SENT) < 0) {
         ST_WARNING("Failed to connlm_egs_ensure.");
@@ -513,6 +570,7 @@ static void* reader_read_thread(void *args)
         gettimeofday(&tte_shuf, NULL);
 #endif
 
+
 #ifdef _TIME_PROF_
         gettimeofday(&tts_lock, NULL);
 #endif
@@ -561,6 +619,13 @@ static void* reader_read_thread(void *args)
         } else {
             memcpy(egs_in_pool->words, egs.words, sizeof(int)*egs.size);
             egs_in_pool->size = egs.size;
+        }
+
+        if (mini_batch > 1) {
+            if (connlm_egs_build_mini_batch(egs_in_pool, mini_batch) < 0) {
+                ST_WARNING("Failed to connlm_egs_build_mini_batch.");
+                goto ERR;
+            }
         }
 #ifdef _TIME_PROF_
         gettimeofday(&tte_fill, NULL);
