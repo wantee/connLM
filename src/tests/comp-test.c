@@ -46,7 +46,6 @@ static int unit_test_comp_read_topo()
         .input_ref = {
             .n_ctx = 1,
             .context = {{-1,1.0}},
-            .combine = IC_AVG,
         },
 
         .num_layer = 0,

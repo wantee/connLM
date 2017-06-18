@@ -37,6 +37,7 @@ extern "C" {
 #include "layer-test.h"
 
 #include "glues/glue.h"
+#include "glues/emb_glue.h"
 #include "glues/direct_glue.h"
 
 #define GLUE_TEST_NAME "glue"
@@ -51,6 +52,10 @@ typedef struct _glue_ref_t_ {
     struct direct_glue_ref {
         long long sz;
     } direct_glue;
+
+    struct emb_glue_ref {
+        emb_combine_t combine;
+    } emb_glue;
 } glue_ref_t;
 
 char* glue_test_get_name(char *name, size_t len, glue_ref_t *ref, int id)
@@ -63,6 +68,7 @@ char* glue_test_get_name(char *name, size_t len, glue_ref_t *ref, int id)
     return name;
 }
 
+const char* emb_combine2str(emb_combine_t c);
 void glue_test_mk_topo_line(char *line, size_t len, glue_ref_t *ref, int id)
 {
     char name[MAX_NAME_LEN];
@@ -82,9 +88,14 @@ void glue_test_mk_topo_line(char *line, size_t len, glue_ref_t *ref, int id)
     st_strncatf(line, len, "%s", layer_test_get_name(name, MAX_NAME_LEN,
                 ref->out_layer));
 
-    if (strcasecmp(ref->type, "direct") == 0) {
+    if (strcasecmp(ref->type, DIRECT_GLUE_NAME) == 0) {
         st_strncatf(line, len, " size=%s", st_ll2str(name, MAX_NAME_LEN,
                     ref->direct_glue.sz, false));
+    }
+
+    if (strcasecmp(ref->type, EMB_GLUE_NAME) == 0) {
+        st_strncatf(line, len, " combine=%s",
+                emb_combine2str(ref->emb_glue.combine));
     }
 
 #ifdef _GLUE_TEST_PRINT_TOPO_
@@ -124,12 +135,22 @@ int glue_test_check_glue(glue_t *glue, glue_ref_t *ref, int id)
         return -1;
     }
 
-    if (strcasecmp(ref->type, "direct") == 0) {
+    if (strcasecmp(ref->type, DIRECT_GLUE_NAME) == 0) {
         if (((direct_glue_data_t *)(glue->extra))->hash_sz
                 != ref->direct_glue.sz) {
             fprintf(stderr, "direct glue size not match.[%lld/%lld]\n",
                 ref->direct_glue.sz,
                 (long long)(((direct_glue_data_t *)glue->extra)->hash_sz));
+            return -1;
+        }
+    }
+
+    if (strcasecmp(ref->type, EMB_GLUE_NAME) == 0) {
+        if (((emb_glue_data_t *)(glue->extra))->combine
+                != ref->emb_glue.combine) {
+            fprintf(stderr, "emb glue combine not match.[%d/%d]\n",
+                ref->emb_glue.combine,
+                ((emb_glue_data_t *)glue->extra)->combine);
             return -1;
         }
     }

@@ -40,7 +40,6 @@ static int unit_test_input_read_topo()
     input_ref_t std_ref = {
         .n_ctx = 2,
         .context = {{-1,1.0}, {1, 0.5}},
-        .combine = IC_SUM,
     };
 
     fprintf(stderr, "  Testing Reading topology line...\n");

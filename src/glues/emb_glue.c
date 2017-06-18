@@ -42,7 +42,7 @@ static const char *combine_str[] = {
     "Concat",
 };
 
-static const char* combine2str(emb_combine_t c)
+const char* __attribute__((noinline)) emb_combine2str(emb_combine_t c)
 {
     return combine_str[c];
 }
@@ -279,7 +279,7 @@ char* emb_glue_draw_label(glue_t *glue, char *label, size_t label_len)
 
     data = (emb_glue_data_t *)glue->extra;
 
-    snprintf(label, label_len, ",combine=%s", combine2str(data->combine));
+    snprintf(label, label_len, ",combine=%s", emb_combine2str(data->combine));
 
     return label;
 }
@@ -371,7 +371,7 @@ int emb_glue_load_header(void **extra, int version,
 
     if (fo_info != NULL) {
         fprintf(fo_info, "\n<EMB-GLUE>\n");
-        fprintf(fo_info, "Combine: %s\n", combine2str((emb_combine_t)c));
+        fprintf(fo_info, "Combine: %s\n", emb_combine2str((emb_combine_t)c));
     }
 
     return 0;
@@ -413,7 +413,7 @@ int emb_glue_save_header(void *extra, FILE *fp, connlm_fmt_t fmt)
             return -1;
         }
 
-        if (fprintf(fp, "Combine: %s\n", combine2str(data->combine)) < 0) {
+        if (fprintf(fp, "Combine: %s\n", emb_combine2str(data->combine)) < 0) {
             ST_WARNING("Failed to fprintf combine.");
             return -1;
         }

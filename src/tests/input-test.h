@@ -40,15 +40,7 @@ extern "C" {
 typedef struct _input_ref_t_ {
     st_wt_int_t context[INPUT_TEST_N];
     int n_ctx;
-    input_combine_t combine;
 } input_ref_t;
-
-static const char *combine_str[] = {
-    "UnDefined",
-    "Sum",
-    "Avg",
-    "Concat",
-};
 
 void input_test_mk_topo_line(char *line, size_t len, input_ref_t *ref)
 {
@@ -61,7 +53,6 @@ void input_test_mk_topo_line(char *line, size_t len, input_ref_t *ref)
         st_strncatf(line, len, "%d:%g,", ref->context[i].i, ref->context[i].w);
     }
     st_strncatf(line, len, "%d:%g", ref->context[i].i, ref->context[i].w);
-    st_strncatf(line, len, " combine=%s", combine_str[ref->combine]);
 
 #ifdef _INPUT_TEST_PRINT_TOPO_
     fprintf(stderr, "%s", line);
@@ -76,12 +67,6 @@ int input_test_check_input(input_t *input, int input_size, input_ref_t *ref)
 
     if (input->input_size != input_size) {
         fprintf(stderr, "input size not match.\n");
-        return -1;
-    }
-
-    if (input->combine != ref->combine) {
-        fprintf(stderr, "combine not match[%d/%d]\n",
-                input->combine, ref->combine);
         return -1;
     }
 
