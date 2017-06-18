@@ -55,8 +55,8 @@ int emb_glue_updater_forward(glue_updater_t *glue_updater,
     input = comp_updater->comp->input;
     col = glue->wt->col;
 
-    switch (input->combine) {
-        case IC_SUM:
+    switch (data->combine) {
+        case EC_SUM:
             for (a = 0; a < input->n_ctx; a++) {
                 pos = input_sent->tgt_pos + input->context[a].i;
                 if (pos < 0 || pos >= input_sent->n_word) {
@@ -96,7 +96,7 @@ int emb_glue_updater_forward(glue_updater_t *glue_updater,
                 }
             }
             break;
-        case IC_AVG:
+        case EC_AVG:
             for (b = 0; b < col; b++) {
                 if (glue_updater->keep_mask != NULL
                         && ! glue_updater->keep_mask[b]) {
@@ -139,7 +139,7 @@ int emb_glue_updater_forward(glue_updater_t *glue_updater,
                 }
             }
             break;
-        case IC_CONCAT:
+        case EC_CONCAT:
             for (a = 0; a < input->n_ctx; a++) {
                 pos = input_sent->tgt_pos + input->context[a].i;
                 if (pos < 0 || pos >= input_sent->n_word) {
@@ -180,7 +180,7 @@ int emb_glue_updater_forward(glue_updater_t *glue_updater,
             }
             break;
         default:
-            ST_WARNING("Unknown combine[%d]", (int)input->combine);
+            ST_WARNING("Unknown combine[%d]", (int)data->combine);
             return -1;
     }
 
@@ -221,7 +221,7 @@ int emb_glue_updater_backprop(glue_updater_t *glue_updater,
         er = out_er;
     }
 
-    if (input->combine == IC_CONCAT) {
+    if (data->combine == EC_CONCAT) {
         for (a = 0; a < input->n_ctx; a++) {
             pos = input_sent->tgt_pos + input->context[a].i;
             if (pos < 0 || pos >= input_sent->n_word) {

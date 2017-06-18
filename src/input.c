@@ -33,31 +33,6 @@
 
 static const int INPUT_MAGIC_NUM = 626140498 + 40;
 
-static const char *combine_str[] = {
-    "UnDefined",
-    "Sum",
-    "Avg",
-    "Concat",
-};
-
-static const char* combine2str(input_combine_t c)
-{
-    return combine_str[c];
-}
-
-static input_combine_t str2combine(const char *str)
-{
-    int i;
-
-    for (i = 0; i < sizeof(combine_str) / sizeof(combine_str[0]); i++) {
-        if (strcasecmp(combine_str[i], str) == 0) {
-            return (input_combine_t)i;
-        }
-    }
-
-    return IC_UNKNOWN;
-}
-
 void input_destroy(input_t *input)
 {
     if (input == NULL) {
@@ -121,16 +96,6 @@ input_t* input_parse_topo(const char *line, int input_size)
                         keyvalue + MAX_LINE_LEN);
                 goto ERR;
             }
-        } else if (strcasecmp("combine", keyvalue) == 0) {
-            if (input->combine != IC_UNDEFINED) {
-                ST_WARNING("Duplicated combine.");
-            }
-            input->combine = str2combine(keyvalue + MAX_LINE_LEN);
-            if (input->combine == IC_UNKNOWN) {
-                ST_WARNING("Failed to parse combine string.[%s]",
-                        keyvalue + MAX_LINE_LEN);
-                goto ERR;
-            }
         } else {
             ST_WARNING("Unknown key/value[%s]", token);
         }
@@ -173,7 +138,6 @@ input_t* input_dup(input_t *in)
     memset(input, 0, sizeof(input_t));
 
     input->input_size = in->input_size;
-    input->combine = in->combine;
 
     input->context = (st_wt_int_t *)st_malloc(sizeof(st_wt_int_t)*in->n_ctx);
     if (input->context == NULL) {
@@ -223,15 +187,13 @@ int input_load_header(input_t **input, int version,
         int magic_num;
     } flag;
 
-    char sym[MAX_LINE_LEN];
-    int c;
     int input_size;
     int n_ctx;
 
     ST_CHECK_PARAM((input == NULL && fo_info == NULL) || fp == NULL
             || fmt == NULL, -1);
 
-    if (version < 3) {
+    if (version < 15) {
         ST_WARNING("Too old version of connlm file");
         return -1;
     }
@@ -271,10 +233,6 @@ int input_load_header(input_t **input, int version,
             ST_WARNING("Failed to read n_ctx.");
             return -1;
         }
-        if (fread(&c, sizeof(int), 1, fp) != 1) {
-            ST_WARNING("Failed to read combine.");
-            return -1;
-        }
     } else {
         if (st_readline(fp, "") != 0) {
             ST_WARNING("tag error.");
@@ -293,16 +251,6 @@ int input_load_header(input_t **input, int version,
             ST_WARNING("Failed to parse n_ctx.");
             goto ERR;
         }
-        if (st_readline(fp, "Combine: %"xSTR(MAX_LINE_LEN)"s", sym) != 1) {
-            ST_WARNING("Failed to parse combine.");
-            goto ERR;
-        }
-        sym[MAX_LINE_LEN - 1] = '\0';
-        c = (int)str2combine(sym);
-        if (c == (int)IC_UNKNOWN) {
-            ST_WARNING("Unknown combine[%s]", sym);
-            goto ERR;
-        }
     }
 
     if (input != NULL) {
@@ -315,14 +263,12 @@ int input_load_header(input_t **input, int version,
 
         (*input)->input_size = input_size;
         (*input)->n_ctx = n_ctx;
-        (*input)->combine = (input_combine_t)c;
     }
 
     if (fo_info != NULL) {
         fprintf(fo_info, "\n<INPUT>\n");
         fprintf(fo_info, "Input size: %d\n", input_size);
         fprintf(fo_info, "Num context: %d\n", n_ctx);
-        fprintf(fo_info, "Combine: %s\n", combine2str((input_combine_t)c));
     }
 
     return 0;
@@ -432,11 +378,6 @@ int input_save_header(input_t *input, FILE *fp, connlm_fmt_t fmt)
             ST_WARNING("Failed to write n_ctx.");
             return -1;
         }
-        n = (int)input->combine;
-        if (fwrite(&n, sizeof(int), 1, fp) != 1) {
-            ST_WARNING("Failed to write combine.");
-            return -1;
-        }
     } else {
         if (fprintf(fp, "    \n<INPUT>\n") < 0) {
             ST_WARNING("Failed to fprintf header.");
@@ -449,10 +390,6 @@ int input_save_header(input_t *input, FILE *fp, connlm_fmt_t fmt)
         }
         if (fprintf(fp, "Num context: %d\n", input->n_ctx) < 0) {
             ST_WARNING("Failed to fprintf num ctx.");
-            return -1;
-        }
-        if (fprintf(fp, "Combine: %s\n", combine2str(input->combine)) < 0) {
-            ST_WARNING("Failed to fprintf combine.");
             return -1;
         }
     }
@@ -508,16 +445,14 @@ char* input_draw_label(input_t *input, char *label, size_t label_len)
 
     ST_CHECK_PARAM(input == NULL || label == NULL, NULL);
 
-    snprintf(label, label_len, "size=%d,ctx={", input->input_size);
+    snprintf(buf, MAX_LINE_LEN, "size=%d,ctx={", input->input_size);
     for (i = 0; i < input->n_ctx - 1; i++) {
-        snprintf(buf, MAX_LINE_LEN, "%s%d:%g,", label, input->context[i].i,
+        snprintf(label, label_len, "%s%d:%g,", buf, input->context[i].i,
                 input->context[i].w);
-        snprintf(label, label_len, "%s", buf);
+        snprintf(buf, MAX_LINE_LEN, "%s", label);
     }
-    snprintf(buf, MAX_LINE_LEN, "%s%d:%g},", label, input->context[i].i,
+    snprintf(label, label_len, "%s%d:%g},", buf, input->context[i].i,
             input->context[i].w);
-    snprintf(label, label_len, "%scombine=%s", buf,
-            combine2str(input->combine));
 
     return label;
 }

@@ -133,6 +133,7 @@ static int connlm_egs_build_mini_batch(connlm_egs_t *egs, int num_batches)
     egs->batch_idx[0] = 0;
     n = 1;
 
+    eos = 0;
     i = 0;
     cnt = 0;
     while (i < egs->size) {

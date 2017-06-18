@@ -214,10 +214,6 @@ bool direct_glue_check(glue_t *glue, layer_t **layers, int n_layer,
         return false;
     }
 
-    if (input->combine != IC_UNDEFINED) {
-        ST_WARNING("combine will be ignored.");
-    }
-
     if (data->hash_sz <= output->tree->num_node) {
         ST_WARNING("Hash size should NOT less than output tree nodes.");
         return false;

@@ -41,18 +41,6 @@ extern "C" {
  */
 
 /**
- * Type of combination methods.
- * @ingroup g_input
- */
-typedef enum _input_combination_method_t_ {
-    IC_UNKNOWN = -1, /**< Unknown combination method. */
-    IC_UNDEFINED = 0, /**< Undefined combination method. */
-    IC_SUM, /**< Sum up all contexts' embedding. */
-    IC_AVG, /**< Average of all contexts' embedding. */
-    IC_CONCAT, /**< Concat all contexts' embedding. */
-} input_combine_t;
-
-/**
  * Input Layer.
  * @ingroup g_input
  */
@@ -61,8 +49,6 @@ typedef struct _input_t_ {
 
     st_wt_int_t *context; /**< context for input layer. */
     int n_ctx; /**< number of contexts for input layer. */
-
-    input_combine_t combine; /**< combine method of input layer. */
 } input_t;
 
 /**

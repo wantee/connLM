@@ -53,12 +53,25 @@ typedef enum _emb_index_method_t_ {
 } emb_index_method_t;
 
 /**
+ * Type of combination methods.
+ * @ingroup g_glue_emb
+ */
+typedef enum _emb_combination_method_t_ {
+    EC_UNKNOWN = -1, /**< Unknown combination method. */
+    EC_UNDEFINED = 0, /**< Undefined combination method. */
+    EC_SUM, /**< Sum up all contexts' embedding. */
+    EC_AVG, /**< Average of all contexts' embedding. */
+    EC_CONCAT, /**< Concat all contexts' embedding. */
+} emb_combine_t;
+
+/**
  * Data for emb glue
  * @ingroup g_glue_emb
  */
 typedef struct _emb_glue_data_t_ {
     emb_index_method_t index_method; /**< index method. */
     int num_vecs; /**< size of hash wt. */
+    emb_combine_t combine; /**< combine method. */
 } emb_glue_data_t;
 
 /**
