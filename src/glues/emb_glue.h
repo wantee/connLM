@@ -42,17 +42,6 @@ extern "C" {
 #define EMB_GLUE_NAME "emb"
 
 /**
- * Type of index methods.
- * @ingroup g_glue_emb
- */
-typedef enum _emb_index_method_t_ {
-    EI_UNKNOWN = -1, /**< Unknown index method. */
-    EI_UNDEFINED = 0, /**< Undefined index method. */
-    EI_WORD = 1, /**< index by word id. */
-    EI_POS, /**< index by position. */
-} emb_index_method_t;
-
-/**
  * Type of combination methods.
  * @ingroup g_glue_emb
  */
@@ -69,8 +58,6 @@ typedef enum _emb_combination_method_t_ {
  * @ingroup g_glue_emb
  */
 typedef struct _emb_glue_data_t_ {
-    emb_index_method_t index_method; /**< index method. */
-    int num_vecs; /**< size of hash wt. */
     emb_combine_t combine; /**< combine method. */
 } emb_glue_data_t;
 

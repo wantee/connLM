@@ -35,31 +35,6 @@
 
 static const int EMB_GLUE_MAGIC_NUM = 626140498 + 72;
 
-static const char *index_method_str[] = {
-    "UnDefined",
-    "Word",
-    "Position",
-};
-
-static const char* index2str(emb_index_method_t i)
-{
-    return index_method_str[i];
-}
-
-static emb_index_method_t str2index(const char *str)
-{
-    int i;
-
-    i = 0;
-    for (; i < sizeof(index_method_str) / sizeof(index_method_str[0]); i++) {
-        if (strcasecmp(index_method_str[i], str) == 0) {
-            return (emb_index_method_t)i;
-        }
-    }
-
-    return EI_UNKNOWN;
-}
-
 static const char *combine_str[] = {
     "UnDefined",
     "Sum",
@@ -99,8 +74,7 @@ static void emb_glue_data_destroy(emb_glue_data_t *data)
         return;
     }
 
-    data->index_method = EI_UNKNOWN;
-    data->num_vecs = 0;
+    data->combine = EC_UNKNOWN;
 }
 
 static emb_glue_data_t* emb_glue_data_init()
@@ -131,8 +105,6 @@ static emb_glue_data_t* emb_glue_data_dup(emb_glue_data_t *src)
         ST_WARNING("Failed to emb_glue_data_init.");
         goto ERR;
     }
-    dst->index_method = ((emb_glue_data_t *)src)->index_method;
-    dst->num_vecs = ((emb_glue_data_t *)src)->num_vecs;
     dst->combine = ((emb_glue_data_t *)src)->combine;
 
     return (void *)dst;
@@ -223,23 +195,7 @@ int emb_glue_parse_topo(glue_t *glue, const char *line)
             goto ERR;
         }
 
-        if (strcasecmp("num_vecs", keyvalue) == 0) {
-            data->num_vecs = atoi(keyvalue + MAX_LINE_LEN);
-            if (data->num_vecs <= 0) {
-                ST_WARNING("Illegal num_vecs[%s]", keyvalue + MAX_LINE_LEN);
-                goto ERR;
-            }
-        } else if (strcasecmp("index", keyvalue) == 0) {
-            if (data->index_method != EI_UNDEFINED) {
-                ST_WARNING("Duplicated index method.");
-            }
-            data->index_method = str2index(keyvalue + MAX_LINE_LEN);
-            if (data->index_method == EI_UNKNOWN) {
-                ST_WARNING("Failed to parse index method string.[%s]",
-                        keyvalue + MAX_LINE_LEN);
-                goto ERR;
-            }
-        } else if (strcasecmp("combine", keyvalue) == 0) {
+        if (strcasecmp("combine", keyvalue) == 0) {
             if (data->combine != EC_UNDEFINED) {
                 ST_WARNING("Duplicated combine.");
             }
@@ -252,10 +208,6 @@ int emb_glue_parse_topo(glue_t *glue, const char *line)
         } else {
             ST_WARNING("Unknown key/value[%s]", token);
         }
-    }
-
-    if (data->index_method == EI_UNDEFINED) {
-        data->index_method = EI_WORD; // default to word embedding
     }
 
     return 0;
@@ -314,20 +266,6 @@ bool emb_glue_check(glue_t *glue, layer_t **layers, int n_layer,
         }
     }
 
-    if (data->index_method == EI_WORD) {
-        if (data->num_vecs <= 0) {
-            data->num_vecs = input->input_size;
-        } else if (data->num_vecs != input->input_size){
-            ST_WARNING("number of word embedding is not equal to vocab size.");
-            return false;
-        }
-    } else {
-        if (data->num_vecs <= 0) {
-            ST_WARNING("number of position embedding is not set.");
-            return false;
-        }
-    }
-
     glue->wt->init_bias = INFINITY; // direct weight will not have bias
 
     return true;
@@ -341,9 +279,7 @@ char* emb_glue_draw_label(glue_t *glue, char *label, size_t label_len)
 
     data = (emb_glue_data_t *)glue->extra;
 
-    snprintf(label, label_len, ",index=%s,num_vecs=%d,combine=%s",
-            index2str(data->index_method), data->num_vecs,
-            combine2str(data->combine));
+    snprintf(label, label_len, ",combine=%s", combine2str(data->combine));
 
     return label;
 }
@@ -359,8 +295,6 @@ int emb_glue_load_header(void **extra, int version,
     } flag;
 
     char sym[MAX_LINE_LEN];
-    int i;
-    int num_vecs;
     int c;
 
     ST_CHECK_PARAM((extra == NULL && fo_info == NULL) || fp == NULL
@@ -398,14 +332,6 @@ int emb_glue_load_header(void **extra, int version,
             *fmt = CONN_FMT_BIN;
         }
 
-        if (fread(&i, sizeof(int), 1, fp) != 1) {
-            ST_WARNING("Failed to read index method.");
-            return -1;
-        }
-        if (fread(&num_vecs, sizeof(int), 1, fp) != 1) {
-            ST_WARNING("Failed to read num_vecs.");
-            return -1;
-        }
         if (fread(&c, sizeof(int), 1, fp) != 1) {
             ST_WARNING("Failed to read combine.");
             return -1;
@@ -420,20 +346,6 @@ int emb_glue_load_header(void **extra, int version,
             goto ERR;
         }
 
-        if (st_readline(fp, "Index method: %"xSTR(MAX_LINE_LEN)"s", sym) != 1) {
-            ST_WARNING("Failed to parse index method.");
-            goto ERR;
-        }
-        sym[MAX_LINE_LEN - 1] = '\0';
-        i = (int)str2index(sym);
-        if (i == (int)EI_UNKNOWN) {
-            ST_WARNING("Unknown index method[%s]", sym);
-            goto ERR;
-        }
-        if (st_readline(fp, "Num vectors: %d", &num_vecs) != 1) {
-            ST_WARNING("Failed to parse num_vecs.");
-            goto ERR;
-        }
         if (st_readline(fp, "Combine: %"xSTR(MAX_LINE_LEN)"s", sym) != 1) {
             ST_WARNING("Failed to parse combine.");
             goto ERR;
@@ -454,16 +366,11 @@ int emb_glue_load_header(void **extra, int version,
         }
 
         *extra = (void *)data;
-        data->index_method = (emb_index_method_t)i;
-        data->num_vecs = num_vecs;
         data->combine = (emb_combine_t)c;
     }
 
     if (fo_info != NULL) {
         fprintf(fo_info, "\n<EMB-GLUE>\n");
-        fprintf(fo_info, "Index method: %s\n",
-                index2str((emb_index_method_t)i));
-        fprintf(fo_info, "Num vectors: %d\n", num_vecs);
         fprintf(fo_info, "Combine: %s\n", combine2str((emb_combine_t)c));
     }
 
@@ -495,15 +402,6 @@ int emb_glue_save_header(void *extra, FILE *fp, connlm_fmt_t fmt)
             return -1;
         }
 
-        i = (int)data->index_method;
-        if (fwrite(&i, sizeof(int), 1, fp) != 1) {
-            ST_WARNING("Failed to write index method.");
-            return -1;
-        }
-        if (fwrite(&data->num_vecs, sizeof(int), 1, fp) != 1) {
-            ST_WARNING("Failed to write num_vecs.");
-            return -1;
-        }
         i = (int)data->combine;
         if (fwrite(&i, sizeof(int), 1, fp) != 1) {
             ST_WARNING("Failed to write combine.");
@@ -515,15 +413,6 @@ int emb_glue_save_header(void *extra, FILE *fp, connlm_fmt_t fmt)
             return -1;
         }
 
-        if (fprintf(fp, "Index method: %s\n",
-                    index2str(data->index_method)) < 0) {
-            ST_WARNING("Failed to fprintf index method.");
-            return -1;
-        }
-        if (fprintf(fp, "Num vectors: %d\n", data->num_vecs) < 0) {
-            ST_WARNING("Failed to fprintf num_vecs.");
-            return -1;
-        }
         if (fprintf(fp, "Combine: %s\n", combine2str(data->combine)) < 0) {
             ST_WARNING("Failed to fprintf combine.");
             return -1;
@@ -554,7 +443,7 @@ int emb_glue_init_data(glue_t *glue, input_t *input,
         col = glue->out_length;
     }
 
-    if (wt_init(glue->wt, data->num_vecs, col) < 0) {
+    if (wt_init(glue->wt, input->input_size, col) < 0) {
         ST_WARNING("Failed to wt_init.");
         return -1;
     }
