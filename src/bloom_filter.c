@@ -1117,10 +1117,12 @@ bool bloom_filter_lookup(bloom_filter_t *blm_flt, bloom_filter_buf_t *buf,
 
 int bloom_filter_build(bloom_filter_t *blm_flt, FILE *text_fp)
 {
-    connlm_egs_t egs = {
+    word_pool_t wp = {
         .words = NULL,
         .size = 0,
         .capacity = 0,
+        .batch_idx = NULL,
+        .num_batches = 0,
     };
 
     bloom_filter_buf_t *buf = NULL;
@@ -1142,14 +1144,14 @@ int bloom_filter_build(bloom_filter_t *blm_flt, FILE *text_fp)
     }
 
     while (!feof(text_fp)) {
-        if (connlm_egs_read(&egs, NULL, EPOCH_SIZE,
+        if (word_pool_read(&wp, NULL, EPOCH_SIZE,
                     text_fp, blm_flt->vocab, NULL, true) < 0) {
-            ST_WARNING("Failed to connlm_egs_read.");
+            ST_WARNING("Failed to word_pool_read.");
             goto ERR;
         }
 
-        for (pos = 0; pos < egs.size; pos++) {
-            if (egs.words[pos] == bos_id(blm_flt)) {
+        for (pos = 0; pos < wp.size; pos++) {
+            if (wp.words[pos] == bos_id(blm_flt)) {
                 sent_start = pos;
             }
 
@@ -1158,7 +1160,7 @@ int bloom_filter_build(bloom_filter_t *blm_flt, FILE *text_fp)
 
             while (order > 0) {
                 if (bloom_filter_add(blm_flt, buf,
-                            egs.words + pos - order + 1, order) < 0) {
+                            wp.words + pos - order + 1, order) < 0) {
                     ST_WARNING("Failed to bloom_filter_add.");
                     goto ERR;
                 }
@@ -1168,13 +1170,13 @@ int bloom_filter_build(bloom_filter_t *blm_flt, FILE *text_fp)
     }
 
     safe_bloom_filter_buf_destroy(buf);
-    connlm_egs_destroy(&egs);
+    word_pool_destroy(&wp);
 
     return 0;
 
 ERR:
     safe_bloom_filter_buf_destroy(buf);
-    connlm_egs_destroy(&egs);
+    word_pool_destroy(&wp);
 
     return -1;
 }

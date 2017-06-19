@@ -67,38 +67,38 @@ typedef struct _reader_opt_t_ {
  * A bunch of word
  * @ingroup g_reader
  */
-typedef struct _connlm_egs_t_ {
+typedef struct _word_pool_t_ {
     int *words; /**< word ids. */
     int size; /**< size of words. */
     int capacity; /**< capacity of words. */
     int *batch_idx; /**< start index of mini-batches. */
     int num_batches; /**< number of batches. */
-    struct _connlm_egs_t_ *next; /**< pointer to the next list element. */
-} connlm_egs_t;
+    struct _word_pool_t_ *next; /**< pointer to the next list element. */
+} word_pool_t;
 
 /**
- * Destroy a connlm_egs and set the pointer to NULL.
+ * Destroy a word_pool and set the pointer to NULL.
  * @ingroup g_reader
- * @param[in] ptr pointer to connlm_egs_t.
+ * @param[in] ptr pointer to word_pool_t.
  */
-#define safe_connlm_egs_destroy(ptr) do {\
+#define safe_word_pool_destroy(ptr) do {\
     if((ptr) != NULL) {\
-        connlm_egs_destroy(ptr);\
+        word_pool_destroy(ptr);\
         safe_st_free(ptr);\
         (ptr) = NULL;\
     }\
     } while(0)
 /**
- * Destroy a connlm_egs.
+ * Destroy a word_pool.
  * @ingroup g_reader
- * @param[in] egs egs to be destroyed.
+ * @param[in] pool pool to be destroyed.
  */
-void connlm_egs_destroy(connlm_egs_t *egs);
+void word_pool_destroy(word_pool_t *wp);
 
 /**
- * Read words into egs.
+ * Read words into pool.
  * @ingroup g_reader
- * @param[in] egs connlm_egs.
+ * @param[in] wp word pool.
  * @param[out] sent_ends contains postion of \</s\>s, if not NULL.
  * @param[in] epoch_size number sents read one time.
  * @param[in] text_fp text file.
@@ -107,7 +107,7 @@ void connlm_egs_destroy(connlm_egs_t *egs);
  * @param[in] drop_empty_line whether drop the empty lines.
  * @return non-zero value if any error.
  */
-int connlm_egs_read(connlm_egs_t *egs, int *sent_ends,
+int word_pool_read(word_pool_t *wp, int *sent_ends,
         int epoch_size, FILE *text_fp, vocab_t *vocab, int *oovs,
         bool drop_empty_line);
 
@@ -132,13 +132,13 @@ typedef struct _reader_t_ {
     vocab_t *vocab; /**< vocabulary. */
     int num_thrs; /**< number of working threads. */
 
-    connlm_egs_t *full_egs_head; /**< head of pool for egs filled with data. */
-    connlm_egs_t *full_egs_tail; /**< head of pool for egs filled with data. */
-    connlm_egs_t *empty_egs; /**< pool for egs with data consumed. */
-    st_sem_t sem_full; /**< number of full egs. */
-    st_sem_t sem_empty; /**< number of empty egs. */
-    pthread_mutex_t full_egs_lock; /**< lock for full egs pool. */
-    pthread_mutex_t empty_egs_lock; /**< lock for empty egs pool. */
+    word_pool_t *full_wp_head; /**< head of list for word pool filled with data. */
+    word_pool_t *full_wp_tail; /**< tail of list for word pool filled with data. */
+    word_pool_t *empty_wps; /**< list for word pool with data consumed. */
+    st_sem_t sem_full; /**< semaphore for full word pool list. */
+    st_sem_t sem_empty; /**< semaphore for empty word pool list. */
+    pthread_mutex_t full_wp_lock; /**< lock for full word pool list. */
+    pthread_mutex_t empty_wp_lock; /**< lock for empty word pool list. */
 
     FILE *fp_debug; /**< file pointer to print out debug info. */
     pthread_mutex_t fp_debug_lock; /**< lock for fp_debug_log. */
@@ -204,21 +204,21 @@ int reader_read(reader_t *reader, thr_stat_t *stats, int *err);
 int reader_wait(reader_t *reader);
 
 /**
- * Get and hold a egs in reading pool.
+ * Get and hold a word pool in reading queue.
  * @ingroup g_reader
  * @param[in] reader reader.
  * @return NULL if there is no more data or any error.
  */
-connlm_egs_t* reader_hold_egs(reader_t *reader);
+word_pool_t* reader_hold_word_pool(reader_t *reader);
 
 /**
- * Relase a egs to reading pool.
+ * Relase a word pool to reading queue.
  * @ingroup g_reader
  * @param[in] reader reader.
- * @param[in] egs egs.
+ * @param[in] wp word pool.
  * @return non-zero value if any error.
  */
-int reader_release_egs(reader_t *reader, connlm_egs_t* egs);
+int reader_release_word_pool(reader_t *reader, word_pool_t* wp);
 
 #ifdef __cplusplus
 }

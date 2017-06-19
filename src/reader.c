@@ -39,53 +39,53 @@
 
 #define NUM_WORD_PER_SENT 128
 
-void connlm_egs_destroy(connlm_egs_t *egs)
+void word_pool_destroy(word_pool_t *wp)
 {
-    if (egs != NULL) {
-        safe_st_free(egs->words);
-        egs->capacity = 0;
-        egs->size = 0;
-        safe_st_free(egs->batch_idx);
-        egs->num_batches = 0;
+    if (wp != NULL) {
+        safe_st_free(wp->words);
+        wp->capacity = 0;
+        wp->size = 0;
+        safe_st_free(wp->batch_idx);
+        wp->num_batches = 0;
     }
 }
 
 //#pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wstrict-overflow"
-static int connlm_egs_ensure(connlm_egs_t *egs, int capacity)
+static int word_pool_ensure_capacity(word_pool_t *wp, int capacity)
 {
-    ST_CHECK_PARAM(egs == NULL, -1);
+    ST_CHECK_PARAM(wp == NULL, -1);
 
-    if (egs->capacity < capacity) {
-        egs->words = st_realloc(egs->words, sizeof(int)*capacity);
-        if (egs->words == NULL) {
-            ST_WARNING("Failed to st_realloc egs->words. capacity[%d]",
+    if (wp->capacity < capacity) {
+        wp->words = st_realloc(wp->words, sizeof(int)*capacity);
+        if (wp->words == NULL) {
+            ST_WARNING("Failed to st_realloc wp->words. capacity[%d]",
                     capacity);
             return -1;
         }
 
-        egs->capacity = capacity;
+        wp->capacity = capacity;
     }
 
     return 0;
 }
 //#pragma GCC diagnostic pop
 
-static int connlm_egs_print(FILE *fp, pthread_mutex_t *fp_lock,
-        connlm_egs_t *egs, vocab_t *vocab)
+static int word_pool_print(FILE *fp, pthread_mutex_t *fp_lock,
+        word_pool_t *wp, vocab_t *vocab)
 {
     int word;
     int i;
 
     ST_CHECK_PARAM(fp == NULL || fp_lock == NULL
-            || egs == NULL, -1);
+            || wp == NULL, -1);
 
     i = 0;
-    while (i < egs->size) {
+    while (i < wp->size) {
         (void)pthread_mutex_lock(fp_lock);
         fprintf(fp, "<EGS>: ");
-        while (egs->words[i] != SENT_END_ID && i < egs->size) {
-            word = egs->words[i];
+        while (wp->words[i] != SENT_END_ID && i < wp->size) {
+            word = wp->words[i];
             if (vocab != NULL && word == vocab_get_id(vocab, SENT_START)) {
                 i++;
                 continue;
@@ -96,7 +96,7 @@ static int connlm_egs_print(FILE *fp, pthread_mutex_t *fp_lock,
             } else {
                 fprintf(fp, "<%d>", word);
             }
-            if (i < egs->size - 1 && egs->words[i+1] != 0) {
+            if (i < wp->size - 1 && wp->words[i+1] != 0) {
                 fprintf(fp, " ");
             }
             i++;
@@ -110,41 +110,41 @@ static int connlm_egs_print(FILE *fp, pthread_mutex_t *fp_lock,
     return 0;
 }
 
-static int connlm_egs_build_mini_batch(connlm_egs_t *egs, int num_batches)
+static int word_pool_build_mini_batch(word_pool_t *wp, int num_batches)
 {
     int i, n;
     int cnt, eos;
     int words_per_batch;
 
-    ST_CHECK_PARAM(egs == NULL || num_batches <= 1, -1);
+    ST_CHECK_PARAM(wp == NULL || num_batches <= 1, -1);
 
-    if (num_batches > egs->num_batches) {
-        egs->batch_idx = (int *)st_realloc(egs->batch_idx,
+    if (num_batches > wp->num_batches) {
+        wp->batch_idx = (int *)st_realloc(wp->batch_idx,
                 sizeof(int) * (num_batches + 1));
-        if (egs->batch_idx == NULL) {
+        if (wp->batch_idx == NULL) {
             ST_WARNING("Failed to st_realloc batch_idx.");
             return -1;
         }
     }
-    egs->num_batches = num_batches;
+    wp->num_batches = num_batches;
 
-    words_per_batch = egs->size / num_batches + 1;
+    words_per_batch = wp->size / num_batches + 1;
 
-    egs->batch_idx[0] = 0;
+    wp->batch_idx[0] = 0;
     n = 1;
 
     eos = 0;
     i = 0;
     cnt = 0;
-    while (i < egs->size) {
-        if (egs->words[i] == SENT_END_ID) {
+    while (i < wp->size) {
+        if (wp->words[i] == SENT_END_ID) {
             eos = i;
         }
         ++cnt;
         if (cnt >= words_per_batch) {
-            egs->batch_idx[n] = eos + 1;
+            wp->batch_idx[n] = eos + 1;
             ++n;
-            if (n >= egs->num_batches) {
+            if (n >= wp->num_batches) {
                 break;
             }
             cnt = i - eos;
@@ -152,12 +152,12 @@ static int connlm_egs_build_mini_batch(connlm_egs_t *egs, int num_batches)
 
         ++i;
     }
-    egs->batch_idx[egs->num_batches] = egs->size;
+    wp->batch_idx[wp->num_batches] = wp->size;
 
     return 0;
 }
 
-int connlm_egs_read(connlm_egs_t *egs, int *sent_ends,
+int word_pool_read(word_pool_t *wp, int *sent_ends,
         int epoch_size, FILE *text_fp, vocab_t *vocab, int *oovs,
         bool drop_empty_line)
 {
@@ -174,12 +174,12 @@ int connlm_egs_read(connlm_egs_t *egs, int *sent_ends,
     bool err;
 
     // assert len(sent_ends) >= epoch_size
-    ST_CHECK_PARAM(egs == NULL || text_fp == NULL || vocab == NULL, -1);
+    ST_CHECK_PARAM(wp == NULL || text_fp == NULL || vocab == NULL, -1);
 
     err = false;
     num_sents = 0;
     oov = 0;
-    egs->size = 0;
+    wp->size = 0;
     while (st_fgets(&line, &line_sz, text_fp, &err)) {
         remove_newline(line);
 
@@ -187,14 +187,15 @@ int connlm_egs_read(connlm_egs_t *egs, int *sent_ends,
             continue;
         }
 
-        if (egs->size >= egs->capacity - 1) {
-            if (connlm_egs_ensure(egs, egs->capacity + NUM_WORD_PER_SENT) < 0) {
-                ST_WARNING("Failed to connlm_egs_ensure. ");
+        if (wp->size >= wp->capacity - 1) {
+            if (word_pool_ensure_capacity(wp,
+                        wp->capacity + NUM_WORD_PER_SENT) < 0) {
+                ST_WARNING("Failed to word_pool_ensure_capacity. ");
                 goto ERR;
             }
         }
-        egs->words[egs->size] = vocab_get_id(vocab, SENT_START);
-        egs->size++;
+        wp->words[wp->size] = vocab_get_id(vocab, SENT_START);
+        wp->size++;
 
         p = line;
         i = 0;
@@ -202,20 +203,20 @@ int connlm_egs_read(connlm_egs_t *egs, int *sent_ends,
             if (*p == ' ' || *p == '\t') {
                 if (i > 0) {
                     word[i] = '\0';
-                    if (egs->size >= egs->capacity - 1) {
-                        if (connlm_egs_ensure(egs,
-                                egs->capacity + NUM_WORD_PER_SENT) < 0) {
-                            ST_WARNING("Failed to connlm_egs_ensure. ");
+                    if (wp->size >= wp->capacity - 1) {
+                        if (word_pool_ensure_capacity(wp,
+                                wp->capacity + NUM_WORD_PER_SENT) < 0) {
+                            ST_WARNING("Failed to word_pool_ensure_capacity. ");
                             goto ERR;
                         }
                     }
-                    egs->words[egs->size] = vocab_get_id(vocab, word);
-                    if (egs->words[egs->size] < 0
-                            || egs->words[egs->size] == UNK_ID) {
-                        egs->words[egs->size] = UNK_ID;
+                    wp->words[wp->size] = vocab_get_id(vocab, word);
+                    if (wp->words[wp->size] < 0
+                            || wp->words[wp->size] == UNK_ID) {
+                        wp->words[wp->size] = UNK_ID;
                         oov++;
                     }
-                    egs->size++;
+                    wp->size++;
 
                     i = 0;
                 }
@@ -231,28 +232,28 @@ int connlm_egs_read(connlm_egs_t *egs, int *sent_ends,
         }
         if (i > 0) {
             word[i] = '\0';
-            if (egs->size >= egs->capacity - 1) {
-                if (connlm_egs_ensure(egs,
-                            egs->capacity + NUM_WORD_PER_SENT) < 0) {
-                    ST_WARNING("Failed to connlm_egs_ensure. ");
+            if (wp->size >= wp->capacity - 1) {
+                if (word_pool_ensure_capacity(wp,
+                            wp->capacity + NUM_WORD_PER_SENT) < 0) {
+                    ST_WARNING("Failed to word_pool_ensure_capacity. ");
                     goto ERR;
                 }
             }
-            egs->words[egs->size] = vocab_get_id(vocab, word);
-            if (egs->words[egs->size] < 0
-                    || egs->words[egs->size] == UNK_ID) {
-                egs->words[egs->size] = UNK_ID;
+            wp->words[wp->size] = vocab_get_id(vocab, word);
+            if (wp->words[wp->size] < 0
+                    || wp->words[wp->size] == UNK_ID) {
+                wp->words[wp->size] = UNK_ID;
                 oov++;
             }
-            egs->size++;
+            wp->size++;
 
             i = 0;
         }
 
-        egs->words[egs->size] = SENT_END_ID;
-        egs->size++; // do not need to check, prev check num_egs - 1
+        wp->words[wp->size] = SENT_END_ID;
+        wp->size++; // do not need to check, prev check wp->size - 1
         if (sent_ends != NULL) {
-            sent_ends[num_sents] = egs->size;
+            sent_ends[num_sents] = wp->size;
         }
 
         num_sents++;
@@ -281,36 +282,36 @@ ERR:
 
 void reader_destroy(reader_t *reader)
 {
-    connlm_egs_t *p;
-    connlm_egs_t *q;
+    word_pool_t *p;
+    word_pool_t *q;
 
     if (reader == NULL) {
         return;
     }
 
-    p = reader->full_egs_head;
+    p = reader->full_wp_head;
     while (p != NULL) {
         q = p;
         p = p->next;
 
-        connlm_egs_destroy(q);
+        word_pool_destroy(q);
         safe_st_free(q);
     }
-    reader->full_egs_head = NULL;
-    reader->full_egs_tail = NULL;
+    reader->full_wp_head = NULL;
+    reader->full_wp_tail = NULL;
 
-    p = reader->empty_egs;
+    p = reader->empty_wps;
     while (p != NULL) {
         q = p;
         p = p->next;
 
-        connlm_egs_destroy(q);
+        word_pool_destroy(q);
         safe_st_free(q);
     }
-    reader->empty_egs = NULL;
+    reader->empty_wps = NULL;
 
-    (void)pthread_mutex_destroy(&reader->full_egs_lock);
-    (void)pthread_mutex_destroy(&reader->empty_egs_lock);
+    (void)pthread_mutex_destroy(&reader->full_wp_lock);
+    (void)pthread_mutex_destroy(&reader->empty_wp_lock);
     (void)st_sem_destroy(&reader->sem_full);
     (void)st_sem_destroy(&reader->sem_empty);
 
@@ -374,7 +375,7 @@ reader_t* reader_create(reader_opt_t *opt, int num_thrs,
         vocab_t *vocab, const char *text_file)
 {
     reader_t *reader = NULL;
-    connlm_egs_t *egs;
+    word_pool_t *wp;
     int pool_size;
 
     int i;
@@ -396,18 +397,18 @@ reader_t* reader_create(reader_opt_t *opt, int num_thrs,
     reader->text_file[MAX_DIR_LEN - 1] = '\0';
 
     pool_size = 2 * num_thrs;
-    reader->full_egs_head = NULL;
-    reader->full_egs_tail = NULL;
-    reader->empty_egs = NULL;;
+    reader->full_wp_head = NULL;
+    reader->full_wp_tail = NULL;
+    reader->empty_wps = NULL;;
     for (i = 0; i < pool_size; i++) {
-        egs = (connlm_egs_t *)st_malloc(sizeof(connlm_egs_t));
-        if (egs == NULL) {
-            ST_WARNING("Failed to st_malloc egs.");
+        wp = (word_pool_t *)st_malloc(sizeof(word_pool_t));
+        if (wp == NULL) {
+            ST_WARNING("Failed to st_malloc wp.");
             goto ERR;
         }
-        memset(egs, 0, sizeof(connlm_egs_t));
-        egs->next = reader->empty_egs;
-        reader->empty_egs = egs;
+        memset(wp, 0, sizeof(word_pool_t));
+        wp->next = reader->empty_wps;
+        reader->empty_wps = wp;
     }
 
     if (st_sem_init(&reader->sem_empty, pool_size) != 0) {
@@ -420,13 +421,13 @@ reader_t* reader_create(reader_opt_t *opt, int num_thrs,
         goto ERR;
     }
 
-    if (pthread_mutex_init(&reader->full_egs_lock, NULL) != 0) {
-        ST_WARNING("Failed to pthread_mutex_init full_egs_lock.");
+    if (pthread_mutex_init(&reader->full_wp_lock, NULL) != 0) {
+        ST_WARNING("Failed to pthread_mutex_init full_wp_lock.");
         goto ERR;
     }
 
-    if (pthread_mutex_init(&reader->empty_egs_lock, NULL) != 0) {
-        ST_WARNING("Failed to pthread_mutex_init empty_egs_lock.");
+    if (pthread_mutex_init(&reader->empty_wp_lock, NULL) != 0) {
+        ST_WARNING("Failed to pthread_mutex_init empty_wp_lock.");
         goto ERR;
     }
 
@@ -460,15 +461,17 @@ static void* reader_read_thread(void *args)
     off_t fsize;
     int *sent_ends = NULL;
 
-    connlm_egs_t egs = {
+    word_pool_t wp = {
         .words = NULL,
         .size = 0,
         .capacity = 0,
+        .batch_idx = NULL,
+        .num_batches = 0,
     };
     int num_thrs;
     int epoch_size, mini_batch;
 
-    connlm_egs_t *egs_in_pool;
+    word_pool_t *wp_in_queue;
     int num_sents;
     int oovs;
     int i;
@@ -500,8 +503,8 @@ static void* reader_read_thread(void *args)
     epoch_size = reader->opt.epoch_size;
     mini_batch = reader->opt.mini_batch;
 
-    if (connlm_egs_ensure(&egs, NUM_WORD_PER_SENT) < 0) {
-        ST_WARNING("Failed to connlm_egs_ensure.");
+    if (word_pool_ensure_capacity(&wp, NUM_WORD_PER_SENT) < 0) {
+        ST_WARNING("Failed to word_pool_ensure_capacity.");
         goto ERR;
     }
 
@@ -540,10 +543,10 @@ static void* reader_read_thread(void *args)
 #ifdef _TIME_PROF_
         gettimeofday(&tts_io, NULL);
 #endif
-        num_sents = connlm_egs_read(&egs, sent_ends, epoch_size, text_fp,
+        num_sents = word_pool_read(&wp, sent_ends, epoch_size, text_fp,
                 reader->vocab, &oovs, reader->opt.drop_empty_line);
         if (num_sents < 0) {
-            ST_WARNING("Failed to connlm_egs_read.");
+            ST_WARNING("Failed to word_pool_read.");
             goto ERR;
         }
 #ifdef _TIME_PROF_
@@ -555,7 +558,7 @@ static void* reader_read_thread(void *args)
 
         reader->oovs += oovs;
         reader->sents += num_sents;
-        reader->words += egs.size - num_sents; // Do not accumulate <s
+        reader->words += wp.size - num_sents; // Do not accumulate <s
 
 #ifdef _TIME_PROF_
         gettimeofday(&tts_shuf, NULL);
@@ -580,14 +583,14 @@ static void* reader_read_thread(void *args)
             goto ERR;
         }
 
-        if (pthread_mutex_lock(&reader->empty_egs_lock) != 0) {
-            ST_WARNING("Failed to pthread_mutex_lock empty_egs_lock.");
+        if (pthread_mutex_lock(&reader->empty_wp_lock) != 0) {
+            ST_WARNING("Failed to pthread_mutex_lock empty_wp_lock.");
             goto ERR;
         }
-        egs_in_pool = reader->empty_egs;
-        reader->empty_egs = reader->empty_egs->next;
-        if (pthread_mutex_unlock(&reader->empty_egs_lock) != 0) {
-            ST_WARNING("Failed to pthread_mutex_unlock empty_egs_lock.");
+        wp_in_queue = reader->empty_wps;
+        reader->empty_wps = reader->empty_wps->next;
+        if (pthread_mutex_unlock(&reader->empty_wp_lock) != 0) {
+            ST_WARNING("Failed to pthread_mutex_unlock empty_wp_lock.");
             goto ERR;
         }
 #ifdef _TIME_PROF_
@@ -597,14 +600,14 @@ static void* reader_read_thread(void *args)
 #ifdef _TIME_PROF_
         gettimeofday(&tts_fill, NULL);
 #endif
-        if (connlm_egs_ensure(egs_in_pool, egs.size) < 0) {
-            ST_WARNING("Failed to connlm_egs_ensure. size[%d].",
-                    egs.size);
+        if (word_pool_ensure_capacity(wp_in_queue, wp.size) < 0) {
+            ST_WARNING("Failed to word_pool_ensure_capacity. size[%d].",
+                    wp.size);
             goto ERR;
         }
 
         if (shuffle_buf != NULL) {
-            egs_in_pool->size = 0;
+            wp_in_queue->size = 0;
             for (i = 0; i < num_sents; i++) {
                 if (shuffle_buf[i] == 0) {
                     start = 0;
@@ -613,18 +616,18 @@ static void* reader_read_thread(void *args)
                 }
                 end = sent_ends[shuffle_buf[i]];
 
-                memcpy(egs_in_pool->words + egs_in_pool->size,
-                        egs.words + start, sizeof(int)*(end - start));
-                egs_in_pool->size += end - start;
+                memcpy(wp_in_queue->words + wp_in_queue->size,
+                        wp.words + start, sizeof(int)*(end - start));
+                wp_in_queue->size += end - start;
             }
         } else {
-            memcpy(egs_in_pool->words, egs.words, sizeof(int)*egs.size);
-            egs_in_pool->size = egs.size;
+            memcpy(wp_in_queue->words, wp.words, sizeof(int)*wp.size);
+            wp_in_queue->size = wp.size;
         }
 
         if (mini_batch > 1) {
-            if (connlm_egs_build_mini_batch(egs_in_pool, mini_batch) < 0) {
-                ST_WARNING("Failed to connlm_egs_build_mini_batch.");
+            if (word_pool_build_mini_batch(wp_in_queue, mini_batch) < 0) {
+                ST_WARNING("Failed to word_pool_build_mini_batch.");
                 goto ERR;
             }
         }
@@ -632,21 +635,21 @@ static void* reader_read_thread(void *args)
         gettimeofday(&tte_fill, NULL);
 #endif
 
-        if (pthread_mutex_lock(&reader->full_egs_lock) != 0) {
-            ST_WARNING("Failed to pthread_mutex_lock full_egs_lock.");
+        if (pthread_mutex_lock(&reader->full_wp_lock) != 0) {
+            ST_WARNING("Failed to pthread_mutex_lock full_wp_lock.");
             goto ERR;
         }
-        egs_in_pool->next = NULL;
-        if (reader->full_egs_tail != NULL) {
-            reader->full_egs_tail->next = egs_in_pool;
+        wp_in_queue->next = NULL;
+        if (reader->full_wp_tail != NULL) {
+            reader->full_wp_tail->next = wp_in_queue;
         }
-        reader->full_egs_tail = egs_in_pool;
-        if (reader->full_egs_head == NULL) {
-            reader->full_egs_head = egs_in_pool;
+        reader->full_wp_tail = wp_in_queue;
+        if (reader->full_wp_head == NULL) {
+            reader->full_wp_head = wp_in_queue;
         }
-        //ST_DEBUG("IN: %p, %d", egs_in_pool, egs_in_pool->size);
-        if (pthread_mutex_unlock(&reader->full_egs_lock) != 0) {
-            ST_WARNING("Failed to pthread_mutex_unlock full_egs_lock.");
+        //ST_DEBUG("IN: %p, %d", wp_in_queue, wp_in_queue->size);
+        if (pthread_mutex_unlock(&reader->full_wp_lock) != 0) {
+            ST_WARNING("Failed to pthread_mutex_unlock full_wp_lock.");
             goto ERR;
         }
         if (st_sem_post(&reader->sem_full) != 0) {
@@ -718,7 +721,7 @@ static void* reader_read_thread(void *args)
         }
     }
 
-    connlm_egs_destroy(&egs);
+    word_pool_destroy(&wp);
     safe_fclose(text_fp);
     safe_st_free(shuffle_buf);
     safe_st_free(sent_ends);
@@ -728,7 +731,7 @@ static void* reader_read_thread(void *args)
 ERR:
     *(reader->err) = -1;
 
-    connlm_egs_destroy(&egs);
+    word_pool_destroy(&wp);
     safe_fclose(text_fp);
     safe_st_free(shuffle_buf);
     safe_st_free(sent_ends);
@@ -774,9 +777,9 @@ int reader_wait(reader_t *reader)
     return 0;
 }
 
-connlm_egs_t* reader_hold_egs(reader_t *reader)
+word_pool_t* reader_hold_word_pool(reader_t *reader)
 {
-    connlm_egs_t *egs;
+    word_pool_t *wp;
 
     ST_CHECK_PARAM(reader == NULL, NULL);
 
@@ -784,51 +787,51 @@ connlm_egs_t* reader_hold_egs(reader_t *reader)
         ST_WARNING("Failed to st_sem_wait sem_full.");
         return NULL;
     }
-    if (pthread_mutex_lock(&reader->full_egs_lock) != 0) {
-        ST_WARNING("Failed to pthread_mutex_lock full_egs_lock.");
+    if (pthread_mutex_lock(&reader->full_wp_lock) != 0) {
+        ST_WARNING("Failed to pthread_mutex_lock full_wp_lock.");
         return NULL;
     }
 
-    egs = reader->full_egs_head;
-    if (egs != NULL) {
-        reader->full_egs_head = egs->next;
+    wp = reader->full_wp_head;
+    if (wp != NULL) {
+        reader->full_wp_head = wp->next;
     }
-    if (egs == reader->full_egs_tail) {
-        reader->full_egs_tail = NULL;
+    if (wp == reader->full_wp_tail) {
+        reader->full_wp_tail = NULL;
     }
 
-    if (pthread_mutex_unlock(&reader->full_egs_lock) != 0) {
-        ST_WARNING("Failed to pthread_mutex_unlock full_egs_lock.");
+    if (pthread_mutex_unlock(&reader->full_wp_lock) != 0) {
+        ST_WARNING("Failed to pthread_mutex_unlock full_wp_lock.");
         return NULL;
     }
 
     if (reader->fp_debug != NULL) {
-        if (connlm_egs_print(reader->fp_debug, &reader->fp_debug_lock,
-                    egs, reader->vocab) < 0) {
-            ST_WARNING("Failed to connlm_egs_print.");
+        if (word_pool_print(reader->fp_debug, &reader->fp_debug_lock,
+                    wp, reader->vocab) < 0) {
+            ST_WARNING("Failed to word_pool_print.");
             return NULL;
         }
     }
 
-    return egs;
+    return wp;
 }
 
-int reader_release_egs(reader_t *reader, connlm_egs_t *egs)
+int reader_release_word_pool(reader_t *reader, word_pool_t *wp)
 {
-    ST_CHECK_PARAM(reader == NULL || egs == NULL, -1);
+    ST_CHECK_PARAM(reader == NULL || wp == NULL, -1);
 
-    if (pthread_mutex_lock(&reader->empty_egs_lock) != 0) {
-        ST_WARNING("Failed to pthread_mutex_lock empty_egs_lock.");
+    if (pthread_mutex_lock(&reader->empty_wp_lock) != 0) {
+        ST_WARNING("Failed to pthread_mutex_lock empty_wp_lock.");
         return -1;
     }
-    egs->next = reader->empty_egs;
-    reader->empty_egs = egs;
-    if (pthread_mutex_unlock(&reader->empty_egs_lock) != 0) {
-        ST_WARNING("Failed to pthread_mutex_unlock empty_egs_lock.");
+    wp->next = reader->empty_wps;
+    reader->empty_wps = wp;
+    if (pthread_mutex_unlock(&reader->empty_wp_lock) != 0) {
+        ST_WARNING("Failed to pthread_mutex_unlock empty_wp_lock.");
         return -1;
     }
     if (st_sem_post(&reader->sem_empty) != 0) {
-        (void) pthread_mutex_unlock(&reader->empty_egs_lock);
+        (void) pthread_mutex_unlock(&reader->empty_wp_lock);
         ST_WARNING("Failed to st_sem_post sem_empty.");
         return -1;
     }

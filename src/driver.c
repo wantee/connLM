@@ -299,7 +299,7 @@ static void* driver_thread(void *args)
     reader_t *reader;
     int tid;
 
-    connlm_egs_t *egs = NULL;
+    word_pool_t *wp = NULL;
 
     count_t words;
     count_t sents;
@@ -332,10 +332,10 @@ static void* driver_thread(void *args)
         }
 
         gettimeofday(&tts_wait, NULL);
-        egs = reader_hold_egs(reader);
+        wp = reader_hold_word_pool(reader);
         gettimeofday(&tte_wait, NULL);
 
-        if (egs == NULL) { // finish
+        if (wp == NULL) { // finish
             if (updater_finalize(updater) < 0) {
                 ST_WARNING("Failed to updater_finalize.");
                 goto ERR;
@@ -349,7 +349,7 @@ static void* driver_thread(void *args)
             break;
         }
 
-        if (updater_feed(updater, egs->words, egs->size) < 0) {
+        if (updater_feed(updater, wp->words, wp->size) < 0) {
             ST_WARNING("Failed to updater_feed.");
             goto ERR;
         }
@@ -378,8 +378,8 @@ static void* driver_thread(void *args)
                 ms_wait / 1000.0, ms_wait / (ms / 100.0),
                 TIMEDIFF(tts_wait, tte_wait) / 1000.0);
 
-        if (reader_release_egs(reader, egs) < 0) {
-            ST_WARNING("Failed to reader_release_egs.");
+        if (reader_release_word_pool(reader, wp) < 0) {
+            ST_WARNING("Failed to reader_release_word_pool.");
             goto ERR;
         }
     }
@@ -542,10 +542,12 @@ static int driver_gen(driver_t *driver)
 
     count_t n_word, n_sent;
 
-    connlm_egs_t egs = {
+    word_pool_t wp = {
         .words = NULL,
         .size = 0,
         .capacity = 0,
+        .batch_idx = NULL,
+        .num_batches = 0,
     };
 
     int word;
@@ -575,23 +577,23 @@ static int driver_gen(driver_t *driver)
     while(true) {
         first = true;
         if (text_fp != NULL && !feof(text_fp)) {
-            if (connlm_egs_read(&egs, NULL, 1, text_fp, vocab,
+            if (word_pool_read(&wp, NULL, 1, text_fp, vocab,
                         NULL, true) < 0) {
-                ST_WARNING("Failed to connlm_egs_read.");
+                ST_WARNING("Failed to word_pool_read.");
                 goto ERR;
             }
 
-            if (egs.size > 1) {
+            if (wp.size > 1) {
                 printf("[");
-                for (i = 1; i < egs.size - 1; i++) {
-                    printf("%s", vocab_get_word(vocab, egs.words[i]));
-                    if (i < egs.size - 2) {
+                for (i = 1; i < wp.size - 1; i++) {
+                    printf("%s", vocab_get_word(vocab, wp.words[i]));
+                    if (i < wp.size - 2) {
                         printf(" ");
                     }
                 }
                 printf("]");
 
-                if (updater_feed(updater, egs.words, egs.size - 1) < 0) {
+                if (updater_feed(updater, wp.words, wp.size - 1) < 0) {
                     ST_WARNING("Failed to updater_feed.");
                     goto ERR;
                 }
@@ -652,12 +654,12 @@ static int driver_gen(driver_t *driver)
             ", words/sec: %.1f", n_word, n_sent,
             n_word / ((double) ms / 1000));
 
-    connlm_egs_destroy(&egs);
+    word_pool_destroy(&wp);
     safe_fclose(text_fp);
     return 0;
 
 ERR:
-    connlm_egs_destroy(&egs);
+    word_pool_destroy(&wp);
     safe_fclose(text_fp);
     return -1;
 }

@@ -280,10 +280,12 @@ static int generate_eval_state(wildcard_state_t *ws)
 
     count_t n_word;
 
-    connlm_egs_t egs = {
+    word_pool_t wp = {
         .words = NULL,
         .size = 0,
         .capacity = 0,
+        .batch_idx = NULL,
+        .num_batches = 0,
     };
 
     int word;
@@ -304,13 +306,13 @@ static int generate_eval_state(wildcard_state_t *ws)
 
     n_word = 0;
     while (! feof(text_fp)) {
-        if (connlm_egs_read(&egs, NULL, 1, text_fp,
+        if (word_pool_read(&wp, NULL, 1, text_fp,
                     ws->connlm->vocab, NULL, true) < 0) {
-            ST_WARNING("Failed to connlm_egs_read.");
+            ST_WARNING("Failed to word_pool_read.");
             goto ERR;
         }
 
-        if (updater_feed(ws->updater, egs.words, egs.size) < 0) {
+        if (updater_feed(ws->updater, wp.words, wp.size) < 0) {
             ST_WARNING("Failed to updater_feed.");
             goto ERR;
         }
@@ -339,7 +341,7 @@ static int generate_eval_state(wildcard_state_t *ws)
         ws->eval_state[i] /= n_word;
     }
 
-    connlm_egs_destroy(&egs);
+    word_pool_destroy(&wp);
     safe_fclose(text_fp);
 
     if (ws->ws_opt.pre_activation) {
@@ -352,7 +354,7 @@ static int generate_eval_state(wildcard_state_t *ws)
     return 0;
 
 ERR:
-    connlm_egs_destroy(&egs);
+    word_pool_destroy(&wp);
     safe_fclose(text_fp);
     return -1;
 }
