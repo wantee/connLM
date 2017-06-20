@@ -32,7 +32,6 @@ extern "C" {
 #include <connlm/config.h>
 
 #include "connlm.h"
-#include "updaters/input_updater.h"
 #include "updaters/output_updater.h"
 #include "updaters/component_updater.h"
 
@@ -56,7 +55,6 @@ typedef struct _updater_t_ {
 
     unsigned int rand_seed; /**< rand seed. */
 
-    sent_t sent; /**< current sentence, filled by input_updater. */
     double logp; /**< logp for current target word. */
 } updater_t;
 

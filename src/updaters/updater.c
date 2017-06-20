@@ -221,7 +221,7 @@ updater_t* updater_create(connlm_t *connlm)
     updater->input_updater = input_updater_create(
             vocab_get_id(connlm->vocab, SENT_START));
     if (updater->input_updater == NULL) {
-        ST_WARNING("Failed to out_updater_create.");
+        ST_WARNING("Failed to input_updater_create.");
         goto ERR;
     }
 
@@ -375,11 +375,23 @@ bool updater_steppable(updater_t *updater)
 
 int updater_move_input(updater_t *updater)
 {
+    int c;
+
     ST_CHECK_PARAM(updater == NULL, -1);
 
-    if (input_updater_move(updater->input_updater, &updater->sent) < 0) {
+    if (input_updater_move(updater->input_updater) < 0) {
         ST_WARNING("Failed to input_updater_move.");
         return -1;
+    }
+
+    for (c = 0; c < updater->connlm->num_comp; c++) {
+        if (input_updater_update_batch(updater->input_updater,
+                    updater->comp_updaters[c]->comp->input,
+                    updater->comp_updaters[c]->batch) < 0) {
+            ST_WARNING("Failed to input_updater_update_batch[%s].",
+                    updater->connlm->comps[c]->name);
+            return -1;
+        }
     }
 
     return 0;

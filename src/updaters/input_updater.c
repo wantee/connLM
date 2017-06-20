@@ -36,19 +36,16 @@ void input_updater_destroy(input_updater_t *input_updater)
         return;
     }
 
-    safe_st_free(input_updater->words);
-    input_updater->n_word = 0;
-    input_updater->cap_word = 0;
+    safe_word_pool_destroy(input_updater->wp);
+    safe_word_pool_destroy(input_updater->tmp_wp);
     input_updater->cur_pos = 0;
+    input_updater->end_pos = 0;
 
     input_updater->ctx_leftmost = 0;
     input_updater->ctx_rightmost = 0;
-
-    input_updater->sent_head = -1;
-    input_updater->sent_tail = -1;
 }
 
-input_updater_t* input_updater_create(int bos_id)
+input_updater_t* input_updater_create(input_t *input, int bos_id)
 {
     input_updater_t *input_updater = NULL;
 
@@ -61,6 +58,20 @@ input_updater_t* input_updater_create(int bos_id)
 
     input_updater->bos_id = bos_id;
 
+    input_updater->wp = (word_pool_t *)st_malloc(sizeof(word_pool_t));
+    if (input_updater->wp == NULL) {
+        ST_WARNING("Failed to st_malloc wp.");
+        goto ERR;
+    }
+    memset(input_updater->wp, 0, sizeof(word_pool_t));
+
+    input_updater->tmp_wp = (word_pool_t *)st_malloc(sizeof(word_pool_t));
+    if (input_updater->tmp_wp == NULL) {
+        ST_WARNING("Failed to st_malloc tmp_wp.");
+        goto ERR;
+    }
+    memset(input_updater->tmp_wp, 0, sizeof(word_pool_t));
+
     return input_updater;
 
 ERR:
@@ -72,148 +83,239 @@ int input_updater_clear(input_updater_t *input_updater)
 {
     ST_CHECK_PARAM(input_updater == NULL, -1);
 
-    input_updater->n_word = 0;
     input_updater->cur_pos = 0;
-    input_updater->sent_head = -1;
-    input_updater->sent_tail = -1;
 
     return 0;
 }
 
-int input_updater_setup(input_updater_t *input_updater, int ctx_leftmost,
-        int ctx_rightmost)
+int input_updater_setup(input_updater_t *input_updater,
+        int ctx_leftmost, int ctx_rightmost)
 {
-    size_t sz;
-
     ST_CHECK_PARAM(input_updater == NULL, -1);
 
+    input_updater->cur_pos = 0;
     input_updater->ctx_leftmost = ctx_leftmost;
     input_updater->ctx_rightmost = ctx_rightmost;
 
-    input_updater->cap_word = ctx_leftmost + ctx_rightmost + 1;
-
-    sz = sizeof(int) * input_updater->cap_word;
-    input_updater->words = (int *)st_malloc(sz);
-    if (input_updater->words == NULL) {
-        ST_WARNING("Failed to st_malloc words.");
-        goto ERR;
-    }
-    memset(input_updater->words, 0, sz);
-    input_updater->n_word = 0;
-    input_updater->cur_pos = 0;
-    input_updater->sent_head = -1;
-    input_updater->sent_tail = -1;
-
     return 0;
-
-ERR:
-    safe_st_free(input_updater->words);
-    input_updater->n_word = 0;
-    input_updater->cap_word = 0;
-    input_updater->cur_pos = 0;
-    input_updater->ctx_leftmost = 0;
-    input_updater->ctx_rightmost = 0;
-    input_updater->sent_head = -1;
-    input_updater->sent_tail = -1;
-
-    return -1;
 }
 
-static int input_updater_update_sent(input_updater_t *input_updater,
-        sent_t *sent)
+int input_updater_update_batch(input_updater_t *input_updater,
+        input_t *input, egs_batch_t *batch)
 {
-    int i;
-    int next;
+    egs_input_t *egs_input;
+    word_pool_t *wp;
+    int b, i;
+    int cur_pos, idx;
+    int ctx_leftmost = 0;
+    int ctx_rightmost = 0;
 
-    ST_CHECK_PARAM(input_updater == NULL || sent == NULL, -1);
+    ST_CHECK_PARAM(input_updater == NULL || batch == NULL, -1);
 
-    if (input_updater->sent_head >= 0) {
-        if (input_updater->words[input_updater->sent_tail-1] != SENT_END_ID) {
-            // move util sentence end
-            next = input_updater->sent_tail;
-            input_updater->sent_tail = input_updater->n_word;
-            for (i = next; i < input_updater->n_word; i++) {
-                if (input_updater->words[i] == SENT_END_ID) {
-                    input_updater->sent_tail = i + 1;
-                    break;
-                }
-            }
-        } else if (input_updater->cur_pos >= input_updater->sent_tail) {
-            // move to next sentence
-            input_updater->sent_head = input_updater->sent_tail;
-            // move util sentence end
-            next = input_updater->sent_tail;
-            input_updater->sent_tail = input_updater->n_word;
-            for (i = next; i < input_updater->n_word; i++) {
-                if (input_updater->words[i] == SENT_END_ID) {
-                    input_updater->sent_tail = i + 1;
-                    break;
-                }
-            }
+    wp = input_updater->wp;
+    cur_pos = input_updater->cur_pos;
+
+    if (input->context[0].i < 0) {
+        ctx_leftmost = -input->context[0].i;
+    }
+    if (input->context[input->n_ctx - 1].i > 0) {
+        ctx_rightmost = input->context[input->n_ctx - 1].i;
+    }
+
+    if (batch->cap_egs < wp->batch_size) {
+        if (egs_batch_realloc(batch, wp->batch_size, input->n_ctx) < 0) {
+            ST_WARNING("Failed to egs_batch_realloc.");
+            return -1;
         }
-    } else {
-        input_updater->sent_head = 0;
-        input_updater->sent_tail = input_updater->n_word;
-        for (i = 0; i < input_updater->n_word; i++) {
-            if (input_updater->words[i] == SENT_END_ID) {
-                input_updater->sent_tail = i + 1;
+    }
+
+    batch->num_egs = 0;
+    for (b = 0; b < wp->batch_size; b++) {
+        if (wp->row_starts[b] + cur_pos >= wp->row_starts[b + 1]) {
+            ST_WARNING("row[%d] overflow", b);
+            return -1;
+        }
+
+        // we never use <s> as target
+        if (wp->words[wp->row_starts[b] + cur_pos] == bos_id) {
+            continue;
+        }
+
+        // find sentence boundaries
+        i = cur_pos - 1;
+        while (i >= cur_pos - ctx_leftmost && i >= 0) {
+            if (wp->words[wp->row_starts[b] + i] == SENT_END_ID) {
                 break;
             }
+            --i;
         }
-    }
+        ctx_leftmost = -(i + 1 - cur_pos);
 
-    if (input_updater->cur_pos < input_updater->n_word
-            && input_updater->words[input_updater->cur_pos] == input_updater->bos_id) {
-        // we never use <s> as target word, since P(<s>) should be equal to 1
-        input_updater->cur_pos++;
-    }
+        i = cur_pos;
+        while (i < cur_pos + ctx_rightmost
+                && wp->row_starts[b] + i + 1 < wp->row_starts[b + 1]) {
+            if (wp->words[wp->row_starts[b] + i] == SENT_END_ID) {
+                break;
+            }
+            ++i;
+        }
+        ctx_rightmost = i - cur_pos;
 
-    sent->words = input_updater->words + input_updater->sent_head;
-    sent->n_word = input_updater->sent_tail - input_updater->sent_head;
-    sent->tgt_pos = input_updater->cur_pos - input_updater->sent_head;
+        // add inputs
+        egs_input = batch->inputs + batch->num_egs;
+        egs_input->num_words = 0;
+        for (i = 0; i < input->n_ctx; i++) {
+            if (input->context[i].i < 0) {
+                if (-input->context[i].i > ctx_leftmost) {
+                    continue;
+                }
+            } else {
+                if (input->context[i].i < ctx_rightmost) {
+                    continue;
+                }
+            }
+
+            assert(egs_input->num_words < egs_input->cap_words);
+
+            idx = wp->row_starts[b] + cur_pos + input->context[i].i;
+            egs_input->words[egs_input->num_words] = wp->words[idx];
+            egs_input->weights[egs_input->num_words] = input->context[i].w;
+            egs_input->positions[egs_input->num_words] = input->context[i].i;
+            egs_input->num_words++;
+        }
+
+        if (egs_input->num_words == 0) {
+            // this should be very rare. no input can be provided
+            continue;
+        }
+
+        // add target
+        idx = wp->row_starts[b] + cur_pos;
+        batch->targets[batch->num_egs] = wp->words[idx];
+
+        batch->num_egs++;
+    }
 
     return 0;
 }
 
-int input_updater_feed(input_updater_t *input_updater, int *words, int n_word,
-        sent_t *sent)
+int input_updater_feed(input_updater_t *input_updater, word_pool_t *new_wp)
 {
-    int drop;
+    word_pool_t *wp, *tmp_wp;
+    int b, size;
+    int num_keep;
 
     ST_CHECK_PARAM(input_updater == NULL || words == NULL, -1);
 
-    // drop words already done, but keep current sentence
-    // in order to calculate word position within the sentence.
-    drop = min(input_updater->cur_pos - input_updater->ctx_leftmost,
-            input_updater->sent_head);
-    if (drop > 0) {
-        memmove(input_updater->words, input_updater->words + drop,
-                sizeof(int) * (input_updater->n_word - drop));
-        input_updater->n_word -= drop;
-        input_updater->cur_pos -= drop;
-        input_updater->sent_head -= drop;
-        input_updater->sent_tail -= drop;
-    }
+    wp = input_updater->wp;
+    tmp_wp = input_updater->tmp_wp;
 
-    // append new words
-    if (input_updater->n_word + n_word > input_updater->cap_word) {
-        input_updater->cap_word = input_updater->n_word + n_word;
-        input_updater->words = (int *)st_realloc(input_updater->words,
-                sizeof(int) * input_updater->cap_word);
-        if (input_updater->words == NULL) {
-            ST_WARNING("Failed to st_realloc words.");
+    if (wp->capacity == 0) {
+        if (word_pool_copy(wp, new_wp) < 0) {
+            ST_WARNING("Failed to word_pool_copy.");
             return -1;
         }
-        //memset(input_updater->words + input_updater->n_word, 0,
-        //    sizeof(int) * (input_updater->cap_word - input_updater->n_word));
-    }
-    memcpy(input_updater->words + input_updater->n_word, words,
-            sizeof(int)*n_word);
-    input_updater->n_word += n_word;
 
-    if (input_updater_update_sent(input_updater, sent) < 0) {
-        ST_WARNING("Failed to input_updater_update_sent.");
-        return -1;
+        input_updater->cur_pos = 0;
+    } else {
+        if (wp->batch_size != new_wp->batch_size) {
+            // sentences must be complete, if batch size changed
+            for (b = 0; b < wp->batch_size; b++) {
+                if (wp->words[wp->row_starts[b + 1] - 1] != SENT_END_ID) {
+                    ST_WARNING("Can not change batch_size, since sentence"
+                            "in row[%d] is not ended", b);
+                    return -1;
+                }
+            }
+
+            for (b = 0; b < new_wp->batch_size; b++) {
+                if (new_wp->words[new_wp->row_starts[b]] != input_updater->bos_id) {
+                    ST_WARNING("Can not change batch_size, since sentence"
+                            "in row[%d] is not started by <s>", b);
+                    return -1;
+                }
+            }
+        }
+
+        num_keep = input_updater->ctx_leftmost * wp->batch_size;
+        for (b = 0; b < wp->batch_size; b++) {
+            if (wp->row_starts[b + 1] - input_updater->cur_pos <= 0) {
+                continue;
+            }
+            num_keep += wp->row_starts[b + 1] - input_updater->cur_pos;
+        }
+
+        if (word_pool_ensure_capacity(tmp_wp, num_keep + new_wp->size) < 0) {
+            ST_WARNING("Failed to word_pool_ensure_capacity.");
+            return -1;
+        }
+
+        tmp_wp->batch_size = max(wp->batch_size, new_wp->batch_size);
+        if (word_pool_ensour_batch_size(tmp_wp, tmp_wp->batch_size) < 0) {
+            ST_WARNING("Failed to word_pool_ensure_batch_size.");
+            return -1;
+        }
+
+        tmp_wp->size = 0;
+        tmp_wp->row_starts[0] = 0;
+        for (b = 0; b < wp->batch_size; b++) {
+            // copy words need to be kept
+            num_keep = wp->row_starts[b + 1] - input_updater->cur_pos;
+            if (num_keep > 0) {
+                memcpy(tmp_wp->words + tmp_wp->size,
+                       wp->words + wp->row_starts[b] + input_updater->cur_pos,
+                       sizeof(int) * num_keep);
+                tmp_wp->size += num_keep;
+            }
+
+            if (b < new_wp->batch_size) {
+                // append new words
+                size = new_wp->row_starts[b+1] - new_wp->row_starts[b];
+                memcpy(tmp_wp->words + tmp_wp->size,
+                       new_wp->words + new_wp->row_starts[b],
+                       sizeof(int) * size);
+                tmp_wp->size += size;
+            }
+
+            tmp_wp->row_starts[b+1] = tmp_wp->size;
+        }
+
+        for (b = wp->batch_size; b < new_wp->batch_size; b++) {
+            // append new words
+            size = new_wp->row_starts[b+1] - new_wp->row_starts[b];
+            memcpy(tmp_wp->words + tmp_wp->size,
+                   new_wp->words + new_wp->row_starts[b],
+                   sizeof(int) * size);
+            tmp_wp->size += size;
+
+            tmp_wp->row_starts[b+1] = tmp_wp->size;
+        }
+
+        if (word_pool_copy(wp, tmp_wp) < 0) {
+            ST_WARNING("Failed to word_pool_copy.");
+            return -1;
+        }
+
+        input_updater->cur_pos = input_updater->ctx_leftmost;
+    }
+
+    // remove empty rows
+    for (b = wp->batch_size - 1; b >= 0; b--) {
+        if (wp->row_starts[b + 1] - wp->row_starts[b] <= 0) {
+            if (b != wp->batch_size - 1) {
+                memmove(wp->row_starts + b, wp->row_starts + b + 1,
+                        sizeof(int) * (wp->batch_size - b - 1));
+            }
+            wp->batch_size--;
+        }
+    }
+
+    // set end_pos
+    input_updater->end_pos = wp->size;
+    for (b = 0; b < wp->batch_size; b++) {
+        if (wp->row_starts[b + 1] - wp->row_starts[b] < input_updater->end_pos) {
+            input_updater->end_pos = wp->row_starts[b + 1] - wp->row_starts[b];
+        }
     }
 
     return 0;
@@ -225,11 +327,6 @@ int input_updater_move(input_updater_t *input_updater, sent_t *sent)
 
     input_updater->cur_pos++;
 
-    if (input_updater_update_sent(input_updater, sent) < 0) {
-        ST_WARNING("Failed to input_updater_update_sent.");
-        return -1;
-    }
-
     return 0;
 }
 
@@ -237,12 +334,7 @@ int input_updater_move_to_end(input_updater_t *input_updater, sent_t *sent)
 {
     ST_CHECK_PARAM(input_updater == NULL, -1);
 
-    input_updater->cur_pos = input_updater->n_word;
-
-    if (input_updater_update_sent(input_updater, sent) < 0) {
-        ST_WARNING("Failed to input_updater_update_sent.");
-        return -1;
-    }
+    input_updater->cur_pos = input_updater->end_pos;
 
     return 0;
 }

@@ -56,16 +56,16 @@ typedef struct _glue_updater_implementation_t_ {
             bool backprop); /**< setup glue updater.*/
 
     int (*forward)(glue_updater_t *glue_updater,
-            comp_updater_t *comp_updater, sent_t *input_sent,
+            comp_updater_t *comp_updater, egs_batch_t *batch,
             real_t *in_ac, real_t *out_ac); /**< forward glue updater.*/
 
     int (*backprop)(glue_updater_t *glue_updater,
             comp_updater_t *comp_updater,
-            sent_t *input_sent, real_t *in_ac, real_t *out_er,
+            egs_batch_t *batch, real_t *in_ac, real_t *out_er,
             real_t *in_er); /**< backprop glue updater.*/
 
     int (*forward_util_out)(glue_updater_t *glue_updater,
-            comp_updater_t *comp_updater, sent_t *input_sent,
+            comp_updater_t *comp_updater, egs_batch_t *batch,
             real_t *in_ac, real_t *out_ac); /**< forward_util_out glue updater.*/
 
     int (*forward_out)(glue_updater_t *glue_updater,
@@ -187,24 +187,24 @@ int glue_updater_reset(glue_updater_t *glue_updater);
  * @ingroup g_updater_glue
  * @param[in] glue_updater the glue_updater.
  * @param[in] comp_updater the comp_updater.
- * @param[in] input_sent input sentence buffer.
+ * @param[in] batch egs batch.
  * @see glue_updater_backprop
  * @return non-zero value if any error.
  */
 int glue_updater_forward(glue_updater_t *glue_updater,
-        comp_updater_t *comp_updater, sent_t *input_sent);
+        comp_updater_t *comp_updater, egs_batch_t *batch);
 
 /**
  * Back-propagate one word for a glue_updater.
  * @ingroup g_updater_glue
  * @param[in] glue_updater the glue_updater.
  * @param[in] comp_updater the comp_updater.
- * @param[in] input_sent input sentence buffer.
+ * @param[in] batch egs batch.
  * @see glue_updater_forward
  * @return non-zero value if any error.
  */
 int glue_updater_backprop(glue_updater_t *glue_updater,
-        comp_updater_t *comp_updater, sent_t *input_sent);
+        comp_updater_t *comp_updater, egs_batch_t *batch);
 
 /**
  * Finish running for glue_updater.
@@ -220,11 +220,11 @@ int glue_updater_finish(glue_updater_t *glue_updater);
  * @ingroup g_updater_glue
  * @param[in] glue_updater the glue_updater.
  * @param[in] comp_updater the comp_updater.
- * @param[in] input_sent input sentence buffer.
+ * @param[in] batch egs batch.
  * @return non-zero value if any error.
  */
 int glue_updater_forward_util_out(glue_updater_t *glue_updater,
-        comp_updater_t *comp_updater, sent_t *input_sent);
+        comp_updater_t *comp_updater, egs_batch_t *batch);
 
 /**
  * Feed-forward one node of output layer.

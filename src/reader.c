@@ -45,8 +45,8 @@ void word_pool_destroy(word_pool_t *wp)
         safe_st_free(wp->words);
         wp->capacity = 0;
         wp->size = 0;
-        safe_st_free(wp->batch_idx);
-        wp->num_batches = 0;
+        safe_st_free(wp->row_starts);
+        wp->batch_size = 0;
     }
 }
 
@@ -110,27 +110,27 @@ static int word_pool_print(FILE *fp, pthread_mutex_t *fp_lock,
     return 0;
 }
 
-static int word_pool_build_mini_batch(word_pool_t *wp, int num_batches)
+static int word_pool_build_mini_batch(word_pool_t *wp, int batch_size)
 {
     int i, n;
     int cnt, eos;
     int words_per_batch;
 
-    ST_CHECK_PARAM(wp == NULL || num_batches <= 1, -1);
+    ST_CHECK_PARAM(wp == NULL || batch_size <= 1, -1);
 
-    if (num_batches > wp->num_batches) {
-        wp->batch_idx = (int *)st_realloc(wp->batch_idx,
-                sizeof(int) * (num_batches + 1));
-        if (wp->batch_idx == NULL) {
-            ST_WARNING("Failed to st_realloc batch_idx.");
+    if (batch_size > wp->batch_size) {
+        wp->row_starts = (int *)st_realloc(wp->row_starts,
+                sizeof(int) * (batch_size + 1));
+        if (wp->row_starts == NULL) {
+            ST_WARNING("Failed to st_realloc row_starts.");
             return -1;
         }
     }
-    wp->num_batches = num_batches;
+    wp->batch_size = batch_size;
 
-    words_per_batch = wp->size / num_batches + 1;
+    words_per_batch = wp->size / batch_size + 1;
 
-    wp->batch_idx[0] = 0;
+    wp->row_starts[0] = 0;
     n = 1;
 
     eos = 0;
@@ -142,9 +142,9 @@ static int word_pool_build_mini_batch(word_pool_t *wp, int num_batches)
         }
         ++cnt;
         if (cnt >= words_per_batch) {
-            wp->batch_idx[n] = eos + 1;
+            wp->row_starts[n] = eos + 1;
             ++n;
-            if (n >= wp->num_batches) {
+            if (n >= wp->batch_size) {
                 break;
             }
             cnt = i - eos;
@@ -152,7 +152,7 @@ static int word_pool_build_mini_batch(word_pool_t *wp, int num_batches)
 
         ++i;
     }
-    wp->batch_idx[wp->num_batches] = wp->size;
+    wp->row_starts[wp->batch_size] = wp->size;
 
     return 0;
 }
@@ -465,8 +465,8 @@ static void* reader_read_thread(void *args)
         .words = NULL,
         .size = 0,
         .capacity = 0,
-        .batch_idx = NULL,
-        .num_batches = 0,
+        .row_starts = NULL,
+        .batch_size = 0,
     };
     int num_thrs;
     int epoch_size, mini_batch;

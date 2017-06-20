@@ -199,6 +199,15 @@ void connlm_sanity_check(connlm_t *connlm);
  */
 void connlm_print_verbose_info(connlm_t *connlm, FILE *fo);
 
+/**
+ * Check whether a connlm model need future input,
+ * i.e., has some context large than zero.
+ * @ingroup g_connlm
+ * @param[in] connlm the connlm model.
+ * @return true if need future input, otherwise false.
+ */
+bool connlm_need_future_input(connlm_t *connlm);
+
 #ifdef __cplusplus
 }
 #endif

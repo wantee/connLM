@@ -983,3 +983,20 @@ void connlm_print_verbose_info(connlm_t *connlm, FILE *fo)
         comp_print_verbose_info(connlm->comps[c], fo);
     }
 }
+
+bool connlm_need_future_input(connlm_t *connlm)
+{
+    input_t *input;
+    int c;
+
+    ST_CHECK_PARAM(connlm == NULL, false);
+
+    for (c = 0; c < connlm->num_comp; c++) {
+        input = connlm->comps[c]->input;
+        if (input->context[input->n_ctx - 1].i > 0) {
+            return true;
+        }
+    }
+
+    return false;
+}

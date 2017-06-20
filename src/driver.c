@@ -193,7 +193,7 @@ int driver_setup(driver_t *driver, driver_mode_t mode)
     }
 
     if (mode == DRIVER_GEN) {
-        if (driver->updaters[0]->input_updater->ctx_rightmost > 0) {
+        if (connlm_need_future_input(driver->connlm)) {
             ST_WARNING("Can not generating: future words in input context.");
             return -1;
         }
@@ -546,8 +546,8 @@ static int driver_gen(driver_t *driver)
         .words = NULL,
         .size = 0,
         .capacity = 0,
-        .batch_idx = NULL,
-        .num_batches = 0,
+        .row_starts = NULL,
+        .batch_size = 0,
     };
 
     int word;

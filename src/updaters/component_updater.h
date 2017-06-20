@@ -32,7 +32,6 @@ extern "C" {
 #include <connlm/config.h>
 
 #include "component.h"
-#include "updaters/input_updater.h"
 #include "updaters/output_updater.h"
 #include "updaters/layer_updater.h"
 #include "updaters/glue_updaters/glue_updater.h"
@@ -62,6 +61,8 @@ typedef struct _component_updater_t_ {
     real_t *bptt_er1; /**< buffer for er used by BPTT. */
 
     unsigned int *rand_seed; /**< random seed. */
+
+    egs_batch_t batch; /**< current data batch, filled by input_updater. */
 } comp_updater_t;
 
 /**
@@ -124,21 +125,21 @@ int comp_updater_reset(comp_updater_t *comp_updater);
  * Feed-forward one word for a comp_updater.
  * @ingroup g_updater_comp
  * @param[in] comp_updater the comp_updater.
- * @param[in] input_sent input sentence buffer.
+ * @param[in] batch egs batch.
  * @see comp_updater_backprop
  * @return non-zero value if any error.
  */
-int comp_updater_forward(comp_updater_t *comp_updater, sent_t *input_sent);
+int comp_updater_forward(comp_updater_t *comp_updater, egs_batch_t *batch);
 
 /**
  * Back-propagate one word for a comp_updater.
  * @ingroup g_updater_comp
  * @param[in] comp_updater the comp_updater.
- * @param[in] input_sent input sentence buffer.
+ * @param[in] batch egs batch.
  * @see comp_updater_forward
  * @return non-zero value if any error.
  */
-int comp_updater_backprop(comp_updater_t *comp_updater, sent_t *input_sent);
+int comp_updater_backprop(comp_updater_t *comp_updater, egs_batch_t *batch);
 
 /**
  * Save state for a comp_updater.
@@ -169,11 +170,11 @@ int comp_updater_finish(comp_updater_t *comp_updater);
  * Feed-forward util output layer.
  * @ingroup g_updater_comp
  * @param[in] comp_updater the comp_updater.
- * @param[in] input_sent input sentence buffer.
+ * @param[in] batch egs batch.
  * @return non-zero value if any error.
  */
 int comp_updater_forward_util_out(comp_updater_t *comp_updater,
-        sent_t *input_sent);
+        egs_batch_t *batch);
 
 /**
  * Feed-forward one node of output layer.

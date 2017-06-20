@@ -31,6 +31,8 @@ extern "C" {
 
 #include <connlm/config.h>
 
+#include "reader.h"
+
 /** @defgroup g_updater_input Updater for Input Layer
  * @ingroup g_updater
  * Perform forward and backprop on input layer.
@@ -42,16 +44,14 @@ extern "C" {
  */
 typedef struct _input_updater_t_ {
     int bos_id; /**< word id of SENT_START. */
+
     int ctx_leftmost; /**< leftmost for all input contexts. */
     int ctx_rightmost; /**< rightmost for all input contexts. */
 
-    int *words; /**< buffer for input words. */
-    int n_word; /**< number of input words. */
-    int cap_word; /**< capacity of input words buffer. */
+    word_pool_t *wp; /**< buffer for input words. */
     int cur_pos; /**< position of current word in word buffer. */
-
-    int sent_head; /**< head position of current sentence. */
-    int sent_tail; /**< tail position of current sentence. */
+    int end_pos; /**< end position of current word pool,
+                      i.e., shortest length of rows in word pool. */
 } input_updater_t;
 
 /**
@@ -89,19 +89,43 @@ input_updater_t* input_updater_create(int bos_id);
  * @param[in] ctx_rightmost rightmost of input contexts.
  * @return non-zero value if any error.
  */
-int input_updater_setup(input_updater_t *input_updater, int ctx_leftmost,
-        int ctx_rightmost);
+int input_updater_setup(input_updater_t *input_updater,
+        int ctx_leftmost, int ctx_rightmost);
 
 /**
- * Buffer of a (partial) sentence with the position of target word.
- * There must be no SENT_END except the last word.
+ * Input of a training examples,
  * @ingroup g_updater_input
  */
-typedef struct _sentence_t_ {
-    int *words; /**< words buffer. */
-    int n_word; /**< number of words. */
-    int tgt_pos; /**< position of target predicted word in sentence. */
-} sent_t;
+typedef struct _egs_input_t_ {
+    int num_words; /**< number of words in this batch. */
+    int *words; /**< input words. */
+    real_t *weights; /**< weight of input words. */
+    int *positions; /**< relative position of words. */
+    int cap_words; /**< capacity of words, equal to num_contexts of input. */
+} egs_input_t;
+
+/**
+ * Batch of training examples,
+ * consist of a batch of pairs of input words and target word.
+ * @ingroup g_updater_input
+ */
+typedef struct _egs_batch_t_ {
+    int num_egs; /**< number of egs in this batch. */
+    egs_input_t *inputs; /**< input of batch. */
+    int *targets; /**< target words. */
+    int cap_egs; /**< capacity of egs. */
+} egs_batch_t;
+
+/**
+ * Update batch for a input layer with word pool in input_updater.
+ * @ingroup g_updater_input
+ * @param[in] input_updater input_updater.
+ * @param[in] input input layer.
+ * @param[out] batch egs batch.
+ * @return non-zero value if any error.
+ */
+int input_updater_update_batch(input_updater_t *input_updater,
+        input_t *input, egs_batch_t *batch);
 
 /**
  * Clear input_updater.
@@ -115,31 +139,26 @@ int input_updater_clear(input_updater_t *input_updater);
  * Feed input words to a input_updater.
  * @ingroup g_updater_input
  * @param[in] input_updater input_updater.
- * @param[in] words input words buffer.
- * @param[in] n_word number of input words.
- * @param[out] sent current sentence.
+ * @param[in] wp word pool.
  * @return non-zero value if any error.
  */
-int input_updater_feed(input_updater_t *input_updater, int *words, int n_word,
-        sent_t *sent);
+int input_updater_feed(input_updater_t *input_updater, word_pool_t *wp);
 
 /**
  * Move forward a input word and return the sentence buffer.
  * @ingroup g_updater_input
  * @param[in] input_updater input_updater.
- * @param[out] sent sentence buffer.
  * @return non-zero value if any error.
  */
-int input_updater_move(input_updater_t *input_updater, sent_t *sent);
+int input_updater_move(input_updater_t *input_updater);
 
 /**
  * Move forward input word to the end and return the sentence buffer.
  * @ingroup g_updater_input
  * @param[in] input_updater input_updater.
- * @param[out] sent sentence buffer.
  * @return non-zero value if any error.
  */
-int input_updater_move_to_end(input_updater_t *input_updater, sent_t *sent);
+int input_updater_move_to_end(input_updater_t *input_updater);
 
 #ifdef __cplusplus
 }

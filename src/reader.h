@@ -71,8 +71,8 @@ typedef struct _word_pool_t_ {
     int *words; /**< word ids. */
     int size; /**< size of words. */
     int capacity; /**< capacity of words. */
-    int *batch_idx; /**< start index of mini-batches. */
-    int num_batches; /**< number of batches. */
+    int *row_starts; /**< start index of each row in mini-batch. */
+    int batch_size; /**< batche size, number of rows. */
     struct _word_pool_t_ *next; /**< pointer to the next list element. */
 } word_pool_t;
 
