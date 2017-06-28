@@ -5,7 +5,8 @@ include flags.mk
 REV_INC=config.h
 GIT_COMMIT_MACRO = CONNLM_GIT_COMMIT
 
-INCS = utils.h \
+INCS = matrix.h \
+       utils.h \
        param.h \
        reader.h \
        driver.h \
@@ -43,7 +44,8 @@ INCS = utils.h \
        bloom_filter.h \
        ngram_hash.h
 
-SRCS = utils.c \
+SRCS = matrix.c \
+       utils.c \
        param.c \
        reader.c \
        driver.c \
