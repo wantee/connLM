@@ -23,6 +23,7 @@
  */
 
 #include <string.h>
+#include <assert.h>
 
 #include <stutils/st_macro.h>
 #include <stutils/st_log.h>
@@ -36,8 +37,8 @@ void input_updater_destroy(input_updater_t *input_updater)
         return;
     }
 
-    safe_word_pool_destroy(input_updater->wp);
-    safe_word_pool_destroy(input_updater->tmp_wp);
+    word_pool_destroy(&input_updater->wp);
+    word_pool_destroy(&input_updater->tmp_wp);
     input_updater->cur_pos = 0;
     input_updater->end_pos = 0;
 
@@ -45,7 +46,7 @@ void input_updater_destroy(input_updater_t *input_updater)
     input_updater->ctx_rightmost = 0;
 }
 
-input_updater_t* input_updater_create(input_t *input, int bos_id)
+input_updater_t* input_updater_create(int bos_id)
 {
     input_updater_t *input_updater = NULL;
 
@@ -57,20 +58,6 @@ input_updater_t* input_updater_create(input_t *input, int bos_id)
     memset(input_updater, 0, sizeof(input_updater_t));
 
     input_updater->bos_id = bos_id;
-
-    input_updater->wp = (word_pool_t *)st_malloc(sizeof(word_pool_t));
-    if (input_updater->wp == NULL) {
-        ST_WARNING("Failed to st_malloc wp.");
-        goto ERR;
-    }
-    memset(input_updater->wp, 0, sizeof(word_pool_t));
-
-    input_updater->tmp_wp = (word_pool_t *)st_malloc(sizeof(word_pool_t));
-    if (input_updater->tmp_wp == NULL) {
-        ST_WARNING("Failed to st_malloc tmp_wp.");
-        goto ERR;
-    }
-    memset(input_updater->tmp_wp, 0, sizeof(word_pool_t));
 
     return input_updater;
 
@@ -112,7 +99,7 @@ int input_updater_update_batch(input_updater_t *input_updater,
 
     ST_CHECK_PARAM(input_updater == NULL || batch == NULL, -1);
 
-    wp = input_updater->wp;
+    wp = &input_updater->wp;
     cur_pos = input_updater->cur_pos;
 
     if (input->context[0].i < 0) {
@@ -137,7 +124,7 @@ int input_updater_update_batch(input_updater_t *input_updater,
         }
 
         // we never use <s> as target
-        if (wp->words[wp->row_starts[b] + cur_pos] == bos_id) {
+        if (wp->words[wp->row_starts[b] + cur_pos] == input_updater->bos_id) {
             continue;
         }
 
@@ -205,10 +192,10 @@ int input_updater_feed(input_updater_t *input_updater, word_pool_t *new_wp)
     int b, size;
     int num_keep;
 
-    ST_CHECK_PARAM(input_updater == NULL || words == NULL, -1);
+    ST_CHECK_PARAM(input_updater == NULL || new_wp == NULL, -1);
 
-    wp = input_updater->wp;
-    tmp_wp = input_updater->tmp_wp;
+    wp = &input_updater->wp;
+    tmp_wp = &input_updater->tmp_wp;
 
     if (wp->capacity == 0) {
         if (word_pool_copy(wp, new_wp) < 0) {
@@ -321,7 +308,7 @@ int input_updater_feed(input_updater_t *input_updater, word_pool_t *new_wp)
     return 0;
 }
 
-int input_updater_move(input_updater_t *input_updater, sent_t *sent)
+int input_updater_move(input_updater_t *input_updater)
 {
     ST_CHECK_PARAM(input_updater == NULL, -1);
 
@@ -330,11 +317,44 @@ int input_updater_move(input_updater_t *input_updater, sent_t *sent)
     return 0;
 }
 
-int input_updater_move_to_end(input_updater_t *input_updater, sent_t *sent)
+int input_updater_move_to_end(input_updater_t *input_updater)
 {
     ST_CHECK_PARAM(input_updater == NULL, -1);
 
     input_updater->cur_pos = input_updater->end_pos;
 
     return 0;
+}
+
+bool input_updater_movable(input_updater_t *input_updater, bool finalized)
+{
+    word_pool_t *wp;
+    int b, r, idx;
+
+    ST_CHECK_PARAM(input_updater == NULL, false);
+
+    wp = &input_updater->wp;
+
+    for (b = 0; b < wp->batch_size; b++) {
+        if (wp->row_starts[b] + input_updater->cur_pos >= wp->row_starts[b+1]) {
+            return false;
+        } else {
+            if (finalized) {
+                return true;
+            }
+        }
+
+        for (r = 1; r <= input_updater->ctx_rightmost; r++) {
+            idx = wp->row_starts[b] + input_updater->cur_pos + r;
+            if (idx >= wp->row_starts[b+1]) {
+                return false;
+            }
+            if (wp->words[idx] == SENT_END_ID) {
+                break;
+            }
+        }
+    }
+
+
+    return true;
 }

@@ -625,7 +625,7 @@ int comp_updater_reset(comp_updater_t *comp_updater)
     return 0;
 }
 
-int comp_updater_forward(comp_updater_t *comp_updater, sent_t *input_sent)
+int comp_updater_forward(comp_updater_t *comp_updater, egs_batch_t *batch)
 {
     component_t *comp;
     glue_updater_t *glue_updater;
@@ -649,7 +649,7 @@ int comp_updater_forward(comp_updater_t *comp_updater, sent_t *input_sent)
             }
         }
 
-        if (glue_updater_forward(glue_updater, comp_updater, input_sent) < 0) {
+        if (glue_updater_forward(glue_updater, comp_updater, batch) < 0) {
             ST_WARNING("Failed to forward glue[%s].",
                     glue_updater->glue->name);
             return -1;
@@ -659,7 +659,7 @@ int comp_updater_forward(comp_updater_t *comp_updater, sent_t *input_sent)
     return 0;
 }
 
-int comp_updater_backprop(comp_updater_t *comp_updater, sent_t *input_sent)
+int comp_updater_backprop(comp_updater_t *comp_updater, egs_batch_t *batch)
 {
     component_t *comp;
     glue_updater_t *glue_updater;
@@ -675,7 +675,7 @@ int comp_updater_backprop(comp_updater_t *comp_updater, sent_t *input_sent)
 
     for (g = comp->num_glue - 1; g >= 0; g--) {
         glue_updater = comp_updater->glue_updaters[comp->fwd_order[g]];
-        if (glue_updater_backprop(glue_updater, comp_updater, input_sent) < 0) {
+        if (glue_updater_backprop(glue_updater, comp_updater, batch) < 0) {
             ST_WARNING("Failed to backprop glue[%s].",
                     glue_updater->glue->name);
             return -1;
@@ -758,7 +758,7 @@ int comp_updater_finish(comp_updater_t *comp_updater)
 }
 
 int comp_updater_forward_util_out(comp_updater_t *comp_updater,
-        sent_t *input_sent)
+        egs_batch_t *batch)
 {
     component_t *comp;
     glue_updater_t *glue_updater;
@@ -775,7 +775,7 @@ int comp_updater_forward_util_out(comp_updater_t *comp_updater,
     for (g = 0; g < comp->num_glue; g++) {
         glue_updater = comp_updater->glue_updaters[comp->fwd_order[g]];
         if (glue_updater_forward_util_out(glue_updater, comp_updater,
-                    input_sent) < 0) {
+                    batch) < 0) {
             ST_WARNING("Failed to forward_util_out glue[%s].",
                     glue_updater->glue->name);
             return -1;

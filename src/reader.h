@@ -77,18 +77,6 @@ typedef struct _word_pool_t_ {
 } word_pool_t;
 
 /**
- * Destroy a word_pool and set the pointer to NULL.
- * @ingroup g_reader
- * @param[in] ptr pointer to word_pool_t.
- */
-#define safe_word_pool_destroy(ptr) do {\
-    if((ptr) != NULL) {\
-        word_pool_destroy(ptr);\
-        safe_st_free(ptr);\
-        (ptr) = NULL;\
-    }\
-    } while(0)
-/**
  * Destroy a word_pool.
  * @ingroup g_reader
  * @param[in] pool pool to be destroyed.

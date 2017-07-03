@@ -107,11 +107,10 @@ int updater_set_rand_seed(updater_t *updater, unsigned int seed);
  * Feed input words to a updater.
  * @ingroup g_updater
  * @param[in] updater the updater.
- * @param[in] words input words buffer.
- * @param[in] n_word number of input words.
+ * @param[in] wp input words pool.
  * @return non-zero value if any error.
  */
-int updater_feed(updater_t *updater, int *words, int n_word);
+int updater_feed(updater_t *updater, word_pool_t *wp);
 
 /**
  * Determine whethre can perform a step for a updater.

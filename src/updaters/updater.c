@@ -51,8 +51,6 @@ static int updater_reset(updater_t *updater)
     return 0;
 }
 
-#define tgt_word(updater) (updater)->sent.words[(updater)->sent.tgt_pos]
-
 static int updater_clear(updater_t *updater)
 {
     int c;
@@ -100,7 +98,7 @@ static int updater_forward_comp(updater_t *updater)
 
     for (c = 0; c < updater->connlm->num_comp; c++) {
         if (comp_updater_forward(updater->comp_updaters[c],
-                &updater->sent) < 0) {
+                &updater->comp_updaters[c]->batch) < 0) {
             ST_WARNING("Failed to comp_updater_forward[%s].",
                     updater->connlm->comps[c]->name);
             return -1;
@@ -149,7 +147,7 @@ static int updater_backprop(updater_t *updater)
 
     for (c = 0; c < updater->connlm->num_comp; c++) {
         if (comp_updater_backprop(updater->comp_updaters[c],
-                    &updater->sent) < 0) {
+                    &updater->comp_updaters[c]->batch) < 0) {
             ST_WARNING("Failed to comp_updater_backprop[%s].",
                     updater->connlm->comps[c]->name);
             return -1;
@@ -336,12 +334,11 @@ int updater_set_rand_seed(updater_t *updater, unsigned int seed)
     return 0;
 }
 
-int updater_feed(updater_t *updater, int *words, int n_word)
+int updater_feed(updater_t *updater, word_pool_t *wp)
 {
     ST_CHECK_PARAM(updater == NULL, -1);
 
-    if (input_updater_feed(updater->input_updater, words, n_word,
-                &updater->sent) < 0) {
+    if (input_updater_feed(updater->input_updater, wp) < 0) {
         ST_WARNING("Failed to input_updater_feed.");
         return -1;
     }
@@ -351,26 +348,9 @@ int updater_feed(updater_t *updater, int *words, int n_word)
 
 bool updater_steppable(updater_t *updater)
 {
-    sent_t *sent;
-
     ST_CHECK_PARAM(updater == NULL, false);
 
-    sent = &updater->sent;
-
-    if (sent->n_word <= 0 || sent->tgt_pos >= sent->n_word) {
-        return false;
-    }
-
-    if (sent->tgt_pos + updater->input_updater->ctx_rightmost < sent->n_word) {
-        return true;
-    }
-
-    if (updater->finalized) {
-        return sent->tgt_pos < sent->n_word;
-    }
-
-    // if the sentence is over, we step to the end
-    return (sent->words[sent->n_word - 1] == SENT_END_ID);
+    return input_updater_movable(updater->input_updater, updater->finalized);
 }
 
 int updater_move_input(updater_t *updater)
@@ -387,7 +367,7 @@ int updater_move_input(updater_t *updater)
     for (c = 0; c < updater->connlm->num_comp; c++) {
         if (input_updater_update_batch(updater->input_updater,
                     updater->comp_updaters[c]->comp->input,
-                    updater->comp_updaters[c]->batch) < 0) {
+                    &updater->comp_updaters[c]->batch) < 0) {
             ST_WARNING("Failed to input_updater_update_batch[%s].",
                     updater->connlm->comps[c]->name);
             return -1;
@@ -471,7 +451,7 @@ static int updater_forward_util_out(updater_t *updater)
 
     for (c = 0; c < updater->connlm->num_comp; c++) {
         if (comp_updater_forward_util_out(updater->comp_updaters[c],
-                    &updater->sent) < 0) {
+                    &updater->comp_updaters[c]->batch) < 0) {
             ST_WARNING("Failed to comp_updater_forward[%s].",
                     updater->connlm->comps[c]->name);
             return -1;
@@ -724,10 +704,6 @@ static int updater_cleanup(updater_t *updater)
         return -1;
     }
 
-    updater->sent.tgt_pos = 0;
-    updater->sent.words = 0;
-    updater->sent.n_word = 0;
-
     for (c = 0; c < updater->connlm->num_comp; c++) {
         if (comp_updater_clear(updater->comp_updaters[c]) < 0) {
             ST_WARNING("Failed to comp_updater_clear[%s].",
@@ -741,6 +717,8 @@ static int updater_cleanup(updater_t *updater)
 
 static int updater_set_hist(updater_t *updater, int *hist, int num_hist)
 {
+    int c;
+
     ST_CHECK_PARAM(updater == NULL || hist == NULL, -1);
 
     if (updater_feed(updater, hist, num_hist) < 0) {
@@ -748,10 +726,19 @@ static int updater_set_hist(updater_t *updater, int *hist, int num_hist)
         return -1;
     }
 
-    if (input_updater_move_to_end(updater->input_updater,
-                &updater->sent) < 0) {
+    if (input_updater_move_to_end(updater->input_updater) < 0) {
         ST_WARNING("Failed to input_updater_move_to_end.");
         return -1;
+    }
+
+    for (c = 0; c < updater->connlm->num_comp; c++) {
+        if (input_updater_update_batch(updater->input_updater,
+                    updater->comp_updaters[c]->comp->input,
+                    &updater->comp_updaters[c]->batch) < 0) {
+            ST_WARNING("Failed to input_updater_update_batch[%s].",
+                    updater->connlm->comps[c]->name);
+            return -1;
+        }
     }
 
     return 0;

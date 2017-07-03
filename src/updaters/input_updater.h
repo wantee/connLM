@@ -32,6 +32,7 @@ extern "C" {
 #include <connlm/config.h>
 
 #include "reader.h"
+#include "input.h"
 
 /** @defgroup g_updater_input Updater for Input Layer
  * @ingroup g_updater
@@ -48,10 +49,12 @@ typedef struct _input_updater_t_ {
     int ctx_leftmost; /**< leftmost for all input contexts. */
     int ctx_rightmost; /**< rightmost for all input contexts. */
 
-    word_pool_t *wp; /**< buffer for input words. */
+    word_pool_t wp; /**< buffer for input words. */
     int cur_pos; /**< position of current word in word buffer. */
     int end_pos; /**< end position of current word pool,
                       i.e., shortest length of rows in word pool. */
+
+    word_pool_t tmp_wp; /**< temp buffer for input words. */
 } input_updater_t;
 
 /**
@@ -159,6 +162,15 @@ int input_updater_move(input_updater_t *input_updater);
  * @return non-zero value if any error.
  */
 int input_updater_move_to_end(input_updater_t *input_updater);
+
+/**
+ * Determine whethre can move a word from input
+ * @ingroup g_updater_input
+ * @param[in] input_updater the input_updater.
+ * @param[in] finalized whether should be finalized
+ * @return true if movable, otherwise false.
+ */
+bool input_updater_movable(input_updater_t *input_updater, bool finalized);
 
 #ifdef __cplusplus
 }
