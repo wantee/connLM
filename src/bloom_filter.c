@@ -1117,14 +1117,7 @@ bool bloom_filter_lookup(bloom_filter_t *blm_flt, bloom_filter_buf_t *buf,
 
 int bloom_filter_build(bloom_filter_t *blm_flt, FILE *text_fp)
 {
-    word_pool_t wp = {
-        .words = NULL,
-        .size = 0,
-        .capacity = 0,
-        .batch_idx = NULL,
-        .num_batches = 0,
-    };
-
+    word_pool_t wp = {0};
     bloom_filter_buf_t *buf = NULL;
 
     int max_order;

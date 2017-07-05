@@ -73,15 +73,52 @@ typedef struct _word_pool_t_ {
     int capacity; /**< capacity of words. */
     int *row_starts; /**< start index of each row in mini-batch. */
     int batch_size; /**< batche size, number of rows. */
+    int cap_batches; /**< capacity of row_starts. */
     struct _word_pool_t_ *next; /**< pointer to the next list element. */
 } word_pool_t;
 
 /**
  * Destroy a word_pool.
  * @ingroup g_reader
- * @param[in] pool pool to be destroyed.
+ * @param[in] wp pool to be destroyed.
  */
 void word_pool_destroy(word_pool_t *wp);
+
+/**
+ * Resize a word_pool.
+ * @ingroup g_reader
+ * @param[in] wp word pool.
+ * @param[in] capacity new capacity.
+ * @return non-zero value if any error.
+ */
+int word_pool_resize(word_pool_t *wp, int capacity);
+
+/**
+ * Resize capacity of batches.
+ * @ingroup g_reader
+ * @param[in] wp word pool.
+ * @param[in] batch_capacity new batch capacity.
+ * @return non-zero value if any error.
+ */
+int word_pool_resize_batches(word_pool_t *wp, int batch_capacity);
+
+/**
+ * Copy a word_pool.
+ * @ingroup g_reader
+ * @param[in] dst_wp destination word pool.
+ * @param[in] src_wp source word pool.
+ * @return non-zero value if any error.
+ */
+int word_pool_copy(word_pool_t *dst_wp, word_pool_t *src_wp);
+
+/**
+ * Build mini-batch in a word_pool.
+ * @ingroup g_reader
+ * @param[in] wp word pool.
+ * @param[in] batch_size size of mini-batch.
+ * @return non-zero value if any error.
+ */
+int word_pool_build_mini_batch(word_pool_t *wp, int batch_size);
 
 /**
  * Read words into pool.

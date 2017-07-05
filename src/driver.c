@@ -349,7 +349,7 @@ static void* driver_thread(void *args)
             break;
         }
 
-        if (updater_feed(updater, wp->words, wp->size) < 0) {
+        if (updater_feed(updater, wp) < 0) {
             ST_WARNING("Failed to updater_feed.");
             goto ERR;
         }
@@ -542,13 +542,7 @@ static int driver_gen(driver_t *driver)
 
     count_t n_word, n_sent;
 
-    word_pool_t wp = {
-        .words = NULL,
-        .size = 0,
-        .capacity = 0,
-        .row_starts = NULL,
-        .batch_size = 0,
-    };
+    word_pool_t wp = {0};
 
     int word;
     int i;
@@ -593,7 +587,8 @@ static int driver_gen(driver_t *driver)
                 }
                 printf("]");
 
-                if (updater_feed(updater, wp.words, wp.size - 1) < 0) {
+                --wp.size; // remove </s> at the end
+                if (updater_feed(updater, &wp) < 0) {
                     ST_WARNING("Failed to updater_feed.");
                     goto ERR;
                 }

@@ -280,13 +280,7 @@ static int generate_eval_state(wildcard_state_t *ws)
 
     count_t n_word;
 
-    word_pool_t wp = {
-        .words = NULL,
-        .size = 0,
-        .capacity = 0,
-        .batch_idx = NULL,
-        .num_batches = 0,
-    };
+    word_pool_t wp = {0};
 
     int word;
     int i;

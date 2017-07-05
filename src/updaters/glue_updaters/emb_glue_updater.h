@@ -45,13 +45,13 @@ extern "C" {
  * @ingroup g_glue_updater_emb
  * @param[in] glue_updater glue_updater.
  * @param[in] comp_updater the comp_updater.
- * @param[in] input_sent input sentence buffer.
+ * @param[in] batch input batch.
  * @param[in] in_ac [unused] activation of in layer.
  * @param[out] out_ac activation of out layer.
  * @return non-zero value if any error.
  */
 int emb_glue_updater_forward(glue_updater_t *glue_updater,
-        comp_updater_t *comp_updater, sent_t *input_sent,
+        comp_updater_t *comp_updater, egs_batch_t *batch,
         real_t *in_ac, real_t *out_ac);
 
 /**
@@ -59,14 +59,14 @@ int emb_glue_updater_forward(glue_updater_t *glue_updater,
  * @ingroup g_glue_updater_emb
  * @param[in] glue_updater glue_updater.
  * @param[in] comp_updater the comp_updater.
- * @param[in] input_sent input sentence buffer.
+ * @param[in] batch input batch.
  * @param[in] in_ac [unused] activation of in layer.
  * @param[in] out_er error of out layer.
  * @param[out] in_er [unused] error of in layer.
  * @return non-zero value if any error.
  */
 int emb_glue_updater_backprop(glue_updater_t *glue_updater,
-        comp_updater_t *comp_updater, sent_t *input_sent,
+        comp_updater_t *comp_updater, egs_batch_t *batch,
         real_t *in_ac, real_t *out_er, real_t *in_er);
 
 #ifdef __cplusplus

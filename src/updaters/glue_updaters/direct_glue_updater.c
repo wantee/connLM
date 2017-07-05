@@ -390,7 +390,7 @@ static int direct_forward_walker(output_t *output, output_node_id_t node,
 }
 
 static int direct_compute_hash(glue_updater_t *glue_updater,
-        comp_updater_t *comp_updater, sent_t *input_sent)
+        comp_updater_t *comp_updater, egs_batch_t *batch)
 {
     dgu_data_t *data;
 
@@ -432,7 +432,7 @@ static int direct_compute_hash(glue_updater_t *glue_updater,
 }
 
 int direct_glue_updater_forward(glue_updater_t *glue_updater,
-        comp_updater_t *comp_updater, sent_t *input_sent,
+        comp_updater_t *comp_updater, egs_batch_t *batch,
         real_t* in_ac, real_t *out_ac)
 {
     dgu_data_t *data;
@@ -441,7 +441,7 @@ int direct_glue_updater_forward(glue_updater_t *glue_updater,
     direct_walker_args_t dw_args;
 
     ST_CHECK_PARAM(glue_updater == NULL || comp_updater == NULL
-            || input_sent == NULL || out_ac == NULL, -1);
+            || batch == NULL || out_ac == NULL, -1);
 
     data = (dgu_data_t *)glue_updater->extra;
     out_updater = comp_updater->out_updater;
@@ -450,8 +450,7 @@ int direct_glue_updater_forward(glue_updater_t *glue_updater,
     //       move this function inside direct_forward_walker
     //       with node_id as init_val, so that we can get different
     //       hash_vals on different tree nodes.
-    if (direct_compute_hash(glue_updater, comp_updater,
-                input_sent) < 0) {
+    if (direct_compute_hash(glue_updater, comp_updater, batch) < 0) {
         ST_WARNING("Failed to direct_compute_hash.");
         return -1;
     }
@@ -538,7 +537,7 @@ static int direct_backprop_walker(output_t *output, output_node_id_t node,
 }
 
 int direct_glue_updater_backprop(glue_updater_t *glue_updater,
-        comp_updater_t *comp_updater, sent_t *input_sent,
+        comp_updater_t *comp_updater, egs_batch_t *batch,
         real_t *in_ac, real_t *out_er, real_t *in_er)
 {
     dgu_data_t *data;
@@ -547,7 +546,7 @@ int direct_glue_updater_backprop(glue_updater_t *glue_updater,
     direct_walker_args_t dw_args;
 
     ST_CHECK_PARAM(glue_updater == NULL || comp_updater == NULL
-            || input_sent == NULL, -1);
+            || batch == NULL, -1);
 
     data = (dgu_data_t *)glue_updater->extra;
     out_updater = comp_updater->out_updater;
@@ -570,10 +569,10 @@ int direct_glue_updater_backprop(glue_updater_t *glue_updater,
 }
 
 int direct_glue_updater_forward_util_out(glue_updater_t *glue_updater,
-        comp_updater_t *comp_updater, sent_t *input_sent,
+        comp_updater_t *comp_updater, egs_batch_t *batch,
         real_t* in_ac, real_t* out_ac)
 {
-    if (direct_compute_hash(glue_updater, comp_updater, input_sent) < 0) {
+    if (direct_compute_hash(glue_updater, comp_updater, batch) < 0) {
         ST_WARNING("Failed to direct_compute_hash.");
         return -1;
     }

@@ -106,13 +106,13 @@ static int out_forward_walker(output_t *output, output_node_id_t node,
 }
 
 int out_glue_updater_forward(glue_updater_t *glue_updater,
-        comp_updater_t *comp_updater, sent_t *input_sent,
+        comp_updater_t *comp_updater, egs_batch_t *batch,
         real_t *in_ac, real_t *out_ac)
 {
     out_walker_args_t ow_args;
 
     ST_CHECK_PARAM(glue_updater == NULL || comp_updater == NULL
-            || input_sent == NULL || out_ac == NULL, -1);
+            || batch == NULL || out_ac == NULL, -1);
 
     ow_args.glue_updater = glue_updater;
     ow_args.output = comp_updater->out_updater->output;
@@ -167,7 +167,7 @@ static int out_backprop_walker(output_t *output, output_node_id_t node,
 }
 
 int out_glue_updater_backprop(glue_updater_t *glue_updater,
-        comp_updater_t *comp_updater, sent_t *input_sent,
+        comp_updater_t *comp_updater, egs_batch_t *batch,
         real_t *in_ac, real_t *out_er, real_t *in_er)
 {
     out_walker_args_t ow_args;
@@ -177,7 +177,7 @@ int out_glue_updater_backprop(glue_updater_t *glue_updater,
     int n_seg;
 
     ST_CHECK_PARAM(glue_updater == NULL || comp_updater == NULL
-            || input_sent == NULL, -1);
+            || batch == NULL, -1);
 
     output = comp_updater->out_updater->output;
     if (glue_updater->wt_updater->segs == NULL) {

@@ -35,7 +35,7 @@
 #include "emb_glue_updater.h"
 
 int emb_glue_updater_forward(glue_updater_t *glue_updater,
-        comp_updater_t *comp_updater, sent_t *input_sent,
+        comp_updater_t *comp_updater, egs_batch_t *batch,
         real_t* in_ac, real_t *out_ac)
 {
     glue_t *glue;
@@ -48,7 +48,7 @@ int emb_glue_updater_forward(glue_updater_t *glue_updater,
     real_t scale, ac;
 
     ST_CHECK_PARAM(glue_updater == NULL || comp_updater == NULL
-            || input_sent == NULL || out_ac == NULL, -1);
+            || batch == NULL || out_ac == NULL, -1);
 
     glue = glue_updater->glue;
     data = (emb_glue_data_t *)glue->extra;
@@ -140,7 +140,7 @@ int emb_glue_updater_forward(glue_updater_t *glue_updater,
 }
 
 int emb_glue_updater_backprop(glue_updater_t *glue_updater,
-        comp_updater_t *comp_updater, sent_t *input_sent,
+        comp_updater_t *comp_updater, egs_batch_t *batch,
         real_t *in_ac, real_t *out_er, real_t *in_er)
 {
     glue_t *glue;

@@ -47,12 +47,11 @@ void word_pool_destroy(word_pool_t *wp)
         wp->size = 0;
         safe_st_free(wp->row_starts);
         wp->batch_size = 0;
+        wp->cap_batches = 0;
     }
 }
 
-//#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wstrict-overflow"
-static int word_pool_ensure_capacity(word_pool_t *wp, int capacity)
+int word_pool_resize(word_pool_t *wp, int capacity)
 {
     ST_CHECK_PARAM(wp == NULL, -1);
 
@@ -69,7 +68,25 @@ static int word_pool_ensure_capacity(word_pool_t *wp, int capacity)
 
     return 0;
 }
-//#pragma GCC diagnostic pop
+
+int word_pool_resize_batches(word_pool_t *wp, int batch_capacity)
+{
+    ST_CHECK_PARAM(wp == NULL, -1);
+
+    if (wp->cap_batches < batch_capacity) {
+        wp->row_starts = st_realloc(wp->row_starts,
+                sizeof(int) * (batch_capacity + 1));
+        if (wp->row_starts == NULL) {
+            ST_WARNING("Failed to st_realloc wp->row_starts. capacity[%d]",
+                    batch_capacity);
+            return -1;
+        }
+
+        wp->cap_batches = batch_capacity;
+    }
+
+    return 0;
+}
 
 static int word_pool_print(FILE *fp, pthread_mutex_t *fp_lock,
         word_pool_t *wp, vocab_t *vocab)
@@ -110,7 +127,7 @@ static int word_pool_print(FILE *fp, pthread_mutex_t *fp_lock,
     return 0;
 }
 
-static int word_pool_build_mini_batch(word_pool_t *wp, int batch_size)
+int word_pool_build_mini_batch(word_pool_t *wp, int batch_size)
 {
     int i, n;
     int cnt, eos;
@@ -118,13 +135,14 @@ static int word_pool_build_mini_batch(word_pool_t *wp, int batch_size)
 
     ST_CHECK_PARAM(wp == NULL || batch_size <= 1, -1);
 
-    if (batch_size > wp->batch_size) {
+    if (batch_size > wp->cap_batches) {
         wp->row_starts = (int *)st_realloc(wp->row_starts,
                 sizeof(int) * (batch_size + 1));
         if (wp->row_starts == NULL) {
             ST_WARNING("Failed to st_realloc row_starts.");
             return -1;
         }
+        wp->cap_batches = batch_size;
     }
     wp->batch_size = batch_size;
 
@@ -188,9 +206,8 @@ int word_pool_read(word_pool_t *wp, int *sent_ends,
         }
 
         if (wp->size >= wp->capacity - 1) {
-            if (word_pool_ensure_capacity(wp,
-                        wp->capacity + NUM_WORD_PER_SENT) < 0) {
-                ST_WARNING("Failed to word_pool_ensure_capacity. ");
+            if (word_pool_resize(wp, wp->capacity + NUM_WORD_PER_SENT) < 0) {
+                ST_WARNING("Failed to word_pool_resize. ");
                 goto ERR;
             }
         }
@@ -204,9 +221,9 @@ int word_pool_read(word_pool_t *wp, int *sent_ends,
                 if (i > 0) {
                     word[i] = '\0';
                     if (wp->size >= wp->capacity - 1) {
-                        if (word_pool_ensure_capacity(wp,
+                        if (word_pool_resize(wp,
                                 wp->capacity + NUM_WORD_PER_SENT) < 0) {
-                            ST_WARNING("Failed to word_pool_ensure_capacity. ");
+                            ST_WARNING("Failed to word_pool_resize. ");
                             goto ERR;
                         }
                     }
@@ -233,9 +250,9 @@ int word_pool_read(word_pool_t *wp, int *sent_ends,
         if (i > 0) {
             word[i] = '\0';
             if (wp->size >= wp->capacity - 1) {
-                if (word_pool_ensure_capacity(wp,
+                if (word_pool_resize(wp,
                             wp->capacity + NUM_WORD_PER_SENT) < 0) {
-                    ST_WARNING("Failed to word_pool_ensure_capacity. ");
+                    ST_WARNING("Failed to word_pool_resize. ");
                     goto ERR;
                 }
             }
@@ -264,6 +281,11 @@ int word_pool_read(word_pool_t *wp, int *sent_ends,
 
     safe_st_free(line);
 
+    if (word_pool_build_mini_batch(wp, 1) < 0) {
+        ST_WARNING("Failed to word_pool_build_mini_batch.");
+        goto ERR;
+    }
+
     if (err) {
         return -1;
     }
@@ -278,6 +300,26 @@ ERR:
 
     safe_st_free(line);
     return -1;
+}
+
+int word_pool_copy(word_pool_t *dst_wp, word_pool_t *src_wp)
+{
+    ST_CHECK_PARAM(dst_wp == NULL || src_wp == NULL, -1);
+
+    if (word_pool_resize(dst_wp, src_wp->size) < 0) {
+        ST_WARNING("Failed to word_pool_resize.");
+        return -1;
+    }
+    memcpy(dst_wp->words, src_wp->words, sizeof(int) * src_wp->size);
+
+    if (word_pool_resize_batches(dst_wp, src_wp->batch_size) < 0) {
+        ST_WARNING("Failed to word_pool_resize_batches.");
+        return -1;
+    }
+    memcpy(dst_wp->row_starts, src_wp->row_starts,
+            sizeof(int) * (src_wp->batch_size + 1));
+
+    return 0;
 }
 
 void reader_destroy(reader_t *reader)
@@ -461,13 +503,7 @@ static void* reader_read_thread(void *args)
     off_t fsize;
     int *sent_ends = NULL;
 
-    word_pool_t wp = {
-        .words = NULL,
-        .size = 0,
-        .capacity = 0,
-        .row_starts = NULL,
-        .batch_size = 0,
-    };
+    word_pool_t wp = {0};
     int num_thrs;
     int epoch_size, mini_batch;
 
@@ -503,8 +539,8 @@ static void* reader_read_thread(void *args)
     epoch_size = reader->opt.epoch_size;
     mini_batch = reader->opt.mini_batch;
 
-    if (word_pool_ensure_capacity(&wp, NUM_WORD_PER_SENT) < 0) {
-        ST_WARNING("Failed to word_pool_ensure_capacity.");
+    if (word_pool_resize(&wp, NUM_WORD_PER_SENT) < 0) {
+        ST_WARNING("Failed to word_pool_resize.");
         goto ERR;
     }
 
@@ -600,8 +636,8 @@ static void* reader_read_thread(void *args)
 #ifdef _TIME_PROF_
         gettimeofday(&tts_fill, NULL);
 #endif
-        if (word_pool_ensure_capacity(wp_in_queue, wp.size) < 0) {
-            ST_WARNING("Failed to word_pool_ensure_capacity. size[%d].",
+        if (word_pool_resize(wp_in_queue, wp.size) < 0) {
+            ST_WARNING("Failed to word_pool_resize. size[%d].",
                     wp.size);
             goto ERR;
         }

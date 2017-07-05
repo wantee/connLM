@@ -31,6 +31,79 @@
 
 #include "input_updater.h"
 
+static int egs_input_resize(egs_input_t *input, int n_ctx)
+{
+    ST_CHECK_PARAM(input == NULL, -1);
+
+    if (n_ctx > input->cap_words) {
+        input->words = (int *)st_realloc(input->words,
+                sizeof(int) * n_ctx);
+        if (input->words == NULL) {
+            ST_WARNING("Failed to st_realloc input->words.");
+            return -1;
+        }
+        memset(input->words, 0, sizeof(int) * (n_ctx - input->cap_words));
+
+        input->positions = (int *)st_realloc(input->positions,
+                sizeof(int) * n_ctx);
+        if (input->positions == NULL) {
+            ST_WARNING("Failed to st_realloc input->positions.");
+            return -1;
+        }
+        memset(input->positions, 0, sizeof(int) * (n_ctx - input->cap_words));
+
+        input->weights = (real_t *)st_realloc(input->weights,
+                sizeof(real_t) * n_ctx);
+        if (input->weights == NULL) {
+            ST_WARNING("Failed to st_realloc input->weights.");
+            return -1;
+        }
+        memset(input->weights, 0, sizeof(real_t) * (n_ctx - input->cap_words));
+
+        input->cap_words = n_ctx;
+    }
+
+    return 0;
+}
+
+static int egs_batch_resize(egs_batch_t *batch, int batch_size, int n_ctx)
+{
+    int i;
+
+    ST_CHECK_PARAM(batch == NULL, -1);
+
+    if (batch_size > batch->cap_egs) {
+        batch->inputs = (egs_input_t *)st_realloc(batch->inputs,
+                sizeof(egs_input_t) * batch_size);
+        if (batch->inputs == NULL) {
+            ST_WARNING("Failed to st_realloc batch->inputs.");
+            return -1;
+        }
+        memset(batch->inputs, 0,
+                sizeof(egs_input_t) * (batch_size - batch->cap_egs));
+
+        batch->targets = (int *)st_realloc(batch->targets,
+                sizeof(int) * batch_size);
+        if (batch->targets == NULL) {
+            ST_WARNING("Failed to st_realloc batch->targets.");
+            return -1;
+        }
+        memset(batch->targets, 0,
+                sizeof(int) * (batch_size - batch->cap_egs));
+
+        batch->cap_egs = batch_size;
+    }
+
+    for (i = 0; i < batch->cap_egs; i++) {
+        if (egs_input_resize(batch->inputs + i, n_ctx) < 0) {
+            ST_WARNING("Failed to egs_input_resize [%d].", i);
+            return -1;
+        }
+    }
+
+    return 0;
+}
+
 void input_updater_destroy(input_updater_t *input_updater)
 {
     if (input_updater == NULL) {
@@ -109,11 +182,9 @@ int input_updater_update_batch(input_updater_t *input_updater,
         ctx_rightmost = input->context[input->n_ctx - 1].i;
     }
 
-    if (batch->cap_egs < wp->batch_size) {
-        if (egs_batch_realloc(batch, wp->batch_size, input->n_ctx) < 0) {
-            ST_WARNING("Failed to egs_batch_realloc.");
-            return -1;
-        }
+    if (egs_batch_resize(batch, wp->batch_size, input->n_ctx) < 0) {
+        ST_WARNING("Failed to egs_batch_resize.");
+        return -1;
     }
 
     batch->num_egs = 0;
@@ -232,13 +303,13 @@ int input_updater_feed(input_updater_t *input_updater, word_pool_t *new_wp)
             num_keep += wp->row_starts[b + 1] - input_updater->cur_pos;
         }
 
-        if (word_pool_ensure_capacity(tmp_wp, num_keep + new_wp->size) < 0) {
+        if (word_pool_resize(tmp_wp, num_keep + new_wp->size) < 0) {
             ST_WARNING("Failed to word_pool_ensure_capacity.");
             return -1;
         }
 
         tmp_wp->batch_size = max(wp->batch_size, new_wp->batch_size);
-        if (word_pool_ensour_batch_size(tmp_wp, tmp_wp->batch_size) < 0) {
+        if (word_pool_resize_batches(tmp_wp, tmp_wp->batch_size) < 0) {
             ST_WARNING("Failed to word_pool_ensure_batch_size.");
             return -1;
         }
