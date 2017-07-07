@@ -45,6 +45,8 @@ typedef struct _matrix_t_ {
     size_t capacity; /**< capacity of val. */
 } matrix_t;
 
+#define MAT_VAL(mat, row, col) ((mat)->vals[(row)*((mat)->cols) + (col)])
+
 /**
  * Destroy a matrix.
  * @ingroup g_matrix

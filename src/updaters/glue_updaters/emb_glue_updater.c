@@ -36,15 +36,14 @@
 
 int emb_glue_updater_forward(glue_updater_t *glue_updater,
         comp_updater_t *comp_updater, egs_batch_t *batch,
-        real_t* in_ac, real_t *out_ac)
+        matrix_t* in_ac, matrix_t *out_ac)
 {
     glue_t *glue;
     input_t *input;
     real_t *wt;
     emb_glue_data_t *data;
 
-    int pos;
-    int a, b, j, col;
+    int b, w, i, j, col;
     real_t scale, ac;
 
     ST_CHECK_PARAM(glue_updater == NULL || comp_updater == NULL
@@ -54,79 +53,81 @@ int emb_glue_updater_forward(glue_updater_t *glue_updater,
     data = (emb_glue_data_t *)glue->extra;
     input = comp_updater->comp->input;
     col = glue->wt->col;
+    wt = glue_updater->wt_updater->wt;
 
     switch (data->combine) {
         case EC_SUM:
-            for (a = 0; a < input->n_ctx; a++) {
-                pos = input_sent->tgt_pos + input->context[a].i;
-                if (pos < 0 || pos >= input_sent->n_word) {
-                    continue;
-                }
-                scale = input->context[a].w;
+            for (b = 0; b < batch->num_egs; b++) {
+                for (w = 0; w < batch->inputs->num_words; w++) {
+                    scale = batch->inputs->weights[w];
 
-                wt = glue_updater->wt_updater->wt;
-                j = input_sent->words[pos] * col;
+                    j = batch->inputs->words[w] * col;
 
-                if (glue_updater->keep_mask != NULL) {
-                    for (b = 0; b < col; b++, j++) {
-                        if (glue_updater->keep_mask[b]) {
-                            out_ac[b] += scale * wt[j] / glue_updater->keep_prob;
+                    if (glue_updater->keep_mask != NULL) {
+                        for (i = 0; i < col; i++, j++) {
+                            if (glue_updater->keep_mask[i]) {
+                                MAT_VAL(out_ac, b, i) += scale * wt[j]
+                                    / glue_updater->keep_prob;
+                            }
                         }
-                    }
-                } else {
-                    for (b = 0; b < col; b++, j++) {
-                        out_ac[b] += scale * wt[j];
+                    } else {
+                        for (i = 0; i < col; i++, j++) {
+                            MAT_VAL(out_ac, b, i) += scale * wt[j];
+                        }
                     }
                 }
             }
             break;
         case EC_AVG:
-            for (b = 0; b < col; b++) {
-                if (glue_updater->keep_mask != NULL
-                        && ! glue_updater->keep_mask[b]) {
-                    continue;
-                }
-
-                ac = 0;
-                for (a = 0; a < input->n_ctx; a++) {
-                    pos = input_sent->tgt_pos + input->context[a].i;
-                    if (pos < 0 || pos >= input_sent->n_word) {
+            for (b = 0; b < batch->num_egs; b++) {
+                for (i = 0; i < col; i++) {
+                    if (glue_updater->keep_mask != NULL
+                            && ! glue_updater->keep_mask[i]) {
                         continue;
                     }
-                    scale = input->context[a].w;
 
-                    wt = glue_updater->wt_updater->wt;
-                    j = input_sent->words[pos] * col + b;
+                    ac = 0;
+                    for (w = 0; w < batch->inputs->num_words; w++) {
+                        scale = batch->inputs->weights[w];
+                        j = batch->inputs->words[w] * col + i;
 
-                    ac += scale * wt[j];
-                }
-                if (glue_updater->keep_mask != NULL) {
-                    out_ac[b] += ac / input->n_ctx / glue_updater->keep_prob;
-                } else {
-                    out_ac[b] += ac / input->n_ctx;
+                        ac += scale * wt[j];
+                    }
+                    if (glue_updater->keep_mask != NULL) {
+                        MAT_VAL(out_ac, b, i) += ac / input->n_ctx
+                            / glue_updater->keep_prob;
+                    } else {
+                        MAT_VAL(out_ac, b, i) += ac / input->n_ctx;
+                    }
                 }
             }
             break;
         case EC_CONCAT:
-            for (a = 0; a < input->n_ctx; a++) {
-                pos = input_sent->tgt_pos + input->context[a].i;
-                if (pos < 0 || pos >= input_sent->n_word) {
-                    continue;
-                }
-                scale = input->context[a].w;
+            for (b = 0; b < batch->num_egs; b++) {
+                pos = 0;
+                for (w = 0; w < batch->inputs->num_words; w++) {
+                    scale = batch->inputs->weights[w];
 
-                wt = glue_updater->wt_updater->wt;
-                j = input_sent->words[pos] * col;
+                    j = batch->inputs->words[w] * col;
 
-                if (glue_updater->keep_mask != NULL) {
-                    for (b = a * col; b < (a + 1) * col; b++, j++) {
-                        if (glue_updater->keep_mask[b]) {
-                            out_ac[b] += scale * wt[j] / glue_updater->keep_prob;
+                    while (pos < input->n_ctx) {
+                        if (input->context[pos].i == batch->inputs->positions[w]) {
+                            break;
                         }
+                        pos++;
                     }
-                } else {
-                    for (b = a * col; b < (a + 1) * col; b++, j++) {
-                        out_ac[b] += scale * wt[j];
+
+                    if (glue_updater->keep_mask != NULL) {
+                        for (i = pos * col; i < (pos + 1) * col; i++, j++) {
+                            if (glue_updater->keep_mask[i]) {
+                                MAT_VAL(out_ac, b, i) += scale * wt[j]
+                                    / glue_updater->keep_prob;
+                            }
+                        }
+                    } else {
+                        for (i = pos * col; i < (pos + 1) * col; i++, j++) {
+                            MAT_VAL(out_ac, b, i) += scale * wt[j];
+                        }
                     }
                 }
             }
@@ -141,7 +142,7 @@ int emb_glue_updater_forward(glue_updater_t *glue_updater,
 
 int emb_glue_updater_backprop(glue_updater_t *glue_updater,
         comp_updater_t *comp_updater, egs_batch_t *batch,
-        real_t *in_ac, real_t *out_er, real_t *in_er)
+        matrix_t *in_ac, matrix_t *out_er, matrix_t *in_er)
 {
     glue_t *glue;
     emb_glue_data_t *data;
@@ -150,11 +151,10 @@ int emb_glue_updater_backprop(glue_updater_t *glue_updater,
     real_t *er;
 
     st_wt_int_t in_idx;
-    int pos;
-    int a;
+    int b, i;
 
     ST_CHECK_PARAM(glue_updater == NULL || comp_updater == NULL
-            || input_sent == NULL, -1);
+            || batch == NULL, -1);
 
     glue = glue_updater->glue;
     data = (emb_glue_data_t *)glue->extra;
@@ -162,11 +162,11 @@ int emb_glue_updater_backprop(glue_updater_t *glue_updater,
 
     if (glue_updater->keep_mask != NULL) {
         er = glue_updater->dropout_val;
-        for (a = 0; a < glue_updater->keep_mask_len; a++) {
-            if (glue_updater->keep_mask[a]) {
-                er[a] = out_er[a];
+        for (i = 0; i < glue_updater->keep_mask_len; i++) {
+            if (glue_updater->keep_mask[i]) {
+                er[i] = out_er[i];
             } else {
-                er[a] = 0.0;
+                er[i] = 0.0;
             }
         }
     } else {
@@ -174,32 +174,36 @@ int emb_glue_updater_backprop(glue_updater_t *glue_updater,
     }
 
     if (data->combine == EC_CONCAT) {
-        for (a = 0; a < input->n_ctx; a++) {
-            pos = input_sent->tgt_pos + input->context[a].i;
-            if (pos < 0 || pos >= input_sent->n_word) {
-                continue;
-            }
-            in_idx.w = input->context[a].w;
-            in_idx.i = input_sent->words[pos];
-            if (wt_update(glue_updater->wt_updater, NULL, -1,
-                        er + a * glue->wt->col,
-                        1.0, NULL, 1.0, &in_idx) < 0) {
-                ST_WARNING("Failed to wt_update.");
-                return -1;
+        for (b = 0; b < batch->num_egs; b++) {
+            j = 0;
+            for (i = 0; i < batch->inputs->num_words; i++) {
+                while (j < input->n_ctx) {
+                    if (input->context[j] == batch->inputs->positions[i]) {
+                        break;
+                    }
+                    j++;
+                }
+
+                in_idx.w = batch->inputs->weights[i];
+                in_idx.i = batch->inputs->words[i];
+                if (wt_update(glue_updater->wt_updater, NULL, -1,
+                            er + j * glue->wt->col,
+                            1.0, NULL, 1.0, &in_idx) < 0) {
+                    ST_WARNING("Failed to wt_update.");
+                    return -1;
+                }
             }
         }
     } else {
-        for (a = 0; a < input->n_ctx; a++) {
-            pos = input_sent->tgt_pos + input->context[a].i;
-            if (pos < 0 || pos >= input_sent->n_word) {
-                continue;
-            }
-            in_idx.w = input->context[a].w;
-            in_idx.i = input_sent->words[pos];
-            if (wt_update(glue_updater->wt_updater, NULL, -1,
-                        er, 1.0, NULL, 1.0, &in_idx) < 0) {
-                ST_WARNING("Failed to wt_update.");
-                return -1;
+        for (b = 0; b < batch->num_egs; b++) {
+            for (i = 0; i < batch->inputs->num_words; i++) {
+                in_idx.w = batch->inputs->weights[i];
+                in_idx.i = batch->inputs->words[i];
+                if (wt_update(glue_updater->wt_updater, NULL, -1,
+                            er, 1.0, NULL, 1.0, &in_idx) < 0) {
+                    ST_WARNING("Failed to wt_update.");
+                    return -1;
+                }
             }
         }
     }

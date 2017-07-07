@@ -36,13 +36,26 @@
 
 #include "direct_glue_updater.h"
 
-typedef struct _dgu_data_t_ {
-    hash_t *hash_vals;
-    ngram_hash_t **nghashes;
-    int num_features;
-    int positive; /* beginning positon of positive context. */
+const unsigned int PRIMES[] = {
+    108641969, 116049371, 125925907, 133333309, 145678979, 175308587,
+    197530793, 234567803, 251851741, 264197411, 330864029, 399999781,
+    407407183, 459258997, 479012069, 545678687, 560493491, 607407037,
+    629629243, 656789717, 716048933, 718518067, 725925469, 733332871,
+    753085943, 755555077, 782715551, 790122953, 812345159, 814814293,
+    893826581, 923456189, 940740127, 953085797, 985184539, 990122807
+};
 
-    int hash_order;
+const unsigned int PRIMES_SIZE = sizeof(PRIMES) / sizeof(PRIMES[0]);
+
+typedef struct _dgu_data_t_ {
+    hash_t **hash_vals;
+    int *hash_order;
+    int cap_batches;
+
+    unsigned int **P; /**< coefficients of hash function, which is like
+                           P0 + P0 * P1 * w1 + P0 * P1 * P2 * w2 + ... */
+    int num_feats;
+    int positive; /* beginning positon of positive context. */
 } dgu_data_t;
 
 #define safe_dgu_data_destroy(ptr) do {\
@@ -61,14 +74,19 @@ void dgu_data_destroy(dgu_data_t *data)
         return;
     }
 
-    if (data->nghashes != NULL) {
-        for (i = 0; i < data->num_features; i++) {
-            safe_ngram_hash_destroy(data->nghashes[i]);
-        }
-        safe_st_free(data->nghashes);
+    for (i = 0; i < data->cap_batches; i++) {
+        safe_free(data->hash_vals[i]);
     }
+    safe_free(data->hash_vals);
+    safe_free(data->hash_order);
+    data->cap_batches = 0;
 
-    safe_st_free(data->hash_vals);
+    for (i = 0; i < data->num_feats; i++) {
+        safe_free(data->P[i]);
+    }
+    safe_free(data->P);
+    data->num_feats = 0;
+    data->positive = 0;
 }
 
 dgu_data_t* dgu_data_init(glue_updater_t *glue_updater)
@@ -88,77 +106,98 @@ ERR:
     return NULL;
 }
 
-int dgu_data_setup(dgu_data_t *data, st_wt_int_t *features, int n_feat)
+int dgu_data_resize_batch(dgu_data_t *data, int batch_size)
 {
-    int a;
     int b;
 
-    int *context = NULL;
-    int max_order, pos;
-    int n_ctx;
+    if (batch_size > data->cap_batches) {
+        data->hash_vals = (hash_t **)st_realloc(data->hash_vals,
+                sizeof(hash_t *) * batch_size);
+        if (data->hash_vals == NULL) {
+            ST_WARNING("Failed to st_malloc hash_vals.");
+            return -1;
+        }
+
+        for (b = data->cap_batches; b < batch_size; b++) {
+            data->hash_vals[b] = (hash_t *)st_malloc(
+                    sizeof(hash_t) * (num_feats + 1));
+            if (data->hash_vals[b] == NULL) {
+                ST_WARNING("Failed to st_malloc hash_vals[%d].", b);
+                return -1;
+            }
+
+            data->hash_vals[b][0] = PRIMES[0] * PRIMES[1] * 1;
+        }
+    }
+
+    return 0;
+}
+
+int dgu_data_setup(dgu_data_t *data, st_wt_int_t *features, int num_feats)
+{
+    int i, j;
+    unsigned int idx;
 
     ST_CHECK_PARAM(data == NULL, -1);
 
-    data->num_features = n_feat;
-    max_order = 0;
-    data->positive = n_feat;
-    for (a = n_feat - 1; a >= 0; a--) {
-        if (features[a].i > 0) {
-            data->positive = a;
-        }
-        if (abs(features[a].i) > max_order) {
-            max_order = abs(features[a].i);
-        }
-    }
+    data->num_feats = num_feats;
 
-    data->nghashes = (ngram_hash_t **)st_malloc(sizeof(ngram_hash_t*) * n_feat);
-    if (data->nghashes == NULL) {
-        ST_WARNING("Failed to st_malloc nghashes.");
+    data->P = (unsigned int **)st_malloc(sizeof(unsigned *)*num_feats);
+    if (data->P == NULL) {
+        ST_WARNING("Failed to st_malloc P.");
         goto ERR;
     }
-    context = (int *)st_malloc(sizeof(int) * max_order);
-    if (context == NULL) {
-        ST_WARNING("Failed to st_malloc context.");
-        goto ERR;
+    data->positive = num_feats;
+    for (i = n_feat - 1; i >= 0; i--) {
+        if (features[i].i > 0) {
+            data->positive = i;
+        }
     }
 
-    for (a = 0; a < n_feat; a++) {
-        pos = features[a].i;
-        n_ctx = 0;
-        if (pos < 0) {
-            while (-pos > 0) {
-                context[n_ctx] = pos;
-                ++n_ctx;
-                ++pos;
-            }
-        } else {
-            b = 1;
-            while (b <= pos) {
-                context[n_ctx] = b;
-                ++n_ctx;
-                ++b;
-            }
-        }
-
-        data->nghashes[a] = ngram_hash_create(context, n_ctx);
-        if (data->nghashes[a] == NULL) {
-            ST_WARNING("Failed to ngram_hash_create for [%d]th feature.", a);
+    // negtive context coefficients
+    for (i = 0; i < data->positive; i++) {
+        data->P[i] = (unsigned int *)st_malloc(sizeof(unsigned)*(i + 1));
+        if (data->P[i] == NULL) {
+            ST_WARNING("Failed to st_malloc P[%d].", i);
             goto ERR;
         }
+
+        for (j = 0; j <= i; j++) {
+            idx = (-context[i].i) * PRIMES[(-context[j].i) % PRIMES_SIZE];
+            idx += (-context[j].i);
+            data->P[i][j] = PRIMES[idx % PRIMES_SIZE];
+            if (j > 0) {
+                data->P[i][j] *= data->P[i][j - 1];
+            } else {
+                data->P[i][j] *= data->hash[0];
+            }
+        }
     }
 
-    data->hash_vals = (hash_t *)st_malloc(sizeof(hash_t)*(n_feat + 1));
-    if (data->hash_vals == NULL) {
-        ST_WARNING("Failed to st_malloc hash_vals.");
-        goto ERR;
-    }
-    data->hash_vals[0] = (hash_t)(108641969L * 116049371L); // PRIMES[0] * PRIMES[1] in ngram_hash
+    // postive context coefficients
+    for (i = data->positive; i < num_feats; i++) {
+        data->P[i] = (unsigned int *)st_malloc(sizeof(unsigned)
+                * (i - data->positive + 1));
+        if (data->P[i] == NULL) {
+            ST_WARNING("Failed to st_malloc P[%d].", i);
+            goto ERR;
+        }
 
-    safe_st_free(context);
+        for (j = data->positive; j <= i; j++) {
+            idx = context[i].i * PRIMES[context[j].i % PRIMES_SIZE];
+            idx += context[j].i;
+            data->P[i][j] = PRIMES[idx % PRIMES_SIZE];
+            if (j > data->positive) {
+                data->P[i][j] *= data->P[i][j - data->positive - 1];
+            } else {
+                data->P[i][j] *= data->hash[0];
+            }
+        }
+    }
+
     return 0;
 ERR:
     dgu_data_destroy(data);
-    safe_st_free(context);
     return -1;
 }
 
@@ -197,61 +236,58 @@ ERR:
     return -1;
 }
 
-static int direct_get_hash_pos(hash_t *hash_vals, hash_t init_val,
-        ngram_hash_t **nghashes, int n_nghashes, int *words,
-        int n_word, int tgt_pos)
+static int direct_get_hash_pos(hash_t *hash, hash_t init_val,
+        unsigned int **P, int *words, int n_word)
 {
-    ngram_hash_t *nghash;
-    int max_pos;
+    int i, j;
 
-    int a;
-
-    // assert all context[i] > 0
-    for (a = 0; a < n_nghashes; a++) {
-        nghash = nghashes[a];
-        max_pos = tgt_pos + nghash->context[nghash->ctx_len - 1];
-        if (max_pos >= n_word) {
-            return a;
+    // assert all context[i].i > 0
+    for (i = 0; i < n_ctx; i++) {
+        if (tgt_pos + context[i].i >= n_word) {
+            return i;
         }
-        if (words[max_pos] < 0 || words[max_pos] == UNK_ID) {
+        if (words[tgt_pos + context[i].i] < 0
+                || words[tgt_pos + context[i].i] == UNK_ID) {
             // if OOV was in future, do not use
             // this N-gram feature and higher orders
-            return a;
+            return i;
         }
 
-        hash_vals[a] = ngram_hash(nghash, words, n_word, tgt_pos, init_val);
+        hash[i] = init_val;
+        for (j = 0; j <= i; j++) {
+            hash[i] += P[i][j] * (hash_t)(words[tgt_pos+context[j].i] + 1);
+        }
     }
 
-    return n_nghashes;
+    return n_ctx;
 }
 
-static int direct_get_hash_neg(hash_t *hash_vals, hash_t init_val,
-        ngram_hash_t **nghashes, int n_nghashes, int *words,
+static int direct_get_hash_neg(hash_t *hash, hash_t init_val,
+        unsigned int **P, st_wt_int_t *context, int n_ctx, int *words,
         int n_word, int tgt_pos)
 {
-    ngram_hash_t *nghash;
-    int max_pos;
+    int i, j;
 
-    int a;
-
-    // assert all context[i] < 0
-    for (a = n_nghashes - 1; a >= 0; a--) {
-        nghash = nghashes[a];
-        max_pos = tgt_pos + nghash->context[0];
-        if (max_pos < 0) {
-            return n_nghashes - a - 1;
+    // assert all context[i].i < 0
+    for (i = n_ctx - 1; i >= 0; i--) {
+        if (tgt_pos + context[i].i < 0) {
+            return n_ctx - i - 1;
         }
-        if (words[max_pos] < 0 || words[max_pos] == UNK_ID) {
+        if (words[tgt_pos + context[i].i] < 0
+                || words[tgt_pos + context[i].i] == UNK_ID) {
             // if OOV was in history, do not use
             // this N-gram feature and higher orders
-            return n_nghashes - a - 1;
+            return n_ctx - i - 1;
         }
 
-        hash_vals[n_nghashes - a - 1] = ngram_hash(nghash, words, n_word,
-                tgt_pos, init_val);
+        hash[n_ctx - i - 1] = init_val;
+        for (j = n_ctx - 1; j >= i; j--) {
+            hash[n_ctx - i - 1] += P[n_ctx - i - 1][j - i]
+                * (hash_t)(words[tgt_pos + context[j].i] + 1);
+        }
     }
 
-    return n_nghashes;
+    return n_ctx;
 }
 
 int direct_glue_updater_setup(glue_updater_t *glue_updater,
@@ -389,43 +425,43 @@ static int direct_forward_walker(output_t *output, output_node_id_t node,
     return 0;
 }
 
-static int direct_compute_hash(glue_updater_t *glue_updater,
-        comp_updater_t *comp_updater, egs_batch_t *batch)
+static int direct_compute_hash(glue_updater_t *glue_updater, int batch_id,
+        egs_input_t *input)
 {
     dgu_data_t *data;
 
     int future_order;
-    int a;
+    int i;
 
     data = (dgu_data_t *)glue_updater->extra;
 
     /* history ngrams. */
-    data->hash_order = direct_get_hash_neg(data->hash_vals + 1, 1,
-            data->nghashes, data->positive,
-            input_sent->words, input_sent->n_word, input_sent->tgt_pos);
+    data->hash_order[batch_id] = direct_get_hash_neg(data->hash + 1, data->hash[0],
+            data->P, input->words, data->positive);
     if (data->hash_order < 0) {
         ST_WARNING("Failed to direct_wt_get_hash history.");
         return -1;
     }
 
-    if (data->num_features - data->positive > 0) {
+    if (data->num_feats - data->positive > 0) {
         /* future ngrams. */
         future_order = direct_get_hash_pos(
-                data->hash_vals + 1 + data->hash_order,
-                1, data->nghashes + data->positive,
-                data->num_features - data->positive,
-                input_sent->words, input_sent->n_word, input_sent->tgt_pos);
+                data->hash_vals[batch_id] + 1 + data->hash_order[batch_id],
+                data->hash_vals[batch_id][0],
+                data->P + data->positive,
+                input->words + data->positive,
+                data->num_feats - data->positive);
         if (future_order < 0) {
             ST_WARNING("Failed to direct_wt_get_hash future.");
             return -1;
         }
-        data->hash_order += future_order;
+        data->hash_order[batch_id] += future_order;
     }
 
-    data->hash_order += 1/* for hash_vals[0]. */;
+    data->hash_order[batch_id] += 1/* for hash_vals[0]. */;
 
-    for (a = 0; a < data->hash_order; a++) {
-        data->hash_vals[a] = data->hash_vals[a] % glue_updater->wt_updater->row;
+    for (i = 0; i < data->hash_order[batch_id]; i++) {
+        data->hash_vals[batch_id][i] %= glue_updater->wt_updater->row;
     }
 
     return 0;
@@ -446,31 +482,38 @@ int direct_glue_updater_forward(glue_updater_t *glue_updater,
     data = (dgu_data_t *)glue_updater->extra;
     out_updater = comp_updater->out_updater;
 
-    // TODO: instead of computing hash_vals here in advance,
-    //       move this function inside direct_forward_walker
-    //       with node_id as init_val, so that we can get different
-    //       hash_vals on different tree nodes.
-    if (direct_compute_hash(glue_updater, comp_updater, batch) < 0) {
-        ST_WARNING("Failed to direct_compute_hash.");
+    if (dgu_data_resize_batch(data, batch->num_egs) < 0) {
+        ST_WARNING("Failed to dgu_data_resize_batch.");
         return -1;
     }
 
-    dw_args.out_ac = out_ac;
-    dw_args.comp_scale = comp_updater->comp->comp_scale;
-    dw_args.wt_updater = glue_updater->wt_updater;
-    dw_args.hash_wt = glue_updater->wt_updater->wt;
-    dw_args.hash_sz = glue_updater->glue->wt->row;
-    dw_args.hash_vals = data->hash_vals;
-    dw_args.hash_order = data->hash_order;
-    dw_args.forwarded = NULL;
-    dw_args.keep_mask = glue_updater->keep_mask;
-    dw_args.keep_prob = glue_updater->keep_prob;
-    dw_args.rand_seed = glue_updater->rand_seed;
-    if (output_walk_through_path(out_updater->output,
-                input_sent->words[input_sent->tgt_pos],
-                direct_forward_walker, (void *)&dw_args) < 0) {
-        ST_WARNING("Failed to output_walk_through_path.");
-        return -1;
+    for (b = 0; b < batch->num_egs; b++) {
+        // TODO: instead of computing hash_vals here in advance,
+        //       move this function inside direct_forward_walker
+        //       with node_id as init_val, so that we can get different
+        //       hash_vals on different tree nodes.
+        if (direct_compute_hash(glue_updater, b, batch->inputs + b) < 0) {
+            ST_WARNING("Failed to direct_compute_hash.");
+            return -1;
+        }
+
+        dw_args.out_ac = out_ac;
+        dw_args.comp_scale = comp_updater->comp->comp_scale;
+        dw_args.wt_updater = glue_updater->wt_updater;
+        dw_args.hash_wt = glue_updater->wt_updater->wt;
+        dw_args.hash_sz = glue_updater->glue->wt->row;
+        dw_args.hash_vals = data->hash_vals;
+        dw_args.hash_order = data->hash_order;
+        dw_args.forwarded = NULL;
+        dw_args.keep_mask = glue_updater->keep_mask;
+        dw_args.keep_prob = glue_updater->keep_prob;
+        dw_args.rand_seed = glue_updater->rand_seed;
+        if (output_walk_through_path(out_updater->output,
+                    batch->targets[b],
+                    direct_forward_walker, (void *)&dw_args) < 0) {
+            ST_WARNING("Failed to output_walk_through_path.");
+            return -1;
+        }
     }
 
     return 0;
@@ -572,9 +615,20 @@ int direct_glue_updater_forward_util_out(glue_updater_t *glue_updater,
         comp_updater_t *comp_updater, egs_batch_t *batch,
         real_t* in_ac, real_t* out_ac)
 {
-    if (direct_compute_hash(glue_updater, comp_updater, batch) < 0) {
-        ST_WARNING("Failed to direct_compute_hash.");
+    dgu_data_t *data;
+    int b;
+
+    data = (dgu_data_t *)glue_updater->extra;
+    if (dgu_data_resize_batch(data, batch->num_egs) < 0) {
+        ST_WARNING("Failed to dgu_data_resize_batch.");
         return -1;
+    }
+
+    for (b = 0; b < batch->num_egs; b++) {
+        if (direct_compute_hash(glue_updater, b, batch->inputs + b) < 0) {
+            ST_WARNING("Failed to direct_compute_hash.");
+            return -1;
+        }
     }
 
     return 0;
