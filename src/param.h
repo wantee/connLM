@@ -46,10 +46,7 @@ typedef struct _param_t_ {
     real_t dropout; /**< dropout probability for in/out layer. */
     real_t l1_penalty; /**< value of L1 penalty */
     real_t l2_penalty; /**< value of L2 penalty */
-    int l2_delay; /**< delayed step of applying L2 penalty */
     real_t momentum; /**< value of momentum */
-    int mini_batch; /**< size of mini-batch */
-    int sync_size; /**< if bigger than 0, sync weight for threads every sync_size steps. */
     real_t er_cutoff; /**< cutoff of error. */
 } param_t;
 

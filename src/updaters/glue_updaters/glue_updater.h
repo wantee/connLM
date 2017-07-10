@@ -207,15 +207,6 @@ int glue_updater_backprop(glue_updater_t *glue_updater,
         comp_updater_t *comp_updater, egs_batch_t *batch);
 
 /**
- * Finish running for glue_updater.
- * Called after all words performed.
- * @ingroup g_updater_glue
- * @param[in] glue_updater glue_updater.
- * @return non-zero value if any error.
- */
-int glue_updater_finish(glue_updater_t *glue_updater);
-
-/**
  * Feed-forward util output layer.
  * @ingroup g_updater_glue
  * @param[in] glue_updater the glue_updater.

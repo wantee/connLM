@@ -127,17 +127,6 @@ bptt_updater_t* bptt_updater_create(component_t *comp, int cycle_id,
         memset(bptt_updater->er_bptt[i], 0, sz);
 
         bptt_updater->wt_updaters[i] = glue_updaters[g]->wt_updater;
-
-        // NOTE: To correctly BPTT, _BATCH_UPDATE_ must be defined
-        // we must make sure mini_batch is at least 1,
-        // so that the bptt could be batch updated.
-        if (bptt_updater->wt_updaters[i]->param.mini_batch <= 0) {
-            bptt_updater->wt_updaters[i]->param.mini_batch = 1;
-            if (wt_updater_init(bptt_updater->wt_updaters[i]) < 0) {
-                ST_WARNING("Failed to wt_updater_init for bptt.");
-                goto ERR;
-            }
-        }
     }
 
     return bptt_updater;

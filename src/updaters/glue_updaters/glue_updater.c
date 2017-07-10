@@ -150,8 +150,6 @@ int glue_updater_setup(glue_updater_t *glue_updater,
 
     ST_CHECK_PARAM(glue_updater == NULL, -1);
 
-    wt_updater_clear(glue_updater->wt_updater);
-
     if (glue_updater->impl != NULL && glue_updater->impl->setup != NULL) {
         if (glue_updater->impl->setup(glue_updater,
                     comp_updater, backprop) < 0) {
@@ -412,13 +410,6 @@ int glue_updater_backprop(glue_updater_t *glue_updater,
             return -1;
         }
 
-        if (glue->recur_type == RECUR_NON) {
-            if (wt_flush(glue_updater->wt_updater, false) < 0) {
-                ST_WARNING("Failed to wt_flush.");
-                return -1;
-            }
-        }
-
         if (glue_updater->keep_prob < 1.0 && in_er != NULL) {
             for (i = 0; i < glue->in_length; i++) {
                 if (! glue_updater->keep_mask[i]) {
@@ -426,22 +417,6 @@ int glue_updater_backprop(glue_updater_t *glue_updater,
                 }
             }
         }
-    }
-
-    return 0;
-}
-
-int glue_updater_finish(glue_updater_t *glue_updater)
-{
-    ST_CHECK_PARAM(glue_updater == NULL, -1);
-
-#ifdef _CONNLM_TRACE_PROCEDURE_
-    ST_TRACE("Finish: glue[%s]", glue_updater->glue->name);
-#endif
-
-    if (wt_flush(glue_updater->wt_updater, true) < 0) {
-        ST_WARNING("Failed to wt_flush.");
-        return -1;
     }
 
     return 0;

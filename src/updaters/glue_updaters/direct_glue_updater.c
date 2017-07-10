@@ -120,7 +120,7 @@ int dgu_data_resize_batch(dgu_data_t *data, int batch_size)
 
         for (b = data->cap_batches; b < batch_size; b++) {
             data->hash_vals[b] = (hash_t *)st_malloc(
-                    sizeof(hash_t) * (num_feats + 1));
+                    sizeof(hash_t) * (data->num_feats + 1));
             if (data->hash_vals[b] == NULL) {
                 ST_WARNING("Failed to st_malloc hash_vals[%d].", b);
                 return -1;
@@ -148,7 +148,7 @@ int dgu_data_setup(dgu_data_t *data, st_wt_int_t *features, int num_feats)
         goto ERR;
     }
     data->positive = num_feats;
-    for (i = n_feat - 1; i >= 0; i--) {
+    for (i = num_feats - 1; i >= 0; i--) {
         if (features[i].i > 0) {
             data->positive = i;
         }

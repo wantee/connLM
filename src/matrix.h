@@ -40,19 +40,28 @@ extern "C" {
  */
 typedef struct _matrix_t_ {
     real_t *vals; /**< values of matrix. */
-    size_t rows; /**< number of rows. */
-    size_t cols; /**< number of cols. */
+    size_t num_rows; /**< number of rows. */
+    size_t num_cols; /**< number of cols. */
     size_t capacity; /**< capacity of val. */
 } matrix_t;
 
-#define MAT_VAL(mat, row, col) ((mat)->vals[(row)*((mat)->cols) + (col)])
+#define MAT_VAL(mat, row, col) ((mat)->vals[(row)*((mat)->num_cols) + (col)])
+#define MAT_VALP(mat, row, col) ((mat)->vals + ((row)*((mat)->num_cols) + (col)))
 
 /**
  * Destroy a matrix.
  * @ingroup g_matrix
- * @param[in] matrix matrix to be destroyed.
+ * @param[in] mat matrix to be destroyed.
  */
 void matrix_destroy(matrix_t *mat);
+
+/**
+ * Clear a matrix.
+ * @ingroup g_matrix
+ * @param[in] mat matrix to be cleared.
+ * @return non-zero if any error.
+ */
+int matrix_clear(matrix_t *mat);
 
 /**
  * Resize a matrix.
@@ -62,7 +71,80 @@ void matrix_destroy(matrix_t *mat);
  * @param[in] cols new number of cols.
  * @return non-zero if any error.
  */
-int matrix_resize(matrix_t *mat, size_t rows, size_t cols);
+int matrix_resize(matrix_t *mat, size_t num_rows, size_t num_cols);
+
+/**
+ * Append a row into a matrix.
+ * @ingroup g_matrix
+ * @param[in] mat the matrix.
+ * @param[in] row values of row, size must be same as mat.num_cols.
+ * @return non-zero if any error.
+ */
+int matrix_append_row(matrix_t *mat, real_t* row);
+
+/**
+ * Sparse matrix format. see https://software.intel.com/en-us/mkl-developer-reference-c-sparse-blas-csr-matrix-storage-format
+ * @ingroup g_matrix
+ */
+typedef enum _sparse_matrix_format_t_ {
+    SP_MAT_CSR = 0, /**< CSR format. */
+    SP_MAT_CSC, /**< CSC format. */
+    SP_MAT_COO, /**< COO format. */
+} sp_mat_fmt_t;
+
+/**
+ * Sparse Matrix.
+ * We only support CSC format now.
+ * @ingroup g_matrix
+ */
+typedef struct _sparse_matrix_t_ {
+    sp_mat_fmt_t fmt; /**< format. */
+    real_t *vals; /**< values of matrix. */
+    size_t size; /**< number of values. */
+    size_t capacity; /**< capacity of values. */
+
+    union {
+        struct _csr_t_ {
+            int *cols; /**< col indexes for values. */
+            int *row_s; /**< begin index for row. */
+            int *row_e; /**< end index for row. */
+            size_t num_rows; /**< number of rows. */
+            size_t cap_rows; /**< capacity of rows. */
+        } csr;
+
+        struct _csc_t_ {
+            int *rows; /**< row indexes for values. */
+            int *col_s; /**< begin index for col. */
+            int *col_e; /**< end index for col. */
+            size_t num_cols; /**< number of cols. */
+            size_t cap_cols; /**< capacity of cols. */
+        } csc;
+
+        struct _coo_t_ {
+            int *rows; /**< row indexes for values. */
+            int *cols; /**< col indexes for values. */
+        } coo;
+    };
+} sparse_matrix_t;
+
+/**
+ * Destroy a sparse matrix.
+ * @ingroup g_matrix
+ * @param[in] sp_mat sparse matrix to be destroyed.
+ */
+void sparse_matrix_destroy(sparse_matrix_t *sp_mat);
+
+/**
+ * Resize a sparse matrix.
+ * @ingroup g_matrix
+ * @param[in] sp_mat the sparse matrix.
+ * @param[in] size new number of values.
+ * @param[in] num_rows new number of rows.
+ * @param[in] num_cols new number of cols.
+ * @return non-zero if any error.
+ */
+int sparse_matrix_resize(sparse_matrix_t *sp_mat, size_t size,
+        size_t num_rows, size_t num_cols);
 
 #ifdef __cplusplus
 }

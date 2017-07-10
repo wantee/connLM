@@ -565,8 +565,8 @@ static int comp_updater_bptt(comp_updater_t *comp_updater, bool clear)
         if (comp_updater->bptt_step % bptt_delay == 0 || clear) {
             for (j = 1; j <= comp->glue_cycles[i][0]; j++) {
                 wt_updater = bptt_updater->wt_updaters[j];
-                if (wt_flush(wt_updater, false) < 0) {
-                    ST_WARNING("Failed to wt_flush.");
+                if (wt_update(wt_updater) < 0) {
+                    ST_WARNING("Failed to wt_update.");
                     return -1;
                 }
 
@@ -730,8 +730,6 @@ int comp_updater_clear(comp_updater_t *comp_updater)
 int comp_updater_finish(comp_updater_t *comp_updater)
 {
     component_t *comp;
-    glue_updater_t *glue_updater;
-    int g;
 
     ST_CHECK_PARAM(comp_updater == NULL, -1);
 
@@ -744,14 +742,6 @@ int comp_updater_finish(comp_updater_t *comp_updater)
     if (comp_updater_bptt(comp_updater, true) < 0) {
         ST_WARNING("Failed to clear bptt comp[%s].", comp->name);
         return -1;
-    }
-
-    for (g = comp->num_glue - 1; g >= 0; g--) {
-        glue_updater = comp_updater->glue_updaters[comp->fwd_order[g]];
-        if (glue_updater_finish(glue_updater) < 0) {
-            ST_WARNING("Failed to finish glue[%s].", glue_updater->glue->name);
-            return -1;
-        }
     }
 
     return 0;

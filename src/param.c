@@ -37,10 +37,7 @@ static param_t def_param = {
     .dropout = 0.0,
     .l1_penalty = 0.0,
     .l2_penalty = 0.0,
-    .l2_delay = 0,
     .momentum = 0.0,
-    .mini_batch = 0,
-    .sync_size = 0,
     .er_cutoff = 50.0,
 };
 
@@ -100,23 +97,11 @@ int param_load(param_t *param, st_opt_t *opt, const char *sec_name,
             "L2 penalty (weight decay)");
     param->l2_penalty = (real_t)d;
 
-    ST_OPT_SEC_GET_INT(opt, sec_name, "L2_DELAY", param->l2_delay,
-            param->l2_delay,
-            "delayed step of applying L2 penalty.");
-
     ST_OPT_SEC_GET_DOUBLE(opt, sec_name, "MOMENTUM", d,
             (double)param->momentum,
             "Momentum. Note: to make the 'effective' learning rate remains "
             "the same, the learning rate will be multiplied by (1-momentum)");
     param->momentum = (real_t)d;
-
-    ST_OPT_SEC_GET_INT(opt, sec_name, "MINI_BATCH", param->mini_batch,
-            param->mini_batch,
-            "Mini-batch size");
-
-    ST_OPT_SEC_GET_INT(opt, sec_name, "SYNC_SIZE", param->sync_size,
-            param->sync_size,
-            "if bigger than 0, sync weight for threads every sync_size steps.");
 
     ST_OPT_SEC_GET_DOUBLE(opt, sec_name, "ERR_CUTOFF", d,
             (double)param->er_cutoff, "Cutoff of error");
@@ -148,19 +133,7 @@ bool param_equal(param_t *param1, param_t *param2)
         return false;
     }
 
-    if (param1->l2_delay != param2->l2_delay) {
-        return false;
-    }
-
     if (param1->momentum != param2->momentum) {
-        return false;
-    }
-
-    if (param1->mini_batch != param2->mini_batch) {
-        return false;
-    }
-
-    if (param1->sync_size != param2->sync_size) {
         return false;
     }
 
