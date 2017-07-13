@@ -30,7 +30,7 @@
 
 #include "matrix.h"
 
-void matrix_destroy(matrix_t *mat)
+void mat_destroy(mat_t *mat)
 {
     if (mat == NULL) {
         return;
@@ -42,7 +42,7 @@ void matrix_destroy(matrix_t *mat)
     mat->capacity = 0;
 }
 
-int matrix_clear(matrix_t *mat)
+int mat_clear(mat_t *mat)
 {
     ST_CHECK_PARAM(mat == NULL, -1);
 
@@ -52,7 +52,7 @@ int matrix_clear(matrix_t *mat)
     return 0;
 }
 
-int matrix_resize(matrix_t *mat, size_t num_rows, size_t num_cols)
+int mat_resize(mat_t *mat, size_t num_rows, size_t num_cols)
 {
     ST_CHECK_PARAM(mat == NULL || num_rows <= 0 || num_cols <= 0, -1);
 
@@ -71,11 +71,11 @@ int matrix_resize(matrix_t *mat, size_t num_rows, size_t num_cols)
     return 0;
 }
 
-int matrix_append_row(matrix_t *mat, real_t* row)
+int mat_append_row(mat_t *mat, real_t* row)
 {
     ST_CHECK_PARAM(mat == NULL || row == NULL, -1);
 
-    if (matrix_resize(mat, mat->num_rows + 1, mat->num_cols) < 0) {
+    if (mat_resize(mat, mat->num_rows + 1, mat->num_cols) < 0) {
         ST_WARNING("Failed to matrix_resize.");
         return -1;
     }
@@ -87,7 +87,7 @@ int matrix_append_row(matrix_t *mat, real_t* row)
     return 0;
 }
 
-void sparse_matrix_destroy(sparse_matrix_t *sp_mat)
+void sp_mat_destroy(sp_mat_t *sp_mat)
 {
     if (sp_mat == NULL) {
         return;
@@ -115,7 +115,7 @@ void sparse_matrix_destroy(sparse_matrix_t *sp_mat)
     sp_mat->capacity = 0;
 }
 
-int sparse_matrix_resize(sparse_matrix_t *sp_mat, size_t size,
+int sp_mat_resize(sp_mat_t *sp_mat, size_t size,
         size_t num_rows, size_t num_cols)
 {
     ST_CHECK_PARAM(sp_mat == NULL || size <= 0, -1);

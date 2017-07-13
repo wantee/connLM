@@ -42,8 +42,8 @@ typedef struct _matrix_t_ {
     real_t *vals; /**< values of matrix. */
     size_t num_rows; /**< number of rows. */
     size_t num_cols; /**< number of cols. */
-    size_t capacity; /**< capacity of val. */
-} matrix_t;
+    size_t capacity; /**< capacity of vals. */
+} mat_t;
 
 #define MAT_VAL(mat, row, col) ((mat)->vals[(row)*((mat)->num_cols) + (col)])
 #define MAT_VALP(mat, row, col) ((mat)->vals + ((row)*((mat)->num_cols) + (col)))
@@ -53,7 +53,7 @@ typedef struct _matrix_t_ {
  * @ingroup g_matrix
  * @param[in] mat matrix to be destroyed.
  */
-void matrix_destroy(matrix_t *mat);
+void mat_destroy(mat_t *mat);
 
 /**
  * Clear a matrix.
@@ -61,7 +61,7 @@ void matrix_destroy(matrix_t *mat);
  * @param[in] mat matrix to be cleared.
  * @return non-zero if any error.
  */
-int matrix_clear(matrix_t *mat);
+int mat_clear(mat_t *mat);
 
 /**
  * Resize a matrix.
@@ -71,7 +71,7 @@ int matrix_clear(matrix_t *mat);
  * @param[in] cols new number of cols.
  * @return non-zero if any error.
  */
-int matrix_resize(matrix_t *mat, size_t num_rows, size_t num_cols);
+int mat_resize(mat_t *mat, size_t num_rows, size_t num_cols);
 
 /**
  * Append a row into a matrix.
@@ -80,7 +80,7 @@ int matrix_resize(matrix_t *mat, size_t num_rows, size_t num_cols);
  * @param[in] row values of row, size must be same as mat.num_cols.
  * @return non-zero if any error.
  */
-int matrix_append_row(matrix_t *mat, real_t* row);
+int mat_append_row(mat_t *mat, real_t* row);
 
 /**
  * Sparse matrix format. see https://software.intel.com/en-us/mkl-developer-reference-c-sparse-blas-csr-matrix-storage-format
@@ -125,14 +125,14 @@ typedef struct _sparse_matrix_t_ {
             int *cols; /**< col indexes for values. */
         } coo;
     };
-} sparse_matrix_t;
+} sp_mat_t;
 
 /**
  * Destroy a sparse matrix.
  * @ingroup g_matrix
  * @param[in] sp_mat sparse matrix to be destroyed.
  */
-void sparse_matrix_destroy(sparse_matrix_t *sp_mat);
+void sp_mat_destroy(sp_mat_t *sp_mat);
 
 /**
  * Resize a sparse matrix.
@@ -143,7 +143,7 @@ void sparse_matrix_destroy(sparse_matrix_t *sp_mat);
  * @param[in] num_cols new number of cols.
  * @return non-zero if any error.
  */
-int sparse_matrix_resize(sparse_matrix_t *sp_mat, size_t size,
+int sp_mat_resize(sp_mat_t *sp_mat, size_t size,
         size_t num_rows, size_t num_cols);
 
 #ifdef __cplusplus
