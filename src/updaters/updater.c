@@ -65,7 +65,7 @@ static int updater_clear(updater_t *updater)
         }
     }
 
-    if (out_updater_clear(updater->out_updater) < 0) {
+    if (out_updater_clear(updater->out_updater, &updater->targets) < 0) {
         ST_WARNING("Failed to out_updater_clear.");
         return -1;
     }
@@ -140,7 +140,7 @@ static int updater_backprop(updater_t *updater)
     ST_TRACE("Backprop: word[%d]", tgt_word(updater));
 #endif
 
-    if (out_updater_loss(updater->out_updater, tgt_word(updater)) < 0) {
+    if (out_updater_loss(updater->out_updater, &updater->targets) < 0) {
         ST_WARNING("Failed to out_updater_backprop.");
         return -1;
     }
@@ -394,6 +394,11 @@ int updater_step(updater_t *updater)
 
     word = tgt_word(updater);
 
+    if (updater_move_input(updater) < 0) {
+        ST_WARNING("Failed to updater_move_input.");
+        return -1;
+    }
+
 #ifdef _CONNLM_TRACE_PROCEDURE_
     ST_TRACE("Step: word[%s]/[%d]",
             vocab_get_word(updater->connlm->vocab, word), word);
@@ -425,11 +430,6 @@ int updater_step(updater_t *updater)
 
     if (updater_clear(updater) < 0) {
         ST_WARNING("updater_clear.");
-        return -1;
-    }
-
-    if (updater_move_input(updater) < 0) {
-        ST_WARNING("Failed to updater_move_input.");
         return -1;
     }
 
@@ -776,117 +776,6 @@ static int updater_set_hist(updater_t *updater, int *hist, int num_hist)
     return 0;
 }
 
-int updater_setup_all(updater_t *updater)
-{
-    ST_CHECK_PARAM(updater == NULL, -1);
-
-    if (updater_setup(updater, false) < 0) {
-        ST_WARNING("Failed to updater_setup.");
-        return -1;
-    }
-
-    if (out_updater_init_all(updater->out_updater) < 0) {
-        ST_WARNING("Failed to out_updater_init_all.");
-        return -1;
-    }
-
-    return 0;
-}
-
-static int output_tree_bfs_trav_forward_all(output_tree_t *tree,
-        output_node_id_t node, void *args)
-{
-    updater_t *updater;
-    int c;
-
-    ST_CHECK_PARAM(tree == NULL || args == NULL, -1);
-
-    updater = (updater_t *)args;
-
-    if (is_leaf(tree, node)) {
-        return 0;
-    }
-
-    for (c = 0; c < updater->connlm->num_comp; c++) {
-        if (comp_updater_forward_out(updater->comp_updaters[c], node) < 0) {
-            ST_WARNING("Failed to comp_updater_forward[%s].",
-                    updater->connlm->comps[c]->name);
-            return -1;
-        }
-    }
-
-    return 0;
-}
-
-static int updater_forward_out_all(updater_t *updater)
-{
-    ST_CHECK_PARAM(updater == NULL, -1);
-
-    if (output_tree_bfs(updater->out_updater->output->tree,
-                updater->out_updater->bfs_aux,
-                output_tree_bfs_trav_forward_all,
-                updater) < 0) {
-        ST_WARNING("Failed to output_tree_bfs.");
-        return -1;
-    }
-
-    return 0;
-}
-
-int updater_step_with_state_forward_out_all(updater_t *updater, real_t *state,
-        int *hist, int num_hist, double *output_probs)
-{
-    ST_CHECK_PARAM(updater == NULL, -1);
-
-    if (out_updater_clear_all(updater->out_updater) < 0) {
-        ST_WARNING("Failed to out_updater_clear_all.");
-        return -1;
-    }
-
-    if (updater_step_with_state(updater, state, hist, num_hist) < 0) {
-        ST_WARNING("Failed to updater_step_with_state.");
-        return -1;
-    }
-
-    if (updater_forward_out_all(updater) < 0) {
-        ST_WARNING("Failed to updater_forward_out_all.");
-        return -1;
-    }
-
-    if (output_probs != NULL) {
-        if (out_updater_activate_all(updater->out_updater,
-                    output_probs) < 0) {
-            ST_WARNING("Failed to out_updater_activate_all.");
-            return -1;
-        }
-    }
-
-    return 0;
-}
-
-static int updater_clear_multicall(updater_t *updater)
-{
-    int c;
-
-    ST_CHECK_PARAM(updater == NULL, -1);
-
-    for (c = 0; c < updater->connlm->num_comp; c++) {
-        if (comp_updater_clear_multicall(updater->comp_updaters[c],
-                    updater->out_updater->output) < 0) {
-            ST_WARNING("Failed to comp_updater_clear_multicall[%s].",
-                    updater->connlm->comps[c]->name);
-            return -1;
-        }
-    }
-
-    if (out_updater_clear_multicall(updater->out_updater) < 0) {
-        ST_WARNING("Failed to out_updater_clear_multicall.");
-        return -1;
-    }
-
-    return 0;
-}
-
 int updater_step_with_state(updater_t *updater, real_t *state,
         int *hist, int num_hist)
 {
@@ -894,11 +783,6 @@ int updater_step_with_state(updater_t *updater, real_t *state,
 
     if (updater_cleanup(updater) < 0) {
         ST_WARNING("Failed to updater_cleanup.");
-        return -1;
-    }
-
-    if (updater_clear_multicall(updater) < 0) {
-        ST_WARNING("Failed to updater_clear_multicall.");
         return -1;
     }
 
@@ -923,34 +807,6 @@ int updater_step_with_state(updater_t *updater, real_t *state,
 
     if (updater_save_state(updater) < 0) {
         ST_WARNING("updater_save_state.");
-        return -1;
-    }
-
-    return 0;
-}
-
-int updater_setup_multicall(updater_t *updater)
-{
-    int c;
-
-    ST_CHECK_PARAM(updater == NULL, -1);
-
-    if (updater_setup(updater, false) < 0) {
-        ST_WARNING("Failed to updater_setup.");
-        return -1;
-    }
-
-    for (c = 0; c < updater->connlm->num_comp; c++) {
-        if (comp_updater_init_multicall(updater->comp_updaters[c],
-                    updater->out_updater->output) < 0) {
-            ST_WARNING("Failed to comp_updater_init_multicall[%s].",
-                    updater->connlm->comps[c]->name);
-            return -1;
-        }
-    }
-
-    if (out_updater_init_multicall(updater->out_updater) < 0) {
-        ST_WARNING("Failed to out_updater_init_multicall.");
         return -1;
     }
 

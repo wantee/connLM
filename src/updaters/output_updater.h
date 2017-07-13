@@ -100,9 +100,10 @@ int out_updater_reset(out_updater_t *out_updater);
  * Clear path for a word in out_updater.
  * @ingroup g_updater_out
  * @param[in] out_updater out_updater.
+ * @param[in] targets target words in current batch.
  * @return non-zero value if any error.
  */
-int out_updater_clear(out_updater_t *out_updater);
+int out_updater_clear(out_updater_t *out_updater, ivec_t *targets);
 
 /**
  * Activate one mini-batch for a out_updater.
@@ -120,11 +121,11 @@ int out_updater_activate(out_updater_t *out_updater,
  * Compute loss of mini-batch for a out_updater.
  * @ingroup g_updater_out
  * @param[in] out_updater out_updater.
- * @param[in] word current predicted word.
+ * @param[in] targets target words in current batch.
  * @see out_updater_activate
  * @return non-zero value if any error.
  */
-int out_updater_loss(out_updater_t *out_updater, int word);
+int out_updater_loss(out_updater_t *out_updater, ivec_t *targets);
 
 /**
  * Finish running for out_updater.

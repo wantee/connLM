@@ -236,7 +236,9 @@ static int driver_steps(driver_t *driver, int tid, double *logp,
 {
     updater_t *updater;
 
+    real_t this_logp;
     int word;
+    int i;
 
     ST_CHECK_PARAM(driver == NULL || tid < 0 || logp == NULL
             || logp_sent == NULL || sents == NULL || words == NULL, -1);
@@ -244,42 +246,46 @@ static int driver_steps(driver_t *driver, int tid, double *logp,
     updater = driver->updaters[tid];
 
     while (updater_steppable(updater)) {
-        word = updater_step(updater);
-        if (word < 0) {
+        if (updater_step(updater) < 0) {
             ST_WARNING("Failed to updater_step.");
             return -1;
         }
 
-        *logp += updater->logp;
-        if (driver->fp_log != NULL
-                    && driver->eval_opt.print_sent_prob) {
-            *logp_sent += logn(updater->logp, driver->eval_opt.out_log_base);
-        }
+        for (i = 0; i < updater->targets.size; i++) {
+            word = VEC_VAL(&updater->targets, i);
+            this_logp = VEC_VAL(&updater->logps, i);
+            *logp += this_logp;
 
-        if ((*logp != *logp) || (isinf(*logp))) {
-            ST_WARNING("Numerical error. tid[%d], log(p_word(%d)) = %g",
-                    tid, word, updater->logp);
-            return -1;
-        }
-
-        if (driver->fp_log != NULL
-                && (! driver->eval_opt.print_sent_prob)) {
-            fprintf(driver->fp_log, "%d\t%.6f\t%s", word,
-                    logn(updater->logp, driver->eval_opt.out_log_base),
-                    vocab_get_word(updater->connlm->vocab, word));
-
-            fprintf(driver->fp_log, "\n");
-        }
-
-        if (word == SENT_END_ID) {
             if (driver->fp_log != NULL
                     && driver->eval_opt.print_sent_prob) {
-                fprintf(driver->fp_log, "%.6f\n", *logp_sent);
-                *logp_sent = 0.0;
+                *logp_sent += logn(this_logp, driver->eval_opt.out_log_base);
             }
-            ++(*sents);
+
+            if ((*logp != *logp) || (isinf(*logp))) {
+                ST_WARNING("Numerical error. tid[%d], log(p_word(%d)) = %g",
+                        tid, word, this_logp);
+                return -1;
+            }
+
+            if (driver->fp_log != NULL
+                    && (! driver->eval_opt.print_sent_prob)) {
+                fprintf(driver->fp_log, "%d\t%.6f\t%s", word,
+                        logn(this_logp, driver->eval_opt.out_log_base),
+                        vocab_get_word(updater->connlm->vocab, word));
+
+                fprintf(driver->fp_log, "\n");
+            }
+
+            if (word == SENT_END_ID) {
+                if (driver->fp_log != NULL
+                        && driver->eval_opt.print_sent_prob) {
+                    fprintf(driver->fp_log, "%.6f\n", *logp_sent);
+                    *logp_sent = 0.0;
+                }
+                ++(*sents);
+            }
+            ++(*words);
         }
-        ++(*words);
     }
 
     return 0;
@@ -414,8 +420,9 @@ static int driver_do_run(driver_t *driver)
                 fprintf(driver->fp_log, "Index   logP(NET)          Word\n");
                 fprintf(driver->fp_log, "----------------------------------\n");
             }
-            ST_NOTICE("Printing Probs, setting num_thread to 1.");
+            ST_NOTICE("Printing Probs, setting num_thread and mini-batch to 1.");
             driver->n_thr = 1;
+            driver->reader->opt.mini_batch = 1;
         }
     }
 

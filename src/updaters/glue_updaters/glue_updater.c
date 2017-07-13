@@ -88,7 +88,6 @@ void glue_updater_destroy(glue_updater_t *glue_updater)
         }
     }
 
-    safe_st_free(glue_updater->forwarded);
     if (glue_updater->glue->recur_type != RECUR_BODY) {
         safe_st_free(glue_updater->keep_mask);
     } else {
@@ -560,40 +559,6 @@ int glue_updater_forward_out_word(glue_updater_t *glue_updater,
             return -1;
         }
     }
-
-    return 0;
-}
-
-int glue_updater_init_multicall(glue_updater_t *glue_updater, output_t *output)
-{
-    ST_CHECK_PARAM(glue_updater == NULL, -1);
-
-    if (glue_updater->impl == NULL || ! glue_updater->impl->multicall) {
-        glue_updater->forwarded = NULL;
-        return 0;
-    }
-
-    glue_updater->forwarded = st_malloc(sizeof(bool) * output->tree->num_node);
-    if (glue_updater->forwarded == NULL) {
-        ST_WARNING("Failed to st_malloc forwarded.");
-        return -1;
-    }
-    memset(glue_updater->forwarded, 0, sizeof(bool) * output->tree->num_node);
-
-    return 0;
-}
-
-int glue_updater_clear_multicall(glue_updater_t *glue_updater,
-        output_t *output)
-{
-    ST_CHECK_PARAM(glue_updater == NULL, -1);
-
-    if (glue_updater->forwarded == NULL) {
-        return 0;
-    }
-
-    memset(glue_updater->forwarded, 0,
-            sizeof(bool) * (output->tree->num_node));
 
     return 0;
 }

@@ -201,29 +201,6 @@ int updater_feed_state(updater_t *updater, real_t *state);
 int updater_random_state(updater_t *updater, real_t *state);
 
 /**
- * Setup updater for running with activating all words in one step.
- * @ingroup g_updater
- * @param[in] updater the updater.
- * @return non-zero value if any error.
- */
-int updater_setup_all(updater_t *updater);
-
-/**
- * Run one step with specified state and history,
- * forward output layer for all words.
- * Activate all words if output_probs != NULL
- * @ingroup g_updater
- * @param[in] updater the updater.
- * @param[in] state state for model, from updater_dump_state.
- * @param[in] hist word history.
- * @param[in] num_hist number of word history.
- * @param[out] output_probs log-probs for all words.
- * @return non-zero value if any error.
- */
-int updater_step_with_state_forward_out_all(updater_t *updater, real_t *state,
-        int *hist, int num_hist, double *output_probs);
-
-/**
  * Run one step with specified state and history, without forward output.
  * @ingroup g_updater
  * @param[in] updater the updater.
@@ -245,14 +222,6 @@ int updater_step_with_state(updater_t *updater, real_t *state,
  * @return non-zero value if any error.
  */
 int updater_forward_out_word(updater_t *updater, int word, double *logp);
-
-/**
- * Setup updater for multi-call of forward_out_word.
- * @ingroup g_updater
- * @param[in] updater the updater.
- * @return non-zero value if any error.
- */
-int updater_setup_multicall(updater_t *updater);
 
 /**
  * Activate state with updater.

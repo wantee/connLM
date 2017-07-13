@@ -143,7 +143,7 @@ int input_updater_clear(input_updater_t *input_updater)
 {
     ST_CHECK_PARAM(input_updater == NULL, -1);
 
-    input_updater->cur_pos = 0;
+    input_updater->cur_pos = -1;
 
     return 0;
 }
@@ -153,7 +153,7 @@ int input_updater_setup(input_updater_t *input_updater,
 {
     ST_CHECK_PARAM(input_updater == NULL, -1);
 
-    input_updater->cur_pos = 0;
+    input_updater->cur_pos = -1;
     input_updater->ctx_leftmost = ctx_leftmost;
     input_updater->ctx_rightmost = ctx_rightmost;
 

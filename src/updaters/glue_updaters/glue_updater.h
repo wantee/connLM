@@ -96,7 +96,6 @@ typedef struct _glue_updater_t_ {
 
     wt_updater_t *wt_updater; /**< the wt_updater. */
     glue_updater_impl_t *impl; /**< implementation for glue. */
-    bool *forwarded; /**< whether a node is forwarded already. For support of multi-call. */
     void *extra; /**< hook to store extra data. */
 } glue_updater_t;
 

@@ -661,11 +661,9 @@ static void* reader_read_thread(void *args)
             wp_in_queue->size = wp.size;
         }
 
-        if (mini_batch > 1) {
-            if (word_pool_build_mini_batch(wp_in_queue, mini_batch) < 0) {
-                ST_WARNING("Failed to word_pool_build_mini_batch.");
-                goto ERR;
-            }
+        if (word_pool_build_mini_batch(wp_in_queue, mini_batch) < 0) {
+            ST_WARNING("Failed to word_pool_build_mini_batch.");
+            goto ERR;
         }
 #ifdef _TIME_PROF_
         gettimeofday(&tte_fill, NULL);
