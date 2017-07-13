@@ -79,9 +79,10 @@ int svec_clear(svec_t *vec);
  * @ingroup g_vector
  * @param[in] vec the vector.
  * @param[in] size new size.
+ * @param[in] init_val initialization value, do not initialize if init_val == NAN
  * @return non-zero if any error.
  */
-int svec_resize(svec_t *vec, int size);
+int svec_resize(svec_t *vec, int size, float init_val);
 
 
 /**
@@ -114,9 +115,10 @@ int dvec_clear(dvec_t *vec);
  * @ingroup g_vector
  * @param[in] vec the vector.
  * @param[in] size new size.
+ * @param[in] init_val initialization value, do not initialize if init_val == NAN
  * @return non-zero if any error.
  */
-int dvec_resize(dvec_t *vec, int size);
+int dvec_resize(dvec_t *vec, int size, double init_val);
 
 /**
  * Int Vector
@@ -160,6 +162,16 @@ int ivec_resize(ivec_t *vec, int size);
  * @return position of the number in vecitor, -1 if any error.
  */
 int ivec_insert(ivec_t *vec, int n);
+
+/**
+ * Set value of vector.
+ * @ingroup g_vector
+ * @param[in] vec the vector, must be uniq and sorted.
+ * @param[in] vals the numbers.
+ * @param[in] n number of vals.
+ * @return non-zero if any error.
+ */
+int ivec_set(ivec_t *vec, int *vals, int n);
 
 #ifdef __cplusplus
 }

@@ -52,8 +52,10 @@ int mat_clear(mat_t *mat)
     return 0;
 }
 
-int mat_resize(mat_t *mat, size_t num_rows, size_t num_cols)
+int mat_resize(mat_t *mat, size_t num_rows, size_t num_cols, real_t init_val)
 {
+    int i;
+
     ST_CHECK_PARAM(mat == NULL || num_rows <= 0 || num_cols <= 0, -1);
 
     if (num_rows * num_cols > mat->capacity) {
@@ -62,6 +64,16 @@ int mat_resize(mat_t *mat, size_t num_rows, size_t num_cols)
         if (mat->vals == NULL) {
             ST_WARNING("Failed to st_aligned_realloc mat->vals.");
             return -1;
+        }
+        if (! isnan(init_val)) {
+            if (init_val == 0.0) {
+                memset(mat->vals + mat->capacity, 0,
+                    sizeof(real_t) * (num_rows * num_cols - mat->capacity));
+            } else {
+                for (i = mat->capacity; i < num_rows * num_cols; i++) {
+                    mat->vals[i] = init_val;
+                }
+            }
         }
         mat->capacity = num_rows * num_cols;
     }
@@ -75,7 +87,7 @@ int mat_append_row(mat_t *mat, real_t* row)
 {
     ST_CHECK_PARAM(mat == NULL || row == NULL, -1);
 
-    if (mat_resize(mat, mat->num_rows + 1, mat->num_cols) < 0) {
+    if (mat_resize(mat, mat->num_rows + 1, mat->num_cols, NAN) < 0) {
         ST_WARNING("Failed to matrix_resize.");
         return -1;
     }

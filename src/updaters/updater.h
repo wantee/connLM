@@ -55,7 +55,8 @@ typedef struct _updater_t_ {
 
     unsigned int rand_seed; /**< rand seed. */
 
-    double logp; /**< logp for current target word. */
+    ivec_t targets; /**< target words in current batch. */
+    dvec_t logps; /**< logp for words in current batch. */
 
     word_pool_t tmp_wp; /**< temp buffer for word pool. */
 } updater_t;

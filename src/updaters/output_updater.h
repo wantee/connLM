@@ -31,6 +31,8 @@ extern "C" {
 
 #include <connlm/config.h>
 
+#include "vector.h"
+#include "matrix.h"
 #include "output.h"
 
 /** @defgroup g_updater_output Updater for Output Layer
@@ -45,13 +47,8 @@ extern "C" {
 typedef struct _output_updater_t_ {
     output_t *output; /**< the output layer. */
 
-    real_t *ac; /**< activation of output layer. */
-    real_t *er; /**< error of output layer. */
-
-    double *node_probs; /**< buffer for probablity of nodes in output tree. */
-    output_tree_bfs_aux_t *bfs_aux; /**< aux for output tree BFS. */
-
-    bool *forwarded; /**< whether a node is forwarded already. For support of multi-call. */
+    mat_t ac; /**< activation of output layer. */
+    mat_t er; /**< error of output layer. */
 } out_updater_t;
 
 /**
@@ -103,24 +100,24 @@ int out_updater_reset(out_updater_t *out_updater);
  * Clear path for a word in out_updater.
  * @ingroup g_updater_out
  * @param[in] out_updater out_updater.
- * @param[in] word current predicted word.
  * @return non-zero value if any error.
  */
-int out_updater_clear(out_updater_t *out_updater, int word);
+int out_updater_clear(out_updater_t *out_updater);
 
 /**
- * Activate one word for a out_updater.
+ * Activate one mini-batch for a out_updater.
  * @ingroup g_updater_out
  * @param[in] out_updater out_updater.
- * @param[in] word current predicted word.
- * @param[out] logp logp for current predicted word.
+ * @param[in] targets target words in current batch.
+ * @param[out] logps logp for words in current batch.
  * @see out_updater_loss
  * @return non-zero value if any error.
  */
-int out_updater_activate(out_updater_t *out_updater, int word, double *logp);
+int out_updater_activate(out_updater_t *out_updater,
+        ivec_t *targets, dvec_t *logps);
 
 /**
- * Compute loss of one word for a out_updater.
+ * Compute loss of mini-batch for a out_updater.
  * @ingroup g_updater_out
  * @param[in] out_updater out_updater.
  * @param[in] word current predicted word.
@@ -147,48 +144,6 @@ int out_updater_finish(out_updater_t *out_updater);
  */
 output_node_id_t out_updater_sample(out_updater_t *out_updater,
         output_node_id_t node);
-
-/**
- * Initialize output updater for activating all words in one step.
- * @ingroup g_updater_output
- * @param[in] out_updater the out_updater.
- * @return non-zero value if any error.
- */
-int out_updater_init_all(out_updater_t *out_updater);
-
-/**
- * Clear buffer for all words.
- * @ingroup g_updater_output
- * @param[in] out_updater the out_updater.
- * @return non-zero value if any error.
- */
-int out_updater_clear_all(out_updater_t *out_updater);
-
-/**
- * Activate a all words in output layer.
- * @ingroup g_updater_output
- * @param[in] out_updater the out_updater.
- * @param[out] output_probs log-probs for all words.
- * @return non-zero value if any error.
- */
-int out_updater_activate_all(out_updater_t *out_updater,
-        double *output_probs);
-
-/**
- * Initialize multi-call of activate.
- * @ingroup g_updater_output
- * @param[in] out_updater the out_updater.
- * @return non-zero value if any error.
- */
-int out_updater_init_multicall(out_updater_t *out_updater);
-
-/**
- * Clear multi-call of activate.
- * @ingroup g_updater_output
- * @param[in] out_updater the out_updater.
- * @return non-zero value if any error.
- */
-int out_updater_clear_multicall(out_updater_t *out_updater);
 
 #ifdef __cplusplus
 }

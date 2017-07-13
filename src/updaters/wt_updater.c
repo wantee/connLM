@@ -229,10 +229,6 @@ int wt_update(wt_updater_t *wt_updater,
                 ST_WARNING("Error format of sp_mat.[%d]", sp_mat->fmt);
                 return -1;
             }
-            if (wt_updater_resize_ids(wt_updater, row) < 0) {
-                ST_WARNING("Failed to wt_updater_resize_ids.");
-                return -1;
-            }
 
             // construct maxtrix for segs
             for (a = 0; a < sp_mat->csc.num_cols; a++) {

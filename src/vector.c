@@ -51,8 +51,10 @@ int svec_clear(svec_t *vec)
     return 0;
 }
 
-int svec_resize(svec_t *vec, int size)
+int svec_resize(svec_t *vec, int size, float init_val)
 {
+    int i;
+
     ST_CHECK_PARAM(vec == NULL || size <= 0, -1);
 
     if (size > vec->capacity) {
@@ -61,6 +63,16 @@ int svec_resize(svec_t *vec, int size)
         if (vec->vals == NULL) {
             ST_WARNING("Failed to st_aligned_realloc vec->vals.");
             return -1;
+        }
+        if (! isnan(init_val)) {
+            if (init_val == 0.0) {
+                memset(vec->vals + vec->capacity, 0,
+                    sizeof(float) * (size - vec->capacity));
+            } else {
+                for (i = vec->capacity; i < size; i++) {
+                    vec->vals[i] = init_val;
+                }
+            }
         }
         vec->capacity = size;
     }
@@ -89,8 +101,10 @@ int dvec_clear(dvec_t *vec)
     return 0;
 }
 
-int dvec_resize(dvec_t *vec, int size)
+int dvec_resize(dvec_t *vec, int size, double init_val)
 {
+    int i;
+
     ST_CHECK_PARAM(vec == NULL || size <= 0, -1);
 
     if (size > vec->capacity) {
@@ -99,6 +113,16 @@ int dvec_resize(dvec_t *vec, int size)
         if (vec->vals == NULL) {
             ST_WARNING("Failed to st_aligned_realloc vec->vals.");
             return -1;
+        }
+        if (! isnan(init_val)) {
+            if (init_val == 0.0) {
+                memset(vec->vals + vec->capacity, 0,
+                    sizeof(double) * (size - vec->capacity));
+            } else {
+                for (i = vec->capacity; i < size; i++) {
+                    vec->vals[i] = init_val;
+                }
+            }
         }
         vec->capacity = size;
     }
@@ -165,3 +189,17 @@ int ivec_insert(ivec_t *vec, int n)
     return pos;
 }
 
+int ivec_set(ivec_t *vec, int *vals, int n)
+{
+    ST_CHECK_PARAM(vec == NULL || vals == NULL, -1);
+
+    if (ivec_resize(vec, n) < 0) {
+        ST_WARNING("Failed to ivec_resize.");
+        return -1;
+    }
+
+    memcpy(vec->vals, vals, sizeof(int) * n);
+    vec->size = n;
+
+    return 0;
+}

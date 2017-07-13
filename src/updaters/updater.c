@@ -65,7 +65,7 @@ static int updater_clear(updater_t *updater)
         }
     }
 
-    if (out_updater_clear(updater->out_updater, tgt_word(updater)) < 0) {
+    if (out_updater_clear(updater->out_updater) < 0) {
         ST_WARNING("Failed to out_updater_clear.");
         return -1;
     }
@@ -121,8 +121,8 @@ static int updater_forward(updater_t *updater)
         return -1;
     }
 
-    if (out_updater_activate(updater->out_updater, tgt_word(updater),
-                &updater->logp) < 0) {
+    if (out_updater_activate(updater->out_updater,
+                &updater->targets, &updater->logps) < 0) {
         ST_WARNING("Failed to out_updater_activate.");
         return -1;
     }
@@ -374,6 +374,13 @@ int updater_move_input(updater_t *updater)
                     updater->connlm->comps[c]->name);
             return -1;
         }
+    }
+
+    if (ivec_set(&updater->targets,
+                updater->comp_updaters[0]->batch.targets,
+                sizeof(int) * updater->comp_updaters[0]->batch.num_egs) < 0) {
+        ST_WARNING("Failed to ivec_append.");
+        return -1;
     }
 
     return 0;

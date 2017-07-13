@@ -72,8 +72,8 @@ typedef struct _weight_updater_t_ {
     st_int_seg_t *segs; /**< segs for type == WT_UT_SEG. */
     int n_seg; /**< number of segs. */
 
-    matrix_t *buf_ins; /**< in for each seg in WT_UT_SEG. */
-    matrix_t *buf_ers; /**< er for each seg in WT_UT_SEG. */
+    mat_t *buf_ins; /**< in for each seg in WT_UT_SEG. */
+    mat_t *buf_ers; /**< er for each seg in WT_UT_SEG. */
 } wt_updater_t;
 
 /**
@@ -151,9 +151,9 @@ int wt_updater_set_segs(wt_updater_t *wt_updater,
  * @return non-zero value if any error.
  */
 int wt_update(wt_updater_t *wt_updater,
-        matrix_t *er, real_t er_scale,
-        matrix_t *in, real_t in_scale,
-        st_size_seg_t* part, sparse_matrix_t *sp_mat);
+        mat_t *er, real_t er_scale,
+        mat_t *in, real_t in_scale,
+        st_size_seg_t* part, sp_mat_t *sp_mat);
 
 #ifdef __cplusplus
 }

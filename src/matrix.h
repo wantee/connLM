@@ -69,9 +69,10 @@ int mat_clear(mat_t *mat);
  * @param[in] mat the matrix.
  * @param[in] rows new number of rows.
  * @param[in] cols new number of cols.
+ * @param[in] init_val initialization value, do not initialize if init_val == NAN
  * @return non-zero if any error.
  */
-int mat_resize(mat_t *mat, size_t num_rows, size_t num_cols);
+int mat_resize(mat_t *mat, size_t num_rows, size_t num_cols, real_t init_val);
 
 /**
  * Append a row into a matrix.
