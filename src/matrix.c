@@ -46,13 +46,21 @@ int mat_clear(mat_t *mat)
 {
     ST_CHECK_PARAM(mat == NULL, -1);
 
-    mat->num_rows = 0;
-    mat->num_cols = 0;
+    memset(mat->vals, 0, sizeof(real_t) * mat->num_rows * mat->num_cols);
 
     return 0;
 }
 
-int mat_resize(mat_t *mat, size_t num_rows, size_t num_cols, real_t init_val)
+int mat_clear_row(mat_t *mat, int row)
+{
+    ST_CHECK_PARAM(mat == NULL, -1);
+
+    memset(mat->vals + row * mat->num_cols, 0, sizeof(real_t) * mat->num_cols);
+
+    return 0;
+}
+
+int mat_resize(mat_t *mat, int num_rows, int num_cols, real_t init_val)
 {
     int i;
 
@@ -99,6 +107,21 @@ int mat_append_row(mat_t *mat, real_t* row)
     return 0;
 }
 
+int mat_cpy(mat_t *dst, mat_t *src)
+{
+    ST_CHECK_PARAM(dst == NULL || src == NULL, -1);
+
+    if (mat_resize(dst, src->num_rows, src->num_cols, NAN) < 0) {
+        ST_WARNING("Failed to mat_resize.");
+        return -1;
+    }
+
+    memcpy(dst->vals, src->vals,
+            sizeof(real_t) * src->num_rows * src->num_cols);
+
+    return 0;
+}
+
 void sp_mat_destroy(sp_mat_t *sp_mat)
 {
     if (sp_mat == NULL) {
@@ -127,8 +150,8 @@ void sp_mat_destroy(sp_mat_t *sp_mat)
     sp_mat->capacity = 0;
 }
 
-int sp_mat_resize(sp_mat_t *sp_mat, size_t size,
-        size_t num_rows, size_t num_cols)
+int sp_mat_resize(sp_mat_t *sp_mat, int size,
+        int num_rows, int num_cols)
 {
     ST_CHECK_PARAM(sp_mat == NULL || size <= 0, -1);
 

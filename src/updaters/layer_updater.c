@@ -41,13 +41,13 @@ void layer_updater_destroy(layer_updater_t *layer_updater)
         return;
     }
 
-    safe_st_aligned_free(layer_updater->ac);
-    safe_st_aligned_free(layer_updater->er);
+    mat_destroy(&layer_updater->ac);
+    mat_destroy(&layer_updater->er);
 
-    safe_st_aligned_free(layer_updater->ac_state);
-    safe_st_aligned_free(layer_updater->er_raw);
+    mat_destroy(&layer_updater->ac_state);
+    mat_destroy(&layer_updater->er_raw);
 
-    safe_st_aligned_free(layer_updater->pre_ac_state);
+    mat_destroy(&layer_updater->pre_ac_state);
 
     layer_updater->layer = NULL;
 }
@@ -106,112 +106,48 @@ ERR:
 
 int layer_updater_setup(layer_updater_t *layer_updater, bool backprop)
 {
-    size_t sz;
-
     ST_CHECK_PARAM(layer_updater == NULL, -1);
 
-    safe_st_aligned_free(layer_updater->ac);
-    safe_st_aligned_free(layer_updater->er);
-
-    sz = sizeof(real_t) * layer_updater->layer->size;
-    layer_updater->ac = st_aligned_malloc(sz, ALIGN_SIZE);
-    if (layer_updater->ac == NULL) {
-        ST_WARNING("Failed to st_aligned_malloc ac.");
-        goto ERR;
-    }
-    memset(layer_updater->ac, 0, sz);
-
-    if (backprop) {
-        layer_updater->er = st_aligned_malloc(sz, ALIGN_SIZE);
-        if (layer_updater->er == NULL) {
-            ST_WARNING("Failed to st_aligned_malloc er.");
-            goto ERR;
-        }
-        memset(layer_updater->er, 0, sz);
-    }
-
     return 0;
-
-ERR:
-
-    safe_st_aligned_free(layer_updater->ac);
-    safe_st_aligned_free(layer_updater->er);
-
-    return -1;
 }
 
 int layer_updater_setup_state(layer_updater_t *layer_updater, bool backprop)
 {
-    size_t sz;
-
     ST_CHECK_PARAM(layer_updater == NULL, -1);
 
-    if (layer_updater->ac_state == NULL) {
-        sz = sizeof(real_t) * layer_updater->layer->size;
-        layer_updater->ac_state = st_aligned_malloc(sz, ALIGN_SIZE);
-        if (layer_updater->ac_state == NULL) {
-            ST_WARNING("Failed to st_aligned_malloc ac_state.");
-            goto ERR;
-        }
-        memset(layer_updater->ac_state, 0, sz);
+    if (mat_resize(&layer_updater->ac_state, 1,
+                layer_updater->layer->size, 0.0) < 0) {
+        ST_WARNING("Failed to mat_resize ac_state.");
+        return -1;
     }
 
     return 0;
-
-ERR:
-
-    safe_st_aligned_free(layer_updater->ac_state);
-
-    return -1;
 }
 
 int layer_updater_setup_er_raw(layer_updater_t *layer_updater)
 {
-    size_t sz;
-
     ST_CHECK_PARAM(layer_updater == NULL, -1);
 
-    if (layer_updater->er_raw == NULL) {
-        sz = sizeof(real_t) * layer_updater->layer->size;
-        layer_updater->er_raw = st_aligned_malloc(sz, ALIGN_SIZE);
-        if (layer_updater->er_raw == NULL) {
-            ST_WARNING("Failed to st_aligned_malloc er_raw.");
-            goto ERR;
-        }
-        memset(layer_updater->er_raw, 0, sz);
+    if (mat_resize(&layer_updater->er_raw, 1,
+                layer_updater->layer->size, 0.0) < 0) {
+        ST_WARNING("Failed to mat_resize ac_state.");
+        return -1;
     }
 
     return 0;
-
-ERR:
-
-    safe_st_aligned_free(layer_updater->er_raw);
-
-    return -1;
 }
 
 int layer_updater_setup_pre_ac_state(layer_updater_t *layer_updater)
 {
-    size_t sz;
-
     ST_CHECK_PARAM(layer_updater == NULL, -1);
 
-    if (layer_updater->pre_ac_state == NULL) {
-        sz = sizeof(real_t) * layer_updater->layer->size;
-        layer_updater->pre_ac_state = st_aligned_malloc(sz, ALIGN_SIZE);
-        if (layer_updater->pre_ac_state == NULL) {
-            ST_WARNING("Failed to st_aligned_malloc pre_ac_state.");
-            goto ERR;
-        }
-        memset(layer_updater->pre_ac_state, 0, sz);
+    if (mat_resize(&layer_updater->pre_ac_state, 1,
+                layer_updater->layer->size, 0.0) < 0) {
+        ST_WARNING("Failed to mat_resize ac_state.");
+        return -1;
     }
 
     return 0;
-
-ERR:
-    safe_st_aligned_free(layer_updater->pre_ac_state);
-
-    return -1;
 }
 
 int layer_updater_activate(layer_updater_t *layer_updater)
@@ -226,14 +162,16 @@ int layer_updater_activate(layer_updater_t *layer_updater)
     ST_TRACE("Activate: layer[%s]", layer_updater->layer->name);
 #endif
 
-    if (layer_updater->pre_ac_state != NULL) {
-        memcpy(layer_updater->pre_ac_state, layer_updater->ac,
-                sizeof(real_t) * layer_updater->layer->size);
+    if (layer_updater->pre_ac_state.vals != NULL) {
+        if (mat_cpy(&layer_updater->pre_ac_state, &layer_updater->ac) < 0) {
+            ST_WARNING("Failed to mat_cpy ac to pre_ac_state.");
+            return -1;
+        }
     }
 
     if (layer_updater->activate != NULL) {
         if (layer_updater->activate(layer_updater->layer,
-                    layer_updater->ac, layer_updater->layer->size) < 0) {
+                    &layer_updater->ac) < 0) {
             ST_WARNING("Failed to layer_updater->activate.[%s]",
                     layer_updater->layer->name);
             return -1;
@@ -257,14 +195,16 @@ int layer_updater_deriv(layer_updater_t *layer_updater)
     ST_TRACE("Deriv: layer[%s]", layer_updater->layer->name);
 #endif
 
-    if (layer_updater->er_raw != NULL) {
-        memcpy(layer_updater->er_raw, layer_updater->er,
-                sizeof(real_t) * layer_updater->layer->size);
+    if (layer_updater->er_raw.vals != NULL) {
+        if (mat_cpy(&layer_updater->er_raw, &layer_updater->er) < 0) {
+            ST_WARNING("Failed to mat_cpy er to er_raw");
+            return -1;
+        }
     }
 
     if (layer_updater->deriv != NULL) {
-        if (layer_updater->deriv(layer_updater->layer, layer_updater->er,
-                    layer_updater->ac, layer_updater->layer->size) < 0) {
+        if (layer_updater->deriv(layer_updater->layer, &layer_updater->er,
+                    &layer_updater->ac) < 0) {
             ST_WARNING("Failed to layer_updater->deriv.[%s]",
                     layer_updater->layer->name);
             return -1;
@@ -278,13 +218,13 @@ int layer_updater_deriv(layer_updater_t *layer_updater)
 
 int layer_updater_save_state(layer_updater_t *layer_updater)
 {
-    size_t sz;
-
     ST_CHECK_PARAM(layer_updater == NULL, -1);
 
-    if (layer_updater->ac_state != NULL) {
-        sz = sizeof(real_t) * layer_updater->layer->size;
-        memcpy(layer_updater->ac_state, layer_updater->ac, sz);
+    if (layer_updater->ac_state.vals != NULL) {
+        if (mat_cpy(&layer_updater->ac_state, &layer_updater->ac) < 0) {
+            ST_WARNING("Failed to mat_cpy ac to ac_state");
+            return -1;
+        }
     }
 
     return 0;
@@ -292,17 +232,14 @@ int layer_updater_save_state(layer_updater_t *layer_updater)
 
 int layer_updater_clear(layer_updater_t *layer_updater)
 {
-    size_t sz;
-
     ST_CHECK_PARAM(layer_updater == NULL, -1);
 
-    sz = sizeof(real_t) * layer_updater->layer->size;
-    if (layer_updater->er != NULL) {
-        memset(layer_updater->er, 0, sz);
+    if (layer_updater->er.vals != NULL) {
+        mat_clear(&layer_updater->er);
         layer_updater->derived = false;
     }
 
-    memset(layer_updater->ac, 0, sz);
+    mat_clear(&layer_updater->ac);
     layer_updater->activated = false;
 
     return 0;
@@ -310,13 +247,10 @@ int layer_updater_clear(layer_updater_t *layer_updater)
 
 int layer_updater_reset(layer_updater_t *layer_updater, int batch_i)
 {
-    size_t sz;
-
     ST_CHECK_PARAM(layer_updater == NULL, -1);
 
-    sz = sizeof(real_t) * layer_updater->layer->size;
-    if (layer_updater->ac_state != NULL) {
-        memset(MAT_VALP(&layer_updater->ac_state, batch_i, 0), 0, sz);
+    if (layer_updater->ac_state.vals != NULL) {
+        mat_clear_row(&layer_updater->ac_state, batch_i);
     }
 
     return 0;
@@ -326,65 +260,87 @@ int layer_updater_state_size(layer_updater_t *layer_updater)
 {
     ST_CHECK_PARAM(layer_updater == NULL, -1);
 
-    if (layer_updater->ac_state != NULL) {
+    if (layer_updater->ac_state.vals != NULL) {
         return layer_updater->layer->size;
     }
 
     return 0;
 }
 
-int layer_updater_dump_state(layer_updater_t *layer_updater, real_t *state)
+int layer_updater_dump_state(layer_updater_t *layer_updater, mat_t *state)
 {
-    size_t sz;
-
     ST_CHECK_PARAM(layer_updater == NULL || state == NULL, -1);
 
-    if (layer_updater->ac_state != NULL) {
-        sz = sizeof(real_t) * layer_updater->layer->size;
-        memcpy(state, layer_updater->ac_state, sz);
+    if (layer_updater->ac_state.vals != NULL) {
+        if (state->num_rows != layer_updater->ac_state.num_rows
+                || state->num_cols != layer_updater->ac_state.num_cols) {
+            ST_WARNING("output buffer size not match.");
+            return -1;
+        }
+
+        if (mat_cpy(state, &layer_updater->ac_state) < 0) {
+            ST_WARNING("Failed to mat_cpy ac_state to state.");
+            return -1;
+        }
     }
 
     return 0;
 }
 
 int layer_updater_dump_pre_ac_state(layer_updater_t *layer_updater,
-        real_t *state)
+        mat_t *state)
 {
-    size_t sz;
-
     ST_CHECK_PARAM(layer_updater == NULL || state == NULL, -1);
 
-    if (layer_updater->pre_ac_state != NULL) {
-        sz = sizeof(real_t) * layer_updater->layer->size;
-        memcpy(state, layer_updater->pre_ac_state, sz);
+    if (layer_updater->pre_ac_state.vals != NULL) {
+        if (state->num_rows != layer_updater->pre_ac_state.num_rows
+                || state->num_cols != layer_updater->pre_ac_state.num_cols) {
+            ST_WARNING("output buffer size not match.");
+            return -1;
+        }
+
+        if (mat_cpy(state, &layer_updater->pre_ac_state) < 0) {
+            ST_WARNING("Failed to mat_cpy pre_ac_state to state");
+            return -1;
+        }
     }
 
     return 0;
 }
 
 
-int layer_updater_feed_state(layer_updater_t *layer_updater, real_t *state)
+int layer_updater_feed_state(layer_updater_t *layer_updater, mat_t *state)
 {
-    size_t sz;
-
     ST_CHECK_PARAM(layer_updater == NULL || state == NULL, -1);
 
-    if (layer_updater->ac_state != NULL) {
-        sz = sizeof(real_t) * layer_updater->layer->size;
-        memcpy(layer_updater->ac_state, state, sz);
+    if (layer_updater->ac_state.vals != NULL) {
+        if (state->num_rows != layer_updater->ac_state.num_rows
+                || state->num_cols != layer_updater->ac_state.num_cols) {
+            ST_WARNING("input buffer size not match.");
+            return -1;
+        }
+
+        if (mat_cpy(&layer_updater->ac_state, state) < 0) {
+            ST_WARNING("Failed to mat_cpy state to ac_state");
+            return -1;
+        }
     }
 
     return 0;
 }
 
-int layer_updater_random_state(layer_updater_t *layer_updater, real_t *state)
+int layer_updater_random_state(layer_updater_t *layer_updater, mat_t *state)
 {
 
     ST_CHECK_PARAM(layer_updater == NULL || state == NULL, -1);
 
-    if (layer_updater->ac_state != NULL && layer_updater->random_state != NULL) {
-        if (layer_updater->random_state(layer_updater->layer,
-                    state, layer_updater->layer->size) < 0) {
+    if (layer_updater->ac_state.vals != NULL && layer_updater->random_state != NULL) {
+        if (state->num_cols != layer_updater->layer->size) {
+            ST_WARNING("output buffer col not match.");
+            return -1;
+        }
+
+        if (layer_updater->random_state(layer_updater->layer, state) < 0) {
             ST_WARNING("Failed to layer_updater->random_state.[%s]",
                     layer_updater->layer->name);
             return -1;
@@ -394,15 +350,18 @@ int layer_updater_random_state(layer_updater_t *layer_updater, real_t *state)
     return 0;
 }
 
-int layer_updater_activate_state(layer_updater_t *layer_updater, real_t *state)
+int layer_updater_activate_state(layer_updater_t *layer_updater, mat_t *state)
 {
 
     ST_CHECK_PARAM(layer_updater == NULL || state == NULL, -1);
 
     if (layer_updater->activate != NULL) {
-        if (layer_updater->activate(layer_updater->layer,
-                    state, layer_updater->layer->size) < 0) {
-            ST_WARNING("Failed to layer_updater->random_state.[%s]",
+        if (state->num_cols != layer_updater->layer->size) {
+            ST_WARNING("output buffer col not match.");
+            return -1;
+        }
+        if (layer_updater->activate(layer_updater->layer, state) < 0) {
+            ST_WARNING("Failed to layer_updater->activate.[%s]",
                     layer_updater->layer->name);
             return -1;
         }

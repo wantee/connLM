@@ -28,46 +28,57 @@
 #include "utils.h"
 #include "relu_layer.h"
 
-int relu_activate(layer_t *layer, real_t *vec, int size)
+int relu_activate(layer_t *layer, mat_t *ac)
 {
-    int i;
+    int i, j;
 
-    ST_CHECK_PARAM(layer == NULL || vec == NULL, -1);
+    ST_CHECK_PARAM(layer == NULL || ac == NULL, -1);
 
-    for (i = 0; i < size; i++) {
-        if (vec[i] < 0) {
-            vec[i] = 0;
+    for (i = 0; i < ac->num_rows; i++) {
+        for (j = 0; i < ac->num_cols; j++) {
+            if (MAT_VAL(ac, i, j) < 0) {
+                MAT_VAL(ac, i, j) = 0.0;
+            }
         }
     }
 
     return 0;
 }
 
-int relu_deriv(layer_t *layer, real_t *er, real_t *ac, int size)
+int relu_deriv(layer_t *layer, mat_t *er, mat_t *ac)
 {
-    int i;
+    int i, j;
 
     ST_CHECK_PARAM(layer == NULL || er == NULL || ac == NULL, -1);
 
-    for (i = 0; i < size; i++) {
-        if (ac[i] <= 0) {
-            er[i] = 0.0;
+    if (er->num_rows != ac->num_rows || er->num_cols != er->num_cols) {
+        ST_WARNING("er and ac size not match");
+        return -1;
+    }
+
+    for (i = 0; i < er->num_rows; i++) {
+        for (j = 0; i < er->num_cols; j++) {
+            if (MAT_VAL(ac, i, j) <= 0) {
+                MAT_VAL(er, i, j) = 0.0;
+            }
         }
     }
 
     return 0;
 }
 
-int relu_random_state(layer_t *layer, real_t *state, int size)
+int relu_random_state(layer_t *layer, mat_t *state)
 {
-    int i;
+    int i, j;
 
     ST_CHECK_PARAM(layer == NULL || state == NULL, -1);
 
-    for (i = 0; i < size; i++) {
-        state[i] = st_random(-50.0, 50.0);
-        if (state[i] < 0) {
-            state[i] = 0.0;
+    for (i = 0; i < state->num_rows; i++) {
+        for (j = 0; i < state->num_cols; j++) {
+            MAT_VAL(state, i, j) = st_random(-50.0, 50.0);
+            if (MAT_VAL(state, i, j) < 0) {
+                MAT_VAL(state, i, j) = 0.0;
+            }
         }
     }
 

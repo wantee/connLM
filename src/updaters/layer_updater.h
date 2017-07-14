@@ -31,6 +31,8 @@ extern "C" {
 
 #include <connlm/config.h>
 
+#include "matrix.h"
+
 #include "layers/layer.h"
 
 /** @defgroup g_updater_layer Updater for Hidden Layer
@@ -39,9 +41,9 @@ extern "C" {
  */
 
 typedef struct _layer_updater_t_ layer_updater_t;
-typedef int (*activate_func_t)(layer_t *layer, real_t *vec, int size); /**< activate function. */
-typedef int (*deriv_func_t)(layer_t *layer, real_t *er, real_t *ac, int size); /**< deriv function. */
-typedef int (*random_state_func_t)(layer_t *layer, real_t *state, int size); /**< random state function. */
+typedef int (*activate_func_t)(layer_t *layer, mat_t *vec); /**< activate function. */
+typedef int (*deriv_func_t)(layer_t *layer, mat_t *er, mat_t *ac); /**< deriv function. */
+typedef int (*random_state_func_t)(layer_t *layer, mat_t *state); /**< random state function. */
 /**
  * Layer updater.
  * @ingroup g_updater_layer
@@ -49,8 +51,8 @@ typedef int (*random_state_func_t)(layer_t *layer, real_t *state, int size); /**
 typedef struct _layer_updater_t_ {
     layer_t *layer; /**< the layer. */
 
-    real_t *ac; /**< activation of layer. */
-    real_t *er; /**< error of layer. */
+    mat_t ac; /**< activation of layer. */
+    mat_t er; /**< error of layer. */
 
     activate_func_t activate; /**< activate function. */
     bool activated; /**< activation indicator. */
@@ -58,10 +60,10 @@ typedef struct _layer_updater_t_ {
     bool derived; /**< derived indicator. */
     random_state_func_t random_state; /**< random state function. */
 
-    real_t *ac_state; /**< state of activation(for prev timestep). */
-    real_t *er_raw; /**< raw value of error(before derived). */
+    mat_t ac_state; /**< state of activation(for prev timestep). */
+    mat_t er_raw; /**< raw value of error(before derived). */
 
-    real_t *pre_ac_state; /**< state of pre-activation. */
+    mat_t pre_ac_state; /**< state of pre-activation. */
 } layer_updater_t;
 
 /**
@@ -183,7 +185,7 @@ int layer_updater_state_size(layer_updater_t *layer_updater);
  *             by layer_updater_state_size.
  * @return non-zero value if any error.
  */
-int layer_updater_dump_state(layer_updater_t *layer_updater, real_t *state);
+int layer_updater_dump_state(layer_updater_t *layer_updater, mat_t *state);
 
 /**
  * Dump the pre-activation state of layer_updater.
@@ -195,7 +197,7 @@ int layer_updater_dump_state(layer_updater_t *layer_updater, real_t *state);
  * @return non-zero value if any error.
  */
 int layer_updater_dump_pre_ac_state(layer_updater_t *layer_updater,
-        real_t *state);
+        mat_t *state);
 
 /**
  * Fedd the state of layer_updater.
@@ -206,7 +208,7 @@ int layer_updater_dump_pre_ac_state(layer_updater_t *layer_updater,
  *             by layer_updater_state_size.
  * @return non-zero value if any error.
  */
-int layer_updater_feed_state(layer_updater_t *layer_updater, real_t *state);
+int layer_updater_feed_state(layer_updater_t *layer_updater, mat_t *state);
 
 /**
  * Generate random state of layer_updater.
@@ -217,7 +219,7 @@ int layer_updater_feed_state(layer_updater_t *layer_updater, real_t *state);
  *             by layer_updater_state_size.
  * @return non-zero value if any error.
  */
-int layer_updater_random_state(layer_updater_t *layer_updater, real_t *state);
+int layer_updater_random_state(layer_updater_t *layer_updater, mat_t *state);
 
 /**
  * Activate state with layer_updater.
@@ -228,7 +230,7 @@ int layer_updater_random_state(layer_updater_t *layer_updater, real_t *state);
  *             by layer_updater_state_size.
  * @return non-zero value if any error.
  */
-int layer_updater_activate_state(layer_updater_t *layer_updater, real_t *state);
+int layer_updater_activate_state(layer_updater_t *layer_updater, mat_t *state);
 
 #ifdef __cplusplus
 }

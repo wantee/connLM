@@ -30,6 +30,7 @@ extern "C" {
 #endif
 
 #include <connlm/config.h>
+#include "matrix.h"
 #include "layer.h"
 
 /** @defgroup g_layer_linear Linear Layer
@@ -123,11 +124,10 @@ int linear_save_header(void *extra, FILE *fp, connlm_fmt_t fmt);
  * Activate linear layer.
  * @ingroup g_layer_linear
  * @param[in] layer the linear layer.
- * @param[in] vec the vector.
- * @param[in] size size of vector.
+ * @param[in] ac the activation, activated row by row.
  * @return non-zero value if any error.
  */
-int linear_activate(layer_t *layer, real_t *vec, int size);
+int linear_activate(layer_t *layer, mat_t *ac);
 
 /**
  * Deriv linear layer.
@@ -135,20 +135,18 @@ int linear_activate(layer_t *layer, real_t *vec, int size);
  * @param[in] layer the linear layer.
  * @param[in] er the error.
  * @param[in] ac the activation.
- * @param[in] size size of vectors.
  * @return non-zero value if any error.
  */
-int linear_deriv(layer_t *layer, real_t *er, real_t *ac, int size);
+int linear_deriv(layer_t *layer, mat_t *er, mat_t *ac);
 
 /**
  * Generate random state for linear layer.
  * @ingroup g_layer_linear
  * @param[in] layer the linear layer.
- * @param[out] state the generated state.
- * @param[in] size size of state.
+ * @param[out] state the generated state, row by row.
  * @return non-zero value if any error.
  */
-int linear_random_state(layer_t *layer, real_t *state, int size);
+int linear_random_state(layer_t *layer, mat_t *state);
 
 #ifdef __cplusplus
 }

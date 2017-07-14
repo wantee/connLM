@@ -28,36 +28,49 @@
 #include "utils.h"
 #include "tanh_layer.h"
 
-int tanh_activate(layer_t *layer, real_t *vec, int size)
-{
-    ST_CHECK_PARAM(layer == NULL || vec == NULL, -1);
-
-    tanH(vec, size);
-
-    return 0;
-}
-
-int tanh_deriv(layer_t *layer, real_t *er, real_t *ac, int size)
+int tanh_activate(layer_t *layer, mat_t *ac)
 {
     int i;
 
-    ST_CHECK_PARAM(layer == NULL || er == NULL || ac == NULL, -1);
+    ST_CHECK_PARAM(layer == NULL || ac == NULL, -1);
 
-    for (i = 0; i < size; i++) {
-        er[i] *= (1 - ac[i] * ac[i]);
+    for (i = 0; i < ac->num_rows; i++) {
+        tanH(MAT_VALP(ac, i, 0), ac->num_cols);
     }
 
     return 0;
 }
 
-int tanh_random_state(layer_t *layer, real_t *state, int size)
+int tanh_deriv(layer_t *layer, mat_t *er, mat_t *ac)
 {
-    int i;
+    int i, j;
+
+    ST_CHECK_PARAM(layer == NULL || er == NULL || ac == NULL, -1);
+
+    if (er->num_rows != ac->num_rows || er->num_cols != er->num_cols) {
+        ST_WARNING("er and ac size not match");
+        return -1;
+    }
+
+    for (i = 0; i < er->num_rows; i++) {
+        for (j = 0; i < er->num_cols; j++) {
+            MAT_VAL(er, i, j) *= (1 - MAT_VAL(ac, i, j) * MAT_VAL(ac, i, j));
+        }
+    }
+
+    return 0;
+}
+
+int tanh_random_state(layer_t *layer, mat_t *state)
+{
+    int i, j;
 
     ST_CHECK_PARAM(layer == NULL || state == NULL, -1);
 
-    for (i = 0; i < size; i++) {
-        state[i] = st_random(-1.0, 1.0);
+    for (i = 0; i < state->num_rows; i++) {
+        for (j = 0; i < state->num_cols; j++) {
+            MAT_VAL(state, i, j) = st_random(-1.0, 1.0);
+        }
     }
 
     return 0;

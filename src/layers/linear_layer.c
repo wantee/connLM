@@ -353,53 +353,59 @@ int linear_save_header(void *extra, FILE *fp, connlm_fmt_t fmt)
     return 0;
 }
 
-int linear_activate(layer_t *layer, real_t *vec, int size)
+int linear_activate(layer_t *layer, mat_t *ac)
 {
     linear_data_t *param;
-    int i;
+    int i, j;
 
-    ST_CHECK_PARAM(layer == NULL || vec == NULL, -1);
+    ST_CHECK_PARAM(layer == NULL || ac == NULL, -1);
 
     param = (linear_data_t *)layer->extra;
 
     if (param->scale != 1.0) {
-        for (i = 0; i < size; i++) {
-            vec[i] *= param->scale;
+        for (i = 0; i < ac->num_rows; i++) {
+            for (j = 0; i < ac->num_cols; j++) {
+                MAT_VAL(ac, i, j) *= param->scale;
+            }
         }
     }
 
     return 0;
 }
 
-int linear_deriv(layer_t *layer, real_t *er, real_t *ac, int size)
+int linear_deriv(layer_t *layer, mat_t *er, mat_t *ac)
 {
     linear_data_t *param;
-    int i;
+    int i, j;
 
     ST_CHECK_PARAM(layer == NULL || er == NULL || ac == NULL, -1);
 
     param = (linear_data_t *)layer->extra;
 
     if (param->scale != 1.0) {
-        for (i = 0; i < size; i++) {
-            er[i] *= param->scale;
+        for (i = 0; i < er->num_rows; i++) {
+            for (j = 0; i < er->num_cols; j++) {
+                MAT_VAL(er, i, j) *= param->scale;
+            }
         }
     }
 
     return 0;
 }
 
-int linear_random_state(layer_t *layer, real_t *state, int size)
+int linear_random_state(layer_t *layer, mat_t *state)
 {
     linear_data_t *param;
-    int i;
+    int i, j;
 
     ST_CHECK_PARAM(layer == NULL || state == NULL, -1);
 
     param = (linear_data_t *)layer->extra;
 
-    for (i = 0; i < size; i++) {
-        state[i] = st_random(-50.0, 50.0) * param->scale;
+    for (i = 0; i < state->num_rows; i++) {
+        for (j = 0; i < state->num_cols; j++) {
+            MAT_VAL(state, i, j) = st_random(-50.0, 50.0) * param->scale;
+        }
     }
 
     return 0;

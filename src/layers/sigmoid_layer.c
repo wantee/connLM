@@ -354,56 +354,72 @@ int sigmoid_save_header(void *extra, FILE *fp, connlm_fmt_t fmt)
     return 0;
 }
 
-int sigmoid_activate(layer_t *layer, real_t *vec, int size)
+int sigmoid_activate(layer_t *layer, mat_t *ac)
 {
     sigmoid_data_t *param;
-    int i;
+    int i, j;
 
-    ST_CHECK_PARAM(layer == NULL || vec == NULL, -1);
+    ST_CHECK_PARAM(layer == NULL || ac == NULL, -1);
 
     param = (sigmoid_data_t *)layer->extra;
 
     if (param->steepness != 1.0) {
-        for (i = 0; i < size; i++) {
-            vec[i] *= param->steepness;
+        for (i = 0; i < ac->num_rows; i++) {
+            for (j = 0; i < ac->num_cols; j++) {
+                MAT_VAL(ac, i, j) *= param->steepness;
+            }
         }
     }
 
-    sigmoid(vec, size);
+    for (i = 0; i < ac->num_rows; i++) {
+        tanH(MAT_VALP(ac, i, 0), ac->num_cols);
+    }
 
     return 0;
 }
 
-int sigmoid_deriv(layer_t *layer, real_t *er, real_t *ac, int size)
+int sigmoid_deriv(layer_t *layer, mat_t *er, mat_t *ac)
 {
     sigmoid_data_t *param;
-    int i;
+    int i, j;
 
     ST_CHECK_PARAM(layer == NULL || er == NULL || ac == NULL, -1);
 
     param = (sigmoid_data_t *)layer->extra;
 
-    if (param->steepness != 1.0) {
-        for (i = 0; i < size; i++) {
-            er[i] *= ac[i] * (1 - ac[i]);
+    if (er->num_rows != ac->num_rows || er->num_cols != er->num_cols) {
+        ST_WARNING("er and ac size not match");
+        return -1;
+    }
+
+    if (param->steepness == 1.0) {
+        for (i = 0; i < er->num_rows; i++) {
+            for (j = 0; i < er->num_cols; j++) {
+                MAT_VAL(er, i, j) *= (1 - MAT_VAL(ac, i, j)) * MAT_VAL(ac, i, j);
+            }
         }
     } else {
-        for (i = 0; i < size; i++) {
-            er[i] *= param->steepness * ac[i] * (1 - ac[i]);
+        for (i = 0; i < er->num_rows; i++) {
+            for (j = 0; i < er->num_cols; j++) {
+                MAT_VAL(er, i, j) *= param->steepness
+                    * (1 - MAT_VAL(ac, i, j)) * MAT_VAL(ac, i, j);
+            }
         }
     }
 
     return 0;
 }
 
-int sigmoid_random_state(layer_t *layer, real_t *state, int size)
+int sigmoid_random_state(layer_t *layer, mat_t *state)
 {
-    int i;
+    int i, j;
 
     ST_CHECK_PARAM(layer == NULL || state == NULL, -1);
 
-    for (i = 0; i < size; i++) {
-        state[i] = st_random(0.0, 1.0);
+    for (i = 0; i < state->num_rows; i++) {
+        for (j = 0; i < state->num_cols; j++) {
+            MAT_VAL(state, i, j) = st_random(0.0, 1.0);
+        }
     }
 
     return 0;

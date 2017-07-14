@@ -30,6 +30,7 @@ extern "C" {
 #endif
 
 #include <connlm/config.h>
+#include "matrix.h"
 #include "layer.h"
 
 /** @defgroup g_layer_relu Rectified Linear Layer
@@ -43,11 +44,10 @@ extern "C" {
  * Activate relu layer.
  * @ingroup g_layer_relu
  * @param[in] layer the relu layer.
- * @param[in] vec the vector.
- * @param[in] size size of vector.
+ * @param[in] ac the activation, activated row by row.
  * @return non-zero value if any error.
  */
-int relu_activate(layer_t *layer, real_t *vec, int size);
+int relu_activate(layer_t *layer, mat_t *ac);
 
 /**
  * Deriv relu layer.
@@ -55,20 +55,18 @@ int relu_activate(layer_t *layer, real_t *vec, int size);
  * @param[in] layer the relu layer.
  * @param[in] er the error.
  * @param[in] ac the activation.
- * @param[in] size size of vectors.
  * @return non-zero value if any error.
  */
-int relu_deriv(layer_t *layer, real_t *er, real_t *ac, int size);
+int relu_deriv(layer_t *layer, mat_t *er, mat_t *ac);
 
 /**
  * Generated random state for relu layer.
  * @ingroup g_layer_relu
  * @param[in] layer the relu layer.
- * @param[out] state the state.
- * @param[in] size size of state.
+ * @param[out] state the generated state, row by row.
  * @return non-zero value if any error.
  */
-int relu_random_state(layer_t *layer, real_t *state, int size);
+int relu_random_state(layer_t *layer, mat_t *state);
 
 #ifdef __cplusplus
 }

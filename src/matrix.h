@@ -40,9 +40,9 @@ extern "C" {
  */
 typedef struct _matrix_t_ {
     real_t *vals; /**< values of matrix. */
-    size_t num_rows; /**< number of rows. */
-    size_t num_cols; /**< number of cols. */
-    size_t capacity; /**< capacity of vals. */
+    int num_rows; /**< number of rows. */
+    int num_cols; /**< number of cols. */
+    int capacity; /**< capacity of vals. */
 } mat_t;
 
 #define MAT_VAL(mat, row, col) ((mat)->vals[(row)*((mat)->num_cols) + (col)])
@@ -64,15 +64,24 @@ void mat_destroy(mat_t *mat);
 int mat_clear(mat_t *mat);
 
 /**
+ * Clear one row of a matrix.
+ * @ingroup g_matrix
+ * @param[in] mat matrix to be cleared.
+ * @param[in] row row index to be cleared.
+ * @return non-zero if any error.
+ */
+int mat_clear_row(mat_t *mat, int row);
+
+/**
  * Resize a matrix.
  * @ingroup g_matrix
  * @param[in] mat the matrix.
- * @param[in] rows new number of rows.
- * @param[in] cols new number of cols.
+ * @param[in] num_rows new number of rows.
+ * @param[in] num_cols new number of cols.
  * @param[in] init_val initialization value, do not initialize if init_val == NAN
  * @return non-zero if any error.
  */
-int mat_resize(mat_t *mat, size_t num_rows, size_t num_cols, real_t init_val);
+int mat_resize(mat_t *mat, int num_rows, int num_cols, real_t init_val);
 
 /**
  * Append a row into a matrix.
@@ -82,6 +91,15 @@ int mat_resize(mat_t *mat, size_t num_rows, size_t num_cols, real_t init_val);
  * @return non-zero if any error.
  */
 int mat_append_row(mat_t *mat, real_t* row);
+
+/**
+ * Copy a matrix to the other.
+ * @ingroup g_matrix
+ * @param[in] dst the dst matrix.
+ * @param[in] src the src matrix.
+ * @return non-zero if any error.
+ */
+int mat_cpy(mat_t *dst, mat_t *src);
 
 /**
  * Sparse matrix format. see https://software.intel.com/en-us/mkl-developer-reference-c-sparse-blas-csr-matrix-storage-format
@@ -101,24 +119,24 @@ typedef enum _sparse_matrix_format_t_ {
 typedef struct _sparse_matrix_t_ {
     sp_mat_fmt_t fmt; /**< format. */
     real_t *vals; /**< values of matrix. */
-    size_t size; /**< number of values. */
-    size_t capacity; /**< capacity of values. */
+    int size; /**< number of values. */
+    int capacity; /**< capacity of values. */
 
     union {
         struct _csr_t_ {
             int *cols; /**< col indexes for values. */
             int *row_s; /**< begin index for row. */
             int *row_e; /**< end index for row. */
-            size_t num_rows; /**< number of rows. */
-            size_t cap_rows; /**< capacity of rows. */
+            int num_rows; /**< number of rows. */
+            int cap_rows; /**< capacity of rows. */
         } csr;
 
         struct _csc_t_ {
             int *rows; /**< row indexes for values. */
             int *col_s; /**< begin index for col. */
             int *col_e; /**< end index for col. */
-            size_t num_cols; /**< number of cols. */
-            size_t cap_cols; /**< capacity of cols. */
+            int num_cols; /**< number of cols. */
+            int cap_cols; /**< capacity of cols. */
         } csc;
 
         struct _coo_t_ {
@@ -144,8 +162,8 @@ void sp_mat_destroy(sp_mat_t *sp_mat);
  * @param[in] num_cols new number of cols.
  * @return non-zero if any error.
  */
-int sp_mat_resize(sp_mat_t *sp_mat, size_t size,
-        size_t num_rows, size_t num_cols);
+int sp_mat_resize(sp_mat_t *sp_mat, int size,
+        int num_rows, int num_cols);
 
 #ifdef __cplusplus
 }
