@@ -66,6 +66,13 @@ int mat_resize(mat_t *mat, int num_rows, int num_cols, real_t init_val)
 
     ST_CHECK_PARAM(mat == NULL || num_rows <= 0 || num_cols <= 0, -1);
 
+    if (mat->is_const) {
+        if (mat->num_rows != num_rows || mat->num_cols != num_cols) {
+            ST_WARNING("Can not resize a const matrix.");
+            return -1;
+        }
+    }
+
     if (num_rows * num_cols > mat->capacity) {
         mat->vals = (real_t *)st_aligned_realloc(mat->vals,
                 sizeof(real_t) * num_rows * num_cols, ALIGN_SIZE);
@@ -118,6 +125,45 @@ int mat_cpy(mat_t *dst, mat_t *src)
 
     memcpy(dst->vals, src->vals,
             sizeof(real_t) * src->num_rows * src->num_cols);
+
+    return 0;
+}
+
+int mat_submat(mat_t *mat, int row_s, int num_rows,
+        int col_s, int num_cols, mat_t *sub)
+{
+    ST_CHECK_PARAM(mat == NULL || sub == NULL || row_s < 0 || col_s < 0, -1);
+
+    if (row_s >= mat->num_rows || col_s >= mat->num_cols) {
+        ST_WARNING("Error row or col index.");
+        return -1;
+    }
+
+    if (num_rows <= 0) {
+        num_rows = mat->num_rows - row_s;
+    } else {
+        if (row_s + num_rows > mat->num_rows) {
+            ST_WARNING("Not enough rows to extract [%d + %d > %d].",
+                    row_s, num_rows, mat->num_rows);
+            return -1;
+        }
+    }
+
+    if (num_cols <= 0) {
+        num_cols = mat->num_cols - col_s;
+    } else {
+        if (col_s + num_cols > mat->num_cols) {
+            ST_WARNING("Not enough cols to extract [%d + %d > %d].",
+                    col_s, num_cols, mat->num_cols);
+            return -1;
+        }
+    }
+
+    sub->vals = mat->vals + row_s * mat->num_cols + col_s;
+    sub->num_rows = num_rows;
+    sub->num_cols = num_cols;
+
+    sub->is_const = true;
 
     return 0;
 }

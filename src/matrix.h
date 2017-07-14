@@ -43,6 +43,7 @@ typedef struct _matrix_t_ {
     int num_rows; /**< number of rows. */
     int num_cols; /**< number of cols. */
     int capacity; /**< capacity of vals. */
+    bool is_const; /**< whether the diemention of matrix is const. */
 } mat_t;
 
 #define MAT_VAL(mat, row, col) ((mat)->vals[(row)*((mat)->num_cols) + (col)])
@@ -100,6 +101,24 @@ int mat_append_row(mat_t *mat, real_t* row);
  * @return non-zero if any error.
  */
 int mat_cpy(mat_t *dst, mat_t *src);
+
+/**
+ * Extract a sub-matrix from one matrix.
+ * @ingroup g_matrix
+ * @param[in] mat the matrix.
+ * @param[in] row_s start row index in original matrix.
+ * @param[in] nun_rows number of rows in sub-matrix.
+ *                     set to non-positive value to extract all the rest
+ *                     rows from original matrix
+ * @param[in] col_s start col index in original matrix.
+ * @param[in] nun_cols number of cols in sub-matrix,
+ *                     set to non-positive value to extract all the rest
+ *                     cols from original matrix
+ * @param[out] sub the sub-matrix.
+ * @return non-zero if any error.
+ */
+int mat_submat(mat_t *mat, int row_s, int num_rows,
+        int col_s, int num_cols, mat_t *sub);
 
 /**
  * Sparse matrix format. see https://software.intel.com/en-us/mkl-developer-reference-c-sparse-blas-csr-matrix-storage-format
