@@ -73,13 +73,6 @@ int out_updater_setup(out_updater_t *out_updater, bool backprop)
     return 0;
 }
 
-int out_updater_reset(out_updater_t *out_updater)
-{
-    ST_CHECK_PARAM(out_updater == NULL, -1);
-
-    return 0;
-}
-
 typedef struct _out_clear_walker_args_t_ {
     real_t *ac;
     real_t *er;

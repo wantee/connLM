@@ -527,6 +527,11 @@ static int comp_updater_bptt(comp_updater_t *comp_updater, bool clear)
                         }
                     }
 
+                    /*
+                    Should do propagate_error for all timestep first
+                    do not update before </s>
+                    */
+
                     // update weight
                     // the recur glue should not be embedding or output or
                     // direct, so the parameters to wt_update only involves
@@ -582,42 +587,16 @@ static int comp_updater_bptt(comp_updater_t *comp_updater, bool clear)
     return 0;
 }
 
-int comp_updater_reset(comp_updater_t *comp_updater)
+int comp_updater_reset(comp_updater_t *comp_updater, int batch_i)
 {
     int i;
 
     ST_CHECK_PARAM(comp_updater == NULL, -1);
 
-    // bptt_reset must before layer_reset, since it will use the ac_state.
-    if (comp_updater->bptt_updaters != NULL) {
-        if (comp_updater_bptt(comp_updater, true) < 0) {
-            ST_WARNING("Failed to reset bptt comp[%s].",
-                    comp_updater->comp->name);
-            return -1;
-        }
-        comp_updater->bptt_step = 0;
-        for (i = 0; i < comp_updater->comp->num_glue_cycle; i++) {
-            if (bptt_updater_reset(comp_updater->bptt_updaters[i]) < 0) {
-                ST_WARNING("Failed to bptt_updater_reset.[%d][%s]", i,
-                        comp_updater->comp->glues[
-                        comp_updater->comp->glue_cycles[i][1]]->name);
-                return -1;
-            }
-        }
-    }
-
     for (i = 2; i < comp_updater->comp->num_layer; i++) {
         if (layer_updater_reset(comp_updater->layer_updaters[i]) < 0) {
             ST_WARNING("Failed to layer_updater_reset.[%s]",
                     comp_updater->comp->layers[i]->name);
-            return -1;
-        }
-    }
-
-    for (i = 2; i < comp_updater->comp->num_glue; i++) {
-        if (glue_updater_reset(comp_updater->glue_updaters[i]) < 0) {
-            ST_WARNING("Failed to glue_updater_reset.[%s]",
-                    comp_updater->comp->glues[i]->name);
             return -1;
         }
     }

@@ -88,15 +88,6 @@ out_updater_t* out_updater_create(output_t *output);
 int out_updater_setup(out_updater_t *out_updater, bool backprop);
 
 /**
- * Reset running for out_updater.
- * Called before every input sentence to be performed.
- * @ingroup g_updater_out
- * @param[in] out_updater out_updater.
- * @return non-zero value if any error.
- */
-int out_updater_reset(out_updater_t *out_updater);
-
-/**
  * Clear path for a word in out_updater.
  * @ingroup g_updater_out
  * @param[in] out_updater out_updater.

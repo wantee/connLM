@@ -308,7 +308,7 @@ int layer_updater_clear(layer_updater_t *layer_updater)
     return 0;
 }
 
-int layer_updater_reset(layer_updater_t *layer_updater)
+int layer_updater_reset(layer_updater_t *layer_updater, int batch_i)
 {
     size_t sz;
 
@@ -316,7 +316,7 @@ int layer_updater_reset(layer_updater_t *layer_updater)
 
     sz = sizeof(real_t) * layer_updater->layer->size;
     if (layer_updater->ac_state != NULL) {
-        memset(layer_updater->ac_state, 0, sz);
+        memset(MAT_VALP(&layer_updater->ac_state, batch_i, 0), 0, sz);
     }
 
     return 0;

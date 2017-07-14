@@ -161,9 +161,10 @@ int layer_updater_clear(layer_updater_t *layer_updater);
  * Reset a layer_updater.
  * @ingroup g_updater_layer
  * @param[in] layer_updater the layer_updater.
+ * @param[in] batch_i index in batch to be reset.
  * @return non-zero value if any error.
  */
-int layer_updater_reset(layer_updater_t *layer_updater);
+int layer_updater_reset(layer_updater_t *layer_updater, int batch_i);
 
 /**
  * Get the size of state in layer_updater.

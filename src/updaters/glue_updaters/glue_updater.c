@@ -210,13 +210,6 @@ int glue_updater_set_rand_seed(glue_updater_t *glue_updater, unsigned int *seed)
     return 0;
 }
 
-int glue_updater_reset(glue_updater_t *glue_updater)
-{
-    ST_CHECK_PARAM(glue_updater == NULL, -1);
-
-    return 0;
-}
-
 int glue_updater_setup_dropout(glue_updater_t *glue_updater, real_t dropout)
 {
     ST_CHECK_PARAM(glue_updater == NULL, -1);

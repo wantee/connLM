@@ -174,14 +174,6 @@ int glue_updater_setup_pre_ac_state(glue_updater_t *glue_updater,
 int glue_updater_set_rand_seed(glue_updater_t *glue_updater, unsigned int *seed);
 
 /**
- * Reset a glue_updater.
- * @ingroup g_updater_glue
- * @param[in] glue_updater the glue_updater.
- * @return non-zero value if any error.
- */
-int glue_updater_reset(glue_updater_t *glue_updater);
-
-/**
  * Feed-forward one word for a glue_updater.
  * @ingroup g_updater_glue
  * @param[in] glue_updater the glue_updater.

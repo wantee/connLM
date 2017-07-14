@@ -117,9 +117,10 @@ int comp_updater_set_rand_seed(comp_updater_t *comp_updater, unsigned int *seed)
  * Called before every input sentence to be performed.
  * @ingroup g_updater_comp
  * @param[in] comp_updater comp_updater.
+ * @param[in] batch_i index in batch to be reset.
  * @return non-zero value if any error.
  */
-int comp_updater_reset(comp_updater_t *comp_updater);
+int comp_updater_reset(comp_updater_t *comp_updater, int batch_i);
 
 /**
  * Feed-forward one word for a comp_updater.

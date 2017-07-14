@@ -31,21 +31,20 @@
 
 static int updater_reset(updater_t *updater)
 {
-    int c;
+    int i, c;
 
     ST_CHECK_PARAM(updater == NULL, -1);
 
-    for (c = 0; c < updater->connlm->num_comp; c++) {
-        if (comp_updater_reset(updater->comp_updaters[c]) < 0) {
-            ST_WARNING("Failed to comp_updater_reset[%s].",
-                    updater->connlm->comps[c]->name);
-            return -1;
+    for (i = 0; i < updater->targets.size; i++) {
+        if (VEC_VAL(&updater->targets, i) == SENT_END_ID) {
+            for (c = 0; c < updater->connlm->num_comp; c++) {
+                if (comp_updater_reset(updater->comp_updaters[c], i) < 0) {
+                    ST_WARNING("Failed to comp_updater_reset[%s].",
+                            updater->connlm->comps[c]->name);
+                    return -1;
+                }
+            }
         }
-    }
-
-    if (out_updater_reset(updater->out_updater) < 0) {
-        ST_WARNING("Failed to out_updater_reset.");
-        return -1;
     }
 
     return 0;
@@ -388,11 +387,7 @@ int updater_move_input(updater_t *updater)
 
 int updater_step(updater_t *updater)
 {
-    int word;
-
     ST_CHECK_PARAM(updater == NULL, -1);
-
-    word = tgt_word(updater);
 
     if (updater_move_input(updater) < 0) {
         ST_WARNING("Failed to updater_move_input.");
@@ -421,11 +416,9 @@ int updater_step(updater_t *updater)
         return -1;
     }
 
-    if (word == SENT_END_ID) {
-        if (updater_reset(updater) < 0) {
-            ST_WARNING("Failed to updater_reset.");
-            return -1;
-        }
+    if (updater_reset(updater) < 0) {
+        ST_WARNING("Failed to updater_reset.");
+        return -1;
     }
 
     if (updater_clear(updater) < 0) {
@@ -440,7 +433,7 @@ int updater_step(updater_t *updater)
         }
     }
 
-    return word;
+    return 0;
 }
 
 int updater_finalize(updater_t *updater)
