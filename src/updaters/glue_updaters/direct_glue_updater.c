@@ -163,13 +163,13 @@ int dgu_data_setup(dgu_data_t *data, st_wt_int_t *features, int num_feats)
         }
 
         for (j = 0; j <= i; j++) {
-            idx = (-context[i].i) * PRIMES[(-context[j].i) % PRIMES_SIZE];
-            idx += (-context[j].i);
+            idx = (-features[i].i) * PRIMES[(-features[j].i) % PRIMES_SIZE];
+            idx += (-features[j].i);
             data->P[i][j] = PRIMES[idx % PRIMES_SIZE];
             if (j > 0) {
                 data->P[i][j] *= data->P[i][j - 1];
             } else {
-                data->P[i][j] *= data->hash[0];
+                data->P[i][j] *= PRIMES[0] * PRIMES[1];
             }
         }
     }
@@ -184,13 +184,13 @@ int dgu_data_setup(dgu_data_t *data, st_wt_int_t *features, int num_feats)
         }
 
         for (j = data->positive; j <= i; j++) {
-            idx = context[i].i * PRIMES[context[j].i % PRIMES_SIZE];
-            idx += context[j].i;
+            idx = features[i].i * PRIMES[features[j].i % PRIMES_SIZE];
+            idx += features[j].i;
             data->P[i][j] = PRIMES[idx % PRIMES_SIZE];
             if (j > data->positive) {
                 data->P[i][j] *= data->P[i][j - data->positive - 1];
             } else {
-                data->P[i][j] *= data->hash[0];
+                data->P[i][j] *= PRIMES[0] * PRIMES[1];
             }
         }
     }
@@ -708,7 +708,7 @@ int direct_glue_updater_forward_out_word(glue_updater_t *glue_updater,
     return 0;
 }
 
-int direct_glue_updater_gen_keep_mask(glue_updater_t *glue_updater)
+int direct_glue_updater_gen_keep_mask(glue_updater_t *glue_updater, int batch_size)
 {
     /* Do nothing, will be generated on the fly. */
     return 0;

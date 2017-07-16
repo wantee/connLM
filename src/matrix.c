@@ -98,6 +98,43 @@ int mat_resize(mat_t *mat, int num_rows, int num_cols, real_t init_val)
     return 0;
 }
 
+int mat_resize_row(mat_t *mat, int num_rows, real_t init_val)
+{
+    int i;
+
+    ST_CHECK_PARAM(mat == NULL || num_rows <= 0, -1);
+
+    if (mat->is_const) {
+        if (mat->num_rows != num_rows) {
+            ST_WARNING("Can not resize a const matrix.");
+            return -1;
+        }
+    }
+
+    if (num_rows * mat->num_cols > mat->capacity) {
+        mat->vals = (real_t *)st_aligned_realloc(mat->vals,
+                sizeof(real_t) * num_rows * mat->num_cols, ALIGN_SIZE);
+        if (mat->vals == NULL) {
+            ST_WARNING("Failed to st_aligned_realloc mat->vals.");
+            return -1;
+        }
+        if (! isnan(init_val)) {
+            if (init_val == 0.0) {
+                memset(mat->vals + mat->capacity, 0,
+                    sizeof(real_t) * (num_rows * mat->num_cols - mat->capacity));
+            } else {
+                for (i = mat->capacity; i < num_rows * mat->num_cols; i++) {
+                    mat->vals[i] = init_val;
+                }
+            }
+        }
+        mat->capacity = num_rows * mat->num_cols;
+    }
+    mat->num_rows = num_rows;
+
+    return 0;
+}
+
 int mat_append_row(mat_t *mat, real_t* row)
 {
     ST_CHECK_PARAM(mat == NULL || row == NULL, -1);
@@ -164,6 +201,41 @@ int mat_submat(mat_t *mat, int row_s, int num_rows,
     sub->num_cols = num_cols;
 
     sub->is_const = true;
+
+    return 0;
+}
+
+void mat_scale(mat_t *mat, real_t scale)
+{
+    int i;
+
+    ST_CHECK_PARAM_VOID(mat == NULL);
+
+    if (scale == 1.0) {
+        return;
+    }
+
+    for (i = 0; i < mat->num_rows * mat->num_cols; i++) {
+        mat->vals[i] *= scale;
+    }
+}
+
+int mat_mul_elems(mat_t *mat1, mat_t *mat2, mat_t *out)
+{
+    int i;
+
+    ST_CHECK_PARAM(mat1 == NULL || mat2 == NULL || out == NULL, -1);
+
+    if (mat1->num_rows != mat2->num_rows || mat1->num_cols != mat2->num_cols
+            || mat1->num_rows != out->num_rows
+            || mat1->num_cols != out->num_cols) {
+        ST_WARNING("Diemension not match.");
+        return -1;
+    }
+
+    for (i = 0; i < mat1->num_rows * mat1->num_cols; i++) {
+        out->vals[i] = mat1->vals[i] * mat2->vals[i];
+    }
 
     return 0;
 }

@@ -76,7 +76,8 @@ typedef struct _glue_updater_implementation_t_ {
             comp_updater_t *comp_updater, int word,
             real_t *in_ac, real_t *out_ac); /**< forward_out_word glue updater.*/
 
-    int (*gen_keep_mask)(glue_updater_t *glue_updater); /**< gen_keep_mask glue updater.*/
+    int (*gen_keep_mask)(glue_updater_t *glue_updater,
+            int batch_size); /**< gen_keep_mask glue updater.*/
 
     bool multicall; /**< whether need multi-call of forword_out_word.*/
 } glue_updater_impl_t;
@@ -90,9 +91,8 @@ typedef struct _glue_updater_t_ {
 
     unsigned int *rand_seed; /**< random seed. */
     real_t keep_prob; /**< keep probability, i.e., 1 - dropout probability. */
-    bool *keep_mask; /**< keep mask. */
-    int keep_mask_len; /**< length of keep_mask. */
-    real_t *dropout_val; /**< transformed activation/error after dropout. */
+    mat_t keep_mask; /**< keep mask. */
+    mat_t dropout_val; /**< transformed activation/error after dropout. */
 
     wt_updater_t *wt_updater; /**< the wt_updater. */
     glue_updater_impl_t *impl; /**< implementation for glue. */
@@ -139,9 +139,10 @@ int glue_updater_setup_dropout(glue_updater_t *glue_updater, real_t dropout);
  * Generate keep mask of dropout for glue_updater.
  * @ingroup g_updater_glue
  * @param[in] glue_updater glue_updater.
+ * @param[in] batch_size batch size.
  * @return non-zero value if any error.
  */
-int glue_updater_gen_keep_mask(glue_updater_t *glue_updater);
+int glue_updater_gen_keep_mask(glue_updater_t *glue_updater, int batch_size);
 
 /**
  * Setup glue_updater for running.

@@ -168,7 +168,7 @@ static int comp_updater_setup_dropout(comp_updater_t *comp_updater)
 
         // following check is necessary for the glues that may be
         // contained in multiple cycles
-        if (head->keep_mask == NULL) {
+        if (head->keep_mask.vals == NULL) {
             // set effective learning rate
             head->wt_updater->param.learn_rate *= (1 - glue->param.dropout);
         }
@@ -185,7 +185,7 @@ static int comp_updater_setup_dropout(comp_updater_t *comp_updater)
 
             // following check is necessary for the glues that may be
             // contained in multiple cycles
-            if (glue_updater->keep_mask == NULL) {
+            if (glue_updater->keep_mask.vals == NULL) {
                 // set effective learning rate
                 glue_updater->wt_updater->param.learn_rate *= (1 - glue->param.dropout);
             }
@@ -209,18 +209,6 @@ static int comp_updater_setup_dropout(comp_updater_t *comp_updater)
             }
             // set effective learning rate
             glue_updater->wt_updater->param.learn_rate *= (1 - glue->param.dropout);
-        }
-    }
-
-    if (comp->num_glue_cycle > 0) {
-        for (i = 0; i < comp->num_glue; i++) {
-            glue_updater = comp_updater->glue_updaters[i];
-            if (glue_updater->glue->recur_type != RECUR_NON) {
-                if (glue_updater_gen_keep_mask(glue_updater) < 0) {
-                    ST_WARNING("Failed to glue_updater_gen_keep_mask.");
-                    return -1;
-                }
-            }
         }
     }
 
@@ -372,6 +360,16 @@ static int comp_updater_bptt(comp_updater_t *comp_updater, bool clear)
             bool2str(clear));
 #endif
 
+    if (comp_updater->bptt_step == 0) {
+        for (j = 1; j <= comp->glue_cycles[i][0]; j++) {
+            g = comp->glue_cycles[i][j];
+            if (glue_updater_gen_keep_mask(comp_updater->glue_updaters[g],
+                       comp_updater->glue_updaters[g]->dropout_val.num_rows) < 0) {
+                ST_WARNING("Failed to glue_updater_gen_keep_mask.");
+                return -1;
+            }
+        }
+    }
     if (!clear) {
         comp_updater->bptt_step += 1;
     }
@@ -576,7 +574,8 @@ static int comp_updater_bptt(comp_updater_t *comp_updater, bool clear)
                 }
 
                 g = comp->glue_cycles[i][j];
-                if (glue_updater_gen_keep_mask(comp_updater->glue_updaters[g]) < 0) {
+                if (glue_updater_gen_keep_mask(comp_updater->glue_updaters[g],
+                            comp_updater->glue_updaters[g]->dropout_val.num_rows) < 0) {
                     ST_WARNING("Failed to glue_updater_gen_keep_mask.");
                     return -1;
                 }
@@ -622,7 +621,7 @@ int comp_updater_forward(comp_updater_t *comp_updater, egs_batch_t *batch)
         glue_updater = comp_updater->glue_updaters[comp->fwd_order[g]];
 
         if (glue_updater->glue->recur_type == RECUR_NON) {
-            if (glue_updater_gen_keep_mask(glue_updater) < 0) {
+            if (glue_updater_gen_keep_mask(glue_updater, batch->num_egs) < 0) {
                 ST_WARNING("Failed to glue_updater_gen_keep_mask.");
                 return -1;
             }

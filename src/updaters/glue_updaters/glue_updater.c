@@ -89,11 +89,9 @@ void glue_updater_destroy(glue_updater_t *glue_updater)
     }
 
     if (glue_updater->glue->recur_type != RECUR_BODY) {
-        safe_st_free(glue_updater->keep_mask);
-    } else {
-        glue_updater->keep_mask = NULL;
+        mat_destroy(&glue_updater->keep_mask);
     }
-    safe_st_free(glue_updater->dropout_val);
+    mat_destroy(&glue_updater->dropout_val);
 
     safe_wt_updater_destroy(glue_updater->wt_updater);
     glue_updater->glue = NULL;
@@ -212,31 +210,24 @@ int glue_updater_set_rand_seed(glue_updater_t *glue_updater, unsigned int *seed)
 
 int glue_updater_setup_dropout(glue_updater_t *glue_updater, real_t dropout)
 {
+    int keep_mask_len;
+
     ST_CHECK_PARAM(glue_updater == NULL, -1);
 
     glue_updater->keep_prob = 1.0 - dropout;
 
     if (glue_updater->keep_prob < 1.0) {
         if (glue_updater->glue->in_layer == INPUT_LAYER_ID) {
-            glue_updater->keep_mask_len = glue_updater->glue->out_length;
+            keep_mask_len = glue_updater->glue->out_length
+                - glue_updater->glue->out_offset;
         } else {
-            glue_updater->keep_mask_len = glue_updater->glue->in_length;
+            keep_mask_len = glue_updater->glue->in_length
+                - glue_updater->glue->in_offset;
         }
 
-        glue_updater->keep_mask = (bool *)st_malloc(sizeof(bool)
-                * glue_updater->keep_mask_len);
-        if (glue_updater->keep_mask == NULL) {
-            ST_WARNING("Failed to st_malloc keep_mask");
-            return -1;
-        }
         // set to UNSET state, will be used by direct_glue_updater
-        memset(glue_updater->keep_mask, 2,
-                sizeof(bool) * glue_updater->keep_mask_len);
-
-        glue_updater->dropout_val = (real_t *)st_malloc(sizeof(real_t)
-                * glue_updater->keep_mask_len);
-        if (glue_updater->dropout_val == NULL) {
-            ST_WARNING("Failed to st_malloc dropout_val");
+        if (mat_resize(&glue_updater->keep_mask, 1, keep_mask_len, 2.0) < 0) {
+            ST_WARNING("Failed to mat_resize keep_mask");
             return -1;
         }
     }
@@ -244,12 +235,48 @@ int glue_updater_setup_dropout(glue_updater_t *glue_updater, real_t dropout)
     return 0;
 }
 
-int glue_updater_gen_keep_mask(glue_updater_t *glue_updater)
+int mat_gen_keep_mask(unsigned int *rand_seed, real_t keep_prob, mat_t *mask)
 {
     double p;
-    int i;
+    int r, c;
 
-    ST_CHECK_PARAM(glue_updater == NULL, -1);
+    ST_CHECK_PARAM(mask == NULL || rand_seed == NULL, -1);
+
+    for (r = 0; r < mask->num_rows; r++) {
+        for (c = 0; c < mask->num_cols; c++) {
+            p = st_random_r(0, 1, rand_seed);
+            if (p < keep_prob) {
+                MAT_VAL(mask, r, c) = 1.0;
+            } else {
+                MAT_VAL(mask, r, c) = 0.0;
+            }
+        }
+    }
+
+    return 0;
+}
+
+int mat_dropout(mat_t *in, mat_t *mask, real_t keep_prob, mat_t *out)
+{
+    ST_CHECK_PARAM(in == NULL || mask == NULL || out == NULL, -1);
+
+    if (mat_resize(out, in->num_rows, in->num_cols, NAN) < 0) {
+        ST_WARNING("Failed to mat_resize out.");
+        return -1;
+    }
+
+    mat_scale(in, 1.0 / keep_prob);
+    mat_mul_elems(in, mask, out);
+
+    return 0;
+}
+
+int glue_updater_gen_keep_mask(glue_updater_t *glue_updater, int batch_size)
+{
+    double p;
+    int b, i;
+
+    ST_CHECK_PARAM(glue_updater == NULL || batch_size < 0, -1);
 
     if (glue_updater->keep_prob >= 1.0) {
         return 0;
@@ -257,7 +284,7 @@ int glue_updater_gen_keep_mask(glue_updater_t *glue_updater)
 
     if (glue_updater->impl != NULL
             && glue_updater->impl->gen_keep_mask != NULL) {
-        if (glue_updater->impl->gen_keep_mask(glue_updater) < 0) {
+        if (glue_updater->impl->gen_keep_mask(glue_updater, batch_size) < 0) {
             ST_WARNING("Failed to glue_updater->impl->gen_keep_mask.[%s]",
                     glue_updater->glue->name);
             return -1;
@@ -271,13 +298,15 @@ int glue_updater_gen_keep_mask(glue_updater_t *glue_updater)
         return -1;
     }
 
-    for (i = 0; i < glue_updater->keep_mask_len; i++) {
-        p = st_random_r(0, 1, glue_updater->rand_seed);
-        if (p < glue_updater->keep_prob) {
-            glue_updater->keep_mask[i] = 1;
-        } else {
-            glue_updater->keep_mask[i] = 0;
-        }
+    if (mat_resize_row(&glue_updater->keep_mask, batch_size, NAN) < 0) {
+        ST_WARNING("Failed to mat_resize_row for keep_mask.");
+        return -1;
+    }
+
+    if (mat_gen_keep_mask(glue_updater->rand_seed, glue_updater->keep_prob,
+                &glue_updater->keep_mask) < 0) {
+        ST_WARNING("Failed to mat_gen_keep_mask.");
+        return -1;
     }
 
     return 0;
@@ -288,8 +317,8 @@ int glue_updater_forward(glue_updater_t *glue_updater,
 {
     glue_t *glue;
     layer_updater_t **layer_updaters;
-    real_t in_ac = {0};
-    real_t out_ac = {0};
+    mat_t in_ac = {0};
+    mat_t out_ac = {0};
     int lid, i;
 
     ST_CHECK_PARAM(glue_updater == NULL || comp_updater == NULL, -1);
@@ -307,7 +336,7 @@ int glue_updater_forward(glue_updater_t *glue_updater,
         if (glue->recur_type == RECUR_HEAD) {
             if (mat_submat(&layer_updaters[lid]->ac_state, 0, -1,
                         glue->in_offset, -1, &in_ac) < 0) {
-                ST_WARNING("Failed to mat_submat in_ac");
+                ST_WARNING("Failed to mat_submat ac_state.");
                 return -1;
             }
         } else {
@@ -318,32 +347,36 @@ int glue_updater_forward(glue_updater_t *glue_updater,
             }
             if (mat_submat(&layer_updaters[lid]->ac, 0, -1,
                         glue->in_offset, -1, &in_ac) < 0) {
-                ST_WARNING("Failed to mat_submat in_ac");
+                ST_WARNING("Failed to mat_submat ac.");
                 return -1;
             }
         }
 
         if (glue_updater->keep_prob < 1.0) {
-            for (i = 0; i < glue->in_length; i++) {
-                if(glue_updater->keep_mask[i]) {
-                    glue_updater->dropout_val[i] = in_ac[i] / glue_updater->keep_prob; // scale
-                } else {
-                    glue_updater->dropout_val[i] = 0.0;
-                }
+            if (mat_dropout(in_ac, &glue_updater->keep_mask,
+                        glue_updater->keep_prob,
+                        &glue_updater->dropout_val) < 0) {
+                ST_WARNING("Failed to mat_dropout.");
+                return -1;
             }
-            in_ac = glue_updater->dropout_val;
+
+            if (mat_submat(&glue_updater->dropout_val, 0, -1,
+                        0, -1, &in_ac) < 0) {
+                ST_WARNING("Failed to mat_submat dropout_val.");
+                return -1;
+            }
         }
     }
     if (glue->out_layer == 0) { // output layer
         if (mat_submat(&comp_updater->out_updater->ac, 0, -1,
                     glue->out_offset, -1, &out_ac) < 0) {
-            ST_WARNING("Failed to mat_submat out_ac");
+            ST_WARNING("Failed to mat_submat out_ac.");
             return -1;
         }
     } else {
         if (mat_submat(&layer_updaters[glue->out_layer]->ac, 0, -1,
                     glue->out_offset, -1, &out_ac) < 0) {
-            ST_WARNING("Failed to mat_submat out_ac");
+            ST_WARNING("Failed to mat_submat out_ac.");
             return -1;
         }
     }
@@ -365,9 +398,9 @@ int glue_updater_backprop(glue_updater_t *glue_updater,
 {
     glue_t *glue;
     layer_updater_t **layer_updaters;
-    real_t *in_ac = NULL;
-    real_t *out_er = NULL;
-    real_t *in_er = NULL;
+    mat_t in_ac = {0};
+    mat_t out_er = {0};
+    mat_t in_er = {0};
     int out_lid;
     int i;
 
@@ -393,22 +426,42 @@ int glue_updater_backprop(glue_updater_t *glue_updater,
     if (glue_updater->impl != NULL && glue_updater->impl->backprop != NULL) {
         if (glue->in_layer >= 2) { // Ignore input layer
             if (glue->recur_type != RECUR_HEAD) {
-                in_er = layer_updaters[glue->in_layer]->er + glue->in_offset;
+                if (mat_submat(&layer_updaters[glue->in_layer]->er, 0, -1,
+                            glue->in_offset, -1, &in_er) < 0) {
+                    ST_WARNING("Failed to mat_submat in_er.");
+                    return -1;
+                }
             }
             if (glue->recur_type == RECUR_NON) {
                 // recur glues will be updated in bptt_updater
                 if (glue_updater->keep_prob < 1.0) {
                     // dropout_val should be filled during forward pass
-                    in_ac = glue_updater->dropout_val;
+                    if (mat_submat(&glue_updater->dropout_val, 0, -1,
+                            0, -1, &in_ac) < 0) {
+                        ST_WARNING("Failed to mat_submat dropout_val.");
+                        return -1;
+                    }
                 } else {
-                    in_ac = layer_updaters[glue->in_layer]->ac + glue->in_offset;
+                    if (mat_submat(&layer_updaters[glue->in_layer]->ac, 0, -1,
+                            glue->in_offset, -1, &in_ac) < 0) {
+                        ST_WARNING("Failed to mat_submat in_ac.");
+                        return -1;
+                    }
                 }
             }
         }
         if (out_lid == 0) { // output layer
-            out_er = comp_updater->out_updater->er + glue->out_offset;
+            if (mat_submat(&comp_updater->out_updater->er, 0, -1,
+                    glue->out_offset, -1, &out_er) < 0) {
+                ST_WARNING("Failed to mat_submat out_er.");
+                return -1;
+            }
         } else {
-            out_er = layer_updaters[out_lid]->er + glue->out_offset;
+            if (mat_submat(&layer_updaters[out_lid]->er, 0, -1,
+                    glue->out_offset, -1, &out_er) < 0) {
+                ST_WARNING("Failed to mat_submat out_er.");
+                return -1;
+            }
         }
         if (glue_updater->impl->backprop(glue_updater, comp_updater,
                     batch, in_ac, out_er, in_er) < 0) {
@@ -417,12 +470,8 @@ int glue_updater_backprop(glue_updater_t *glue_updater,
             return -1;
         }
 
-        if (glue_updater->keep_prob < 1.0 && in_er != NULL) {
-            for (i = 0; i < glue->in_length; i++) {
-                if (! glue_updater->keep_mask[i]) {
-                    in_er[i] = 0.0;
-                }
-            }
+        if (glue_updater->keep_prob < 1.0 && in_er.vals != NULL) {
+            mat_mul_elems(&in_er, &glue_updater->keep_mask, &in_er);
         }
     }
 

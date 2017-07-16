@@ -141,9 +141,10 @@ int direct_glue_updater_forward_out_word(glue_updater_t *glue_updater,
  * Generate keep mask for direct_glue_updater.
  * @ingroup g_glue_updater_direct
  * @param[in] glue_updater the glue_updater.
+ * @param[in] batch_size batch size.
  * @return non-zero value if any error.
  */
-int direct_glue_updater_gen_keep_mask(glue_updater_t *glue_updater);
+int direct_glue_updater_gen_keep_mask(glue_updater_t *glue_updater, int batch_size);
 
 #ifdef __cplusplus
 }

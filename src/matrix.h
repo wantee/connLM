@@ -85,6 +85,16 @@ int mat_clear_row(mat_t *mat, int row);
 int mat_resize(mat_t *mat, int num_rows, int num_cols, real_t init_val);
 
 /**
+ * Resize row of a matrix.
+ * @ingroup g_matrix
+ * @param[in] mat the matrix.
+ * @param[in] num_rows new number of rows.
+ * @param[in] init_val initialization value, do not initialize if init_val == NAN
+ * @return non-zero if any error.
+ */
+int mat_resize_row(mat_t *mat, int num_rows, real_t init_val);
+
+/**
  * Append a row into a matrix.
  * @ingroup g_matrix
  * @param[in] mat the matrix.
@@ -119,6 +129,24 @@ int mat_cpy(mat_t *dst, mat_t *src);
  */
 int mat_submat(mat_t *mat, int row_s, int num_rows,
         int col_s, int num_cols, mat_t *sub);
+
+/**
+ * Scale elements in a matrix.
+ * @ingroup g_matrix
+ * @param[in] mat the matrix.
+ * @param[in] scale the scale.
+ */
+void mat_scale(mat_t *mat, real_t scale);
+
+/**
+ * Multiple element-by-element for two matrix.
+ * @ingroup g_matrix
+ * @param[in] mat1 the first matrix.
+ * @param[in] mat2 the second matrix.
+ * @param[out] out the output matrix.
+ * @return non-zero if any error.
+ */
+int mat_mul_elems(mat_t *mat1, mat_t *mat2, mat_t *out);
 
 /**
  * Sparse matrix format. see https://software.intel.com/en-us/mkl-developer-reference-c-sparse-blas-csr-matrix-storage-format
