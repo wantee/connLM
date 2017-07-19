@@ -55,7 +55,6 @@ typedef struct _dgu_data_t_ {
     unsigned int **P; /**< coefficients of hash function, which is like
                            P0 + P0 * P1 * w1 + P0 * P1 * P2 * w2 + ... */
     int num_feats;
-    int positive; /* beginning positon of positive context. */
 } dgu_data_t;
 
 #define safe_dgu_data_destroy(ptr) do {\
@@ -86,7 +85,6 @@ void dgu_data_destroy(dgu_data_t *data)
     }
     safe_free(data->P);
     data->num_feats = 0;
-    data->positive = 0;
 }
 
 dgu_data_t* dgu_data_init(glue_updater_t *glue_updater)
@@ -137,6 +135,7 @@ int dgu_data_setup(dgu_data_t *data, st_wt_int_t *features, int num_feats)
 {
     int i, j;
     unsigned int idx;
+    int positive;
 
     ST_CHECK_PARAM(data == NULL, -1);
 
@@ -147,15 +146,15 @@ int dgu_data_setup(dgu_data_t *data, st_wt_int_t *features, int num_feats)
         ST_WARNING("Failed to st_malloc P.");
         goto ERR;
     }
-    data->positive = num_feats;
+    positive = num_feats;
     for (i = num_feats - 1; i >= 0; i--) {
         if (features[i].i > 0) {
-            data->positive = i;
+            positive = i;
         }
     }
 
     // negtive context coefficients
-    for (i = 0; i < data->positive; i++) {
+    for (i = 0; i < positive; i++) {
         data->P[i] = (unsigned int *)st_malloc(sizeof(unsigned)*(i + 1));
         if (data->P[i] == NULL) {
             ST_WARNING("Failed to st_malloc P[%d].", i);
@@ -175,20 +174,20 @@ int dgu_data_setup(dgu_data_t *data, st_wt_int_t *features, int num_feats)
     }
 
     // postive context coefficients
-    for (i = data->positive; i < num_feats; i++) {
+    for (i = positive; i < num_feats; i++) {
         data->P[i] = (unsigned int *)st_malloc(sizeof(unsigned)
-                * (i - data->positive + 1));
+                * (i - positive + 1));
         if (data->P[i] == NULL) {
             ST_WARNING("Failed to st_malloc P[%d].", i);
             goto ERR;
         }
 
-        for (j = data->positive; j <= i; j++) {
+        for (j = positive; j <= i; j++) {
             idx = features[i].i * PRIMES[features[j].i % PRIMES_SIZE];
             idx += features[j].i;
             data->P[i][j] = PRIMES[idx % PRIMES_SIZE];
-            if (j > data->positive) {
-                data->P[i][j] *= data->P[i][j - data->positive - 1];
+            if (j > positive) {
+                data->P[i][j] *= data->P[i][j - positive - 1];
             } else {
                 data->P[i][j] *= PRIMES[0] * PRIMES[1];
             }
@@ -242,12 +241,8 @@ static int direct_get_hash_pos(hash_t *hash, hash_t init_val,
     int i, j;
 
     // assert all context[i].i > 0
-    for (i = 0; i < n_ctx; i++) {
-        if (tgt_pos + context[i].i >= n_word) {
-            return i;
-        }
-        if (words[tgt_pos + context[i].i] < 0
-                || words[tgt_pos + context[i].i] == UNK_ID) {
+    for (i = 0; i < n_word; i++) {
+        if (words[i] < 0 || words[i] == UNK_ID) {
             // if OOV was in future, do not use
             // this N-gram feature and higher orders
             return i;
@@ -255,39 +250,34 @@ static int direct_get_hash_pos(hash_t *hash, hash_t init_val,
 
         hash[i] = init_val;
         for (j = 0; j <= i; j++) {
-            hash[i] += P[i][j] * (hash_t)(words[tgt_pos+context[j].i] + 1);
+            hash[i] += P[i][j] * (hash_t)(words[j] + 1);
         }
     }
 
-    return n_ctx;
+    return n_word;
 }
 
 static int direct_get_hash_neg(hash_t *hash, hash_t init_val,
-        unsigned int **P, st_wt_int_t *context, int n_ctx, int *words,
-        int n_word, int tgt_pos)
+        unsigned int **P, int *words, int n_word)
 {
     int i, j;
 
     // assert all context[i].i < 0
-    for (i = n_ctx - 1; i >= 0; i--) {
-        if (tgt_pos + context[i].i < 0) {
-            return n_ctx - i - 1;
-        }
-        if (words[tgt_pos + context[i].i] < 0
-                || words[tgt_pos + context[i].i] == UNK_ID) {
+    for (i = n_word - 1; i >= 0; i--) {
+        if (words[i] < 0 || words[i] == UNK_ID) {
             // if OOV was in history, do not use
             // this N-gram feature and higher orders
-            return n_ctx - i - 1;
+            return n_word - i - 1;
         }
 
-        hash[n_ctx - i - 1] = init_val;
-        for (j = n_ctx - 1; j >= i; j--) {
-            hash[n_ctx - i - 1] += P[n_ctx - i - 1][j - i]
-                * (hash_t)(words[tgt_pos + context[j].i] + 1);
+        hash[n_word - i - 1] = init_val;
+        for (j = n_word - 1; j >= i; j--) {
+            hash[n_word - i - 1] += P[n_word - i - 1][j - i]
+                * (hash_t)(words[j] + 1);
         }
     }
 
-    return n_ctx;
+    return n_word;
 }
 
 int direct_glue_updater_setup(glue_updater_t *glue_updater,
@@ -430,27 +420,35 @@ static int direct_compute_hash(glue_updater_t *glue_updater, int batch_id,
 {
     dgu_data_t *data;
 
+    int positive;
     int future_order;
     int i;
 
     data = (dgu_data_t *)glue_updater->extra;
 
+    positive = input->num_words;
+    for (i = input->num_words - 1; i >= 0; i--) {
+        if (input->positions[i] > 0) {
+            positive = i;
+        }
+    }
     /* history ngrams. */
-    data->hash_order[batch_id] = direct_get_hash_neg(data->hash + 1, data->hash[0],
-            data->P, input->words, data->positive);
+    data->hash_order[batch_id] = direct_get_hash_neg(
+            data->hash_vals[batch_id] + 1, data->hash_vals[batch_id][0],
+            data->P, input->words, positive);
     if (data->hash_order < 0) {
         ST_WARNING("Failed to direct_wt_get_hash history.");
         return -1;
     }
 
-    if (data->num_feats - data->positive > 0) {
+    if (input->num_words - positive > 0) {
         /* future ngrams. */
         future_order = direct_get_hash_pos(
                 data->hash_vals[batch_id] + 1 + data->hash_order[batch_id],
                 data->hash_vals[batch_id][0],
-                data->P + data->positive,
-                input->words + data->positive,
-                data->num_feats - data->positive);
+                data->P + positive,
+                input->words + positive,
+                input->num_words - positive);
         if (future_order < 0) {
             ST_WARNING("Failed to direct_wt_get_hash future.");
             return -1;
