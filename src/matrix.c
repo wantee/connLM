@@ -64,7 +64,7 @@ int mat_resize(mat_t *mat, int num_rows, int num_cols, real_t init_val)
 {
     int i;
 
-    ST_CHECK_PARAM(mat == NULL || num_rows <= 0 || num_cols <= 0, -1);
+    ST_CHECK_PARAM(mat == NULL || num_rows < 0 || num_cols < 0, -1);
 
     if (mat->is_const) {
         if (mat->num_rows != num_rows || mat->num_cols != num_cols) {
@@ -135,11 +135,31 @@ int mat_resize_row(mat_t *mat, int num_rows, real_t init_val)
     return 0;
 }
 
+int mat_append(mat_t *dst, mat_t* src)
+{
+    ST_CHECK_PARAM(dst == NULL || src == NULL, -1);
+
+    if (dst->num_cols != src->num_cols) {
+        ST_WARNING("num_cols not match");
+        return -1;
+    }
+
+    if (mat_resize_row(dst, dst->num_rows + src->num_rows, NAN) < 0) {
+        ST_WARNING("Failed to mat_resize_row.");
+    }
+
+    memcpy(dst->vals + dst->num_rows * dst->num_cols, src->vals,
+            sizeof(real_t) * src->num_rows * src->num_cols);
+    dst->num_rows += src->num_rows;
+
+    return 0;
+}
+
 int mat_append_row(mat_t *mat, real_t* row)
 {
     ST_CHECK_PARAM(mat == NULL || row == NULL, -1);
 
-    if (mat_resize(mat, mat->num_rows + 1, mat->num_cols, NAN) < 0) {
+    if (mat_resize_row(mat, mat->num_rows + 1, NAN) < 0) {
         ST_WARNING("Failed to matrix_resize.");
         return -1;
     }
@@ -162,6 +182,30 @@ int mat_cpy(mat_t *dst, mat_t *src)
 
     memcpy(dst->vals, src->vals,
             sizeof(real_t) * src->num_rows * src->num_cols);
+
+    return 0;
+}
+
+void mat_assign(mat_t *dst, mat_t *src)
+{
+    ST_CHECK_PARAM_VOID(dst == NULL || src == NULL);
+
+    dst = src;
+    dst->is_const = true;
+}
+
+int mat_move_up(mat_t *mat, int dst_row, int src_row)
+{
+    ST_CHECK_PARAM(mat == NULL || dst_row < 0 || src_row < 0, -1);
+
+    if (dst_row >= src_row) {
+        ST_WARNING("dst_row must be larger than src_row.");
+        return -1;
+    }
+
+    memmove(mat->vals + dst_row * mat->num_cols,
+            mat->vals + src_row * mat->num_cols,
+            sizeof(real_t) * (mat->num_rows - src_row) * mat->num_cols);
 
     return 0;
 }
@@ -199,8 +243,29 @@ int mat_submat(mat_t *mat, int row_s, int num_rows,
     sub->vals = mat->vals + row_s * mat->num_cols + col_s;
     sub->num_rows = num_rows;
     sub->num_cols = num_cols;
+    sub->capacity = num_rows * num_cols;
 
     sub->is_const = true;
+
+    return 0;
+}
+
+int mat_fill(mat_t *mat, int row_s, int num_rows,
+        int col_s, int num_cols, mat_t *val)
+{
+    mat_t sub;
+
+    ST_CHECK_PARAM(mat == NULL || val == NULL || row_s < 0 || col_s < 0, -1);
+
+    if (mat_submat(mat, row_s, num_rows, col_s, num_cols, &sub) < 0) {
+        ST_WARNING("Failed to mat_submat.");
+        return -1;
+    }
+
+    if (mat_cpy(&sub, val) < 0) {
+        ST_WARNING("Failed to mat_cpy");
+        return -1;
+    }
 
     return 0;
 }
@@ -218,6 +283,37 @@ void mat_scale(mat_t *mat, real_t scale)
     for (i = 0; i < mat->num_rows * mat->num_cols; i++) {
         mat->vals[i] *= scale;
     }
+}
+
+void mat_set_value(mat_t *mat, real_t val)
+{
+    int i;
+
+    ST_CHECK_PARAM_VOID(mat == NULL);
+
+    for (i = 0; i < mat->num_rows * mat->num_cols; i++) {
+        mat->vals[i] = val;
+    }
+}
+
+int mat_add_elems(mat_t *mat1, mat_t *mat2, mat_t *out)
+{
+    int i;
+
+    ST_CHECK_PARAM(mat1 == NULL || mat2 == NULL || out == NULL, -1);
+
+    if (mat1->num_rows != mat2->num_rows || mat1->num_cols != mat2->num_cols
+            || mat1->num_rows != out->num_rows
+            || mat1->num_cols != out->num_cols) {
+        ST_WARNING("Diemension not match.");
+        return -1;
+    }
+
+    for (i = 0; i < mat1->num_rows * mat1->num_cols; i++) {
+        out->vals[i] = mat1->vals[i] + mat2->vals[i];
+    }
+
+    return 0;
 }
 
 int mat_mul_elems(mat_t *mat1, mat_t *mat2, mat_t *out)

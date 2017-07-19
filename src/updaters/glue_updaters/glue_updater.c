@@ -266,16 +266,16 @@ int mat_dropout(mat_t *in, mat_t *mask, real_t keep_prob, mat_t *out)
     }
 
     mat_scale(in, 1.0 / keep_prob);
-    mat_mul_elems(in, mask, out);
+    if (mat_mul_elems(in, mask, out) < 0) {
+        ST_WARNING("Failed to mat_mul_elems.");
+        return -1;
+    }
 
     return 0;
 }
 
 int glue_updater_gen_keep_mask(glue_updater_t *glue_updater, int batch_size)
 {
-    double p;
-    int b, i;
-
     ST_CHECK_PARAM(glue_updater == NULL || batch_size < 0, -1);
 
     if (glue_updater->keep_prob >= 1.0) {
@@ -353,18 +353,14 @@ int glue_updater_forward(glue_updater_t *glue_updater,
         }
 
         if (glue_updater->keep_prob < 1.0) {
-            if (mat_dropout(in_ac, &glue_updater->keep_mask,
+            if (mat_dropout(&in_ac, &glue_updater->keep_mask,
                         glue_updater->keep_prob,
                         &glue_updater->dropout_val) < 0) {
                 ST_WARNING("Failed to mat_dropout.");
                 return -1;
             }
 
-            if (mat_submat(&glue_updater->dropout_val, 0, -1,
-                        0, -1, &in_ac) < 0) {
-                ST_WARNING("Failed to mat_submat dropout_val.");
-                return -1;
-            }
+            mat_assign(&in_ac, &glue_updater->dropout_val);
         }
     }
     if (glue->out_layer == 0) { // output layer
@@ -383,7 +379,7 @@ int glue_updater_forward(glue_updater_t *glue_updater,
 
     if (glue_updater->impl != NULL && glue_updater->impl->forward != NULL) {
         if (glue_updater->impl->forward(glue_updater, comp_updater,
-                    batch, in_ac, out_ac) < 0) {
+                    batch, &in_ac, &out_ac) < 0) {
             ST_WARNING("Failed to glue_updater->impl->forward.[%s]",
                     glue->name);
             return -1;
@@ -436,11 +432,7 @@ int glue_updater_backprop(glue_updater_t *glue_updater,
                 // recur glues will be updated in bptt_updater
                 if (glue_updater->keep_prob < 1.0) {
                     // dropout_val should be filled during forward pass
-                    if (mat_submat(&glue_updater->dropout_val, 0, -1,
-                            0, -1, &in_ac) < 0) {
-                        ST_WARNING("Failed to mat_submat dropout_val.");
-                        return -1;
-                    }
+                    mat_assign(&in_ac, &glue_updater->dropout_val);
                 } else {
                     if (mat_submat(&layer_updaters[glue->in_layer]->ac, 0, -1,
                             glue->in_offset, -1, &in_ac) < 0) {
@@ -471,7 +463,10 @@ int glue_updater_backprop(glue_updater_t *glue_updater,
         }
 
         if (glue_updater->keep_prob < 1.0 && in_er.vals != NULL) {
-            mat_mul_elems(&in_er, &glue_updater->keep_mask, &in_er);
+            if (mat_mul_elems(&in_er, &glue_updater->keep_mask, &in_er) < 0) {
+                ST_WARNING("Failed to mat_mul_elems.");
+                return -1;
+            }
         }
     }
 

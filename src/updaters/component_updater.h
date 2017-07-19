@@ -57,8 +57,8 @@ typedef struct _component_updater_t_ {
     bptt_updater_t **bptt_updaters; /**< bptt updater. Every cycle in
                                       comp->glue_cycles has one bptt_updater. */
 
-    real_t *bptt_er0; /**< buffer for er used by BPTT. */
-    real_t *bptt_er1; /**< buffer for er used by BPTT. */
+    mat_t bptt_er0; /**< buffer for er used by BPTT. */
+    mat_t bptt_er1; /**< buffer for er used by BPTT. */
 
     unsigned int *rand_seed; /**< random seed. */
 

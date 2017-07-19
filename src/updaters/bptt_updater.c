@@ -39,30 +39,41 @@ void bptt_updater_destroy(bptt_updater_t *bptt_updater)
         return;
     }
 
-    if (bptt_updater->ac_bptt != NULL) {
+    if (bptt_updater->ac_bptts != NULL) {
         for (i = 1; i <= bptt_updater->num_glue; i++) {
-            safe_st_aligned_free(bptt_updater->ac_bptt[i]);
+            mat_destroy(bptt_updater->ac_bptts + i);
         }
-        safe_st_free(bptt_updater->ac_bptt);
+        safe_st_free(bptt_updater->ac_bptts);
     }
 
-    if (bptt_updater->er_bptt != NULL) {
+    if (bptt_updater->er_bptts != NULL) {
         for (i = 1; i <= bptt_updater->num_glue; i++) {
-            safe_st_aligned_free(bptt_updater->er_bptt[i]);
+            mat_destroy(bptt_updater->er_bptts + i);
         }
-        safe_st_free(bptt_updater->er_bptt);
+        safe_st_free(bptt_updater->er_bptts);
     }
 
-    if (bptt_updater->wt_updaters != NULL) {
-        safe_st_free(bptt_updater->wt_updaters);
+    if (bptt_updater->in_acs != NULL) {
+        for (i = 1; i <= bptt_updater->num_glue; i++) {
+            mat_destroy(bptt_updater->in_acs + i);
+        }
+        safe_st_free(bptt_updater->in_acs);
     }
+
+    if (bptt_updater->out_ers != NULL) {
+        for (i = 1; i <= bptt_updater->num_glue; i++) {
+            mat_destroy(bptt_updater->out_ers + i);
+        }
+        safe_st_free(bptt_updater->out_ers);
+    }
+
+    safe_st_free(bptt_updater->wt_updaters);
 }
 
 bptt_updater_t* bptt_updater_create(component_t *comp, int cycle_id,
         glue_updater_t **glue_updaters)
 {
     bptt_updater_t *bptt_updater = NULL;
-    glue_t *glue;
     int g, i, bptt, bptt_delay, sz;
 
     ST_CHECK_PARAM(comp == NULL || cycle_id < 0
@@ -82,20 +93,34 @@ bptt_updater_t* bptt_updater_create(component_t *comp, int cycle_id,
 
     bptt_updater->num_glue = comp->glue_cycles[cycle_id][0];
 
-    sz = sizeof(real_t *) * (bptt_updater->num_glue + 1);
-    bptt_updater->ac_bptt = (real_t **)st_malloc(sz);
-    if (bptt_updater->ac_bptt == NULL) {
-        ST_WARNING("Failed to st_malloc ac_bptt.");
+    sz = sizeof(mat_t) * (bptt_updater->num_glue + 1);
+    bptt_updater->ac_bptts = (mat_t *)st_malloc(sz);
+    if (bptt_updater->ac_bptts == NULL) {
+        ST_WARNING("Failed to st_malloc ac_bptts.");
         goto ERR;
     }
-    memset(bptt_updater->ac_bptt, 0, sz);
+    memset(bptt_updater->ac_bptts, 0, sz);
 
-    bptt_updater->er_bptt = (real_t **)st_malloc(sz);
-    if (bptt_updater->er_bptt == NULL) {
-        ST_WARNING("Failed to st_malloc er_bptt.");
+    bptt_updater->er_bptts = (mat_t *)st_malloc(sz);
+    if (bptt_updater->er_bptts == NULL) {
+        ST_WARNING("Failed to st_malloc er_bptts.");
         goto ERR;
     }
-    memset(bptt_updater->er_bptt, 0, sz);
+    memset(bptt_updater->er_bptts, 0, sz);
+
+    bptt_updater->in_acs = (mat_t *)st_malloc(sz);
+    if (bptt_updater->in_acs == NULL) {
+        ST_WARNING("Failed to st_malloc in_acs.");
+        goto ERR;
+    }
+    memset(bptt_updater->in_acs, 0, sz);
+
+    bptt_updater->out_ers = (mat_t *)st_malloc(sz);
+    if (bptt_updater->out_ers == NULL) {
+        ST_WARNING("Failed to st_malloc out_ers.");
+        goto ERR;
+    }
+    memset(bptt_updater->out_ers, 0, sz);
 
     sz = sizeof(wt_updater_t *) * (bptt_updater->num_glue + 1);
     bptt_updater->wt_updaters = (wt_updater_t **)st_malloc(sz);
@@ -107,25 +132,6 @@ bptt_updater_t* bptt_updater_create(component_t *comp, int cycle_id,
 
     for (i = 1; i <= bptt_updater->num_glue; i++) {
         g = comp->glue_cycles[cycle_id][i];
-        glue = comp->glues[g];
-        sz = sizeof(real_t) * comp->layers[glue->in_layer]->size
-            * (bptt + bptt_delay);
-        bptt_updater->ac_bptt[i] = st_aligned_malloc(sz, ALIGN_SIZE);
-        if (bptt_updater->ac_bptt[i] == NULL) {
-            ST_WARNING("Failed to st_aligned_malloc ac_bptt[%d].", i);
-            goto ERR;
-        }
-        memset(bptt_updater->ac_bptt[i], 0, sz);
-
-        sz = sizeof(real_t) * comp->layers[glue->out_layer]->size
-            * bptt_delay;
-        bptt_updater->er_bptt[i] = st_aligned_malloc(sz, ALIGN_SIZE);
-        if (bptt_updater->er_bptt[i] == NULL) {
-            ST_WARNING("Failed to st_aligned_malloc er_bptt[%d].", i);
-            goto ERR;
-        }
-        memset(bptt_updater->er_bptt[i], 0, sz);
-
         bptt_updater->wt_updaters[i] = glue_updaters[g]->wt_updater;
     }
 
@@ -140,8 +146,8 @@ int bptt_updater_reset(bptt_updater_t *bptt_updater)
 {
     ST_CHECK_PARAM(bptt_updater == NULL, -1);
 
-    bptt_updater->num_ac_bptt = 0;
-    bptt_updater->num_er_bptt = 0;
+    bptt_updater->num_ac_bptts = 0;
+    bptt_updater->num_er_bptts = 0;
 
     return 0;
 }

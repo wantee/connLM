@@ -473,6 +473,7 @@ int direct_glue_updater_forward(glue_updater_t *glue_updater,
     out_updater_t *out_updater;
 
     direct_walker_args_t dw_args;
+    int b;
 
     ST_CHECK_PARAM(glue_updater == NULL || comp_updater == NULL
             || batch == NULL || out_ac == NULL, -1);
@@ -500,7 +501,7 @@ int direct_glue_updater_forward(glue_updater_t *glue_updater,
         dw_args.wt_updater = glue_updater->wt_updater;
         dw_args.hash_wt = glue_updater->wt_updater->wt;
         dw_args.hash_sz = glue_updater->glue->wt->row;
-        dw_args.hash_vals = data->hash_vals;
+        dw_args.hash_vals = data->hash_vals + b;
         dw_args.hash_order = data->hash_order;
         dw_args.forwarded = NULL;
         dw_args.keep_mask = glue_updater->keep_mask;

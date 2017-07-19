@@ -48,11 +48,13 @@ typedef struct _bptt_updater_t_ {
     bptt_opt_t bptt_opt; /**< bptt option. */
 
     wt_updater_t **wt_updaters; /**< wt_updater for every glue. */
+    mat_t *in_acs; /**< buffer of in_ac. */
+    mat_t *out_ers; /**< buffer of out_er. */
     int num_glue; /**< number of glue in this cycle. */
-    real_t **ac_bptt; /**< buffer of activation for BPTT in cycle. one-based. */
-    int num_ac_bptt; /**< number time stpes filled in ac_bptt. */
-    real_t **er_bptt; /**< buffer of error for BPTT in cycle. one-based.*/
-    int num_er_bptt; /**< number time stpes filled in er_bptt. */
+    mat_t *ac_bptts; /**< buffer of activation for BPTT in cycle. one-based. */
+    int num_ac_bptts; /**< number time stpes filled in ac_bptt. */
+    mat_t *er_bptts; /**< buffer of error for BPTT in cycle. one-based.*/
+    int num_er_bptts; /**< number time stpes filled in er_bptt. */
 } bptt_updater_t;
 
 /**

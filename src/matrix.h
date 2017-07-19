@@ -95,9 +95,18 @@ int mat_resize(mat_t *mat, int num_rows, int num_cols, real_t init_val);
 int mat_resize_row(mat_t *mat, int num_rows, real_t init_val);
 
 /**
+ * Append a matrix into a matrix, col must be the same.
+ * @ingroup g_matrix
+ * @param[out] dst dst matrix.
+ * @param[in] src src matrix.
+ * @return non-zero if any error.
+ */
+int mat_append(mat_t *dst, mat_t* src);
+
+/**
  * Append a row into a matrix.
  * @ingroup g_matrix
- * @param[in] mat the matrix.
+ * @param[out] mat the matrix.
  * @param[in] row values of row, size must be same as mat.num_cols.
  * @return non-zero if any error.
  */
@@ -106,22 +115,40 @@ int mat_append_row(mat_t *mat, real_t* row);
 /**
  * Copy a matrix to the other.
  * @ingroup g_matrix
- * @param[in] dst the dst matrix.
+ * @param[out] dst the dst matrix.
  * @param[in] src the src matrix.
  * @return non-zero if any error.
  */
 int mat_cpy(mat_t *dst, mat_t *src);
 
 /**
+ * Assing a matrix to the other.
+ * @ingroup g_matrix
+ * @param[in] dst the dst matrix.
+ * @param[in] src the src matrix.
+ */
+void mat_assign(mat_t *dst, mat_t *src);
+
+/**
+ * Move rows in a matrix.
+ * @ingroup g_matrix
+ * @param[in] mat the matrix.
+ * @param[in] dst_row the dst row of matrix.
+ * @param[in] src_row the src row of matrix.
+ * @return non-zero if any error.
+ */
+int mat_move_up(mat_t *mat, int dst_row, int src_row);
+
+/**
  * Extract a sub-matrix from one matrix.
  * @ingroup g_matrix
  * @param[in] mat the matrix.
  * @param[in] row_s start row index in original matrix.
- * @param[in] nun_rows number of rows in sub-matrix.
+ * @param[in] num_rows number of rows in sub-matrix.
  *                     set to non-positive value to extract all the rest
  *                     rows from original matrix
  * @param[in] col_s start col index in original matrix.
- * @param[in] nun_cols number of cols in sub-matrix,
+ * @param[in] num_cols number of cols in sub-matrix,
  *                     set to non-positive value to extract all the rest
  *                     cols from original matrix
  * @param[out] sub the sub-matrix.
@@ -131,12 +158,48 @@ int mat_submat(mat_t *mat, int row_s, int num_rows,
         int col_s, int num_cols, mat_t *sub);
 
 /**
+ * Fill a matrix with sub-matrix.
+ * @ingroup g_matrix
+ * @param[out] mat the matrix.
+ * @param[in] row_s start row index in original matrix.
+ * @param[in] num_rows number of rows in sub-matrix.
+ *                     set to non-positive value to extract all the rest
+ *                     rows from original matrix
+ * @param[in] col_s start col index in original matrix.
+ * @param[in] num_cols number of cols in sub-matrix,
+ *                     set to non-positive value to extract all the rest
+ *                     cols from original matrix
+ * @param[in] val the sub-matrix contains values.
+ * @return non-zero if any error.
+ */
+int mat_fill(mat_t *mat, int row_s, int num_rows,
+        int col_s, int num_cols, mat_t *val);
+
+/**
  * Scale elements in a matrix.
  * @ingroup g_matrix
  * @param[in] mat the matrix.
  * @param[in] scale the scale.
  */
 void mat_scale(mat_t *mat, real_t scale);
+
+/**
+ * Set elements to a val in a matrix.
+ * @ingroup g_matrix
+ * @param[in] mat the matrix.
+ * @param[in] val the value.
+ */
+void mat_set_value(mat_t *mat, real_t val);
+
+/**
+ * Add element-by-element for two matrix.
+ * @ingroup g_matrix
+ * @param[in] mat1 the first matrix.
+ * @param[in] mat2 the second matrix.
+ * @param[out] out the output matrix.
+ * @return non-zero if any error.
+ */
+int mat_add_elems(mat_t *mat1, mat_t *mat2, mat_t *out);
 
 /**
  * Multiple element-by-element for two matrix.
