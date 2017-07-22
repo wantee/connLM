@@ -316,7 +316,6 @@ static int comp_updater_bptt(comp_updater_t *comp_updater, bool clear)
     layer_t *layer;
     glue_t *glue;
     bptt_updater_t *bptt_updater;
-    bool *keep_mask;
     real_t keep_prob;
 
     mat_t in_er = {0};
@@ -325,7 +324,7 @@ static int comp_updater_bptt(comp_updater_t *comp_updater, bool clear)
     mat_t out_ac = {0};
     mat_t tmp = {0};
     int bptt, bptt_delay, batch_size;
-    int i, j, g, t, ii, er_t;
+    int i, j, g, t, er_t;
 
     ST_CHECK_PARAM(comp_updater == NULL, -1);
 
@@ -560,7 +559,7 @@ static int comp_updater_bptt(comp_updater_t *comp_updater, bool clear)
                         }
                         mat_set_value(&in_er, 0.0);
 
-                        propagate_error(in_er, out_er,
+                        propagate_error(&in_er, &out_er,
                                 wt_updater->wt,
                                 wt_updater->col, wt_updater->row,
                                 wt_updater->param.er_cutoff, 1.0);
@@ -652,7 +651,7 @@ int comp_updater_reset(comp_updater_t *comp_updater, int batch_i)
     ST_CHECK_PARAM(comp_updater == NULL, -1);
 
     for (i = 2; i < comp_updater->comp->num_layer; i++) {
-        if (layer_updater_reset(comp_updater->layer_updaters[i]) < 0) {
+        if (layer_updater_reset(comp_updater->layer_updaters[i], batch_i) < 0) {
             ST_WARNING("Failed to layer_updater_reset.[%s]",
                     comp_updater->comp->layers[i]->name);
             return -1;
@@ -841,7 +840,7 @@ int comp_updater_forward_out(comp_updater_t *comp_updater,
     return 0;
 }
 
-int comp_updater_forward_out_word(comp_updater_t *comp_updater, int word)
+int comp_updater_forward_out_word(comp_updater_t *comp_updater, ivec_t *words)
 {
     component_t *comp;
     glue_updater_t *glue_updater;
@@ -859,7 +858,7 @@ int comp_updater_forward_out_word(comp_updater_t *comp_updater, int word)
     for (g = 0; g < comp->num_glue; g++) {
         glue_updater = comp_updater->glue_updaters[comp->fwd_order[g]];
         if (glue_updater_forward_out_word(glue_updater,
-                    comp_updater, word) < 0) {
+                    comp_updater, words) < 0) {
             ST_WARNING("Failed to forward_out_word glue[%s].",
                     glue_updater->glue->name);
             return -1;
@@ -891,8 +890,10 @@ int comp_updater_state_size(comp_updater_t *comp_updater)
     return total_size;
 }
 
-int comp_updater_dump_state(comp_updater_t *comp_updater, real_t *state)
+int comp_updater_dump_state(comp_updater_t *comp_updater, mat_t *state)
 {
+    mat_t sub_state;
+
     int i;
     int size;
     int total_size;
@@ -907,8 +908,12 @@ int comp_updater_dump_state(comp_updater_t *comp_updater, real_t *state)
                     comp_updater->comp->layers[i]->name);
             return -1;
         }
+        if (mat_submat(state, 0, -1, total_size, -1, &sub_state) < 0) {
+            ST_WARNING("Failed to mat_submat state.");
+            return -1;
+        }
         if (layer_updater_dump_state(comp_updater->layer_updaters[i],
-                    state + total_size) < 0) {
+                    &sub_state) < 0) {
             ST_WARNING("Failed to layer_updater_dump_state.[%s]",
                     comp_updater->comp->layers[i]->name);
             return -1;
@@ -920,8 +925,10 @@ int comp_updater_dump_state(comp_updater_t *comp_updater, real_t *state)
 }
 
 int comp_updater_dump_pre_ac_state(comp_updater_t *comp_updater,
-        real_t *state)
+        mat_t *state)
 {
+    mat_t sub_state;
+
     int i;
     int size;
     int total_size;
@@ -936,9 +943,13 @@ int comp_updater_dump_pre_ac_state(comp_updater_t *comp_updater,
                     comp_updater->comp->layers[i]->name);
             return -1;
         }
+        if (mat_submat(state, 0, -1, total_size, -1, &sub_state) < 0) {
+            ST_WARNING("Failed to mat_submat state.");
+            return -1;
+        }
         if (layer_updater_dump_pre_ac_state(
                     comp_updater->layer_updaters[i],
-                    state + total_size) < 0) {
+                    &sub_state) < 0) {
             ST_WARNING("Failed to layer_updater_dump_pre_ac_state.[%s]",
                     comp_updater->comp->layers[i]->name);
             return -1;
@@ -949,8 +960,9 @@ int comp_updater_dump_pre_ac_state(comp_updater_t *comp_updater,
     return 0;
 }
 
-int comp_updater_feed_state(comp_updater_t *comp_updater, real_t *state)
+int comp_updater_feed_state(comp_updater_t *comp_updater, mat_t *state)
 {
+    mat_t sub_state;
     int i;
     int size;
     int total_size;
@@ -965,8 +977,12 @@ int comp_updater_feed_state(comp_updater_t *comp_updater, real_t *state)
                     comp_updater->comp->layers[i]->name);
             return -1;
         }
+        if (mat_submat(state, 0, -1, total_size, -1, &sub_state) < 0) {
+            ST_WARNING("Failed to mat_submat state.");
+            return -1;
+        }
         if (layer_updater_feed_state(comp_updater->layer_updaters[i],
-                    state + total_size) < 0) {
+                    &sub_state) < 0) {
             ST_WARNING("Failed to layer_updater_feed_state.[%s]",
                     comp_updater->comp->layers[i]->name);
             return -1;
@@ -977,8 +993,9 @@ int comp_updater_feed_state(comp_updater_t *comp_updater, real_t *state)
     return 0;
 }
 
-int comp_updater_random_state(comp_updater_t *comp_updater, real_t *state)
+int comp_updater_random_state(comp_updater_t *comp_updater, mat_t *state)
 {
+    mat_t sub_state;
     int i;
     int size;
     int total_size;
@@ -993,8 +1010,12 @@ int comp_updater_random_state(comp_updater_t *comp_updater, real_t *state)
                     comp_updater->comp->layers[i]->name);
             return -1;
         }
+        if (mat_submat(state, 0, -1, total_size, -1, &sub_state) < 0) {
+            ST_WARNING("Failed to mat_submat state.");
+            return -1;
+        }
         if (layer_updater_random_state(comp_updater->layer_updaters[i],
-                    state + total_size) < 0) {
+                    &sub_state) < 0) {
             ST_WARNING("Failed to layer_updater_random_state.[%s]",
                     comp_updater->comp->layers[i]->name);
             return -1;
@@ -1043,8 +1064,10 @@ int comp_updater_clear_multicall(comp_updater_t *comp_updater,
     return 0;
 }
 
-int comp_updater_activate_state(comp_updater_t *comp_updater, real_t *state)
+int comp_updater_activate_state(comp_updater_t *comp_updater, mat_t *state)
 {
+    mat_t sub_state;
+
     int i;
     int size;
     int total_size;
@@ -1059,8 +1082,12 @@ int comp_updater_activate_state(comp_updater_t *comp_updater, real_t *state)
                     comp_updater->comp->layers[i]->name);
             return -1;
         }
+        if (mat_submat(state, 0, -1, total_size, -1, &sub_state) < 0) {
+            ST_WARNING("Failed to mat_submat state.");
+            return -1;
+        }
         if (layer_updater_activate_state(comp_updater->layer_updaters[i],
-                    state + total_size) < 0) {
+                    &sub_state) < 0) {
             ST_WARNING("Failed to layer_updater_activate.[%s]",
                     comp_updater->comp->layers[i]->name);
             return -1;

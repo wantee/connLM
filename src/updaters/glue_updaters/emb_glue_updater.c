@@ -36,14 +36,14 @@
 
 int emb_glue_updater_forward(glue_updater_t *glue_updater,
         comp_updater_t *comp_updater, egs_batch_t *batch,
-        matrix_t* in_ac, matrix_t *out_ac)
+        mat_t* in_ac, mat_t *out_ac)
 {
     glue_t *glue;
     input_t *input;
     real_t *wt;
     emb_glue_data_t *data;
 
-    int b, w, i, j, col;
+    int b, w, i, j, col, pos;
     real_t scale, ac;
 
     ST_CHECK_PARAM(glue_updater == NULL || comp_updater == NULL
@@ -63,9 +63,9 @@ int emb_glue_updater_forward(glue_updater_t *glue_updater,
 
                     j = batch->inputs->words[w] * col;
 
-                    if (glue_updater->keep_mask != NULL) {
+                    if (glue_updater->keep_mask.vals != NULL) {
                         for (i = 0; i < col; i++, j++) {
-                            if (glue_updater->keep_mask[i]) {
+                            if (glue_updater->keep_mask.vals[i] == 1.0) {
                                 MAT_VAL(out_ac, b, i) += scale * wt[j]
                                     / glue_updater->keep_prob;
                             }
@@ -81,8 +81,8 @@ int emb_glue_updater_forward(glue_updater_t *glue_updater,
         case EC_AVG:
             for (b = 0; b < batch->num_egs; b++) {
                 for (i = 0; i < col; i++) {
-                    if (glue_updater->keep_mask != NULL
-                            && ! glue_updater->keep_mask[i]) {
+                    if (glue_updater->keep_mask.vals != NULL
+                            && glue_updater->keep_mask.vals[i] == 0.0) {
                         continue;
                     }
 
@@ -93,7 +93,7 @@ int emb_glue_updater_forward(glue_updater_t *glue_updater,
 
                         ac += scale * wt[j];
                     }
-                    if (glue_updater->keep_mask != NULL) {
+                    if (glue_updater->keep_mask.vals != NULL) {
                         MAT_VAL(out_ac, b, i) += ac / input->n_ctx
                             / glue_updater->keep_prob;
                     } else {
@@ -117,9 +117,9 @@ int emb_glue_updater_forward(glue_updater_t *glue_updater,
                         pos++;
                     }
 
-                    if (glue_updater->keep_mask != NULL) {
+                    if (glue_updater->keep_mask.vals != NULL) {
                         for (i = pos * col; i < (pos + 1) * col; i++, j++) {
-                            if (glue_updater->keep_mask[i]) {
+                            if (glue_updater->keep_mask.vals[i] == 1.0) {
                                 MAT_VAL(out_ac, b, i) += scale * wt[j]
                                     / glue_updater->keep_prob;
                             }
@@ -142,7 +142,7 @@ int emb_glue_updater_forward(glue_updater_t *glue_updater,
 
 int emb_glue_updater_backprop(glue_updater_t *glue_updater,
         comp_updater_t *comp_updater, egs_batch_t *batch,
-        matrix_t *in_ac, matrix_t *out_er, matrix_t *in_er)
+        mat_t *in_ac, mat_t *out_er, mat_t *in_er)
 {
     glue_t *glue;
     emb_glue_data_t *data;
@@ -151,7 +151,7 @@ int emb_glue_updater_backprop(glue_updater_t *glue_updater,
     real_t *er;
 
     st_wt_int_t in_idx;
-    int b, i;
+    int b, i, j;
 
     ST_CHECK_PARAM(glue_updater == NULL || comp_updater == NULL
             || batch == NULL, -1);
@@ -160,10 +160,10 @@ int emb_glue_updater_backprop(glue_updater_t *glue_updater,
     data = (emb_glue_data_t *)glue->extra;
     input = comp_updater->comp->input;
 
-    if (glue_updater->keep_mask != NULL) {
+    if (glue_updater->keep_mask.vals != NULL) {
         er = glue_updater->dropout_val;
         for (i = 0; i < glue_updater->keep_mask_len; i++) {
-            if (glue_updater->keep_mask[i]) {
+            if (glue_updater->keep_mask.vals[i] == 1.0) {
                 er[i] = out_er[i];
             } else {
                 er[i] = 0.0;

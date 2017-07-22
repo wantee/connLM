@@ -42,7 +42,7 @@ extern "C" {
  */
 
 /**
- * Feed-forward one word for a out_glue_updater.
+ * Feed-forward a batch for a out_glue_updater.
  * @ingroup g_glue_updater_out
  * @param[in] glue_updater glue_updater.
  * @param[in] comp_updater the comp_updater.
@@ -53,10 +53,10 @@ extern "C" {
  */
 int out_glue_updater_forward(glue_updater_t *glue_updater,
         comp_updater_t *comp_updater, egs_batch_t *batch,
-        real_t *in_ac, real_t *out_ac);
+        mat_t *in_ac, mat_t *out_ac);
 
 /**
- * Back-prop one word for a out_glue_updater.
+ * Back-prop a batch for a out_glue_updater.
  * @ingroup g_glue_updater_out
  * @param[in] glue_updater glue_updater.
  * @param[in] comp_updater the comp_updater.
@@ -68,7 +68,7 @@ int out_glue_updater_forward(glue_updater_t *glue_updater,
  */
 int out_glue_updater_backprop(glue_updater_t *glue_updater,
         comp_updater_t *comp_updater, egs_batch_t *batch,
-        real_t *in_ac, real_t *out_er, real_t *in_er);
+        mat_t *in_ac, mat_t *out_er, mat_t *in_er);
 
 /**
  * Feed-forward one node of output layer.
@@ -82,21 +82,21 @@ int out_glue_updater_backprop(glue_updater_t *glue_updater,
  */
 int out_glue_updater_forward_out(glue_updater_t *glue_updater,
         comp_updater_t *comp_updater, output_node_id_t node,
-        real_t *in_ac, real_t *out_ac);
+        mat_t *in_ac, mat_t *out_ac);
 
 /**
- * Feed-forward one word of output layer.
+ * Feed-forward some words of output layer.
  * @ingroup g_glue_updater_out
  * @param[in] glue_updater the glue_updater.
  * @param[in] comp_updater the comp_updater.
- * @param[in] word the word.
+ * @param[in] words the words.
  * @param[in] in_ac activation of in layer.
  * @param[out] out_ac activation of out layer.
  * @return non-zero value if any error.
  */
 int out_glue_updater_forward_out_word(glue_updater_t *glue_updater,
-        comp_updater_t *comp_updater, int word,
-        real_t *in_ac, real_t *out_ac);
+        comp_updater_t *comp_updater, ivec_t *words,
+        mat_t *in_ac, mat_t *out_ac);
 
 #ifdef __cplusplus
 }

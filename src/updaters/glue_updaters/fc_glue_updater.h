@@ -51,7 +51,7 @@ extern "C" {
  */
 int fc_glue_updater_forward(glue_updater_t *glue_updater,
         comp_updater_t *comp_updater, egs_batch_t *batch,
-        real_t *in_ac, real_t *out_ac);
+        mat_t *in_ac, mat_t *out_ac);
 
 /**
  * Back-prop one word for a fc_glue_updater.
@@ -66,7 +66,7 @@ int fc_glue_updater_forward(glue_updater_t *glue_updater,
  */
 int fc_glue_updater_backprop(glue_updater_t *glue_updater,
         comp_updater_t *comp_updater, egs_batch_t *batch,
-        real_t *in_ac, real_t *out_er, real_t *in_er);
+        mat_t *in_ac, mat_t *out_er, mat_t *in_er);
 
 #ifdef __cplusplus
 }

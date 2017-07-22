@@ -543,11 +543,9 @@ int updater_sampling(updater_t *updater, bool startover)
         return -1;
     }
 
-    if (word == SENT_END_ID) {
-        if (updater_reset(updater) < 0) {
-            ST_WARNING("Failed to updater_reset.");
-            return -1;
-        }
+    if (updater_reset(updater) < 0) {
+        ST_WARNING("Failed to updater_reset.");
+        return -1;
     }
 
     if (updater_clear(updater) < 0) {
@@ -586,8 +584,10 @@ int updater_state_size(updater_t *updater)
     return total_size;
 }
 
-int updater_dump_state(updater_t *updater, real_t *state)
+int updater_dump_state(updater_t *updater, mat_t *state)
 {
+    mat_t sub_state;
+
     int c;
     int size;
     int total_size;
@@ -603,8 +603,12 @@ int updater_dump_state(updater_t *updater, real_t *state)
             return -1;
         }
 
+        if (mat_submat(state, 0, -1, total_size, -1, &sub_state) < 0) {
+            ST_WARNING("Failed to mat_submat state.");
+            return -1;
+        }
         if (comp_updater_dump_state(updater->comp_updaters[c],
-                    state + total_size) < 0) {
+                    &sub_state) < 0) {
             ST_WARNING("Failed to comp_updater_dump_state[%s].",
                     updater->connlm->comps[c]->name);
             return -1;
@@ -615,8 +619,10 @@ int updater_dump_state(updater_t *updater, real_t *state)
     return 0;
 }
 
-int updater_dump_pre_ac_state(updater_t *updater, real_t *state)
+int updater_dump_pre_ac_state(updater_t *updater, mat_t *state)
 {
+    mat_t sub_state;
+
     int c;
     int size;
     int total_size;
@@ -632,8 +638,12 @@ int updater_dump_pre_ac_state(updater_t *updater, real_t *state)
             return -1;
         }
 
+        if (mat_submat(state, 0, -1, total_size, -1, &sub_state) < 0) {
+            ST_WARNING("Failed to mat_submat state.");
+            return -1;
+        }
         if (comp_updater_dump_pre_ac_state(updater->comp_updaters[c],
-                    state + total_size) < 0) {
+                    &sub_state) < 0) {
             ST_WARNING("Failed to comp_updater_dump_pre_ac_state[%s].",
                     updater->connlm->comps[c]->name);
             return -1;
@@ -644,8 +654,10 @@ int updater_dump_pre_ac_state(updater_t *updater, real_t *state)
     return 0;
 }
 
-int updater_feed_state(updater_t *updater, real_t *state)
+int updater_feed_state(updater_t *updater, mat_t *state)
 {
+    mat_t sub_state;
+
     int c;
     int size;
     int total_size;
@@ -661,8 +673,12 @@ int updater_feed_state(updater_t *updater, real_t *state)
             return -1;
         }
 
+        if (mat_submat(state, 0, -1, total_size, -1, &sub_state) < 0) {
+            ST_WARNING("Failed to mat_submat state.");
+            return -1;
+        }
         if (comp_updater_feed_state(updater->comp_updaters[c],
-                    state + total_size) < 0) {
+                    &sub_state) < 0) {
             ST_WARNING("Failed to comp_updater_feed_state[%s].",
                     updater->connlm->comps[c]->name);
             return -1;
@@ -673,8 +689,10 @@ int updater_feed_state(updater_t *updater, real_t *state)
     return 0;
 }
 
-int updater_random_state(updater_t *updater, real_t *state)
+int updater_random_state(updater_t *updater, mat_t *state)
 {
+    mat_t sub_state;
+
     int c;
     int size;
     int total_size;
@@ -690,8 +708,12 @@ int updater_random_state(updater_t *updater, real_t *state)
             return -1;
         }
 
+        if (mat_submat(state, 0, -1, total_size, -1, &sub_state) < 0) {
+            ST_WARNING("Failed to mat_submat state.");
+            return -1;
+        }
         if (comp_updater_random_state(updater->comp_updaters[c],
-                    state + total_size) < 0) {
+                    &sub_state) < 0) {
             ST_WARNING("Failed to comp_updater_random_state[%s].",
                     updater->connlm->comps[c]->name);
             return -1;
@@ -729,23 +751,42 @@ static int updater_cleanup(updater_t *updater)
     return 0;
 }
 
-static int updater_set_hist(updater_t *updater, int *hist, int num_hist)
+static int updater_set_hist(updater_t *updater, ivec_t *hists, int num_hists)
 {
-    int c;
+    int i, c, sz;
 
-    ST_CHECK_PARAM(updater == NULL || hist == NULL, -1);
+    ST_CHECK_PARAM(updater == NULL || hists == NULL, -1);
 
-    if (word_pool_resize(&updater->tmp_wp, num_hist) < 0) {
+    // build mini_batch with hists
+    sz = 0;
+    for (i = 0; i < num_hists; i++) {
+        if (hists[i].size > sz) {
+            sz = hists[i].size;
+        }
+    }
+
+    if (word_pool_resize(&updater->tmp_wp, sz * num_hists) < 0) {
         ST_WARNING("Failed to word_pool_resize.");
         return -1;
     }
-    memcpy(updater->tmp_wp.words, hist, sizeof(int)*num_hist);
-    updater->tmp_wp.size = num_hist;
-    if (word_pool_build_mini_batch(&updater->tmp_wp, 1) < 0) {
-        ST_WARNING("Failed to word_pool_build_mini_batch.");
+    if (word_pool_resize_batches(&updater->tmp_wp, num_hists) < 0) {
+        ST_WARNING("Failed to word_pool_resize_batches.");
         return -1;
     }
 
+    for (i = 0; i < num_hists; i++) {
+        // set the empty words to -1
+        for (c = 0; c < sz - hists[i].size; c++) {
+            updater->tmp_wp.words[i * sz + c] = -1;
+        }
+        memcpy(updater->tmp_wp.words + i * sz + c,
+                hists[i].vals, sizeof(int) * hists[i].size);
+        updater->tmp_wp.row_starts[i] = i * sz;
+    }
+    updater->tmp_wp.row_starts[num_hists] = num_hists * sz;
+    updater->tmp_wp.size = sz * num_hists;
+
+    // feed the word_pool with hists
     if (updater_feed(updater, &updater->tmp_wp) < 0) {
         ST_WARNING("Failed to updater_feed.");
         return -1;
@@ -769,8 +810,8 @@ static int updater_set_hist(updater_t *updater, int *hist, int num_hist)
     return 0;
 }
 
-int updater_step_with_state(updater_t *updater, real_t *state,
-        int *hist, int num_hist)
+int updater_step_with_state(updater_t *updater, mat_t *state,
+        ivec_t *hists, int num_hists)
 {
     ST_CHECK_PARAM(updater == NULL, -1);
 
@@ -779,8 +820,12 @@ int updater_step_with_state(updater_t *updater, real_t *state,
         return -1;
     }
 
-    if (hist != NULL && num_hist > 0) {
-        if (updater_set_hist(updater, hist, num_hist) < 0) {
+    if (hists != NULL && num_hists > 0) {
+        if (num_hists != state->num_rows) {
+            ST_WARNING("num_hists must be equal to state->num_rows.");
+            return -1;
+        }
+        if (updater_set_hist(updater, hists, num_hists) < 0) {
             ST_WARNING("Failed to updater_set_hist.");
             return -1;
         }
@@ -806,23 +851,22 @@ int updater_step_with_state(updater_t *updater, real_t *state,
     return 0;
 }
 
-int updater_forward_out_word(updater_t *updater, int word, double *logp)
+int updater_forward_out_word(updater_t *updater, ivec_t *words, dvec_t *logps)
 {
-    ST_CHECK_PARAM(updater == NULL || word < 0, -1);
+    ST_CHECK_PARAM(updater == NULL || words == NULL, -1);
 
     int c;
 
     for (c = 0; c < updater->connlm->num_comp; c++) {
-        if (comp_updater_forward_out_word(updater->comp_updaters[c], word) < 0) {
+        if (comp_updater_forward_out_word(updater->comp_updaters[c], words) < 0) {
             ST_WARNING("Failed to comp_updater_forward[%s].",
                     updater->connlm->comps[c]->name);
             return -1;
         }
     }
 
-    if (logp != NULL) {
-        *logp = 0.0;
-        if (out_updater_activate(updater->out_updater, word, logp) < 0) {
+    if (logps != NULL) {
+        if (out_updater_activate(updater->out_updater, words, logps) < 0) {
             ST_WARNING("Failed to out_updater_activate.");
             return -1;
         }
@@ -832,8 +876,10 @@ int updater_forward_out_word(updater_t *updater, int word, double *logp)
     return 0;
 }
 
-int updater_activate_state(updater_t *updater, real_t *state)
+int updater_activate_state(updater_t *updater, mat_t *state)
 {
+    mat_t sub_state;
+
     int c;
     int size;
     int total_size;
@@ -849,8 +895,12 @@ int updater_activate_state(updater_t *updater, real_t *state)
             return -1;
         }
 
+        if (mat_submat(state, 0, -1, total_size, -1, &sub_state) < 0) {
+            ST_WARNING("Failed to mat_submat state.");
+            return -1;
+        }
         if (comp_updater_activate_state(updater->comp_updaters[c],
-                    state + total_size) < 0) {
+                    &sub_state) < 0) {
             ST_WARNING("Failed to comp_updater_activate_state[%s].",
                     updater->connlm->comps[c]->name);
             return -1;
@@ -878,13 +928,19 @@ int updater_setup_pre_ac_state(updater_t *updater)
     return 0;
 }
 
-int updater_sampling_state(updater_t *updater, real_t *state,
-        real_t *pre_ac_state, bool startover)
+int updater_sampling_state(updater_t *updater, mat_t *state,
+        mat_t *pre_ac_state, bool startover)
 {
     int word;
 
     ST_CHECK_PARAM(updater == NULL
             || (state == NULL && pre_ac_state == NULL), -1);
+
+    if ((state != NULL && state->num_rows != 1)
+            || (pre_ac_state != NULL && pre_ac_state->num_rows != 1)) {
+        ST_WARNING("num_rows of state/pre_ac_state must be 1.");
+       return -1;
+    }
 
     if (word_pool_resize(&updater->tmp_wp, 1) < 0) {
         ST_WARNING("Failed to word_pool_resize.");
@@ -896,7 +952,7 @@ int updater_sampling_state(updater_t *updater, real_t *state,
         return -1;
     }
 
-    if (startover) {
+    if (startover) { // feed with <s>
         word = vocab_get_id(updater->connlm->vocab, SENT_START);
         updater->tmp_wp.words[0] = word;
         if (updater_feed(updater, &updater->tmp_wp) < 0) {
@@ -941,11 +997,9 @@ int updater_sampling_state(updater_t *updater, real_t *state,
         }
     }
 
-    if (word == SENT_END_ID) {
-        if (updater_reset(updater) < 0) {
-            ST_WARNING("Failed to updater_reset.");
-            return -1;
-        }
+    if (updater_reset(updater) < 0) {
+        ST_WARNING("Failed to updater_reset.");
+        return -1;
     }
 
     if (updater_clear(updater) < 0) {
@@ -963,13 +1017,14 @@ int updater_sampling_state(updater_t *updater, real_t *state,
 }
 
 int updater_step_state(updater_t *updater,
-        real_t *state, real_t *pre_ac_state)
+        mat_t *state, mat_t *pre_ac_state)
 {
-    int word;
-
     ST_CHECK_PARAM(updater == NULL, -1);
 
-    word = tgt_word(updater);
+    if (updater_move_input(updater) < 0) {
+        ST_WARNING("Failed to updater_move_input.");
+        return -1;
+    }
 
     if (updater_forward(updater) < 0) {
         ST_WARNING("Failed to updater_forward.");
@@ -1002,20 +1057,13 @@ int updater_step_state(updater_t *updater,
         }
     }
 
-    if (word == SENT_END_ID) {
-        if (updater_reset(updater) < 0) {
-            ST_WARNING("Failed to updater_reset.");
-            return -1;
-        }
+    if (updater_reset(updater) < 0) {
+        ST_WARNING("Failed to updater_reset.");
+        return -1;
     }
 
     if (updater_clear(updater) < 0) {
         ST_WARNING("updater_clear.");
-        return -1;
-    }
-
-    if (updater_move_input(updater) < 0) {
-        ST_WARNING("Failed to updater_move_input.");
         return -1;
     }
 
@@ -1026,5 +1074,5 @@ int updater_step_state(updater_t *updater,
         }
     }
 
-    return word;
+    return 0;
 }

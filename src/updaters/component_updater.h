@@ -123,7 +123,7 @@ int comp_updater_set_rand_seed(comp_updater_t *comp_updater, unsigned int *seed)
 int comp_updater_reset(comp_updater_t *comp_updater, int batch_i);
 
 /**
- * Feed-forward one word for a comp_updater.
+ * Feed-forward a batch for a comp_updater.
  * @ingroup g_updater_comp
  * @param[in] comp_updater the comp_updater.
  * @param[in] batch egs batch.
@@ -133,7 +133,7 @@ int comp_updater_reset(comp_updater_t *comp_updater, int batch_i);
 int comp_updater_forward(comp_updater_t *comp_updater, egs_batch_t *batch);
 
 /**
- * Back-propagate one word for a comp_updater.
+ * Back-propagate a batch for a comp_updater.
  * @ingroup g_updater_comp
  * @param[in] comp_updater the comp_updater.
  * @param[in] batch egs batch.
@@ -188,13 +188,13 @@ int comp_updater_forward_out(comp_updater_t *comp_updater,
         output_node_id_t node);
 
 /**
- * Feed-forward one word of output layer.
+ * Feed-forward batch of words of output layer.
  * @ingroup g_updater_comp
  * @param[in] comp_updater the comp_updater.
- * @param[in] word the word.
+ * @param[in] words the words.
  * @return non-zero value if any error.
  */
-int comp_updater_forward_out_word(comp_updater_t *comp_updater, int word);
+int comp_updater_forward_out_word(comp_updater_t *comp_updater, ivec_t* words);
 
 /**
  * Get the size of state in comp_updater.
@@ -213,7 +213,7 @@ int comp_updater_state_size(comp_updater_t *comp_updater);
  *             by comp_updater_state_size.
  * @return non-zero value if any error.
  */
-int comp_updater_dump_state(comp_updater_t *comp_updater, real_t *state);
+int comp_updater_dump_state(comp_updater_t *comp_updater, mat_t *state);
 
 /**
  * Dump the pre-activation state of comp_updater.
@@ -225,7 +225,7 @@ int comp_updater_dump_state(comp_updater_t *comp_updater, real_t *state);
  * @return non-zero value if any error.
  */
 int comp_updater_dump_pre_ac_state(comp_updater_t *comp_updater,
-        real_t *state);
+        mat_t *state);
 
 /**
  * Feed the state of comp_updater.
@@ -236,7 +236,7 @@ int comp_updater_dump_pre_ac_state(comp_updater_t *comp_updater,
  *             by comp_updater_state_size.
  * @return non-zero value if any error.
  */
-int comp_updater_feed_state(comp_updater_t *comp_updater, real_t *state);
+int comp_updater_feed_state(comp_updater_t *comp_updater, mat_t *state);
 
 /**
  * Generate random state of comp_updater.
@@ -247,7 +247,7 @@ int comp_updater_feed_state(comp_updater_t *comp_updater, real_t *state);
  *             by comp_updater_state_size.
  * @return non-zero value if any error.
  */
-int comp_updater_random_state(comp_updater_t *comp_updater, real_t *state);
+int comp_updater_random_state(comp_updater_t *comp_updater, mat_t *state);
 
 /**
  * Initialize multi-call of forward_out_word.
@@ -278,7 +278,7 @@ int comp_updater_clear_multicall(comp_updater_t *comp_updater,
  *             by comp_updater_state_size.
  * @return non-zero value if any error.
  */
-int comp_updater_activate_state(comp_updater_t *comp_updater, real_t *state);
+int comp_updater_activate_state(comp_updater_t *comp_updater, mat_t *state);
 
 /**
  * Setup pre-activation state for comp_updater.

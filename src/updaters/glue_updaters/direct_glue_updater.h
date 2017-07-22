@@ -67,7 +67,7 @@ int direct_glue_updater_setup(glue_updater_t *glue_updater,
         comp_updater_t *comp_updater, bool backprop);
 
 /**
- * Feed-forward one word for a direct_glue_updater.
+ * Feed-forward a batch for a direct_glue_updater.
  * @ingroup g_glue_updater_direct
  * @param[in] glue_updater glue_updater.
  * @param[in] comp_updater the comp_updater.
@@ -78,10 +78,10 @@ int direct_glue_updater_setup(glue_updater_t *glue_updater,
  */
 int direct_glue_updater_forward(glue_updater_t *glue_updater,
         comp_updater_t *comp_updater, egs_batch_t *batch,
-        real_t *in_ac, real_t *out_ac);
+        mat_t *in_ac, mat_t *out_ac);
 
 /**
- * Back-prop one word for a direct_glue_updater.
+ * Back-prop a batch for a direct_glue_updater.
  * @ingroup g_glue_updater_direct
  * @param[in] glue_updater glue_updater.
  * @param[in] comp_updater the comp_updater.
@@ -93,7 +93,7 @@ int direct_glue_updater_forward(glue_updater_t *glue_updater,
  */
 int direct_glue_updater_backprop(glue_updater_t *glue_updater,
         comp_updater_t *comp_updater, egs_batch_t *batch,
-        real_t *in_ac, real_t *out_er, real_t *in_er);
+        mat_t *in_ac, mat_t *out_er, mat_t *in_er);
 
 /**
  * Feed-forward util output layer.
@@ -107,7 +107,7 @@ int direct_glue_updater_backprop(glue_updater_t *glue_updater,
  */
 int direct_glue_updater_forward_util_out(glue_updater_t *glue_updater,
         comp_updater_t *comp_updater, egs_batch_t *batch,
-        real_t *in_ac, real_t *out_ac);
+        mat_t *in_ac, mat_t *out_ac);
 
 /**
  * Feed-forward one node of output layer.
@@ -121,21 +121,21 @@ int direct_glue_updater_forward_util_out(glue_updater_t *glue_updater,
  */
 int direct_glue_updater_forward_out(glue_updater_t *glue_updater,
         comp_updater_t *comp_updater, output_node_id_t node,
-        real_t *in_ac, real_t *out_ac);
+        mat_t *in_ac, mat_t *out_ac);
 
 /**
- * Feed-forward one word of output layer.
+ * Feed-forward some words of output layer.
  * @ingroup g_glue_updater_direct
  * @param[in] glue_updater the glue_updater.
  * @param[in] comp_updater the comp_updater.
- * @param[in] word the word.
+ * @param[in] words the word.
  * @param[in] in_ac [unused] activation of in layer.
  * @param[out] out_ac activation of out layer.
  * @return non-zero value if any error.
  */
 int direct_glue_updater_forward_out_word(glue_updater_t *glue_updater,
-        comp_updater_t *comp_updater, int word,
-        real_t *in_ac, real_t *out_ac);
+        comp_updater_t *comp_updater, ivec_t *words,
+        mat_t *in_ac, mat_t *out_ac);
 
 /**
  * Generate keep mask for direct_glue_updater.

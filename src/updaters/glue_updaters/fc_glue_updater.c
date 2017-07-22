@@ -34,7 +34,7 @@
 
 int fc_glue_updater_forward(glue_updater_t *glue_updater,
         comp_updater_t *comp_updater, egs_batch_t* batch,
-        real_t *in_ac, real_t *out_ac)
+        mat_t *in_ac, mat_t *out_ac)
 {
     wt_updater_t *wt_updater;
     int i;
@@ -58,7 +58,7 @@ int fc_glue_updater_forward(glue_updater_t *glue_updater,
 
 int fc_glue_updater_backprop(glue_updater_t *glue_updater,
         comp_updater_t *comp_updater, egs_batch_t *batch,
-        real_t *in_ac, real_t *out_er, real_t *in_er)
+        mat_t *in_ac, mat_t *out_er, mat_t *in_er)
 {
     wt_updater_t *wt_updater;
 
@@ -66,13 +66,13 @@ int fc_glue_updater_backprop(glue_updater_t *glue_updater,
 
     wt_updater = glue_updater->wt_updater;
 
-    if (in_er != NULL) {
+    if (in_er != NULL && in_er->vals != NULL) {
         propagate_error(in_er, out_er,
                 wt_updater->wt, wt_updater->col, wt_updater->row,
                 wt_updater->param.er_cutoff, 1.0);
     }
 
-    if (in_ac != NULL) {
+    if (in_ac != NULL && in_ac->vals != NULL) {
         if (wt_update(wt_updater, NULL, -1, out_er, 1.0,
                     in_ac, 1.0, NULL) < 0) {
             ST_WARNING("Failed to wt_update.");

@@ -301,7 +301,7 @@ static int direct_glue_updater_forward_node(output_t *output,
         real_t *hash_wt, size_t hash_sz,
         hash_t *hash_vals, int hash_order, real_t *out_ac, real_t scale,
         bool *forwarded,
-        bool *keep_mask, real_t keep_prob, unsigned int *rand_seed)
+        real_t *keep_mask, real_t keep_prob, unsigned int *rand_seed)
 {
     hash_t h;
     output_node_id_t ch;
@@ -326,30 +326,30 @@ static int direct_glue_updater_forward_node(output_t *output,
 
             if (keep_mask != NULL) {
                 for (ch = child_s; ch < child_e - 1; ch++) {
-                    if (keep_mask[ch] == 2) { // not set
+                    if (keep_mask[ch] == 2.0) { // not set
                         p = st_random_r(0, 1, rand_seed);
                         if (p < keep_prob) {
-                            keep_mask[ch] = 1;
+                            keep_mask[ch] = 1.0;
                         } else {
-                            keep_mask[ch] = 0;
+                            keep_mask[ch] = 0.0;
                         }
                     }
                 }
 
                 if (h + child_e - child_s - 1 > hash_sz) {
                     for (ch = child_s; h < hash_sz; ch++, h++) {
-                        if (keep_mask[ch]) {
+                        if (keep_mask[ch] == 1.0) {
                             out_ac[ch] += scale * hash_wt[h] / keep_prob;
                         }
                     }
                     for (h = 0; ch < child_e - 1; ch++, h++) {
-                        if (keep_mask[ch]) {
+                        if (keep_mask[ch] == 1.0) {
                             out_ac[ch] += scale * hash_wt[h] / keep_prob;
                         }
                     }
                 } else {
                     for (ch = child_s; ch < child_e - 1; ch++, h++) {
-                        if (keep_mask[ch]) {
+                        if (keep_mask[ch] == 1.0) {
                             out_ac[ch] += scale * hash_wt[h] / keep_prob;
                         }
                     }
@@ -388,7 +388,7 @@ typedef struct _direct_walker_args_t_ {
 
     bool *forwarded;
 
-    bool *keep_mask;
+    real_t *keep_mask;
     real_t keep_prob;
     unsigned int *rand_seed;
     real_t *dropout_val;
@@ -467,7 +467,7 @@ static int direct_compute_hash(glue_updater_t *glue_updater, int batch_id,
 
 int direct_glue_updater_forward(glue_updater_t *glue_updater,
         comp_updater_t *comp_updater, egs_batch_t *batch,
-        real_t* in_ac, real_t *out_ac)
+        mat_t* in_ac, mat_t *out_ac)
 {
     dgu_data_t *data;
     out_updater_t *out_updater;
@@ -496,15 +496,15 @@ int direct_glue_updater_forward(glue_updater_t *glue_updater,
             return -1;
         }
 
-        dw_args.out_ac = out_ac;
+        dw_args.out_ac = MAT_VALP(out_ac, b, 0);
         dw_args.comp_scale = comp_updater->comp->comp_scale;
         dw_args.wt_updater = glue_updater->wt_updater;
         dw_args.hash_wt = glue_updater->wt_updater->wt;
         dw_args.hash_sz = glue_updater->glue->wt->row;
-        dw_args.hash_vals = data->hash_vals + b;
-        dw_args.hash_order = data->hash_order;
+        dw_args.hash_vals = data->hash_vals[b];
+        dw_args.hash_order = data->hash_order[b];
         dw_args.forwarded = NULL;
-        dw_args.keep_mask = glue_updater->keep_mask;
+        dw_args.keep_mask = MAT_VALP(&glue_updater->keep_mask, b, 0);
         dw_args.keep_prob = glue_updater->keep_prob;
         dw_args.rand_seed = glue_updater->rand_seed;
         if (output_walk_through_path(out_updater->output,
@@ -580,7 +580,7 @@ static int direct_backprop_walker(output_t *output, output_node_id_t node,
 
 int direct_glue_updater_backprop(glue_updater_t *glue_updater,
         comp_updater_t *comp_updater, egs_batch_t *batch,
-        real_t *in_ac, real_t *out_er, real_t *in_er)
+        mat_t *in_ac, mat_t *out_er, mat_t *in_er)
 {
     dgu_data_t *data;
     out_updater_t *out_updater;
@@ -612,7 +612,7 @@ int direct_glue_updater_backprop(glue_updater_t *glue_updater,
 
 int direct_glue_updater_forward_util_out(glue_updater_t *glue_updater,
         comp_updater_t *comp_updater, egs_batch_t *batch,
-        real_t* in_ac, real_t* out_ac)
+        mat_t* in_ac, mat_t* out_ac)
 {
     dgu_data_t *data;
     int b;
@@ -635,7 +635,7 @@ int direct_glue_updater_forward_util_out(glue_updater_t *glue_updater,
 
 int direct_glue_updater_forward_out(glue_updater_t *glue_updater,
         comp_updater_t *comp_updater, output_node_id_t node,
-        real_t* in_ac, real_t *out_ac)
+        mat_t* in_ac, mat_t *out_ac)
 {
     out_updater_t *out_updater;
     output_t *output;
@@ -673,35 +673,42 @@ int direct_glue_updater_forward_out(glue_updater_t *glue_updater,
 }
 
 int direct_glue_updater_forward_out_word(glue_updater_t *glue_updater,
-        comp_updater_t *comp_updater, int word,
-        real_t* in_ac, real_t *out_ac)
+        comp_updater_t *comp_updater, ivec_t *words,
+        mat_t* in_ac, mat_t *out_ac)
 {
     direct_walker_args_t dw_args;
 
     out_updater_t *out_updater;
     dgu_data_t *data;
 
+    int b, i;
+
     ST_CHECK_PARAM(glue_updater == NULL || comp_updater == NULL
-            || word < 0 || out_ac == NULL, -1);
+            || words == NULL || out_ac == NULL, -1);
 
     out_updater = comp_updater->out_updater;
     data = (dgu_data_t *)glue_updater->extra;
 
-    dw_args.out_ac = out_ac;
     dw_args.comp_scale = comp_updater->comp->comp_scale;
     dw_args.wt_updater = glue_updater->wt_updater;
     dw_args.hash_wt = glue_updater->wt_updater->wt;
     dw_args.hash_sz = glue_updater->glue->wt->row;
-    dw_args.hash_vals = data->hash_vals;
-    dw_args.hash_order = data->hash_order;
-    dw_args.forwarded = glue_updater->forwarded;
-    dw_args.keep_mask = glue_updater->keep_mask;
     dw_args.keep_prob = glue_updater->keep_prob;
     dw_args.rand_seed = glue_updater->rand_seed;
-    if (output_walk_through_path(out_updater->output,
-                word, direct_forward_walker, (void *)&dw_args) < 0) {
-        ST_WARNING("Failed to output_walk_through_path.");
-        return -1;
+    for (b = 0; b < out_ac->num_rows; b++) {
+        dw_args.out_ac = MAT_VALP(out_ac, b, 0);
+        dw_args.hash_vals = data->hash_vals[b];
+        dw_args.hash_order = data->hash_order[b];
+        dw_args.forwarded = glue_updater->forwarded[b];
+        dw_args.keep_mask = MAT_VALP(&glue_updater->keep_mask, b, 0);
+        for (i = 0; i < words->size; i++) {
+            if (output_walk_through_path(out_updater->output,
+                        VEC_VAL(words, i),
+                        direct_forward_walker, (void *)&dw_args) < 0) {
+                ST_WARNING("Failed to output_walk_through_path.");
+                return -1;
+            }
+        }
     }
 
     return 0;

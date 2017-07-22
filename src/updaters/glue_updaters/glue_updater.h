@@ -57,24 +57,24 @@ typedef struct _glue_updater_implementation_t_ {
 
     int (*forward)(glue_updater_t *glue_updater,
             comp_updater_t *comp_updater, egs_batch_t *batch,
-            real_t *in_ac, real_t *out_ac); /**< forward glue updater.*/
+            mat_t *in_ac, mat_t *out_ac); /**< forward glue updater.*/
 
     int (*backprop)(glue_updater_t *glue_updater,
             comp_updater_t *comp_updater,
-            egs_batch_t *batch, real_t *in_ac, real_t *out_er,
-            real_t *in_er); /**< backprop glue updater.*/
+            egs_batch_t *batch, mat_t *in_ac, mat_t *out_er,
+            mat_t *in_er); /**< backprop glue updater.*/
 
     int (*forward_util_out)(glue_updater_t *glue_updater,
             comp_updater_t *comp_updater, egs_batch_t *batch,
-            real_t *in_ac, real_t *out_ac); /**< forward_util_out glue updater.*/
+            mat_t *in_ac, mat_t *out_ac); /**< forward_util_out glue updater.*/
 
     int (*forward_out)(glue_updater_t *glue_updater,
             comp_updater_t *comp_updater, output_node_id_t node,
-            real_t *in_ac, real_t *out_ac); /**< forward_out glue updater.*/
+            mat_t *in_ac, mat_t *out_ac); /**< forward_out glue updater.*/
 
     int (*forward_out_word)(glue_updater_t *glue_updater,
-            comp_updater_t *comp_updater, int word,
-            real_t *in_ac, real_t *out_ac); /**< forward_out_word glue updater.*/
+            comp_updater_t *comp_updater, ivec_t *words,
+            mat_t *in_ac, mat_t *out_ac); /**< forward_out_word glue updater.*/
 
     int (*gen_keep_mask)(glue_updater_t *glue_updater,
             int batch_size); /**< gen_keep_mask glue updater.*/
@@ -175,7 +175,7 @@ int glue_updater_setup_pre_ac_state(glue_updater_t *glue_updater,
 int glue_updater_set_rand_seed(glue_updater_t *glue_updater, unsigned int *seed);
 
 /**
- * Feed-forward one word for a glue_updater.
+ * Feed-forward a batch for a glue_updater.
  * @ingroup g_updater_glue
  * @param[in] glue_updater the glue_updater.
  * @param[in] comp_updater the comp_updater.
@@ -187,7 +187,7 @@ int glue_updater_forward(glue_updater_t *glue_updater,
         comp_updater_t *comp_updater, egs_batch_t *batch);
 
 /**
- * Back-propagate one word for a glue_updater.
+ * Back-propagate a batch for a glue_updater.
  * @ingroup g_updater_glue
  * @param[in] glue_updater the glue_updater.
  * @param[in] comp_updater the comp_updater.
@@ -221,15 +221,15 @@ int glue_updater_forward_out(glue_updater_t *glue_updater,
         comp_updater_t *comp_updater, output_node_id_t node);
 
 /**
- * Feed-forward one word of output layer.
+ * Feed-forward batch of words of output layer.
  * @ingroup g_updater_glue
  * @param[in] glue_updater the glue_updater.
  * @param[in] comp_updater the comp_updater.
- * @param[in] word the word.
+ * @param[in] words the words.
  * @return non-zero value if any error.
  */
 int glue_updater_forward_out_word(glue_updater_t *glue_updater,
-        comp_updater_t *comp_updater, int word);
+        comp_updater_t *comp_updater, ivec_t *words);
 
 /**
  * Initialize multi-call of forward_out_word.

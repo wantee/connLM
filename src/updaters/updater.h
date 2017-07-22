@@ -165,7 +165,7 @@ int updater_state_size(updater_t *updater);
  *             by updater_state_size.
  * @return non-zero value if any error.
  */
-int updater_dump_state(updater_t *updater, real_t *state);
+int updater_dump_state(updater_t *updater, mat_t *state);
 
 /**
  * Dump the pre-activation state of updater.
@@ -176,7 +176,7 @@ int updater_dump_state(updater_t *updater, real_t *state);
  *             by updater_state_size.
  * @return non-zero value if any error.
  */
-int updater_dump_pre_ac_state(updater_t *updater, real_t *state);
+int updater_dump_pre_ac_state(updater_t *updater, mat_t *state);
 
 /**
  * Feed the state of updater.
@@ -187,7 +187,7 @@ int updater_dump_pre_ac_state(updater_t *updater, real_t *state);
  *             by updater_state_size.
  * @return non-zero value if any error.
  */
-int updater_feed_state(updater_t *updater, real_t *state);
+int updater_feed_state(updater_t *updater, mat_t *state);
 
 /**
  * Generate random state of updater.
@@ -198,30 +198,30 @@ int updater_feed_state(updater_t *updater, real_t *state);
  *             by updater_state_size.
  * @return non-zero value if any error.
  */
-int updater_random_state(updater_t *updater, real_t *state);
+int updater_random_state(updater_t *updater, mat_t *state);
 
 /**
- * Run one step with specified state and history, without forward output.
+ * Run one step with specified state and histories, without forward output.
  * @ingroup g_updater
  * @param[in] updater the updater.
  * @param[in] state state for model, from updater_dump_state.
- * @param[in] hist word history.
- * @param[in] num_hist number of word history.
+ * @param[in] hists array of word histories.
+ * @param[in] num_hists size of hists array.
  * @return non-zero value if any error.
  */
-int updater_step_with_state(updater_t *updater, real_t *state,
-        int *hist, int num_hist);
+int updater_step_with_state(updater_t *updater, mat_t *state,
+        ivec_t *hists, int num_hists);
 
 /**
  * Forward and activate in output layer for a word.
  * Activate the word if logp != NULL
  * @ingroup g_updater
  * @param[in] updater the updater.
- * @param[in] word the word.
- * @param[out] logp log-probs for the word.
+ * @param[in] words the words.
+ * @param[out] logps log-prob for the words.
  * @return non-zero value if any error.
  */
-int updater_forward_out_word(updater_t *updater, int word, double *logp);
+int updater_forward_out_word(updater_t *updater, ivec_t *words, dvec_t *logps);
 
 /**
  * Activate state with updater.
@@ -232,7 +232,7 @@ int updater_forward_out_word(updater_t *updater, int word, double *logp);
  *             by updater_state_size.
  * @return non-zero value if any error.
  */
-int updater_activate_state(updater_t *updater, real_t *state);
+int updater_activate_state(updater_t *updater, mat_t *state);
 
 /**
  * Sampling a word and return the state.
@@ -247,8 +247,8 @@ int updater_activate_state(updater_t *updater, real_t *state);
  * @param[in] startover if true, feed \<s\> before sampling.
  * @return the sampled word, -1 if any error.
  */
-int updater_sampling_state(updater_t *updater, real_t *state,
-        real_t *pre_ac_state, bool startover);
+int updater_sampling_state(updater_t *updater, mat_t *state,
+        mat_t *pre_ac_state, bool startover);
 
 /**
  * Setup pre-activated state for updater.
@@ -270,8 +270,8 @@ int updater_setup_pre_ac_state(updater_t *updater);
  *                                 by updater_state_size.
  * @return word for this step, -1 if any error.
  */
-int updater_step_state(updater_t *updater, real_t *state,
-        real_t *pre_ac_state);
+int updater_step_state(updater_t *updater, mat_t *state,
+        mat_t *pre_ac_state);
 
 #ifdef __cplusplus
 }

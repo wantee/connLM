@@ -38,7 +38,7 @@
 static int out_glue_updater_forward_node(glue_updater_t *glue_updater,
         output_t *output, output_node_id_t node,
         output_node_id_t child_s, output_node_id_t child_e,
-        real_t *in_ac, real_t *out_ac, real_t scale, bool *forwarded)
+        mat_t *in_ac, mat_t *out_ac, mat_t scale, bool *forwarded)
 {
     real_t *wt;
     real_t *bias;
@@ -107,7 +107,7 @@ static int out_forward_walker(output_t *output, output_node_id_t node,
 
 int out_glue_updater_forward(glue_updater_t *glue_updater,
         comp_updater_t *comp_updater, egs_batch_t *batch,
-        real_t *in_ac, real_t *out_ac)
+        mat_t *in_ac, mat_t *out_ac)
 {
     out_walker_args_t ow_args;
 
@@ -168,7 +168,7 @@ static int out_backprop_walker(output_t *output, output_node_id_t node,
 
 int out_glue_updater_backprop(glue_updater_t *glue_updater,
         comp_updater_t *comp_updater, egs_batch_t *batch,
-        real_t *in_ac, real_t *out_er, real_t *in_er)
+        mat_t *in_ac, mat_t *out_er, mat_t *in_er)
 {
     out_walker_args_t ow_args;
 
@@ -216,7 +216,7 @@ ERR:
 
 int out_glue_updater_forward_out(glue_updater_t *glue_updater,
         comp_updater_t *comp_updater, output_node_id_t node,
-        real_t *in_ac, real_t *out_ac)
+        mat_t *in_ac, mat_t *out_ac)
 {
     output_t *output;
 
@@ -245,8 +245,8 @@ int out_glue_updater_forward_out(glue_updater_t *glue_updater,
 }
 
 int out_glue_updater_forward_out_word(glue_updater_t *glue_updater,
-        comp_updater_t *comp_updater, int word,
-        real_t *in_ac, real_t *out_ac)
+        comp_updater_t *comp_updater, ivec_t *words,
+        mat_t *in_ac, mat_t *out_ac)
 {
     out_walker_args_t ow_args;
 
