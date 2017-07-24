@@ -148,7 +148,7 @@ int emb_glue_updater_backprop(glue_updater_t *glue_updater,
     emb_glue_data_t *data;
     input_t *input;
 
-    real_t *er;
+    mat_t er = {0};
 
     st_wt_int_t in_idx;
     int b, i, j;
@@ -161,16 +161,14 @@ int emb_glue_updater_backprop(glue_updater_t *glue_updater,
     input = comp_updater->comp->input;
 
     if (glue_updater->keep_mask.vals != NULL) {
-        er = glue_updater->dropout_val;
-        for (i = 0; i < glue_updater->keep_mask_len; i++) {
-            if (glue_updater->keep_mask.vals[i] == 1.0) {
-                er[i] = out_er[i];
-            } else {
-                er[i] = 0.0;
-            }
+        if (mat_mul_elems(out_er, &glue_updater->keep_mask,
+                    &glue_updater->dropout_val) < 0) {
+            ST_WARNING("Failed to mat_mul_elems.");
+            return -1;
         }
+        mat_assign(&er, &glue_updater->dropout_val);
     } else {
-        er = out_er;
+        mat_assign(&er, out_er);
     }
 
     if (data->combine == EC_CONCAT) {

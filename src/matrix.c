@@ -336,6 +336,130 @@ int mat_mul_elems(mat_t *mat1, mat_t *mat2, mat_t *out)
     return 0;
 }
 
+int add_mat_mat(real_t alpha, mat_t *A, mat_trans_t trans_A,
+        mat_t *B, mat_trans_t trans_B, real_t beta, mat_t *C)
+{
+    int m, n, k;
+
+    ST_CHECK_PARAM(A == NULL || B == NULL || C == NULL, -1);
+
+    if (trans_A == MT_NoTrans && trans_B == MT_NoTrans) {
+        if (A->num_cols != B->num_rows || A->num_rows != C->num_rows
+                || B->num_cols != C->num_cols) {
+            ST_WARNING("diemensions not match.");
+            return -1;
+        }
+    } else if (trans_A == MT_Trans && trans_B == MT_NoTrans) {
+        if (A->num_rows != B->num_rows || A->num_cols != C->num_rows
+                || B->num_cols != C->num_cols) {
+            ST_WARNING("diemensions not match.");
+            return -1;
+        }
+    } else if (trans_A == MT_NoTrans && trans_B == MT_Trans) {
+        if (A->num_cols != B->num_cols || A->num_rows != C->num_rows
+                || B->num_rows != C->num_cols) {
+            ST_WARNING("diemensions not match.");
+            return -1;
+        }
+    } else if (trans_A == MT_Trans && trans_B == MT_Trans) {
+        if (A->num_rows != B->num_cols || A->num_cols != C->num_rows
+                || B->num_rows != C->num_cols) {
+            ST_WARNING("diemensions not match.");
+            return -1;
+        }
+    }
+
+    m = C->num_rows;
+    n = C->num_cols;
+    if (trans_A == MT_NoTrans) {
+        k = A->num_cols;
+    } else {
+        k = A->num_rows;
+    }
+
+#ifdef _USE_BLAS_
+    cblas_gemm(CblasRowMajor, (enum CBLAS_TRANSPOSE)trans_A,
+            (enum CBLAS_TRANSPOSE)trans_B, m, n, k,
+            alpha, A->vals, A->num_cols, B->vals, B->num_cols,
+            beta, C->vals, C->num_cols);
+#else
+    real_t *aa, *bb, *cc, sum;
+    int i, j, t;
+
+    if (beta == 0.0) {
+        memset(C->vals, 0, sizeof(real_t) * m * n);
+    } else if (beta != 1.0) {
+        for (i = 0; i < m * n; i++) {
+            C->vals[i] *= beta;
+        }
+    }
+
+    if (trans_A == MT_NoTrans && trans_B == MT_NoTrans) {
+        aa = A->vals;
+        cc = C->vals;
+        for (i = 0; i < m; i++) {
+            for (j = 0; j < n; j++) {
+                bb = B->vals + j;
+                sum = 0.0;
+                for (t = 0; t < k; t++) {
+                    sum += aa[t] * bb[t*n];
+                }
+                cc[j] = alpha * sum;
+            }
+            aa += k;
+            cc += n;
+        }
+    } else if (trans_A == MT_Trans && trans_B == MT_NoTrans) {
+        aa = A->vals;
+        bb = B->vals;
+        for (t = 0; t < k; t++) {
+            cc = C->vals;
+            for (i = 0; i < m; i++) {
+                for (j = 0; j < n; j++) {
+                    cc[j] += alpha * aa[i] * bb[j];
+                }
+                cc += n;
+            }
+            aa += m;
+            bb += n;
+        }
+    } else if (trans_A == MT_NoTrans && trans_B == MT_Trans) {
+        aa = A->vals;
+        cc = C->vals;
+        for (i = 0; i < m; i++) {
+            bb = B->vals;
+            for (j = 0; j < n; j++) {
+                sum = 0.0;
+                for (t = 0; t < k; t++) {
+                    sum += aa[t] * bb[t];
+                }
+                cc[j] = alpha * sum;
+                bb += k;
+            }
+            aa += k;
+            cc += n;
+        }
+    } else if (trans_A == MT_Trans && trans_B == MT_Trans) {
+        bb = B->vals;
+        cc = C->vals;
+        for (i = 0; i < m; i++) {
+            aa = A->vals + i;
+            for (j = 0; j < n; j++) {
+                sum = 0.0;
+                for (t = 0; t < k; t++) {
+                    sum += aa[t*m] * bb[t];
+                }
+                cc[j] = alpha * sum;
+            }
+            bb += k;
+            cc += n;
+        }
+    }
+#endif
+
+    return 0;
+}
+
 void sp_mat_destroy(sp_mat_t *sp_mat)
 {
     if (sp_mat == NULL) {

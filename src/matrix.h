@@ -30,9 +30,19 @@ extern "C" {
 #endif
 
 #include <connlm/config.h>
+#include "blas.h"
 
 /** @defgroup g_matrix Matrix
  */
+typedef enum matrix_transpose_t_ {
+#ifdef _USE_BLAS_
+    MT_Trans    = CblasTrans,
+    MT_NoTrans  = CblasNoTrans
+#else
+    MT_Trans = 0,
+    MT_NoTrans = 1
+#endif
+} mat_trans_t;
 
 /**
  * Matrix
@@ -210,6 +220,21 @@ int mat_add_elems(mat_t *mat1, mat_t *mat2, mat_t *out);
  * @return non-zero if any error.
  */
 int mat_mul_elems(mat_t *mat1, mat_t *mat2, mat_t *out);
+
+/*
+ * Computing C = alpha * A * B + beta * C
+ * @ingroup g_matrix
+ * @param[in] alpha scale alpha.
+ * @param[in] A matrix A.
+ * @param[in] trans_A transpose of A.
+ * @param[in] B matrix B.
+ * @param[in] trans_B transpose of B.
+ * @param[in] beta scale beta.
+ * @param[out] C the output matrix.
+ * @return non-zero if any error.
+ */
+int add_mat_mat(real_t alpha, mat_t *A, mat_trans_t trans_A,
+        mat_t *B, mat_trans_t trans_B, real_t beta, mat_t *C);
 
 /**
  * Sparse matrix format. see https://software.intel.com/en-us/mkl-developer-reference-c-sparse-blas-csr-matrix-storage-format
