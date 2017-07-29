@@ -97,7 +97,7 @@ static int updater_forward_comp(updater_t *updater)
 
     for (c = 0; c < updater->connlm->num_comp; c++) {
         if (comp_updater_forward(updater->comp_updaters[c],
-                &updater->comp_updaters[c]->batch) < 0) {
+                updater->batches + c) < 0) {
             ST_WARNING("Failed to comp_updater_forward[%s].",
                     updater->connlm->comps[c]->name);
             return -1;
@@ -146,7 +146,7 @@ static int updater_backprop(updater_t *updater)
 
     for (c = 0; c < updater->connlm->num_comp; c++) {
         if (comp_updater_backprop(updater->comp_updaters[c],
-                    &updater->comp_updaters[c]->batch) < 0) {
+                    updater->batches + c) < 0) {
             ST_WARNING("Failed to comp_updater_backprop[%s].",
                     updater->connlm->comps[c]->name);
             return -1;
@@ -193,6 +193,12 @@ void updater_destroy(updater_t *updater)
             safe_comp_updater_destroy(updater->comp_updaters[c]);
         }
         safe_st_free(updater->comp_updaters);
+    }
+    if (updater->batches != NULL) {
+        for (c = 0; c < updater->connlm->num_comp; c++) {
+            egs_batch_destroy(updater->batches + c);
+        }
+        safe_st_free(updater->batches);
     }
     updater->connlm = NULL;
 
@@ -247,6 +253,14 @@ updater_t* updater_create(connlm_t *connlm)
                 goto ERR;
             }
         }
+
+        sz = sizeof(egs_batch_t) * connlm->num_comp;
+        updater->batches = (egs_batch_t *)st_malloc(sz);
+        if (updater->batches == NULL) {
+            ST_WARNING("Failed to st_malloc batches.");
+            goto ERR;
+        }
+        memset(updater->batches, 0, sz);
     }
 
     return updater;
@@ -368,7 +382,7 @@ int updater_move_input(updater_t *updater)
     for (c = 0; c < updater->connlm->num_comp; c++) {
         if (input_updater_update_batch(updater->input_updater,
                     updater->comp_updaters[c]->comp->input,
-                    &updater->comp_updaters[c]->batch) < 0) {
+                    updater->batches + c) < 0) {
             ST_WARNING("Failed to input_updater_update_batch[%s].",
                     updater->connlm->comps[c]->name);
             return -1;
@@ -376,8 +390,8 @@ int updater_move_input(updater_t *updater)
     }
 
     if (ivec_set(&updater->targets,
-                updater->comp_updaters[0]->batch.targets,
-                sizeof(int) * updater->comp_updaters[0]->batch.num_egs) < 0) {
+                updater->batches[0].targets,
+                sizeof(int) * updater->batches[0].num_egs) < 0) {
         ST_WARNING("Failed to ivec_append.");
         return -1;
     }
@@ -453,7 +467,7 @@ static int updater_forward_util_out(updater_t *updater)
 
     for (c = 0; c < updater->connlm->num_comp; c++) {
         if (comp_updater_forward_util_out(updater->comp_updaters[c],
-                    &updater->comp_updaters[c]->batch) < 0) {
+                    updater->batches + c) < 0) {
             ST_WARNING("Failed to comp_updater_forward[%s].",
                     updater->connlm->comps[c]->name);
             return -1;
@@ -800,7 +814,7 @@ static int updater_set_hist(updater_t *updater, ivec_t *hists, int num_hists)
     for (c = 0; c < updater->connlm->num_comp; c++) {
         if (input_updater_update_batch(updater->input_updater,
                     updater->comp_updaters[c]->comp->input,
-                    &updater->comp_updaters[c]->batch) < 0) {
+                    updater->batches + c) < 0) {
             ST_WARNING("Failed to input_updater_update_batch[%s].",
                     updater->connlm->comps[c]->name);
             return -1;

@@ -199,7 +199,17 @@ void mat_scale(mat_t *mat, real_t scale);
  * @param[in] mat the matrix.
  * @param[in] val the value.
  */
-void mat_set_value(mat_t *mat, real_t val);
+void mat_set(mat_t *mat, real_t val);
+
+/**
+ * Set a row of elements to a val in a matrix.
+ * @ingroup g_matrix
+ * @param[in] mat the matrix.
+ * @param[in] row the row index.
+ * @param[in] val the value.
+ * @return non-zero if any error.
+ */
+int mat_set_row(mat_t *mat, int row, real_t val);
 
 /**
  * Add element-by-element for two matrix.

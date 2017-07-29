@@ -62,7 +62,7 @@ typedef struct _component_updater_t_ {
 
     unsigned int *rand_seed; /**< random seed. */
 
-    egs_batch_t batch; /**< current data batch, filled by input_updater. */
+    int batch_size; /**< current batch size. */
 } comp_updater_t;
 
 /**

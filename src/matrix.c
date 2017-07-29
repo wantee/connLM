@@ -285,7 +285,7 @@ void mat_scale(mat_t *mat, real_t scale)
     }
 }
 
-void mat_set_value(mat_t *mat, real_t val)
+void mat_set(mat_t *mat, real_t val)
 {
     int i;
 
@@ -294,6 +294,24 @@ void mat_set_value(mat_t *mat, real_t val)
     for (i = 0; i < mat->num_rows * mat->num_cols; i++) {
         mat->vals[i] = val;
     }
+}
+
+int mat_set_row(mat_t *mat, int row, real_t val)
+{
+    int i;
+
+    ST_CHECK_PARAM(mat == NULL || row < 0, -1);
+
+    if (row >= mat->num_rows) {
+        ST_WARNING("Invalid row index [%d/%d]", row, mat->num_rows);
+        return -1;
+    }
+
+    for (i = row * mat->num_cols; i < (row + 1) * mat->num_cols; i++) {
+        mat->vals[i] = val;
+    }
+
+    return 0;
 }
 
 int mat_add_elems(mat_t *mat1, mat_t *mat2, mat_t *out)

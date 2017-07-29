@@ -31,6 +31,20 @@
 
 #include "input_updater.h"
 
+static void egs_input_destroy(egs_input_t *input)
+{
+    if (input == NULL) {
+        return;
+    }
+
+    safe_st_free(input->words);
+    safe_st_free(input->positions);
+    safe_st_free(input->weights);
+
+    input->num_words = 0;
+    input->cap_words = 0;
+}
+
 static int egs_input_resize(egs_input_t *input, int n_ctx)
 {
     ST_CHECK_PARAM(input == NULL, -1);
@@ -64,6 +78,26 @@ static int egs_input_resize(egs_input_t *input, int n_ctx)
     }
 
     return 0;
+}
+
+void egs_batch_destroy(egs_batch_t *batch)
+{
+    int i;
+
+    if (batch == NULL) {
+        return;
+    }
+
+    if (batch->inputs != NULL) {
+        for (i = 0; i < batch->cap_egs; i++) {
+            egs_input_destroy(batch->inputs + i);
+        }
+        safe_st_free(batch->inputs);
+    }
+    safe_st_free(batch->targets);
+
+    batch->num_egs = 0;
+    batch->cap_egs = 0;
 }
 
 static int egs_batch_resize(egs_batch_t *batch, int batch_size, int n_ctx)

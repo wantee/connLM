@@ -245,7 +245,7 @@ int comp_updater_setup(comp_updater_t *comp_updater, bool backprop)
 
     if (backprop) {
         if (comp->num_glue_cycle > 0) {
-            if (comp_check_glue_cycles(comp) < 0) {
+            if (! comp_check_glue_cycles(comp)) {
                 ST_WARNING("Failed to comp_check_glue_cycles.");
                 goto ERR;
             }
@@ -338,7 +338,7 @@ static int comp_updater_bptt(comp_updater_t *comp_updater, bool clear)
 
     g = comp->glue_cycles[0][1];
     glue = comp->glues[g];
-    batch_size = layer_updaters[glue->in_layer]->ac.num_rows;
+    batch_size = comp_updater->batch_size;
 
     if (comp_updater->bptt_step == 0) {
         for (i = 0; i < comp->num_glue_cycle; i++) {
@@ -496,7 +496,7 @@ static int comp_updater_bptt(comp_updater_t *comp_updater, bool clear)
                             ST_WARNING("Failed to mat_resize out_er");
                             goto ERR;
                         }
-                        mat_set_value(&out_er, 0.0);
+                        mat_set(&out_er, 0.0);
                     } else {
                         // the glues in a cycle is joined one-by-one,
                         // the output of one glue is the input of the prev glue
@@ -557,7 +557,7 @@ static int comp_updater_bptt(comp_updater_t *comp_updater, bool clear)
                             ST_WARNING("Failed to mat_resize in_er");
                             goto ERR;
                         }
-                        mat_set_value(&in_er, 0.0);
+                        mat_set(&in_er, 0.0);
 
                         propagate_error(&in_er, &out_er,
                                 wt_updater->wt,
@@ -620,8 +620,6 @@ ERR:
             for (j = 1; j <= comp->glue_cycles[i][0]; j++) {
                 wt_updater = bptt_updater->wt_updaters[j];
 
-                // TODO: do not update cross sentence(set rows before <s> to zero)
-
                 if (wt_update(wt_updater, bptt_updater->out_ers + j, 1.0,
                             bptt_updater->in_acs + j, 1.0,
                             NULL, NULL) < 0) {
@@ -633,7 +631,7 @@ ERR:
 
                 g = comp->glue_cycles[i][j];
                 if (glue_updater_gen_keep_mask(comp_updater->glue_updaters[g],
-                            comp_updater->glue_updaters[g]->dropout_val.num_rows) < 0) {
+                            batch_size) < 0) {
                     ST_WARNING("Failed to glue_updater_gen_keep_mask.");
                     return -1;
                 }
@@ -646,9 +644,34 @@ ERR:
 
 int comp_updater_reset(comp_updater_t *comp_updater, int batch_i)
 {
-    int i;
+    bptt_updater_t *bptt_updater;
+    int i, j, g;
 
     ST_CHECK_PARAM(comp_updater == NULL, -1);
+
+    for (g = 0; g < comp_updater->comp->num_glue_cycle; g++) {
+        bptt_updater = comp_updater->bptt_updaters[g];
+
+        for (j = 1; j <= comp_updater->comp->glue_cycles[i][0]; j++) {
+            // </s> should be the last member on ac_bptts and er_bptts
+            // so we reset all time steps on the buffer
+            for (i = 0; i < bptt_updater->num_ac_bptts; i++) {
+                if (mat_set_row(bptt_updater->ac_bptts + j,
+                            i * comp_updater->batch_size + batch_i, 0.0) < 0) {
+                    ST_WARNING("Failed to mat_set_row ac_bptts.");
+                    return -1;
+                }
+            }
+            // do we need to reset er_bptts?
+            for (i = 0; i < bptt_updater->num_er_bptts; i++) {
+                if (mat_set_row(bptt_updater->er_bptts + j,
+                            i * comp_updater->batch_size + batch_i, 0.0) < 0) {
+                    ST_WARNING("Failed to mat_set_row er_bptts.");
+                    return -1;
+                }
+            }
+        }
+    }
 
     for (i = 2; i < comp_updater->comp->num_layer; i++) {
         if (layer_updater_reset(comp_updater->layer_updaters[i], batch_i) < 0) {
@@ -674,6 +697,19 @@ int comp_updater_forward(comp_updater_t *comp_updater, egs_batch_t *batch)
 #ifdef _CONNLM_TRACE_PROCEDURE_
     ST_TRACE("Forward: comp[%s]", comp->name);
 #endif
+
+    if (comp_updater_state_size(comp_updater) > 0) {
+        if (comp_updater->batch_size > 0) {
+            if (comp_updater->batch_size != batch->num_egs) {
+                ST_WARNING("Can not change batch_size for stateful model");
+                return -1;
+            }
+        } else {
+            comp_updater->batch_size = batch->num_egs;
+        }
+    } else {
+        comp_updater->batch_size = batch->num_egs;
+    }
 
     for (g = 0; g < comp->num_glue; g++) {
         glue_updater = comp_updater->glue_updaters[comp->fwd_order[g]];
@@ -797,6 +833,19 @@ int comp_updater_forward_util_out(comp_updater_t *comp_updater,
 #ifdef _CONNLM_TRACE_PROCEDURE_
     ST_TRACE("Forward-util-out: comp[%s]", comp->name);
 #endif
+
+    if (comp_updater_state_size(comp_updater) > 0) {
+        if (comp_updater->batch_size > 0) {
+            if (comp_updater->batch_size != batch->num_egs) {
+                ST_WARNING("Can not change batch_size for stateful model");
+                return -1;
+            }
+        } else {
+            comp_updater->batch_size = batch->num_egs;
+        }
+    } else {
+        comp_updater->batch_size = batch->num_egs;
+    }
 
     for (g = 0; g < comp->num_glue; g++) {
         glue_updater = comp_updater->glue_updaters[comp->fwd_order[g]];

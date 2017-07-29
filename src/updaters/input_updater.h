@@ -119,6 +119,8 @@ typedef struct _egs_batch_t_ {
     int cap_egs; /**< capacity of egs. */
 } egs_batch_t;
 
+void egs_batch_destroy(egs_batch_t *batch);
+
 /**
  * Update batch for a input layer with word pool in input_updater.
  * @ingroup g_updater_input

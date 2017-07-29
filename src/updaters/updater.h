@@ -55,6 +55,7 @@ typedef struct _updater_t_ {
 
     unsigned int rand_seed; /**< rand seed. */
 
+    egs_batch_t *batches; /**< current data batches, filled by input_updater. */
     ivec_t targets; /**< target words in current batch. */
     dvec_t logps; /**< logp for words in current batch. */
 
