@@ -54,7 +54,7 @@ static glue_updater_impl_t GLUE_UPDATER_IMPL[] = {
     {FC_GLUE_NAME, NULL, NULL,
         NULL, fc_glue_updater_forward, fc_glue_updater_backprop,
         fc_glue_updater_forward, NULL, NULL, false},
-    {EMB_GLUE_NAME, NULL, NULL,
+    {EMB_GLUE_NAME, emb_glue_updater_init, emb_glue_updater_destroy,
         NULL, emb_glue_updater_forward, emb_glue_updater_backprop,
         emb_glue_updater_forward, NULL, NULL, false},
     {OUT_GLUE_NAME, NULL, NULL,

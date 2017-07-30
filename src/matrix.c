@@ -46,16 +46,15 @@ int mat_clear(mat_t *mat)
 {
     ST_CHECK_PARAM(mat == NULL, -1);
 
-    memset(mat->vals, 0, sizeof(real_t) * mat->num_rows * mat->num_cols);
+    if (mat->is_const) {
+        if (mat->num_rows != 0 || mat->num_cols != 0) {
+            ST_WARNING("Can not clear a const mat.");
+            return -1;
+        }
+    }
 
-    return 0;
-}
-
-int mat_clear_row(mat_t *mat, size_t row)
-{
-    ST_CHECK_PARAM(mat == NULL, -1);
-
-    memset(mat->vals + row * mat->num_cols, 0, sizeof(real_t) * mat->num_cols);
+    mat->num_rows = 0;
+    mat->num_cols = 0;
 
     return 0;
 }
@@ -504,13 +503,11 @@ void sp_mat_destroy(sp_mat_t *sp_mat)
         safe_st_aligned_free(sp_mat->csr.cols);
         safe_st_aligned_free(sp_mat->csr.row_s);
         safe_st_aligned_free(sp_mat->csr.row_e);
-        sp_mat->csr.num_rows = 0;
         sp_mat->csr.cap_rows = 0;
     } else if (sp_mat->fmt == SP_MAT_CSC) {
         safe_st_aligned_free(sp_mat->csc.rows);
         safe_st_aligned_free(sp_mat->csc.col_s);
         safe_st_aligned_free(sp_mat->csc.col_e);
-        sp_mat->csc.num_cols = 0;
         sp_mat->csc.cap_cols = 0;
     } else if (sp_mat->fmt == SP_MAT_COO) {
         safe_st_aligned_free(sp_mat->coo.rows);
@@ -518,12 +515,13 @@ void sp_mat_destroy(sp_mat_t *sp_mat)
     }
 
     safe_st_aligned_free(sp_mat->vals);
+    sp_mat->num_rows = 0;
+    sp_mat->num_cols = 0;
     sp_mat->size = 0;
     sp_mat->capacity = 0;
 }
 
-int sp_mat_resize(sp_mat_t *sp_mat, size_t size,
-        size_t num_rows, size_t num_cols)
+static int sp_mat_resize_elems(sp_mat_t *sp_mat, size_t size)
 {
     ST_CHECK_PARAM(sp_mat == NULL || size <= 0, -1);
 
@@ -554,9 +552,21 @@ int sp_mat_resize(sp_mat_t *sp_mat, size_t size,
     }
     sp_mat->size = size;
 
-    if (sp_mat->fmt == SP_MAT_CSC) {
-        ST_CHECK_PARAM(num_cols <= 0, -1);
+    return 0;
+}
 
+int sp_mat_resize(sp_mat_t *sp_mat, size_t size,
+        size_t num_rows, size_t num_cols)
+{
+    ST_CHECK_PARAM(sp_mat == NULL || size <= 0 || num_rows <= 0
+            || num_cols <= 0, -1);
+
+    if (sp_mat_resize_elems(sp_mat, size) < 0) {
+        ST_WARNING("Failed to sp_mat_resize_elems.");
+        return -1;
+    }
+
+    if (sp_mat->fmt == SP_MAT_CSC) {
         if (num_cols > sp_mat->csc.cap_cols) {
             sp_mat->csc.col_s = (size_t *)st_aligned_realloc(sp_mat->csc.col_s,
                     sizeof(size_t) * num_cols, ALIGN_SIZE);
@@ -574,10 +584,7 @@ int sp_mat_resize(sp_mat_t *sp_mat, size_t size,
 
             sp_mat->csc.cap_cols = num_cols;
         }
-        sp_mat->csc.num_cols = num_cols;
     } else if (sp_mat->fmt == SP_MAT_CSR) {
-        ST_CHECK_PARAM(num_rows <= 0, -1);
-
         if (num_rows > sp_mat->csr.cap_rows) {
             sp_mat->csr.row_s = (size_t *)st_aligned_realloc(sp_mat->csr.row_s,
                     sizeof(size_t) * num_rows, ALIGN_SIZE);
@@ -595,8 +602,49 @@ int sp_mat_resize(sp_mat_t *sp_mat, size_t size,
 
             sp_mat->csr.cap_rows = num_rows;
         }
-        sp_mat->csr.num_rows = num_rows;
     }
+    sp_mat->num_rows = num_rows;
+    sp_mat->num_cols = num_cols;
+
+    return 0;
+}
+
+int sp_mat_clear(sp_mat_t *sp_mat)
+{
+    ST_CHECK_PARAM(sp_mat == NULL, -1);
+
+    sp_mat->size = 0;
+
+    return 0;
+}
+
+int sp_mat_coo_add(sp_mat_t *sp_mat, size_t row, size_t col, real_t val)
+{
+    ST_CHECK_PARAM(sp_mat == NULL, -1);
+
+    if (sp_mat->fmt != SP_MAT_COO) {
+        ST_WARNING("Format not COO");
+        return -1;
+    }
+
+    if (row >= sp_mat->num_rows) {
+        ST_WARNING("row overflow[%zu/%zu].", row, sp_mat->num_rows);
+        return -1;
+    }
+
+    if (col >= sp_mat->num_cols) {
+        ST_WARNING("col overflow[%zu/%zu].", col, sp_mat->num_cols);
+        return -1;
+    }
+
+    if (sp_mat_resize_elems(sp_mat, sp_mat->size + 1) < 0) {
+        ST_WARNING("Failed to sp_mat_resize_elems.");
+        return -1;
+    }
+
+    sp_mat->vals[sp_mat->size - 1] = val;
+    sp_mat->coo.rows[sp_mat->size - 1] = row;
+    sp_mat->coo.cols[sp_mat->size - 1] = col;
 
     return 0;
 }

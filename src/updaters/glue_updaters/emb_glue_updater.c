@@ -34,6 +34,79 @@
 
 #include "emb_glue_updater.h"
 
+typedef struct _egu_data_t_ {
+    sp_mat_t word_buf;
+} egu_data_t;
+
+#define safe_egu_data_destroy(ptr) do {\
+    if((ptr) != NULL) {\
+        egu_data_destroy((egu_data_t *)ptr);\
+        safe_st_free(ptr);\
+        (ptr) = NULL;\
+    }\
+    } while(0)
+
+void egu_data_destroy(egu_data_t *data)
+{
+    if (data == NULL) {
+        return;
+    }
+
+    sp_mat_destroy(&data->word_buf);
+}
+
+egu_data_t* egu_data_init(glue_updater_t *glue_updater)
+{
+    egu_data_t *data = NULL;
+
+    data = (egu_data_t *)st_malloc(sizeof(egu_data_t));
+    if (data == NULL) {
+        ST_WARNING("Failed to st_malloc egu_data.");
+        goto ERR;
+    }
+    memset(data, 0, sizeof(egu_data_t));
+
+    return data;
+ERR:
+    safe_egu_data_destroy(data);
+    return NULL;
+}
+
+void emb_glue_updater_destroy(glue_updater_t *glue_updater)
+{
+    if (glue_updater == NULL) {
+        return;
+    }
+
+    safe_egu_data_destroy(glue_updater->extra);
+}
+
+int emb_glue_updater_init(glue_updater_t *glue_updater)
+{
+    glue_t *glue;
+
+    ST_CHECK_PARAM(glue_updater == NULL, -1);
+
+    glue= glue_updater->glue;
+
+    if (strcasecmp(glue->type, EMB_GLUE_NAME) != 0) {
+        ST_WARNING("Not a emb glue_updater. [%s]", glue->type);
+        return -1;
+    }
+
+    glue_updater->extra = (void *)egu_data_init(glue_updater);
+    if (glue_updater->extra == NULL) {
+        ST_WARNING("Failed to egu_data_init.");
+        goto ERR;
+    }
+
+    return 0;
+
+ERR:
+    safe_egu_data_destroy(glue_updater->extra);
+    return -1;
+}
+
 int emb_glue_updater_forward(glue_updater_t *glue_updater,
         comp_updater_t *comp_updater, egs_batch_t *batch,
         mat_t* in_ac, mat_t *out_ac)
@@ -146,11 +219,12 @@ int emb_glue_updater_backprop(glue_updater_t *glue_updater,
 {
     glue_t *glue;
     emb_glue_data_t *data;
+    egu_data_t *egu_data;
     input_t *input;
 
     mat_t er = {0};
+    mat_t part_er = {0};
 
-    st_wt_int_t in_idx;
     int b, i, j;
 
     ST_CHECK_PARAM(glue_updater == NULL || comp_updater == NULL
@@ -158,6 +232,7 @@ int emb_glue_updater_backprop(glue_updater_t *glue_updater,
 
     glue = glue_updater->glue;
     data = (emb_glue_data_t *)glue->extra;
+    egu_data = (egu_data_t *)glue_updater->extra;
     input = comp_updater->comp->input;
 
     if (glue_updater->keep_mask.vals != NULL) {
@@ -172,39 +247,64 @@ int emb_glue_updater_backprop(glue_updater_t *glue_updater,
     }
 
     if (data->combine == EC_CONCAT) {
-        for (b = 0; b < batch->num_egs; b++) {
-            j = 0;
-            for (i = 0; i < batch->inputs->num_words; i++) {
-                while (j < input->n_ctx) {
+        for (j = 0; j < input->n_ctx; j++) {
+            for (b = 0; b < batch->num_egs; b++) {
+                i = min(j, batch->inputs->num_words);
+                while (i >= 0) {
                     if (input->context[j].i == batch->inputs->positions[i]) {
                         break;
                     }
-                    j++;
+                    --i;
                 }
 
-                in_idx.w = batch->inputs->weights[i];
-                in_idx.i = batch->inputs->words[i];
-                if (wt_update(glue_updater->wt_updater, NULL, -1,
-                            er + j * glue->wt->col,
-                            1.0, NULL, 1.0, &in_idx) < 0) {
-                    ST_WARNING("Failed to wt_update.");
-                    return -1;
+                if (i < 0) { // not in batch
+                    if (sp_mat_coo_add(&egu_data->word_buf, b,
+                                0, /* since we set weight to zero, this can be arbitrary word id. */
+                                0.0) < 0) {
+                        ST_WARNING("Failed to sp_mat_coo_add");
+                        return -1;
+                    }
+                } else {
+                    if (sp_mat_coo_add(&egu_data->word_buf, b,
+                                batch->inputs->words[i],
+                                batch->inputs->weights[i]) < 0) {
+                        ST_WARNING("Failed to sp_mat_coo_add");
+                        return -1;
+                    }
                 }
+            }
+            if (mat_submat(&er, 0, -1, j * glue->wt->col,
+                        (j + 1) * glue->wt->col, &part_er) < 0) {
+                ST_WARNING("Failed to mat_submat.");
+                return -1;
+            }
+            if (wt_update(glue_updater->wt_updater,
+                        &part_er, 1.0, NULL, 1.0, NULL,
+                        &egu_data->word_buf) < 0) {
+                ST_WARNING("Failed to wt_update.");
+                return -1;
             }
         }
     } else {
         for (b = 0; b < batch->num_egs; b++) {
             for (i = 0; i < batch->inputs->num_words; i++) {
-                in_idx.w = batch->inputs->weights[i];
-                in_idx.i = batch->inputs->words[i];
-                if (wt_update(glue_updater->wt_updater, NULL, -1,
-                            er, 1.0, NULL, 1.0, &in_idx) < 0) {
-                    ST_WARNING("Failed to wt_update.");
+                if (sp_mat_coo_add(&egu_data->word_buf, b,
+                            batch->inputs->words[i],
+                            batch->inputs->weights[i]) < 0) {
+                    ST_WARNING("Failed to sp_mat_coo_add");
                     return -1;
                 }
             }
         }
+
+        if (wt_update(glue_updater->wt_updater,
+                    &er, 1.0, NULL, 1.0, NULL, &egu_data->word_buf) < 0) {
+            ST_WARNING("Failed to wt_update.");
+            return -1;
+        }
     }
+
+    sp_mat_clear(&egu_data->word_buf);
 
     return 0;
 }

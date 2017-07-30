@@ -235,11 +235,11 @@ int layer_updater_clear(layer_updater_t *layer_updater)
     ST_CHECK_PARAM(layer_updater == NULL, -1);
 
     if (layer_updater->er.vals != NULL) {
-        mat_clear(&layer_updater->er);
+        mat_set(&layer_updater->er, 0.0);
         layer_updater->derived = false;
     }
 
-    mat_clear(&layer_updater->ac);
+    mat_set(&layer_updater->ac, 0.0);
     layer_updater->activated = false;
 
     return 0;
@@ -250,7 +250,7 @@ int layer_updater_reset(layer_updater_t *layer_updater, int batch_i)
     ST_CHECK_PARAM(layer_updater == NULL, -1);
 
     if (layer_updater->ac_state.vals != NULL) {
-        mat_clear_row(&layer_updater->ac_state, batch_i);
+        mat_set_row(&layer_updater->ac_state, batch_i, 0.0);
     }
 
     return 0;

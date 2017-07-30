@@ -37,19 +37,24 @@ int fc_glue_updater_forward(glue_updater_t *glue_updater,
         mat_t *in_ac, mat_t *out_ac)
 {
     wt_updater_t *wt_updater;
-    int i;
+    size_t i, j;
 
     ST_CHECK_PARAM(glue_updater == NULL || comp_updater == NULL
             || in_ac == NULL || out_ac == NULL, -1);
 
     wt_updater = glue_updater->wt_updater;
 
-    matXvec(out_ac, wt_updater->wt, in_ac,
-            wt_updater->row, wt_updater->col, 1.0);
+    if (add_mat_mat(1.0, in_ac, MT_NoTrans,
+                wt_updater->wt, MT_Trans, 1.0, out_ac) < 0) {
+        ST_WARNING("Failed to add_mat_mat.");
+        return -1;
+    }
 
     if (wt_updater->bias != NULL) {
-        for (i = 0; i < wt_updater->row; i++) {
-            out_ac[i] += wt_updater->bias[i];
+        for (i = 0; i < out_ac->num_rows; i++) {
+            for (j = 0; j < out_ac->num_cols; j++) {
+                MAT_VAL(out_ac, i, j) += wt_updater->bias[j];
+            }
         }
     }
 
@@ -73,8 +78,8 @@ int fc_glue_updater_backprop(glue_updater_t *glue_updater,
     }
 
     if (in_ac != NULL && in_ac->vals != NULL) {
-        if (wt_update(wt_updater, NULL, -1, out_er, 1.0,
-                    in_ac, 1.0, NULL) < 0) {
+        if (wt_update(wt_updater, out_er, 1.0,
+                    in_ac, 1.0, NULL, NULL) < 0) {
             ST_WARNING("Failed to wt_update.");
             return -1;
         }

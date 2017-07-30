@@ -70,6 +70,7 @@ void mat_destroy(mat_t *mat);
  * Clear a matrix.
  * @ingroup g_matrix
  * @param[in] mat matrix to be cleared.
+ * @param[in] row row index to be cleared.
  * @return non-zero if any error.
  */
 int mat_clear(mat_t *mat);
@@ -275,6 +276,8 @@ typedef struct _sparse_matrix_t_ {
     sp_mat_fmt_t fmt; /**< format. */
     real_t *vals; /**< values of matrix. */
     size_t size; /**< number of values. */
+    size_t num_rows; /**< number of rows. */
+    size_t num_cols; /**< number of cols. */
     size_t capacity; /**< capacity of values. */
 
     union {
@@ -282,7 +285,6 @@ typedef struct _sparse_matrix_t_ {
             size_t *cols; /**< col indexes for values. */
             size_t *row_s; /**< begin index for row. */
             size_t *row_e; /**< end index for row. */
-            size_t num_rows; /**< number of rows. */
             size_t cap_rows; /**< capacity of rows. */
         } csr;
 
@@ -290,7 +292,6 @@ typedef struct _sparse_matrix_t_ {
             size_t *rows; /**< row indexes for values. */
             size_t *col_s; /**< begin index for col. */
             size_t *col_e; /**< end index for col. */
-            size_t num_cols; /**< number of cols. */
             size_t cap_cols; /**< capacity of cols. */
         } csc;
 
@@ -319,6 +320,25 @@ void sp_mat_destroy(sp_mat_t *sp_mat);
  */
 int sp_mat_resize(sp_mat_t *sp_mat, size_t size,
         size_t num_rows, size_t num_cols);
+
+/**
+ * Clear a sparse matrix.
+ * @ingroup g_matrix
+ * @param[in] sp_mat sparse matrix to be cleared.
+ * @return non-zero if any error.
+ */
+int sp_mat_clear(sp_mat_t *sp_mat);
+
+/**
+ * Add an element to sparse matrix.
+ * @ingroup g_matrix
+ * @param[in] sp_mat the sparse matrix.
+ * @param[in] row index of row.
+ * @param[in] col index of col.
+ * @param[in] val value of element.
+ * @return non-zero if any error.
+ */
+int sp_mat_coo_add(sp_mat_t *sp_mat, size_t row, size_t col, real_t val);
 
 #ifdef __cplusplus
 }

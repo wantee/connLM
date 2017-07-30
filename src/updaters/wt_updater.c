@@ -136,9 +136,9 @@ static inline real_t get_lr(param_t *param)
 }
 
 int wt_update(wt_updater_t *wt_updater,
-        matrix_t *er, real_t er_scale,
-        matrix_t *in, real_t in_scale,
-        st_size_seg_t* part, sparse_matrix_t *sp_mat)
+        mat_t *er, real_t er_scale,
+        mat_t *in, real_t in_scale,
+        st_size_seg_t* part, sp_mat_t *sp_mat)
 {
     real_t *wt;
     real_t *delta_wt;
@@ -146,7 +146,7 @@ int wt_update(wt_updater_t *wt_updater,
     real_t *delta_bias;
 
     st_int_seg_t *seg;
-    matrix_t *buf_er, *buf_in;
+    mat_t *buf_er, *buf_in;
     size_t row, col, sz, i, j;
     int idx;
     real_t sum;
@@ -237,24 +237,24 @@ int wt_update(wt_updater_t *wt_updater,
                     seg = wt_updater->segs + idx;
 
                     buf_er = wt_updater->buf_ers + idx;
-                    if (matrix_resize(buf_er, row, seg->n) < 0) {
-                        ST_WARNING("Failed to matrix_resize for buf_er.");
+                    if (mat_resize(buf_er, row, seg->n) < 0) {
+                        ST_WARNING("Failed to mat_resize for buf_er.");
                         return -1;
                     }
-                    if (matrix_append_row(buf_er,
+                    if (mat_append_row(buf_er,
                                 MAT_VALP(er, idx, seg->s), seg->n) < 0) {
-                        ST_WARNING("Failed to matrix_append_row for buf_er.");
+                        ST_WARNING("Failed to mat_append_row for buf_er.");
                         return -1;
                     }
 
                     buf_in = wt_updater->buf_ins + idx;
-                    if (matrix_resize(buf_in, row, seg->n) < 0) {
-                        ST_WARNING("Failed to matrix_resize for buf_in.");
+                    if (mat_resize(buf_in, row, seg->n, NAN) < 0) {
+                        ST_WARNING("Failed to mat_resize for buf_in.");
                         return -1;
                     }
-                    if (matrix_append_row(buf_in,
+                    if (mat_append_row(buf_in,
                                 MAT_VALP(in, idx, seg->s), seg->n) < 0) {
-                        ST_WARNING("Failed to matrix_append_row for buf_in.");
+                        ST_WARNING("Failed to mat_append_row for buf_in.");
                         return -1;
                     }
                 }
@@ -309,12 +309,12 @@ int wt_update(wt_updater_t *wt_updater,
                         }
                     }
 
-                    if (matrix_clear(buf_er) < 0) {
-                        ST_WARNING("Failed to matrix_clear for buf_er.");
+                    if (mat_clear(buf_er) < 0) {
+                        ST_WARNING("Failed to mat_clear for buf_er.");
                         return -1;
                     }
-                    if (matrix_clear(buf_in) < 0) {
-                        ST_WARNING("Failed to matrix_clear for buf_in.");
+                    if (mat_clear(buf_in) < 0) {
+                        ST_WARNING("Failed to mat_clear for buf_in.");
                         return -1;
                     }
                 }
