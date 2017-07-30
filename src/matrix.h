@@ -212,6 +212,16 @@ void mat_set(mat_t *mat, real_t val);
 int mat_set_row(mat_t *mat, size_t row, real_t val);
 
 /**
+ * Construct a matrix from a array.
+ * @ingroup g_matrix
+ * @param[out] mat the output matrix.
+ * @param[in] arr the array.
+ * @param[in] len lenth of array.
+ * @param[in] row_vec true for row vector, false for column vector.
+ */
+void mat_from_array(mat_t *mat, real_t *arr, size_t len, bool row_vec);
+
+/**
  * Add element-by-element for two matrix.
  * @ingroup g_matrix
  * @param[in] mat1 the first matrix.

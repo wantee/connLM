@@ -225,8 +225,7 @@ int glue_updater_setup_dropout(glue_updater_t *glue_updater, real_t dropout)
                 - glue_updater->glue->in_offset;
         }
 
-        // set to UNSET state, will be used by direct_glue_updater
-        if (mat_resize(&glue_updater->keep_mask, 1, keep_mask_len, 2.0) < 0) {
+        if (mat_resize(&glue_updater->keep_mask, 1, keep_mask_len, NAN) < 0) {
             ST_WARNING("Failed to mat_resize keep_mask");
             return -1;
         }

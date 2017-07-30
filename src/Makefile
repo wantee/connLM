@@ -42,7 +42,6 @@ INCS = vector.h \
        updaters/bptt_updater.h \
        wildcard_state.h \
        fst_converter.h \
-       ngram_hash.h
 
 SRCS = vector.c \
        matrix.c \
@@ -81,7 +80,6 @@ SRCS = vector.c \
        updaters/bptt_updater.c \
        wildcard_state.c \
        fst_converter.c \
-       ngram_hash.c
 
 BINS = bin/connlm-train \
        bin/connlm-eval \

@@ -176,7 +176,7 @@ int emb_glue_updater_backprop(glue_updater_t *glue_updater,
             j = 0;
             for (i = 0; i < batch->inputs->num_words; i++) {
                 while (j < input->n_ctx) {
-                    if (input->context[j] == batch->inputs->positions[i]) {
+                    if (input->context[j].i == batch->inputs->positions[i]) {
                         break;
                     }
                     j++;

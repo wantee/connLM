@@ -40,6 +40,9 @@ extern "C" {
  * Perform forward and backprop on a direct glue.
  */
 
+typedef uint64_t hash_t;
+#define HASH_FMT "%llu"
+
 /**
  * Destroy a direct glue_updater.
  * @ingroup g_glue_updater_direct

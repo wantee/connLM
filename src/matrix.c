@@ -314,6 +314,22 @@ int mat_set_row(mat_t *mat, size_t row, real_t val)
     return 0;
 }
 
+void mat_from_array(mat_t *mat, real_t *arr, size_t len, bool row_vec)
+{
+    ST_CHECK_PARAM_VOID(mat == NULL || arr == NULL);
+
+    mat->vals = arr;
+    if (row_vec) {
+        mat->num_rows = 1;
+        mat->num_cols = len;
+    } else {
+        mat->num_rows = len;
+        mat->num_cols = 1;
+    }
+    mat->capacity = len;
+    mat->is_const = true;
+}
+
 int mat_add_elems(mat_t *mat1, mat_t *mat2, mat_t *out)
 {
     size_t i;
