@@ -51,7 +51,7 @@ int mat_clear(mat_t *mat)
     return 0;
 }
 
-int mat_clear_row(mat_t *mat, int row)
+int mat_clear_row(mat_t *mat, size_t row)
 {
     ST_CHECK_PARAM(mat == NULL, -1);
 
@@ -60,11 +60,11 @@ int mat_clear_row(mat_t *mat, int row)
     return 0;
 }
 
-int mat_resize(mat_t *mat, int num_rows, int num_cols, real_t init_val)
+int mat_resize(mat_t *mat, size_t num_rows, size_t num_cols, real_t init_val)
 {
-    int i;
+    size_t i;
 
-    ST_CHECK_PARAM(mat == NULL || num_rows < 0 || num_cols < 0, -1);
+    ST_CHECK_PARAM(mat == NULL, -1);
 
     if (mat->is_const) {
         if (mat->num_rows != num_rows || mat->num_cols != num_cols) {
@@ -98,9 +98,9 @@ int mat_resize(mat_t *mat, int num_rows, int num_cols, real_t init_val)
     return 0;
 }
 
-int mat_resize_row(mat_t *mat, int num_rows, real_t init_val)
+int mat_resize_row(mat_t *mat, size_t num_rows, real_t init_val)
 {
-    int i;
+    size_t i;
 
     ST_CHECK_PARAM(mat == NULL || num_rows <= 0, -1);
 
@@ -194,9 +194,9 @@ void mat_assign(mat_t *dst, mat_t *src)
     dst->is_const = true;
 }
 
-int mat_move_up(mat_t *mat, int dst_row, int src_row)
+int mat_move_up(mat_t *mat, size_t dst_row, size_t src_row)
 {
-    ST_CHECK_PARAM(mat == NULL || dst_row < 0 || src_row < 0, -1);
+    ST_CHECK_PARAM(mat == NULL, -1);
 
     if (dst_row >= src_row) {
         ST_WARNING("dst_row must be larger than src_row.");
@@ -210,10 +210,10 @@ int mat_move_up(mat_t *mat, int dst_row, int src_row)
     return 0;
 }
 
-int mat_submat(mat_t *mat, int row_s, int num_rows,
-        int col_s, int num_cols, mat_t *sub)
+int mat_submat(mat_t *mat, size_t row_s, size_t num_rows,
+        size_t col_s, size_t num_cols, mat_t *sub)
 {
-    ST_CHECK_PARAM(mat == NULL || sub == NULL || row_s < 0 || col_s < 0, -1);
+    ST_CHECK_PARAM(mat == NULL || sub == NULL, -1);
 
     if (row_s >= mat->num_rows || col_s >= mat->num_cols) {
         ST_WARNING("Error row or col index.");
@@ -250,12 +250,12 @@ int mat_submat(mat_t *mat, int row_s, int num_rows,
     return 0;
 }
 
-int mat_fill(mat_t *mat, int row_s, int num_rows,
-        int col_s, int num_cols, mat_t *val)
+int mat_fill(mat_t *mat, size_t row_s, size_t num_rows,
+        size_t col_s, size_t num_cols, mat_t *val)
 {
     mat_t sub;
 
-    ST_CHECK_PARAM(mat == NULL || val == NULL || row_s < 0 || col_s < 0, -1);
+    ST_CHECK_PARAM(mat == NULL || val == NULL, -1);
 
     if (mat_submat(mat, row_s, num_rows, col_s, num_cols, &sub) < 0) {
         ST_WARNING("Failed to mat_submat.");
@@ -272,7 +272,7 @@ int mat_fill(mat_t *mat, int row_s, int num_rows,
 
 void mat_scale(mat_t *mat, real_t scale)
 {
-    int i;
+    size_t i;
 
     ST_CHECK_PARAM_VOID(mat == NULL);
 
@@ -287,7 +287,7 @@ void mat_scale(mat_t *mat, real_t scale)
 
 void mat_set(mat_t *mat, real_t val)
 {
-    int i;
+    size_t i;
 
     ST_CHECK_PARAM_VOID(mat == NULL);
 
@@ -296,11 +296,11 @@ void mat_set(mat_t *mat, real_t val)
     }
 }
 
-int mat_set_row(mat_t *mat, int row, real_t val)
+int mat_set_row(mat_t *mat, size_t row, real_t val)
 {
-    int i;
+    size_t i;
 
-    ST_CHECK_PARAM(mat == NULL || row < 0, -1);
+    ST_CHECK_PARAM(mat == NULL, -1);
 
     if (row >= mat->num_rows) {
         ST_WARNING("Invalid row index [%d/%d]", row, mat->num_rows);
@@ -316,7 +316,7 @@ int mat_set_row(mat_t *mat, int row, real_t val)
 
 int mat_add_elems(mat_t *mat1, mat_t *mat2, mat_t *out)
 {
-    int i;
+    size_t i;
 
     ST_CHECK_PARAM(mat1 == NULL || mat2 == NULL || out == NULL, -1);
 
@@ -336,7 +336,7 @@ int mat_add_elems(mat_t *mat1, mat_t *mat2, mat_t *out)
 
 int mat_mul_elems(mat_t *mat1, mat_t *mat2, mat_t *out)
 {
-    int i;
+    size_t i;
 
     ST_CHECK_PARAM(mat1 == NULL || mat2 == NULL || out == NULL, -1);
 
@@ -357,7 +357,7 @@ int mat_mul_elems(mat_t *mat1, mat_t *mat2, mat_t *out)
 int add_mat_mat(real_t alpha, mat_t *A, mat_trans_t trans_A,
         mat_t *B, mat_trans_t trans_B, real_t beta, mat_t *C)
 {
-    int m, n, k;
+    size_t m, n, k;
 
     ST_CHECK_PARAM(A == NULL || B == NULL || C == NULL, -1);
 
@@ -402,7 +402,7 @@ int add_mat_mat(real_t alpha, mat_t *A, mat_trans_t trans_A,
             beta, C->vals, C->num_cols);
 #else
     real_t *aa, *bb, *cc, sum;
-    int i, j, t;
+    size_t i, j, t;
 
     if (beta == 0.0) {
         memset(C->vals, 0, sizeof(real_t) * m * n);
@@ -506,8 +506,8 @@ void sp_mat_destroy(sp_mat_t *sp_mat)
     sp_mat->capacity = 0;
 }
 
-int sp_mat_resize(sp_mat_t *sp_mat, int size,
-        int num_rows, int num_cols)
+int sp_mat_resize(sp_mat_t *sp_mat, size_t size,
+        size_t num_rows, size_t num_cols)
 {
     ST_CHECK_PARAM(sp_mat == NULL || size <= 0, -1);
 
@@ -520,14 +520,14 @@ int sp_mat_resize(sp_mat_t *sp_mat, int size,
         }
 
         if (sp_mat->fmt == SP_MAT_COO) {
-            sp_mat->coo.rows = (int *)st_aligned_realloc(sp_mat->coo.rows,
-                    sizeof(int) * size, ALIGN_SIZE);
+            sp_mat->coo.rows = (size_t *)st_aligned_realloc(sp_mat->coo.rows,
+                    sizeof(size_t) * size, ALIGN_SIZE);
             if (sp_mat->coo.rows == NULL) {
                 ST_WARNING("Failed to st_aligned_realloc sp_mat->coo.rows.");
                 return -1;
             }
-            sp_mat->coo.cols = (int *)st_aligned_realloc(sp_mat->coo.cols,
-                    sizeof(int) * size, ALIGN_SIZE);
+            sp_mat->coo.cols = (size_t *)st_aligned_realloc(sp_mat->coo.cols,
+                    sizeof(size_t) * size, ALIGN_SIZE);
             if (sp_mat->coo.cols == NULL) {
                 ST_WARNING("Failed to st_aligned_realloc sp_mat->coo.cols.");
                 return -1;
@@ -542,15 +542,15 @@ int sp_mat_resize(sp_mat_t *sp_mat, int size,
         ST_CHECK_PARAM(num_cols <= 0, -1);
 
         if (num_cols > sp_mat->csc.cap_cols) {
-            sp_mat->csc.col_s = (int *)st_aligned_realloc(sp_mat->csc.col_s,
-                    sizeof(int) * num_cols, ALIGN_SIZE);
+            sp_mat->csc.col_s = (size_t *)st_aligned_realloc(sp_mat->csc.col_s,
+                    sizeof(size_t) * num_cols, ALIGN_SIZE);
             if (sp_mat->csc.col_s == NULL) {
                 ST_WARNING("Failed to st_aligned_realloc sp_mat->csc.col_s.");
                 return -1;
             }
 
-            sp_mat->csc.col_e = (int *)st_aligned_realloc(sp_mat->csc.col_e,
-                    sizeof(int) * num_cols, ALIGN_SIZE);
+            sp_mat->csc.col_e = (size_t *)st_aligned_realloc(sp_mat->csc.col_e,
+                    sizeof(size_t) * num_cols, ALIGN_SIZE);
             if (sp_mat->csc.col_e == NULL) {
                 ST_WARNING("Failed to st_aligned_realloc sp_mat->csc.col_e.");
                 return -1;
@@ -563,15 +563,15 @@ int sp_mat_resize(sp_mat_t *sp_mat, int size,
         ST_CHECK_PARAM(num_rows <= 0, -1);
 
         if (num_rows > sp_mat->csr.cap_rows) {
-            sp_mat->csr.row_s = (int *)st_aligned_realloc(sp_mat->csr.row_s,
-                    sizeof(int) * num_rows, ALIGN_SIZE);
+            sp_mat->csr.row_s = (size_t *)st_aligned_realloc(sp_mat->csr.row_s,
+                    sizeof(size_t) * num_rows, ALIGN_SIZE);
             if (sp_mat->csr.row_s == NULL) {
                 ST_WARNING("Failed to st_aligned_realloc sp_mat->csr.row_s.");
                 return -1;
             }
 
-            sp_mat->csr.row_e = (int *)st_aligned_realloc(sp_mat->csr.row_e,
-                    sizeof(int) * num_rows, ALIGN_SIZE);
+            sp_mat->csr.row_e = (size_t *)st_aligned_realloc(sp_mat->csr.row_e,
+                    sizeof(size_t) * num_rows, ALIGN_SIZE);
             if (sp_mat->csr.row_e == NULL) {
                 ST_WARNING("Failed to st_aligned_realloc sp_mat->csr.row_e.");
                 return -1;

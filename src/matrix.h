@@ -50,9 +50,9 @@ typedef enum matrix_transpose_t_ {
  */
 typedef struct _matrix_t_ {
     real_t *vals; /**< values of matrix. */
-    int num_rows; /**< number of rows. */
-    int num_cols; /**< number of cols. */
-    int capacity; /**< capacity of vals. */
+    size_t num_rows; /**< number of rows. */
+    size_t num_cols; /**< number of cols. */
+    size_t capacity; /**< capacity of vals. */
     bool is_const; /**< whether the diemention of matrix is const. */
 } mat_t;
 
@@ -81,7 +81,7 @@ int mat_clear(mat_t *mat);
  * @param[in] row row index to be cleared.
  * @return non-zero if any error.
  */
-int mat_clear_row(mat_t *mat, int row);
+int mat_clear_row(mat_t *mat, size_t row);
 
 /**
  * Resize a matrix.
@@ -92,7 +92,7 @@ int mat_clear_row(mat_t *mat, int row);
  * @param[in] init_val initialization value, do not initialize if init_val == NAN
  * @return non-zero if any error.
  */
-int mat_resize(mat_t *mat, int num_rows, int num_cols, real_t init_val);
+int mat_resize(mat_t *mat, size_t num_rows, size_t num_cols, real_t init_val);
 
 /**
  * Resize row of a matrix.
@@ -102,7 +102,7 @@ int mat_resize(mat_t *mat, int num_rows, int num_cols, real_t init_val);
  * @param[in] init_val initialization value, do not initialize if init_val == NAN
  * @return non-zero if any error.
  */
-int mat_resize_row(mat_t *mat, int num_rows, real_t init_val);
+int mat_resize_row(mat_t *mat, size_t num_rows, real_t init_val);
 
 /**
  * Append a matrix into a matrix, col must be the same.
@@ -147,7 +147,7 @@ void mat_assign(mat_t *dst, mat_t *src);
  * @param[in] src_row the src row of matrix.
  * @return non-zero if any error.
  */
-int mat_move_up(mat_t *mat, int dst_row, int src_row);
+int mat_move_up(mat_t *mat, size_t dst_row, size_t src_row);
 
 /**
  * Extract a sub-matrix from one matrix.
@@ -164,8 +164,8 @@ int mat_move_up(mat_t *mat, int dst_row, int src_row);
  * @param[out] sub the sub-matrix.
  * @return non-zero if any error.
  */
-int mat_submat(mat_t *mat, int row_s, int num_rows,
-        int col_s, int num_cols, mat_t *sub);
+int mat_submat(mat_t *mat, size_t row_s, size_t num_rows,
+        size_t col_s, size_t num_cols, mat_t *sub);
 
 /**
  * Fill a matrix with sub-matrix.
@@ -182,8 +182,8 @@ int mat_submat(mat_t *mat, int row_s, int num_rows,
  * @param[in] val the sub-matrix contains values.
  * @return non-zero if any error.
  */
-int mat_fill(mat_t *mat, int row_s, int num_rows,
-        int col_s, int num_cols, mat_t *val);
+int mat_fill(mat_t *mat, size_t row_s, size_t num_rows,
+        size_t col_s, size_t num_cols, mat_t *val);
 
 /**
  * Scale elements in a matrix.
@@ -209,7 +209,7 @@ void mat_set(mat_t *mat, real_t val);
  * @param[in] val the value.
  * @return non-zero if any error.
  */
-int mat_set_row(mat_t *mat, int row, real_t val);
+int mat_set_row(mat_t *mat, size_t row, real_t val);
 
 /**
  * Add element-by-element for two matrix.
@@ -264,29 +264,29 @@ typedef enum _sparse_matrix_format_t_ {
 typedef struct _sparse_matrix_t_ {
     sp_mat_fmt_t fmt; /**< format. */
     real_t *vals; /**< values of matrix. */
-    int size; /**< number of values. */
-    int capacity; /**< capacity of values. */
+    size_t size; /**< number of values. */
+    size_t capacity; /**< capacity of values. */
 
     union {
         struct _csr_t_ {
-            int *cols; /**< col indexes for values. */
-            int *row_s; /**< begin index for row. */
-            int *row_e; /**< end index for row. */
-            int num_rows; /**< number of rows. */
-            int cap_rows; /**< capacity of rows. */
+            size_t *cols; /**< col indexes for values. */
+            size_t *row_s; /**< begin index for row. */
+            size_t *row_e; /**< end index for row. */
+            size_t num_rows; /**< number of rows. */
+            size_t cap_rows; /**< capacity of rows. */
         } csr;
 
         struct _csc_t_ {
-            int *rows; /**< row indexes for values. */
-            int *col_s; /**< begin index for col. */
-            int *col_e; /**< end index for col. */
-            int num_cols; /**< number of cols. */
-            int cap_cols; /**< capacity of cols. */
+            size_t *rows; /**< row indexes for values. */
+            size_t *col_s; /**< begin index for col. */
+            size_t *col_e; /**< end index for col. */
+            size_t num_cols; /**< number of cols. */
+            size_t cap_cols; /**< capacity of cols. */
         } csc;
 
         struct _coo_t_ {
-            int *rows; /**< row indexes for values. */
-            int *cols; /**< col indexes for values. */
+            size_t *rows; /**< row indexes for values. */
+            size_t *cols; /**< col indexes for values. */
         } coo;
     };
 } sp_mat_t;
@@ -307,8 +307,8 @@ void sp_mat_destroy(sp_mat_t *sp_mat);
  * @param[in] num_cols new number of cols.
  * @return non-zero if any error.
  */
-int sp_mat_resize(sp_mat_t *sp_mat, int size,
-        int num_rows, int num_cols);
+int sp_mat_resize(sp_mat_t *sp_mat, size_t size,
+        size_t num_rows, size_t num_cols);
 
 #ifdef __cplusplus
 }

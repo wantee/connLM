@@ -51,9 +51,9 @@ int svec_clear(svec_t *vec)
     return 0;
 }
 
-int svec_resize(svec_t *vec, int size, float init_val)
+int svec_resize(svec_t *vec, size_t size, float init_val)
 {
-    int i;
+    size_t i;
 
     ST_CHECK_PARAM(vec == NULL || size <= 0, -1);
 
@@ -101,9 +101,9 @@ int dvec_clear(dvec_t *vec)
     return 0;
 }
 
-int dvec_resize(dvec_t *vec, int size, double init_val)
+int dvec_resize(dvec_t *vec, size_t size, double init_val)
 {
-    int i;
+    size_t i;
 
     ST_CHECK_PARAM(vec == NULL || size <= 0, -1);
 
@@ -151,7 +151,7 @@ int ivec_clear(ivec_t *vec)
     return 0;
 }
 
-int ivec_resize(ivec_t *vec, int size)
+int ivec_resize(ivec_t *vec, size_t size)
 {
     ST_CHECK_PARAM(vec == NULL || size <= 0, -1);
 
@@ -171,7 +171,7 @@ int ivec_resize(ivec_t *vec, int size)
 
 int ivec_insert(ivec_t *vec, int n)
 {
-    int pos;
+    size_t pos;
 
     ST_CHECK_PARAM(vec == NULL, -1);
 
@@ -180,8 +180,7 @@ int ivec_insert(ivec_t *vec, int n)
         return -1;
     }
 
-    pos = st_int_insert(vec->vals, vec->capacity, &vec->size, n);
-    if (pos < 0) {
+    if (st_int_insert(vec->vals, vec->capacity, &vec->size, &pos, n) < 0) {
         ST_WARNING("Failed to st_int_insert.");
         return -1;
     }
@@ -189,7 +188,7 @@ int ivec_insert(ivec_t *vec, int n)
     return pos;
 }
 
-int ivec_set(ivec_t *vec, int *vals, int n)
+int ivec_set(ivec_t *vec, int *vals, size_t n)
 {
     ST_CHECK_PARAM(vec == NULL || vals == NULL, -1);
 

@@ -55,8 +55,8 @@ extern "C" {
  */
 typedef struct _single_vector_t_ {
     float *vals; /**< values of vector. */
-    int size; /**< size of vals. */
-    int capacity; /**< capacity of vals. */
+    size_t size; /**< size of vals. */
+    size_t capacity; /**< capacity of vals. */
 } svec_t;
 
 /**
@@ -82,7 +82,7 @@ int svec_clear(svec_t *vec);
  * @param[in] init_val initialization value, do not initialize if init_val == NAN
  * @return non-zero if any error.
  */
-int svec_resize(svec_t *vec, int size, float init_val);
+int svec_resize(svec_t *vec, size_t size, float init_val);
 
 
 /**
@@ -91,8 +91,8 @@ int svec_resize(svec_t *vec, int size, float init_val);
  */
 typedef struct _double_vector_t_ {
     double *vals; /**< values of vector. */
-    int size; /**< size of vals. */
-    int capacity; /**< capacity of vals. */
+    size_t size; /**< size of vals. */
+    size_t capacity; /**< capacity of vals. */
 } dvec_t;
 
 /**
@@ -118,7 +118,7 @@ int dvec_clear(dvec_t *vec);
  * @param[in] init_val initialization value, do not initialize if init_val == NAN
  * @return non-zero if any error.
  */
-int dvec_resize(dvec_t *vec, int size, double init_val);
+int dvec_resize(dvec_t *vec, size_t size, double init_val);
 
 /**
  * Int Vector
@@ -126,8 +126,8 @@ int dvec_resize(dvec_t *vec, int size, double init_val);
  */
 typedef struct _int_vector_t_ {
     int *vals; /**< values of vector. */
-    int size; /**< size of vals. */
-    int capacity; /**< capacity of vals. */
+    size_t size; /**< size of vals. */
+    size_t capacity; /**< capacity of vals. */
 } ivec_t;
 
 /**
@@ -152,7 +152,7 @@ int ivec_clear(ivec_t *vec);
  * @param[in] size new size.
  * @return non-zero if any error.
  */
-int ivec_resize(ivec_t *vec, int size);
+int ivec_resize(ivec_t *vec, size_t size);
 
 /**
  * Insert a int into a int vector. same numbers are merged.
@@ -166,12 +166,12 @@ int ivec_insert(ivec_t *vec, int n);
 /**
  * Set value of vector.
  * @ingroup g_vector
- * @param[in] vec the vector, must be uniq and sorted.
+ * @param[in] vec the vector
  * @param[in] vals the numbers.
  * @param[in] n number of vals.
  * @return non-zero if any error.
  */
-int ivec_set(ivec_t *vec, int *vals, int n);
+int ivec_set(ivec_t *vec, int *vals, size_t n);
 
 #ifdef __cplusplus
 }
