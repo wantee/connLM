@@ -29,9 +29,9 @@
 extern "C" {
 #endif
 
-#define CONNLM_VERSION   "2.0.1"
+#define CONNLM_VERSION   "3.0.1"
 
-#define CONNLM_FILE_VERSION   15
+#define CONNLM_FILE_VERSION   20
 
 #define CONNLM_GIT_COMMIT "0"
 

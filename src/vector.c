@@ -31,6 +31,8 @@
 
 #include "vector.h"
 
+static const int VEC_MAGIC_NUM = 626140498 + 81;
+
 void svec_destroy(svec_t *vec)
 {
     if (vec == NULL) {
@@ -81,6 +83,31 @@ int svec_resize(svec_t *vec, size_t size, float init_val)
     return 0;
 }
 
+int svec_cpy(svec_t *dst, svec_t *src)
+{
+    ST_CHECK_PARAM(dst == NULL || src == NULL, -1);
+
+    if (svec_resize(dst, src->size, NAN) < 0) {
+        ST_WARNING("Failed to svec_resize.");
+        return -1;
+    }
+
+    memcpy(dst->vals, src->vals, sizeof(float) * src->size);
+
+    return 0;
+}
+
+void svec_set(svec_t *vec, float val)
+{
+    size_t i;
+
+    ST_CHECK_PARAM_VOID(vec == NULL);
+
+    for (i = 0; i < vec->size; i++) {
+        vec->vals[i] = val;
+    }
+}
+
 void dvec_destroy(dvec_t *vec)
 {
     if (vec == NULL) {
@@ -129,6 +156,31 @@ int dvec_resize(dvec_t *vec, size_t size, double init_val)
     vec->size = size;
 
     return 0;
+}
+
+int dvec_cpy(dvec_t *dst, dvec_t *src)
+{
+    ST_CHECK_PARAM(dst == NULL || src == NULL, -1);
+
+    if (dvec_resize(dst, src->size, NAN) < 0) {
+        ST_WARNING("Failed to dvec_resize.");
+        return -1;
+    }
+
+    memcpy(dst->vals, src->vals, sizeof(double) * src->size);
+
+    return 0;
+}
+
+void dvec_set(dvec_t *vec, double val)
+{
+    size_t i;
+
+    ST_CHECK_PARAM_VOID(vec == NULL);
+
+    for (i = 0; i < vec->size; i++) {
+        vec->vals[i] = val;
+    }
 }
 
 void ivec_destroy(ivec_t *vec)

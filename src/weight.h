@@ -31,6 +31,8 @@ extern "C" {
 
 #include <connlm/config.h>
 #include "utils.h"
+#include "vector.h"
+#include "matrix.h"
 
 /** @defgroup g_weight NNet weight
  * Weight for NNet, with various types.
@@ -55,10 +57,8 @@ typedef enum _weight_init_type_t {
  * @ingroup g_weight
  */
 typedef struct _weight_t_ {
-    real_t *mat; /**< weight matrix. */
-    real_t *bias; /**< bias vector. */
-    size_t row; /**< number row of weight matrix. */
-    size_t col; /**< number column of weight matrix. */
+    mat_t w; /**< weight matrix. */
+    vec_t bias; /**< bias vector. */
 
     wt_init_type_t init_type; /**< weight init type. */
     real_t init_param; /**< parameter of init type. */

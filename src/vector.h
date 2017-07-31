@@ -39,11 +39,15 @@ extern "C" {
 #define dvec_destroy vec_destroy
 #define dvec_clear vec_clear
 #define dvec_resize vec_resize
+#define dvec_cpy vec_cpy
+#define dvec_set vec_set
 #else
 #define svec_t vec_t
 #define svec_destroy vec_destroy
 #define svec_clear vec_clear
 #define svec_resize vec_resize
+#define svec_cpy vec_cpy
+#define svec_set vec_set
 #endif
 
 #define VEC_VAL(vec, idx) ((vec)->vals[idx])
@@ -84,6 +88,23 @@ int svec_clear(svec_t *vec);
  */
 int svec_resize(svec_t *vec, size_t size, float init_val);
 
+/**
+ * Copy a single float vector to the other.
+ * @ingroup g_vector
+ * @param[out] dst the dst vector.
+ * @param[in] src the src vector.
+ * @return non-zero if any error.
+ */
+int svec_cpy(svec_t *dst, svec_t *src);
+
+/**
+ * Set elements to a val in a vector.
+ * @ingroup g_vector
+ * @param[in] vec the vector.
+ * @param[in] val the value.
+ */
+void svec_set(svec_t *vec, float val);
+
 
 /**
  * Double Float Vector
@@ -119,6 +140,24 @@ int dvec_clear(dvec_t *vec);
  * @return non-zero if any error.
  */
 int dvec_resize(dvec_t *vec, size_t size, double init_val);
+
+/**
+ * Copy a double float vector to the other.
+ * @ingroup g_vector
+ * @param[out] dst the dst vector.
+ * @param[in] src the src vector.
+ * @return non-zero if any error.
+ */
+int dvec_cpy(dvec_t *dst, dvec_t *src);
+
+/**
+ * Set elements to a val in a vector.
+ * @ingroup g_vector
+ * @param[in] vec the vector.
+ * @param[in] val the value.
+ */
+void dvec_set(dvec_t *vec, double val);
+
 
 /**
  * Int Vector

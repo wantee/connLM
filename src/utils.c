@@ -31,11 +31,14 @@
 #include <stutils/st_utils.h>
 #include <stutils/st_mem.h>
 #include <stutils/st_string.h>
+#include <stutils/st_varint.h>
 
 #include "utils.h"
 #include "blas.h"
 
 #define REALLOC_NUM 100
+
+#define SQ_MULTIPLE 1024.0
 
 void matXvec(real_t *dst, real_t *mat, real_t *vec,
         int mat_row, int in_vec_size, real_t scale)
@@ -643,6 +646,209 @@ int16_t quantify_int16(real_t r, real_t multiple)
     r = max(r, -(1 << 15));
 
     return (int16_t)r;
+}
+
+int load_sq_zc(real_t *a, size_t sz, FILE *fp)
+{
+    size_t i;
+    uint64_t num_zeros;
+    int16_t si;
+
+    i = 0;
+    while (i < sz) {
+        if (fread(&si, sizeof(int16_t), 1, fp) != 1) {
+            ST_WARNING("Failed to read short.");
+            return -1;
+        }
+
+        if (si != 0) {
+            a[i] = ((real_t)si) / SQ_MULTIPLE;
+            ++i;
+            continue;
+        }
+
+        if (st_varint_decode_stream_uint64(fp, &num_zeros) < 0) {
+            ST_WARNING("Failed to st_varint_decode_stream_uint64");
+            return -1;
+        }
+
+        assert(i + num_zeros <= sz);
+        memset(a + i, 0, sizeof(real_t) * num_zeros);
+        i += num_zeros;
+    }
+
+    return 0;
+}
+
+int load_sq(real_t *a, size_t sz, FILE *fp)
+{
+    size_t i;
+    int16_t si;
+
+    for (i = 0; i < sz; i++) {
+        if (fread(&si, sizeof(int16_t), 1, fp) != 1) {
+            ST_WARNING("Failed to read short.");
+            return -1;
+        }
+
+        a[i] = ((real_t)si) / SQ_MULTIPLE;
+    }
+
+    return 0;
+}
+
+int load_zc(real_t *a, size_t sz, FILE *fp)
+{
+    size_t i;
+    uint64_t num_zeros;
+    real_t r;
+
+    i = 0;
+    while (i < sz) {
+        if (fread(&r, sizeof(real_t), 1, fp) != 1) {
+            ST_WARNING("Failed to read real_t.");
+            return -1;
+        }
+
+        if (r != 0) {
+            a[i] = r;
+            ++i;
+            continue;
+        }
+
+        if (st_varint_decode_stream_uint64(fp, &num_zeros) < 0) {
+            ST_WARNING("Failed to st_varint_decode_stream_uint64");
+            return -1;
+        }
+
+        assert(i + num_zeros <= sz);
+        memset(a + i, 0, sizeof(real_t) * num_zeros);
+        i += num_zeros;
+    }
+
+    return 0;
+}
+
+static int write_zeros_int16(uint64_t num_zeros, FILE *fp)
+{
+    int16_t zero = 0;
+
+    if (fwrite(&zero, sizeof(int16_t), 1, fp) != 1) {
+        ST_WARNING("Failed to write zero.");
+        return -1;
+    }
+    if (st_varint_encode_stream_uint64(num_zeros, fp) < 0) {
+        ST_WARNING("Failed to st_varint_encode_stream_uint64[%"PRIu64"]",
+                num_zeros);
+        return -1;
+    }
+
+    return 0;
+}
+
+int save_sq_zc(real_t *a, size_t sz, FILE *fp)
+{
+    uint64_t num_zeros;
+    size_t i;
+    int16_t si;
+
+    num_zeros = 0;
+    for (i = 0; i < sz; i++) {
+        si = quantify_int16(a[i], SQ_MULTIPLE);
+        if (si == 0) {
+            ++num_zeros;
+            continue;
+        }
+
+        if (num_zeros > 0) {
+            if (write_zeros_int16(num_zeros, fp) < 0) {
+                ST_WARNING("Failed to write_zeros_int16.");
+                return -1;
+            }
+            num_zeros = 0;
+        }
+
+        if (fwrite(&si, sizeof(int16_t), 1, fp) != 1) {
+            ST_WARNING("Failed to write short.");
+            return -1;
+        }
+    }
+    if (num_zeros > 0) {
+        if (write_zeros_int16(num_zeros, fp) < 0) {
+            ST_WARNING("Failed to write_zeros_int16.");
+            return -1;
+        }
+    }
+
+    return 0;
+}
+
+int save_sq(real_t *a, size_t sz, FILE *fp)
+{
+    size_t i;
+    int16_t si;
+
+    for (i = 0; i < sz; i++) {
+        si = quantify_int16(a[i], SQ_MULTIPLE);
+        if (fwrite(&si, sizeof(int16_t), 1, fp) != 1) {
+            ST_WARNING("Failed to write short.");
+            return -1;
+        }
+    }
+
+    return 0;
+}
+
+static int write_zeros_real(uint64_t num_zeros, FILE *fp)
+{
+    real_t zero = 0;
+
+    if (fwrite(&zero, sizeof(real_t), 1, fp) != 1) {
+        ST_WARNING("Failed to write zero.");
+        return -1;
+    }
+    if (st_varint_encode_stream_uint64(num_zeros, fp) < 0) {
+        ST_WARNING("Failed to st_varint_encode_stream_uint64[%"PRIu64"]",
+                num_zeros);
+        return -1;
+    }
+
+    return 0;
+}
+
+int save_zc(real_t *a, size_t sz, FILE *fp)
+{
+    uint64_t num_zeros;
+    size_t i;
+
+    num_zeros = 0;
+    for (i = 0; i < sz; i++) {
+        if (a[i] == 0.0) {
+            ++num_zeros;
+            continue;
+        }
+
+        if (num_zeros > 0) {
+            if (write_zeros_real(num_zeros, fp) < 0) {
+                ST_WARNING("Failed to write_zeros_real.");
+                return -1;
+            }
+            num_zeros = 0;
+        }
+
+        if (fwrite(a + i, sizeof(real_t), 1, fp) != 1) {
+            ST_WARNING("Failed to write real_t.");
+            return -1;
+        }
+    }
+    if (num_zeros > 0) {
+        if (write_zeros_real(num_zeros, fp) < 0) {
+            ST_WARNING("Failed to write_zeros_real.");
+            return -1;
+        }
+    }
+
+    return 0;
 }
 
 int print_vec(FILE *fp, real_t *vec, size_t size, const char *name)

@@ -184,15 +184,64 @@ connlm_fmt_t connlm_format_parse(const char *str);
 int16_t quantify_int16(real_t r, real_t multiple);
 
 /**
- * print a real-valued vector.
+ * Load a short-quantization and zero-compressed vector from a stream.
  * @ingroup g_connlm
- * @param[out] fp file stream to be written into.
- * @param[in] vec the vector.
- * @param[in] size size of vector.
- * @param[in] name name of vector, will be prepended if not NULL.
- * @return non-zero value if any error.
+ * @param[out] a real-valued vector.
+ * @param[in] sz size of the vector.
+ * @param[in] fp file stream.
+ * @return non-zero if any error.
  */
-int print_vec(FILE *fp, real_t *vec, size_t size, const char *name);
+int load_sq_zc(real_t *a, size_t sz, FILE *fp);
+
+/**
+ * Load a short-quantization vector from a stream.
+ * @ingroup g_connlm
+ * @param[out] a real-valued vector.
+ * @param[in] sz size of the vector.
+ * @param[in] fp file stream.
+ * @return non-zero if any error.
+ */
+int load_sq(real_t *a, size_t sz, FILE *fp);
+
+/**
+ * Load a zero-compressed vector from a stream.
+ * @ingroup g_connlm
+ * @param[out] a real-valued vector.
+ * @param[in] sz size of the vector.
+ * @param[in] fp file stream.
+ * @return non-zero if any error.
+ */
+int load_zc(real_t *a, size_t sz, FILE *fp);
+
+/**
+ * Save a short-quantization and zero-compressed vector to a stream.
+ * @ingroup g_connlm
+ * @param[in] a real-valued vector.
+ * @param[in] sz size of the vector.
+ * @param[out] fp file stream.
+ * @return non-zero if any error.
+ */
+int save_sq_zc(real_t *a, size_t sz, FILE *fp);
+
+/**
+ * Save a short-quantization vector to a stream.
+ * @ingroup g_connlm
+ * @param[in] a real-valued vector.
+ * @param[in] sz size of the vector.
+ * @param[out] fp file stream.
+ * @return non-zero if any error.
+ */
+int save_sq(real_t *a, size_t sz, FILE *fp);
+
+/**
+ * Save a zero-compressed vector to a stream.
+ * @ingroup g_connlm
+ * @param[in] a real-valued vector.
+ * @param[in] sz size of the vector.
+ * @param[out] fp file stream.
+ * @return non-zero if any error.
+ */
+int save_zc(real_t *a, size_t sz, FILE *fp);
 
 /**
  * parse a real-valued vector from a string.
