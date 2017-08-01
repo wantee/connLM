@@ -396,16 +396,7 @@ ERR:
 
 int wt_load_body(weight_t *wt, int version, FILE *fp, connlm_fmt_t fmt)
 {
-    char name[MAX_NAME_LEN];
     int n;
-    size_t i, j;
-    size_t sz;
-
-    char *line = NULL;
-    size_t line_sz = 0;
-    bool err;
-    const char *p;
-    char token[MAX_NAME_LEN];
 
     ST_CHECK_PARAM(wt == NULL || fp == NULL, -1);
 
@@ -414,120 +405,36 @@ int wt_load_body(weight_t *wt, int version, FILE *fp, connlm_fmt_t fmt)
         return -1;
     }
 
-    if (wt_resize(wt, wt->row, wt->col) < 0) {
-        ST_WARNING("Failed to wt_resize.");
-        return -1;
-    }
-
     if (connlm_fmt_is_bin(fmt)) {
         if (fread(&n, sizeof(int), 1, fp) != 1) {
             ST_WARNING("Failed to read magic num.");
-            goto ERR;
+            return -1;
         }
 
         if (n != -WT_MAGIC_NUM) {
             ST_WARNING("Magic num error.[%d]", n);
-            goto ERR;
-        }
-
-        if (mat_load_body(&wt->w, version, fp, fmt) < 0) {
-            ST_WARNING("Failed to mat_load_body w");
-            goto ERR;
-        }
-        if (fmt == CONN_FMT_BIN) {
-            if (fread(wt->mat, sizeof(real_t), sz, fp) != sz) {
-                ST_WARNING("Failed to read mat.");
-                goto ERR;
-            }
-
-            if (wt->bias != NULL) {
-                if (fread(wt->bias, sizeof(real_t), wt->row, fp) != wt->row) {
-                    ST_WARNING("Failed to read bias.");
-                    goto ERR;
-                }
-            }
-        } else if (fmt & CONN_FMT_SHORT_QUANTIZATION) {
-            if (fmt & CONN_FMT_ZEROS_COMPRESSED) {
-                if (wt_load_sq_zc(wt->mat, sz, fp) < 0) {
-                    ST_WARNING("Failed to wt_load_sq_zc for mat.");
-                    return -1;
-                }
-                if (wt->bias != NULL) {
-                    if (wt_load_sq_zc(wt->bias, wt->row, fp) < 0) {
-                        ST_WARNING("Failed to wt_load_sq_zc for bias.");
-                        return -1;
-                    }
-                }
-            } else {
-                if (wt_load_sq(wt->mat, sz, fp) < 0) {
-                    ST_WARNING("Failed to wt_load_sq for mat.");
-                    return -1;
-                }
-                if (wt->bias != NULL) {
-                    if (wt_load_sq(wt->bias, wt->row, fp) < 0) {
-                        ST_WARNING("Failed to wt_load_sq for bias.");
-                        return -1;
-                    }
-                }
-            }
-        } else if (fmt & CONN_FMT_ZEROS_COMPRESSED) {
-            if (wt_load_zc(wt->mat, sz, fp) < 0) {
-                ST_WARNING("Failed to wt_load_zc for mat.");
-                goto ERR;
-            }
-            if (wt->bias != NULL) {
-                if (wt_load_zc(wt->bias, wt->row, fp) < 0) {
-                    ST_WARNING("Failed to wt_load_zc for bias.");
-                    goto ERR;
-                }
-            }
+            return -1;
         }
     } else {
         if (st_readline(fp, "<WEIGHT-DATA>") != 0) {
             ST_WARNING("body flag error.");
-            goto ERR;
-        }
-        if (st_readline(fp, "%"xSTR(MAX_NAME_LEN)"s", name) != 1) {
-            ST_WARNING("name error.");
-            goto ERR;
-        }
-
-        for (i = 0; i < wt->row; i++) {
-            if (st_fgets(&line, &line_sz, fp, &err) == NULL || err) {
-                ST_WARNING("Failed to parse mat[%zu].", i);
-            }
-            p = line;
-            for (j = 0; j < wt->col; j++) {
-                p = get_next_token(p, token);
-                if (p == NULL
-                        || sscanf(token, REAL_FMT, wt->mat+i*wt->col+j) != 1) {
-                    ST_WARNING("Failed to parse mat[%zu, %zu].", i, j);
-                    goto ERR;
-                }
-            }
-        }
-        if (wt->bias != NULL) {
-            if (st_fgets(&line, &line_sz, fp, &err) == NULL || err) {
-                ST_WARNING("Failed to parse bias.");
-            }
-            p = line;
-            for (i = 0; i < wt->row; i++) {
-                p = get_next_token(p, token);
-                if (p == NULL || sscanf(token, REAL_FMT, wt->bias + i) != 1) {
-                    ST_WARNING("Failed to parse bias[%zu].", i);
-                    goto ERR;
-                }
-            }
+            return -1;
         }
     }
 
-    safe_st_free(line);
-    return 0;
-ERR:
+    if (mat_load_body(&wt->w, version, fp, fmt) < 0) {
+        ST_WARNING("Failed to mat_load_body w");
+        return -1;
+    }
 
-    safe_st_free(line);
-    wt_destroy(wt);
-    return -1;
+    if (! isinf(wt->init_bias)) {
+        if (vec_load_body(&wt->bias, version, fp, fmt) < 0) {
+            ST_WARNING("Failed to vec_load_body bias");
+            return -1;
+        }
+    }
+
+    return 0;
 }
 
 int wt_save_header(weight_t *wt, FILE *fp, connlm_fmt_t fmt)
@@ -546,14 +453,6 @@ int wt_save_header(weight_t *wt, FILE *fp, connlm_fmt_t fmt)
             return -1;
         }
 
-        if (fwrite(&wt->row, sizeof(size_t), 1, fp) != 1) {
-            ST_WARNING("Failed to write row.");
-            return -1;
-        }
-        if (fwrite(&wt->col, sizeof(size_t), 1, fp) != 1) {
-            ST_WARNING("Failed to write col.");
-            return -1;
-        }
         n = (int)wt->init_type;
         if (fwrite(&n, sizeof(int), 1, fp) != 1) {
             ST_WARNING("Failed to write init_type.");
@@ -574,14 +473,6 @@ int wt_save_header(weight_t *wt, FILE *fp, connlm_fmt_t fmt)
             return -1;
         }
 
-        if (fprintf(fp, "Row: %zu\n", wt->row) < 0) {
-            ST_WARNING("Failed to fprintf row.");
-            return -1;
-        }
-        if (fprintf(fp, "Col: %zu\n", wt->col) < 0) {
-            ST_WARNING("Failed to fprintf col.");
-            return -1;
-        }
         if (fprintf(fp, "Init: %s\n", init2str(wt->init_type)) < 0) {
             ST_WARNING("Failed to fprintf init type.");
             return -1;
@@ -609,14 +500,8 @@ int wt_save_header(weight_t *wt, FILE *fp, connlm_fmt_t fmt)
 int wt_save_body(weight_t *wt, FILE *fp, connlm_fmt_t fmt, char *name)
 {
     int n;
-    size_t i, j;
-    size_t sz;
 
     ST_CHECK_PARAM(fp == NULL, -1);
-
-    if (wt->row <= 0) {
-        return 0;
-    }
 
     if (connlm_fmt_is_bin(fmt)) {
         n = -WT_MAGIC_NUM;
@@ -624,90 +509,26 @@ int wt_save_body(weight_t *wt, FILE *fp, connlm_fmt_t fmt, char *name)
             ST_WARNING("Failed to write magic num.");
             return -1;
         }
-        sz = wt->row * wt->col;
 
-        if (fmt == CONN_FMT_BIN) {
-            if (fwrite(wt->mat, sizeof(real_t), sz, fp) != sz) {
-                ST_WARNING("Failed to write mat.");
-                return -1;
-            }
-            if (wt->bias != NULL) {
-                if (fwrite(wt->bias, sizeof(real_t), wt->row, fp) != wt->row) {
-                    ST_WARNING("Failed to write bias.");
-                    return -1;
-                }
-            }
-        } else if (fmt & CONN_FMT_SHORT_QUANTIZATION) {
-            if (fmt & CONN_FMT_ZEROS_COMPRESSED) {
-                if (wt_save_sq_zc(wt->mat, sz, fp) < 0) {
-                    ST_WARNING("Failed to wt_save_sq_zc for mat.");
-                    return -1;
-                }
-                if (wt->bias != NULL) {
-                    if (wt_save_sq_zc(wt->bias, wt->row, fp) < 0) {
-                        ST_WARNING("Failed to wt_save_sq_zc for bias.");
-                        return -1;
-                    }
-                }
-            } else {
-                if (wt_save_sq(wt->mat, sz, fp) < 0) {
-                    ST_WARNING("Failed to wt_save_sq for mat.");
-                    return -1;
-                }
-                if (wt->bias != NULL) {
-                    if (wt_save_sq(wt->bias, wt->row, fp) < 0) {
-                        ST_WARNING("Failed to wt_save_sq for bias.");
-                        return -1;
-                    }
-                }
-            }
-        } else if (fmt & CONN_FMT_ZEROS_COMPRESSED) {
-            if (wt_save_zc(wt->mat, sz, fp) < 0) {
-                ST_WARNING("Failed to wt_save_zc for mat.");
-                return -1;
-            }
-            if (wt->bias != NULL) {
-                if (wt_save_zc(wt->bias, wt->row, fp) < 0) {
-                    ST_WARNING("Failed to wt_save_zc for bias.");
-                    return -1;
-                }
-            }
-        }
     } else {
         if (fprintf(fp, "<WEIGHT-DATA>\n") < 0) {
             ST_WARNING("Failed to fprintf header.");
             return -1;
         }
-        if (fprintf(fp, "%s\n", name != NULL ? name : "") < 0) {
-            ST_WARNING("Failed to fprintf name.");
+    }
+
+    if (mat_save_body(&wt->w, fp, fmt, name) < 0) {
+        ST_WARNING("Failed to mat_save_body w");
+        return -1;
+    }
+
+    if (! isinf(wt->init_bias)) {
+        if (vec_save_body(&wt->bias, fp, fmt, NULL) < 0) {
+            ST_WARNING("Failed to vec_save_body bias");
             return -1;
         }
-
-        for (i = 0; i < wt->row; i++) {
-            for (j = 0; j < wt->col - 1; j++) {
-                if (fprintf(fp, REAL_FMT" ", wt->mat[i*wt->col + j]) < 0) {
-                    ST_WARNING("Failed to fprintf mat[%zu,%zu].", i, j);
-                    return -1;
-                }
-            }
-            if (fprintf(fp, REAL_FMT"\n", wt->mat[i*wt->col + j]) < 0) {
-                ST_WARNING("Failed to fprintf mat[%zu/%zu].", i, j);
-                return -1;
-            }
-        }
-        if (wt->bias != NULL) {
-            for (i = 0; i < wt->row - 1; i++) {
-                if (fprintf(fp, REAL_FMT" ", wt->bias[i]) < 0) {
-                    ST_WARNING("Failed to fprintf bias[%zu].", i);
-                    return -1;
-                }
-            }
-            if (fprintf(fp, REAL_FMT"\n", wt->bias[i]) < 0) {
-                ST_WARNING("Failed to fprintf bias[%zu].", i);
-                return -1;
-            }
-        }
     }
+
 
     return 0;
 }
@@ -755,7 +576,7 @@ int wt_init(weight_t *wt, size_t row, size_t col)
             }
             mat_set(&wt->w, 0.0);
             for (i = 0; i < wt->w.num_rows; i++) {
-                MAT_VAL(&wt->mat, i, i) = wt->init_param;
+                MAT_VAL(&wt->w, i, i) = wt->init_param;
             }
             break;
         default:
@@ -772,16 +593,16 @@ int wt_init(weight_t *wt, size_t row, size_t col)
 
 void wt_sanity_check(weight_t *wt, const char *name)
 {
-    size_t i, n, sz;
+    size_t i, j, n;
 
     ST_CHECK_PARAM_VOID(wt == NULL);
 
-    sz = wt->w.num_rows * wt->w.num_cols;
-
     n = 0;
-    for (i = 0; i < sz; i++) {
-        if (MAT_VAL(&wt->w, i) >= 100 || MAT_VAL(&wt->w, i) <= -100) {
-            n++;
+    for (i = 0; i < wt->w.num_rows; i++) {
+        for (j = 0; j < wt->w.num_cols; j++) {
+            if (MAT_VAL(&wt->w, i, j) >= 100 || MAT_VAL(&wt->w, i, j) <= -100) {
+                n++;
+            }
         }
     }
 

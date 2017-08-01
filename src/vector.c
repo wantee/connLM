@@ -28,10 +28,283 @@
 #include <stutils/st_log.h>
 #include <stutils/st_mem.h>
 #include <stutils/st_int.h>
+#include <stutils/st_io.h>
+#include <stutils/st_string.h>
 
 #include "vector.h"
 
 static const int VEC_MAGIC_NUM = 626140498 + 81;
+
+int svec_load_header(svec_t *vec, int version,
+        FILE *fp, connlm_fmt_t *fmt, FILE *fo_info)
+{
+    union {
+        char str[4];
+        int magic_num;
+    } flag;
+
+    size_t size;
+
+    ST_CHECK_PARAM((vec == NULL && fo_info == NULL) || fp == NULL
+            || fmt == NULL, -1);
+
+    if (fread(&flag.magic_num, sizeof(int), 1, fp) != 1) {
+        ST_WARNING("Failed to load magic num.");
+        return -1;
+    }
+
+    *fmt = CONN_FMT_UNKNOWN;
+    if (strncmp(flag.str, "    ", 4) == 0) {
+        *fmt = CONN_FMT_TXT;
+    } else if (VEC_MAGIC_NUM != flag.magic_num) {
+        ST_WARNING("magic num wrong.");
+        return -2;
+    }
+
+    if (vec != NULL) {
+        memset(vec, 0, sizeof(svec_t));
+    }
+
+    if (*fmt != CONN_FMT_TXT) {
+        if (fread(fmt, sizeof(connlm_fmt_t), 1, fp) != 1) {
+            ST_WARNING("Failed to read fmt.");
+            goto ERR;
+        }
+
+        if (fread(&size, sizeof(size_t), 1, fp) != 1) {
+            ST_WARNING("Failed to read size.");
+            goto ERR;
+        }
+    } else {
+        if (st_readline(fp, "") != 0) {
+            ST_WARNING("tag error.");
+            goto ERR;
+        }
+        if (st_readline(fp, "<VECTOR>") != 0) {
+            ST_WARNING("tag error.");
+            goto ERR;
+        }
+
+        if (st_readline(fp, "Size: %zu", &size) != 1) {
+            ST_WARNING("Failed to parse size.");
+            goto ERR;
+        }
+    }
+
+    if (vec != NULL) {
+        if (svec_resize(vec, size, NAN) < 0) {
+            ST_WARNING("Failed to svec_resize.");
+            goto ERR;
+        }
+    }
+
+    if (fo_info != NULL) {
+        fprintf(fo_info, "\n<VECTOR>\n");
+        fprintf(fo_info, "Size: %zu\n", size);
+    }
+
+    return 0;
+
+ERR:
+    if (vec != NULL) {
+        svec_destroy(vec);
+    }
+    return -1;
+}
+
+int svec_load_body(svec_t *vec, int version, FILE *fp, connlm_fmt_t fmt)
+{
+    char name[MAX_NAME_LEN];
+    int n;
+    size_t i;
+
+    char *line = NULL;
+    size_t line_sz = 0;
+    bool err;
+    const char *p;
+    char token[MAX_NAME_LEN];
+
+    ST_CHECK_PARAM(vec == NULL || fp == NULL, -1);
+
+    if (connlm_fmt_is_bin(fmt)) {
+        if (fread(&n, sizeof(int), 1, fp) != 1) {
+            ST_WARNING("Failed to read magic num.");
+            goto ERR;
+        }
+
+        if (n != -VEC_MAGIC_NUM) {
+            ST_WARNING("Magic num error.[%d]", n);
+            goto ERR;
+        }
+
+        if (fmt == CONN_FMT_BIN) {
+            if (fread(VEC_VALP(vec, 0), sizeof(real_t),
+                        vec->size, fp) != vec->size) {
+                ST_WARNING("Failed to read vec.");
+                goto ERR;
+            }
+        } else if (fmt & CONN_FMT_SHORT_QUANTIZATION) {
+            if (fmt & CONN_FMT_ZEROS_COMPRESSED) {
+                if (load_sq_zc(VEC_VALP(vec, 0), vec->size, fp) < 0) {
+                    ST_WARNING("Failed to load_sq_zc for vec.");
+                    return -1;
+                }
+            } else {
+                if (load_sq(VEC_VALP(vec, 0), vec->size, fp) < 0) {
+                    ST_WARNING("Failed to load_sq for vec.");
+                    return -1;
+                }
+            }
+        } else if (fmt & CONN_FMT_ZEROS_COMPRESSED) {
+            if (load_zc(VEC_VALP(vec, 0), vec->size, fp) < 0) {
+                ST_WARNING("Failed to load_zc for vec.");
+                return -1;
+            }
+        }
+    } else {
+        if (st_readline(fp, "<VECTOR-DATA>") != 0) {
+            ST_WARNING("body flag error.");
+            goto ERR;
+        }
+        if (st_readline(fp, "%"xSTR(MAX_NAME_LEN)"s", name) != 1) {
+            ST_WARNING("name error.");
+            goto ERR;
+        }
+
+        if (st_fgets(&line, &line_sz, fp, &err) == NULL || err) {
+            ST_WARNING("Failed to parse vec.");
+        }
+        p = get_next_token(line, token);
+        if (p == NULL || ! (p[0] == '[' && p[1] == '\0')) {
+            ST_WARNING("'[' expected.");
+            goto ERR;
+        }
+        for (i = 0; i < vec->size; i++) {
+            p = get_next_token(p, token);
+            if (p == NULL || sscanf(token, REAL_FMT,
+                        VEC_VALP(vec, i)) != 1) {
+                ST_WARNING("Failed to parse elem[%zu].", i);
+                goto ERR;
+            }
+        }
+        p = get_next_token(p, token);
+        if (p == NULL || ! (p[0] == ']' && p[1] == '\0')) {
+            ST_WARNING("']' expected.");
+            goto ERR;
+        }
+    }
+
+    safe_st_free(line);
+    return 0;
+ERR:
+
+    safe_st_free(line);
+    return -1;
+}
+
+int svec_save_header(svec_t *vec, FILE *fp, connlm_fmt_t fmt)
+{
+    ST_CHECK_PARAM(fp == NULL, -1);
+
+    if (connlm_fmt_is_bin(fmt)) {
+        if (fwrite(&VEC_MAGIC_NUM, sizeof(int), 1, fp) != 1) {
+            ST_WARNING("Failed to write magic num.");
+            return -1;
+        }
+        if (fwrite(&fmt, sizeof(connlm_fmt_t), 1, fp) != 1) {
+            ST_WARNING("Failed to write fmt.");
+            return -1;
+        }
+
+        if (fwrite(&vec->size, sizeof(size_t), 1, fp) != 1) {
+            ST_WARNING("Failed to write size.");
+            return -1;
+        }
+    } else {
+        if (fprintf(fp, "    \n<VECTOR>\n") < 0) {
+            ST_WARNING("Failed to fprintf header.");
+            return -1;
+        }
+
+        if (fprintf(fp, "Size: %zu\n", vec->size) < 0) {
+            ST_WARNING("Failed to fprintf size.");
+            return -1;
+        }
+    }
+
+    return 0;
+}
+
+int svec_save_body(svec_t *vec, FILE *fp, connlm_fmt_t fmt, char *name)
+{
+    int n;
+    size_t i;
+
+    ST_CHECK_PARAM(fp == NULL, -1);
+
+    if (connlm_fmt_is_bin(fmt)) {
+        n = -VEC_MAGIC_NUM;
+        if (fwrite(&n, sizeof(int), 1, fp) != 1) {
+            ST_WARNING("Failed to write magic num.");
+            return -1;
+        }
+
+        if (fmt == CONN_FMT_BIN) {
+            if (fwrite(VEC_VALP(vec, 0), sizeof(real_t),
+                        vec->size, fp) != vec->size) {
+                ST_WARNING("Failed to write vec.");
+                return -1;
+            }
+        } else if (fmt & CONN_FMT_SHORT_QUANTIZATION) {
+            if (fmt & CONN_FMT_ZEROS_COMPRESSED) {
+                if (save_sq_zc(VEC_VALP(vec, 0), vec->size, fp) < 0) {
+                    ST_WARNING("Failed to save_sq_zc for vec.");
+                    return -1;
+                }
+            } else {
+                if (save_sq(VEC_VALP(vec, 0), vec->size, fp) < 0) {
+                    ST_WARNING("Failed to save_sq for vec.");
+                    return -1;
+                }
+            }
+        } else if (fmt & CONN_FMT_ZEROS_COMPRESSED) {
+            if (save_zc(VEC_VALP(vec, 0), vec->size, fp) < 0) {
+                ST_WARNING("Failed to save_zc for vec.");
+                return -1;
+            }
+        }
+    } else {
+        if (fprintf(fp, "<VECTOR-DATA>\n") < 0) {
+            ST_WARNING("Failed to fprintf header.");
+            return -1;
+        }
+        if (fprintf(fp, "%s\n", name != NULL ? name : "") < 0) {
+            ST_WARNING("Failed to fprintf name.");
+            return -1;
+        }
+
+        if (fprintf(fp, "[\n") < 0) {
+            ST_WARNING("Failed to fprintf '['.");
+            return -1;
+        }
+        for (i = 0; i < vec->size - 1; i++) {
+            if (fprintf(fp, REAL_FMT" ", VEC_VAL(vec, i)) < 0) {
+                ST_WARNING("Failed to fprintf vec[%zu].", i);
+                return -1;
+            }
+        }
+        if (fprintf(fp, REAL_FMT"\n", VEC_VAL(vec, i)) < 0) {
+            ST_WARNING("Failed to fprintf vec[%zu].", i);
+            return -1;
+        }
+        if (fprintf(fp, "]\n") < 0) {
+            ST_WARNING("Failed to fprintf ']'.");
+            return -1;
+        }
+    }
+
+    return 0;
+}
 
 void svec_destroy(svec_t *vec)
 {

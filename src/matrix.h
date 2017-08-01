@@ -31,6 +31,7 @@ extern "C" {
 
 #include <connlm/config.h>
 #include "blas.h"
+#include "utils.h"
 
 /** @defgroup g_matrix Matrix
  */
@@ -60,6 +61,59 @@ typedef struct _matrix_t_ {
 #define MAT_VALP(mat, row, col) ((mat)->vals + ((row)*((mat)->num_cols) + (col)))
 
 /**
+ * Load matrix header.
+ * @ingroup g_matrix
+ * @param[out] mat matrix to be initialised.
+ * @param[in] version file version of loading file.
+ * @param[in] fp file stream loaded from.
+ * @param[out] fmt storage format.
+ * @param[out] fo_info file stream used to print information, if it is not NULL.
+ * @see mat_load_body
+ * @see mat_save_header, mat_save_body
+ * @return non-zero value if any error.
+ */
+int mat_load_header(mat_t *mat, int version,
+        FILE *fp, connlm_fmt_t *fmt, FILE *fo_info);
+
+/**
+ * Load matrix body.
+ * @ingroup g_matrix
+ * @param[in] mat matrix to be loaded.
+ * @param[in] version file version of loading file.
+ * @param[in] fp file stream loaded from.
+ * @param[in] fmt storage format.
+ * @see mat_load_header
+ * @see mat_save_header, mat_save_body
+ * @return non-zero value if any error.
+ */
+int mat_load_body(mat_t *mat, int version, FILE *fp, connlm_fmt_t fmt);
+
+/**
+ * Save matrix header.
+ * @ingroup g_matrix
+ * @param[in] mat matrix to be saved.
+ * @param[in] fp file stream saved to.
+ * @param[in] fmt storage format.
+ * @see mat_save_body
+ * @see mat_load_header, mat_load_body
+ * @return non-zero value if any error.
+ */
+int mat_save_header(mat_t *mat, FILE *fp, connlm_fmt_t fmt);
+
+/**
+ * Save matrix body.
+ * @ingroup g_matrix
+ * @param[in] mat matrix to be saved.
+ * @param[in] fp file stream saved to.
+ * @param[in] fmt storage format.
+ * @param[in] name name of the weight.
+ * @see mat_save_header
+ * @see mat_load_header, mat_load_body
+ * @return non-zero value if any error.
+ */
+int mat_save_body(mat_t *mat, FILE *fp, connlm_fmt_t fmt, char *name);
+
+/**
  * Destroy a matrix.
  * @ingroup g_matrix
  * @param[in] mat matrix to be destroyed.
@@ -70,7 +124,6 @@ void mat_destroy(mat_t *mat);
  * Clear a matrix.
  * @ingroup g_matrix
  * @param[in] mat matrix to be cleared.
- * @param[in] row row index to be cleared.
  * @return non-zero if any error.
  */
 int mat_clear(mat_t *mat);

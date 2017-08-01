@@ -30,12 +30,17 @@ extern "C" {
 #endif
 
 #include <connlm/config.h>
+#include "utils.h"
 
 /** @defgroup g_vector Vector
  */
 
 #if _USE_DOUBLE_ == 1
 #define dvec_t vec_t
+#define dvec_load_header vec_load_header
+#define dvec_load_body vec_load_body
+#define dvec_save_header vec_save_header
+#define dvec_save_body vec_save_body
 #define dvec_destroy vec_destroy
 #define dvec_clear vec_clear
 #define dvec_resize vec_resize
@@ -43,6 +48,10 @@ extern "C" {
 #define dvec_set vec_set
 #else
 #define svec_t vec_t
+#define svec_load_header vec_load_header
+#define svec_load_body vec_load_body
+#define svec_save_header vec_save_header
+#define svec_save_body vec_save_body
 #define svec_destroy vec_destroy
 #define svec_clear vec_clear
 #define svec_resize vec_resize
@@ -62,6 +71,59 @@ typedef struct _single_vector_t_ {
     size_t size; /**< size of vals. */
     size_t capacity; /**< capacity of vals. */
 } svec_t;
+
+/**
+ * Load single float vector header.
+ * @ingroup g_vector
+ * @param[out] vec vector to be initialised.
+ * @param[in] version file version of loading file.
+ * @param[in] fp file stream loaded from.
+ * @param[out] fmt storage format.
+ * @param[out] fo_info file stream used to print information, if it is not NULL.
+ * @see svec_load_body
+ * @see svec_save_header, svec_save_body
+ * @return non-zero value if any error.
+ */
+int svec_load_header(svec_t *vec, int version,
+        FILE *fp, connlm_fmt_t *fmt, FILE *fo_info);
+
+/**
+ * Load single float vector body.
+ * @ingroup g_vector
+ * @param[in] vec vector to be loaded.
+ * @param[in] version file version of loading file.
+ * @param[in] fp file stream loaded from.
+ * @param[in] fmt storage format.
+ * @see svec_load_header
+ * @see svec_save_header, svec_save_body
+ * @return non-zero value if any error.
+ */
+int svec_load_body(svec_t *vec, int version, FILE *fp, connlm_fmt_t fmt);
+
+/**
+ * Save single float vector header.
+ * @ingroup g_vector
+ * @param[in] vec vector to be saved.
+ * @param[in] fp file stream saved to.
+ * @param[in] fmt storage format.
+ * @see svec_save_body
+ * @see svec_load_header, svec_load_body
+ * @return non-zero value if any error.
+ */
+int svec_save_header(svec_t *vec, FILE *fp, connlm_fmt_t fmt);
+
+/**
+ * Save single float vector body.
+ * @ingroup g_vector
+ * @param[in] vec vector to be saved.
+ * @param[in] fp file stream saved to.
+ * @param[in] fmt storage format.
+ * @param[in] name name of the weight.
+ * @see svec_save_header
+ * @see svec_load_header, svec_load_body
+ * @return non-zero value if any error.
+ */
+int svec_save_body(svec_t *vec, FILE *fp, connlm_fmt_t fmt, char *name);
 
 /**
  * Destroy a single float vector.
@@ -115,6 +177,59 @@ typedef struct _double_vector_t_ {
     size_t size; /**< size of vals. */
     size_t capacity; /**< capacity of vals. */
 } dvec_t;
+
+/**
+ * Load double float vector header.
+ * @ingroup g_vector
+ * @param[out] vec vector to be initialised.
+ * @param[in] version file version of loading file.
+ * @param[in] fp file stream loaded from.
+ * @param[out] fmt storage format.
+ * @param[out] fo_info file stream used to print information, if it is not NULL.
+ * @see dvec_load_body
+ * @see dvec_save_header, dvec_save_body
+ * @return non-zero value if any error.
+ */
+int dvec_load_header(dvec_t *vec, int version,
+        FILE *fp, connlm_fmt_t *fmt, FILE *fo_info);
+
+/**
+ * Load double float vector body.
+ * @ingroup g_vector
+ * @param[in] vec vector to be loaded.
+ * @param[in] version file version of loading file.
+ * @param[in] fp file stream loaded from.
+ * @param[in] fmt storage format.
+ * @see dvec_load_header
+ * @see dvec_save_header, dvec_save_body
+ * @return non-zero value if any error.
+ */
+int dvec_load_body(dvec_t *vec, int version, FILE *fp, connlm_fmt_t fmt);
+
+/**
+ * Save double float vector header.
+ * @ingroup g_vector
+ * @param[in] vec vector to be saved.
+ * @param[in] fp file stream saved to.
+ * @param[in] fmt storage format.
+ * @see dvec_save_body
+ * @see dvec_load_header, dvec_load_body
+ * @return non-zero value if any error.
+ */
+int dvec_save_header(dvec_t *vec, FILE *fp, connlm_fmt_t fmt);
+
+/**
+ * Save double float vector body.
+ * @ingroup g_vector
+ * @param[in] vec vector to be saved.
+ * @param[in] fp file stream saved to.
+ * @param[in] fmt storage format.
+ * @param[in] name name of the weight.
+ * @see dvec_save_header
+ * @see dvec_load_header, dvec_load_body
+ * @return non-zero value if any error.
+ */
+int dvec_save_body(dvec_t *vec, FILE *fp, connlm_fmt_t fmt, char *name);
 
 /**
  * Destroy a double float vector.
