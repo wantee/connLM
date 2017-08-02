@@ -559,10 +559,11 @@ static int comp_updater_bptt(comp_updater_t *comp_updater, bool clear)
                         }
                         mat_set(&in_er, 0.0);
 
-                        propagate_error(&in_er, &out_er,
-                                wt_updater->wt,
-                                wt_updater->col, wt_updater->row,
-                                wt_updater->param.er_cutoff, 1.0);
+                        if (propagate_error(&wt_updater->wt, &in_er, 1.0,
+                                    wt_updater->param.er_cutoff, &out_er) < 0) {
+                            ST_WARNING("Failed to propagate_error.");
+                            goto ERR;
+                        }
 
                         // dropout in_er
                         if (keep_prob < 1.0) {

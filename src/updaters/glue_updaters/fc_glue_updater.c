@@ -45,15 +45,15 @@ int fc_glue_updater_forward(glue_updater_t *glue_updater,
     wt_updater = glue_updater->wt_updater;
 
     if (add_mat_mat(1.0, in_ac, MT_NoTrans,
-                wt_updater->wt, MT_Trans, 1.0, out_ac) < 0) {
+                &wt_updater->wt, MT_Trans, 1.0, out_ac) < 0) {
         ST_WARNING("Failed to add_mat_mat.");
         return -1;
     }
 
-    if (wt_updater->bias != NULL) {
+    if (wt_updater->bias.size > 0) {
         for (i = 0; i < out_ac->num_rows; i++) {
             for (j = 0; j < out_ac->num_cols; j++) {
-                MAT_VAL(out_ac, i, j) += wt_updater->bias[j];
+                MAT_VAL(out_ac, i, j) += VEC_VAL(&wt_updater->bias, j);
             }
         }
     }
@@ -71,13 +71,15 @@ int fc_glue_updater_backprop(glue_updater_t *glue_updater,
 
     wt_updater = glue_updater->wt_updater;
 
-    if (in_er != NULL && in_er->vals != NULL) {
-        propagate_error(in_er, out_er,
-                wt_updater->wt, wt_updater->col, wt_updater->row,
-                wt_updater->param.er_cutoff, 1.0);
+    if (in_er != NULL && in_er->num_rows > 0) {
+        if (propagate_error(&wt_updater->wt, in_er, 1.0,
+                    wt_updater->param.er_cutoff, out_er) < 0) {
+            ST_WARNING("Failed to propagate_error.");
+            return -1;
+        }
     }
 
-    if (in_ac != NULL && in_ac->vals != NULL) {
+    if (in_ac != NULL && in_ac->num_rows > 0) {
         if (wt_update(wt_updater, out_er, 1.0,
                     in_ac, 1.0, NULL, NULL) < 0) {
             ST_WARNING("Failed to wt_update.");

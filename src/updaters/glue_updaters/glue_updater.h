@@ -251,6 +251,19 @@ int glue_updater_init_multicall(glue_updater_t *glue_updater,
 int glue_updater_clear_multicall(glue_updater_t *glue_updater,
         output_t *output);
 
+/**
+ * Propagate error to previous layer.
+ * @ingroup g_updater
+ * @param[in] in_er error of input layer.
+ * @param[in] wt weight matrix.
+ * @param[in] scale the scale.
+ * @param[in] er_cutoff cutoff of error.
+ * @param[out] out_er error of output layer.
+ * @return word for this step, -1 if any error.
+ */
+int propagate_error(mat_t *wt, mat_t *in_er,
+        real_t scale, real_t er_cutoff, mat_t *out_er);
+
 #ifdef __cplusplus
 }
 #endif

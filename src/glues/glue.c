@@ -892,7 +892,7 @@ int glue_load_train_opt(glue_t *glue, st_opt_t *opt, const char *sec_name,
 
     ST_CHECK_PARAM(glue == NULL || opt == NULL, -1);
 
-    if (glue->wt != NULL && glue->wt->row > 0) {
+    if (glue->wt != NULL && glue->wt->w.num_rows > 0) {
         if (sec_name == NULL || sec_name[0] == '\0') {
             snprintf(name, MAX_ST_CONF_LEN, "%s", glue->name);
         } else {

@@ -388,7 +388,7 @@ int direct_glue_init_data(glue_t *glue, input_t *input,
 
     data = (direct_glue_data_t *)glue->extra;
 
-    if (wt_init(glue->wt, data->hash_sz, 1) < 0) {
+    if (wt_init(glue->wt, 1, data->hash_sz) < 0) {
         ST_WARNING("Failed to wt_init.");
         return -1;
     }
@@ -408,8 +408,7 @@ wt_updater_t* direct_glue_init_wt_updater(glue_t *glue, param_t *param)
     }
 
     wt_updater = wt_updater_create(param == NULL ? &glue->param : param,
-            glue->wt->mat, glue->wt->bias,
-            glue->wt->row, glue->wt->col, WT_UT_PART);
+            &glue->wt->w, &glue->wt->bias, WT_UT_PART);
     if (wt_updater == NULL) {
         ST_WARNING("Failed to wt_updater_create.");
         goto ERR;
@@ -431,13 +430,13 @@ static float direct_glue_load_factor(glue_t *glue)
     ST_CHECK_PARAM(glue == NULL, 0.0);
 
     n = 0;
-    for (i = 0; i < glue->wt->row; i++) {
-        if (glue->wt->mat[i] != 0) {
+    for (i = 0; i < glue->wt->w.num_rows; i++) {
+        if (MAT_VAL(&glue->wt->w, i, 0) != 0) {
             ++n;
         }
     }
 
-    return n / (float)(glue->wt->row);
+    return n / (float)(glue->wt->w.num_rows);
 }
 
 void direct_glue_print_verbose_info(glue_t *glue, FILE *fo)

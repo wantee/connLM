@@ -40,26 +40,26 @@ void wt_updater_destroy(wt_updater_t *wt_updater)
         return;
     }
 
-    wt_updater->wt = NULL;
-    safe_st_aligned_free(wt_updater->delta_wt);
-    wt_updater->bias = NULL;
-    safe_st_aligned_free(wt_updater->delta_bias);
-    wt_updater->row = 0;
-    wt_updater->col = 0;
+    mat_destroy(&wt_updater->wt);
+    mat_destroy(&wt_updater->delta_wt);
+    vec_destroy(&wt_updater->bias);
+    vec_destroy(&wt_updater->delta_bias);
 
     safe_st_free(wt_updater->segs);
     wt_updater->n_seg = 0;
 }
 
-wt_updater_t* wt_updater_create(param_t *param, real_t *wt, real_t *bias,
-        size_t row, size_t col, wt_update_type_t type)
+wt_updater_t* wt_updater_create(param_t *param, mat_t *wt, vec_t *bias,
+        wt_update_type_t type)
 {
-    size_t sz;
-    size_t bias_sz;
-
     wt_updater_t *wt_updater = NULL;
 
-    ST_CHECK_PARAM(param == NULL || wt == NULL || row <= 0 || col <= 0, NULL);
+    ST_CHECK_PARAM(param == NULL || wt == NULL || bias == NULL, NULL);
+
+    if (wt->num_cols != bias->size) {
+        ST_WARNING("weight matrix and bias not match");
+        return NULL;
+    }
 
     wt_updater = (wt_updater_t *)st_malloc(sizeof(wt_updater_t));
     if (wt_updater == NULL) {
@@ -69,32 +69,22 @@ wt_updater_t* wt_updater_create(param_t *param, real_t *wt, real_t *bias,
     memset(wt_updater, 0, sizeof(wt_updater_t));
 
     wt_updater->param = *param;
-    wt_updater->row = row;
-    wt_updater->col = col;
-    wt_updater->wt = wt;
-    wt_updater->bias = bias;
+    mat_assign(&wt_updater->wt, wt);
+    vec_assign(&wt_updater->bias, bias);
     wt_updater->type = type;
 
     if (wt_updater->param.momentum != 0.0) {
-        sz =  wt_updater->row * wt_updater->col * sizeof(real_t);
-        bias_sz = wt_updater->row * sizeof(real_t);
-
-        safe_st_aligned_free(wt_updater->delta_wt);
-        wt_updater->delta_wt = st_aligned_malloc(sz, ALIGN_SIZE);
-        if (wt_updater->delta_wt == NULL) {
-            ST_WARNING("Failed to st_aligned_malloc delta_wt.");
+        if (mat_resize(&wt_updater->delta_wt,
+                    wt->num_rows, wt->num_cols, 0.0) < 0) {
+            ST_WARNING("Failed to mat_resize delta_wt.");
             goto ERR;
         }
-        memset(wt_updater->delta_wt, 0, sz);
 
-        if (wt_updater->bias != NULL) {
-            safe_st_aligned_free(wt_updater->delta_bias);
-            wt_updater->delta_bias = st_aligned_malloc(bias_sz, ALIGN_SIZE);
-            if (wt_updater->delta_bias == NULL) {
-                ST_WARNING("Failed to st_aligned_malloc delta_bias.");
+        if (wt_updater->bias.size > 0) {
+            if (vec_resize(&wt_updater->delta_bias, bias->size, 0.0) < 0) {
+                ST_WARNING("Failed to mat_resize delta_bias.");
                 goto ERR;
             }
-            memset(wt_updater->delta_bias, 0, bias_sz);
         }
     }
 

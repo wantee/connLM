@@ -248,6 +248,14 @@ int mat_fill(mat_t *mat, size_t row_s, size_t num_rows,
 void mat_scale(mat_t *mat, real_t scale);
 
 /**
+ * Cutoff elements in a matrix.
+ * @ingroup g_matrix
+ * @param[in] mat the matrix.
+ * @param[in] cutoff the cutoff.
+ */
+void mat_cutoff(mat_t *mat, real_t cutoff);
+
+/**
  * Set elements to a val in a matrix.
  * @ingroup g_matrix
  * @param[in] mat the matrix.

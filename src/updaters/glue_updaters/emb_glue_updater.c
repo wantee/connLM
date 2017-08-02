@@ -116,7 +116,8 @@ int emb_glue_updater_forward(glue_updater_t *glue_updater,
     real_t *wt;
     emb_glue_data_t *data;
 
-    int b, w, i, j, col, pos;
+    size_t col;
+    int b, w, i, j, pos;
     real_t scale, ac;
 
     ST_CHECK_PARAM(glue_updater == NULL || comp_updater == NULL
@@ -125,8 +126,8 @@ int emb_glue_updater_forward(glue_updater_t *glue_updater,
     glue = glue_updater->glue;
     data = (emb_glue_data_t *)glue->extra;
     input = comp_updater->comp->input;
-    col = glue->wt->col;
-    wt = glue_updater->wt_updater->wt;
+    col = glue_updater->wt_updater->wt.num_cols;
+    wt = glue_updater->wt_updater->wt.vals;
 
     switch (data->combine) {
         case EC_SUM:
@@ -226,6 +227,7 @@ int emb_glue_updater_backprop(glue_updater_t *glue_updater,
     mat_t part_er = {0};
 
     int b, i, j;
+    size_t col;
 
     ST_CHECK_PARAM(glue_updater == NULL || comp_updater == NULL
             || batch == NULL, -1);
@@ -234,6 +236,7 @@ int emb_glue_updater_backprop(glue_updater_t *glue_updater,
     data = (emb_glue_data_t *)glue->extra;
     egu_data = (egu_data_t *)glue_updater->extra;
     input = comp_updater->comp->input;
+    col = glue_updater->wt_updater->wt.num_cols;
 
     if (glue_updater->keep_mask.vals != NULL) {
         if (mat_mul_elems(out_er, &glue_updater->keep_mask,
@@ -273,8 +276,8 @@ int emb_glue_updater_backprop(glue_updater_t *glue_updater,
                     }
                 }
             }
-            if (mat_submat(&er, 0, -1, j * glue->wt->col,
-                        (j + 1) * glue->wt->col, &part_er) < 0) {
+            if (mat_submat(&er, 0, -1, j * col,
+                        (j + 1) * col, &part_er) < 0) {
                 ST_WARNING("Failed to mat_submat.");
                 return -1;
             }

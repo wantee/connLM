@@ -40,7 +40,10 @@ void mat_destroy(mat_t *mat)
         return;
     }
 
-    safe_st_aligned_free(mat->vals);
+    if (! mat->is_const) {
+        safe_st_aligned_free(mat->vals);
+    }
+
     mat->num_rows = 0;
     mat->num_cols = 0;
     mat->capacity = 0;
@@ -285,6 +288,21 @@ void mat_scale(mat_t *mat, real_t scale)
 
     for (i = 0; i < mat->num_rows * mat->num_cols; i++) {
         mat->vals[i] *= scale;
+    }
+}
+
+void mat_cutoff(mat_t *mat, real_t cutoff)
+{
+    size_t i;
+
+    ST_CHECK_PARAM_VOID(mat == NULL || cutoff < 0);
+
+    for (i = 0; i < mat->num_rows * mat->num_cols; i++) {
+        if (mat->vals[i] > cutoff) {
+            mat->vals[i] = cutoff;
+        } else if (mat->vals[i] < -cutoff) {
+            mat->vals[i] = -cutoff;
+        }
     }
 }
 

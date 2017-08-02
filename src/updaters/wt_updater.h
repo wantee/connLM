@@ -61,12 +61,10 @@ typedef enum _weight_update_type_t_ {
 typedef struct _weight_updater_t_ {
     param_t param; /**< the param. */
 
-    real_t *wt; /**< local weight matrix of this updater. */
-    real_t *delta_wt; /**< buffer for delta weight. used by momentum. */
-    real_t *bias; /**< local bias of this updater. */
-    real_t *delta_bias; /**< buffer for delta bias. used by momentum. */
-    size_t row; /**< row of weight maxtrix. */
-    size_t col; /**< col of weight maxtrix. */
+    mat_t wt; /**< local weight matrix of this updater. */
+    mat_t delta_wt; /**< buffer for delta weight. used by momentum. */
+    vec_t bias; /**< local bias of this updater. */
+    vec_t delta_bias; /**< buffer for delta bias. used by momentum. */
     wt_update_type_t type; /**< updating type. */
 
     st_int_seg_t *segs; /**< segs for type == WT_UT_SEG. */
@@ -107,8 +105,8 @@ void wt_updater_destroy(wt_updater_t *wt_updater);
  * @param[in] type updating type of weight maxtrix.
  * @return wt_updater on success, otherwise NULL.
  */
-wt_updater_t* wt_updater_create(param_t *param, real_t *wt, real_t *bias,
-        size_t row, size_t col, wt_update_type_t type);
+wt_updater_t* wt_updater_create(param_t *param, mat_t *wt, vec_t *bias,
+        wt_update_type_t type);
 
 /**
  * Set segs for wt_updater. The segs is used by WT_UT_SEG.
