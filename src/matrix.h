@@ -335,10 +335,11 @@ typedef enum _sparse_matrix_format_t_ {
  */
 typedef struct _sparse_matrix_t_ {
     sp_mat_fmt_t fmt; /**< format. */
+    size_t num_rows; /**< number rows of the matrix. */
+    size_t num_cols; /**< number cols of the matrix. */
+
     real_t *vals; /**< values of matrix. */
     size_t size; /**< number of values. */
-    size_t num_rows; /**< number of rows. */
-    size_t num_cols; /**< number of cols. */
     size_t capacity; /**< capacity of values. */
 
     union {

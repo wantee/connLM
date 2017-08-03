@@ -35,6 +35,79 @@
 
 #include "out_glue_updater.h"
 
+typedef struct _ogu_data_t_ {
+    sp_mat_t seg_buf;
+} ogu_data_t;
+
+#define safe_ogu_data_destroy(ptr) do {\
+    if((ptr) != NULL) {\
+        ogu_data_destroy((ogu_data_t *)ptr);\
+        safe_st_free(ptr);\
+        (ptr) = NULL;\
+    }\
+    } while(0)
+
+void ogu_data_destroy(ogu_data_t *data)
+{
+    if (data == NULL) {
+        return;
+    }
+
+    sp_mat_destroy(&data->seg_buf);
+}
+
+ogu_data_t* ogu_data_init(glue_updater_t *glue_updater)
+{
+    ogu_data_t *data = NULL;
+
+    data = (ogu_data_t *)st_malloc(sizeof(ogu_data_t));
+    if (data == NULL) {
+        ST_WARNING("Failed to st_malloc ogu_data.");
+        goto ERR;
+    }
+    memset(data, 0, sizeof(ogu_data_t));
+
+    return data;
+ERR:
+    safe_ogu_data_destroy(data);
+    return NULL;
+}
+
+void out_glue_updater_destroy(glue_updater_t *glue_updater)
+{
+    if (glue_updater == NULL) {
+        return;
+    }
+
+    safe_ogu_data_destroy(glue_updater->extra);
+}
+
+int out_glue_updater_init(glue_updater_t *glue_updater)
+{
+    glue_t *glue;
+
+    ST_CHECK_PARAM(glue_updater == NULL, -1);
+
+    glue= glue_updater->glue;
+
+    if (strcasecmp(glue->type, OUT_GLUE_NAME) != 0) {
+        ST_WARNING("Not a out glue_updater. [%s]", glue->type);
+        return -1;
+    }
+
+    glue_updater->extra = (void *)ogu_data_init(glue_updater);
+    if (glue_updater->extra == NULL) {
+        ST_WARNING("Failed to ogu_data_init.");
+        goto ERR;
+    }
+
+    return 0;
+
+ERR:
+    safe_ogu_data_destroy(glue_updater->extra);
+    return -1;
+}
+
 static int out_glue_updater_forward_node(glue_updater_t *glue_updater,
         output_t *output, output_node_id_t node,
         output_node_id_t child_s, output_node_id_t child_e,
@@ -60,6 +133,7 @@ static int out_glue_updater_forward_node(glue_updater_t *glue_updater,
 
     if (output->norm == ON_SOFTMAX) {
         if (child_e - child_s - 1 > 0) {
+            add_mat_mat
             matXvec(out_ac + child_s,
                     wt + output_param_idx(output, child_s) * layer_size,
                     in_ac, child_e - child_s - 1, layer_size, scale);

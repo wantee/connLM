@@ -222,7 +222,7 @@ int wt_update(wt_updater_t *wt_updater,
 
             // construct maxtrix for segs
             for (a = 0; a < sp_mat->csc.num_cols; a++) {
-                for (b = sp_mat->csc.col_s; b < sp_mat->csc.col_e; b++) {
+                for (b = sp_mat->csc.col_s[a]; b < sp_mat->csc.col_e[a]; b++) {
                     idx = sp_mat->csc.rows[b];
                     seg = wt_updater->segs + idx;
 
@@ -252,7 +252,7 @@ int wt_update(wt_updater_t *wt_updater,
 
             // do update weight
             for (a = 0; a < sp_mat->csc.num_cols; a++) {
-                for (b = sp_mat->csc.col_s; b < sp_mat->csc.col_e; b++) {
+                for (b = sp_mat->csc.col_s[a]; b < sp_mat->csc.col_e[a]; b++) {
                     idx = sp_mat->csc.rows[b];
                     seg = wt_updater->segs + idx;
                     buf_er = wt_updater->buf_ers + idx;
