@@ -36,7 +36,20 @@
 #include "out_glue_updater.h"
 
 typedef struct _ogu_data_t_ {
-    sp_mat_t seg_buf;
+    /* these variables are used to store the ac or er for tree nodes of all
+       words in a batch. They are all array with size equals to num_tree_nodes
+
+       usage is:
+       for word in batch:
+           for node in path(word):
+               ac = MAT_ROW(node_acs[node], node_iters[node])
+               er = MAT_ROW(node_ers[node], node_iters[node])
+               node_iters[node]++
+    */
+    int num_nodes;
+    int *node_iters;
+    mat_t *node_acs;
+    mat_t *node_ers;
 } ogu_data_t;
 
 #define safe_ogu_data_destroy(ptr) do {\
@@ -49,11 +62,29 @@ typedef struct _ogu_data_t_ {
 
 void ogu_data_destroy(ogu_data_t *data)
 {
+    int i;
+
     if (data == NULL) {
         return;
     }
 
-    sp_mat_destroy(&data->seg_buf);
+    safe_st_free(data->node_iters);
+
+    if (data->node_acs != NULL) {
+        for (i = 0; i < data->num_nodes; i++) {
+            mat_destroy(data->node_acs + i);
+        }
+        safe_st_free(data->node_acs);
+    }
+
+    if (data->node_ers != NULL) {
+        for (i = 0; i < data->num_nodes; i++) {
+            mat_destroy(data->node_ers + i);
+        }
+        safe_st_free(data->node_ers);
+    }
+
+    data->num_nodes = 0;
 }
 
 ogu_data_t* ogu_data_init(glue_updater_t *glue_updater)
@@ -106,6 +137,56 @@ int out_glue_updater_init(glue_updater_t *glue_updater)
 ERR:
     safe_ogu_data_destroy(glue_updater->extra);
     return -1;
+}
+
+int ogu_data_setup(ogu_data_t *data, int num_nodes, bool backprop)
+{
+    ST_CHECK_PARAM(data == NULL, -1);
+
+    data->num_nodes = num_nodes;
+
+    data->node_iters = (int *)st_malloc(sizeof(int) * num_nodes);
+    if (data->node_iters == NULL) {
+        ST_WARNING("Failed to st_malloc node_iters.");
+        goto ERR;
+    }
+    memset(data->node_iters, 0, sizeof(int) * num_nodes);
+
+    data->node_acs = (mat_t *)st_malloc(sizeof(mat_t) * num_nodes);
+    if (data->node_acs == NULL) {
+        ST_WARNING("Failed to st_malloc node_acs.");
+        goto ERR;
+    }
+    memset(data->node_acs, 0, sizeof(mat_t) * num_nodes);
+
+    if (backprop) {
+        data->node_ers = (mat_t *)st_malloc(sizeof(mat_t) * num_nodes);
+        if (data->node_ers == NULL) {
+            ST_WARNING("Failed to st_malloc node_ers.");
+            goto ERR;
+        }
+        memset(data->node_ers, 0, sizeof(mat_t) * num_nodes);
+    }
+
+    return 0;
+ERR:
+    ogu_data_destroy(data);
+    return -1;
+}
+
+int out_glue_updater_setup(glue_updater_t *glue_updater,
+        comp_updater_t *comp_updater, bool backprop)
+{
+    ST_CHECK_PARAM(glue_updater == NULL || comp_updater == NULL, -1);
+
+    if (ogu_data_setup((ogu_data_t *)glue_updater->extra,
+                comp_updater->out_updater->output->tree->num_node,
+                backprop) < 0) {
+        ST_WARNING("Failed to ogu_data_setup");
+        return -1;
+    }
+
+    return 0;
 }
 
 static int out_glue_updater_forward_node(glue_updater_t *glue_updater,

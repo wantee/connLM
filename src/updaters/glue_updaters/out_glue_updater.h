@@ -57,6 +57,17 @@ void out_glue_updater_destroy(glue_updater_t* glue_updater);
 int out_glue_updater_init(glue_updater_t *glue_updater);
 
 /**
+ * Setup out_glue_updater for running.
+ * @ingroup g_glue_updater_out
+ * @param[in] glue_updater glue_updater.
+ * @param[in] comp_updater the comp_updater.
+ * @param[in] backprop whether do backprop.
+ * @return non-zero value if any error.
+ */
+int out_glue_updater_setup(glue_updater_t *glue_updater,
+        comp_updater_t *comp_updater, bool backprop);
+
+/**
  * Feed-forward a batch for a out_glue_updater.
  * @ingroup g_glue_updater_out
  * @param[in] glue_updater glue_updater.

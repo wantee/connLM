@@ -34,6 +34,7 @@ extern "C" {
 #include <connlm/config.h>
 
 #include "utils.h"
+#include "vector.h"
 #include "matrix.h"
 #include "param.h"
 
