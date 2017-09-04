@@ -113,8 +113,8 @@ int emb_glue_updater_forward(glue_updater_t *glue_updater,
 {
     glue_t *glue;
     input_t *input;
-    real_t *wt;
     emb_glue_data_t *data;
+    mat_t *wt;
 
     size_t col;
     int b, w, i, j, pos;
@@ -126,8 +126,8 @@ int emb_glue_updater_forward(glue_updater_t *glue_updater,
     glue = glue_updater->glue;
     data = (emb_glue_data_t *)glue->extra;
     input = comp_updater->comp->input;
-    col = glue_updater->wt_updater->wt.num_cols;
-    wt = glue_updater->wt_updater->wt.vals;
+    wt = &glue_updater->wt_updater->wt;
+    col = wt->num_cols;
 
     switch (data->combine) {
         case EC_SUM:
@@ -135,18 +135,17 @@ int emb_glue_updater_forward(glue_updater_t *glue_updater,
                 for (w = 0; w < batch->inputs->num_words; w++) {
                     scale = batch->inputs->weights[w];
 
-                    j = batch->inputs->words[w] * col;
-
-                    if (glue_updater->keep_mask.vals != NULL) {
-                        for (i = 0; i < col; i++, j++) {
-                            if (glue_updater->keep_mask.vals[i] == 1.0) {
-                                MAT_VAL(out_ac, b, i) += scale * wt[j]
-                                    / glue_updater->keep_prob;
+                    j = batch->inputs->words[w];
+                    if (glue_updater->keep_mask.num_rows > 0) {
+                        scale /= glue_updater->keep_prob;
+                        for (i = 0; i < col; i++) {
+                            if (MAT_VAL(&glue_updater->keep_mask, b, i) == 1.0) {
+                                MAT_VAL(out_ac, b, i) += scale * MAT_VAL(wt, j, i);
                             }
                         }
                     } else {
-                        for (i = 0; i < col; i++, j++) {
-                            MAT_VAL(out_ac, b, i) += scale * wt[j];
+                        for (i = 0; i < col; i++) {
+                            MAT_VAL(out_ac, b, i) += scale * MAT_VAL(wt, j, i);
                         }
                     }
                 }
@@ -155,24 +154,22 @@ int emb_glue_updater_forward(glue_updater_t *glue_updater,
         case EC_AVG:
             for (b = 0; b < batch->num_egs; b++) {
                 for (i = 0; i < col; i++) {
-                    if (glue_updater->keep_mask.vals != NULL
-                            && glue_updater->keep_mask.vals[i] == 0.0) {
+                    if (glue_updater->keep_mask.num_rows > 0
+                            && MAT_VAL(&glue_updater->keep_mask, b, i) == 0.0) {
                         continue;
                     }
 
                     ac = 0;
                     for (w = 0; w < batch->inputs->num_words; w++) {
                         scale = batch->inputs->weights[w];
-                        j = batch->inputs->words[w] * col + i;
+                        j = batch->inputs->words[w];
 
-                        ac += scale * wt[j];
+                        ac += MAT_VAL(wt, j, i);
                     }
-                    if (glue_updater->keep_mask.vals != NULL) {
-                        MAT_VAL(out_ac, b, i) += ac / input->n_ctx
-                            / glue_updater->keep_prob;
-                    } else {
-                        MAT_VAL(out_ac, b, i) += ac / input->n_ctx;
+                    if (glue_updater->keep_mask.num_rows > 0) {
+                        scale /= glue_updater->keep_prob;
                     }
+                    MAT_VAL(out_ac, b, i) += scale * ac / input->n_ctx;
                 }
             }
             break;
@@ -182,7 +179,7 @@ int emb_glue_updater_forward(glue_updater_t *glue_updater,
                 for (w = 0; w < batch->inputs->num_words; w++) {
                     scale = batch->inputs->weights[w];
 
-                    j = batch->inputs->words[w] * col;
+                    j = batch->inputs->words[w];
 
                     while (pos < input->n_ctx) {
                         if (input->context[pos].i == batch->inputs->positions[w]) {
@@ -191,16 +188,16 @@ int emb_glue_updater_forward(glue_updater_t *glue_updater,
                         pos++;
                     }
 
-                    if (glue_updater->keep_mask.vals != NULL) {
-                        for (i = pos * col; i < (pos + 1) * col; i++, j++) {
-                            if (glue_updater->keep_mask.vals[i] == 1.0) {
-                                MAT_VAL(out_ac, b, i) += scale * wt[j]
-                                    / glue_updater->keep_prob;
+                    if (glue_updater->keep_mask.num_rows > 0) {
+                        scale /= glue_updater->keep_prob;
+                        for (i = pos * col; i < (pos + 1) * col; i++) {
+                            if (MAT_VAL(&glue_updater->keep_mask, b, i) == 1.0) {
+                                MAT_VAL(out_ac, b, i) += scale * MAT_VAL(wt, j, i);
                             }
                         }
                     } else {
-                        for (i = pos * col; i < (pos + 1) * col; i++, j++) {
-                            MAT_VAL(out_ac, b, i) += scale * wt[j];
+                        for (i = pos * col; i < (pos + 1) * col; i++) {
+                            MAT_VAL(out_ac, b, i) += scale * MAT_VAL(wt, j, i);
                         }
                     }
                 }
@@ -238,7 +235,7 @@ int emb_glue_updater_backprop(glue_updater_t *glue_updater,
     input = comp_updater->comp->input;
     col = glue_updater->wt_updater->wt.num_cols;
 
-    if (glue_updater->keep_mask.vals != NULL) {
+    if (glue_updater->keep_mask.num_rows > 0) {
         if (mat_mul_elems(out_er, &glue_updater->keep_mask,
                     &glue_updater->dropout_val) < 0) {
             ST_WARNING("Failed to mat_mul_elems.");

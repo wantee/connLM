@@ -460,7 +460,7 @@ int glue_updater_backprop(glue_updater_t *glue_updater,
             return -1;
         }
 
-        if (glue_updater->keep_prob < 1.0 && in_er.vals != NULL) {
+        if (glue_updater->keep_prob < 1.0 && in_er.num_rows > 0) {
             if (mat_mul_elems(&in_er, &glue_updater->keep_mask, &in_er) < 0) {
                 ST_WARNING("Failed to mat_mul_elems.");
                 return -1;

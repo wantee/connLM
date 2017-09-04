@@ -168,7 +168,7 @@ static int comp_updater_setup_dropout(comp_updater_t *comp_updater)
 
         // following check is necessary for the glues that may be
         // contained in multiple cycles
-        if (head->keep_mask.vals == NULL) {
+        if (head->keep_mask.num_rows > 0) {
             // set effective learning rate
             head->wt_updater->param.learn_rate *= (1 - glue->param.dropout);
         }
@@ -185,7 +185,7 @@ static int comp_updater_setup_dropout(comp_updater_t *comp_updater)
 
             // following check is necessary for the glues that may be
             // contained in multiple cycles
-            if (glue_updater->keep_mask.vals == NULL) {
+            if (glue_updater->keep_mask.num_rows > 0) {
                 // set effective learning rate
                 glue_updater->wt_updater->param.learn_rate *= (1 - glue->param.dropout);
             }
