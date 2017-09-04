@@ -53,12 +53,13 @@ typedef struct _matrix_t_ {
     real_t *vals; /**< values of matrix. */
     size_t num_rows; /**< number of rows. */
     size_t num_cols; /**< number of cols. */
+    size_t stride; /**< true number of columns for the internal matrix. */
     size_t capacity; /**< capacity of vals. */
     bool is_const; /**< whether the diemention of matrix is const. */
 } mat_t;
 
-#define MAT_VAL(mat, row, col) ((mat)->vals[(row)*((mat)->num_cols) + (col)])
-#define MAT_VALP(mat, row, col) ((mat)->vals + ((row)*((mat)->num_cols) + (col)))
+#define MAT_VAL(mat, row, col) ((mat)->vals[(row)*((mat)->stride) + (col)])
+#define MAT_VALP(mat, row, col) ((mat)->vals + ((row)*((mat)->stride) + (col)))
 
 /**
  * Load matrix header.

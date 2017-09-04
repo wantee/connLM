@@ -68,6 +68,7 @@ int mat_clear(mat_t *mat)
 
 int mat_resize(mat_t *mat, size_t num_rows, size_t num_cols, real_t init_val)
 {
+    size_t stride;
     size_t i;
 
     ST_CHECK_PARAM(mat == NULL, -1);
@@ -79,9 +80,13 @@ int mat_resize(mat_t *mat, size_t num_rows, size_t num_cols, real_t init_val)
         }
     }
 
-    if (num_rows * num_cols > mat->capacity) {
+    stride = num_cols;
+    stride += ((ALIGN_SIZE / sizeof(real_t)) - num_cols % (ALIGN_SIZE / sizeof(real_t)))
+                  % (ALIGN_SIZE / sizeof(real_t));
+
+    if (num_rows * stride > mat->capacity) {
         mat->vals = (real_t *)st_aligned_realloc(mat->vals,
-                sizeof(real_t) * num_rows * num_cols, ALIGN_SIZE);
+                sizeof(real_t) * num_rows * stride, ALIGN_SIZE);
         if (mat->vals == NULL) {
             ST_WARNING("Failed to st_aligned_realloc mat->vals.");
             return -1;
@@ -89,17 +94,18 @@ int mat_resize(mat_t *mat, size_t num_rows, size_t num_cols, real_t init_val)
         if (! isnan(init_val)) {
             if (init_val == 0.0) {
                 memset(mat->vals + mat->capacity, 0,
-                    sizeof(real_t) * (num_rows * num_cols - mat->capacity));
+                    sizeof(real_t) * (num_rows * stride - mat->capacity));
             } else {
-                for (i = mat->capacity; i < num_rows * num_cols; i++) {
+                for (i = mat->capacity; i < num_rows * stride; i++) {
                     mat->vals[i] = init_val;
                 }
             }
         }
-        mat->capacity = num_rows * num_cols;
+        mat->capacity = num_rows * stride;
     }
     mat->num_rows = num_rows;
     mat->num_cols = num_cols;
+    mat->stride = stride;
 
     return 0;
 }
@@ -117,9 +123,9 @@ int mat_resize_row(mat_t *mat, size_t num_rows, real_t init_val)
         }
     }
 
-    if (num_rows * mat->num_cols > mat->capacity) {
+    if (num_rows * mat->stride > mat->capacity) {
         mat->vals = (real_t *)st_aligned_realloc(mat->vals,
-                sizeof(real_t) * num_rows * mat->num_cols, ALIGN_SIZE);
+                sizeof(real_t) * num_rows * mat->stride, ALIGN_SIZE);
         if (mat->vals == NULL) {
             ST_WARNING("Failed to st_aligned_realloc mat->vals.");
             return -1;
@@ -127,14 +133,14 @@ int mat_resize_row(mat_t *mat, size_t num_rows, real_t init_val)
         if (! isnan(init_val)) {
             if (init_val == 0.0) {
                 memset(mat->vals + mat->capacity, 0,
-                    sizeof(real_t) * (num_rows * mat->num_cols - mat->capacity));
+                    sizeof(real_t) * (num_rows * mat->stride - mat->capacity));
             } else {
-                for (i = mat->capacity; i < num_rows * mat->num_cols; i++) {
+                for (i = mat->capacity; i < num_rows * mat->stride; i++) {
                     mat->vals[i] = init_val;
                 }
             }
         }
-        mat->capacity = num_rows * mat->num_cols;
+        mat->capacity = num_rows * mat->stride;
     }
     mat->num_rows = num_rows;
 
@@ -154,8 +160,8 @@ int mat_append(mat_t *dst, mat_t* src)
         ST_WARNING("Failed to mat_resize_row.");
     }
 
-    memcpy(dst->vals + dst->num_rows * dst->num_cols, src->vals,
-            sizeof(real_t) * src->num_rows * src->num_cols);
+    memcpy(dst->vals + dst->num_rows * dst->stride, src->vals,
+            sizeof(real_t) * src->num_rows * src->stride);
     dst->num_rows += src->num_rows;
 
     return 0;
@@ -170,8 +176,8 @@ int mat_append_row(mat_t *mat, real_t* row)
         return -1;
     }
 
-    memcpy(mat->vals + mat->num_rows * mat->num_cols, row,
-            sizeof(real_t) * mat->num_cols);
+    memcpy(mat->vals + mat->num_rows * mat->stride, row,
+            sizeof(real_t) * mat->stride);
     mat->num_rows++;
 
     return 0;
@@ -187,7 +193,7 @@ int mat_cpy(mat_t *dst, mat_t *src)
     }
 
     memcpy(dst->vals, src->vals,
-            sizeof(real_t) * src->num_rows * src->num_cols);
+            sizeof(real_t) * src->num_rows * src->stride);
 
     return 0;
 }
@@ -209,9 +215,9 @@ int mat_move_up(mat_t *mat, size_t dst_row, size_t src_row)
         return -1;
     }
 
-    memmove(mat->vals + dst_row * mat->num_cols,
-            mat->vals + src_row * mat->num_cols,
-            sizeof(real_t) * (mat->num_rows - src_row) * mat->num_cols);
+    memmove(mat->vals + dst_row * mat->stride,
+            mat->vals + src_row * mat->stride,
+            sizeof(real_t) * (mat->num_rows - src_row) * mat->stride);
 
     return 0;
 }
@@ -246,10 +252,11 @@ int mat_submat(mat_t *mat, size_t row_s, size_t num_rows,
         }
     }
 
-    sub->vals = mat->vals + row_s * mat->num_cols + col_s;
+    sub->vals = mat->vals + row_s * mat->stride + col_s;
     sub->num_rows = num_rows;
     sub->num_cols = num_cols;
-    sub->capacity = num_rows * num_cols;
+    sub->stride = mat->stride;
+    sub->capacity = num_rows * mat->stride;
 
     sub->is_const = true;
 
@@ -286,7 +293,7 @@ void mat_scale(mat_t *mat, real_t scale)
         return;
     }
 
-    for (i = 0; i < mat->num_rows * mat->num_cols; i++) {
+    for (i = 0; i < mat->num_rows * mat->stride; i++) {
         mat->vals[i] *= scale;
     }
 }
@@ -297,7 +304,7 @@ void mat_cutoff(mat_t *mat, real_t cutoff)
 
     ST_CHECK_PARAM_VOID(mat == NULL || cutoff < 0);
 
-    for (i = 0; i < mat->num_rows * mat->num_cols; i++) {
+    for (i = 0; i < mat->num_rows * mat->stride; i++) {
         if (mat->vals[i] > cutoff) {
             mat->vals[i] = cutoff;
         } else if (mat->vals[i] < -cutoff) {
@@ -312,7 +319,7 @@ void mat_set(mat_t *mat, real_t val)
 
     ST_CHECK_PARAM_VOID(mat == NULL);
 
-    for (i = 0; i < mat->num_rows * mat->num_cols; i++) {
+    for (i = 0; i < mat->num_rows * mat->stride; i++) {
         mat->vals[i] = val;
     }
 }
@@ -328,7 +335,7 @@ int mat_set_row(mat_t *mat, size_t row, real_t val)
         return -1;
     }
 
-    for (i = row * mat->num_cols; i < (row + 1) * mat->num_cols; i++) {
+    for (i = row * mat->stride; i < (row + 1) * mat->stride; i++) {
         mat->vals[i] = val;
     }
 
@@ -343,9 +350,11 @@ void mat_from_array(mat_t *mat, real_t *arr, size_t len, bool row_vec)
     if (row_vec) {
         mat->num_rows = 1;
         mat->num_cols = len;
+        mat->stride = len;
     } else {
         mat->num_rows = len;
         mat->num_cols = 1;
+        mat->stride = 1;
     }
     mat->capacity = len;
     mat->is_const = true;
@@ -364,7 +373,7 @@ int mat_add_elems(mat_t *mat1, mat_t *mat2, mat_t *out)
         return -1;
     }
 
-    for (i = 0; i < mat1->num_rows * mat1->num_cols; i++) {
+    for (i = 0; i < mat1->num_rows * mat1->stride; i++) {
         out->vals[i] = mat1->vals[i] + mat2->vals[i];
     }
 
@@ -384,7 +393,7 @@ int mat_mul_elems(mat_t *mat1, mat_t *mat2, mat_t *out)
         return -1;
     }
 
-    for (i = 0; i < mat1->num_rows * mat1->num_cols; i++) {
+    for (i = 0; i < mat1->num_rows * mat1->stride; i++) {
         out->vals[i] = mat1->vals[i] * mat2->vals[i];
     }
 
@@ -435,11 +444,17 @@ int add_mat_mat(real_t alpha, mat_t *A, mat_trans_t trans_A,
 #ifdef _USE_BLAS_
     cblas_gemm(CblasRowMajor, (enum CBLAS_TRANSPOSE)trans_A,
             (enum CBLAS_TRANSPOSE)trans_B, m, n, k,
-            alpha, A->vals, A->num_cols, B->vals, B->num_cols,
-            beta, C->vals, C->num_cols);
+            alpha, A->vals, A->stride, B->vals, B->stride,
+            beta, C->vals, C->stride);
 #else
     real_t *aa, *bb, *cc, sum;
     size_t i, j, t;
+
+    if (A->stride != A->num_cols || B->stride != B->num_cols
+            || C->stride == C->num_cols) {
+        ST_WARNING("Do not support num_cols != stride for now");
+        return -1;
+    }
 
     if (beta == 0.0) {
         memset(C->vals, 0, sizeof(real_t) * m * n);

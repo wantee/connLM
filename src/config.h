@@ -58,7 +58,7 @@ typedef unsigned long count_t;
 #define COUNT_FMT "%lu"
 #define COUNT_MAX ((count_t)-1)
 
-#define ALIGN_SIZE 128
+#define ALIGN_SIZE 16
 
 #define SENT_END "</s>"
 #define SENT_END_ID 0
