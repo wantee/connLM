@@ -46,6 +46,7 @@ void mat_destroy(mat_t *mat)
 
     mat->num_rows = 0;
     mat->num_cols = 0;
+    mat->stride = 0;
     mat->capacity = 0;
 }
 
@@ -62,6 +63,7 @@ int mat_clear(mat_t *mat)
 
     mat->num_rows = 0;
     mat->num_cols = 0;
+    mat->stride = 0;
 
     return 0;
 }

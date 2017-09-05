@@ -60,6 +60,7 @@ typedef struct _matrix_t_ {
 
 #define MAT_VAL(mat, row, col) ((mat)->vals[(row)*((mat)->stride) + (col)])
 #define MAT_VALP(mat, row, col) ((mat)->vals + ((row)*((mat)->stride) + (col)))
+#define MAT_ROW(mat, row) ((mat)->vals + (row)*((mat)->stride))
 
 /**
  * Load matrix header.
