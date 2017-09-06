@@ -312,7 +312,9 @@ void svec_destroy(svec_t *vec)
         return;
     }
 
-    safe_st_aligned_free(vec->vals);
+    if (! vec->is_const) {
+        safe_st_aligned_free(vec->vals);
+    }
     vec->size = 0;
     vec->capacity = 0;
 }
@@ -320,6 +322,13 @@ void svec_destroy(svec_t *vec)
 int svec_clear(svec_t *vec)
 {
     ST_CHECK_PARAM(vec == NULL, -1);
+
+    if (vec->is_const) {
+        if (vec->size != 0) {
+            ST_WARNING("Can not clear a const vector.");
+            return -1;
+        }
+    }
 
     vec->size = 0;
 
@@ -331,6 +340,13 @@ int svec_resize(svec_t *vec, size_t size, float init_val)
     size_t i;
 
     ST_CHECK_PARAM(vec == NULL || size <= 0, -1);
+
+    if (vec->is_const) {
+        if (vec->size != size) {
+            ST_WARNING("Can not resize a const vector.");
+            return -1;
+        }
+    }
 
     if (size > vec->capacity) {
         vec->vals = (float *)st_aligned_realloc(vec->vals,
@@ -381,13 +397,43 @@ void svec_set(svec_t *vec, float val)
     }
 }
 
+int svec_subvec(svec_t *vec, size_t start, size_t size, svec_t *sub)
+{
+    ST_CHECK_PARAM(vec == NULL || sub == NULL, -1);
+
+    if (start >= vec->size) {
+        ST_WARNING("Error start index.");
+        return -1;
+    }
+
+    if (size <= 0) {
+        size = vec->size - start;
+    } else {
+        if (start + size > vec->size) {
+            ST_WARNING("Not enough elems to extract [%d + %d > %d].",
+                    start, size, vec->size);
+            return -1;
+        }
+    }
+
+    sub->vals = vec->vals + start;
+    sub->size = size;
+    sub->capacity = vec->capacity - (sub->vals - vec->vals);
+
+    sub->is_const = true;
+
+    return 0;
+}
+
 void dvec_destroy(dvec_t *vec)
 {
     if (vec == NULL) {
         return;
     }
 
-    safe_st_aligned_free(vec->vals);
+    if (! vec->is_const) {
+        safe_st_aligned_free(vec->vals);
+    }
     vec->size = 0;
     vec->capacity = 0;
 }
@@ -395,6 +441,13 @@ void dvec_destroy(dvec_t *vec)
 int dvec_clear(dvec_t *vec)
 {
     ST_CHECK_PARAM(vec == NULL, -1);
+
+    if (vec->is_const) {
+        if (vec->size != 0) {
+            ST_WARNING("Can not clear a const vector.");
+            return -1;
+        }
+    }
 
     vec->size = 0;
 
@@ -406,6 +459,13 @@ int dvec_resize(dvec_t *vec, size_t size, double init_val)
     size_t i;
 
     ST_CHECK_PARAM(vec == NULL || size <= 0, -1);
+
+    if (vec->is_const) {
+        if (vec->size != size) {
+            ST_WARNING("Can not resize a const vector.");
+            return -1;
+        }
+    }
 
     if (size > vec->capacity) {
         vec->vals = (double *)st_aligned_realloc(vec->vals,
@@ -454,6 +514,34 @@ void dvec_set(dvec_t *vec, double val)
     for (i = 0; i < vec->size; i++) {
         vec->vals[i] = val;
     }
+}
+
+int dvec_subvec(dvec_t *vec, size_t start, size_t size, dvec_t *sub)
+{
+    ST_CHECK_PARAM(vec == NULL || sub == NULL, -1);
+
+    if (start >= vec->size) {
+        ST_WARNING("Error start index.");
+        return -1;
+    }
+
+    if (size <= 0) {
+        size = vec->size - start;
+    } else {
+        if (start + size > vec->size) {
+            ST_WARNING("Not enough elems to extract [%d + %d > %d].",
+                    start, size, vec->size);
+            return -1;
+        }
+    }
+
+    sub->vals = vec->vals + start;
+    sub->size = size;
+    sub->capacity = vec->capacity - (sub->vals - vec->vals);
+
+    sub->is_const = true;
+
+    return 0;
 }
 
 void ivec_destroy(ivec_t *vec)

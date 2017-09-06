@@ -32,6 +32,7 @@ extern "C" {
 #include <connlm/config.h>
 #include "blas.h"
 #include "utils.h"
+#include "vector.h"
 
 /** @defgroup g_matrix Matrix
  */
@@ -304,6 +305,18 @@ int mat_add_elems(mat_t *mat1, mat_t *mat2, mat_t *out);
  * @return non-zero if any error.
  */
 int mat_mul_elems(mat_t *mat1, mat_t *mat2, mat_t *out);
+
+/**
+ * Add vector for every row of matrix.
+ * assert vec->size == mat->num_cols
+*
+ * @ingroup g_matrix
+ * @param[in,out] mat the matrix.
+ * @param[in] vec the vector.
+ * @param[in] scale the scale
+ * @return non-zero if any error.
+ */
+int mat_add_vec(mat_t *mat, vec_t *vec, real_t scale);
 
 /*
  * Computing C = alpha * A * B + beta * C

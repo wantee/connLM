@@ -258,7 +258,7 @@ int mat_submat(mat_t *mat, size_t row_s, size_t num_rows,
     sub->num_rows = num_rows;
     sub->num_cols = num_cols;
     sub->stride = mat->stride;
-    sub->capacity = num_rows * mat->stride;
+    sub->capacity = mat->capacity - (sub->vals - mat->vals);
 
     sub->is_const = true;
 
@@ -397,6 +397,34 @@ int mat_mul_elems(mat_t *mat1, mat_t *mat2, mat_t *out)
 
     for (i = 0; i < mat1->num_rows * mat1->stride; i++) {
         out->vals[i] = mat1->vals[i] * mat2->vals[i];
+    }
+
+    return 0;
+}
+
+int mat_add_vec(mat_t *mat, vec_t *vec, real_t scale)
+{
+    size_t i, j;
+
+    ST_CHECK_PARAM(mat == NULL || vec == NULL, -1);
+
+    if (mat->num_cols != vec->size) {
+        ST_WARNING("Diemension not match.");
+        return -1;
+    }
+
+    if (scale != 1.0) {
+        for (i = 0; i < mat->num_rows; i++) {
+            for (j = 0; j < mat->num_cols; j++) {
+                mat->vals[i * mat->stride + j] += scale * vec->vals[j];
+            }
+        }
+    } else {
+        for (i = 0; i < mat->num_rows; i++) {
+            for (j = 0; j < mat->num_cols; j++) {
+                mat->vals[i * mat->stride + j] += vec->vals[j];
+            }
+        }
     }
 
     return 0;

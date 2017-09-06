@@ -46,6 +46,7 @@ extern "C" {
 #define dvec_resize vec_resize
 #define dvec_cpy vec_cpy
 #define dvec_set vec_set
+#define dvec_subvec vec_subvec
 #else
 #define svec_t vec_t
 #define svec_load_header vec_load_header
@@ -57,6 +58,7 @@ extern "C" {
 #define svec_resize vec_resize
 #define svec_cpy vec_cpy
 #define svec_set vec_set
+#define svec_subvec vec_subvec
 #endif
 
 #define VEC_VAL(vec, idx) ((vec)->vals[idx])
@@ -70,6 +72,7 @@ typedef struct _single_vector_t_ {
     float *vals; /**< values of vector. */
     size_t size; /**< size of vals. */
     size_t capacity; /**< capacity of vals. */
+    bool is_const; /**< whether the diemention of vector is const. */
 } svec_t;
 
 /**
@@ -167,6 +170,19 @@ int svec_cpy(svec_t *dst, svec_t *src);
  */
 void svec_set(svec_t *vec, float val);
 
+/**
+ * Extract a sub-vector from one vector.
+ * @ingroup g_vector
+ * @param[in] vec the vector.
+ * @param[in] start start index in original vector.
+ * @param[in] size size of sub-vector.
+ *                 set to non-positive value to extract all the rest
+ *                 elems from original vector
+ * @param[out] sub the sub-vector.
+ * @return non-zero if any error.
+ */
+int svec_subvec(svec_t *vec, size_t start, size_t size, svec_t *sub);
+
 
 /**
  * Double Float Vector
@@ -176,6 +192,7 @@ typedef struct _double_vector_t_ {
     double *vals; /**< values of vector. */
     size_t size; /**< size of vals. */
     size_t capacity; /**< capacity of vals. */
+    bool is_const; /**< whether the diemention of vector is const. */
 } dvec_t;
 
 /**
@@ -272,6 +289,19 @@ int dvec_cpy(dvec_t *dst, dvec_t *src);
  * @param[in] val the value.
  */
 void dvec_set(dvec_t *vec, double val);
+
+/**
+ * Extract a sub-vector from one vector.
+ * @ingroup g_vector
+ * @param[in] vec the vector.
+ * @param[in] start start index in original vector.
+ * @param[in] size size of sub-vector.
+ *                 set to non-positive value to extract all the rest
+ *                 elems from original vector
+ * @param[out] sub the sub-vector.
+ * @return non-zero if any error.
+ */
+int dvec_subvec(dvec_t *vec, size_t start, size_t size, dvec_t *sub);
 
 
 /**
