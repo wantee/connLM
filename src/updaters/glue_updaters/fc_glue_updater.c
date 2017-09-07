@@ -72,8 +72,8 @@ int fc_glue_updater_backprop(glue_updater_t *glue_updater,
     wt_updater = glue_updater->wt_updater;
 
     if (in_er != NULL && in_er->num_rows > 0) {
-        if (propagate_error(&wt_updater->wt, in_er, 1.0,
-                    wt_updater->param.er_cutoff, out_er) < 0) {
+        if (propagate_error(&wt_updater->wt, out_er, 1.0,
+                    wt_updater->param.er_cutoff, in_er) < 0) {
             ST_WARNING("Failed to propagate_error.");
             return -1;
         }
