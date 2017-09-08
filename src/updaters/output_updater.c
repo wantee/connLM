@@ -34,12 +34,27 @@
 
 void out_updater_destroy(out_updater_t *out_updater)
 {
+    int i;
+
     if (out_updater == NULL) {
         return;
     }
 
-    mat_destroy(&out_updater->ac);
-    mat_destroy(&out_updater->er);
+    safe_st_free(out_updater->node_iters);
+
+    if (out_updater->node_acs != NULL) {
+        for (i = 0; i < out_updater->output->tree->num_node; i++) {
+            mat_destroy(out_updater->node_acs + i);
+        }
+        safe_st_free(out_updater->node_acs);
+    }
+
+    if (out_updater->node_ers != NULL) {
+        for (i = 0; i < out_updater->output->tree->num_node; i++) {
+            mat_destroy(out_updater->node_ers + i);
+        }
+        safe_st_free(out_updater->node_ers);
+    }
 
     out_updater->output = NULL;
 }
@@ -68,56 +83,113 @@ ERR:
 
 int out_updater_setup(out_updater_t *out_updater, bool backprop)
 {
+    int num_nodes;
+
     ST_CHECK_PARAM(out_updater == NULL, -1);
+
+    num_nodes = out_updater->output->tree->num_node;
+    out_updater->node_iters = (int *)st_malloc(sizeof(int) * num_nodes);
+    if (out_updater->node_iters == NULL) {
+        ST_WARNING("Failed to st_malloc node_iters.");
+        goto ERR;
+    }
+    memset(out_updater->node_iters, 0, sizeof(int) * num_nodes);
+
+    out_updater->node_acs = (mat_t *)st_malloc(sizeof(mat_t) * num_nodes);
+    if (out_updater->node_acs == NULL) {
+        ST_WARNING("Failed to st_malloc node_acs.");
+        goto ERR;
+    }
+    memset(out_updater->node_acs, 0, sizeof(mat_t) * num_nodes);
+
+    if (backprop) {
+        out_updater->node_ers = (mat_t *)st_malloc(sizeof(mat_t) * num_nodes);
+        if (out_updater->node_ers == NULL) {
+            ST_WARNING("Failed to st_malloc node_ers.");
+            goto ERR;
+        }
+        memset(out_updater->node_ers, 0, sizeof(mat_t) * num_nodes);
+    }
+
+    return 0;
+ERR:
+    out_updater_destroy(out_updater);
+    return -1;
+}
+
+static int out_reset_walker(output_t *output, output_node_id_t node,
+        output_node_id_t next_node,
+        output_node_id_t child_s, output_node_id_t child_e, void *args)
+{
+    int *node_iters;
+
+    node_iters = (int *) args;
+
+    node_iters[node] = 0;
 
     return 0;
 }
 
-typedef struct _out_clear_walker_args_t_ {
-    real_t *ac;
-    real_t *er;
-} out_clear_walker_args_t;
+static int out_updater_reset_iters(out_updater_t *out_updater, ivec_t *targets)
+{
+    int i;
+
+    ST_CHECK_PARAM(out_updater == NULL || targets == NULL, -1);
+
+    for (i = 0; i < targets->size; i++) {
+        if (output_walk_through_path(out_updater->output, VEC_VAL(targets, i),
+                    out_reset_walker, (void *)out_updater->node_iters) < 0) {
+            ST_WARNING("Failed to output_walk_through_path.");
+            return -1;
+        }
+    }
+
+    return 0;
+}
 
 static int out_clear_walker(output_t *output, output_node_id_t node,
         output_node_id_t next_node,
         output_node_id_t child_s, output_node_id_t child_e, void *args)
 {
-    out_clear_walker_args_t *ocw_args;
-    size_t sz;
+    out_updater_t *out_updater;
 
-    ocw_args = (out_clear_walker_args_t *)args;
+    out_updater = (out_updater_t *)args;
 
-    if (child_s >= child_e) {
+    if (child_s >= child_e || out_updater->node_iters[node] <= 0) {
+        assert(out_updater->node_acs[node].num_rows == 0);
         return 0;
     }
 
-    sz = (child_e - child_s) * sizeof(real_t);
-    memset(ocw_args->ac + child_s, 0, sz);
-    if (ocw_args->er != NULL) {
-        memset(ocw_args->er + child_s, 0, sz);
+    mat_set(out_updater->node_acs + node, 0.0);
+    if (mat_clear(out_updater->node_acs + node) < 0) {
+        ST_WARNING("Failed to mat_clear node_acs.");
+        return -1;
     }
+
+#if 0 // no need to clear ers
+    if (out_updater->node_ers != NULL) {
+        mat_set(out_updater->node_ers + node, 0.0);
+        if (mat_clear(out_updater->node_ers + node) < 0) {
+            ST_WARNING("Failed to mat_clear node_ers.");
+            return -1;
+        }
+    }
+#endif
+
+    out_updater->node_iters[node] = 0;
 
     return 0;
 }
 
 int out_updater_clear(out_updater_t *out_updater, ivec_t *targets)
 {
-    out_clear_walker_args_t ocw_args;
-
     int i;
 
     ST_CHECK_PARAM(out_updater == NULL, -1);
 
     for (i = 0; i < targets->size; i++) {
-        ocw_args.ac = MAT_VALP(&out_updater->ac, i, 0);
-        if (out_updater->er.num_rows > 0) {
-            ocw_args.er = MAT_VALP(&out_updater->er, i, 0);
-        } else {
-            ocw_args.er = NULL;
-        }
-
         if (output_walk_through_path(out_updater->output, VEC_VAL(targets, i),
-                    out_clear_walker, (void *)&ocw_args) < 0) {
+                    out_clear_walker, (void *)out_updater) < 0) {
             ST_WARNING("Failed to output_walk_through_path.");
             return -1;
         }
@@ -127,8 +199,9 @@ int out_updater_clear(out_updater_t *out_updater, ivec_t *targets)
 }
 
 typedef struct _out_act_walker_args_t_ {
-    double logp;
-    real_t *ac;
+    out_updater_t *out_updater;
+    dvec_t *logps;
+    int batch_i;
 } out_act_walker_args_t;
 
 static int out_act_walker(output_t *output, output_node_id_t node,
@@ -136,19 +209,25 @@ static int out_act_walker(output_t *output, output_node_id_t node,
         output_node_id_t child_s, output_node_id_t child_e, void *args)
 {
     out_act_walker_args_t *oaw_args;
-
-    oaw_args = (out_act_walker_args_t *)args;
+    mat_t *ac;
+    int this_row;
 
     if (child_e <= child_s || child_e == OUTPUT_NODE_NONE) {
         return 0;
     }
 
+    oaw_args = (out_act_walker_args_t *) args;
+    ac = oaw_args->out_updater->node_acs + node;
+    this_row = oaw_args->out_updater->node_iters[node];
+
     if (output->norm == ON_SOFTMAX) {
-        oaw_args->ac[child_e - 1] = 0;
-        softmax(oaw_args->ac + child_s, child_e - child_s);
+        MAT_VAL(ac, this_row, child_e - 1) = 0.0;
+        softmax(MAT_VALP(ac, this_row, child_s), child_e - child_s);
     }
 
-    oaw_args->logp += log(oaw_args->ac[next_node]);
+    VEC_VAL(oaw_args->logps, oaw_args->batch_i) +=
+        log(MAT_VAL(ac, this_row, next_node - child_s));
+    oaw_args->out_updater->node_iters[node]++;
 
     return 0;
 }
@@ -169,60 +248,70 @@ int out_updater_activate(out_updater_t *out_updater,
 
     output = out_updater->output;
 
-    if (mat_resize(&out_updater->ac, targets->size,
-                output->tree->num_node, 0.0) < 0) {
-        ST_WARNING("Failed to mat_resize");
-        return -1;
-    }
-
     if (dvec_resize(logps, targets->size, 0.0) < 0) {
         ST_WARNING("Failed to dvec_resize");
         return -1;
     }
+    dvec_set(logps, 0.0);
 
+    if (out_updater_reset_iters(out_updater, targets) < 0) {
+        ST_WARNING("Failed to out_updater_reset_iters.");
+        return -1;
+    }
+
+    oaw_args.out_updater = out_updater;
+    oaw_args.logps = logps;
     for (i = 0; i < targets->size; i++) {
-        oaw_args.logp = 0.0;
-        oaw_args.ac = MAT_VALP(&out_updater->ac, i, 0);
-
+        oaw_args.batch_i = i;
         if (output_walk_through_path(output, VEC_VAL(targets, i),
                     out_act_walker, (void *)&oaw_args) < 0) {
             ST_WARNING("Failed to output_walk_through_path.");
             return -1;
         }
-
-        VEC_VAL(logps, i) = oaw_args.logp;
     }
 
     return 0;
 }
 
-typedef struct _out_loss_walker_args_t_ {
-    real_t *ac;
-    real_t *er;
-} out_loss_walker_args_t;
-
 static int out_loss_walker(output_t *output, output_node_id_t node,
         output_node_id_t next_node,
         output_node_id_t child_s, output_node_id_t child_e, void *args)
 {
-    out_loss_walker_args_t *olw_args;
+    out_updater_t *out_updater;
     output_node_id_t ch;
+    mat_t *ac;
+    mat_t *er;
+    int this_row;
 
-    olw_args = (out_loss_walker_args_t *)args;
+    if (child_e <= child_s || child_e == OUTPUT_NODE_NONE) {
+        return 0;
+    }
+
+    out_updater = (out_updater_t *) args;
+    ac = out_updater->node_acs + node;
+    er = out_updater->node_ers + node;
+    this_row = out_updater->node_iters[node];
+
+    if (mat_resize(er, ac->num_rows, ac->num_cols, NAN) < 0) {
+        ST_WARNING("Failed to mat_resize for er");
+        return -1;
+    }
 
     if (output->norm == ON_SOFTMAX) {
         for (ch = child_s; ch < child_e; ++ch) {
-            olw_args->er[ch] = (0 - olw_args->ac[ch]);
+            MAT_VAL(er, this_row, ch) = (0 - MAT_VAL(ac, this_row, ch));
         }
-        olw_args->er[next_node] = (1 - olw_args->ac[next_node]);
+        MAT_VAL(er, this_row, next_node - child_s) =
+            (1 - MAT_VAL(ac, this_row, next_node - child_s));
     }
+
+    out_updater->node_iters[node]++;
 
     return 0;
 }
 
 int out_updater_loss(out_updater_t *out_updater, ivec_t *targets)
 {
-    out_loss_walker_args_t olw_args;
     output_t *output;
     int i;
 
@@ -234,18 +323,14 @@ int out_updater_loss(out_updater_t *out_updater, ivec_t *targets)
 
     output = out_updater->output;
 
-    if (mat_resize(&out_updater->er, targets->size,
-                output->tree->num_node, NAN) < 0) {
-        ST_WARNING("Failed to mat_resize");
+    if (out_updater_reset_iters(out_updater, targets) < 0) {
+        ST_WARNING("Failed to out_updater_reset_iters.");
         return -1;
     }
 
     for (i = 0; i < targets->size; i++) {
-        olw_args.ac = MAT_VALP(&out_updater->ac, i, 0);
-        olw_args.er = MAT_VALP(&out_updater->er, i, 0);
-
         if (output_walk_through_path(output, VEC_VAL(targets, i),
-                    out_loss_walker, (void *)&olw_args) < 0) {
+                    out_loss_walker, (void *)out_updater) < 0) {
             ST_WARNING("Failed to output_walk_through_path.");
             return -1;
         }
@@ -265,11 +350,12 @@ output_node_id_t out_updater_sample(out_updater_t *out_updater,
         output_node_id_t node)
 {
     output_t *output;
-    real_t *ac;
+    mat_t *ac;
     output_node_id_t s, e, sampled;
 
     double u, p;
     int word;
+    int row;
 
     ST_CHECK_PARAM(out_updater == NULL || node == OUTPUT_NODE_NONE,
             OUTPUT_NODE_NONE);
@@ -300,10 +386,11 @@ output_node_id_t out_updater_sample(out_updater_t *out_updater,
         }
     }
 
-    ac = MAT_VALP(&out_updater->ac, 0, 0); // batch_size == 1
+    ac = out_updater->node_acs + node;
+    row = 0; // batch_size == 1
     if (output->norm == ON_SOFTMAX) {
-        ac[e - 1] = 0;
-        softmax(ac + s, e - s);
+        MAT_VAL(ac, row, e - 1) = 0.0;
+        softmax(MAT_VALP(ac, row, s), e - s);
     }
 
     while (true) {
@@ -313,7 +400,7 @@ output_node_id_t out_updater_sample(out_updater_t *out_updater,
         p = 0;
 
         for (sampled = s; sampled < e; sampled++) {
-            p += ac[sampled];
+            p += MAT_VAL(ac, row, sampled);
 
             if (p >= u) {
                 break;

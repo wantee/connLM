@@ -439,7 +439,7 @@ static int acc_tree_nodes_walker(output_t *output, output_node_id_t node,
 
     // tnw_args->vals if a full matrix for all nodes
     if (mat_resize(tnw_args->val0, tnw_args->batch_i + 1,
-                data->num_nodes, NAN) > 0) {
+                data->num_nodes, 0.0) > 0) {
         ST_WARNING("Failed to mat_resize for val0.");
         return -1;
     }

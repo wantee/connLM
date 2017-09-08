@@ -47,8 +47,9 @@ extern "C" {
 typedef struct _output_updater_t_ {
     output_t *output; /**< the output layer. */
 
-    mat_t ac; /**< activation of output layer. */
-    mat_t er; /**< error of output layer. */
+    mat_t *node_acs; /**< activation of each output tree node. */
+    mat_t *node_ers; /**< error of each output tree node. */
+    int *node_iters; /**< error of each output tree node. */
 } out_updater_t;
 
 /**

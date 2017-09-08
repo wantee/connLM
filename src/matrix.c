@@ -317,18 +317,24 @@ void mat_cutoff(mat_t *mat, real_t cutoff)
 
 void mat_set(mat_t *mat, real_t val)
 {
-    size_t i;
+    size_t i, j;
 
     ST_CHECK_PARAM_VOID(mat == NULL);
 
-    for (i = 0; i < mat->num_rows * mat->stride; i++) {
-        mat->vals[i] = val;
+    if (val == 0.0) {
+        memset(mat->vals, 0, sizeof(real_t) * mat->num_rows * mat->stride);
+    } else {
+        for (i = 0; i < mat->num_rows; i++) {
+            for (j = 0; j < mat->num_cols; j++) {
+                mat->vals[i * mat->stride + j] = val;
+            }
+        }
     }
 }
 
 int mat_set_row(mat_t *mat, size_t row, real_t val)
 {
-    size_t i;
+    size_t j;
 
     ST_CHECK_PARAM(mat == NULL, -1);
 
@@ -337,8 +343,12 @@ int mat_set_row(mat_t *mat, size_t row, real_t val)
         return -1;
     }
 
-    for (i = row * mat->stride; i < (row + 1) * mat->stride; i++) {
-        mat->vals[i] = val;
+    if (val == 0.0) {
+        memset(mat->vals + row * mat->stride, 0, sizeof(real_t) * mat->stride);
+    } else {
+        for (j = 0; j < mat->num_cols; j++) {
+            mat->vals[row * mat->stride + j] = val;
+        }
     }
 
     return 0;
