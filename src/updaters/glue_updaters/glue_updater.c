@@ -363,12 +363,8 @@ int glue_updater_forward(glue_updater_t *glue_updater,
             mat_assign(&in_ac, &glue_updater->dropout_val);
         }
     }
-    if (glue->out_layer == 0) { // output layer
-        if (mat_submat(&comp_updater->out_updater->ac, 0, -1,
-                    glue->out_offset, -1, &out_ac) < 0) {
-            ST_WARNING("Failed to mat_submat out_ac.");
-            return -1;
-        }
+    if (glue->out_layer == 0) {
+        // output layer don't need out_ac
     } else {
         if (mat_submat(&layer_updaters[glue->out_layer]->ac, 0, -1,
                     glue->out_offset, -1, &out_ac) < 0) {
@@ -441,12 +437,8 @@ int glue_updater_backprop(glue_updater_t *glue_updater,
                 }
             }
         }
-        if (out_lid == 0) { // output layer
-            if (mat_submat(&comp_updater->out_updater->er, 0, -1,
-                    glue->out_offset, -1, &out_er) < 0) {
-                ST_WARNING("Failed to mat_submat out_er.");
-                return -1;
-            }
+        if (out_lid == 0) {
+            // output layer don't need out_er
         } else {
             if (mat_submat(&layer_updaters[out_lid]->er, 0, -1,
                     glue->out_offset, -1, &out_er) < 0) {
@@ -512,12 +504,8 @@ int glue_updater_forward_util_out(glue_updater_t *glue_updater,
             }
         }
     }
-    if (glue->out_layer == 0) { // output layer
-        if (mat_submat(&comp_updater->out_updater->ac, 0, -1,
-                    glue->out_offset, -1, &out_ac) < 0) {
-            ST_WARNING("Failed to mat_submat out_ac.");
-            return -1;
-        }
+    if (glue->out_layer == 0) {
+        // output layer don't need out_ac
     } else {
         if (mat_submat(&layer_updaters[glue->out_layer]->ac, 0, -1,
                     glue->out_offset, -1, &out_ac) < 0) {
@@ -575,12 +563,8 @@ int glue_updater_forward_out(glue_updater_t *glue_updater,
                 }
             }
         }
-        if (glue->out_layer == 0) { // output layer
-            if (mat_submat(&comp_updater->out_updater->ac, 0, -1,
-                        glue->out_offset, -1, &out_ac) < 0) {
-                ST_WARNING("Failed to mat_submat out_ac.");
-                return -1;
-            }
+        if (glue->out_layer == 0) {
+            // output layer don't need out_ac
         } else {
             if (mat_submat(&layer_updaters[glue->out_layer]->ac, 0, -1,
                         glue->out_offset, -1, &out_ac) < 0) {
@@ -640,12 +624,8 @@ int glue_updater_forward_out_word(glue_updater_t *glue_updater,
                 }
             }
         }
-        if (glue->out_layer == 0) { // output layer
-            if (mat_submat(&comp_updater->out_updater->ac, 0, -1,
-                        glue->out_offset, -1, &out_ac) < 0) {
-                ST_WARNING("Failed to mat_submat out_ac.");
-                return -1;
-            }
+        if (glue->out_layer == 0) {
+            // output layer don't need out_ac
         } else {
             if (mat_submat(&layer_updaters[glue->out_layer]->ac, 0, -1,
                         glue->out_offset, -1, &out_ac) < 0) {

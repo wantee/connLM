@@ -47,6 +47,16 @@ extern "C" {
 typedef struct _output_updater_t_ {
     output_t *output; /**< the output layer. */
 
+    /* these variables are used to store the ac or er for tree nodes of all
+       words in a batch. They are all array with size equals to num_tree_nodes
+
+       usage is:
+       for word in batch:
+           for node in path(word):
+               ac = MAT_ROW(node_acs[node], node_iters[node])
+               er = MAT_ROW(node_ers[node], node_iters[node])
+               node_iters[node]++
+    */
     mat_t *node_acs; /**< activation of each output tree node. */
     mat_t *node_ers; /**< error of each output tree node. */
     int *node_iters; /**< error of each output tree node. */

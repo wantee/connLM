@@ -73,6 +73,11 @@ bool out_glue_check(glue_t *glue, layer_t **layers, int n_layer,
         return false;
     }
 
+    if (glue->out_offset > 0) {
+        ST_WARNING("out glue: out layer offset must be zero.");
+        return false;
+    }
+
     return true;
 }
 
