@@ -42,7 +42,7 @@ int fc_glue_updater_forward(glue_updater_t *glue_updater,
     ST_CHECK_PARAM(glue_updater == NULL || comp_updater == NULL
             || in_ac == NULL || out_ac == NULL, -1);
 
-    wt_updater = glue_updater->wt_updater;
+    wt_updater = glue_updater->wt_updaters[0];
 
     if (add_mat_mat(1.0, in_ac, MT_NoTrans,
                 &wt_updater->wt, MT_Trans, 1.0, out_ac) < 0) {
@@ -69,7 +69,7 @@ int fc_glue_updater_backprop(glue_updater_t *glue_updater,
 
     ST_CHECK_PARAM(glue_updater == NULL || out_er == NULL, -1);
 
-    wt_updater = glue_updater->wt_updater;
+    wt_updater = glue_updater->wt_updaters[0];
 
     if (in_er != NULL && in_er->num_rows > 0) {
         if (propagate_error(&wt_updater->wt, out_er, 1.0,

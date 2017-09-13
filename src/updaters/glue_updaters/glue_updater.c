@@ -79,6 +79,8 @@ static glue_updater_impl_t* glue_updater_get_impl(const char *type)
 
 void glue_updater_destroy(glue_updater_t *glue_updater)
 {
+    int i;
+
     if (glue_updater == NULL) {
         return;
     }
@@ -94,12 +96,19 @@ void glue_updater_destroy(glue_updater_t *glue_updater)
     }
     mat_destroy(&glue_updater->dropout_val);
 
-    safe_wt_updater_destroy(glue_updater->wt_updater);
+    if (glue_updater->wt_updaters != NULL) {
+        for (i = 0; i < glue_updater->num_wt_updaters; i++) {
+            safe_wt_updater_destroy(glue_updater->wt_updaters[i]);
+        }
+        safe_st_free(glue_updater->wt_updaters);
+    }
+
     glue_updater->glue = NULL;
 }
 
 glue_updater_t* glue_updater_create(glue_t *glue)
 {
+    wt_update_type_t wu_type;
     glue_updater_t *glue_updater = NULL;
 
     ST_CHECK_PARAM(glue == NULL, NULL);
@@ -112,6 +121,19 @@ glue_updater_t* glue_updater_create(glue_t *glue)
     memset(glue_updater, 0, sizeof(glue_updater_t));
 
     glue_updater->glue = glue;
+
+    if (strcasecmp(glue->type, DIRECT_GLUE_NAME) == 0) {
+        wu_type = WT_UT_PART;
+    } else if (strcasecmp(glue->type, EMB_GLUE_NAME) == 0) {
+        wu_type = WT_UT_ONE_SHOT;
+    } else if (strcasecmp(glue->type, FC_GLUE_NAME) == 0) {
+        wu_type = WT_UT_FULL;
+    } else if (strcasecmp(glue->type, OUT_GLUE_NAME) == 0) {
+        wu_type = WT_UT_FULL;
+    } else {
+        ST_WARNING("Unknown glue type[%s]", glue->type);
+        goto ERR;
+    }
 
     glue_updater->keep_prob = 1.0; // no dropout by default
 
@@ -127,9 +149,10 @@ glue_updater_t* glue_updater_create(glue_t *glue)
         }
     }
 
-    glue_updater->wt_updater = glue_init_wt_updater(glue, NULL);
-    if (glue_updater->wt_updater == NULL) {
-        ST_WARNING("Failed to init_wt_updater for glue updater.");
+    glue_updater->wt_updaters = glue_init_wt_updaters(glue, NULL,
+            wu_type, &glue_updater->num_wt_updaters);
+    if (glue_updater->wt_updaters == NULL) {
+        ST_WARNING("Failed to init_wt_updaters for glue updater.");
         goto ERR;
     }
 

@@ -194,6 +194,7 @@ bool direct_glue_check(glue_t *glue, layer_t **layers, int n_layer,
         input_t *input, output_t *output)
 {
     direct_glue_data_t *data;
+    int i;
 
     ST_CHECK_PARAM(glue == NULL || input == NULL, false);
 
@@ -219,12 +220,14 @@ bool direct_glue_check(glue_t *glue, layer_t **layers, int n_layer,
         return false;
     }
 
-    if (glue->wt->init_type != WT_INIT_CONST) {
-        glue->wt->init_type = WT_INIT_CONST;
-        glue->wt->init_param = 0;
-    }
+    for (i = 0; i < glue->num_wts; i++) {
+        if (glue->wts[i]->init_type != WT_INIT_CONST) {
+            glue->wts[i]->init_type = WT_INIT_CONST;
+            glue->wts[i]->init_param = 0;
+        }
 
-    glue->wt->init_bias = INFINITY; // direct weight will not have bias
+        glue->wts[i]->init_bias = INFINITY; // direct weight will not have bias
+    }
 
     return true;
 }
@@ -377,8 +380,9 @@ int direct_glue_init_data(glue_t *glue, input_t *input,
         layer_t **layers, output_t *output)
 {
     direct_glue_data_t *data;
+    int i;
 
-    ST_CHECK_PARAM(glue == NULL || glue->wt == NULL
+    ST_CHECK_PARAM(glue == NULL || glue->wts == NULL
             || input == NULL || output == NULL, -1);
 
     if (strcasecmp(glue->type, DIRECT_GLUE_NAME) != 0) {
@@ -388,55 +392,36 @@ int direct_glue_init_data(glue_t *glue, input_t *input,
 
     data = (direct_glue_data_t *)glue->extra;
 
-    if (wt_init(glue->wt, 1, data->hash_sz) < 0) {
-        ST_WARNING("Failed to wt_init.");
-        return -1;
+    for (i = 0; i < glue->num_wts; i++) {
+        if (wt_init(glue->wts[i], 1, data->hash_sz) < 0) {
+            ST_WARNING("Failed to wt_init[%d].", i);
+            return -1;
+        }
     }
 
     return 0;
 }
 
-wt_updater_t* direct_glue_init_wt_updater(glue_t *glue, param_t *param)
-{
-    wt_updater_t *wt_updater = NULL;
-
-    ST_CHECK_PARAM(glue == NULL, NULL);
-
-    if (strcasecmp(glue->type, DIRECT_GLUE_NAME) != 0) {
-        ST_WARNING("Not a direct glue. [%s]", glue->type);
-        return NULL;
-    }
-
-    wt_updater = wt_updater_create(param == NULL ? &glue->param : param,
-            &glue->wt->w, &glue->wt->bias, WT_UT_PART);
-    if (wt_updater == NULL) {
-        ST_WARNING("Failed to wt_updater_create.");
-        goto ERR;
-    }
-
-    return wt_updater;
-
-ERR:
-    safe_wt_updater_destroy(wt_updater);
-    return NULL;
-}
-
 static float direct_glue_load_factor(glue_t *glue)
 {
-    size_t i;
-
-    size_t n;
+    size_t j;
+    size_t n, total;
+    int i;
 
     ST_CHECK_PARAM(glue == NULL, 0.0);
 
     n = 0;
-    for (i = 0; i < glue->wt->w.num_rows; i++) {
-        if (MAT_VAL(&glue->wt->w, i, 0) != 0) {
-            ++n;
+    total = 0;
+    for (i = 0; i < glue->num_wts; i++) {
+        for (j = 0; j < glue->wts[i]->w.num_rows; j++) {
+            if (MAT_VAL(&glue->wts[i]->w, j, 0) != 0) {
+                ++n;
+            }
         }
+        total += glue->wts[i]->w.num_rows;
     }
 
-    return n / (float)(glue->wt->w.num_rows);
+    return n / (float)total;
 }
 
 void direct_glue_print_verbose_info(glue_t *glue, FILE *fo)

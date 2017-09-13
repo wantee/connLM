@@ -81,10 +81,41 @@ bool out_glue_check(glue_t *glue, layer_t **layers, int n_layer,
     return true;
 }
 
+typedef struct _init_wt_args_t_ {
+    weight_t **wts;
+    int in_len;
+} init_wt_args_t;
+
+static int output_tree_dfs_trav_init_wt(output_tree_t *tree,
+        output_node_id_t node, st_stack_t *stack, void *args)
+{
+    init_wt_args_t *iw_args;
+    output_node_id_t child_s, chile_e;
+
+    iw_args = (init_wt_args_t *) args;
+
+    child_s = s_children(tree, node);
+    chile_e = e_children(tree, node);
+
+    if (chile_e == OUTPUT_NODE_NONE || child_s >= chile_e) {
+        return 0;
+    }
+
+    if (wt_init(iw_args->wts[node], chile_e - child_s, iw_args->in_len) < 0) {
+        ST_WARNING("Failed to wt_init["OUTPUT_NODE_FMT"].", node);
+        return -1;
+    }
+
+    return 0;
+}
+
 int out_glue_init_data(glue_t *glue, input_t *input,
         layer_t **layers, output_t *output)
 {
-    ST_CHECK_PARAM(glue == NULL || glue->wt == NULL
+    init_wt_args_t iw_args;
+    output_tree_dfs_aux_t *dfs_aux = NULL;
+
+    ST_CHECK_PARAM(glue == NULL || glue->wts == NULL
             || input == NULL, -1);
 
     if (strcasecmp(glue->type, OUT_GLUE_NAME) != 0) {
@@ -92,35 +123,26 @@ int out_glue_init_data(glue_t *glue, input_t *input,
         return -1;
     }
 
-    if (wt_init(glue->wt, output_param_size(output), glue->in_length) < 0) {
-        ST_WARNING("Failed to wt_init.");
-        return -1;
-    }
-
-    return 0;
-}
-
-wt_updater_t* out_glue_init_wt_updater(glue_t *glue, param_t *param)
-{
-    wt_updater_t *wt_updater = NULL;
-
-    ST_CHECK_PARAM(glue == NULL, NULL);
-
-    if (strcasecmp(glue->type, OUT_GLUE_NAME) != 0) {
-        ST_WARNING("Not a out glue_updater. [%s]", glue->type);
-        return NULL;
-    }
-
-    wt_updater = wt_updater_create(param == NULL ? &glue->param : param,
-            &glue->wt->w, &glue->wt->bias, WT_UT_SEG);
-    if (wt_updater == NULL) {
-        ST_WARNING("Failed to wt_updater_create.");
+    dfs_aux = output_tree_dfs_aux_create(output->tree);
+    if (dfs_aux == NULL) {
+        ST_WARNING("Failed to output_tree_dfs_aux_create.");
         goto ERR;
     }
 
-    return wt_updater;
+    iw_args.wts = glue->wts;
+    iw_args.in_len = glue->in_length;
+    if (output_tree_dfs(output->tree, dfs_aux,
+                output_tree_dfs_trav_init_wt, (void *)&iw_args) < 0) {
+        ST_WARNING("Failed to output_tree_dfs.");
+        goto ERR;
+    }
+
+    safe_output_tree_dfs_aux_destroy(dfs_aux);
+
+    return 0;
 
 ERR:
-    safe_wt_updater_destroy(wt_updater);
-    return NULL;
+    safe_output_tree_dfs_aux_destroy(dfs_aux);
+    return -1;
+
 }

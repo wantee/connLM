@@ -94,7 +94,8 @@ typedef struct _glue_updater_t_ {
     mat_t keep_mask; /**< keep mask. */
     mat_t dropout_val; /**< transformed activation/error after dropout. */
 
-    wt_updater_t *wt_updater; /**< the wt_updater. */
+    wt_updater_t **wt_updaters; /**< the wt_updaters. */
+    int num_wt_updaters; /**< number of wt_updaters. */
     glue_updater_impl_t *impl; /**< implementation for glue. */
     void *extra; /**< hook to store extra data. */
 } glue_updater_t;

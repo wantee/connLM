@@ -126,7 +126,7 @@ int emb_glue_updater_forward(glue_updater_t *glue_updater,
     glue = glue_updater->glue;
     data = (emb_glue_data_t *)glue->extra;
     input = comp_updater->comp->input;
-    wt = &glue_updater->wt_updater->wt;
+    wt = &glue_updater->wt_updaters[0]->wt;
     col = wt->num_cols;
 
     switch (data->combine) {
@@ -233,7 +233,7 @@ int emb_glue_updater_backprop(glue_updater_t *glue_updater,
     data = (emb_glue_data_t *)glue->extra;
     egu_data = (egu_data_t *)glue_updater->extra;
     input = comp_updater->comp->input;
-    col = glue_updater->wt_updater->wt.num_cols;
+    col = glue_updater->wt_updaters[0]->wt.num_cols;
 
     if (glue_updater->keep_mask.num_rows > 0) {
         if (mat_mul_elems(out_er, &glue_updater->keep_mask,
@@ -278,7 +278,7 @@ int emb_glue_updater_backprop(glue_updater_t *glue_updater,
                 ST_WARNING("Failed to mat_submat.");
                 return -1;
             }
-            if (wt_update(glue_updater->wt_updater,
+            if (wt_update(glue_updater->wt_updaters[0],
                         &part_er, 1.0, NULL, 1.0, NULL,
                         &egu_data->word_buf) < 0) {
                 ST_WARNING("Failed to wt_update.");
@@ -297,7 +297,7 @@ int emb_glue_updater_backprop(glue_updater_t *glue_updater,
             }
         }
 
-        if (wt_update(glue_updater->wt_updater,
+        if (wt_update(glue_updater->wt_updaters[0],
                     &er, 1.0, NULL, 1.0, NULL, &egu_data->word_buf) < 0) {
             ST_WARNING("Failed to wt_update.");
             return -1;

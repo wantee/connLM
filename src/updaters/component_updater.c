@@ -155,7 +155,7 @@ static int comp_updater_setup_dropout(comp_updater_t *comp_updater)
     component_t *comp;
     glue_t *glue;
     glue_updater_t *head, *glue_updater;
-    int i, j, g;
+    int i, j, g, u;
 
     ST_CHECK_PARAM(comp_updater == NULL, -1);
 
@@ -170,7 +170,9 @@ static int comp_updater_setup_dropout(comp_updater_t *comp_updater)
         // contained in multiple cycles
         if (head->keep_mask.num_rows > 0) {
             // set effective learning rate
-            head->wt_updater->param.learn_rate *= (1 - glue->param.dropout);
+            for (u = 0; u < head->num_wt_updaters; u++) {
+                head->wt_updaters[u]->param.learn_rate *= (1 - glue->param.dropout);
+            }
         }
 
         if (glue_updater_setup_dropout(head, glue->param.dropout) < 0) {
@@ -187,7 +189,9 @@ static int comp_updater_setup_dropout(comp_updater_t *comp_updater)
             // contained in multiple cycles
             if (glue_updater->keep_mask.num_rows > 0) {
                 // set effective learning rate
-                glue_updater->wt_updater->param.learn_rate *= (1 - glue->param.dropout);
+                for (u = 0; u < glue_updater->num_wt_updaters; u++) {
+                    glue_updater->wt_updaters[u]->param.learn_rate *= (1 - glue->param.dropout);
+                }
             }
 
             if (glue_updater_setup_dropout(glue_updater, glue->param.dropout) < 0) {
@@ -208,7 +212,9 @@ static int comp_updater_setup_dropout(comp_updater_t *comp_updater)
                 return -1;
             }
             // set effective learning rate
-            glue_updater->wt_updater->param.learn_rate *= (1 - glue->param.dropout);
+            for (u = 0; u < glue_updater->num_wt_updaters; u++) {
+                glue_updater->wt_updaters[u]->param.learn_rate *= (1 - glue->param.dropout);
+            }
         }
     }
 

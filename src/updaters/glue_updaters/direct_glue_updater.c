@@ -458,7 +458,7 @@ static int direct_compute_hash(glue_updater_t *glue_updater, int batch_id,
     data->hash_order[batch_id] += 1/* for hash_vals[0]. */;
 
     for (i = 0; i < data->hash_order[batch_id]; i++) {
-        data->hash_vals[batch_id][i] %= glue_updater->wt_updater->wt.num_cols;
+        data->hash_vals[batch_id][i] %= glue_updater->wt_updaters[0]->wt.num_cols;
     }
 
     return 0;
@@ -497,9 +497,9 @@ int direct_glue_updater_forward(glue_updater_t *glue_updater,
 
         dw_args.out_ac = MAT_VALP(out_ac, b, 0);
         dw_args.comp_scale = comp_updater->comp->comp_scale;
-        dw_args.wt_updater = glue_updater->wt_updater;
-        dw_args.hash_wt = MAT_VALP(&glue_updater->wt_updater->wt, 0, 0);
-        dw_args.hash_sz = glue_updater->wt_updater->wt.num_cols;
+        dw_args.wt_updater = glue_updater->wt_updaters[0];
+        dw_args.hash_wt = MAT_VALP(&glue_updater->wt_updaters[0]->wt, 0, 0);
+        dw_args.hash_sz = glue_updater->wt_updaters[0]->wt.num_cols;
         dw_args.hash_vals = data->hash_vals[b];
         dw_args.hash_order = data->hash_order[b];
         dw_args.forwarded = NULL;
@@ -596,7 +596,7 @@ int direct_glue_updater_backprop(glue_updater_t *glue_updater,
     out_updater = comp_updater->out_updater;
 
     dw_args.comp_scale = comp_updater->comp->comp_scale;
-    dw_args.wt_updater = glue_updater->wt_updater;
+    dw_args.wt_updater = glue_updater->wt_updaters[0];
     for (b = 0; b < batch->num_egs; b++) {
         dw_args.out_er = MAT_VALP(out_er, b, 0);
         dw_args.hash_vals = data->hash_vals[b];
@@ -671,8 +671,8 @@ int direct_glue_updater_forward_out(glue_updater_t *glue_updater,
     for (b = 0; b < out_ac->num_rows; b++) {
         if (direct_glue_updater_forward_node(output, node,
                     child_s, child_e,
-                    MAT_VALP(&glue_updater->wt_updater->wt, 0, 0),
-                    glue_updater->wt_updater->wt.num_cols,
+                    MAT_VALP(&glue_updater->wt_updaters[0]->wt, 0, 0),
+                    glue_updater->wt_updaters[0]->wt.num_cols,
                     data->hash_vals[b], data->hash_order[b],
                     MAT_VALP(out_ac, b, 0), comp_updater->comp->comp_scale,
                     NULL, MAT_VALP(&glue_updater->keep_mask, b, 0),
@@ -708,9 +708,9 @@ int direct_glue_updater_forward_out_word(glue_updater_t *glue_updater,
     data = (dgu_data_t *)glue_updater->extra;
 
     dw_args.comp_scale = comp_updater->comp->comp_scale;
-    dw_args.wt_updater = glue_updater->wt_updater;
-    dw_args.hash_wt = MAT_VALP(&glue_updater->wt_updater->wt, 0, 0);
-    dw_args.hash_sz = glue_updater->wt_updater->wt.num_cols;
+    dw_args.wt_updater = glue_updater->wt_updaters[0];
+    dw_args.hash_wt = MAT_VALP(&glue_updater->wt_updaters[0]->wt, 0, 0);
+    dw_args.hash_sz = glue_updater->wt_updaters[0]->wt.num_cols;
     dw_args.keep_prob = glue_updater->keep_prob;
     dw_args.rand_seed = glue_updater->rand_seed;
     for (b = 0; b < out_ac->num_rows; b++) {

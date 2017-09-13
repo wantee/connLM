@@ -88,9 +88,6 @@ typedef struct _glue_implementation_t_ {
     int (*init_data)(glue_t *glue, input_t *input,
             layer_t **layers, output_t *output); /**< init data of glue. */
 
-    wt_updater_t* (*init_wt_updater)(glue_t *glue,
-            param_t *param); /**< init wt_updater for glue.*/
-
     void (*print_verbose_info)(glue_t *glue, FILE *fo); /**< print info. */
 
 } glue_impl_t;
@@ -121,7 +118,8 @@ typedef struct _glue_t_ {
     glue_recur_type_t recur_type; /**< recur_type of this glue. */
     bptt_opt_t bptt_opt; /**< options for BPTT, only relevant with recur glue. */
 
-    weight_t *wt; /**< weight matrix. */
+    weight_t **wts; /**< weights. */
+    int num_wts; /**< number of weights. */
     param_t param; /**< updating parameters. */
 
     glue_impl_t *impl; /**< implementation for glue. */
@@ -271,13 +269,16 @@ int glue_init_data(glue_t *glue, input_t *input,
         layer_t **layers, output_t *output);
 
 /**
- * Initialize wt_updater for glue.
+ * Initialize wt_updaters for glue.
  * @ingroup g_glue
  * @param[in] glue the glue.
  * @param[in] param param used for initialising, if not NULL.
+ * @param[in] wu_type weight update type
+ * @param[out] num_wt_updaters number of wt_updaters
  * @return wt_updater on success, otherwise NULL.
  */
-wt_updater_t* glue_init_wt_updater(glue_t *glue, param_t *param);
+wt_updater_t** glue_init_wt_updaters(glue_t *glue, param_t *param,
+        wt_update_type_t wu_type, int *num_wt_updaters);
 
 /**
  * Load glue train option.

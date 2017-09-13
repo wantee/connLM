@@ -220,6 +220,7 @@ bool emb_glue_check(glue_t *glue, layer_t **layers, int n_layer,
         input_t *input, output_t *output)
 {
     emb_glue_data_t *data;
+    int i;
 
     ST_CHECK_PARAM(glue == NULL || input == NULL, false);
 
@@ -266,7 +267,9 @@ bool emb_glue_check(glue_t *glue, layer_t **layers, int n_layer,
         }
     }
 
-    glue->wt->init_bias = INFINITY; // direct weight will not have bias
+    for (i = 0; i < glue->num_wts; i++) {
+        glue->wts[i]->init_bias = INFINITY; // direct weight will not have bias
+    }
 
     return true;
 }
@@ -426,9 +429,9 @@ int emb_glue_init_data(glue_t *glue, input_t *input,
         layer_t **layers, output_t *output)
 {
     emb_glue_data_t *data;
-    int col;
+    int col, i;
 
-    ST_CHECK_PARAM(glue == NULL || glue->wt == NULL
+    ST_CHECK_PARAM(glue == NULL || glue->wts == NULL
             || input == NULL, -1);
 
     if (strcasecmp(glue->type, EMB_GLUE_NAME) != 0) {
@@ -443,35 +446,12 @@ int emb_glue_init_data(glue_t *glue, input_t *input,
         col = glue->out_length;
     }
 
-    if (wt_init(glue->wt, input->input_size, col) < 0) {
-        ST_WARNING("Failed to wt_init.");
-        return -1;
+    for (i = 0; i < glue->num_wts; i++) {
+        if (wt_init(glue->wts[i], input->input_size, col) < 0) {
+            ST_WARNING("Failed to wt_init[%d].", i);
+            return -1;
+        }
     }
 
     return 0;
-}
-
-wt_updater_t* emb_glue_init_wt_updater(glue_t *glue, param_t *param)
-{
-    wt_updater_t *wt_updater = NULL;
-
-    ST_CHECK_PARAM(glue == NULL, NULL);
-
-    if (strcasecmp(glue->type, EMB_GLUE_NAME) != 0) {
-        ST_WARNING("Not a emb glue. [%s]", glue->type);
-        return NULL;
-    }
-
-    wt_updater = wt_updater_create(param == NULL ? &glue->param : param,
-            &glue->wt->w, &glue->wt->bias, WT_UT_ONE_SHOT);
-    if (wt_updater == NULL) {
-        ST_WARNING("Failed to wt_updater_create.");
-        goto ERR;
-    }
-
-    return wt_updater;
-
-ERR:
-    safe_wt_updater_destroy(wt_updater);
-    return NULL;
 }

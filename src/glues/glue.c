@@ -43,20 +43,20 @@ static glue_impl_t GLUE_IMPL[] = {
     {DIRECT_GLUE_NAME, direct_glue_init, direct_glue_destroy, direct_glue_dup,
         direct_glue_parse_topo, direct_glue_check, direct_glue_draw_label,
         direct_glue_load_header, NULL, direct_glue_save_header, NULL,
-        direct_glue_init_data, direct_glue_init_wt_updater,
+        direct_glue_init_data,
         direct_glue_print_verbose_info},
     {FC_GLUE_NAME, NULL, NULL, NULL,
         fc_glue_parse_topo, fc_glue_check, NULL,
         NULL, NULL, NULL, NULL,
-        fc_glue_init_data, fc_glue_init_wt_updater, NULL},
+        fc_glue_init_data, NULL},
     {EMB_GLUE_NAME, emb_glue_init, emb_glue_destroy, emb_glue_dup,
         emb_glue_parse_topo, emb_glue_check, emb_glue_draw_label,
         emb_glue_load_header, NULL, emb_glue_save_header, NULL,
-        emb_glue_init_data, emb_glue_init_wt_updater, NULL},
+        emb_glue_init_data, NULL},
     {OUT_GLUE_NAME, NULL, NULL, NULL,
         out_glue_parse_topo, out_glue_check, NULL,
         NULL, NULL, NULL, NULL,
-        out_glue_init_data, out_glue_init_wt_updater, NULL},
+        out_glue_init_data, NULL},
 };
 
 static glue_impl_t* glue_get_impl(const char *type)
@@ -87,6 +87,8 @@ static int glue_get_layer(layer_t **layers, int n_layer, const char *name)
 
 void glue_destroy(glue_t *glue)
 {
+    int i;
+
     if (glue == NULL) {
         return;
     }
@@ -105,7 +107,14 @@ void glue_destroy(glue_t *glue)
     glue->out_layer = -1;
     glue->out_offset = -1;
     glue->out_length = -1;
-    safe_wt_destroy(glue->wt);
+
+    if (glue->wts != NULL) {
+        for (i = 0;i < glue->num_wts; i++) {
+            safe_wt_destroy(glue->wts[i]);
+        }
+        safe_st_free(glue->wts);
+    }
+    glue->num_wts = 0;
 }
 
 bool glue_check(glue_t *glue, layer_t **layers,
@@ -158,6 +167,7 @@ glue_t* glue_parse_topo(const char *line, layer_t **layers,
     char untouch_topo[MAX_LINE_LEN];
 
     const char *p;
+    int i;
 
     ST_CHECK_PARAM(line == NULL, NULL);
 
@@ -291,16 +301,34 @@ glue_t* glue_parse_topo(const char *line, layer_t **layers,
         goto ERR;
     }
 
-    glue->wt = (weight_t *)st_malloc(sizeof(weight_t));
-    if (glue->wt == NULL) {
-        ST_WARNING("Failed to st_malloc weight_t");
+    if (strcasecmp(glue->type, OUT_GLUE_NAME) == 0) {
+        glue->num_wts = output->tree->num_node;
+    } else {
+        glue->num_wts = 1;
+    }
+
+    glue->wts = (weight_t **)st_malloc(sizeof(weight_t *) * glue->num_wts);
+    if (glue->wts == NULL) {
+        ST_WARNING("Failed to st_malloc wts");
         goto ERR;
     }
-    memset(glue->wt, 0, sizeof(weight_t));
+    memset(glue->wts, 0, sizeof(weight_t *) * glue->num_wts);
 
-    if (wt_parse_topo(glue->wt, untouch_topo, MAX_LINE_LEN) < 0) {
+    for (i = 0; i < glue->num_wts; i++) {
+        glue->wts[i] = (weight_t *)st_malloc(sizeof(weight_t));
+        if (glue->wts[i] == NULL) {
+            ST_WARNING("Failed to st_malloc wts");
+            goto ERR;
+        }
+        memset(glue->wts[i], 0, sizeof(weight_t));
+    }
+
+    if (wt_parse_topo(glue->wts[0], untouch_topo, MAX_LINE_LEN) < 0) {
         ST_WARNING("Failed to wt_parse_topo.");
         goto ERR;
+    }
+    for (i = 1; i < glue->num_wts; i++) {
+        glue->wts[i] = glue->wts[0];
     }
 
     if (!glue_check(glue, layers, n_layer, input, output)) {
@@ -336,6 +364,7 @@ ERR:
 glue_t* glue_dup(glue_t *g)
 {
     glue_t *glue = NULL;
+    int i;
 
     ST_CHECK_PARAM(g == NULL, NULL);
 
@@ -364,10 +393,20 @@ glue_t* glue_dup(glue_t *g)
     glue->bptt_opt = g->bptt_opt;
     glue->param = g->param;
 
-    glue->wt = wt_dup(g->wt);
-    if (glue->wt == NULL) {
-        ST_WARNING("Failed to wt_dup.");
+    glue->num_wts = g->num_wts;
+    glue->wts = (weight_t **)st_malloc(sizeof(weight_t *) * glue->num_wts);
+    if (glue->wts == NULL) {
+        ST_WARNING("Failed to st_malloc wts");
         goto ERR;
+    }
+    memset(glue->wts, 0, sizeof(weight_t *) * glue->num_wts);
+
+    for (i = 0; i < glue->num_wts; i++) {
+        glue->wts[i] = wt_dup(g->wts[i]);
+        if (glue->wts[i] == NULL) {
+            ST_WARNING("Failed to wt_dup wt[%d].", i);
+            goto ERR;
+        }
     }
 
     glue->impl = g->impl;
@@ -401,15 +440,16 @@ int glue_load_header(glue_t **glue, int version,
     int out_layer;
     int out_offset;
     int out_length;
-	real_t dropout; // deprecated
+    int num_wts;
 
     glue_impl_t *impl;
     connlm_fmt_t f;
+    int i;
 
     ST_CHECK_PARAM((glue == NULL && fo_info == NULL) || fp == NULL
             || fmt == NULL, -1);
 
-    if (version < 6) {
+    if (version < 20) {
         ST_WARNING("Too old version of connlm file");
         return -1;
     }
@@ -475,11 +515,9 @@ int glue_load_header(glue_t **glue, int version,
             ST_WARNING("Failed to read out_length.");
             return -1;
         }
-        if (version == 13) { /* deprecated */
-            if (fread(&dropout, sizeof(real_t), 1, fp) != 1) {
-                ST_WARNING("Failed to read dropout.");
-                return -1;
-            }
+        if (fread(&num_wts, sizeof(int), 1, fp) != 1) {
+            ST_WARNING("Failed to read num_wts.");
+            return -1;
         }
     } else {
         if (st_readline(fp, "") != 0) {
@@ -526,11 +564,9 @@ int glue_load_header(glue_t **glue, int version,
             ST_WARNING("Failed to parse out_length.");
             goto ERR;
         }
-        if (version == 13) { /* deprecated */
-            if (st_readline(fp, "Dropout: "REAL_FMT, &dropout) != 1) {
-                ST_WARNING("Failed to parse dropout.");
-                goto ERR;
-            }
+        if (st_readline(fp, "Num weights: %d", &num_wts) != 1) {
+            ST_WARNING("Failed to parse num_wts.");
+            goto ERR;
         }
     }
 
@@ -556,6 +592,7 @@ int glue_load_header(glue_t **glue, int version,
         (*glue)->out_layer = out_layer;
         (*glue)->out_offset = out_offset;
         (*glue)->out_length = out_length;
+        (*glue)->num_wts = num_wts;
         (*glue)->impl = impl;
     }
 
@@ -568,16 +605,40 @@ int glue_load_header(glue_t **glue, int version,
         fprintf(fo_info, "out layer: %d\n", out_layer);
         fprintf(fo_info, "out offset: %d\n", out_offset);
         fprintf(fo_info, "out length: %d\n", out_length);
+        fprintf(fo_info, "num weights: %d\n", num_wts);
     }
 
-    if (wt_load_header(glue != NULL ? &((*glue)->wt) : NULL,
+    if (glue != NULL) {
+        (*glue)->num_wts = num_wts;
+        (*glue)->wts = (weight_t **)st_malloc(sizeof(weight_t *) * num_wts);
+        if ((*glue)->wts == NULL) {
+            ST_WARNING("Failed to st_malloc wts");
+            return -1;
+        }
+        memset((*glue)->wts, 0, sizeof(weight_t *) * num_wts);
+    }
+
+    if (wt_load_header(glue != NULL ? &((*glue)->wts[0]) : NULL,
             version, fp, &f, fo_info) < 0) {
-        ST_WARNING("Failed to wt_load_header.");
+        ST_WARNING("Failed to wt_load_header[0].");
         goto ERR;
     }
     if (connlm_fmt_is_bin(*fmt) != connlm_fmt_is_bin(f)) {
         ST_WARNING("Multiple formats in one file.");
         return -1;
+    }
+
+    for (i = 1; i < num_wts; i++) {
+        // do not print info for other weights
+        if (wt_load_header(glue != NULL ? &((*glue)->wts[i]) : NULL,
+                    version, fp, &f, NULL) < 0) {
+            ST_WARNING("Failed to wt_load_header[%d].", i);
+            goto ERR;
+        }
+        if (connlm_fmt_is_bin(*fmt) != connlm_fmt_is_bin(f)) {
+            ST_WARNING("Multiple formats in one file.");
+            return -1;
+        }
     }
 
     if (impl->load_header != NULL) {
@@ -605,6 +666,7 @@ int glue_load_body(glue_t *glue, int version, FILE *fp, connlm_fmt_t fmt)
 {
     connlm_fmt_t wt_fmt;
     int n;
+    int i;
 
     ST_CHECK_PARAM(glue == NULL || fp == NULL, -1);
 
@@ -640,9 +702,11 @@ int glue_load_body(glue_t *glue, int version, FILE *fp, connlm_fmt_t fmt)
         }
     }
 
-    if (wt_load_body(glue->wt, version, fp, wt_fmt) < 0) {
-        ST_WARNING("Failed to wt_load_body.");
-        goto ERR;
+    for (i = 0; i < glue->num_wts; i++) {
+        if (wt_load_body(glue->wts[i], version, fp, wt_fmt) < 0) {
+            ST_WARNING("Failed to wt_load_body[%d].", i);
+            goto ERR;
+        }
     }
 
     if (glue->impl->load_body != NULL) {
@@ -661,6 +725,7 @@ ERR:
 int glue_save_header(glue_t *glue, FILE *fp, connlm_fmt_t fmt)
 {
     int n;
+    int i;
 
     ST_CHECK_PARAM(fp == NULL, -1);
 
@@ -717,6 +782,10 @@ int glue_save_header(glue_t *glue, FILE *fp, connlm_fmt_t fmt)
             ST_WARNING("Failed to write out_length.");
             return -1;
         }
+        if (fwrite(&glue->num_wts, sizeof(int), 1, fp) != 1) {
+            ST_WARNING("Failed to write num_wts.");
+            return -1;
+        }
     } else {
         if (fprintf(fp, "    \n<GLUE>\n") < 0) {
             ST_WARNING("Failed to fprintf header.");
@@ -755,11 +824,17 @@ int glue_save_header(glue_t *glue, FILE *fp, connlm_fmt_t fmt)
             ST_WARNING("Failed to fprintf out_length.");
             return -1;
         }
+        if (fprintf(fp, "Num weights: %d\n", glue->num_wts) < 0) {
+            ST_WARNING("Failed to fprintf num_wts.");
+            return -1;
+        }
     }
 
-    if (wt_save_header(glue->wt, fp, fmt) < 0) {
-        ST_WARNING("Failed to wt_save_header.");
-        return -1;
+    for (i = 0; i < glue->num_wts; i++) {
+        if (wt_save_header(glue->wts[i], fp, fmt) < 0) {
+            ST_WARNING("Failed to wt_save_header[%d].", i);
+            return -1;
+        }
     }
 
     if (glue->impl != NULL && glue->impl->save_header != NULL) {
@@ -774,8 +849,10 @@ int glue_save_header(glue_t *glue, FILE *fp, connlm_fmt_t fmt)
 
 int glue_save_body(glue_t *glue, FILE *fp, connlm_fmt_t fmt)
 {
+    char name[MAX_NAME_LEN];
     connlm_fmt_t wt_fmt;
     int n;
+    int i;
 
     ST_CHECK_PARAM(fp == NULL, -1);
 
@@ -802,9 +879,12 @@ int glue_save_body(glue_t *glue, FILE *fp, connlm_fmt_t fmt)
         }
     }
 
-    if (wt_save_body(glue->wt, fp, wt_fmt, glue->name) < 0) {
-        ST_WARNING("Failed to wt_save_body.");
-        return -1;
+    for (i = 0; i < glue->num_wts; i++) {
+        snprintf(name, MAX_NAME_LEN, "%s-%d", glue->name, i);
+        if (wt_save_body(glue->wts[i], fp, wt_fmt, name) < 0) {
+            ST_WARNING("Failed to wt_save_body[%d].", i);
+            return -1;
+        }
     }
 
     if (glue->impl != NULL && glue->impl->save_body != NULL) {
@@ -864,24 +944,42 @@ int glue_init_data(glue_t *glue, input_t *input,
     return 0;
 }
 
-wt_updater_t* glue_init_wt_updater(glue_t *glue, param_t *param)
+wt_updater_t** glue_init_wt_updaters(glue_t *glue, param_t *param,
+        wt_update_type_t wu_type, int *num_wt_updaters)
 {
-    wt_updater_t *wt_updater = NULL;
+    wt_updater_t **wt_updaters = NULL;
+    int i;
 
     ST_CHECK_PARAM(glue == NULL, NULL);
 
-    if (glue->impl != NULL && glue->impl->init_wt_updater != NULL) {
-        wt_updater = glue->impl->init_wt_updater(glue, param);
-        if (wt_updater == NULL) {
-            ST_WARNING("Failed to glue->impl->init_wt_updater.[%s]",
-                    glue->name);
+    *num_wt_updaters = glue->num_wts;
+    wt_updaters = (wt_updater_t **)st_malloc(sizeof(wt_updater_t *)
+            * (*num_wt_updaters));
+    if (wt_updaters != NULL) {
+        ST_WARNING("Failed to st_malloc wt_updaters.");
+        return NULL;
+    }
+    memset(wt_updaters, 0, sizeof(wt_updater_t *) * (*num_wt_updaters));
+
+    for (i = 0; i < *num_wt_updaters; i++) {
+        wt_updaters[i] = wt_updater_create(param == NULL ? &glue->param : param,
+                &glue->wts[i]->w, &glue->wts[i]->bias, wu_type);
+        if (wt_updaters[i] == NULL) {
+            ST_WARNING("Failed to wt_updater_create.");
             goto ERR;
         }
     }
 
-    return wt_updater;
+    return wt_updaters;
 
 ERR:
+    if (wt_updaters != NULL) {
+        for (i = 0; i < *num_wt_updaters; i++) {
+            safe_wt_updater_destroy(wt_updaters[i]);
+        }
+        safe_st_free(wt_updaters);
+    }
+    *num_wt_updaters = 0;
     return NULL;
 }
 
@@ -892,7 +990,7 @@ int glue_load_train_opt(glue_t *glue, st_opt_t *opt, const char *sec_name,
 
     ST_CHECK_PARAM(glue == NULL || opt == NULL, -1);
 
-    if (glue->wt != NULL && glue->wt->w.num_rows > 0) {
+    if (glue->wts != NULL && glue->wts[0]->w.num_rows > 0) {
         if (sec_name == NULL || sec_name[0] == '\0') {
             snprintf(name, MAX_ST_CONF_LEN, "%s", glue->name);
         } else {
@@ -920,10 +1018,16 @@ ST_OPT_ERR:
 
 void glue_sanity_check(glue_t *glue)
 {
+    char name[MAX_NAME_LEN];
+    int i;
+
     ST_CHECK_PARAM_VOID(glue == NULL);
 
-    if (glue->wt != NULL) {
-        wt_sanity_check(glue->wt, glue->name);
+    if (glue->wts != NULL) {
+        for (i = 0; i < glue->num_wts; i++) {
+            snprintf(name, MAX_NAME_LEN, "%s-%d", glue->name, i);
+            wt_sanity_check(glue->wts[i], name);
+        }
     }
 }
 

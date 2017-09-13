@@ -74,24 +74,6 @@ bool out_glue_check(glue_t *glue, layer_t **layers, int n_layer,
 int out_glue_init_data(glue_t *glue, input_t *input,
         layer_t **layers, output_t *output);
 
-/**
- * Initialize a wt_updater for out glue.
- * @ingroup g_glue_out
- * @param[in] glue the glue.
- * @param[in] param param used for initialising, if not NULL.
- * @return wt_updater on success, otherwise NULL.
- */
-wt_updater_t* out_glue_init_wt_updater(glue_t *glue, param_t *param);
-
-/**
- * Initialize a wt_updater for direct glue.
- * @ingroup g_glue_out
- * @param[in] glue the glue.
- * @param[in] param param used for initialising, if not NULL.
- * @return wt_updater on success, otherwise NULL.
- */
-wt_updater_t* direct_glue_init_wt_updater(glue_t *glue, param_t *param);
-
 #ifdef __cplusplus
 }
 #endif
