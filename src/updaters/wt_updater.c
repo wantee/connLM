@@ -44,9 +44,6 @@ void wt_updater_destroy(wt_updater_t *wt_updater)
     mat_destroy(&wt_updater->delta_wt);
     vec_destroy(&wt_updater->bias);
     vec_destroy(&wt_updater->delta_bias);
-
-    safe_st_free(wt_updater->segs);
-    wt_updater->n_seg = 0;
 }
 
 wt_updater_t* wt_updater_create(param_t *param, mat_t *wt, vec_t *bias,
@@ -93,27 +90,6 @@ wt_updater_t* wt_updater_create(param_t *param, mat_t *wt, vec_t *bias,
 ERR:
     safe_wt_updater_destroy(wt_updater);
     return NULL;
-}
-
-int wt_updater_set_segs(wt_updater_t *wt_updater,
-        st_int_seg_t *segs, int n_seg)
-{
-    ST_CHECK_PARAM(wt_updater == NULL || segs == NULL || n_seg <= 0, -1);
-
-    safe_st_free(wt_updater->segs);
-    wt_updater->segs = (st_int_seg_t *)st_malloc(sizeof(st_int_seg_t)*n_seg);
-    if (wt_updater->segs == NULL) {
-        ST_WARNING("Failed to st_malloc segs.");
-        goto ERR;
-    }
-    memcpy(wt_updater->segs, segs, sizeof(st_int_seg_t) * n_seg);
-    wt_updater->n_seg = n_seg;
-
-    return 0;
-
-ERR:
-    safe_st_free(wt_updater->segs);
-    return -1;
 }
 
 static inline real_t get_lr(param_t *param)
@@ -164,7 +140,7 @@ int wt_update(wt_updater_t *wt_updater,
     momentum = wt_updater->param.momentum;
 
     batch_size = er->num_rows;
-    /* TODO: should we divide batch_size for WT_UT_ONE_SHOT and WT_UT_SEG,
+    /* TODO: should we divide batch_size for WT_UT_ONE_SHOT
        since they usually update only a subset of rows. */
     lr /= batch_size;
 
@@ -207,109 +183,6 @@ int wt_update(wt_updater_t *wt_updater,
                     }
                 }
             }
-            break;
-
-        case WT_UT_SEG:
-            if (er->num_cols != row) {
-                ST_WARNING("Error size of er mat.[%zux%zu]",
-                        er->num_rows, er->num_cols);
-                return -1;
-            }
-            if (sp_mat->fmt != SP_MAT_CSC) {
-                ST_WARNING("Error format of sp_mat.[%d]", sp_mat->fmt);
-                return -1;
-            }
-
-            // construct maxtrix for segs
-            for (a = 0; a < sp_mat->csc.num_cols; a++) {
-                for (b = sp_mat->csc.col_s[a]; b < sp_mat->csc.col_e[a]; b++) {
-                    idx = sp_mat->csc.rows[b];
-                    seg = wt_updater->segs + idx;
-
-                    buf_er = wt_updater->buf_ers + idx;
-                    if (mat_resize(buf_er, row, seg->n) < 0) {
-                        ST_WARNING("Failed to mat_resize for buf_er.");
-                        return -1;
-                    }
-                    if (mat_append_row(buf_er,
-                                MAT_VALP(er, idx, seg->s), seg->n) < 0) {
-                        ST_WARNING("Failed to mat_append_row for buf_er.");
-                        return -1;
-                    }
-
-                    buf_in = wt_updater->buf_ins + idx;
-                    if (mat_resize(buf_in, row, seg->n, NAN) < 0) {
-                        ST_WARNING("Failed to mat_resize for buf_in.");
-                        return -1;
-                    }
-                    if (mat_append_row(buf_in,
-                                MAT_VALP(in, idx, seg->s), seg->n) < 0) {
-                        ST_WARNING("Failed to mat_append_row for buf_in.");
-                        return -1;
-                    }
-                }
-            }
-
-            // do update weight
-            for (a = 0; a < sp_mat->csc.num_cols; a++) {
-                for (b = sp_mat->csc.col_s[a]; b < sp_mat->csc.col_e[a]; b++) {
-                    idx = sp_mat->csc.rows[b];
-                    seg = wt_updater->segs + idx;
-                    buf_er = wt_updater->buf_ers + idx;
-                    buf_in = wt_updater->buf_ins + idx;
-
-                    if (buf_er->num_rows == 0) {
-                        continue;
-                    }
-
-                    if (momentum != 0.0) {
-                        matXmat(delta_wt + seg->s * col,
-                                buf_er->vals,
-                                buf_in->vals, seg->n, col,
-                                buf_er->num_rows, lr, momentum);
-                        i = seg->s * col;
-                        for (; i < (seg->s + seg->n) * col; i++) {
-                            delta_wt[i] -= l2 * wt[i];
-                            wt[i] += delta_wt[i];
-                        }
-                        if (bias != NULL) {
-                            for (i = seg->s; i < (seg->s + seg->n); i++) {
-                                sum = 0.0;
-                                for (j = 0; j < buf_er->num_rows; j++) {
-                                    sum += MAT_VAL(buf_er, j, i - seg->s);
-                                }
-                                delta_bias[i] = lr * sum - l2 * bias[i] + momentum * delta_bias[i];
-                                bias[i] += delta_bias[i];
-                            }
-                        }
-                    } else {
-                        matXmat(wt + seg->s * col,
-                                buf_er->vals,
-                                buf_in->vals, seg->n, col,
-                                buf_er->num_rows,
-                                lr, 1.0 - l2);
-                        if (bias != NULL) {
-                            for (i = seg->s; i < (seg->s + seg->n); i++) {
-                                sum = 0.0;
-                                for (j = 0; j < buf_er->num_rows; j++) {
-                                    sum += MAT_VAL(buf_er, j, i - seg->s);
-                                }
-                                bias[i] += lr * sum - l2 * bias[i];
-                            }
-                        }
-                    }
-
-                    if (mat_clear(buf_er) < 0) {
-                        ST_WARNING("Failed to mat_clear for buf_er.");
-                        return -1;
-                    }
-                    if (mat_clear(buf_in) < 0) {
-                        ST_WARNING("Failed to mat_clear for buf_in.");
-                        return -1;
-                    }
-                }
-            }
-
             break;
 
         case WT_UT_PART:

@@ -162,39 +162,15 @@ ERR:
 int out_glue_updater_setup(glue_updater_t *glue_updater,
         comp_updater_t *comp_updater, bool backprop)
 {
-    st_int_seg_t *segs = NULL;
-    int n_seg;
-
     ST_CHECK_PARAM(glue_updater == NULL || comp_updater == NULL, -1);
 
     if (ogu_data_setup((ogu_data_t *)glue_updater->extra,
                 comp_updater->out_updater, backprop) < 0) {
         ST_WARNING("Failed to ogu_data_setup");
-        goto ERR;
-    }
-
-    if (backprop) {
-        if (glue_updater->wt_updater->segs == NULL) {
-            segs = output_gen_segs(comp_updater->out_updater->output, &n_seg);
-            if (segs == NULL || n_seg <= 0) {
-                ST_WARNING("Failed to output_gen_segs.");
-                goto ERR;
-            }
-
-            if (wt_updater_set_segs(glue_updater->wt_updater, segs, n_seg) < 0) {
-                ST_WARNING("Failed to wt_updater_set_segs.");
-                goto ERR;
-            }
-
-            safe_st_free(segs);
-        }
+        return -1;
     }
 
     return 0;
-
-ERR:
-    safe_st_free(segs);
-    return -1;
 }
 
 static int clear_tree_nodes_walker(output_t *output, output_node_id_t node,

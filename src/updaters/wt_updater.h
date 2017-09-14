@@ -51,7 +51,6 @@ typedef enum _weight_update_type_t_ {
     WT_UT_UNKNOWN = -1, /**< Unknown weight. */
     WT_UT_FULL = 0, /**< fully updated weight. */
     WT_UT_PART, /**< partly updated weight. e.g. hashed wt. */
-    WT_UT_SEG, /**< segmently(non-overlap) updated weight. e.g. output wt. */
     WT_UT_ONE_SHOT, /**< one-shot updated weight. e.g. embedding wt. */
 } wt_update_type_t;
 
@@ -67,12 +66,6 @@ typedef struct _weight_updater_t_ {
     vec_t bias; /**< local bias of this updater. */
     vec_t delta_bias; /**< buffer for delta bias. used by momentum. */
     wt_update_type_t type; /**< updating type. */
-
-    st_int_seg_t *segs; /**< segs for type == WT_UT_SEG. */
-    int n_seg; /**< number of segs. */
-
-    mat_t *buf_ins; /**< in for each seg in WT_UT_SEG. */
-    mat_t *buf_ers; /**< er for each seg in WT_UT_SEG. */
 } wt_updater_t;
 
 /**
@@ -110,25 +103,12 @@ wt_updater_t* wt_updater_create(param_t *param, mat_t *wt, vec_t *bias,
         wt_update_type_t type);
 
 /**
- * Set segs for wt_updater. The segs is used by WT_UT_SEG.
- *
- * @ingroup g_updater_wt
- * @param[in] wt_updater the wt_updater.
- * @param[in] segs the segs.
- * @param[in] n_seg number of segs.
- * @return non-zero value if any error.
- */
-int wt_updater_set_segs(wt_updater_t *wt_updater,
-        st_int_seg_t *segs, int n_seg);
-
-/**
  * Update weights.
  * @ingroup g_updater_wt
  *
  * Denote Batch size by B
  * For WT_UT_FULL: in is [ B x col ]; er is [ B x row ];
  * For WT_UT_PART: in is NULL; er is [ 1 x part.n ];
- * For WT_UT_SEG: in is [ B x col ]; er is [ B x row ];
  * For WT_UT_ONE_SHOT: in is NULL; er is [ B x row ];
  *
  * Note that for WT_UT_PART, we don't pass a Batch into this function,
@@ -143,8 +123,6 @@ int wt_updater_set_segs(wt_updater_t *wt_updater,
  *
  * @param[in] part    for WT_UT_PART, specify the segment of row in weight.
  * @param[in] sp_mat  sparse matrix with num_rows == B. An egs is in a row.
- *                    for WT_UT_SEG, every col index represents an id of
- *                      segment of row in weight.
  *                    for WT_UT_ONE_SHOT, every col index represents an id
  *                      of input and the value represents scale.
  * @return non-zero value if any error.
