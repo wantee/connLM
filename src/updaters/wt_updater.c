@@ -53,7 +53,7 @@ wt_updater_t* wt_updater_create(param_t *param, mat_t *wt, vec_t *bias,
 
     ST_CHECK_PARAM(param == NULL || wt == NULL || bias == NULL, NULL);
 
-    if (wt->num_cols != bias->size) {
+    if (bias->size > 0 && wt->num_rows != bias->size) {
         ST_WARNING("weight matrix and bias not match");
         return NULL;
     }

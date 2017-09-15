@@ -72,17 +72,21 @@ void dgu_data_destroy(dgu_data_t *data)
         return;
     }
 
-    for (i = 0; i < data->cap_batches; i++) {
-        safe_free(data->hash_vals[i]);
+    if (data->hash_vals != NULL) {
+        for (i = 0; i < data->cap_batches; i++) {
+            safe_st_free(data->hash_vals[i]);
+        }
+        safe_st_free(data->hash_vals);
     }
-    safe_free(data->hash_vals);
-    safe_free(data->hash_order);
+    safe_st_free(data->hash_order);
     data->cap_batches = 0;
 
-    for (i = 0; i < data->num_feats; i++) {
-        safe_free(data->P[i]);
+    if (data->P != NULL) {
+        for (i = 0; i < data->num_feats; i++) {
+            safe_st_free(data->P[i]);
+        }
+        safe_st_free(data->P);
     }
-    safe_free(data->P);
     data->num_feats = 0;
 }
 

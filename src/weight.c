@@ -494,6 +494,18 @@ int wt_save_header(weight_t *wt, FILE *fp, connlm_fmt_t fmt)
         }
     }
 
+    if (mat_save_header(&wt->w, fp, fmt) < 0) {
+        ST_WARNING("Failed to mat_save_header.");
+        return -1;
+    }
+
+    if (! isinf(wt->init_bias)) {
+        if (vec_save_header(&wt->bias, fp, fmt) < 0) {
+            ST_WARNING("Failed to vec_save_header.");
+            return -1;
+        }
+    }
+
     return 0;
 }
 

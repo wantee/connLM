@@ -955,7 +955,7 @@ wt_updater_t** glue_init_wt_updaters(glue_t *glue, param_t *param,
     *num_wt_updaters = glue->num_wts;
     wt_updaters = (wt_updater_t **)st_malloc(sizeof(wt_updater_t *)
             * (*num_wt_updaters));
-    if (wt_updaters != NULL) {
+    if (wt_updaters == NULL) {
         ST_WARNING("Failed to st_malloc wt_updaters.");
         return NULL;
     }
