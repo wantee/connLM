@@ -200,9 +200,12 @@ void updater_destroy(updater_t *updater)
         }
         safe_st_free(updater->batches);
     }
-    updater->connlm = NULL;
 
+    ivec_destroy(&updater->targets);
+    dvec_destroy(&updater->logps);
     word_pool_destroy(&updater->tmp_wp);
+
+    updater->connlm = NULL;
 }
 
 updater_t* updater_create(connlm_t *connlm)
@@ -884,7 +887,6 @@ int updater_forward_out_words(updater_t *updater, ivec_t *words, dvec_t *logps)
             ST_WARNING("Failed to out_updater_activate.");
             return -1;
         }
-
     }
 
     return 0;

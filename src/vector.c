@@ -35,7 +35,7 @@
 
 static const int VEC_MAGIC_NUM = 626140498 + 81;
 
-int svec_load_header(svec_t *vec, int version,
+int vec_load_header(vec_t *vec, int version,
         FILE *fp, connlm_fmt_t *fmt, FILE *fo_info)
 {
     union {
@@ -62,7 +62,7 @@ int svec_load_header(svec_t *vec, int version,
     }
 
     if (vec != NULL) {
-        memset(vec, 0, sizeof(svec_t));
+        memset(vec, 0, sizeof(vec_t));
     }
 
     if (*fmt != CONN_FMT_TXT) {
@@ -92,8 +92,8 @@ int svec_load_header(svec_t *vec, int version,
     }
 
     if (vec != NULL) {
-        if (svec_resize(vec, size, NAN) < 0) {
-            ST_WARNING("Failed to svec_resize.");
+        if (vec_resize(vec, size, NAN) < 0) {
+            ST_WARNING("Failed to vec_resize.");
             goto ERR;
         }
     }
@@ -107,12 +107,12 @@ int svec_load_header(svec_t *vec, int version,
 
 ERR:
     if (vec != NULL) {
-        svec_destroy(vec);
+        vec_destroy(vec);
     }
     return -1;
 }
 
-int svec_load_body(svec_t *vec, int version, FILE *fp, connlm_fmt_t fmt)
+int vec_load_body(vec_t *vec, int version, FILE *fp, connlm_fmt_t fmt)
 {
     char name[MAX_NAME_LEN];
     int n;
@@ -202,7 +202,7 @@ ERR:
     return -1;
 }
 
-int svec_save_header(svec_t *vec, FILE *fp, connlm_fmt_t fmt)
+int vec_save_header(vec_t *vec, FILE *fp, connlm_fmt_t fmt)
 {
     ST_CHECK_PARAM(fp == NULL, -1);
 
@@ -235,7 +235,7 @@ int svec_save_header(svec_t *vec, FILE *fp, connlm_fmt_t fmt)
     return 0;
 }
 
-int svec_save_body(svec_t *vec, FILE *fp, connlm_fmt_t fmt, char *name)
+int vec_save_body(vec_t *vec, FILE *fp, connlm_fmt_t fmt, char *name)
 {
     int n;
     size_t i;
@@ -306,7 +306,7 @@ int svec_save_body(svec_t *vec, FILE *fp, connlm_fmt_t fmt, char *name)
     return 0;
 }
 
-void svec_destroy(svec_t *vec)
+void vec_destroy(vec_t *vec)
 {
     if (vec == NULL) {
         return;
@@ -319,7 +319,7 @@ void svec_destroy(svec_t *vec)
     vec->capacity = 0;
 }
 
-int svec_clear(svec_t *vec)
+int vec_clear(vec_t *vec)
 {
     ST_CHECK_PARAM(vec == NULL, -1);
 
@@ -335,7 +335,7 @@ int svec_clear(svec_t *vec)
     return 0;
 }
 
-int svec_resize(svec_t *vec, size_t size, float init_val)
+int vec_resize(vec_t *vec, size_t size, real_t init_val)
 {
     size_t i;
 
@@ -349,8 +349,8 @@ int svec_resize(svec_t *vec, size_t size, float init_val)
     }
 
     if (size > vec->capacity) {
-        vec->vals = (float *)st_aligned_realloc(vec->vals,
-                sizeof(float) * size, ALIGN_SIZE);
+        vec->vals = (real_t *)st_aligned_realloc(vec->vals,
+                sizeof(real_t) * size, ALIGN_SIZE);
         if (vec->vals == NULL) {
             ST_WARNING("Failed to st_aligned_realloc vec->vals.");
             return -1;
@@ -358,7 +358,7 @@ int svec_resize(svec_t *vec, size_t size, float init_val)
         if (! isnan(init_val)) {
             if (init_val == 0.0) {
                 memset(vec->vals + vec->capacity, 0,
-                    sizeof(float) * (size - vec->capacity));
+                    sizeof(real_t) * (size - vec->capacity));
             } else {
                 for (i = vec->capacity; i < size; i++) {
                     vec->vals[i] = init_val;
@@ -372,21 +372,21 @@ int svec_resize(svec_t *vec, size_t size, float init_val)
     return 0;
 }
 
-int svec_cpy(svec_t *dst, svec_t *src)
+int vec_cpy(vec_t *dst, vec_t *src)
 {
     ST_CHECK_PARAM(dst == NULL || src == NULL, -1);
 
-    if (svec_resize(dst, src->size, NAN) < 0) {
-        ST_WARNING("Failed to svec_resize.");
+    if (vec_resize(dst, src->size, NAN) < 0) {
+        ST_WARNING("Failed to vec_resize.");
         return -1;
     }
 
-    memcpy(dst->vals, src->vals, sizeof(float) * src->size);
+    memcpy(dst->vals, src->vals, sizeof(real_t) * src->size);
 
     return 0;
 }
 
-void svec_assign(svec_t *dst, svec_t *src)
+void vec_assign(vec_t *dst, vec_t *src)
 {
     ST_CHECK_PARAM_VOID(dst == NULL || src == NULL);
 
@@ -394,7 +394,7 @@ void svec_assign(svec_t *dst, svec_t *src)
     dst->is_const = true;
 }
 
-void svec_set(svec_t *vec, float val)
+void vec_set(vec_t *vec, real_t val)
 {
     size_t i;
 
@@ -405,7 +405,7 @@ void svec_set(svec_t *vec, float val)
     }
 }
 
-int svec_subvec(svec_t *vec, size_t start, size_t size, svec_t *sub)
+int vec_subvec(vec_t *vec, size_t start, size_t size, vec_t *sub)
 {
     ST_CHECK_PARAM(vec == NULL || sub == NULL, -1);
 
@@ -432,6 +432,7 @@ int svec_subvec(svec_t *vec, size_t start, size_t size, svec_t *sub)
 
     return 0;
 }
+
 
 void dvec_destroy(dvec_t *vec)
 {
@@ -499,28 +500,6 @@ int dvec_resize(dvec_t *vec, size_t size, double init_val)
     return 0;
 }
 
-int dvec_cpy(dvec_t *dst, dvec_t *src)
-{
-    ST_CHECK_PARAM(dst == NULL || src == NULL, -1);
-
-    if (dvec_resize(dst, src->size, NAN) < 0) {
-        ST_WARNING("Failed to dvec_resize.");
-        return -1;
-    }
-
-    memcpy(dst->vals, src->vals, sizeof(double) * src->size);
-
-    return 0;
-}
-
-void dvec_assign(dvec_t *dst, dvec_t *src)
-{
-    ST_CHECK_PARAM_VOID(dst == NULL || src == NULL);
-
-    dst = src;
-    dst->is_const = true;
-}
-
 void dvec_set(dvec_t *vec, double val)
 {
     size_t i;
@@ -532,33 +511,6 @@ void dvec_set(dvec_t *vec, double val)
     }
 }
 
-int dvec_subvec(dvec_t *vec, size_t start, size_t size, dvec_t *sub)
-{
-    ST_CHECK_PARAM(vec == NULL || sub == NULL, -1);
-
-    if (start >= vec->size) {
-        ST_WARNING("Error start index.");
-        return -1;
-    }
-
-    if (size <= 0) {
-        size = vec->size - start;
-    } else {
-        if (start + size > vec->size) {
-            ST_WARNING("Not enough elems to extract [%d + %d > %d].",
-                    start, size, vec->size);
-            return -1;
-        }
-    }
-
-    sub->vals = vec->vals + start;
-    sub->size = size;
-    sub->capacity = vec->capacity - (sub->vals - vec->vals);
-
-    sub->is_const = true;
-
-    return 0;
-}
 
 void ivec_destroy(ivec_t *vec)
 {

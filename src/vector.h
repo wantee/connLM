@@ -35,142 +35,114 @@ extern "C" {
 /** @defgroup g_vector Vector
  */
 
-#if _USE_DOUBLE_ == 1
-#define dvec_t vec_t
-#define dvec_load_header vec_load_header
-#define dvec_load_body vec_load_body
-#define dvec_save_header vec_save_header
-#define dvec_save_body vec_save_body
-#define dvec_destroy vec_destroy
-#define dvec_clear vec_clear
-#define dvec_resize vec_resize
-#define dvec_cpy vec_cpy
-#define dvec_assign vec_assign
-#define dvec_set vec_set
-#define dvec_subvec vec_subvec
-#else
-#define svec_t vec_t
-#define svec_load_header vec_load_header
-#define svec_load_body vec_load_body
-#define svec_save_header vec_save_header
-#define svec_save_body vec_save_body
-#define svec_destroy vec_destroy
-#define svec_clear vec_clear
-#define svec_resize vec_resize
-#define svec_cpy vec_cpy
-#define svec_assign vec_assign
-#define svec_set vec_set
-#define svec_subvec vec_subvec
-#endif
-
 #define VEC_VAL(vec, idx) ((vec)->vals[idx])
 #define VEC_VALP(vec, idx) ((vec)->vals + (idx))
 
 /**
- * Single Float Vector
+ * Vector
  * @ingroup g_vector
  */
-typedef struct _single_vector_t_ {
-    float *vals; /**< values of vector. */
+typedef struct _vector_t_ {
+    real_t *vals; /**< values of vector. */
     size_t size; /**< size of vals. */
     size_t capacity; /**< capacity of vals. */
     bool is_const; /**< whether the diemention of vector is const. */
-} svec_t;
+} vec_t;
 
 /**
- * Load single float vector header.
+ * Load vector header.
  * @ingroup g_vector
  * @param[out] vec vector to be initialised.
  * @param[in] version file version of loading file.
  * @param[in] fp file stream loaded from.
  * @param[out] fmt storage format.
  * @param[out] fo_info file stream used to print information, if it is not NULL.
- * @see svec_load_body
- * @see svec_save_header, svec_save_body
+ * @see vec_load_body
+ * @see vec_save_header, vec_save_body
  * @return non-zero value if any error.
  */
-int svec_load_header(svec_t *vec, int version,
+int vec_load_header(vec_t *vec, int version,
         FILE *fp, connlm_fmt_t *fmt, FILE *fo_info);
 
 /**
- * Load single float vector body.
+ * Load vector body.
  * @ingroup g_vector
  * @param[in] vec vector to be loaded.
  * @param[in] version file version of loading file.
  * @param[in] fp file stream loaded from.
  * @param[in] fmt storage format.
- * @see svec_load_header
- * @see svec_save_header, svec_save_body
+ * @see vec_load_header
+ * @see vec_save_header, vec_save_body
  * @return non-zero value if any error.
  */
-int svec_load_body(svec_t *vec, int version, FILE *fp, connlm_fmt_t fmt);
+int vec_load_body(vec_t *vec, int version, FILE *fp, connlm_fmt_t fmt);
 
 /**
- * Save single float vector header.
+ * Save vector header.
  * @ingroup g_vector
  * @param[in] vec vector to be saved.
  * @param[in] fp file stream saved to.
  * @param[in] fmt storage format.
- * @see svec_save_body
- * @see svec_load_header, svec_load_body
+ * @see vec_save_body
+ * @see vec_load_header, vec_load_body
  * @return non-zero value if any error.
  */
-int svec_save_header(svec_t *vec, FILE *fp, connlm_fmt_t fmt);
+int vec_save_header(vec_t *vec, FILE *fp, connlm_fmt_t fmt);
 
 /**
- * Save single float vector body.
+ * Save vector body.
  * @ingroup g_vector
  * @param[in] vec vector to be saved.
  * @param[in] fp file stream saved to.
  * @param[in] fmt storage format.
  * @param[in] name name of the weight.
- * @see svec_save_header
- * @see svec_load_header, svec_load_body
+ * @see vec_save_header
+ * @see vec_load_header, vec_load_body
  * @return non-zero value if any error.
  */
-int svec_save_body(svec_t *vec, FILE *fp, connlm_fmt_t fmt, char *name);
+int vec_save_body(vec_t *vec, FILE *fp, connlm_fmt_t fmt, char *name);
 
 /**
- * Destroy a single float vector.
+ * Destroy a vector.
  * @ingroup g_vector
  * @param[in] vec vector to be destroyed.
  */
-void svec_destroy(svec_t *vec);
+void vec_destroy(vec_t *vec);
 
 /**
- * Clear a single float vector.
+ * Clear a vector.
  * @ingroup g_vector
  * @param[in] vec vector to be cleared.
  * @return non-zero if any error.
  */
-int svec_clear(svec_t *vec);
+int vec_clear(vec_t *vec);
 
 /**
- * Resize a single float vector.
+ * Resize a vector.
  * @ingroup g_vector
  * @param[in] vec the vector.
  * @param[in] size new size.
  * @param[in] init_val initialization value, do not initialize if init_val == NAN
  * @return non-zero if any error.
  */
-int svec_resize(svec_t *vec, size_t size, float init_val);
+int vec_resize(vec_t *vec, size_t size, real_t init_val);
 
 /**
- * Copy a single float vector to the other.
+ * Copy a vector to the other.
  * @ingroup g_vector
  * @param[out] dst the dst vector.
  * @param[in] src the src vector.
  * @return non-zero if any error.
  */
-int svec_cpy(svec_t *dst, svec_t *src);
+int vec_cpy(vec_t *dst, vec_t *src);
 
 /**
- * Assing a single float vector to the other.
+ * Assing a vector to the other.
  * @ingroup g_vector
  * @param[in] dst the dst vector.
  * @param[in] src the src vector.
  */
-void svec_assign(svec_t *dst, svec_t *src);
+void vec_assign(vec_t *dst, vec_t *src);
 
 /**
  * Set elements to a val in a vector.
@@ -178,7 +150,7 @@ void svec_assign(svec_t *dst, svec_t *src);
  * @param[in] vec the vector.
  * @param[in] val the value.
  */
-void svec_set(svec_t *vec, float val);
+void vec_set(vec_t *vec, real_t val);
 
 /**
  * Extract a sub-vector from one vector.
@@ -191,11 +163,11 @@ void svec_set(svec_t *vec, float val);
  * @param[out] sub the sub-vector.
  * @return non-zero if any error.
  */
-int svec_subvec(svec_t *vec, size_t start, size_t size, svec_t *sub);
+int vec_subvec(vec_t *vec, size_t start, size_t size, vec_t *sub);
 
 
 /**
- * Double Float Vector
+ * Double Vector
  * @ingroup g_vector
  */
 typedef struct _double_vector_t_ {
@@ -206,67 +178,14 @@ typedef struct _double_vector_t_ {
 } dvec_t;
 
 /**
- * Load double float vector header.
- * @ingroup g_vector
- * @param[out] vec vector to be initialised.
- * @param[in] version file version of loading file.
- * @param[in] fp file stream loaded from.
- * @param[out] fmt storage format.
- * @param[out] fo_info file stream used to print information, if it is not NULL.
- * @see dvec_load_body
- * @see dvec_save_header, dvec_save_body
- * @return non-zero value if any error.
- */
-int dvec_load_header(dvec_t *vec, int version,
-        FILE *fp, connlm_fmt_t *fmt, FILE *fo_info);
-
-/**
- * Load double float vector body.
- * @ingroup g_vector
- * @param[in] vec vector to be loaded.
- * @param[in] version file version of loading file.
- * @param[in] fp file stream loaded from.
- * @param[in] fmt storage format.
- * @see dvec_load_header
- * @see dvec_save_header, dvec_save_body
- * @return non-zero value if any error.
- */
-int dvec_load_body(dvec_t *vec, int version, FILE *fp, connlm_fmt_t fmt);
-
-/**
- * Save double float vector header.
- * @ingroup g_vector
- * @param[in] vec vector to be saved.
- * @param[in] fp file stream saved to.
- * @param[in] fmt storage format.
- * @see dvec_save_body
- * @see dvec_load_header, dvec_load_body
- * @return non-zero value if any error.
- */
-int dvec_save_header(dvec_t *vec, FILE *fp, connlm_fmt_t fmt);
-
-/**
- * Save double float vector body.
- * @ingroup g_vector
- * @param[in] vec vector to be saved.
- * @param[in] fp file stream saved to.
- * @param[in] fmt storage format.
- * @param[in] name name of the weight.
- * @see dvec_save_header
- * @see dvec_load_header, dvec_load_body
- * @return non-zero value if any error.
- */
-int dvec_save_body(dvec_t *vec, FILE *fp, connlm_fmt_t fmt, char *name);
-
-/**
- * Destroy a double float vector.
+ * Destroy a double vector.
  * @ingroup g_vector
  * @param[in] vec vector to be destroyed.
  */
 void dvec_destroy(dvec_t *vec);
 
 /**
- * Clear a double float vector.
+ * Clear a double vector.
  * @ingroup g_vector
  * @param[in] vec vector to be cleared.
  * @return non-zero if any error.
@@ -274,7 +193,7 @@ void dvec_destroy(dvec_t *vec);
 int dvec_clear(dvec_t *vec);
 
 /**
- * Resize a double float vector.
+ * Resize a double vector.
  * @ingroup g_vector
  * @param[in] vec the vector.
  * @param[in] size new size.
@@ -284,42 +203,12 @@ int dvec_clear(dvec_t *vec);
 int dvec_resize(dvec_t *vec, size_t size, double init_val);
 
 /**
- * Copy a double float vector to the other.
- * @ingroup g_vector
- * @param[out] dst the dst vector.
- * @param[in] src the src vector.
- * @return non-zero if any error.
- */
-int dvec_cpy(dvec_t *dst, dvec_t *src);
-
-/**
- * Assing a double float vector to the other.
- * @ingroup g_vector
- * @param[in] dst the dst vector.
- * @param[in] src the src vector.
- */
-void dvec_assign(dvec_t *dst, dvec_t *src);
-
-/**
- * Set elements to a val in a vector.
+ * Set elements to a val in a double vector.
  * @ingroup g_vector
  * @param[in] vec the vector.
  * @param[in] val the value.
  */
 void dvec_set(dvec_t *vec, double val);
-
-/**
- * Extract a sub-vector from one vector.
- * @ingroup g_vector
- * @param[in] vec the vector.
- * @param[in] start start index in original vector.
- * @param[in] size size of sub-vector.
- *                 set to non-positive value to extract all the rest
- *                 elems from original vector
- * @param[out] sub the sub-vector.
- * @return non-zero if any error.
- */
-int dvec_subvec(dvec_t *vec, size_t start, size_t size, dvec_t *sub);
 
 
 /**
@@ -333,14 +222,14 @@ typedef struct _int_vector_t_ {
 } ivec_t;
 
 /**
- * Destroy a int float vector.
+ * Destroy a int vector.
  * @ingroup g_vector
  * @param[in] vec vector to be destroyed.
  */
 void ivec_destroy(ivec_t *vec);
 
 /**
- * Clear a int float vector.
+ * Clear a int vector.
  * @ingroup g_vector
  * @param[in] vec vector to be cleared.
  * @return non-zero if any error.
@@ -348,7 +237,7 @@ void ivec_destroy(ivec_t *vec);
 int ivec_clear(ivec_t *vec);
 
 /**
- * Resize a int float vector.
+ * Resize a int vector.
  * @ingroup g_vector
  * @param[in] vec the vector.
  * @param[in] size new size.
