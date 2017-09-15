@@ -533,7 +533,7 @@ static int comp_updater_bptt(comp_updater_t *comp_updater, bool clear)
                             ST_WARNING("Failed to mat_submat er_bptts.");
                             goto ERR;
                         }
-                        if (mat_add_elems(&out_er, &tmp, &out_er) < 0) {
+                        if (mat_add_elems(&out_er, 1.0, &tmp, 1.0, &out_er) < 0) {
                             ST_WARNING("Failed to mat_add_elems for out_er");
                             goto ERR;
                         }

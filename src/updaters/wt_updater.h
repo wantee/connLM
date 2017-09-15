@@ -94,8 +94,6 @@ void wt_updater_destroy(wt_updater_t *wt_updater);
  * @param[in] param the param.
  * @param[in] wt the weight maxtrix.
  * @param[in] bias the bias vector.
- * @param[in] row row of weight maxtrix.
- * @param[in] col col of weight maxtrix.
  * @param[in] type updating type of weight maxtrix.
  * @return wt_updater on success, otherwise NULL.
  */

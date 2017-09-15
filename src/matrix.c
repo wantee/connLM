@@ -372,9 +372,10 @@ void mat_from_array(mat_t *mat, real_t *arr, size_t len, bool row_vec)
     mat->is_const = true;
 }
 
-int mat_add_elems(mat_t *mat1, mat_t *mat2, mat_t *out)
+int mat_add_elems(mat_t *mat1, real_t s1, mat_t *mat2, real_t s2, mat_t *out)
 {
     size_t i;
+    size_t j;
 
     ST_CHECK_PARAM(mat1 == NULL || mat2 == NULL || out == NULL, -1);
 
@@ -385,8 +386,10 @@ int mat_add_elems(mat_t *mat1, mat_t *mat2, mat_t *out)
         return -1;
     }
 
-    for (i = 0; i < mat1->num_rows * mat1->stride; i++) {
-        out->vals[i] = mat1->vals[i] + mat2->vals[i];
+    for (i = 0; i < mat1->num_rows; i++) {
+        for (j = 0; j < mat1->num_cols; j++) {
+            MAT_VAL(out, i, j) = s1 * MAT_VAL(mat1, i, j) + s2 * MAT_VAL(mat2, i, j);
+        }
     }
 
     return 0;

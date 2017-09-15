@@ -132,7 +132,7 @@ bptt_updater_t* bptt_updater_create(component_t *comp, int cycle_id,
 
     for (i = 1; i <= bptt_updater->num_glue; i++) {
         g = comp->glue_cycles[cycle_id][i];
-        bptt_updater->wt_updaters[i] = glue_updaters[g]->wt_updater;
+        bptt_updater->wt_updaters[i] = glue_updaters[g]->wt_updaters[0];
     }
 
     return bptt_updater;

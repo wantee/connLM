@@ -386,6 +386,14 @@ int svec_cpy(svec_t *dst, svec_t *src)
     return 0;
 }
 
+void svec_assign(svec_t *dst, svec_t *src)
+{
+    ST_CHECK_PARAM_VOID(dst == NULL || src == NULL);
+
+    dst = src;
+    dst->is_const = true;
+}
+
 void svec_set(svec_t *vec, float val)
 {
     size_t i;
@@ -503,6 +511,14 @@ int dvec_cpy(dvec_t *dst, dvec_t *src)
     memcpy(dst->vals, src->vals, sizeof(double) * src->size);
 
     return 0;
+}
+
+void dvec_assign(dvec_t *dst, dvec_t *src)
+{
+    ST_CHECK_PARAM_VOID(dst == NULL || src == NULL);
+
+    dst = src;
+    dst->is_const = true;
 }
 
 void dvec_set(dvec_t *vec, double val)

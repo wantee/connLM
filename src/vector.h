@@ -45,6 +45,7 @@ extern "C" {
 #define dvec_clear vec_clear
 #define dvec_resize vec_resize
 #define dvec_cpy vec_cpy
+#define dvec_assign vec_assign
 #define dvec_set vec_set
 #define dvec_subvec vec_subvec
 #else
@@ -57,6 +58,7 @@ extern "C" {
 #define svec_clear vec_clear
 #define svec_resize vec_resize
 #define svec_cpy vec_cpy
+#define svec_assign vec_assign
 #define svec_set vec_set
 #define svec_subvec vec_subvec
 #endif
@@ -161,6 +163,14 @@ int svec_resize(svec_t *vec, size_t size, float init_val);
  * @return non-zero if any error.
  */
 int svec_cpy(svec_t *dst, svec_t *src);
+
+/**
+ * Assing a single float vector to the other.
+ * @ingroup g_vector
+ * @param[in] dst the dst vector.
+ * @param[in] src the src vector.
+ */
+void svec_assign(svec_t *dst, svec_t *src);
 
 /**
  * Set elements to a val in a vector.
@@ -281,6 +291,14 @@ int dvec_resize(dvec_t *vec, size_t size, double init_val);
  * @return non-zero if any error.
  */
 int dvec_cpy(dvec_t *dst, dvec_t *src);
+
+/**
+ * Assing a double float vector to the other.
+ * @ingroup g_vector
+ * @param[in] dst the dst vector.
+ * @param[in] src the src vector.
+ */
+void dvec_assign(dvec_t *dst, dvec_t *src);
 
 /**
  * Set elements to a val in a vector.

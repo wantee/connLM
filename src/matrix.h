@@ -288,13 +288,16 @@ void mat_from_array(mat_t *mat, real_t *arr, size_t len, bool row_vec);
 
 /**
  * Add element-by-element for two matrix.
+ * out = s1 * mat1 + s2 * mat2
  * @ingroup g_matrix
  * @param[in] mat1 the first matrix.
+ * @param[in] s1 the first scale.
  * @param[in] mat2 the second matrix.
+ * @param[in] s2 the second scale.
  * @param[out] out the output matrix.
  * @return non-zero if any error.
  */
-int mat_add_elems(mat_t *mat1, mat_t *mat2, mat_t *out);
+int mat_add_elems(mat_t *mat1, real_t s1, mat_t *mat2, real_t s2, mat_t *out);
 
 /**
  * Multiple element-by-element for two matrix.

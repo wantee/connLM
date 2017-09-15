@@ -106,15 +106,13 @@ int wt_update(wt_updater_t *wt_updater,
         mat_t *in, real_t in_scale,
         st_size_seg_t* part, sp_mat_t *sp_mat)
 {
-    real_t *wt;
-    real_t *delta_wt;
-    real_t *bias;
-    real_t *delta_bias;
+    mat_t *wt;
+    mat_t *delta_wt;
+    vec_t *bias;
+    vec_t *delta_bias;
 
-    st_int_seg_t *seg;
-    mat_t *buf_er, *buf_in;
-    size_t row, col, sz, i, j;
-    int idx;
+    size_t a, i, j;
+    int b, batch_size;
     real_t sum;
 
     real_t lr, l2;
@@ -126,13 +124,10 @@ int wt_update(wt_updater_t *wt_updater,
     ST_TRACE("Update weight");
 #endif
 
-    wt = wt_updater->wt;
-    delta_wt = wt_updater->delta_wt;
-    bias = wt_updater->bias;
-    delta_bias = wt_updater->delta_bias;
-
-    row = wt_updater->row;
-    col = wt_updater->col;
+    wt = &wt_updater->wt;
+    delta_wt = &wt_updater->delta_wt;
+    bias = &wt_updater->bias;
+    delta_bias = &wt_updater->delta_bias;
 
     lr = get_lr(&(wt_updater->param));
     lr *= er_scale * in_scale;
@@ -146,40 +141,53 @@ int wt_update(wt_updater_t *wt_updater,
 
     switch (wt_updater->type) {
         case WT_UT_FULL:
-            if (er->num_cols != row) {
+            if (er->num_cols != wt->num_rows) {
                 ST_WARNING("Error size of er mat.[%zux%zu]",
                         er->num_rows, er->num_cols);
                 return -1;
             }
-            sz = row * col;
 
             if (momentum != 0.0) {
-                matXmat(delta_wt, er->vals, in->vals, row, col,
-                        batch_size, lr, momentum);
-                for (i = 0; i < sz; i++) {
-                    delta_wt[i] -= l2 * wt[i];
-                    wt[i] += delta_wt[i];
+                if (add_mat_mat(lr, er, MT_Trans, in, MT_NoTrans,
+                            momentum, delta_wt) < 0) {
+                    ST_WARNING("Failed to add_mat_mat for in and er");
+                    return -1;
                 }
-                if (bias != NULL) {
-                    for (i = 0; i < row; i++) {
+
+                if (mat_add_elems(delta_wt, 1.0, wt, -l2, delta_wt) < 0) {
+                    ST_WARNING("Failed to mat_add_elems for delta_wt.");
+                    return -1;
+                }
+
+                if (mat_add_elems(wt, 1.0, delta_wt, 1.0, wt) < 0) {
+                    ST_WARNING("Failed to mat_add_elems for wt.");
+                    return -1;
+                }
+
+                if (bias->size > 0) {
+                    for (i = 0; i < er->num_cols; i++) {
                         sum = 0.0;
                         for (b = 0; b < batch_size; b++) {
                             sum += MAT_VAL(er, b, i);
                         }
-                        delta_bias[i] = lr * sum - l2 * bias[i] + momentum * delta_bias[i];
-                        bias[i] += delta_bias[i];
+                        VEC_VAL(delta_bias, i) = lr * sum - l2 * VEC_VAL(bias, i)
+                            + momentum * VEC_VAL(delta_bias, i);
+                        VEC_VAL(bias, i) += VEC_VAL(delta_bias, i);
                     }
                 }
             } else {
-                matXmat(wt, er->vals, in->vals, row, col,
-                        batch_size, lr, 1.0 - l2);
-                if (bias != NULL) {
-                    for (i = 0; i < row; i++) {
+                if (add_mat_mat(lr, er, MT_Trans, in, MT_NoTrans,
+                            1.0 - l2, wt) < 0) {
+                    ST_WARNING("Failed to add_mat_mat for in and er");
+                    return -1;
+                }
+                if (bias->size > 0) {
+                    for (i = 0; i < er->num_cols; i++) {
                         sum = 0.0;
                         for (b = 0; b < batch_size; b++) {
                             sum += MAT_VAL(er, b, i);
                         }
-                        bias[i] += lr * sum - l2 * bias[i];
+                        VEC_VAL(bias, i) += lr * sum - l2 * VEC_VAL(bias, i);
                     }
                 }
             }
@@ -193,42 +201,45 @@ int wt_update(wt_updater_t *wt_updater,
             }
 
             if (momentum != 0.0) {
-                if (part->s + part->n > row) {
-                    for (j = 0, i = part->s; i < row; j++, i++) {
-                        delta_wt[i] = lr * er->vals[j] - l2 * wt[i]
-                            + momentum * delta_wt[i];
-                        wt[i] += delta_wt[i];
+                if (part->s + part->n > wt->num_rows) {
+                    for (j = 0, i = part->s; i < wt->num_rows; j++, i++) {
+                        MAT_VAL(delta_wt, 0, i) = lr * MAT_VAL(er, 0, j)
+                            - l2 * MAT_VAL(wt, 0, i)
+                            + momentum * MAT_VAL(delta_wt, 0, i);
+                        MAT_VAL(wt, 0, i) += MAT_VAL(delta_wt, 0, i);
                     }
                     for (i = 0; j < part->n; j++, i++) {
-                        delta_wt[i] = lr * er->vals[j] - l2 * wt[i]
-                            + momentum * delta_wt[i];
-                        wt[i] += delta_wt[i];
+                        MAT_VAL(delta_wt, 0, i) = lr * MAT_VAL(er, 0, j)
+                            - l2 * MAT_VAL(wt, 0, i)
+                            + momentum * MAT_VAL(delta_wt, 0, i);
+                        MAT_VAL(wt, 0, i) += MAT_VAL(delta_wt, 0, i);
                     }
                 } else {
                     for (j = 0, i = part->s; j < part->n; j++, i++) {
-                        delta_wt[i] = lr * er->vals[j] - l2 * wt[i]
-                            + momentum * delta_wt[i];
-                        wt[i] += delta_wt[i];
+                        MAT_VAL(delta_wt, 0, i) = lr * MAT_VAL(er, 0, j)
+                            - l2 * MAT_VAL(wt, 0, i)
+                            + momentum * MAT_VAL(delta_wt, 0, i);
+                        MAT_VAL(wt, 0, i) += MAT_VAL(delta_wt, 0, i);
                     }
                 }
             } else {
-                if (part->s + part->n > row) {
-                    for (j = 0, i = part->s; i < row; j++, i++) {
-                        wt[i] += lr * er->vals[j] - l2 * wt[i];
+                if (part->s + part->n > wt->num_rows) {
+                    for (j = 0, i = part->s; i < wt->num_rows; j++, i++) {
+                        MAT_VAL(wt, 0, i) += lr * MAT_VAL(er, 0, j) - l2 * MAT_VAL(wt, 0, i);
                     }
                     for (i = 0; j < part->n; j++, i++) {
-                        wt[i] += lr * er->vals[j] - l2 * wt[i];
+                        MAT_VAL(wt, 0, i) += lr * MAT_VAL(er, 0, j) - l2 * MAT_VAL(wt, 0, i);
                     }
                 } else {
                     for (j = 0, i = part->s; j < part->n; j++, i++) {
-                        wt[i] += lr * er->vals[j] - l2 * wt[i];
+                        MAT_VAL(wt, 0, i) += lr * MAT_VAL(er, 0, j) - l2 * MAT_VAL(wt, 0, i);
                     }
                 }
             }
             break;
 
         case WT_UT_ONE_SHOT:
-            if (er->num_cols != row) {
+            if (er->num_cols != wt->num_rows) {
                 ST_WARNING("Error size of er mat.[%zux%zu]",
                         er->num_rows, er->num_cols);
                 return -1;
@@ -239,20 +250,22 @@ int wt_update(wt_updater_t *wt_updater,
             }
             if (momentum != 0.0) {
                 for (a = 0; a < sp_mat->size; a++) {
-                    i = sp_mat->cols[a] * col; // sp_mat->cols[a] is word_id
-                    for (j = 0; j < col; j++, i++) {
-                        delta_wt[i] += lr * sp_mat->vals[a]
-                            * MAT_VAL(er, sp_mat->rows[a], j) - l2 * wt[i]
-                            + momentum * delta_wt[i];
-                        wt[i] += delta_wt[i];
+                    i = sp_mat->coo.cols[a]; // sp_mat->coo.cols[a] is word_id
+                    for (j = 0; j < wt->num_cols; j++) {
+                        MAT_VAL(delta_wt, i, j) += lr * sp_mat->vals[a]
+                            * MAT_VAL(er, sp_mat->coo.rows[a], j)
+                            - l2 * MAT_VAL(wt, i, j)
+                            + momentum * MAT_VAL(delta_wt, i, j);
+                        MAT_VAL(wt, i, j) += MAT_VAL(delta_wt, i, j);
                     }
                 }
             } else {
                 for (a = 0; a < sp_mat->size; a++) {
-                    i = sp_mat->cols[a] * col; // sp_mat->cols[a] is word_id
-                    for (j = 0; j < col; j++, i++) {
-                        wt[i] += lr * sp_mat->vals[a]
-                            * MAT_VAL(er, sp_mat->rows[a], j) - l2 * wt[i];
+                    i = sp_mat->coo.cols[a]; // sp_mat->coo.cols[a] is word_id
+                    for (j = 0; j < wt->num_cols; j++) {
+                        MAT_VAL(wt, i, j) += lr * sp_mat->vals[a]
+                            * MAT_VAL(er, sp_mat->coo.rows[a], j)
+                            - l2 * MAT_VAL(wt, i, j);
                     }
                 }
             }
