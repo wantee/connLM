@@ -391,8 +391,8 @@ int updater_move_input(updater_t *updater)
 
     if (ivec_set(&updater->targets,
                 updater->batches[0].targets,
-                sizeof(int) * updater->batches[0].num_egs) < 0) {
-        ST_WARNING("Failed to ivec_append.");
+                updater->batches[0].num_egs) < 0) {
+        ST_WARNING("Failed to ivec_set targets.");
         return -1;
     }
 
@@ -865,15 +865,15 @@ int updater_step_with_state(updater_t *updater, mat_t *state,
     return 0;
 }
 
-int updater_forward_out_word(updater_t *updater, ivec_t *words, dvec_t *logps)
+int updater_forward_out_words(updater_t *updater, ivec_t *words, dvec_t *logps)
 {
     ST_CHECK_PARAM(updater == NULL || words == NULL, -1);
 
     int c;
 
     for (c = 0; c < updater->connlm->num_comp; c++) {
-        if (comp_updater_forward_out_word(updater->comp_updaters[c], words) < 0) {
-            ST_WARNING("Failed to comp_updater_forward[%s].",
+        if (comp_updater_forward_out_words(updater->comp_updaters[c], words) < 0) {
+            ST_WARNING("Failed to comp_updater_forward_out_words[%s].",
                     updater->connlm->comps[c]->name);
             return -1;
         }

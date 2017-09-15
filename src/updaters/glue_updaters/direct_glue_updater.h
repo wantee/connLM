@@ -136,7 +136,7 @@ int direct_glue_updater_forward_out(glue_updater_t *glue_updater,
  * @param[out] out_ac activation of out layer.
  * @return non-zero value if any error.
  */
-int direct_glue_updater_forward_out_word(glue_updater_t *glue_updater,
+int direct_glue_updater_forward_out_words(glue_updater_t *glue_updater,
         comp_updater_t *comp_updater, ivec_t *words,
         mat_t *in_ac, mat_t *out_ac);
 

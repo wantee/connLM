@@ -48,7 +48,7 @@ static glue_updater_impl_t GLUE_UPDATER_IMPL[] = {
         direct_glue_updater_setup,
         direct_glue_updater_forward, direct_glue_updater_backprop,
         direct_glue_updater_forward_util_out, direct_glue_updater_forward_out,
-        direct_glue_updater_forward_out_word,
+        direct_glue_updater_forward_out_words,
         direct_glue_updater_gen_keep_mask,
         true},
     {FC_GLUE_NAME, NULL, NULL,
@@ -60,7 +60,7 @@ static glue_updater_impl_t GLUE_UPDATER_IMPL[] = {
     {OUT_GLUE_NAME, out_glue_updater_init, out_glue_updater_destroy,
         out_glue_updater_setup,
         out_glue_updater_forward, out_glue_updater_backprop,
-        NULL, out_glue_updater_forward_out, out_glue_updater_forward_out_word,
+        NULL, out_glue_updater_forward_out, out_glue_updater_forward_out_words,
         NULL, true},
 };
 
@@ -606,7 +606,7 @@ int glue_updater_forward_out(glue_updater_t *glue_updater,
     return 0;
 }
 
-int glue_updater_forward_out_word(glue_updater_t *glue_updater,
+int glue_updater_forward_out_words(glue_updater_t *glue_updater,
         comp_updater_t *comp_updater, ivec_t *words)
 {
     glue_t *glue;
@@ -625,7 +625,7 @@ int glue_updater_forward_out_word(glue_updater_t *glue_updater,
     ST_TRACE("Forward-out-word: glue[%s]", glue->name);
 #endif
 
-    if (glue_updater->impl != NULL && glue_updater->impl->forward_out_word != NULL) {
+    if (glue_updater->impl != NULL && glue_updater->impl->forward_out_words != NULL) {
         lid = glue->in_layer;
         if (layer_updaters[lid]->ac.num_rows != words->size) {
             ST_WARNING("words->size not match with batch_size.");
@@ -656,9 +656,9 @@ int glue_updater_forward_out_word(glue_updater_t *glue_updater,
                 return -1;
             }
         }
-        if (glue_updater->impl->forward_out_word(glue_updater, comp_updater,
+        if (glue_updater->impl->forward_out_words(glue_updater, comp_updater,
                     words, &in_ac, &out_ac) < 0) {
-            ST_WARNING("Failed to glue_updater->impl->forward_out_word.[%s]",
+            ST_WARNING("Failed to glue_updater->impl->forward_out_words.[%s]",
                     glue->name);
             return -1;
         }

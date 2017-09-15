@@ -222,7 +222,7 @@ int updater_step_with_state(updater_t *updater, mat_t *state,
  * @param[out] logps log-prob for the words.
  * @return non-zero value if any error.
  */
-int updater_forward_out_word(updater_t *updater, ivec_t *words, dvec_t *logps);
+int updater_forward_out_words(updater_t *updater, ivec_t *words, dvec_t *logps);
 
 /**
  * Activate state with updater.

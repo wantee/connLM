@@ -194,7 +194,7 @@ int comp_updater_forward_out(comp_updater_t *comp_updater,
  * @param[in] words the words.
  * @return non-zero value if any error.
  */
-int comp_updater_forward_out_word(comp_updater_t *comp_updater, ivec_t* words);
+int comp_updater_forward_out_words(comp_updater_t *comp_updater, ivec_t* words);
 
 /**
  * Get the size of state in comp_updater.
@@ -248,26 +248,6 @@ int comp_updater_feed_state(comp_updater_t *comp_updater, mat_t *state);
  * @return non-zero value if any error.
  */
 int comp_updater_random_state(comp_updater_t *comp_updater, mat_t *state);
-
-/**
- * Initialize multi-call of forward_out_word.
- * @ingroup g_updater_comp
- * @param[in] comp_updater the comp_updater.
- * @param[in] output the output layer.
- * @return non-zero value if any error.
- */
-int comp_updater_init_multicall(comp_updater_t *comp_updater,
-        output_t *output);
-
-/**
- * Clear multi-call of forward_out_word.
- * @ingroup g_updater_comp
- * @param[in] comp_updater the comp_updater.
- * @param[in] output the output layer.
- * @return non-zero value if any error.
- */
-int comp_updater_clear_multicall(comp_updater_t *comp_updater,
-        output_t *output);
 
 /**
  * Activate state with comp_updater.

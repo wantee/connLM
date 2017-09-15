@@ -72,9 +72,9 @@ typedef struct _glue_updater_implementation_t_ {
             comp_updater_t *comp_updater, output_node_id_t node,
             mat_t *in_ac, mat_t *out_ac); /**< forward_out glue updater.*/
 
-    int (*forward_out_word)(glue_updater_t *glue_updater,
+    int (*forward_out_words)(glue_updater_t *glue_updater,
             comp_updater_t *comp_updater, ivec_t *words,
-            mat_t *in_ac, mat_t *out_ac); /**< forward_out_word glue updater.*/
+            mat_t *in_ac, mat_t *out_ac); /**< forward_out_words glue updater.*/
 
     int (*gen_keep_mask)(glue_updater_t *glue_updater,
             int batch_size); /**< gen_keep_mask glue updater.*/
@@ -229,28 +229,8 @@ int glue_updater_forward_out(glue_updater_t *glue_updater,
  * @param[in] words the words.
  * @return non-zero value if any error.
  */
-int glue_updater_forward_out_word(glue_updater_t *glue_updater,
+int glue_updater_forward_out_words(glue_updater_t *glue_updater,
         comp_updater_t *comp_updater, ivec_t *words);
-
-/**
- * Initialize multi-call of forward_out_word.
- * @ingroup g_updater_glue
- * @param[in] glue_updater glue_updater.
- * @param[in] output the output layer.
- * @return non-zero value if any error.
- */
-int glue_updater_init_multicall(glue_updater_t *glue_updater,
-        output_t *output);
-
-/**
- * Clear multi-call of forward_out_word.
- * @ingroup g_updater_glue
- * @param[in] glue_updater glue_updater.
- * @param[in] output the output layer.
- * @return non-zero value if any error.
- */
-int glue_updater_clear_multicall(glue_updater_t *glue_updater,
-        output_t *output);
 
 /**
  * Propagate error to previous layer.
