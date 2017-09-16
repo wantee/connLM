@@ -36,7 +36,6 @@
 #include "out_glue_updater.h"
 
 typedef struct _ogu_data_t_ {
-    ivec_t targets;
     int num_nodes;
     mat_t *node_in_acs;
     mat_t *node_out_ers;
@@ -60,8 +59,6 @@ void ogu_data_destroy(ogu_data_t *data)
     if (data == NULL) {
         return;
     }
-
-    ivec_destroy(&data->targets);
 
     if (data->node_in_acs != NULL) {
         for (i = 0; i < data->num_nodes; i++) {
@@ -242,18 +239,18 @@ static int fill_tree_nodes_walker(output_t *output, output_node_id_t node,
 }
 
 // this function fill in the activation into ogu_data_t's buffer
-static int fill_tree_nodes(output_t *output, ivec_t *targets,
+static int fill_tree_nodes(output_t *output, egs_batch_t *batch,
         mat_t *in_ac, mat_t *out_er, ogu_data_t *data)
 {
     tree_nodes_walker_args_t tnw_args;
     int i;
 
-    ST_CHECK_PARAM(output == NULL || data == NULL || targets == NULL
+    ST_CHECK_PARAM(output == NULL || data == NULL || batch == NULL
             || in_ac == NULL, -1);
 
     // clear buffers
-    for (i = 0; i < targets->size; i++) {
-        if (output_walk_through_path(output, VEC_VAL(targets, i),
+    for (i = 0; i < batch->num_egs; i++) {
+        if (output_walk_through_path(output, batch->targets[i],
                     clear_tree_nodes_walker, (void *)data) < 0) {
             ST_WARNING("Failed to output_walk_through_path.");
             return -1;
@@ -264,12 +261,43 @@ static int fill_tree_nodes(output_t *output, ivec_t *targets,
     tnw_args.in_ac = in_ac;
     tnw_args.out_er = out_er;
     tnw_args.data = data;
-    for (i = 0; i < targets->size; i++) {
+    for (i = 0; i < batch->num_egs; i++) {
         tnw_args.batch_i = i;
-        if (output_walk_through_path(output, VEC_VAL(targets, i),
+        if (output_walk_through_path(output, batch->targets[i],
                     fill_tree_nodes_walker, (void *)&tnw_args) < 0) {
             ST_WARNING("Failed to output_walk_through_path.");
             return -1;
+        }
+    }
+
+    return 0;
+}
+
+static int forward_one_node(output_norm_t norm, mat_t *wt, vec_t *bias,
+        real_t scale, mat_t *in_ac, mat_t *out_ac)
+{
+    if (wt->num_rows <= 0) {
+        // (child_e - child_s - 1 <= 0)
+        return 0;
+    }
+
+    if (norm == ON_SOFTMAX) {
+        if (mat_resize(out_ac, in_ac->num_rows, wt->num_rows, NAN) < 0) {
+            ST_WARNING("Failed to mat_resize.");
+            return -1;
+        }
+
+        if (add_mat_mat(scale, in_ac, MT_NoTrans,
+                    wt, MT_Trans, 0.0, out_ac) < 0) {
+            ST_WARNING("Failed to add_mat_mat.");
+            return -1;
+        }
+
+        if (bias->size > 0) {
+            if (mat_add_vec(out_ac, bias, scale) < 0) {
+                ST_WARNING("Failed to mat_add_vec.");
+                return -1;
+            }
         }
     }
 
@@ -288,51 +316,29 @@ static int forward_tree_nodes_walker(output_t *output, output_node_id_t node,
         output_node_id_t child_s, output_node_id_t child_e, void *args)
 {
     tree_nodes_fwd_walker_args_t *tnfw_args;
-    mat_t *in_ac;
-    mat_t *out_ac;
-    mat_t *wt;
-    vec_t *bias;
 
     tnfw_args = (tree_nodes_fwd_walker_args_t *)args;
-    in_ac = tnfw_args->node_in_acs + node;
-    out_ac = tnfw_args->node_out_acs + node;
-    wt = &tnfw_args->wt_updaters[node]->wt;
-    bias = &tnfw_args->wt_updaters[node]->bias;
 
-    if (output->norm == ON_SOFTMAX) {
-        if (child_e - child_s - 1 > 0) {
-            if (mat_resize(out_ac, in_ac->num_rows, wt->num_rows, NAN) < 0) {
-                ST_WARNING("Failed to mat_resize.");
-                return -1;
-            }
-
-            if (add_mat_mat(tnfw_args->scale, in_ac, MT_NoTrans,
-                        wt, MT_Trans, 0.0, out_ac) < 0) {
-                ST_WARNING("Failed to add_mat_mat.");
-                return -1;
-            }
-
-            if (bias->size > 0) {
-                if (mat_add_vec(out_ac, bias, tnfw_args->scale) < 0) {
-                    ST_WARNING("Failed to mat_add_vec.");
-                    return -1;
-                }
-            }
-        }
+    if (forward_one_node(output->norm, &tnfw_args->wt_updaters[node]->wt,
+                &tnfw_args->wt_updaters[node]->bias, tnfw_args->scale,
+                tnfw_args->node_in_acs + node,
+                tnfw_args->node_out_acs + node) < 0) {
+        ST_WARNING("Failed to forward_one_node["OUTPUT_NODE_FMT"]", node);
+        return -1;
     }
 
     return 0;
 }
 
 // this function do forward with ogu_data_t's buffer
-static int forward_tree_nodes(output_t *output, ivec_t *targets,
+static int forward_tree_nodes(output_t *output, egs_batch_t *batch,
         wt_updater_t **wt_updaters, real_t scale, mat_t *node_in_acs,
         mat_t *node_out_acs)
 {
     tree_nodes_fwd_walker_args_t tnfw_args;
     int i;
 
-    ST_CHECK_PARAM(output == NULL || targets == NULL || wt_updaters == NULL
+    ST_CHECK_PARAM(output == NULL || batch == NULL || wt_updaters == NULL
             || node_in_acs == NULL || node_out_acs == NULL, -1);
 
     // do matrix multiplication
@@ -340,8 +346,8 @@ static int forward_tree_nodes(output_t *output, ivec_t *targets,
     tnfw_args.scale = scale;
     tnfw_args.node_in_acs = node_in_acs;
     tnfw_args.node_out_acs = node_out_acs;
-    for (i = 0; i < targets->size; i++) {
-        if (output_walk_through_path(output, VEC_VAL(targets, i),
+    for (i = 0; i < batch->num_egs; i++) {
+        if (output_walk_through_path(output, batch->targets[i],
                     forward_tree_nodes_walker, (void *)&tnfw_args) < 0) {
             ST_WARNING("Failed to output_walk_through_path.");
             return -1;
@@ -355,21 +361,29 @@ int out_glue_updater_forward(glue_updater_t *glue_updater,
         comp_updater_t *comp_updater, egs_batch_t *batch,
         mat_t *in_ac, mat_t *out_ac /* unused */)
 {
+    output_t *output;
     ogu_data_t *data;
 
     ST_CHECK_PARAM(glue_updater == NULL || comp_updater == NULL
             || batch == NULL, -1);
 
+    output = comp_updater->out_updater->output;
     data = (ogu_data_t *)glue_updater->extra;
 
-    if (ivec_set(&data->targets, batch->targets, batch->num_egs) < 0) {
-        ST_WARNING("Failed to ivec_set targets.");
+    if (batch->num_egs != in_ac->num_rows) {
+        ST_WARNING("batch->num_egs and in_ac->num_rows not match");
         return -1;
     }
 
-    if (out_glue_updater_forward_out_words(glue_updater, comp_updater,
-                &data->targets, in_ac, out_ac) < 0) {
-        ST_WARNING("Failed to out_glue_updater_forward_out_words.");
+    if (fill_tree_nodes(output, batch, in_ac, NULL, data) < 0) {
+        ST_WARNING("Failed to fill_tree_nodes.");
+        return -1;
+    }
+
+    if (forward_tree_nodes(output, batch, glue_updater->wt_updaters,
+                comp_updater->comp->comp_scale, data->node_in_acs,
+                comp_updater->out_updater->node_acs) < 0) {
+        ST_WARNING("Failed to forward_tree_nodes.");
         return -1;
     }
 
@@ -427,14 +441,14 @@ static int backprop_tree_nodes_walker(output_t *output, output_node_id_t node,
 }
 
 // this function do back-prop within ogu_data_t's buffer
-static int backprop_tree_nodes(output_t *output, ivec_t *targets,
+static int backprop_tree_nodes(output_t *output, egs_batch_t *batch,
         wt_updater_t **wt_updaters, real_t scale, mat_t *node_in_acs,
         mat_t *node_out_ers, mat_t *in_er)
 {
     tree_nodes_bp_walker_args_t tnbw_args;
     int i;
 
-    ST_CHECK_PARAM(output == NULL || targets == NULL || wt_updaters == NULL
+    ST_CHECK_PARAM(output == NULL || batch == NULL || wt_updaters == NULL
             || node_in_acs == NULL || node_out_ers == NULL
             || in_er == NULL, -1);
 
@@ -444,8 +458,8 @@ static int backprop_tree_nodes(output_t *output, ivec_t *targets,
     tnbw_args.node_in_acs = node_in_acs;
     tnbw_args.node_out_ers = node_out_ers;
     tnbw_args.in_er = in_er;
-    for (i = 0; i < targets->size; i++) {
-        if (output_walk_through_path(output, VEC_VAL(targets, i),
+    for (i = 0; i < batch->num_egs; i++) {
+        if (output_walk_through_path(output, batch->targets[i],
                     backprop_tree_nodes_walker, (void *)&tnbw_args) < 0) {
             ST_WARNING("Failed to output_walk_through_path.");
             return -1;
@@ -468,19 +482,14 @@ int out_glue_updater_backprop(glue_updater_t *glue_updater,
     data = (ogu_data_t *)glue_updater->extra;
     output = comp_updater->out_updater->output;
 
-    if (ivec_set(&data->targets, batch->targets, batch->num_egs) < 0) {
-        ST_WARNING("Failed to ivec_set targets.");
-        return -1;
-    }
-
-    if (fill_tree_nodes(output, &data->targets,
+    if (fill_tree_nodes(output, batch,
                 NULL /* in_ac should be filled druing forward pass. */,
                 out_er, data) < 0) {
         ST_WARNING("Failed to fill_tree_nodes.");
         return -1;
     }
 
-    if (backprop_tree_nodes(output, &data->targets, glue_updater->wt_updaters,
+    if (backprop_tree_nodes(output, batch, glue_updater->wt_updaters,
                 comp_updater->comp->comp_scale, data->node_in_acs,
                 comp_updater->out_updater->node_ers, in_er) < 0) {
         ST_WARNING("Failed to backprop_tree_nodes.");
@@ -543,34 +552,95 @@ int out_glue_updater_forward_out(glue_updater_t *glue_updater,
     return 0;
 }
 
+static int reset_iters_walker(output_t *output, output_node_id_t node,
+        output_node_id_t next_node,
+        output_node_id_t child_s, output_node_id_t child_e, void *args)
+{
+    int *node_iters;
+
+    node_iters = (int *) args;
+
+    node_iters[node] = 0;
+
+    return 0;
+}
+
+typedef struct _forward_out_words_args_t_ {
+    wt_updater_t **wt_updaters;
+    real_t scale;
+    mat_t *in_ac;
+    mat_t *node_out_acs;
+    int *node_iters;
+} forward_out_words_args_t;
+
+static int forward_out_words_walker(output_t *output, output_node_id_t node,
+        output_node_id_t next_node,
+        output_node_id_t child_s, output_node_id_t child_e, void *args)
+{
+    forward_out_words_args_t *fow_args;
+    ogu_data_t *data;
+
+    fow_args = (forward_out_words_args_t *)args;
+
+    if (fow_args->node_iters[node] != 0) {
+        // already forwarded
+        return 0;
+    }
+
+    if (forward_one_node(output->norm, &fow_args->wt_updaters[node]->wt,
+                &fow_args->wt_updaters[node]->bias, fow_args->scale,
+                fow_args->in_ac,
+                fow_args->node_out_acs + node) < 0) {
+        ST_WARNING("Failed to forward_one_node["OUTPUT_NODE_FMT"]", node);
+        return -1;
+    }
+
+    fow_args->node_iters[node] = 1;
+
+    return 0;
+}
+
 int out_glue_updater_forward_out_words(glue_updater_t *glue_updater,
         comp_updater_t *comp_updater, ivec_t *words,
         mat_t *in_ac, mat_t *out_ac /* unused */)
 {
-    ogu_data_t *data;
+    forward_out_words_args_t fow_args;
     output_t *output;
+    ogu_data_t *data;
+
+    int i;
 
     ST_CHECK_PARAM(glue_updater == NULL || comp_updater == NULL
             || words == NULL, -1);
 
-    if (words->size != in_ac->num_rows) {
-        ST_WARNING("words->size and in_ac->num_rows not match");
+    if (in_ac->num_rows != 1) {
+        ST_WARNING("Only support batch_size == 1.");
         return -1;
     }
 
-    data = (ogu_data_t *)glue_updater->extra;
     output = comp_updater->out_updater->output;
+    data = (ogu_data_t *)glue_updater->extra;
 
-    if (fill_tree_nodes(output, words, in_ac, NULL, data) < 0) {
-        ST_WARNING("Failed to fill_tree_nodes.");
-        return -1;
+    // reset buffers
+    for (i = 0; i < words->size; i++) {
+        if (output_walk_through_path(output, VEC_VAL(words, i),
+                    reset_iters_walker, (void *)data->node_iters) < 0) {
+            ST_WARNING("Failed to output_walk_through_path for reset_iters.");
+            return -1;
+        }
     }
 
-    if (forward_tree_nodes(output, words, glue_updater->wt_updaters,
-                comp_updater->comp->comp_scale, data->node_in_acs,
-                comp_updater->out_updater->node_acs) < 0) {
-        ST_WARNING("Failed to forward_tree_nodes.");
-        return -1;
+    fow_args.wt_updaters = glue_updater->wt_updaters;
+    fow_args.scale = comp_updater->comp->comp_scale;
+    fow_args.in_ac = in_ac;
+    fow_args.node_out_acs = comp_updater->out_updater->node_acs;
+    fow_args.node_iters = data->node_iters;
+    for (i = 0; i < words->size; i++) {
+        if (output_walk_through_path(output, VEC_VAL(words, i),
+                    forward_out_words_walker, (void *)&fow_args) < 0) {
+            ST_WARNING("Failed to output_walk_through_path for forward_out_words.");
+            return -1;
+        }
     }
 
     return 0;
