@@ -339,7 +339,7 @@ static int forward_tree_nodes(output_t *output, ivec_t *targets,
     tnfw_args.wt_updaters = wt_updaters;
     tnfw_args.scale = scale;
     tnfw_args.node_in_acs = node_in_acs;
-    tnfw_args.node_out_acs = node_in_acs;
+    tnfw_args.node_out_acs = node_out_acs;
     for (i = 0; i < targets->size; i++) {
         if (output_walk_through_path(output, VEC_VAL(targets, i),
                     forward_tree_nodes_walker, (void *)&tnfw_args) < 0) {
@@ -353,12 +353,12 @@ static int forward_tree_nodes(output_t *output, ivec_t *targets,
 
 int out_glue_updater_forward(glue_updater_t *glue_updater,
         comp_updater_t *comp_updater, egs_batch_t *batch,
-        mat_t *in_ac, mat_t *out_ac)
+        mat_t *in_ac, mat_t *out_ac /* unused */)
 {
     ogu_data_t *data;
 
     ST_CHECK_PARAM(glue_updater == NULL || comp_updater == NULL
-            || batch == NULL || out_ac == NULL, -1);
+            || batch == NULL, -1);
 
     data = (ogu_data_t *)glue_updater->extra;
 
@@ -492,7 +492,7 @@ int out_glue_updater_backprop(glue_updater_t *glue_updater,
 
 int out_glue_updater_forward_out(glue_updater_t *glue_updater,
         comp_updater_t *comp_updater, output_node_id_t node,
-        mat_t *in_ac, mat_t *out_ac)
+        mat_t *in_ac, mat_t *out_ac /* unused */)
 {
     output_t *output;
     mat_t *wt;
@@ -502,7 +502,7 @@ int out_glue_updater_forward_out(glue_updater_t *glue_updater,
     output_node_id_t child_s, child_e;
 
     ST_CHECK_PARAM(glue_updater == NULL || comp_updater == NULL
-            || node == OUTPUT_NODE_NONE || out_ac == NULL, -1);
+            || node == OUTPUT_NODE_NONE, -1);
 
     output = comp_updater->out_updater->output;
 
@@ -516,6 +516,7 @@ int out_glue_updater_forward_out(glue_updater_t *glue_updater,
     wt = &glue_updater->wt_updaters[node]->wt;
     bias = &glue_updater->wt_updaters[node]->bias;
     scale = comp_updater->comp->comp_scale;
+    out_ac = comp_updater->out_updater->node_acs + node;
 
     if (output->norm == ON_SOFTMAX) {
         if (child_e - child_s - 1 > 0) {
@@ -544,13 +545,13 @@ int out_glue_updater_forward_out(glue_updater_t *glue_updater,
 
 int out_glue_updater_forward_out_words(glue_updater_t *glue_updater,
         comp_updater_t *comp_updater, ivec_t *words,
-        mat_t *in_ac, mat_t *out_ac)
+        mat_t *in_ac, mat_t *out_ac /* unused */)
 {
     ogu_data_t *data;
     output_t *output;
 
     ST_CHECK_PARAM(glue_updater == NULL || comp_updater == NULL
-            || words == NULL || out_ac == NULL, -1);
+            || words == NULL, -1);
 
     if (words->size != in_ac->num_rows) {
         ST_WARNING("words->size and in_ac->num_rows not match");

@@ -44,7 +44,7 @@ extern "C" {
  * @ingroup g_glue_updater_fc
  * @param[in] glue_updater glue_updater.
  * @param[in] comp_updater the comp_updater.
- * @param[in] batch [unused] input batch.
+ * @param[in] batch [unused]
  * @param[in] in_ac activation of in layer.
  * @param[out] out_ac activation of out layer.
  * @return non-zero value if any error.
@@ -58,7 +58,7 @@ int fc_glue_updater_forward(glue_updater_t *glue_updater,
  * @ingroup g_glue_updater_fc
  * @param[in] glue_updater glue_updater.
  * @param[in] comp_updater the comp_updater.
- * @param[in] batch [unused] input batch.
+ * @param[in] batch [unused]
  * @param[in] in_ac activation of in layer.
  * @param[in] out_er error of out layer.
  * @param[out] in_er error of in layer.

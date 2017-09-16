@@ -61,7 +61,7 @@ int emb_glue_updater_init(glue_updater_t *glue_updater);
  * @param[in] glue_updater glue_updater.
  * @param[in] comp_updater the comp_updater.
  * @param[in] batch input batch.
- * @param[in] in_ac [unused] activation of in layer.
+ * @param[in] in_ac [unused]
  * @param[out] out_ac activation of out layer.
  * @return non-zero value if any error.
  */
@@ -75,9 +75,9 @@ int emb_glue_updater_forward(glue_updater_t *glue_updater,
  * @param[in] glue_updater glue_updater.
  * @param[in] comp_updater the comp_updater.
  * @param[in] batch input batch.
- * @param[in] in_ac [unused] activation of in layer.
+ * @param[in] in_ac [unused]
  * @param[in] out_er error of out layer.
- * @param[out] in_er [unused] error of in layer.
+ * @param[out] in_er [unused]
  * @return non-zero value if any error.
  */
 int emb_glue_updater_backprop(glue_updater_t *glue_updater,

@@ -74,7 +74,7 @@ int out_glue_updater_setup(glue_updater_t *glue_updater,
  * @param[in] comp_updater the comp_updater.
  * @param[in] batch input batch.
  * @param[in] in_ac activation of in layer.
- * @param[out] out_ac activation of out layer.
+ * @param[out] out_ac [unused]
  * @return non-zero value if any error.
  */
 int out_glue_updater_forward(glue_updater_t *glue_updater,
@@ -103,7 +103,7 @@ int out_glue_updater_backprop(glue_updater_t *glue_updater,
  * @param[in] comp_updater the comp_updater.
  * @param[in] node node of output tree.
  * @param[in] in_ac activation of in layer.
- * @param[out] out_ac activation of out layer.
+ * @param[out] out_ac [unused]
  * @return non-zero value if any error.
  */
 int out_glue_updater_forward_out(glue_updater_t *glue_updater,
@@ -117,7 +117,7 @@ int out_glue_updater_forward_out(glue_updater_t *glue_updater,
  * @param[in] comp_updater the comp_updater.
  * @param[in] words the words.
  * @param[in] in_ac activation of in layer.
- * @param[out] out_ac activation of out layer.
+ * @param[out] out_ac [unused]
  * @return non-zero value if any error.
  */
 int out_glue_updater_forward_out_words(glue_updater_t *glue_updater,

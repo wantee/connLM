@@ -109,7 +109,7 @@ ERR:
 
 int emb_glue_updater_forward(glue_updater_t *glue_updater,
         comp_updater_t *comp_updater, egs_batch_t *batch,
-        mat_t* in_ac, mat_t *out_ac)
+        mat_t* in_ac /* unused */, mat_t *out_ac)
 {
     glue_t *glue;
     input_t *input;
@@ -213,7 +213,7 @@ int emb_glue_updater_forward(glue_updater_t *glue_updater,
 
 int emb_glue_updater_backprop(glue_updater_t *glue_updater,
         comp_updater_t *comp_updater, egs_batch_t *batch,
-        mat_t *in_ac, mat_t *out_er, mat_t *in_er)
+        mat_t *in_ac /* unused */, mat_t *out_er, mat_t *in_er /* unused */)
 {
     glue_t *glue;
     emb_glue_data_t *data;
