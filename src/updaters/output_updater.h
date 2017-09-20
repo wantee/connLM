@@ -148,6 +148,15 @@ int out_updater_finish(out_updater_t *out_updater);
 output_node_id_t out_updater_sample(out_updater_t *out_updater,
         output_node_id_t node);
 
+/**
+ * Reset node_iters for given targets.
+ * @ingroup g_updater_output
+ * @param[in] out_updater the out_updater.
+ * @param[in] targets the targets.
+ * @return non-zero value if any error.
+ */
+int out_updater_reset_iters(out_updater_t *out_updater, ivec_t *targets);
+
 #ifdef __cplusplus
 }
 #endif

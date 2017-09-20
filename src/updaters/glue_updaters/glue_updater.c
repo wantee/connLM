@@ -49,19 +49,18 @@ static glue_updater_impl_t GLUE_UPDATER_IMPL[] = {
         direct_glue_updater_forward, direct_glue_updater_backprop,
         direct_glue_updater_forward_util_out, direct_glue_updater_forward_out,
         direct_glue_updater_forward_out_words,
-        direct_glue_updater_gen_keep_mask,
-        true},
+        direct_glue_updater_gen_keep_mask},
     {FC_GLUE_NAME, NULL, NULL,
         NULL, fc_glue_updater_forward, fc_glue_updater_backprop,
-        fc_glue_updater_forward, NULL, NULL, false},
+        fc_glue_updater_forward, NULL, NULL},
     {EMB_GLUE_NAME, emb_glue_updater_init, emb_glue_updater_destroy,
         NULL, emb_glue_updater_forward, emb_glue_updater_backprop,
-        emb_glue_updater_forward, NULL, NULL, false},
+        emb_glue_updater_forward, NULL, NULL},
     {OUT_GLUE_NAME, out_glue_updater_init, out_glue_updater_destroy,
         out_glue_updater_setup,
         out_glue_updater_forward, out_glue_updater_backprop,
         NULL, out_glue_updater_forward_out, out_glue_updater_forward_out_words,
-        NULL, true},
+        NULL},
 };
 
 static glue_updater_impl_t* glue_updater_get_impl(const char *type)

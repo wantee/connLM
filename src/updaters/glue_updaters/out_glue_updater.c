@@ -504,10 +504,6 @@ int out_glue_updater_forward_out(glue_updater_t *glue_updater,
         mat_t *in_ac, mat_t *out_ac /* unused */)
 {
     output_t *output;
-    mat_t *wt;
-    vec_t *bias;
-
-    real_t scale;
     output_node_id_t child_s, child_e;
 
     ST_CHECK_PARAM(glue_updater == NULL || comp_updater == NULL
@@ -522,31 +518,12 @@ int out_glue_updater_forward_out(glue_updater_t *glue_updater,
         return 0;
     }
 
-    wt = &glue_updater->wt_updaters[node]->wt;
-    bias = &glue_updater->wt_updaters[node]->bias;
-    scale = comp_updater->comp->comp_scale;
-    out_ac = comp_updater->out_updater->node_acs + node;
-
-    if (output->norm == ON_SOFTMAX) {
-        if (child_e - child_s - 1 > 0) {
-            if (mat_resize(out_ac, in_ac->num_rows, wt->num_rows, NAN) < 0) {
-                ST_WARNING("Failed to mat_resize.");
-                return -1;
-            }
-
-            if (add_mat_mat(scale, in_ac, MT_NoTrans,
-                        wt, MT_Trans, 0.0, out_ac) < 0) {
-                ST_WARNING("Failed to add_mat_mat.");
-                return -1;
-            }
-
-            if (bias->size > 0) {
-                if (mat_add_vec(out_ac, bias, scale) < 0) {
-                    ST_WARNING("Failed to mat_add_vec.");
-                    return -1;
-                }
-            }
-        }
+    if (forward_one_node(output->norm, &glue_updater->wt_updaters[node]->wt,
+                &glue_updater->wt_updaters[node]->bias,
+                comp_updater->comp->comp_scale, in_ac,
+                comp_updater->out_updater->node_acs + node) < 0) {
+        ST_WARNING("Failed to forward_one_node["OUTPUT_NODE_FMT"]", node);
+        return -1;
     }
 
     return 0;
@@ -578,7 +555,6 @@ static int forward_out_words_walker(output_t *output, output_node_id_t node,
         output_node_id_t child_s, output_node_id_t child_e, void *args)
 {
     forward_out_words_args_t *fow_args;
-    ogu_data_t *data;
 
     fow_args = (forward_out_words_args_t *)args;
 

@@ -130,7 +130,7 @@ static int out_reset_walker(output_t *output, output_node_id_t node,
     return 0;
 }
 
-static int out_updater_reset_iters(out_updater_t *out_updater, ivec_t *targets)
+int out_updater_reset_iters(out_updater_t *out_updater, ivec_t *targets)
 {
     int i;
 

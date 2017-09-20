@@ -66,20 +66,18 @@ typedef struct _glue_updater_implementation_t_ {
 
     int (*forward_util_out)(glue_updater_t *glue_updater,
             comp_updater_t *comp_updater, egs_batch_t *batch,
-            mat_t *in_ac, mat_t *out_ac); /**< forward_util_out glue updater.*/
+            mat_t *in_ac, mat_t *out_ac); /**< forward_util_out for glue updater.*/
 
     int (*forward_out)(glue_updater_t *glue_updater,
             comp_updater_t *comp_updater, output_node_id_t node,
-            mat_t *in_ac, mat_t *out_ac); /**< forward_out glue updater.*/
+            mat_t *in_ac, mat_t *out_ac); /**< forward_out for glue updater.*/
 
     int (*forward_out_words)(glue_updater_t *glue_updater,
             comp_updater_t *comp_updater, ivec_t *words,
-            mat_t *in_ac, mat_t *out_ac); /**< forward_out_words glue updater.*/
+            mat_t *in_ac, mat_t *out_ac); /**< forward_out_words for glue updater.*/
 
     int (*gen_keep_mask)(glue_updater_t *glue_updater,
-            int batch_size); /**< gen_keep_mask glue updater.*/
-
-    bool multicall; /**< whether need multi-call of forword_out_word.*/
+            int batch_size); /**< gen_keep_mask for glue updater.*/
 } glue_updater_impl_t;
 
 /**
