@@ -37,55 +37,13 @@
 #include "utils.h"
 #include "reader.h"
 
-#define NUM_WORD_PER_SENT 128
-
 void word_pool_destroy(word_pool_t *wp)
 {
     if (wp != NULL) {
-        safe_st_free(wp->words);
-        wp->capacity = 0;
-        wp->size = 0;
-        safe_st_free(wp->row_starts);
-        wp->batch_size = 0;
-        wp->cap_batches = 0;
+        ivec_destroy(&wp->words);
+        ivec_destroy(&wp->sent_ends);
+        ivec_destroy(&wp->row_starts);
     }
-}
-
-int word_pool_resize(word_pool_t *wp, int capacity)
-{
-    ST_CHECK_PARAM(wp == NULL, -1);
-
-    if (wp->capacity < capacity) {
-        wp->words = st_realloc(wp->words, sizeof(int)*capacity);
-        if (wp->words == NULL) {
-            ST_WARNING("Failed to st_realloc wp->words. capacity[%d]",
-                    capacity);
-            return -1;
-        }
-
-        wp->capacity = capacity;
-    }
-
-    return 0;
-}
-
-int word_pool_resize_batches(word_pool_t *wp, int batch_capacity)
-{
-    ST_CHECK_PARAM(wp == NULL, -1);
-
-    if (wp->cap_batches < batch_capacity) {
-        wp->row_starts = st_realloc(wp->row_starts,
-                sizeof(int) * (batch_capacity + 1));
-        if (wp->row_starts == NULL) {
-            ST_WARNING("Failed to st_realloc wp->row_starts. capacity[%d]",
-                    batch_capacity);
-            return -1;
-        }
-
-        wp->cap_batches = batch_capacity;
-    }
-
-    return 0;
 }
 
 static int word_pool_print(FILE *fp, pthread_mutex_t *fp_lock,
@@ -98,11 +56,11 @@ static int word_pool_print(FILE *fp, pthread_mutex_t *fp_lock,
             || wp == NULL, -1);
 
     i = 0;
-    while (i < wp->size) {
+    while (i < wp->words.size) {
         (void)pthread_mutex_lock(fp_lock);
         fprintf(fp, "<EGS>: ");
-        while (wp->words[i] != SENT_END_ID && i < wp->size) {
-            word = wp->words[i];
+        while (VEC_VAL(&wp->words, i) != SENT_END_ID && i < wp->words.size) {
+            word = VEC_VAL(&wp->words, i);
             if (vocab != NULL && word == vocab_get_id(vocab, SENT_START)) {
                 i++;
                 continue;
@@ -113,7 +71,7 @@ static int word_pool_print(FILE *fp, pthread_mutex_t *fp_lock,
             } else {
                 fprintf(fp, "<%d>", word);
             }
-            if (i < wp->size - 1 && wp->words[i+1] != 0) {
+            if (i < wp->words.size - 1 && VEC_VAL(&wp->words, i + 1) != 0) {
                 fprintf(fp, " ");
             }
             i++;
@@ -127,57 +85,70 @@ static int word_pool_print(FILE *fp, pthread_mutex_t *fp_lock,
     return 0;
 }
 
-int word_pool_build_mini_batch(word_pool_t *wp, int batch_size)
+int word_pool_clear(word_pool_t *wp)
 {
-    int i, n;
-    int cnt, eos;
-    int words_per_batch;
+    ST_CHECK_PARAM(wp == NULL, -1);
 
-    ST_CHECK_PARAM(wp == NULL || batch_size <= 1, -1);
-
-    if (batch_size > wp->cap_batches) {
-        wp->row_starts = (int *)st_realloc(wp->row_starts,
-                sizeof(int) * (batch_size + 1));
-        if (wp->row_starts == NULL) {
-            ST_WARNING("Failed to st_realloc row_starts.");
-            return -1;
-        }
-        wp->cap_batches = batch_size;
+    if (ivec_clear(&wp->words) < 0) {
+        ST_WARNING("Failed to ivec_clear words.");
+        return -1;
     }
-    wp->batch_size = batch_size;
 
-    words_per_batch = wp->size / batch_size + 1;
-
-    wp->row_starts[0] = 0;
-    n = 1;
-
-    eos = 0;
-    i = 0;
-    cnt = 0;
-    while (i < wp->size) {
-        if (wp->words[i] == SENT_END_ID) {
-            eos = i;
-        }
-        ++cnt;
-        if (cnt >= words_per_batch) {
-            wp->row_starts[n] = eos + 1;
-            ++n;
-            if (n >= wp->batch_size) {
-                break;
-            }
-            cnt = i - eos;
-        }
-
-        ++i;
+    if (ivec_clear(&wp->sent_ends) < 0) {
+        ST_WARNING("Failed to ivec_clear sent_ends.");
+        return -1;
     }
-    wp->row_starts[wp->batch_size] = wp->size;
+
+    if (ivec_clear(&wp->row_starts) < 0) {
+        ST_WARNING("Failed to ivec_clear row_starts.");
+        return -1;
+    }
 
     return 0;
 }
 
-int word_pool_read(word_pool_t *wp, int *sent_ends,
-        int epoch_size, FILE *text_fp, vocab_t *vocab, int *oovs,
-        bool drop_empty_line)
+int word_pool_build_mini_batch(word_pool_t *wp, int batch_size)
+{
+    int i, n;
+    int num_sents_per_batch, extras;
+
+    ST_CHECK_PARAM(wp == NULL || batch_size < 1, -1);
+
+    if (ivec_resize(&wp->row_starts, batch_size + 1) < 0) {
+        ST_WARNING("Failed to ivec_resize row_starts.");
+        return -1;
+    }
+
+    num_sents_per_batch = wp->sent_ends.size / batch_size;
+    extras = wp->sent_ends.size % batch_size;
+
+    if (ivec_clear(&wp->row_starts) < 0) {
+        ST_WARNING("Failed to ivec_clear row_starts.");
+        return -1;
+    }
+    if (ivec_append(&wp->row_starts, 0) < 0) {
+        ST_WARNING("Failed to ivec_append first row_start.");
+        return -1;
+    }
+
+    n = 0;
+    for (i = 0; i < batch_size; i++) {
+        if (i < extras) {
+            n += num_sents_per_batch + 1;
+        } else {
+            n += num_sents_per_batch;
+        }
+        if (ivec_append(&wp->row_starts, VEC_VAL(&wp->sent_ends, n - 1)) < 0) {
+            ST_WARNING("Failed to ivec_append mid row_starts.");
+            return -1;
+        }
+    }
+
+    return 0;
+}
+
+int word_pool_read(word_pool_t *wp, int epoch_size, FILE *text_fp,
+        vocab_t *vocab, int *oovs, bool drop_empty_line)
 {
     char *line = NULL;
     size_t line_sz = 0;
@@ -191,13 +162,21 @@ int word_pool_read(word_pool_t *wp, int *sent_ends,
 
     bool err;
 
-    // assert len(sent_ends) >= epoch_size
     ST_CHECK_PARAM(wp == NULL || text_fp == NULL || vocab == NULL, -1);
+
+    if (ivec_resize(&wp->sent_ends, epoch_size) < 0) {
+        ST_WARNING("Failed to ivec_resize sent_ends.");
+        goto ERR;
+    }
+
+    if (word_pool_clear(wp) < 0) {
+        ST_WARNING("Failed to word_pool_clear.");
+        goto ERR;
+    }
 
     err = false;
     num_sents = 0;
     oov = 0;
-    wp->size = 0;
     while (st_fgets(&line, &line_sz, text_fp, &err)) {
         remove_newline(line);
 
@@ -205,14 +184,10 @@ int word_pool_read(word_pool_t *wp, int *sent_ends,
             continue;
         }
 
-        if (wp->size >= wp->capacity - 1) {
-            if (word_pool_resize(wp, wp->capacity + NUM_WORD_PER_SENT) < 0) {
-                ST_WARNING("Failed to word_pool_resize. ");
-                goto ERR;
-            }
+        if (ivec_append(&wp->words, vocab_get_id(vocab, SENT_START)) < 0) {
+            ST_WARNING("Failed to ivec_append <s>");
+            goto ERR;
         }
-        wp->words[wp->size] = vocab_get_id(vocab, SENT_START);
-        wp->size++;
 
         p = line;
         i = 0;
@@ -220,20 +195,15 @@ int word_pool_read(word_pool_t *wp, int *sent_ends,
             if (*p == ' ' || *p == '\t') {
                 if (i > 0) {
                     word[i] = '\0';
-                    if (wp->size >= wp->capacity - 1) {
-                        if (word_pool_resize(wp,
-                                wp->capacity + NUM_WORD_PER_SENT) < 0) {
-                            ST_WARNING("Failed to word_pool_resize. ");
-                            goto ERR;
-                        }
+                    if (ivec_append(&wp->words, vocab_get_id(vocab, word)) < 0) {
+                        ST_WARNING("Failed to ivec_append word[%s]", word);
+                        goto ERR;
                     }
-                    wp->words[wp->size] = vocab_get_id(vocab, word);
-                    if (wp->words[wp->size] < 0
-                            || wp->words[wp->size] == UNK_ID) {
-                        wp->words[wp->size] = UNK_ID;
+                    if (VEC_LAST(&wp->words) < 0
+                            || VEC_LAST(&wp->words) == UNK_ID) {
+                        VEC_LAST(&wp->words) = UNK_ID;
                         oov++;
                     }
-                    wp->size++;
 
                     i = 0;
                 }
@@ -249,28 +219,27 @@ int word_pool_read(word_pool_t *wp, int *sent_ends,
         }
         if (i > 0) {
             word[i] = '\0';
-            if (wp->size >= wp->capacity - 1) {
-                if (word_pool_resize(wp,
-                            wp->capacity + NUM_WORD_PER_SENT) < 0) {
-                    ST_WARNING("Failed to word_pool_resize. ");
-                    goto ERR;
-                }
+            if (ivec_append(&wp->words, vocab_get_id(vocab, word)) < 0) {
+                ST_WARNING("Failed to ivec_append word[%s]", word);
+                goto ERR;
             }
-            wp->words[wp->size] = vocab_get_id(vocab, word);
-            if (wp->words[wp->size] < 0
-                    || wp->words[wp->size] == UNK_ID) {
-                wp->words[wp->size] = UNK_ID;
+            if (VEC_LAST(&wp->words) < 0
+                    || VEC_LAST(&wp->words) == UNK_ID) {
+                VEC_LAST(&wp->words) = UNK_ID;
                 oov++;
             }
-            wp->size++;
 
             i = 0;
         }
 
-        wp->words[wp->size] = SENT_END_ID;
-        wp->size++; // do not need to check, prev check wp->size - 1
-        if (sent_ends != NULL) {
-            sent_ends[num_sents] = wp->size;
+        if (ivec_append(&wp->words, SENT_END_ID) < 0) {
+            ST_WARNING("Failed to ivec_append </s>");
+            goto ERR;
+        }
+
+        if (ivec_append(&wp->sent_ends, wp->words.size) < 0) {
+            ST_WARNING("Failed to ivec_append sent_end");
+            goto ERR;
         }
 
         num_sents++;
@@ -302,24 +271,68 @@ ERR:
     return -1;
 }
 
+int word_pool_resize_as(word_pool_t *dst_wp, word_pool_t *src_wp)
+{
+    ST_CHECK_PARAM(dst_wp == NULL || src_wp == NULL, -1);
+
+    if (ivec_resize(&dst_wp->words, src_wp->words.size) < 0) {
+        ST_WARNING("Failed to ivec_resize words.");
+        return -1;
+    }
+
+    if (ivec_resize(&dst_wp->sent_ends, src_wp->sent_ends.size) < 0) {
+        ST_WARNING("Failed to ivec_resize sent_ends.");
+        return -1;
+    }
+
+    if (ivec_resize(&dst_wp->row_starts, src_wp->row_starts.size) < 0) {
+        ST_WARNING("Failed to ivec_resize row_starts.");
+        return -1;
+    }
+
+    return 0;
+}
+
 int word_pool_copy(word_pool_t *dst_wp, word_pool_t *src_wp)
 {
     ST_CHECK_PARAM(dst_wp == NULL || src_wp == NULL, -1);
 
-    if (word_pool_resize(dst_wp, src_wp->size) < 0) {
-        ST_WARNING("Failed to word_pool_resize.");
+    if (ivec_cpy(&dst_wp->words, &src_wp->words) < 0) {
+        ST_WARNING("Failed to ivec_cpy words.");
         return -1;
     }
-    memcpy(dst_wp->words, src_wp->words, sizeof(int) * src_wp->size);
 
-    if (word_pool_resize_batches(dst_wp, src_wp->batch_size) < 0) {
-        ST_WARNING("Failed to word_pool_resize_batches.");
+    if (ivec_cpy(&dst_wp->sent_ends, &src_wp->sent_ends) < 0) {
+        ST_WARNING("Failed to ivec_cpy sent_ends.");
         return -1;
     }
-    memcpy(dst_wp->row_starts, src_wp->row_starts,
-            sizeof(int) * (src_wp->batch_size + 1));
+
+    if (ivec_cpy(&dst_wp->row_starts, &src_wp->row_starts) < 0) {
+        ST_WARNING("Failed to ivec_cpy row_starts.");
+        return -1;
+    }
 
     return 0;
+}
+
+int word_pool_pop(word_pool_t *wp)
+{
+    int word;
+
+    ST_CHECK_PARAM(wp == NULL, -1);
+
+    if (wp->words.size <= 0) {
+        ST_WARNING("Empty word_pool");
+        return -1;
+    }
+
+    word = VEC_LAST(&wp->words);
+
+    wp->words.size--;
+    VEC_LAST(&wp->sent_ends) = wp->words.size;
+    VEC_LAST(&wp->row_starts) = wp->words.size;
+
+    return word;
 }
 
 void reader_destroy(reader_t *reader)
@@ -501,9 +514,8 @@ static void* reader_read_thread(void *args)
     FILE *text_fp = NULL;
     int *shuffle_buf = NULL;
     off_t fsize;
-    int *sent_ends = NULL;
 
-    word_pool_t wp = {0};
+    word_pool_t wp = WORD_POOL_INITIALIZER;
     int num_thrs;
     int epoch_size, mini_batch;
 
@@ -539,21 +551,10 @@ static void* reader_read_thread(void *args)
     epoch_size = reader->opt.epoch_size;
     mini_batch = reader->opt.mini_batch;
 
-    if (word_pool_resize(&wp, NUM_WORD_PER_SENT) < 0) {
-        ST_WARNING("Failed to word_pool_resize.");
-        goto ERR;
-    }
-
     if (reader->opt.shuffle) {
         shuffle_buf = (int *)st_malloc(sizeof(int) * epoch_size);
         if (shuffle_buf == NULL) {
             ST_WARNING("Failed to st_malloc shuffle_buf");
-            goto ERR;
-        }
-
-        sent_ends = (int *)st_malloc(sizeof(int) * epoch_size);
-        if (sent_ends == NULL) {
-            ST_WARNING("Failed to st_malloc sent_ends");
             goto ERR;
         }
     }
@@ -579,7 +580,7 @@ static void* reader_read_thread(void *args)
 #ifdef _TIME_PROF_
         gettimeofday(&tts_io, NULL);
 #endif
-        num_sents = word_pool_read(&wp, sent_ends, epoch_size, text_fp,
+        num_sents = word_pool_read(&wp, epoch_size, text_fp,
                 reader->vocab, &oovs, reader->opt.drop_empty_line);
         if (num_sents < 0) {
             ST_WARNING("Failed to word_pool_read.");
@@ -594,7 +595,7 @@ static void* reader_read_thread(void *args)
 
         reader->oovs += oovs;
         reader->sents += num_sents;
-        reader->words += wp.size - num_sents; // Do not accumulate <s
+        reader->words += wp.words.size - num_sents; // Do not accumulate \<s\>
 
 #ifdef _TIME_PROF_
         gettimeofday(&tts_shuf, NULL);
@@ -636,29 +637,39 @@ static void* reader_read_thread(void *args)
 #ifdef _TIME_PROF_
         gettimeofday(&tts_fill, NULL);
 #endif
-        if (word_pool_resize(wp_in_queue, wp.size) < 0) {
-            ST_WARNING("Failed to word_pool_resize. size[%d].",
-                    wp.size);
+        if (word_pool_resize_as(wp_in_queue, &wp) < 0) {
+            ST_WARNING("Failed to word_pool_resize_as.");
+            goto ERR;
+        }
+        if (word_pool_clear(wp_in_queue) < 0) {
+            ST_WARNING("Failed to word_pool_clear wp_in_queue.");
             goto ERR;
         }
 
         if (shuffle_buf != NULL) {
-            wp_in_queue->size = 0;
             for (i = 0; i < num_sents; i++) {
                 if (shuffle_buf[i] == 0) {
                     start = 0;
                 } else {
-                    start = sent_ends[shuffle_buf[i] - 1];
+                    start = VEC_VAL(&wp.sent_ends, shuffle_buf[i] - 1);
                 }
-                end = sent_ends[shuffle_buf[i]];
+                end = VEC_VAL(&wp.sent_ends, shuffle_buf[i]);
 
-                memcpy(wp_in_queue->words + wp_in_queue->size,
-                        wp.words + start, sizeof(int)*(end - start));
-                wp_in_queue->size += end - start;
+                if (ivec_extend(&wp_in_queue->words, &wp.words, start, end) < 0) {
+                    ST_WARNING("Failed to ivec_extend.");
+                    goto ERR;
+                }
+                if (ivec_append(&wp_in_queue->sent_ends,
+                            wp_in_queue->words.size) < 0) {
+                    ST_WARNING("Failed to ivec_append wp_in_queue->sent_ends.");
+                    goto ERR;
+                }
             }
         } else {
-            memcpy(wp_in_queue->words, wp.words, sizeof(int)*wp.size);
-            wp_in_queue->size = wp.size;
+            if (word_pool_copy(wp_in_queue, &wp) < 0) {
+                ST_WARNING("Failed to word_pool_copy wp into wp_in_queue.");
+                goto ERR;
+            }
         }
 
         if (word_pool_build_mini_batch(wp_in_queue, mini_batch) < 0) {
@@ -758,7 +769,6 @@ static void* reader_read_thread(void *args)
     word_pool_destroy(&wp);
     safe_fclose(text_fp);
     safe_st_free(shuffle_buf);
-    safe_st_free(sent_ends);
 
     return NULL;
 
@@ -768,7 +778,6 @@ ERR:
     word_pool_destroy(&wp);
     safe_fclose(text_fp);
     safe_st_free(shuffle_buf);
-    safe_st_free(sent_ends);
 
     for (i = 0; i < num_thrs; i++) {
         /* posting semaphore without adding data indicates finish. */

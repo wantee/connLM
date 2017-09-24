@@ -549,7 +549,7 @@ static int driver_gen(driver_t *driver)
 
     count_t n_word, n_sent;
 
-    word_pool_t wp = {0};
+    word_pool_t wp = WORD_POOL_INITIALIZER;
 
     int word;
     int i;
@@ -578,23 +578,22 @@ static int driver_gen(driver_t *driver)
     while(true) {
         first = true;
         if (text_fp != NULL && !feof(text_fp)) {
-            if (word_pool_read(&wp, NULL, 1, text_fp, vocab,
-                        NULL, true) < 0) {
+            if (word_pool_read(&wp, 1, text_fp, vocab, NULL, true) < 0) {
                 ST_WARNING("Failed to word_pool_read.");
                 goto ERR;
             }
 
-            if (wp.size > 1) {
+            if (wp.words.size > 1) {
                 printf("[");
-                for (i = 1; i < wp.size - 1; i++) {
-                    printf("%s", vocab_get_word(vocab, wp.words[i]));
-                    if (i < wp.size - 2) {
+                for (i = 1; i < wp.words.size - 1; i++) {
+                    printf("%s", vocab_get_word(vocab, VEC_VAL(&wp.words, i)));
+                    if (i < wp.words.size - 2) {
                         printf(" ");
                     }
                 }
                 printf("]");
 
-                --wp.size; // remove </s> at the end
+                word_pool_pop(&wp); // remove </s> at the end
                 if (updater_feed(updater, &wp) < 0) {
                     ST_WARNING("Failed to updater_feed.");
                     goto ERR;

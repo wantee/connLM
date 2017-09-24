@@ -550,14 +550,39 @@ int ivec_resize(ivec_t *vec, size_t size)
     return 0;
 }
 
+int ivec_extsize(ivec_t *vec, size_t ext_size)
+{
+    ST_CHECK_PARAM(vec == NULL || ext_size <= 0, -1);
+
+    if (ivec_resize(vec, ext_size + vec->size) < 0) {
+        ST_WARNING("Failed to ivec_resize.");
+        return -1;
+    }
+
+    return 0;
+}
+
+int ivec_append(ivec_t *vec, int n)
+{
+    if (ivec_extsize(vec, NUM_IVEC_RESIZE) < 0) {
+        ST_WARNING("Failed to ivec_extsize.");
+        return -1;
+    }
+
+    vec->vals[vec->size] = n;
+    vec->size++;
+
+    return 0;
+}
+
 int ivec_insert(ivec_t *vec, int n)
 {
     size_t pos;
 
     ST_CHECK_PARAM(vec == NULL, -1);
 
-    if (ivec_resize(vec, vec->size + 1) < 0) {
-        ST_WARNING("Failed to ivec_resize.");
+    if (ivec_extsize(vec, NUM_IVEC_RESIZE) < 0) {
+        ST_WARNING("Failed to ivec_extsize.");
         return -1;
     }
 
@@ -580,6 +605,36 @@ int ivec_set(ivec_t *vec, int *vals, size_t n)
 
     memcpy(vec->vals, vals, sizeof(int) * n);
     vec->size = n;
+
+    return 0;
+}
+
+int ivec_cpy(ivec_t *dst, ivec_t *src)
+{
+    ST_CHECK_PARAM(dst == NULL || src == NULL, -1);
+
+    if (ivec_resize(dst, src->size) < 0) {
+        ST_WARNING("Failed to ivec_resize.");
+        return -1;
+    }
+
+    memcpy(dst->vals, src->vals, sizeof(int) * src->size);
+
+    return 0;
+}
+
+int ivec_extend(ivec_t *vec, ivec_t *src, size_t start, size_t end)
+{
+    ST_CHECK_PARAM(vec == NULL || src == NULL, -1);
+
+    if (ivec_extsize(vec, end - start) < 0) {
+        ST_WARNING("Failed to ivec_extsize.");
+        return -1;
+    }
+
+    memcpy(vec->vals + vec->size, src->vals + start,
+            sizeof(int) * (end - start));
+    vec->size += end - start;
 
     return 0;
 }

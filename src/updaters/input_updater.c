@@ -216,13 +216,13 @@ int input_updater_update_batch(input_updater_t *input_updater,
         ctx_rightmost = input->context[input->n_ctx - 1].i;
     }
 
-    if (egs_batch_resize(batch, wp->batch_size, input->n_ctx) < 0) {
+    if (egs_batch_resize(batch, wp_batch_size(wp), input->n_ctx) < 0) {
         ST_WARNING("Failed to egs_batch_resize.");
         return -1;
     }
 
     batch->num_egs = 0;
-    for (b = 0; b < wp->batch_size; b++) {
+    for (b = 0; b < wp_batch_size(wp); b++) {
         if (wp->row_starts[b] + cur_pos >= wp->row_starts[b + 1]) {
             ST_WARNING("row[%d] overflow", b);
             return -1;

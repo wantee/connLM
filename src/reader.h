@@ -34,6 +34,7 @@ extern "C" {
 #include <stutils/st_semaphore.h>
 
 #include <connlm/config.h>
+#include "vector.h"
 #include "vocab.h"
 
 /** @defgroup g_reader Samples Reader
@@ -68,14 +69,16 @@ typedef struct _reader_opt_t_ {
  * @ingroup g_reader
  */
 typedef struct _word_pool_t_ {
-    int *words; /**< word ids. */
-    int size; /**< size of words. */
-    int capacity; /**< capacity of words. */
-    int *row_starts; /**< start index of each row in mini-batch. */
-    int batch_size; /**< batche size, number of rows. */
-    int cap_batches; /**< capacity of row_starts. */
+    ivec_t words; /**< word ids. */
+    ivec_t sent_ends; /**< postions of \</s\> */
+
+    ivec_t row_starts; /**< start index of each row in mini-batch.
+                           batche size is row_starts.size() - 1. */
     struct _word_pool_t_ *next; /**< pointer to the next list element. */
 } word_pool_t;
+
+#define WORD_POOL_INITIALIZER {{0}, {0}, {0}}
+#define wp_batch_size(wp) (wp)->row_starts.size - 1
 
 /**
  * Destroy a word_pool.
@@ -112,6 +115,14 @@ int word_pool_resize_batches(word_pool_t *wp, int batch_capacity);
 int word_pool_copy(word_pool_t *dst_wp, word_pool_t *src_wp);
 
 /**
+ * Pop out the last word of a word_pool.
+ * @ingroup g_reader
+ * @param[in] wp word pool.
+ * @return -1 if any error, otherwise the last word.
+ */
+int word_pool_pop(word_pool_t *wp);
+
+/**
  * Build mini-batch in a word_pool.
  * @ingroup g_reader
  * @param[in] wp word pool.
@@ -124,7 +135,6 @@ int word_pool_build_mini_batch(word_pool_t *wp, int batch_size);
  * Read words into pool.
  * @ingroup g_reader
  * @param[in] wp word pool.
- * @param[out] sent_ends contains postion of \</s\>s, if not NULL.
  * @param[in] epoch_size number sents read one time.
  * @param[in] text_fp text file.
  * @param[in] vocab vocab.
@@ -132,9 +142,8 @@ int word_pool_build_mini_batch(word_pool_t *wp, int batch_size);
  * @param[in] drop_empty_line whether drop the empty lines.
  * @return non-zero value if any error.
  */
-int word_pool_read(word_pool_t *wp, int *sent_ends,
-        int epoch_size, FILE *text_fp, vocab_t *vocab, int *oovs,
-        bool drop_empty_line);
+int word_pool_read(word_pool_t *wp, int epoch_size, FILE *text_fp,
+        vocab_t *vocab, int *oovs, bool drop_empty_line);
 
 /**
  * Load reader option.

@@ -37,6 +37,7 @@ extern "C" {
 
 #define VEC_VAL(vec, idx) ((vec)->vals[idx])
 #define VEC_VALP(vec, idx) ((vec)->vals + (idx))
+#define VEC_LAST(vec) ((vec)->vals[(vec)->size - 1])
 
 /**
  * Vector
@@ -211,6 +212,8 @@ int dvec_resize(dvec_t *vec, size_t size, double init_val);
 void dvec_set(dvec_t *vec, double val);
 
 
+#define NUM_IVEC_RESIZE 128
+
 /**
  * Int Vector
  * @ingroup g_vector
@@ -246,12 +249,31 @@ int ivec_clear(ivec_t *vec);
 int ivec_resize(ivec_t *vec, size_t size);
 
 /**
+ * Extend the size of a int vector.
+ * @ingroup g_vector
+ * @param[in] vec the vector.
+ * @param[in] ext_size the extended size.
+ * @return non-zero if any error.
+ */
+int ivec_extsize(ivec_t *vec, size_t ext_size);
+
+/**
+ * append a int into a int vector.
+ * @ingroup g_vector
+ * @param[in] vec the vector.
+ * @param[in] n the number.
+ * @return position of the number in vecitor, -1 if any error.
+ */
+int ivec_append(ivec_t *vec, int n);
+
+/**
  * Insert a int into a int vector. same numbers are merged.
  * @ingroup g_vector
  * @param[in] vec the vector, must be uniq and sorted.
  * @param[in] n the number.
  * @return position of the number in vecitor, -1 if any error.
  */
+
 int ivec_insert(ivec_t *vec, int n);
 
 /**
@@ -263,6 +285,26 @@ int ivec_insert(ivec_t *vec, int n);
  * @return non-zero if any error.
  */
 int ivec_set(ivec_t *vec, int *vals, size_t n);
+
+/**
+ * Copy a int vector to the other.
+ * @ingroup g_vector
+ * @param[out] dst the dst vector.
+ * @param[in] src the src vector.
+ * @return non-zero if any error.
+ */
+int ivec_cpy(ivec_t *dst, ivec_t *src);
+
+/**
+ * Extend a int vector with a sub int vector.
+ * @ingroup g_vector
+ * @param[in] vec the vector.
+ * @param[in] src thr source vector.
+ * @param[in] start start index of source vector.
+ * @param[in] end end index of source vector.
+ * @return non-zero if any error.
+ */
+int ivec_extend(ivec_t *vec, ivec_t *src, size_t start, size_t end);
 
 #ifdef __cplusplus
 }
