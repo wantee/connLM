@@ -88,22 +88,12 @@ typedef struct _word_pool_t_ {
 void word_pool_destroy(word_pool_t *wp);
 
 /**
- * Resize a word_pool.
+ * Clear a word_pool.
  * @ingroup g_reader
- * @param[in] wp word pool.
- * @param[in] capacity new capacity.
+ * @param[in] wp pool to be cleared.
  * @return non-zero value if any error.
  */
-int word_pool_resize(word_pool_t *wp, int capacity);
-
-/**
- * Resize capacity of batches.
- * @ingroup g_reader
- * @param[in] wp word pool.
- * @param[in] batch_capacity new batch capacity.
- * @return non-zero value if any error.
- */
-int word_pool_resize_batches(word_pool_t *wp, int batch_capacity);
+int word_pool_clear(word_pool_t *wp);
 
 /**
  * Copy a word_pool.
@@ -121,6 +111,24 @@ int word_pool_copy(word_pool_t *dst_wp, word_pool_t *src_wp);
  * @return -1 if any error, otherwise the last word.
  */
 int word_pool_pop(word_pool_t *wp);
+
+/**
+ * Append a word into a word_pool.
+ * @ingroup g_reader
+ * @param[in] wp word pool.
+ * @param[in] word the word.
+ * @return non-zero value if any error.
+ */
+int word_pool_append(word_pool_t *wp, int word);
+
+/**
+ * Append a vector of words into a word_pool.
+ * @ingroup g_reader
+ * @param[in] wp word pool.
+ * @param[in] words the vector of words.
+ * @return non-zero value if any error.
+ */
+int word_pool_append_ivec(word_pool_t *wp, ivec_t *words);
 
 /**
  * Build mini-batch in a word_pool.

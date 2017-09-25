@@ -509,6 +509,26 @@ static int updater_sample_out(updater_t *updater)
     return output_tree_leaf2word(output->tree, node);
 }
 
+static int wp_set_word(word_pool_t *wp, int word)
+{
+    ST_CHECK_PARAM(wp == NULL || word < 0, -1);
+
+    if (word_pool_clear(wp) < 0) {
+        ST_WARNING("Failed to word_pool_clear.");
+        return -1;
+    }
+    if (word_pool_append(wp, word) < 0) {
+        ST_WARNING("Failed to word_pool_resize.");
+        return -1;
+    }
+    if (word_pool_build_mini_batch(wp, 1) < 0) {
+        ST_WARNING("Failed to word_pool_build_mini_batch.");
+        return -1;
+    }
+
+    return 0;
+}
+
 int updater_sampling(updater_t *updater, bool startover)
 {
     int word;
@@ -519,19 +539,12 @@ int updater_sampling(updater_t *updater, bool startover)
     ST_TRACE("Sampling");
 #endif
 
-    if (word_pool_resize(&updater->tmp_wp, 1) < 0) {
-        ST_WARNING("Failed to word_pool_resize.");
-        return -1;
-    }
-    updater->tmp_wp.size = 1;
-    if (word_pool_build_mini_batch(&updater->tmp_wp, 1) < 0) {
-        ST_WARNING("Failed to word_pool_build_mini_batch.");
-        return -1;
-    }
-
     if (startover) { // feed with <s>
         word = vocab_get_id(updater->connlm->vocab, SENT_START);
-        updater->tmp_wp.words[0] = word;
+        if (wp_set_word(&updater->tmp_wp, word) < 0) {
+            ST_WARNING("Failed to wp_set_word.");
+            return -1;
+        }
         if (updater_feed(updater, &updater->tmp_wp) < 0) {
             ST_WARNING("Failed to updater_feed.");
             return -1;
@@ -549,7 +562,10 @@ int updater_sampling(updater_t *updater, bool startover)
         return -1;
     }
 
-    updater->tmp_wp.words[0] = word;
+    if (wp_set_word(&updater->tmp_wp, word) < 0) {
+        ST_WARNING("Failed to wp_set_word.");
+        return -1;
+    }
     if (updater_feed(updater, &updater->tmp_wp) < 0) {
         ST_WARNING("Failed to updater_feed.");
         return -1;
@@ -770,38 +786,34 @@ static int updater_cleanup(updater_t *updater)
 
 static int updater_set_hist(updater_t *updater, ivec_t *hists, int num_hists)
 {
-    int i, c, sz;
+    int i, c;
 
     ST_CHECK_PARAM(updater == NULL || hists == NULL, -1);
 
     // build mini_batch with hists
-    sz = 0;
-    for (i = 0; i < num_hists; i++) {
-        if (hists[i].size > sz) {
-            sz = hists[i].size;
-        }
-    }
-
-    if (word_pool_resize(&updater->tmp_wp, sz * num_hists) < 0) {
-        ST_WARNING("Failed to word_pool_resize.");
-        return -1;
-    }
-    if (word_pool_resize_batches(&updater->tmp_wp, num_hists) < 0) {
-        ST_WARNING("Failed to word_pool_resize_batches.");
+    if (word_pool_clear(&updater->tmp_wp) < 0) {
+        ST_WARNING("Failed to word_pool_clear.");
         return -1;
     }
 
     for (i = 0; i < num_hists; i++) {
-        // set the empty words to -1
-        for (c = 0; c < sz - hists[i].size; c++) {
-            updater->tmp_wp.words[i * sz + c] = -1;
+        if (word_pool_append_ivec(&updater->tmp_wp, hists + i) < 0) {
+            ST_WARNING("Failed to word_pool_append_ivec[%d].", i);
+            return -1;
         }
-        memcpy(updater->tmp_wp.words + i * sz + c,
-                hists[i].vals, sizeof(int) * hists[i].size);
-        updater->tmp_wp.row_starts[i] = i * sz;
+
+        // set the sent_ends
+        if (ivec_append(&updater->tmp_wp.sent_ends,
+                    updater->tmp_wp.words.size) < 0) {
+            ST_WARNING("Failed to ivec_append.");
+            return -1;
+        }
     }
-    updater->tmp_wp.row_starts[num_hists] = num_hists * sz;
-    updater->tmp_wp.size = sz * num_hists;
+
+    if (word_pool_build_mini_batch(&updater->tmp_wp, num_hists) < 0) {
+        ST_WARNING("Failed to word_pool_build_mini_batch for hists.");
+        return -1;
+    }
 
     // feed the word_pool with hists
     if (updater_feed(updater, &updater->tmp_wp) < 0) {
@@ -958,19 +970,12 @@ int updater_sampling_state(updater_t *updater, mat_t *state,
        return -1;
     }
 
-    if (word_pool_resize(&updater->tmp_wp, 1) < 0) {
-        ST_WARNING("Failed to word_pool_resize.");
-        return -1;
-    }
-    updater->tmp_wp.size = 1;
-    if (word_pool_build_mini_batch(&updater->tmp_wp, 1) < 0) {
-        ST_WARNING("Failed to word_pool_build_mini_batch.");
-        return -1;
-    }
-
     if (startover) { // feed with <s>
         word = vocab_get_id(updater->connlm->vocab, SENT_START);
-        updater->tmp_wp.words[0] = word;
+        if (wp_set_word(&updater->tmp_wp, word) < 0) {
+            ST_WARNING("Failed to wp_set_word.");
+            return -1;
+        }
         if (updater_feed(updater, &updater->tmp_wp) < 0) {
             ST_WARNING("Failed to updater_feed.");
             return -1;
@@ -988,7 +993,10 @@ int updater_sampling_state(updater_t *updater, mat_t *state,
         return -1;
     }
 
-    updater->tmp_wp.words[0] = word;
+    if (wp_set_word(&updater->tmp_wp, word) < 0) {
+        ST_WARNING("Failed to wp_set_word.");
+        return -1;
+    }
     if (updater_feed(updater, &updater->tmp_wp) < 0) {
         ST_WARNING("Failed to updater_feed.");
         return -1;

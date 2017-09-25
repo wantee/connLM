@@ -335,6 +335,44 @@ int word_pool_pop(word_pool_t *wp)
     return word;
 }
 
+int word_pool_append(word_pool_t *wp, int word)
+{
+    ST_CHECK_PARAM(wp == NULL, -1);
+
+    if (ivec_append(&wp->words, word) < 0) {
+        ST_WARNING("Failed to ivec_append word.");
+        return -1;
+    }
+
+    if (wp->sent_ends.size > 0) {
+        VEC_LAST(&wp->sent_ends) = wp->words.size;
+    }
+    if (wp->row_starts.size > 0) {
+        VEC_LAST(&wp->row_starts) = wp->words.size;
+    }
+
+    return 0;
+}
+
+int word_pool_append_ivec(word_pool_t *wp, ivec_t *words)
+{
+    ST_CHECK_PARAM(wp == NULL || words == NULL, -1);
+
+    if (ivec_extend(&wp->words, words, 0, words->size) < 0) {
+        ST_WARNING("Failed to ivec_extend words.");
+        return -1;
+    }
+
+    if (wp->sent_ends.size > 0) {
+        VEC_LAST(&wp->sent_ends) = wp->words.size;
+    }
+    if (wp->row_starts.size > 0) {
+        VEC_LAST(&wp->row_starts) = wp->words.size;
+    }
+
+    return 0;
+}
+
 void reader_destroy(reader_t *reader)
 {
     word_pool_t *p;
