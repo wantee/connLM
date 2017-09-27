@@ -623,6 +623,22 @@ int ivec_cpy(ivec_t *dst, ivec_t *src)
     return 0;
 }
 
+#define SWAP(a, b, t) \
+    (t) = (a); (a) = (b); (b) = (t);
+int ivec_swap(ivec_t *vec1, ivec_t *vec2)
+{
+    int *tmp_vals;
+    size_t tmp_sz;
+
+    ST_CHECK_PARAM(vec1 == NULL || vec2 == NULL, -1);
+
+    SWAP(vec1->vals, vec2->vals, tmp_vals);
+    SWAP(vec1->size, vec2->size, tmp_sz);
+    SWAP(vec1->capacity, vec2->capacity, tmp_sz);
+
+    return 0;
+}
+
 int ivec_extend(ivec_t *vec, ivec_t *src, size_t start, size_t end)
 {
     ST_CHECK_PARAM(vec == NULL || src == NULL, -1);

@@ -105,6 +105,15 @@ int word_pool_clear(word_pool_t *wp);
 int word_pool_copy(word_pool_t *dst_wp, word_pool_t *src_wp);
 
 /**
+ * Swap the content of two word_pools.
+ * @ingroup g_reader
+ * @param[in] wp1 the first word pool.
+ * @param[in] wp2 the second word pool.
+ * @return non-zero value if any error.
+ */
+int word_pool_swap(word_pool_t *wp1, word_pool_t *wp2);
+
+/**
  * Pop out the last word of a word_pool.
  * @ingroup g_reader
  * @param[in] wp word pool.

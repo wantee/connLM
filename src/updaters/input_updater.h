@@ -51,8 +51,6 @@ typedef struct _input_updater_t_ {
 
     word_pool_t wp; /**< buffer for input words. */
     int cur_pos; /**< position of current word in word buffer. */
-    int end_pos; /**< end position of current word pool,
-                      i.e., shortest length of rows in word pool. */
 
     word_pool_t tmp_wp; /**< temp buffer for input words. */
 } input_updater_t;

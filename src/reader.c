@@ -315,6 +315,28 @@ int word_pool_copy(word_pool_t *dst_wp, word_pool_t *src_wp)
     return 0;
 }
 
+int word_pool_swap(word_pool_t *wp1, word_pool_t *wp2)
+{
+    ST_CHECK_PARAM(wp1 == NULL || wp2 == NULL, -1);
+
+    if (ivec_swap(&wp1->words, &wp2->words) < 0) {
+        ST_WARNING("Failed to ivec_swap words.");
+        return -1;
+    }
+
+    if (ivec_swap(&wp1->sent_ends, &wp2->sent_ends) < 0) {
+        ST_WARNING("Failed to ivec_swap sent_ends.");
+        return -1;
+    }
+
+    if (ivec_swap(&wp1->row_starts, &wp2->row_starts) < 0) {
+        ST_WARNING("Failed to ivec_swap row_starts.");
+        return -1;
+    }
+
+    return 0;
+}
+
 int word_pool_pop(word_pool_t *wp)
 {
     int word;

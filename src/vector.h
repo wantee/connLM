@@ -296,6 +296,15 @@ int ivec_set(ivec_t *vec, int *vals, size_t n);
 int ivec_cpy(ivec_t *dst, ivec_t *src);
 
 /**
+ * Swap the content of two int vector.
+ * @ingroup g_vector
+ * @param[in] vec1 the first int vector.
+ * @param[in] vec2 the second int vector.
+ * @return non-zero value if any error.
+ */
+int ivec_swap(ivec_t *vec1, ivec_t *vec2);
+
+/**
  * Extend a int vector with a sub int vector.
  * @ingroup g_vector
  * @param[in] vec the vector.

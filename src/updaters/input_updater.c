@@ -147,7 +147,6 @@ void input_updater_destroy(input_updater_t *input_updater)
     word_pool_destroy(&input_updater->wp);
     word_pool_destroy(&input_updater->tmp_wp);
     input_updater->cur_pos = 0;
-    input_updater->end_pos = 0;
 
     input_updater->ctx_leftmost = 0;
     input_updater->ctx_rightmost = 0;
@@ -200,7 +199,7 @@ int input_updater_update_batch(input_updater_t *input_updater,
     egs_input_t *egs_input;
     word_pool_t *wp;
     int b, i;
-    int cur_pos, idx;
+    int cur_pos, row_start, idx;
     int ctx_leftmost = 0;
     int ctx_rightmost = 0;
 
@@ -223,20 +222,12 @@ int input_updater_update_batch(input_updater_t *input_updater,
 
     batch->num_egs = 0;
     for (b = 0; b < wp_batch_size(wp); b++) {
-        if (wp->row_starts[b] + cur_pos >= wp->row_starts[b + 1]) {
-            ST_WARNING("row[%d] overflow", b);
-            return -1;
-        }
-
-        // we never use <s> as target
-        if (wp->words[wp->row_starts[b] + cur_pos] == input_updater->bos_id) {
-            continue;
-        }
+        row_start = VEC_VAL(&wp->row_starts, b);
 
         // find sentence boundaries
         i = cur_pos - 1;
         while (i >= cur_pos - ctx_leftmost && i >= 0) {
-            if (wp->words[wp->row_starts[b] + i] == SENT_END_ID) {
+            if (VEC_VAL(&wp->words, row_start + i) == SENT_END_ID) {
                 break;
             }
             --i;
@@ -245,8 +236,8 @@ int input_updater_update_batch(input_updater_t *input_updater,
 
         i = cur_pos;
         while (i < cur_pos + ctx_rightmost
-                && wp->row_starts[b] + i + 1 < wp->row_starts[b + 1]) {
-            if (wp->words[wp->row_starts[b] + i] == SENT_END_ID) {
+                && row_start + i + 1 < VEC_VAL(&wp->row_starts, b + 1)) {
+            if (VEC_VAL(&wp->words, row_start + i) == SENT_END_ID) {
                 break;
             }
             ++i;
@@ -262,28 +253,28 @@ int input_updater_update_batch(input_updater_t *input_updater,
                     continue;
                 }
             } else {
-                if (input->context[i].i < ctx_rightmost) {
+                if (input->context[i].i > ctx_rightmost) {
                     continue;
                 }
             }
 
             assert(egs_input->num_words < egs_input->cap_words);
 
-            idx = wp->row_starts[b] + cur_pos + input->context[i].i;
-            egs_input->words[egs_input->num_words] = wp->words[idx];
+            idx = row_start + cur_pos + input->context[i].i;
+            egs_input->words[egs_input->num_words] = VEC_VAL(&wp->words, idx);
             egs_input->weights[egs_input->num_words] = input->context[i].w;
             egs_input->positions[egs_input->num_words] = input->context[i].i;
             egs_input->num_words++;
         }
 
-        if (egs_input->num_words == 0) {
-            // this should be very rare. no input can be provided
-            continue;
-        }
-
         // add target
-        idx = wp->row_starts[b] + cur_pos;
-        batch->targets[batch->num_egs] = wp->words[idx];
+        if (row_start + cur_pos >= VEC_VAL(&wp->row_starts, b + 1)
+                // we never use <s> as target
+                || VEC_VAL(&wp->words, row_start + cur_pos) == input_updater->bos_id) {
+            batch->targets[batch->num_egs] = PADDING_ID;
+        } else {
+            batch->targets[batch->num_egs] = VEC_VAL(&wp->words, idx);
+        }
 
         batch->num_egs++;
     }
@@ -294,15 +285,15 @@ int input_updater_update_batch(input_updater_t *input_updater,
 int input_updater_feed(input_updater_t *input_updater, word_pool_t *new_wp)
 {
     word_pool_t *wp, *tmp_wp;
-    int b, size;
-    int num_keep;
+    int b;
+    int start, end;
 
     ST_CHECK_PARAM(input_updater == NULL || new_wp == NULL, -1);
 
     wp = &input_updater->wp;
     tmp_wp = &input_updater->tmp_wp;
 
-    if (wp->capacity == 0) {
+    if (wp->words.size == 0) {
         if (word_pool_copy(wp, new_wp) < 0) {
             ST_WARNING("Failed to word_pool_copy.");
             return -1;
@@ -310,104 +301,43 @@ int input_updater_feed(input_updater_t *input_updater, word_pool_t *new_wp)
 
         input_updater->cur_pos = 0;
     } else {
-        if (wp->batch_size != new_wp->batch_size) {
-            // sentences must be complete, if batch size changed
-            for (b = 0; b < wp->batch_size; b++) {
-                if (wp->words[wp->row_starts[b + 1] - 1] != SENT_END_ID) {
-                    ST_WARNING("Can not change batch_size, since sentence"
-                            "in row[%d] is not ended", b);
-                    return -1;
-                }
-            }
-
-            for (b = 0; b < new_wp->batch_size; b++) {
-                if (new_wp->words[new_wp->row_starts[b]] != input_updater->bos_id) {
-                    ST_WARNING("Can not change batch_size, since sentence"
-                            "in row[%d] is not started by <s>", b);
-                    return -1;
-                }
-            }
-        }
-
-        num_keep = input_updater->ctx_leftmost * wp->batch_size;
-        for (b = 0; b < wp->batch_size; b++) {
-            if (wp->row_starts[b + 1] - input_updater->cur_pos <= 0) {
-                continue;
-            }
-            num_keep += wp->row_starts[b + 1] - input_updater->cur_pos;
-        }
-
-        if (word_pool_resize(tmp_wp, num_keep + new_wp->size) < 0) {
-            ST_WARNING("Failed to word_pool_ensure_capacity.");
+        // assert batch size is constanst, which is required by stateful network
+        if (wp_batch_size(wp) != wp_batch_size(new_wp)) {
+            ST_WARNING("Batch size can not be changed.");
             return -1;
         }
 
-        tmp_wp->batch_size = max(wp->batch_size, new_wp->batch_size);
-        if (word_pool_resize_batches(tmp_wp, tmp_wp->batch_size) < 0) {
-            ST_WARNING("Failed to word_pool_ensure_batch_size.");
+        if (word_pool_clear(tmp_wp) < 0) {
+            ST_WARNING("Failed to word_pool_clear tmp_wp.");
             return -1;
         }
-
-        tmp_wp->size = 0;
-        tmp_wp->row_starts[0] = 0;
-        for (b = 0; b < wp->batch_size; b++) {
-            // copy words need to be kept
-            num_keep = wp->row_starts[b + 1] - input_updater->cur_pos;
-            if (num_keep > 0) {
-                memcpy(tmp_wp->words + tmp_wp->size,
-                       wp->words + wp->row_starts[b] + input_updater->cur_pos,
-                       sizeof(int) * num_keep);
-                tmp_wp->size += num_keep;
+        if (ivec_append(&tmp_wp->row_starts, 0) < 0) {
+            ST_WARNING("Failed to ivec_append first of tmp_wp->row_starts.");
+            return -1;
+        }
+        for (b = 0; b < wp_batch_size(wp); b++) {
+            start = VEC_VAL(&wp->row_starts, b) + input_updater->cur_pos
+                - input_updater->ctx_leftmost;
+            end = VEC_VAL(&wp->row_starts, b + 1);
+            if (start < end) {
+                if (ivec_extend(&tmp_wp->words, &wp->words, start, end) < 0) {
+                    ST_WARNING("Failed to ivec_extend tmp_wp.words.");
+                    return -1;
+                }
             }
-
-            if (b < new_wp->batch_size) {
-                // append new words
-                size = new_wp->row_starts[b+1] - new_wp->row_starts[b];
-                memcpy(tmp_wp->words + tmp_wp->size,
-                       new_wp->words + new_wp->row_starts[b],
-                       sizeof(int) * size);
-                tmp_wp->size += size;
+            if (ivec_append(&tmp_wp->row_starts, tmp_wp->words.size) < 0) {
+                ST_WARNING("Failed to ivec_append tmp_wp->row_starts.");
+                return -1;
             }
-
-            tmp_wp->row_starts[b+1] = tmp_wp->size;
+            // we do NOT take care of the sent_ends in word_pool any more
         }
 
-        for (b = wp->batch_size; b < new_wp->batch_size; b++) {
-            // append new words
-            size = new_wp->row_starts[b+1] - new_wp->row_starts[b];
-            memcpy(tmp_wp->words + tmp_wp->size,
-                   new_wp->words + new_wp->row_starts[b],
-                   sizeof(int) * size);
-            tmp_wp->size += size;
-
-            tmp_wp->row_starts[b+1] = tmp_wp->size;
-        }
-
-        if (word_pool_copy(wp, tmp_wp) < 0) {
-            ST_WARNING("Failed to word_pool_copy.");
+        if (word_pool_swap(wp, tmp_wp) < 0) {
+            ST_WARNING("Failed to word_pool_swap.");
             return -1;
         }
 
         input_updater->cur_pos = input_updater->ctx_leftmost;
-    }
-
-    // remove empty rows
-    for (b = wp->batch_size - 1; b >= 0; b--) {
-        if (wp->row_starts[b + 1] - wp->row_starts[b] <= 0) {
-            if (b != wp->batch_size - 1) {
-                memmove(wp->row_starts + b, wp->row_starts + b + 1,
-                        sizeof(int) * (wp->batch_size - b - 1));
-            }
-            wp->batch_size--;
-        }
-    }
-
-    // set end_pos
-    input_updater->end_pos = wp->size;
-    for (b = 0; b < wp->batch_size; b++) {
-        if (wp->row_starts[b + 1] - wp->row_starts[b] < input_updater->end_pos) {
-            input_updater->end_pos = wp->row_starts[b + 1] - wp->row_starts[b];
-        }
     }
 
     return 0;
@@ -424,9 +354,21 @@ int input_updater_move(input_updater_t *input_updater)
 
 int input_updater_move_to_end(input_updater_t *input_updater)
 {
+    word_pool_t *wp;
+    int b;
+
     ST_CHECK_PARAM(input_updater == NULL, -1);
 
-    input_updater->cur_pos = input_updater->end_pos;
+    wp = &input_updater->wp;
+    input_updater->cur_pos = 0;
+    for (b = 0; b < wp_batch_size(wp); b++) {
+        if (VEC_VAL(&wp->row_starts, b + 1) - VEC_VAL(&wp->row_starts, b)
+                > input_updater->cur_pos) {
+            input_updater->cur_pos = VEC_VAL(&wp->row_starts, b + 1)
+                - VEC_VAL(&wp->row_starts, b);
+        }
+    }
+
 
     return 0;
 }
@@ -434,27 +376,27 @@ int input_updater_move_to_end(input_updater_t *input_updater)
 bool input_updater_movable(input_updater_t *input_updater, bool finalized)
 {
     word_pool_t *wp;
-    int b, r, idx;
+    int b, r, pos;
 
     ST_CHECK_PARAM(input_updater == NULL, false);
 
     wp = &input_updater->wp;
 
-    for (b = 0; b < wp->batch_size; b++) {
-        if (wp->row_starts[b] + input_updater->cur_pos >= wp->row_starts[b+1]) {
+    if (finalized) {
+        return true;
+    }
+
+    for (b = 0; b < wp_batch_size(wp); b++) {
+        pos = VEC_VAL(&wp->row_starts, b) + input_updater->cur_pos;
+        if (pos >= VEC_VAL(&wp->row_starts, b + 1)) {
             return false;
-        } else {
-            if (finalized) {
-                return true;
-            }
         }
 
         for (r = 1; r <= input_updater->ctx_rightmost; r++) {
-            idx = wp->row_starts[b] + input_updater->cur_pos + r;
-            if (idx >= wp->row_starts[b+1]) {
+            if (pos + r >= VEC_VAL(&wp->row_starts, b + 1)) {
                 return false;
             }
-            if (wp->words[idx] == SENT_END_ID) {
+            if (VEC_VAL(&wp->words, pos + r) == SENT_END_ID) {
                 break;
             }
         }

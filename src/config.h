@@ -69,6 +69,8 @@ typedef unsigned long count_t;
 #define EPS "<eps>"
 #define PHI "#phi"
 
+#define PADDING_ID -100
+
 #ifdef __cplusplus
 }
 #endif
