@@ -477,6 +477,9 @@ static int reset_node_iters(out_updater_t *out_updater, egs_batch_t *batch)
     int b;
 
     for (b = 0; b < batch->num_egs; b++) {
+        if (batch->targets[b] == PADDING_ID) {
+            continue;
+        }
         if (output_walk_through_path(out_updater->output, batch->targets[b],
                     reset_node_iters_walker, (void *)out_updater->node_iters) < 0) {
             ST_WARNING("Failed to output_walk_through_path.");
@@ -525,6 +528,10 @@ int direct_glue_updater_forward(glue_updater_t *glue_updater,
     dfw_args.keep_prob = glue_updater->keep_prob;
     dfw_args.rand_seed = glue_updater->rand_seed;
     for (b = 0; b < batch->num_egs; b++) {
+        if (batch->targets[b] == PADDING_ID) {
+            continue;
+        }
+
         // TODO: instead of computing hash_vals here in advance,
         //       move this function inside direct_forward_walker
         //       with node_id as init_val, so that we can get different
@@ -648,6 +655,10 @@ int direct_glue_updater_backprop(glue_updater_t *glue_updater,
     dbw_args.keep_mask = NULL;
     dbw_args.dropout_val = NULL;
     for (b = 0; b < batch->num_egs; b++) {
+        if (batch->targets[b] == PADDING_ID) {
+            continue;
+        }
+
         dbw_args.hash_vals = data->hash_vals[b];
         dbw_args.hash_order = data->hash_order[b];
         if (glue_updater->keep_mask.num_rows > 0) {
@@ -803,6 +814,9 @@ int direct_glue_updater_forward_out_words(glue_updater_t *glue_updater,
     dfw_args.hash_vals = data->hash_vals[0];
     dfw_args.hash_order = data->hash_order[0];
     for (i = 0; i < words->size; i++) {
+        if (VEC_VAL(words, i) == PADDING_ID) {
+            continue;
+        }
         if (output_walk_through_path(out_updater->output, VEC_VAL(words, i),
                     forward_out_words_walker, (void *)&dfw_args) < 0) {
             ST_WARNING("Failed to output_walk_through_path for forward_out_words.");

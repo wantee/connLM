@@ -250,6 +250,9 @@ static int fill_tree_nodes(output_t *output, egs_batch_t *batch,
 
     // clear buffers
     for (i = 0; i < batch->num_egs; i++) {
+        if (batch->targets[i] == PADDING_ID) {
+            continue;
+        }
         if (output_walk_through_path(output, batch->targets[i],
                     clear_tree_nodes_walker, (void *)data) < 0) {
             ST_WARNING("Failed to output_walk_through_path.");
@@ -262,6 +265,9 @@ static int fill_tree_nodes(output_t *output, egs_batch_t *batch,
     tnw_args.out_er = out_er;
     tnw_args.data = data;
     for (i = 0; i < batch->num_egs; i++) {
+        if (batch->targets[i] == PADDING_ID) {
+            continue;
+        }
         tnw_args.batch_i = i;
         if (output_walk_through_path(output, batch->targets[i],
                     fill_tree_nodes_walker, (void *)&tnw_args) < 0) {
@@ -347,6 +353,9 @@ static int forward_tree_nodes(output_t *output, egs_batch_t *batch,
     tnfw_args.node_in_acs = node_in_acs;
     tnfw_args.node_out_acs = node_out_acs;
     for (i = 0; i < batch->num_egs; i++) {
+        if (batch->targets[i] == PADDING_ID) {
+            continue;
+        }
         if (output_walk_through_path(output, batch->targets[i],
                     forward_tree_nodes_walker, (void *)&tnfw_args) < 0) {
             ST_WARNING("Failed to output_walk_through_path.");
@@ -459,6 +468,9 @@ static int backprop_tree_nodes(output_t *output, egs_batch_t *batch,
     tnbw_args.node_out_ers = node_out_ers;
     tnbw_args.in_er = in_er;
     for (i = 0; i < batch->num_egs; i++) {
+        if (batch->targets[i] == PADDING_ID) {
+            continue;
+        }
         if (output_walk_through_path(output, batch->targets[i],
                     backprop_tree_nodes_walker, (void *)&tnbw_args) < 0) {
             ST_WARNING("Failed to output_walk_through_path.");
@@ -599,6 +611,9 @@ int out_glue_updater_forward_out_words(glue_updater_t *glue_updater,
 
     // reset buffers
     for (i = 0; i < words->size; i++) {
+        if (VEC_VAL(words, i) == PADDING_ID) {
+            continue;
+        }
         if (output_walk_through_path(output, VEC_VAL(words, i),
                     reset_iters_walker, (void *)data->node_iters) < 0) {
             ST_WARNING("Failed to output_walk_through_path for reset_iters.");
@@ -612,6 +627,9 @@ int out_glue_updater_forward_out_words(glue_updater_t *glue_updater,
     fow_args.node_out_acs = comp_updater->out_updater->node_acs;
     fow_args.node_iters = data->node_iters;
     for (i = 0; i < words->size; i++) {
+        if (VEC_VAL(words, i) == PADDING_ID) {
+            continue;
+        }
         if (output_walk_through_path(output, VEC_VAL(words, i),
                     forward_out_words_walker, (void *)&fow_args) < 0) {
             ST_WARNING("Failed to output_walk_through_path for forward_out_words.");

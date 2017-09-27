@@ -137,6 +137,9 @@ int out_updater_reset_iters(out_updater_t *out_updater, ivec_t *targets)
     ST_CHECK_PARAM(out_updater == NULL || targets == NULL, -1);
 
     for (i = 0; i < targets->size; i++) {
+        if (VEC_VAL(targets, i) == PADDING_ID) {
+            continue;
+        }
         if (output_walk_through_path(out_updater->output, VEC_VAL(targets, i),
                     out_reset_walker, (void *)out_updater->node_iters) < 0) {
             ST_WARNING("Failed to output_walk_through_path.");
@@ -188,6 +191,9 @@ int out_updater_clear(out_updater_t *out_updater, ivec_t *targets)
     ST_CHECK_PARAM(out_updater == NULL, -1);
 
     for (i = 0; i < targets->size; i++) {
+        if (VEC_VAL(targets, i) == PADDING_ID) {
+            continue;
+        }
         if (output_walk_through_path(out_updater->output, VEC_VAL(targets, i),
                     out_clear_walker, (void *)out_updater) < 0) {
             ST_WARNING("Failed to output_walk_through_path.");
@@ -262,6 +268,9 @@ int out_updater_activate(out_updater_t *out_updater,
     oaw_args.out_updater = out_updater;
     oaw_args.logps = logps;
     for (i = 0; i < targets->size; i++) {
+        if (VEC_VAL(targets, i) == PADDING_ID) {
+            continue;
+        }
         oaw_args.batch_i = i;
         if (output_walk_through_path(output, VEC_VAL(targets, i),
                     out_act_walker, (void *)&oaw_args) < 0) {
@@ -329,6 +338,9 @@ int out_updater_loss(out_updater_t *out_updater, ivec_t *targets)
     }
 
     for (i = 0; i < targets->size; i++) {
+        if (VEC_VAL(targets, i) == PADDING_ID) {
+            continue;
+        }
         if (output_walk_through_path(output, VEC_VAL(targets, i),
                     out_loss_walker, (void *)out_updater) < 0) {
             ST_WARNING("Failed to output_walk_through_path.");
