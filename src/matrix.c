@@ -204,7 +204,7 @@ void mat_assign(mat_t *dst, mat_t *src)
 {
     ST_CHECK_PARAM_VOID(dst == NULL || src == NULL);
 
-    dst = src;
+    *dst = *src;
     dst->is_const = true;
 }
 

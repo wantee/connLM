@@ -48,7 +48,7 @@ const unsigned int PRIMES_SIZE = sizeof(PRIMES) / sizeof(PRIMES[0]);
 
 typedef struct _dgu_data_t_ {
     hash_t **hash_vals;
-    int *hash_order;
+    int *hash_orders;
     int batch_size;
     int cap_batches;
 
@@ -79,7 +79,7 @@ void dgu_data_destroy(dgu_data_t *data)
         }
         safe_st_free(data->hash_vals);
     }
-    safe_st_free(data->hash_order);
+    safe_st_free(data->hash_orders);
     data->batch_size = 0;
     data->cap_batches = 0;
 
@@ -114,6 +114,13 @@ int dgu_data_resize_batch(dgu_data_t *data, int batch_size)
     int b;
 
     if (batch_size > data->cap_batches) {
+        data->hash_orders = (int *)st_realloc(data->hash_orders,
+                sizeof(int) * batch_size);
+        if (data->hash_orders == NULL) {
+            ST_WARNING("Failed to st_malloc hash_orders.");
+            return -1;
+        }
+
         data->hash_vals = (hash_t **)st_realloc(data->hash_vals,
                 sizeof(hash_t *) * batch_size);
         if (data->hash_vals == NULL) {
@@ -131,6 +138,8 @@ int dgu_data_resize_batch(dgu_data_t *data, int batch_size)
 
             data->hash_vals[b][0] = PRIMES[0] * PRIMES[1] * 1;
         }
+
+        data->cap_batches = batch_size;
     }
 
     data->batch_size = batch_size;
@@ -427,10 +436,10 @@ static int direct_compute_hash(glue_updater_t *glue_updater, int batch_id,
         }
     }
     /* history ngrams. */
-    data->hash_order[batch_id] = direct_get_hash_neg(
+    data->hash_orders[batch_id] = direct_get_hash_neg(
             data->hash_vals[batch_id] + 1, data->hash_vals[batch_id][0],
             data->P, input->words, positive);
-    if (data->hash_order < 0) {
+    if (data->hash_orders < 0) {
         ST_WARNING("Failed to direct_wt_get_hash history.");
         return -1;
     }
@@ -438,7 +447,7 @@ static int direct_compute_hash(glue_updater_t *glue_updater, int batch_id,
     if (input->num_words - positive > 0) {
         /* future ngrams. */
         future_order = direct_get_hash_pos(
-                data->hash_vals[batch_id] + 1 + data->hash_order[batch_id],
+                data->hash_vals[batch_id] + 1 + data->hash_orders[batch_id],
                 data->hash_vals[batch_id][0],
                 data->P + positive,
                 input->words + positive,
@@ -447,12 +456,12 @@ static int direct_compute_hash(glue_updater_t *glue_updater, int batch_id,
             ST_WARNING("Failed to direct_wt_get_hash future.");
             return -1;
         }
-        data->hash_order[batch_id] += future_order;
+        data->hash_orders[batch_id] += future_order;
     }
 
-    data->hash_order[batch_id] += 1/* for hash_vals[0]. */;
+    data->hash_orders[batch_id] += 1/* for hash_vals[0]. */;
 
-    for (i = 0; i < data->hash_order[batch_id]; i++) {
+    for (i = 0; i < data->hash_orders[batch_id]; i++) {
         data->hash_vals[batch_id][i] %= glue_updater->wt_updaters[0]->wt.num_cols;
     }
 
@@ -542,7 +551,7 @@ int direct_glue_updater_forward(glue_updater_t *glue_updater,
         }
 
         dfw_args.hash_vals = data->hash_vals[b];
-        dfw_args.hash_order = data->hash_order[b];
+        dfw_args.hash_order = data->hash_orders[b];
         if (glue_updater->keep_mask.num_rows > 0) {
             dfw_args.keep_mask = MAT_VALP(&glue_updater->keep_mask, b, 0);
         }
@@ -660,7 +669,7 @@ int direct_glue_updater_backprop(glue_updater_t *glue_updater,
         }
 
         dbw_args.hash_vals = data->hash_vals[b];
-        dbw_args.hash_order = data->hash_order[b];
+        dbw_args.hash_order = data->hash_orders[b];
         if (glue_updater->keep_mask.num_rows > 0) {
             dbw_args.keep_mask = MAT_VALP(&glue_updater->keep_mask, b, 0);
             dbw_args.dropout_val = MAT_VALP(&glue_updater->dropout_val, b, 0);
@@ -737,7 +746,7 @@ int direct_glue_updater_forward_out(glue_updater_t *glue_updater,
                     child_s, child_e,
                     MAT_VALP(&glue_updater->wt_updaters[0]->wt, 0, 0),
                     glue_updater->wt_updaters[0]->wt.num_cols,
-                    data->hash_vals[b], data->hash_order[b],
+                    data->hash_vals[b], data->hash_orders[b],
                     MAT_VALP(out_updater->node_acs + node,
                         out_updater->node_iters[node], 0),
                     comp_updater->comp->comp_scale,
@@ -812,7 +821,7 @@ int direct_glue_updater_forward_out_words(glue_updater_t *glue_updater,
     dfw_args.hash_wt = MAT_VALP(&glue_updater->wt_updaters[0]->wt, 0, 0);
     dfw_args.hash_sz = glue_updater->wt_updaters[0]->wt.num_cols;
     dfw_args.hash_vals = data->hash_vals[0];
-    dfw_args.hash_order = data->hash_order[0];
+    dfw_args.hash_order = data->hash_orders[0];
     for (i = 0; i < words->size; i++) {
         if (VEC_VAL(words, i) == PADDING_ID) {
             continue;
