@@ -344,32 +344,32 @@ static int forward_one_node(output_norm_t norm, output_node_id_t node,
                 if (h + child_e - child_s - 1 > hash_sz) {
                     for (ch = child_s; h < hash_sz; ch++, h++) {
                         if (keep_mask[ch] == 1.0) {
-                            out_ac[ch] += scale * hash_wt[h] / keep_prob;
+                            out_ac[ch - child_s] += scale * hash_wt[h] / keep_prob;
                         }
                     }
                     for (h = 0; ch < child_e - 1; ch++, h++) {
                         if (keep_mask[ch] == 1.0) {
-                            out_ac[ch] += scale * hash_wt[h] / keep_prob;
+                            out_ac[ch - child_s] += scale * hash_wt[h] / keep_prob;
                         }
                     }
                 } else {
                     for (ch = child_s; ch < child_e - 1; ch++, h++) {
                         if (keep_mask[ch] == 1.0) {
-                            out_ac[ch] += scale * hash_wt[h] / keep_prob;
+                            out_ac[ch - child_s] += scale * hash_wt[h] / keep_prob;
                         }
                     }
                 }
             } else {
                 if (h + child_e - child_s - 1 > hash_sz) {
                     for (ch = child_s; h < hash_sz; ch++, h++) {
-                        out_ac[ch] += scale * hash_wt[h];
+                        out_ac[ch - child_s] += scale * hash_wt[h];
                     }
                     for (h = 0; ch < child_e - 1; ch++, h++) {
-                        out_ac[ch] += scale * hash_wt[h];
+                        out_ac[ch - child_s] += scale * hash_wt[h];
                     }
                 } else {
                     for (ch = child_s; ch < child_e - 1; ch++, h++) {
-                        out_ac[ch] += scale * hash_wt[h];
+                        out_ac[ch - child_s] += scale * hash_wt[h];
                     }
                 }
             }

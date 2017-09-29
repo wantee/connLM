@@ -203,7 +203,7 @@ static int out_prepare_walker(output_t *output, output_node_id_t node,
 
     if (output->norm == ON_SOFTMAX) {
         if (mat_resize(out_updater->node_acs + node,
-                    out_updater->node_iters[node], child_e - child_s - 1,
+                    out_updater->node_iters[node], child_e - child_s,
                     0.0) < 0) {
             ST_WARNING("Failed to mat_resize node_acs["OUTPUT_NODE_FMT".", node);
             return -1;
@@ -212,7 +212,7 @@ static int out_prepare_walker(output_t *output, output_node_id_t node,
 
         if (out_updater->node_ers != NULL) {
             if (mat_resize(out_updater->node_ers + node,
-                        out_updater->node_iters[node], child_e - child_s - 1,
+                        out_updater->node_iters[node], child_e - child_s,
                         NAN /* no need to init ers. */) < 0) {
                 ST_WARNING("Failed to mat_resize node_ers["OUTPUT_NODE_FMT".", node);
                 return -1;
@@ -272,9 +272,10 @@ static int out_act_walker(output_t *output, output_node_id_t node,
     ac = oaw_args->out_updater->node_acs + node;
     this_row = oaw_args->out_updater->node_iters[node];
 
+    assert(ac->num_cols == child_e - child_s);
     if (output->norm == ON_SOFTMAX) {
-        MAT_VAL(ac, this_row, child_e - 1) = 0.0;
-        softmax(MAT_VALP(ac, this_row, child_s), child_e - child_s);
+        MAT_VAL(ac, this_row, ac->num_cols - 1) = 0.0;
+        softmax(MAT_VALP(ac, this_row, 0), ac->num_cols);
     }
 
     VEC_VAL(oaw_args->logps, oaw_args->batch_i) +=
@@ -347,13 +348,9 @@ static int out_loss_walker(output_t *output, output_node_id_t node,
     er = out_updater->node_ers + node;
     this_row = out_updater->node_iters[node];
 
-    if (mat_resize(er, ac->num_rows, ac->num_cols, NAN) < 0) {
-        ST_WARNING("Failed to mat_resize for er");
-        return -1;
-    }
-
+    assert(ac->num_cols == child_e - child_s);
     if (output->norm == ON_SOFTMAX) {
-        for (ch = child_s; ch < child_e; ++ch) {
+        for (ch = 0; ch < ac->num_cols; ++ch) {
             MAT_VAL(er, this_row, ch) = (0 - MAT_VAL(ac, this_row, ch));
         }
         MAT_VAL(er, this_row, next_node - child_s) =
