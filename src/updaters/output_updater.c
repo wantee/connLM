@@ -151,7 +151,45 @@ int out_updater_reset_iters(out_updater_t *out_updater, ivec_t *targets)
     return 0;
 }
 
-static int out_clear_walker(output_t *output, output_node_id_t node,
+static int out_acc_iter_walker(output_t *output, output_node_id_t node,
+        output_node_id_t next_node,
+        output_node_id_t child_s, output_node_id_t child_e, void *args)
+{
+    int *node_iters;
+
+    node_iters = (int *) args;
+
+    node_iters[node]++;
+
+    return 0;
+}
+
+static int out_updater_acc_iters(out_updater_t *out_updater, ivec_t *targets)
+{
+    int i;
+
+    ST_CHECK_PARAM(out_updater == NULL, -1);
+
+    if (out_updater_reset_iters(out_updater, targets) < 0) {
+        ST_WARNING("Failed to out_updater_reset_iters.");
+        return -1;
+    }
+
+    for (i = 0; i < targets->size; i++) {
+        if (VEC_VAL(targets, i) == PADDING_ID) {
+            continue;
+        }
+        if (output_walk_through_path(out_updater->output, VEC_VAL(targets, i),
+                    out_acc_iter_walker, (void *)out_updater->node_iters) < 0) {
+            ST_WARNING("Failed to output_walk_through_path.");
+            return -1;
+        }
+    }
+
+    return 0;
+}
+
+static int out_prepare_walker(output_t *output, output_node_id_t node,
         output_node_id_t next_node,
         output_node_id_t child_s, output_node_id_t child_e, void *args)
 {
@@ -160,43 +198,50 @@ static int out_clear_walker(output_t *output, output_node_id_t node,
     out_updater = (out_updater_t *)args;
 
     if (child_s >= child_e || out_updater->node_iters[node] <= 0) {
-        assert(out_updater->node_acs[node].num_rows == 0);
         return 0;
     }
 
-    mat_set(out_updater->node_acs + node, 0.0);
-    if (mat_clear(out_updater->node_acs + node) < 0) {
-        ST_WARNING("Failed to mat_clear node_acs.");
-        return -1;
-    }
-
-#if 0 // no need to clear ers
-    if (out_updater->node_ers != NULL) {
-        mat_set(out_updater->node_ers + node, 0.0);
-        if (mat_clear(out_updater->node_ers + node) < 0) {
-            ST_WARNING("Failed to mat_clear node_ers.");
+    if (output->norm == ON_SOFTMAX) {
+        if (mat_resize(out_updater->node_acs + node,
+                    out_updater->node_iters[node], child_e - child_s - 1,
+                    0.0) < 0) {
+            ST_WARNING("Failed to mat_resize node_acs["OUTPUT_NODE_FMT".", node);
             return -1;
         }
+
+
+        if (out_updater->node_ers != NULL) {
+            if (mat_resize(out_updater->node_ers + node,
+                        out_updater->node_iters[node], child_e - child_s - 1,
+                        NAN /* no need to init ers. */) < 0) {
+                ST_WARNING("Failed to mat_resize node_ers["OUTPUT_NODE_FMT".", node);
+                return -1;
+            }
+        }
     }
-#endif
 
     out_updater->node_iters[node] = 0;
 
     return 0;
 }
 
-int out_updater_clear(out_updater_t *out_updater, ivec_t *targets)
+int out_updater_prepare(out_updater_t *out_updater, ivec_t *targets)
 {
     int i;
 
     ST_CHECK_PARAM(out_updater == NULL, -1);
+
+    if (out_updater_acc_iters(out_updater, targets) < 0) {
+        ST_WARNING("Failed to out_updater_acc_iters.");
+        return -1;
+    }
 
     for (i = 0; i < targets->size; i++) {
         if (VEC_VAL(targets, i) == PADDING_ID) {
             continue;
         }
         if (output_walk_through_path(out_updater->output, VEC_VAL(targets, i),
-                    out_clear_walker, (void *)out_updater) < 0) {
+                    out_prepare_walker, (void *)out_updater) < 0) {
             ST_WARNING("Failed to output_walk_through_path.");
             return -1;
         }
@@ -435,4 +480,24 @@ output_node_id_t out_updater_sample(out_updater_t *out_updater,
     }
 
     return sampled;
+}
+
+int out_updater_clear_node(out_updater_t *out_updater, output_node_id_t node)
+{
+    output_t *output;
+    output_node_id_t s, e;
+
+    ST_CHECK_PARAM(out_updater == NULL || node == OUTPUT_NODE_NONE, -1);
+
+    output = out_updater->output;
+
+    s = s_children(output->tree, node);
+    e = e_children(output->tree, node);
+    if (s >= e) {
+        return 0;
+    }
+
+    mat_set(out_updater->node_acs + node, 0.0);
+
+    return 0;
 }

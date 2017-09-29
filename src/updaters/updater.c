@@ -50,22 +50,24 @@ static int updater_reset(updater_t *updater)
     return 0;
 }
 
-static int updater_clear(updater_t *updater)
+static int updater_prepare(updater_t *updater, int batch_size)
 {
     int c;
 
     ST_CHECK_PARAM(updater == NULL, -1);
 
     for (c = 0; c < updater->connlm->num_comp; c++) {
-        if (comp_updater_clear(updater->comp_updaters[c]) < 0) {
-            ST_WARNING("Failed to comp_updater_clear[%s].",
+        if (comp_updater_prepare(updater->comp_updaters[c],
+                    batch_size) < 0) {
+            ST_WARNING("Failed to comp_updater_prepare[%s].",
                     updater->connlm->comps[c]->name);
             return -1;
         }
     }
 
-    if (out_updater_clear(updater->out_updater, &updater->targets) < 0) {
-        ST_WARNING("Failed to out_updater_clear.");
+    // updater->targets.size == 0 when called in sampling
+    if (out_updater_prepare(updater->out_updater, &updater->targets) < 0) {
+        ST_WARNING("Failed to out_updater_prepare.");
         return -1;
     }
 
@@ -416,6 +418,11 @@ int updater_step(updater_t *updater)
             vocab_get_word(updater->connlm->vocab, word), word);
 #endif
 
+    if (updater_prepare(updater, updater->targets.size) < 0) {
+        ST_WARNING("updater_prepare.");
+        return -1;
+    }
+
     if (updater_forward(updater) < 0) {
         ST_WARNING("Failed to updater_forward.");
         return -1;
@@ -435,11 +442,6 @@ int updater_step(updater_t *updater)
 
     if (updater_reset(updater) < 0) {
         ST_WARNING("Failed to updater_reset.");
-        return -1;
-    }
-
-    if (updater_clear(updater) < 0) {
-        ST_WARNING("updater_clear.");
         return -1;
     }
 
@@ -504,6 +506,11 @@ static int updater_sample_out(updater_t *updater)
             ST_WARNING("Failed to out_updater_sample.");
             return -1;
         }
+
+        if (out_updater_clear_node(updater->out_updater, node) < 0) {
+            ST_WARNING("Failed to out_updater_clear_node.");
+            return -1;
+        }
     }
 
     return output_tree_leaf2word(output->tree, node);
@@ -551,6 +558,11 @@ int updater_sampling(updater_t *updater, bool startover)
         }
     }
 
+    if (updater_prepare(updater, 1) < 0) {
+        ST_WARNING("updater_prepare.");
+        return -1;
+    }
+
     if (updater_forward_util_out(updater) < 0) {
         ST_WARNING("Failed to updater_forward_util_out.");
         return -1;
@@ -578,11 +590,6 @@ int updater_sampling(updater_t *updater, bool startover)
 
     if (updater_reset(updater) < 0) {
         ST_WARNING("Failed to updater_reset.");
-        return -1;
-    }
-
-    if (updater_clear(updater) < 0) {
-        ST_WARNING("updater_clear.");
         return -1;
     }
 
@@ -757,7 +764,7 @@ int updater_random_state(updater_t *updater, mat_t *state)
     return 0;
 }
 
-static int updater_cleanup(updater_t *updater)
+static int updater_cleanup(updater_t *updater, int batch_size)
 {
     int c;
 
@@ -774,7 +781,7 @@ static int updater_cleanup(updater_t *updater)
     }
 
     for (c = 0; c < updater->connlm->num_comp; c++) {
-        if (comp_updater_clear(updater->comp_updaters[c]) < 0) {
+        if (comp_updater_prepare(updater->comp_updaters[c], batch_size) < 0) {
             ST_WARNING("Failed to comp_updater_clear[%s].",
                     updater->connlm->comps[c]->name);
             return -1;
@@ -842,9 +849,9 @@ static int updater_set_hist(updater_t *updater, ivec_t *hists, int num_hists)
 int updater_step_with_state(updater_t *updater, mat_t *state,
         ivec_t *hists, int num_hists)
 {
-    ST_CHECK_PARAM(updater == NULL, -1);
+    ST_CHECK_PARAM(updater == NULL || state == NULL, -1);
 
-    if (updater_cleanup(updater) < 0) {
+    if (updater_cleanup(updater, state->num_rows) < 0) {
         ST_WARNING("Failed to updater_cleanup.");
         return -1;
     }
@@ -982,6 +989,11 @@ int updater_sampling_state(updater_t *updater, mat_t *state,
         }
     }
 
+    if (updater_prepare(updater, 1) < 0) {
+        ST_WARNING("updater_prepare.");
+        return -1;
+    }
+
     if (updater_forward_util_out(updater) < 0) {
         ST_WARNING("Failed to updater_forward_util_out.");
         return -1;
@@ -1026,11 +1038,6 @@ int updater_sampling_state(updater_t *updater, mat_t *state,
         return -1;
     }
 
-    if (updater_clear(updater) < 0) {
-        ST_WARNING("updater_clear.");
-        return -1;
-    }
-
     // Move cur_pos to the pos fed into later after sampled out
     if (updater_move_input(updater) < 0) {
         ST_WARNING("Failed to updater_move_input.");
@@ -1047,6 +1054,11 @@ int updater_step_state(updater_t *updater,
 
     if (updater_move_input(updater) < 0) {
         ST_WARNING("Failed to updater_move_input.");
+        return -1;
+    }
+
+    if (updater_prepare(updater, updater->targets.size) < 0) {
+        ST_WARNING("updater_prepare.");
         return -1;
     }
 
@@ -1083,11 +1095,6 @@ int updater_step_state(updater_t *updater,
 
     if (updater_reset(updater) < 0) {
         ST_WARNING("Failed to updater_reset.");
-        return -1;
-    }
-
-    if (updater_clear(updater) < 0) {
-        ST_WARNING("updater_clear.");
         return -1;
     }
 

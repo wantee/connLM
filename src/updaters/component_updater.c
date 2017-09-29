@@ -789,15 +789,16 @@ int comp_updater_save_state(comp_updater_t *comp_updater)
     return 0;
 }
 
-int comp_updater_clear(comp_updater_t *comp_updater)
+int comp_updater_prepare(comp_updater_t *comp_updater, int batch_size)
 {
     int i;
 
     ST_CHECK_PARAM(comp_updater == NULL, -1);
 
     for (i = 2; i < comp_updater->comp->num_layer; i++) {
-        if (layer_updater_clear(comp_updater->layer_updaters[i]) < 0) {
-            ST_WARNING("Failed to layer_updater_clear.[%s]",
+        if (layer_updater_prepare(comp_updater->layer_updaters[i],
+                    batch_size) < 0) {
+            ST_WARNING("Failed to layer_updater_prepare.[%s]",
                     comp_updater->comp->layers[i]->name);
             return -1;
         }

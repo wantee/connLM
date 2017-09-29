@@ -152,12 +152,13 @@ int layer_updater_deriv(layer_updater_t *layer_updater);
 int layer_updater_save_state(layer_updater_t *layer_updater);
 
 /**
- * Clear a layer_updater.
+ * Prepare to forward a word for layer_updater.
  * @ingroup g_updater_layer
  * @param[in] layer_updater the layer_updater.
+ * @param[in] batch_size batch size.
  * @return non-zero value if any error.
  */
-int layer_updater_clear(layer_updater_t *layer_updater);
+int layer_updater_prepare(layer_updater_t *layer_updater, int batch_size);
 
 /**
  * Reset a layer_updater.

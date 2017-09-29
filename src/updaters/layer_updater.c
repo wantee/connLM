@@ -108,6 +108,22 @@ int layer_updater_setup(layer_updater_t *layer_updater, bool backprop)
 {
     ST_CHECK_PARAM(layer_updater == NULL, -1);
 
+    if (mat_resize(&layer_updater->ac, 1,
+                layer_updater->layer->size, 0.0) < 0) {
+        ST_WARNING("Failed to mat_resize ac");
+        return -1;
+    }
+    layer_updater->activated = false;
+
+    if (backprop) {
+        if (mat_resize(&layer_updater->er, 1,
+                layer_updater->layer->size, 0.0) < 0) {
+            ST_WARNING("Failed to mat_resize er");
+            return -1;
+        }
+        layer_updater->derived = false;
+    }
+
     return 0;
 }
 
@@ -230,17 +246,25 @@ int layer_updater_save_state(layer_updater_t *layer_updater)
     return 0;
 }
 
-int layer_updater_clear(layer_updater_t *layer_updater)
+int layer_updater_prepare(layer_updater_t *layer_updater, int batch_size)
 {
     ST_CHECK_PARAM(layer_updater == NULL, -1);
 
+    if (mat_resize(&layer_updater->ac, batch_size,
+                layer_updater->layer->size, 0.0) < 0) {
+        ST_WARNING("Failed to mat_resize ac");
+        return -1;
+    }
+    layer_updater->activated = false;
+
     if (layer_updater->er.num_rows > 0) {
-        mat_set(&layer_updater->er, 0.0);
+        if (mat_resize(&layer_updater->er, batch_size,
+                layer_updater->layer->size, 0.0) < 0) {
+            ST_WARNING("Failed to mat_resize er");
+            return -1;
+        }
         layer_updater->derived = false;
     }
-
-    mat_set(&layer_updater->ac, 0.0);
-    layer_updater->activated = false;
 
     return 0;
 }
@@ -307,7 +331,6 @@ int layer_updater_dump_pre_ac_state(layer_updater_t *layer_updater,
 
     return 0;
 }
-
 
 int layer_updater_feed_state(layer_updater_t *layer_updater, mat_t *state)
 {

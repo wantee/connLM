@@ -71,7 +71,7 @@ int mat_clear(mat_t *mat)
 int mat_resize(mat_t *mat, size_t num_rows, size_t num_cols, real_t init_val)
 {
     size_t stride;
-    size_t i;
+    size_t i, j;
 
     ST_CHECK_PARAM(mat == NULL, -1);
 
@@ -93,28 +93,31 @@ int mat_resize(mat_t *mat, size_t num_rows, size_t num_cols, real_t init_val)
             ST_WARNING("Failed to st_aligned_realloc mat->vals.");
             return -1;
         }
-        if (! isnan(init_val)) {
-            if (init_val == 0.0) {
-                memset(mat->vals + mat->capacity, 0,
-                    sizeof(real_t) * (num_rows * stride - mat->capacity));
-            } else {
-                for (i = mat->capacity; i < num_rows * stride; i++) {
-                    mat->vals[i] = init_val;
-                }
-            }
-        }
         mat->capacity = num_rows * stride;
     }
     mat->num_rows = num_rows;
     mat->num_cols = num_cols;
     mat->stride = stride;
 
+    if (! isnan(init_val)) {
+        if (init_val == 0.0) {
+            memset(mat->vals, 0,
+                    sizeof(real_t) * (mat->num_rows * mat->stride));
+        } else {
+            for (i = 0; i < mat->num_rows; i++) {
+                for (j = 0; j < mat->num_cols; j++) {
+                    mat->vals[i * mat->stride + j] = init_val;
+                }
+            }
+        }
+    }
+
     return 0;
 }
 
 int mat_resize_row(mat_t *mat, size_t num_rows, real_t init_val)
 {
-    size_t i;
+    size_t i, j;
 
     ST_CHECK_PARAM(mat == NULL || num_rows <= 0, -1);
 
@@ -132,19 +135,22 @@ int mat_resize_row(mat_t *mat, size_t num_rows, real_t init_val)
             ST_WARNING("Failed to st_aligned_realloc mat->vals.");
             return -1;
         }
-        if (! isnan(init_val)) {
-            if (init_val == 0.0) {
-                memset(mat->vals + mat->capacity, 0,
-                    sizeof(real_t) * (num_rows * mat->stride - mat->capacity));
-            } else {
-                for (i = mat->capacity; i < num_rows * mat->stride; i++) {
-                    mat->vals[i] = init_val;
-                }
-            }
-        }
         mat->capacity = num_rows * mat->stride;
     }
     mat->num_rows = num_rows;
+
+    if (! isnan(init_val)) {
+        if (init_val == 0.0) {
+            memset(mat->vals, 0,
+                    sizeof(real_t) * (mat->num_rows * mat->stride));
+        } else {
+            for (i = 0; i < mat->num_rows; i++) {
+                for (j = 0; j < mat->num_cols; j++) {
+                    mat->vals[i * mat->stride + j] = init_val;
+                }
+            }
+        }
+    }
 
     return 0;
 }

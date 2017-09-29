@@ -99,13 +99,13 @@ out_updater_t* out_updater_create(output_t *output);
 int out_updater_setup(out_updater_t *out_updater, bool backprop);
 
 /**
- * Clear path for a word in out_updater.
+ * Prepare to forward a word for out_updater.
  * @ingroup g_updater_out
  * @param[in] out_updater out_updater.
  * @param[in] targets target words in current batch.
  * @return non-zero value if any error.
  */
-int out_updater_clear(out_updater_t *out_updater, ivec_t *targets);
+int out_updater_prepare(out_updater_t *out_updater, ivec_t *targets);
 
 /**
  * Activate one mini-batch for a out_updater.
@@ -156,6 +156,15 @@ output_node_id_t out_updater_sample(out_updater_t *out_updater,
  * @return non-zero value if any error.
  */
 int out_updater_reset_iters(out_updater_t *out_updater, ivec_t *targets);
+
+/**
+ * Clear buffer of a node in output tree.
+ * @ingroup g_updater_output
+ * @param[in] out_updater the out_updater.
+ * @param[in] node the node.
+ * @return non-zero value if any error.
+ */
+int out_updater_clear_node(out_updater_t *out_updater, output_node_id_t node);
 
 #ifdef __cplusplus
 }
