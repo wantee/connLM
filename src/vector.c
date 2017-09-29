@@ -532,18 +532,42 @@ int ivec_clear(ivec_t *vec)
     return 0;
 }
 
-int ivec_resize(ivec_t *vec, size_t size)
+int ivec_reserve(ivec_t *vec, size_t capacity)
 {
-    ST_CHECK_PARAM(vec == NULL || size <= 0, -1);
+    ST_CHECK_PARAM(vec == NULL || capacity <= 0, -1);
 
-    if (size > vec->capacity) {
+    if (capacity > vec->capacity) {
         vec->vals = (int *)st_aligned_realloc(vec->vals,
-                sizeof(int) * size, ALIGN_SIZE);
+                sizeof(int) * capacity, ALIGN_SIZE);
         if (vec->vals == NULL) {
             ST_WARNING("Failed to st_aligned_realloc vec->vals.");
             return -1;
         }
-        vec->capacity = size;
+        vec->capacity = capacity;
+    }
+
+    return 0;
+}
+
+int ivec_ext_reserve(ivec_t *vec, size_t ext_capacity)
+{
+    ST_CHECK_PARAM(vec == NULL || ext_capacity < 0, -1);
+
+    if (ivec_reserve(vec, vec->size + ext_capacity) < 0) {
+        ST_WARNING("Failed to ivec_reserve.");
+        return -1;
+    }
+
+    return 0;
+}
+
+int ivec_resize(ivec_t *vec, size_t size)
+{
+    ST_CHECK_PARAM(vec == NULL || size <= 0, -1);
+
+    if (ivec_reserve(vec, size) < 0) {
+        ST_WARNING("Failed to ivec_reserve.");
+        return -1;
     }
     vec->size = size;
 
@@ -564,8 +588,8 @@ int ivec_extsize(ivec_t *vec, size_t ext_size)
 
 int ivec_append(ivec_t *vec, int n)
 {
-    if (ivec_extsize(vec, NUM_IVEC_RESIZE) < 0) {
-        ST_WARNING("Failed to ivec_extsize.");
+    if (ivec_reserve(vec, vec->size + NUM_IVEC_RESIZE) < 0) {
+        ST_WARNING("Failed to ivec_reserve.");
         return -1;
     }
 
@@ -581,8 +605,8 @@ int ivec_insert(ivec_t *vec, int n)
 
     ST_CHECK_PARAM(vec == NULL, -1);
 
-    if (ivec_extsize(vec, NUM_IVEC_RESIZE) < 0) {
-        ST_WARNING("Failed to ivec_extsize.");
+    if (ivec_reserve(vec, NUM_IVEC_RESIZE) < 0) {
+        ST_WARNING("Failed to ivec_reserve.");
         return -1;
     }
 
@@ -643,8 +667,8 @@ int ivec_extend(ivec_t *vec, ivec_t *src, size_t start, size_t end)
 {
     ST_CHECK_PARAM(vec == NULL || src == NULL, -1);
 
-    if (ivec_extsize(vec, end - start) < 0) {
-        ST_WARNING("Failed to ivec_extsize.");
+    if (ivec_ext_reserve(vec, end - start) < 0) {
+        ST_WARNING("Failed to ivec_ext_reserve.");
         return -1;
     }
 

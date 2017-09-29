@@ -23,6 +23,7 @@
  */
 
 #include <string.h>
+#include <assert.h>
 
 #include <stutils/st_macro.h>
 #include <stutils/st_log.h>

@@ -240,12 +240,31 @@ void ivec_destroy(ivec_t *vec);
 int ivec_clear(ivec_t *vec);
 
 /**
+ * Reserve capacity for a int vector.
+ * @ingroup g_vector
+ * @param[in] vec the vector.
+ * @param[in] capacity new capacity.
+ * @return non-zero if any error.
+ */
+int ivec_reserve(ivec_t *vec, size_t capacity);
+
+/**
+ * Extend the capacity of a int vector.
+ * @ingroup g_vector
+ * @param[in] vec the vector.
+ * @param[in] ext_capactiy the extended capactiy.
+ * @return non-zero if any error.
+ */
+int ivec_ext_reserve(ivec_t *vec, size_t ext_capactiy);
+
+/**
  * Resize a int vector.
  * @ingroup g_vector
  * @param[in] vec the vector.
  * @param[in] size new size.
  * @return non-zero if any error.
  */
+
 int ivec_resize(ivec_t *vec, size_t size);
 
 /**

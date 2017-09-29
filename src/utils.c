@@ -25,6 +25,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <float.h>
+#include <assert.h>
 
 #include <stutils/st_macro.h>
 #include <stutils/st_log.h>
