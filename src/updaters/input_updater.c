@@ -273,7 +273,7 @@ int input_updater_update_batch(input_updater_t *input_updater,
                 || VEC_VAL(&wp->words, row_start + cur_pos) == input_updater->bos_id) {
             batch->targets[batch->num_egs] = PADDING_ID;
         } else {
-            batch->targets[batch->num_egs] = VEC_VAL(&wp->words, idx);
+            batch->targets[batch->num_egs] = VEC_VAL(&wp->words, row_start + cur_pos);
         }
 
         batch->num_egs++;
