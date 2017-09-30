@@ -321,10 +321,20 @@ int input_updater_feed(input_updater_t *input_updater, word_pool_t *new_wp)
             end = VEC_VAL(&wp->row_starts, b + 1);
             if (start < end) {
                 if (ivec_extend(&tmp_wp->words, &wp->words, start, end) < 0) {
-                    ST_WARNING("Failed to ivec_extend tmp_wp.words.");
+                    ST_WARNING("Failed to ivec_extend tmp_wp.words from wp.");
                     return -1;
                 }
             }
+
+            start = VEC_VAL(&new_wp->row_starts, b);
+            end = VEC_VAL(&new_wp->row_starts, b + 1);
+            if (start < end) {
+                if (ivec_extend(&tmp_wp->words, &new_wp->words, start, end) < 0) {
+                    ST_WARNING("Failed to ivec_extend tmp_wp.words from new_wp.");
+                    return -1;
+                }
+            }
+
             if (ivec_append(&tmp_wp->row_starts, tmp_wp->words.size) < 0) {
                 ST_WARNING("Failed to ivec_append tmp_wp->row_starts.");
                 return -1;
