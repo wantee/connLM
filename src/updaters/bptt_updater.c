@@ -74,7 +74,7 @@ bptt_updater_t* bptt_updater_create(component_t *comp, int cycle_id,
         glue_updater_t **glue_updaters)
 {
     bptt_updater_t *bptt_updater = NULL;
-    int g, i, bptt, bptt_delay, sz;
+    int g, i, sz;
 
     ST_CHECK_PARAM(comp == NULL || cycle_id < 0
             || cycle_id >= comp->num_glue_cycle, NULL);
@@ -88,8 +88,6 @@ bptt_updater_t* bptt_updater_create(component_t *comp, int cycle_id,
 
     g = comp->glue_cycles[cycle_id][1];
     bptt_updater->bptt_opt = comp->glues[g]->bptt_opt;
-    bptt = bptt_updater->bptt_opt.bptt;
-    bptt_delay = bptt_updater->bptt_opt.bptt_delay;
 
     bptt_updater->num_glue = comp->glue_cycles[cycle_id][0];
 
