@@ -208,26 +208,12 @@ static int fill_tree_nodes_walker(output_t *output, output_node_id_t node,
     data = tnw_args->data;
 
     if (tnw_args->in_ac != NULL) {
-        // tnw_args->in_ac->num_cols is the hidden size of prev layer
-        if (mat_resize(data->node_in_acs + node, data->node_iters[node] + 1,
-                    tnw_args->in_ac->num_cols, NAN) > 0) {
-            ST_WARNING("Failed to mat_resize for node_in_acs.");
-            return -1;
-        }
-
         memcpy(MAT_ROW(data->node_in_acs + node, data->node_iters[node]),
                 MAT_ROW(tnw_args->in_ac, tnw_args->batch_i),
                 sizeof(real_t) * tnw_args->in_ac->num_cols);
     }
 
     if (tnw_args->out_er != NULL && child_e - child_s - 1 > 0) {
-        // tnw_args->vals1->num_cols is num_cols of node weight
-        if (mat_resize(data->node_out_ers + node, data->node_iters[node] + 1,
-                    child_e - child_s - 1, NAN) > 0) {
-            ST_WARNING("Failed to mat_resize for node_out_ers.");
-            return -1;
-        }
-
         memcpy(MAT_ROW(data->node_out_ers + node, data->node_iters[node]),
                MAT_ROW(tnw_args->out_er, tnw_args->batch_i),
                sizeof(real_t) * tnw_args->out_er->num_cols);
@@ -288,11 +274,6 @@ static int forward_one_node(output_norm_t norm, mat_t *wt, vec_t *bias,
     }
 
     if (norm == ON_SOFTMAX) {
-        if (mat_resize(out_ac, in_ac->num_rows, wt->num_rows, NAN) < 0) {
-            ST_WARNING("Failed to mat_resize.");
-            return -1;
-        }
-
         if (add_mat_mat(scale, in_ac, MT_NoTrans,
                     wt, MT_Trans, 0.0, out_ac) < 0) {
             ST_WARNING("Failed to add_mat_mat.");
@@ -422,12 +403,6 @@ static int backprop_tree_nodes_walker(output_t *output, output_node_id_t node,
     out_er = tnbw_args->node_out_ers + node;
     in_er = tnbw_args->in_er;
     wt_updater = tnbw_args->wt_updaters[node];
-
-    // diemension same as in_ac
-    if (mat_resize(in_er, in_ac->num_rows, in_ac->num_cols, NAN) < 0) {
-        ST_WARNING("Failed to mat_resize for in_er.");
-        return -1;
-    }
 
     // propagate from out_er to in_er
     if (propagate_error(&wt_updater->wt, out_er, tnbw_args->scale,
