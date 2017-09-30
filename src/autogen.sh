@@ -24,7 +24,7 @@ if [ "`uname`" == "Linux" ]; then
     echo "LDFLAGS += -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lmkl_sequential -lmkl_core" >> $mkfile
   else
     if [ -z "$BLASLIB" ]; then
-      lib=`ldconfig -p | grep 'libopenblas.so' | head -n 1 | cut -d'>' -f2`
+      lib=`/sbin/ldconfig -p | grep 'libopenblas.so' | head -n 1 | cut -d'>' -f2`
       if [ -n "$lib" ]; then
         libdir=$(dirname "$lib" 2>/dev/null)
         BLASINC="-I /usr/include/openblas/"
@@ -34,12 +34,12 @@ if [ "`uname`" == "Linux" ]; then
         fi
       else
         # atlas
-        lib=`ldconfig -p | grep 'libatlas.so' | head -n 1 | cut -d'>' -f2`
+        lib=`/sbin/ldconfig -p | grep 'libatlas.so' | head -n 1 | cut -d'>' -f2`
         if [ -n "$lib" ]; then
           libdir=$(dirname "$lib" 2>/dev/null)
           BLASLIB="-L $libdir -lcblas -latlas -llapack"
         else
-          lib=`ldconfig -p | grep 'libsatlas.so' | head -n 1 | cut -d'>' -f2`
+          lib=`/sbin/ldconfig -p | grep 'libsatlas.so' | head -n 1 | cut -d'>' -f2`
           if [ -n "$lib" ]; then
             libdir=$(dirname "$lib" 2>/dev/null)
             BLASLIB="-L $libdir -lsatlas"
