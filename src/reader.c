@@ -148,7 +148,7 @@ int word_pool_build_mini_batch(word_pool_t *wp, int batch_size)
 }
 
 int word_pool_read(word_pool_t *wp, int epoch_size, FILE *text_fp,
-        vocab_t *vocab, int *oovs, bool drop_empty_line)
+        vocab_t *vocab, int *num_oovs, bool drop_empty_line)
 {
     char *line = NULL;
     size_t line_sz = 0;
@@ -157,7 +157,7 @@ int word_pool_read(word_pool_t *wp, int epoch_size, FILE *text_fp,
     char *p;
 
     int num_sents;
-    int oov;
+    int this_num_oovs;
     int i;
 
     bool err;
@@ -176,7 +176,7 @@ int word_pool_read(word_pool_t *wp, int epoch_size, FILE *text_fp,
 
     err = false;
     num_sents = 0;
-    oov = 0;
+    this_num_oovs = 0;
     while (st_fgets(&line, &line_sz, text_fp, &err)) {
         remove_newline(line);
 
@@ -202,7 +202,7 @@ int word_pool_read(word_pool_t *wp, int epoch_size, FILE *text_fp,
                     if (VEC_LAST(&wp->words) < 0
                             || VEC_LAST(&wp->words) == UNK_ID) {
                         VEC_LAST(&wp->words) = UNK_ID;
-                        oov++;
+                        this_num_oovs++;
                     }
 
                     i = 0;
@@ -226,7 +226,7 @@ int word_pool_read(word_pool_t *wp, int epoch_size, FILE *text_fp,
             if (VEC_LAST(&wp->words) < 0
                     || VEC_LAST(&wp->words) == UNK_ID) {
                 VEC_LAST(&wp->words) = UNK_ID;
-                oov++;
+                this_num_oovs++;
             }
 
             i = 0;
@@ -259,8 +259,8 @@ int word_pool_read(word_pool_t *wp, int epoch_size, FILE *text_fp,
         return -1;
     }
 
-    if (oovs != NULL) {
-        *oovs = oov;
+    if (num_oovs != NULL) {
+        *num_oovs = this_num_oovs;
     }
 
     return num_sents;
@@ -581,7 +581,7 @@ static void* reader_read_thread(void *args)
 
     word_pool_t *wp_in_queue;
     int num_sents;
-    int oovs;
+    int num_oovs;
     int i;
     int start;
     int end;
@@ -628,9 +628,9 @@ static void* reader_read_thread(void *args)
     }
 
     num_reads = 0;
-    reader->oovs = 0;
-    reader->sents = 0;
-    reader->words = 0;
+    reader->num_oovs = 0;
+    reader->num_sents = 0;
+    reader->num_words = 0;
     gettimeofday(&tts, NULL);
     while (!feof(text_fp)) {
         if (*(reader->err) != 0) {
@@ -641,7 +641,7 @@ static void* reader_read_thread(void *args)
         gettimeofday(&tts_io, NULL);
 #endif
         num_sents = word_pool_read(&wp, epoch_size, text_fp,
-                reader->vocab, &oovs, reader->opt.drop_empty_line);
+                reader->vocab, &num_oovs, reader->opt.drop_empty_line);
         if (num_sents < 0) {
             ST_WARNING("Failed to word_pool_read.");
             goto ERR;
@@ -653,9 +653,9 @@ static void* reader_read_thread(void *args)
             continue;
         }
 
-        reader->oovs += oovs;
-        reader->sents += num_sents;
-        reader->words += wp.words.size - num_sents; // Do not accumulate \<s\>
+        reader->num_oovs += num_oovs;
+        reader->num_sents += num_sents;
+        reader->num_words += wp.words.size - num_sents; // Do not accumulate \<s\>
 
 #ifdef _TIME_PROF_
         gettimeofday(&tts_shuf, NULL);
@@ -784,8 +784,8 @@ static void* reader_read_thread(void *args)
             total_sents = 0;
             logp = 0.0;
             for (i = 0; i < num_thrs; i++) {
-                total_words += stats[i].words;
-                total_sents += stats[i].sents;
+                total_words += stats[i].num_words;
+                total_sents += stats[i].num_sents;
                 logp += stats[i].logp;
             }
 
@@ -799,7 +799,7 @@ static void* reader_read_thread(void *args)
                             ", OOVs: " COUNT_FMT ", words/sec: %.1f, "
                             "LogP: %f, Entropy: %f, PPL: %f, Time: %.3fs",
                             ftell(text_fp) / (fsize / 100.0),
-                            total_words, total_sents, reader->oovs,
+                            total_words, total_sents, reader->num_oovs,
                             total_words / ((double) ms / 1000.0),
                             logp, -logp / log(2) / total_words,
                             exp(-logp / (double) total_words),
@@ -808,7 +808,7 @@ static void* reader_read_thread(void *args)
                     ST_TRACE("Words: " COUNT_FMT ", Sentences: " COUNT_FMT
                             ", OOVs: " COUNT_FMT ", words/sec: %.1f, "
                             "LogP: %f, Entropy: %f, PPL: %f, Time: %.3fs",
-                            total_words, total_sents, reader->oovs,
+                            total_words, total_sents, reader->num_oovs,
                             total_words / ((double) ms / 1000.0),
                             logp, -logp / log(2) / total_words,
                             exp(-logp / (double) total_words),

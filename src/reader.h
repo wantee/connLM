@@ -46,8 +46,8 @@ extern "C" {
  * @ingroup g_reader
  */
 typedef struct _thread_statistics_t_ {
-    count_t words; /**< total number of words trained in this thread. */
-    count_t sents; /**< total number of sentences trained in this thread. */
+    count_t num_words; /**< total number of words trained in this thread. */
+    count_t num_sents; /**< total number of sentences trained in this thread. */
     double logp; /**< total log probability in this thread. */
 } thr_stat_t;
 
@@ -194,9 +194,9 @@ typedef struct _reader_t_ {
     FILE *fp_debug; /**< file pointer to print out debug info. */
     pthread_mutex_t fp_debug_lock; /**< lock for fp_debug_log. */
 
-    count_t words; /**< total words readed. */
-    count_t sents; /**< total sentences readed. */
-    count_t oovs; /**< total OOVs readed. */
+    count_t num_words; /**< total words readed. */
+    count_t num_sents; /**< total sentences readed. */
+    count_t num_oovs; /**< total OOVs readed. */
 
     pthread_t tid; /**< thread id for read thread. */
     unsigned int random; /**< random seed. */

@@ -232,7 +232,7 @@ int driver_set_gen(driver_t *driver, driver_gen_opt_t *gen_opt, int num_sents)
 }
 
 static int driver_steps(driver_t *driver, int tid, double *logp,
-        double *logp_sent, count_t *sents, count_t *words)
+        double *logp_sent, count_t *num_sents, count_t *num_words)
 {
     updater_t *updater;
 
@@ -241,7 +241,7 @@ static int driver_steps(driver_t *driver, int tid, double *logp,
     int i;
 
     ST_CHECK_PARAM(driver == NULL || tid < 0 || logp == NULL
-            || logp_sent == NULL || sents == NULL || words == NULL, -1);
+            || logp_sent == NULL || num_sents == NULL || num_words == NULL, -1);
 
     updater = driver->updaters[tid];
 
@@ -253,6 +253,10 @@ static int driver_steps(driver_t *driver, int tid, double *logp,
 
         for (i = 0; i < updater->targets.size; i++) {
             word = VEC_VAL(&updater->targets, i);
+            if (word == PADDING_ID) {
+                continue;
+            }
+
             this_logp = VEC_VAL(&updater->logps, i);
             *logp += this_logp;
 
@@ -282,9 +286,9 @@ static int driver_steps(driver_t *driver, int tid, double *logp,
                     fprintf(driver->fp_log, "%.6f\n", *logp_sent);
                     *logp_sent = 0.0;
                 }
-                ++(*sents);
+                ++(*num_sents);
             }
-            ++(*words);
+            ++(*num_words);
         }
     }
 
@@ -307,8 +311,8 @@ static void* driver_thread(void *args)
 
     word_pool_t *wp = NULL;
 
-    count_t words;
-    count_t sents;
+    count_t num_words;
+    count_t num_sents;
     double logp;
     double logp_sent;
 
@@ -328,8 +332,8 @@ static void* driver_thread(void *args)
 
     gettimeofday(&tts, NULL);
 
-    words = 0;
-    sents = 0;
+    num_words = 0;
+    num_sents = 0;
     logp = 0.0;
     logp_sent = 0.0;
     while (true) {
@@ -348,7 +352,7 @@ static void* driver_thread(void *args)
             }
 
             if (driver_steps(driver, tid, &logp, &logp_sent,
-                        &sents, &words) < 0) {
+                        &num_sents, &num_words) < 0) {
                 ST_WARNING("Failed to driver_steps.");
                 goto ERR;
             }
@@ -360,13 +364,14 @@ static void* driver_thread(void *args)
             goto ERR;
         }
 
-        if (driver_steps(driver, tid, &logp, &logp_sent, &sents, &words) < 0) {
+        if (driver_steps(driver, tid, &logp, &logp_sent,
+                    &num_sents, &num_words) < 0) {
             ST_WARNING("Failed to driver_steps.");
             goto ERR;
         }
 
-        thr->stat->words = words;
-        thr->stat->sents = sents;
+        thr->stat->num_words = num_words;
+        thr->stat->num_sents = num_sents;
         thr->stat->logp = logp;
 
         gettimeofday(&tte, NULL);
@@ -377,9 +382,9 @@ static void* driver_thread(void *args)
                 ", Sentences: " COUNT_FMT ", words/sec: %.1f, "
                 "LogP: %f, Entropy: %f, PPL: %f, "
                 "Time(cpu/wait): %.3fs(%.2f%%)/%.3fs(%.2f%%):%.3f",
-                tid, words, sents, words / ((double) ms / 1000.0),
-                logp, -logp / log(2) / words,
-                exp(-logp / (double) words),
+                tid, num_words, num_sents, num_words / ((double) ms / 1000.0),
+                logp, -logp / log(2) / num_words,
+                exp(-logp / (double) num_words),
                 (ms - ms_wait) / 1000.0, (ms - ms_wait) / (ms / 100.0),
                 ms_wait / 1000.0, ms_wait / (ms / 100.0),
                 TIMEDIFF(tts_wait, tte_wait) / 1000.0);
@@ -403,8 +408,8 @@ static int driver_do_run(driver_t *driver)
     pthread_t *pts = NULL;
     thr_stat_t *stats = NULL;
 
-    count_t words;
-    count_t sents;
+    count_t num_words;
+    count_t num_sents;
     double logp;
     struct timeval tts, tte;
     long ms;
@@ -486,31 +491,32 @@ static int driver_do_run(driver_t *driver)
     gettimeofday(&tte, NULL);
     ms = TIMEDIFF(tts, tte);
 
-    words = 0;
-    sents = 0;
+    num_words = 0;
+    num_sents = 0;
     logp = 0.0;
     for (i = 0; i < n_thr; i++) {
-        words += stats[i].words;
-        sents += stats[i].sents;
+        num_words += stats[i].num_words;
+        num_sents += stats[i].num_sents;
         logp += stats[i].logp;
     }
 
-    if (words != driver->reader->words || sents != driver->reader->sents) {
+    if (num_words != driver->reader->num_words
+            || num_sents != driver->reader->num_sents) {
         ST_WARNING("words[" COUNT_FMT "] != read_words[" COUNT_FMT "] "
                 "or sents[" COUNT_FMT "] != read_sents[" COUNT_FMT "] ",
-                words, driver->reader->words,
-                sents, driver->reader->sents);
+                num_words, driver->reader->num_words,
+                num_sents, driver->reader->num_sents);
     }
 
     if (driver->mode == DRIVER_TRAIN || driver->mode == DRIVER_EVAL) {
         ST_NOTICE("Finish %s in %ldms.", driver->mode == DRIVER_TRAIN
                 ? "training" : "evaluating", ms);
         ST_NOTICE("Words: " COUNT_FMT ", Sentences: " COUNT_FMT
-                ", OOVs: " COUNT_FMT ", words/sec: %.1f", words, sents,
-                driver->reader->oovs, words / ((double) ms / 1000.0));
+                ", OOVs: " COUNT_FMT ", words/sec: %.1f", num_words, num_sents,
+                driver->reader->num_oovs, num_words / ((double) ms / 1000.0));
         ST_NOTICE("LogP: %f", logp);
-        ST_NOTICE("Entropy: %f", -logp / log(2) / words);
-        ST_NOTICE("PPL: %f", exp(-logp / (double) words));
+        ST_NOTICE("Entropy: %f", -logp / log(2) / num_words);
+        ST_NOTICE("PPL: %f", exp(-logp / (double) num_words));
     }
 
     if (driver->mode == DRIVER_EVAL) {
@@ -518,12 +524,12 @@ static int driver_do_run(driver_t *driver)
             fprintf(driver->fp_log, "\nSummary:\n");
             fprintf(driver->fp_log, "Words: " COUNT_FMT
                     "    OOVs: " COUNT_FMT "\n",
-                    words, driver->reader->oovs);
+                    num_words, driver->reader->num_oovs);
             fprintf(driver->fp_log, "LogP: %f\n", logp);
             fprintf(driver->fp_log, "Entropy: %f\n",
-                    -logp / log(2) / words);
+                    -logp / log(2) / num_words);
             fprintf(driver->fp_log, "PPL: %f\n",
-                    exp(-logp / (double) words));
+                    exp(-logp / (double) num_words));
         }
     }
 
