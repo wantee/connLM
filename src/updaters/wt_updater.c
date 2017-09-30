@@ -201,8 +201,8 @@ int wt_update(wt_updater_t *wt_updater,
             }
 
             if (momentum != 0.0) {
-                if (part->s + part->n > wt->num_rows) {
-                    for (j = 0, i = part->s; i < wt->num_rows; j++, i++) {
+                if (part->s + part->n > wt->num_cols) {
+                    for (j = 0, i = part->s; i < wt->num_cols; j++, i++) {
                         MAT_VAL(delta_wt, 0, i) = lr * MAT_VAL(er, 0, j)
                             - l2 * MAT_VAL(wt, 0, i)
                             + momentum * MAT_VAL(delta_wt, 0, i);
@@ -223,8 +223,8 @@ int wt_update(wt_updater_t *wt_updater,
                     }
                 }
             } else {
-                if (part->s + part->n > wt->num_rows) {
-                    for (j = 0, i = part->s; i < wt->num_rows; j++, i++) {
+                if (part->s + part->n > wt->num_cols) {
+                    for (j = 0, i = part->s; i < wt->num_cols; j++, i++) {
                         MAT_VAL(wt, 0, i) += lr * MAT_VAL(er, 0, j) - l2 * MAT_VAL(wt, 0, i);
                     }
                     for (i = 0; j < part->n; j++, i++) {

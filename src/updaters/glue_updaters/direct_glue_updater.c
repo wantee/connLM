@@ -587,6 +587,7 @@ static int direct_backprop_walker(output_t *output, output_node_id_t node,
 {
     direct_bp_walker_args_t *dbw_args;
     real_t *out_er;
+    real_t *keep_mask;
     real_t *node_out_er;
 
     mat_t out_er_mat = {0};
@@ -607,9 +608,10 @@ static int direct_backprop_walker(output_t *output, output_node_id_t node,
         hash_sz = dbw_args->wt_updater->wt.num_cols;
 
         if (dbw_args->keep_mask != NULL) {
-            out_er = dbw_args->dropout_val;
-            for (ch = child_s; ch < child_e - 1; ch++) {
-                if (dbw_args->keep_mask[ch]) {
+            out_er = dbw_args->dropout_val + child_s;
+            keep_mask = dbw_args->keep_mask + child_s;
+            for (ch = 0; ch < child_e - child_s - 1; ch++) {
+                if (keep_mask[ch]) {
                     out_er[ch] = node_out_er[ch];
                 } else {
                     out_er[ch] = 0.0;
@@ -627,7 +629,7 @@ static int direct_backprop_walker(output_t *output, output_node_id_t node,
 
             seg.s = h;
             seg.n = child_e - child_s - 1;
-            mat_from_array(&out_er_mat, out_er + child_s, seg.n, true);
+            mat_from_array(&out_er_mat, out_er, seg.n, true);
             if (wt_update(dbw_args->wt_updater, &out_er_mat, dbw_args->scale,
                         NULL, 1.0, &seg, NULL) < 0) {
                 ST_WARNING("Failed to wt_update.");
@@ -656,6 +658,11 @@ int direct_glue_updater_backprop(glue_updater_t *glue_updater,
 
     data = (dgu_data_t *)glue_updater->extra;
     out_updater = comp_updater->out_updater;
+
+    if (reset_node_iters(out_updater, batch) < 0) {
+        ST_WARNING("Failed to reset_node_iters.");
+        return -1;
+    }
 
     dbw_args.scale = comp_updater->comp->comp_scale;
     dbw_args.node_out_ers = out_updater->node_ers;
