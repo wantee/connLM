@@ -377,24 +377,25 @@ bool input_updater_movable(input_updater_t *input_updater, bool finalized)
 {
     word_pool_t *wp;
     int b, r, pos;
+    int num_finished, num_need_right;
 
     ST_CHECK_PARAM(input_updater == NULL, false);
 
     wp = &input_updater->wp;
 
-    if (finalized) {
-        return true;
-    }
-
+    num_finished = 0;
+    num_need_right = 0;
     for (b = 0; b < wp_batch_size(wp); b++) {
         pos = VEC_VAL(&wp->row_starts, b) + input_updater->cur_pos;
         if (pos >= VEC_VAL(&wp->row_starts, b + 1)) {
-            return false;
+            ++num_finished;
+            continue;
         }
 
         for (r = 1; r <= input_updater->ctx_rightmost; r++) {
             if (pos + r >= VEC_VAL(&wp->row_starts, b + 1)) {
-                return false;
+                ++num_need_right;
+                break;
             }
             if (VEC_VAL(&wp->words, pos + r) == SENT_END_ID) {
                 break;
@@ -402,6 +403,14 @@ bool input_updater_movable(input_updater_t *input_updater, bool finalized)
         }
     }
 
+    if (num_finished >= wp_batch_size(wp)) {
+        // all finished
+        return false;
+    }
 
-    return true;
+    if (finalized) {
+        return true;
+    }
+
+    return (num_finished == 0 && num_need_right == 0);
 }
