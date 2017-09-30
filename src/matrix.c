@@ -492,8 +492,13 @@ int add_mat_mat(real_t alpha, mat_t *A, mat_trans_t trans_A,
     }
 
 #ifdef _USE_BLAS_
-    cblas_gemm(CblasRowMajor, (enum CBLAS_TRANSPOSE)trans_A,
-            (enum CBLAS_TRANSPOSE)trans_B, m, n, k,
+#ifdef _HAVE_MKL_
+#  define CBLAS_TRANSPOSE_CAST CBLAS_TRANSPOSE
+#else
+#  define CBLAS_TRANSPOSE_CAST enum CBLAS_TRANSPOSE
+#endif
+    cblas_gemm(CblasRowMajor, (CBLAS_TRANSPOSE_CAST)trans_A,
+            (CBLAS_TRANSPOSE_CAST)trans_B, m, n, k,
             alpha, A->vals, A->stride, B->vals, B->stride,
             beta, C->vals, C->stride);
 #else
