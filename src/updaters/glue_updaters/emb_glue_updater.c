@@ -164,12 +164,12 @@ int emb_glue_updater_forward(glue_updater_t *glue_updater,
                         scale = batch->inputs->weights[w];
                         j = batch->inputs->words[w];
 
-                        ac += MAT_VAL(wt, j, i);
+                        ac += scale * MAT_VAL(wt, j, i);
                     }
                     if (glue_updater->keep_mask.num_rows > 0) {
-                        scale /= glue_updater->keep_prob;
+                        ac /= glue_updater->keep_prob;
                     }
-                    MAT_VAL(out_ac, b, i) += scale * ac / input->n_ctx;
+                    MAT_VAL(out_ac, b, i) += ac / input->n_ctx;
                 }
             }
             break;

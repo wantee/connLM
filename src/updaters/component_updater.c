@@ -659,7 +659,7 @@ int comp_updater_reset(comp_updater_t *comp_updater, int batch_i)
     for (g = 0; g < comp_updater->comp->num_glue_cycle; g++) {
         bptt_updater = comp_updater->bptt_updaters[g];
 
-        for (j = 1; j <= comp_updater->comp->glue_cycles[i][0]; j++) {
+        for (j = 1; j <= comp_updater->comp->glue_cycles[g][0]; j++) {
             // </s> should be the last member on ac_bptts and er_bptts
             // so we reset all time steps on the buffer
             for (i = 0; i < bptt_updater->num_ac_bptts; i++) {
