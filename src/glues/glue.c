@@ -328,7 +328,7 @@ glue_t* glue_parse_topo(const char *line, layer_t **layers,
         goto ERR;
     }
     for (i = 1; i < glue->num_wts; i++) {
-        glue->wts[i] = glue->wts[0];
+        *(glue->wts[i]) = *(glue->wts[0]);
     }
 
     if (!glue_check(glue, layers, n_layer, input, output)) {
