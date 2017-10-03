@@ -245,7 +245,7 @@ int mat_submat(mat_t *mat, size_t row_s, size_t num_rows,
         num_rows = mat->num_rows - row_s;
     } else {
         if (row_s + num_rows > mat->num_rows) {
-            ST_WARNING("Not enough rows to extract [%d + %d > %d].",
+            ST_WARNING("Not enough rows to extract [%zu + %zu > %zu].",
                     row_s, num_rows, mat->num_rows);
             return -1;
         }
@@ -255,7 +255,7 @@ int mat_submat(mat_t *mat, size_t row_s, size_t num_rows,
         num_cols = mat->num_cols - col_s;
     } else {
         if (col_s + num_cols > mat->num_cols) {
-            ST_WARNING("Not enough cols to extract [%d + %d > %d].",
+            ST_WARNING("Not enough cols to extract [%zu + %zu > %zu].",
                     col_s, num_cols, mat->num_cols);
             return -1;
         }
@@ -346,7 +346,7 @@ int mat_set_row(mat_t *mat, size_t row, real_t val)
     ST_CHECK_PARAM(mat == NULL, -1);
 
     if (row >= mat->num_rows) {
-        ST_WARNING("Invalid row index [%d/%d]", row, mat->num_rows);
+        ST_WARNING("Invalid row index [%zu/%zu]", row, mat->num_rows);
         return -1;
     }
 

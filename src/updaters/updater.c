@@ -643,7 +643,7 @@ int updater_dump_state(updater_t *updater, mat_t *state)
             return -1;
         }
 
-        if (mat_submat(state, 0, -1, total_size, -1, &sub_state) < 0) {
+        if (mat_submat(state, 0, 0, total_size, 0, &sub_state) < 0) {
             ST_WARNING("Failed to mat_submat state.");
             return -1;
         }
@@ -678,7 +678,7 @@ int updater_dump_pre_ac_state(updater_t *updater, mat_t *state)
             return -1;
         }
 
-        if (mat_submat(state, 0, -1, total_size, -1, &sub_state) < 0) {
+        if (mat_submat(state, 0, 0, total_size, 0, &sub_state) < 0) {
             ST_WARNING("Failed to mat_submat state.");
             return -1;
         }
@@ -713,7 +713,7 @@ int updater_feed_state(updater_t *updater, mat_t *state)
             return -1;
         }
 
-        if (mat_submat(state, 0, -1, total_size, -1, &sub_state) < 0) {
+        if (mat_submat(state, 0, 0, total_size, 0, &sub_state) < 0) {
             ST_WARNING("Failed to mat_submat state.");
             return -1;
         }
@@ -748,7 +748,7 @@ int updater_random_state(updater_t *updater, mat_t *state)
             return -1;
         }
 
-        if (mat_submat(state, 0, -1, total_size, -1, &sub_state) < 0) {
+        if (mat_submat(state, 0, 0, total_size, 0, &sub_state) < 0) {
             ST_WARNING("Failed to mat_submat state.");
             return -1;
         }
@@ -930,7 +930,7 @@ int updater_activate_state(updater_t *updater, mat_t *state)
             return -1;
         }
 
-        if (mat_submat(state, 0, -1, total_size, -1, &sub_state) < 0) {
+        if (mat_submat(state, 0, 0, total_size, 0, &sub_state) < 0) {
             ST_WARNING("Failed to mat_submat state.");
             return -1;
         }

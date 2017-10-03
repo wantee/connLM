@@ -212,11 +212,11 @@ int mat_move_up(mat_t *mat, size_t dst_row, size_t src_row);
  * @param[in] mat the matrix.
  * @param[in] row_s start row index in original matrix.
  * @param[in] num_rows number of rows in sub-matrix.
- *                     set to non-positive value to extract all the rest
+ *                     set to zero to extract all the rest
  *                     rows from original matrix
  * @param[in] col_s start col index in original matrix.
  * @param[in] num_cols number of cols in sub-matrix,
- *                     set to non-positive value to extract all the rest
+ *                     set to zero to extract all the rest
  *                     cols from original matrix
  * @param[out] sub the sub-matrix.
  * @return non-zero if any error.
@@ -230,11 +230,11 @@ int mat_submat(mat_t *mat, size_t row_s, size_t num_rows,
  * @param[out] mat the matrix.
  * @param[in] row_s start row index in original matrix.
  * @param[in] num_rows number of rows in sub-matrix.
- *                     set to non-positive value to extract all the rest
+ *                     set to zero to extract all the rest
  *                     rows from original matrix
  * @param[in] col_s start col index in original matrix.
  * @param[in] num_cols number of cols in sub-matrix,
- *                     set to non-positive value to extract all the rest
+ *                     set to zero to extract all the rest
  *                     cols from original matrix
  * @param[in] val the sub-matrix contains values.
  * @return non-zero if any error.

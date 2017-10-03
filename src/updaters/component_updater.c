@@ -389,13 +389,13 @@ static int comp_updater_bptt(comp_updater_t *comp_updater, bool clear)
                 } else {
                     if (j == 1) {
                         if (mat_submat(&layer_updaters[glue->in_layer]->ac_state,
-                                    0, -1, glue->in_offset, -1, &in_ac) < 0) {
+                                    0, 0, glue->in_offset, 0, &in_ac) < 0) {
                             ST_WARNING("Failed to mat_submat in_ac.");
                             return -1;
                         }
                     } else {
                         if (mat_submat(&layer_updaters[glue->in_layer]->ac,
-                                    0, -1, glue->in_offset, -1, &in_ac) < 0) {
+                                    0, 0, glue->in_offset, 0, &in_ac) < 0) {
                             ST_WARNING("Failed to mat_submat in_ac.");
                             return -1;
                         }
@@ -427,14 +427,14 @@ static int comp_updater_bptt(comp_updater_t *comp_updater, bool clear)
 
                     if (mat_fill(bptt_updater->ac_bptts + j,
                                 (bptt_updater->num_ac_bptts - 1) * batch_size,
-                                batch_size, 0, -1, &in_ac) < 0) {
+                                batch_size, 0, 0, &in_ac) < 0) {
                         ST_WARNING("Failed to mat_fill for ac_bptts.");
                         return -1;
                     }
                 } else {
                     if (mat_fill(bptt_updater->ac_bptts + j,
                                 bptt_updater->num_ac_bptts * batch_size,
-                                batch_size, 0, -1, &in_ac) < 0) {
+                                batch_size, 0, 0, &in_ac) < 0) {
                         ST_WARNING("Failed to mat_fill for ac_bptts.");
                         return -1;
                     }
@@ -449,14 +449,14 @@ static int comp_updater_bptt(comp_updater_t *comp_updater, bool clear)
 
                     if (mat_fill(bptt_updater->er_bptts + j,
                                 (bptt_updater->num_er_bptts - 1) * batch_size,
-                                batch_size, 0, -1, &out_er) < 0) {
+                                batch_size, 0, 0, &out_er) < 0) {
                         ST_WARNING("Failed to mat_fill for er_bptts.");
                         return -1;
                     }
                 } else {
                     if (mat_fill(bptt_updater->er_bptts + j,
                                 bptt_updater->num_er_bptts * batch_size,
-                                batch_size, 0, -1, &out_er) < 0) {
+                                batch_size, 0, 0, &out_er) < 0) {
                         ST_WARNING("Failed to mat_fill for er_bptts.");
                         return -1;
                     }
@@ -491,7 +491,7 @@ static int comp_updater_bptt(comp_updater_t *comp_updater, bool clear)
                     if (t == bptt_updater->num_ac_bptts - 1 && j == 1) {
                         // using values in current timestep
                         if (mat_submat(&layer_updaters[glue->out_layer]->ac,
-                                    0, -1, glue->out_offset, -1, &out_ac) < 0) {
+                                    0, 0, glue->out_offset, 0, &out_ac) < 0) {
                             ST_WARNING("Failed to mat_submat out_ac.");
                             goto ERR;
                         }
@@ -515,7 +515,7 @@ static int comp_updater_bptt(comp_updater_t *comp_updater, bool clear)
                     }
                     if (mat_submat(bptt_updater->ac_bptts + j,
                                 t * batch_size, batch_size,
-                                0, -1, &in_ac) < 0) {
+                                0, 0, &in_ac) < 0) {
                         ST_WARNING("Failed to mat_submat in_ac.");
                         goto ERR;
                     }
@@ -529,7 +529,7 @@ static int comp_updater_bptt(comp_updater_t *comp_updater, bool clear)
 #endif
                         if (mat_submat(bptt_updater->er_bptts + j,
                                     er_t * batch_size, batch_size,
-                                    0, -1, &tmp) < 0) {
+                                    0, 0, &tmp) < 0) {
                             ST_WARNING("Failed to mat_submat er_bptts.");
                             goto ERR;
                         }
@@ -965,7 +965,7 @@ int comp_updater_dump_state(comp_updater_t *comp_updater, mat_t *state)
                     comp_updater->comp->layers[i]->name);
             return -1;
         }
-        if (mat_submat(state, 0, -1, total_size, -1, &sub_state) < 0) {
+        if (mat_submat(state, 0, 0, total_size, 0, &sub_state) < 0) {
             ST_WARNING("Failed to mat_submat state.");
             return -1;
         }
@@ -1000,7 +1000,7 @@ int comp_updater_dump_pre_ac_state(comp_updater_t *comp_updater,
                     comp_updater->comp->layers[i]->name);
             return -1;
         }
-        if (mat_submat(state, 0, -1, total_size, -1, &sub_state) < 0) {
+        if (mat_submat(state, 0, 0, total_size, 0, &sub_state) < 0) {
             ST_WARNING("Failed to mat_submat state.");
             return -1;
         }
@@ -1034,7 +1034,7 @@ int comp_updater_feed_state(comp_updater_t *comp_updater, mat_t *state)
                     comp_updater->comp->layers[i]->name);
             return -1;
         }
-        if (mat_submat(state, 0, -1, total_size, -1, &sub_state) < 0) {
+        if (mat_submat(state, 0, 0, total_size, 0, &sub_state) < 0) {
             ST_WARNING("Failed to mat_submat state.");
             return -1;
         }
@@ -1067,7 +1067,7 @@ int comp_updater_random_state(comp_updater_t *comp_updater, mat_t *state)
                     comp_updater->comp->layers[i]->name);
             return -1;
         }
-        if (mat_submat(state, 0, -1, total_size, -1, &sub_state) < 0) {
+        if (mat_submat(state, 0, 0, total_size, 0, &sub_state) < 0) {
             ST_WARNING("Failed to mat_submat state.");
             return -1;
         }
@@ -1101,7 +1101,7 @@ int comp_updater_activate_state(comp_updater_t *comp_updater, mat_t *state)
                     comp_updater->comp->layers[i]->name);
             return -1;
         }
-        if (mat_submat(state, 0, -1, total_size, -1, &sub_state) < 0) {
+        if (mat_submat(state, 0, 0, total_size, 0, &sub_state) < 0) {
             ST_WARNING("Failed to mat_submat state.");
             return -1;
         }

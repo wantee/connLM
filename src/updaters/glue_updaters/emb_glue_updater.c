@@ -273,7 +273,7 @@ int emb_glue_updater_backprop(glue_updater_t *glue_updater,
                     }
                 }
             }
-            if (mat_submat(&er, 0, -1, j * col,
+            if (mat_submat(&er, 0, 0, j * col,
                         (j + 1) * col, &part_er) < 0) {
                 ST_WARNING("Failed to mat_submat.");
                 return -1;
