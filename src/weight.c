@@ -258,8 +258,7 @@ int wt_load_header(weight_t **wt, int version,
     real_t init_param;
     real_t init_bias = INFINITY;
 
-    ST_CHECK_PARAM((wt == NULL && fo_info == NULL) || fp == NULL
-            || fmt == NULL, -1);
+    ST_CHECK_PARAM(fp == NULL || fmt == NULL, -1);
 
     if (version < 20) {
         ST_WARNING("Too old version of connlm file");

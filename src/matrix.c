@@ -596,8 +596,7 @@ int mat_load_header(mat_t *mat, int version,
     size_t num_rows;
     size_t num_cols;
 
-    ST_CHECK_PARAM((mat == NULL && fo_info == NULL) || fp == NULL
-            || fmt == NULL, -1);
+    ST_CHECK_PARAM(fp == NULL || fmt == NULL, -1);
 
     if (fread(&flag.magic_num, sizeof(int), 1, fp) != 1) {
         ST_WARNING("Failed to load magic num.");

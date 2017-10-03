@@ -46,8 +46,7 @@ int vec_load_header(vec_t *vec, int version,
 
     size_t size;
 
-    ST_CHECK_PARAM((vec == NULL && fo_info == NULL) || fp == NULL
-            || fmt == NULL, -1);
+    ST_CHECK_PARAM(fp == NULL || fmt == NULL, -1);
 
     if (fread(&flag.magic_num, sizeof(int), 1, fp) != 1) {
         ST_WARNING("Failed to load magic num.");
@@ -340,7 +339,7 @@ int vec_resize(vec_t *vec, size_t size, real_t init_val)
 {
     size_t i;
 
-    ST_CHECK_PARAM(vec == NULL || size <= 0, -1);
+    ST_CHECK_PARAM(vec == NULL || size < 0, -1);
 
     if (vec->is_const) {
         if (vec->size != size) {
