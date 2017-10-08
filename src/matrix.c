@@ -176,22 +176,6 @@ int mat_append(mat_t *dst, mat_t* src)
     return 0;
 }
 
-int mat_append_row(mat_t *mat, real_t* row)
-{
-    ST_CHECK_PARAM(mat == NULL || row == NULL, -1);
-
-    if (mat_resize_row(mat, mat->num_rows + 1, NAN) < 0) {
-        ST_WARNING("Failed to matrix_resize.");
-        return -1;
-    }
-
-    memcpy(mat->vals + mat->num_rows * mat->stride, row,
-            sizeof(real_t) * mat->stride);
-    mat->num_rows++;
-
-    return 0;
-}
-
 int mat_cpy(mat_t *dst, mat_t *src)
 {
     ST_CHECK_PARAM(dst == NULL || src == NULL, -1);

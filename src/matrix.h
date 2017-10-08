@@ -171,15 +171,6 @@ int mat_resize_row(mat_t *mat, size_t num_rows, real_t init_val);
 int mat_append(mat_t *dst, mat_t* src);
 
 /**
- * Append a row into a matrix.
- * @ingroup g_matrix
- * @param[out] mat the matrix.
- * @param[in] row values of row, size must be same as mat.num_cols.
- * @return non-zero if any error.
- */
-int mat_append_row(mat_t *mat, real_t* row);
-
-/**
  * Copy a matrix to the other.
  * @ingroup g_matrix
  * @param[out] dst the dst matrix.

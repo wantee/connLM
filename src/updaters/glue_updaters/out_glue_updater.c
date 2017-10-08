@@ -173,19 +173,126 @@ int out_glue_updater_setup(glue_updater_t *glue_updater,
     return 0;
 }
 
-static int clear_tree_nodes_walker(output_t *output, output_node_id_t node,
-        output_node_id_t next_node,
+static int clear_tree_node_iters_walker(output_t *output,
+        output_node_id_t node, output_node_id_t next_node,
+        output_node_id_t child_s, output_node_id_t child_e, void *args)
+{
+    int *node_iters;
+
+    node_iters = (int *) args;
+
+    node_iters[node] = 0;
+
+    return 0;
+}
+
+static int clear_tree_node_iters(output_t *output, egs_batch_t *batch,
+        ogu_data_t *data)
+{
+    int i;
+
+    for (i = 0; i < batch->num_egs; i++) {
+        if (batch->targets[i] == PADDING_ID) {
+            continue;
+        }
+        if (output_walk_through_path(output, batch->targets[i],
+                    clear_tree_node_iters_walker,
+                    (void *)data->node_iters) < 0) {
+            ST_WARNING("Failed to output_walk_through_path "
+                       "clear_tree_node_iters_walker.");
+            return -1;
+        }
+    }
+
+    return 0;
+}
+
+static int acc_tree_node_iters_walker(output_t *output,
+        output_node_id_t node, output_node_id_t next_node,
+        output_node_id_t child_s, output_node_id_t child_e, void *args)
+{
+    int *node_iters;
+
+    node_iters = (int *) args;
+
+    node_iters[node]++;
+
+    return 0;
+}
+
+static int prepare_tree_nodes_walker(output_t *output,
+        output_node_id_t node, output_node_id_t next_node,
         output_node_id_t child_s, output_node_id_t child_e, void *args)
 {
     ogu_data_t *data;
 
     data = (ogu_data_t *) args;
 
-    mat_clear(data->node_in_acs + node);
-    if (data->node_out_ers != NULL) {
-        mat_clear(data->node_out_ers + node);
+    if (child_s >= child_e || data->node_iters[node] <= 0) {
+        return 0;
     }
+
+    if (output->norm == ON_SOFTMAX) {
+        if (mat_resize(data->node_in_acs + node,
+                    data->node_iters[node], child_e - child_s,
+                    NAN /* no need to init acs. */) < 0) {
+            ST_WARNING("Failed to mat_resize node_in_acs["OUTPUT_NODE_FMT".",
+                    node);
+            return -1;
+        }
+
+
+        if (data->node_out_ers != NULL) {
+            if (mat_resize(data->node_out_ers + node,
+                        data->node_iters[node], child_e - child_s,
+                        NAN /* no need to init ers. */) < 0) {
+                ST_WARNING("Failed to mat_resize node_out_ers["
+                           OUTPUT_NODE_FMT".", node);
+                return -1;
+            }
+        }
+    }
+
     data->node_iters[node] = 0;
+
+    return 0;
+}
+
+static int prepare_tree_nodes(output_t *output, egs_batch_t *batch,
+        ogu_data_t *data)
+{
+    int i;
+
+    ST_CHECK_PARAM(output == NULL || batch == NULL || data == NULL, -1);
+
+    if (clear_tree_node_iters(output, batch, data) < 0) {
+        ST_WARNING("Failed to clear_tree_node_iters.");
+        return -1;
+    }
+
+    for (i = 0; i < batch->num_egs; i++) {
+        if (batch->targets[i] == PADDING_ID) {
+            continue;
+        }
+        if (output_walk_through_path(output, batch->targets[i],
+                    acc_tree_node_iters_walker, (void *)data->node_iters) < 0) {
+            ST_WARNING("Failed to output_walk_through_path "
+                       "acc_tree_node_iters_walker.");
+            return -1;
+        }
+    }
+
+    for (i = 0; i < batch->num_egs; i++) {
+        if (batch->targets[i] == PADDING_ID) {
+            continue;
+        }
+        if (output_walk_through_path(output, batch->targets[i],
+                    prepare_tree_nodes_walker, (void *)data) < 0) {
+            ST_WARNING("Failed to output_walk_through_path "
+                       "prepare_tree_nodes_walker.");
+            return -1;
+        }
+    }
 
     return 0;
 }
@@ -231,20 +338,9 @@ static int fill_tree_nodes(output_t *output, egs_batch_t *batch,
     tree_nodes_walker_args_t tnw_args;
     int i;
 
-    ST_CHECK_PARAM(output == NULL || data == NULL || batch == NULL
-            || in_ac == NULL, -1);
+    ST_CHECK_PARAM(output == NULL || data == NULL || batch == NULL, -1);
 
-    // clear buffers
-    for (i = 0; i < batch->num_egs; i++) {
-        if (batch->targets[i] == PADDING_ID) {
-            continue;
-        }
-        if (output_walk_through_path(output, batch->targets[i],
-                    clear_tree_nodes_walker, (void *)data) < 0) {
-            ST_WARNING("Failed to output_walk_through_path.");
-            return -1;
-        }
-    }
+    //assert dat->node_iters be cleared
 
     // fill in buffer with in_ac and out_er if not NULL
     tnw_args.in_ac = in_ac;
@@ -365,6 +461,12 @@ int out_glue_updater_forward(glue_updater_t *glue_updater,
         return -1;
     }
 
+    // resize and clear buffers
+    if (prepare_tree_nodes(output, batch, data) < 0) {
+        ST_WARNING("Failed to prepare_tree_nodes.");
+        return -1;
+    }
+
     if (fill_tree_nodes(output, batch, in_ac, NULL, data) < 0) {
         ST_WARNING("Failed to fill_tree_nodes.");
         return -1;
@@ -469,6 +571,11 @@ int out_glue_updater_backprop(glue_updater_t *glue_updater,
     data = (ogu_data_t *)glue_updater->extra;
     output = comp_updater->out_updater->output;
 
+    if (clear_tree_node_iters(output, batch, data) < 0) {
+        ST_WARNING("Failed to clear_tree_node_iters.");
+        return -1;
+    }
+
     if (fill_tree_nodes(output, batch,
                 NULL /* in_ac should be filled druing forward pass. */,
                 out_er, data) < 0) {
@@ -512,19 +619,6 @@ int out_glue_updater_forward_out(glue_updater_t *glue_updater,
         ST_WARNING("Failed to forward_one_node["OUTPUT_NODE_FMT"]", node);
         return -1;
     }
-
-    return 0;
-}
-
-static int reset_iters_walker(output_t *output, output_node_id_t node,
-        output_node_id_t next_node,
-        output_node_id_t child_s, output_node_id_t child_e, void *args)
-{
-    int *node_iters;
-
-    node_iters = (int *) args;
-
-    node_iters[node] = 0;
 
     return 0;
 }
@@ -590,8 +684,9 @@ int out_glue_updater_forward_out_words(glue_updater_t *glue_updater,
             continue;
         }
         if (output_walk_through_path(output, VEC_VAL(words, i),
-                    reset_iters_walker, (void *)data->node_iters) < 0) {
-            ST_WARNING("Failed to output_walk_through_path for reset_iters.");
+                    clear_tree_node_iters_walker, (void *)data->node_iters) < 0) {
+            ST_WARNING("Failed to output_walk_through_path "
+                       "clear_tree_node_iters_walker.");
             return -1;
         }
     }
