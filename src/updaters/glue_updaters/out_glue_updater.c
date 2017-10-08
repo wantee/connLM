@@ -220,13 +220,20 @@ static int acc_tree_node_iters_walker(output_t *output,
     return 0;
 }
 
+typedef struct _tree_nodes_prepare_walker_args_t_ {
+    ogu_data_t *data;
+    size_t in_size;
+} tree_nodes_prepare_walker_args_t;
+
 static int prepare_tree_nodes_walker(output_t *output,
         output_node_id_t node, output_node_id_t next_node,
         output_node_id_t child_s, output_node_id_t child_e, void *args)
 {
+    tree_nodes_prepare_walker_args_t *tnpw_args;
     ogu_data_t *data;
 
-    data = (ogu_data_t *) args;
+    tnpw_args = (tree_nodes_prepare_walker_args_t *) args;
+    data = tnpw_args->data;
 
     if (child_s >= child_e || data->node_iters[node] <= 0) {
         return 0;
@@ -234,7 +241,7 @@ static int prepare_tree_nodes_walker(output_t *output,
 
     if (output->norm == ON_SOFTMAX) {
         if (mat_resize(data->node_in_acs + node,
-                    data->node_iters[node], child_e - child_s,
+                    data->node_iters[node], tnpw_args->in_size,
                     NAN /* no need to init acs. */) < 0) {
             ST_WARNING("Failed to mat_resize node_in_acs["OUTPUT_NODE_FMT".",
                     node);
@@ -259,8 +266,9 @@ static int prepare_tree_nodes_walker(output_t *output,
 }
 
 static int prepare_tree_nodes(output_t *output, egs_batch_t *batch,
-        ogu_data_t *data)
+        size_t in_size, ogu_data_t *data)
 {
+    tree_nodes_prepare_walker_args_t tnpw_args;
     int i;
 
     ST_CHECK_PARAM(output == NULL || batch == NULL || data == NULL, -1);
@@ -282,12 +290,14 @@ static int prepare_tree_nodes(output_t *output, egs_batch_t *batch,
         }
     }
 
+    tnpw_args.data = data;
+    tnpw_args.in_size = in_size;
     for (i = 0; i < batch->num_egs; i++) {
         if (batch->targets[i] == PADDING_ID) {
             continue;
         }
         if (output_walk_through_path(output, batch->targets[i],
-                    prepare_tree_nodes_walker, (void *)data) < 0) {
+                    prepare_tree_nodes_walker, (void *)&tnpw_args) < 0) {
             ST_WARNING("Failed to output_walk_through_path "
                        "prepare_tree_nodes_walker.");
             return -1;
@@ -315,15 +325,19 @@ static int fill_tree_nodes_walker(output_t *output, output_node_id_t node,
     data = tnw_args->data;
 
     if (tnw_args->in_ac != NULL) {
-        memcpy(MAT_ROW(data->node_in_acs + node, data->node_iters[node]),
-                MAT_ROW(tnw_args->in_ac, tnw_args->batch_i),
-                sizeof(real_t) * tnw_args->in_ac->num_cols);
+        if (mat_cpy_row(data->node_in_acs + node, data->node_iters[node],
+                    tnw_args->in_ac, tnw_args->batch_i) < 0) {
+            ST_WARNING("Failed to mat_cpy_row for node_in_acs.");
+            return -1;
+        }
     }
 
     if (tnw_args->out_er != NULL && child_e - child_s - 1 > 0) {
-        memcpy(MAT_ROW(data->node_out_ers + node, data->node_iters[node]),
-               MAT_ROW(tnw_args->out_er, tnw_args->batch_i),
-               sizeof(real_t) * tnw_args->out_er->num_cols);
+        if (mat_cpy_row(data->node_out_ers + node, data->node_iters[node],
+                    tnw_args->out_er, tnw_args->batch_i) < 0) {
+            ST_WARNING("Failed to mat_cpy_row for node_out_ers.");
+            return -1;
+        }
     }
 
     data->node_iters[node]++;
@@ -451,7 +465,7 @@ int out_glue_updater_forward(glue_updater_t *glue_updater,
     ogu_data_t *data;
 
     ST_CHECK_PARAM(glue_updater == NULL || comp_updater == NULL
-            || batch == NULL, -1);
+            || in_ac == NULL || batch == NULL, -1);
 
     output = comp_updater->out_updater->output;
     data = (ogu_data_t *)glue_updater->extra;
@@ -462,7 +476,7 @@ int out_glue_updater_forward(glue_updater_t *glue_updater,
     }
 
     // resize and clear buffers
-    if (prepare_tree_nodes(output, batch, data) < 0) {
+    if (prepare_tree_nodes(output, batch, in_ac->num_cols, data) < 0) {
         ST_WARNING("Failed to prepare_tree_nodes.");
         return -1;
     }
@@ -571,6 +585,7 @@ int out_glue_updater_backprop(glue_updater_t *glue_updater,
     data = (ogu_data_t *)glue_updater->extra;
     output = comp_updater->out_updater->output;
 
+    // prepare_tree_nodes() should be called in out_glue_updater_forward.
     if (clear_tree_node_iters(output, batch, data) < 0) {
         ST_WARNING("Failed to clear_tree_node_iters.");
         return -1;

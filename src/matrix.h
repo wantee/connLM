@@ -61,7 +61,6 @@ typedef struct _matrix_t_ {
 
 #define MAT_VAL(mat, row, col) ((mat)->vals[(row)*((mat)->stride) + (col)])
 #define MAT_VALP(mat, row, col) ((mat)->vals + ((row)*((mat)->stride) + (col)))
-#define MAT_ROW(mat, row) ((mat)->vals + (row)*((mat)->stride))
 
 /**
  * Load matrix header.
@@ -196,6 +195,18 @@ void mat_assign(mat_t *dst, mat_t *src);
  * @return non-zero if any error.
  */
 int mat_move_up(mat_t *mat, size_t dst_row, size_t src_row);
+
+/**
+ * Copy a row between two matrice.
+ * num_cols of the two matrice must be equal.
+ * @ingroup g_matrix
+ * @param[in] dst the dst matrix.
+ * @param[in] dst_row the row of dst matrix.
+ * @param[in] src the src matrix.
+ * @param[in] src_row the row of src matrix.
+ * @return non-zero if any error.
+ */
+int mat_cpy_row(mat_t *dst, size_t dst_row, mat_t *src, size_t src_row);
 
 /**
  * Extract a sub-matrix from one matrix.
