@@ -1322,11 +1322,11 @@ static huffman_tree_t* output_gen_bu_huffman(output_t *output,
         n_cnt(huffman, parent) = 0;
         for (n = s_children(huffman, parent)[0];
                 n < e_children(huffman, parent)[0]; ++n) {
-            n_cnt(huffman, parent) += cnts[n];
+            n_cnt(huffman, parent) += n_cnt(huffman, n);
         }
         for (n = s_children(huffman, parent)[1];
                 n < e_children(huffman, parent)[1]; ++n) {
-            n_cnt(huffman, parent) += cnts[n];
+            n_cnt(huffman, parent) += n_cnt(huffman, n);
         }
     }
     huffman->root = parent;

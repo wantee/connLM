@@ -798,6 +798,7 @@ static int unit_test_output_generate()
     safe_output_destroy(output);
     fprintf(stderr, "Success\n");
 
+    safe_vocab_destroy(vocab);
     return 0;
 
 ERR:
