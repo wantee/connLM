@@ -266,6 +266,37 @@ int mat_cpy_row(mat_t *dst, size_t dst_row, mat_t *src, size_t src_row)
     return 0;
 }
 
+int mat_acc_row(mat_t *dst, size_t dst_row, mat_t *src, size_t src_row)
+{
+    real_t *dst_vals, *src_vals;
+    size_t j;
+
+    ST_CHECK_PARAM(dst == NULL || src == NULL, -1);
+
+    if (dst_row >= dst->num_rows) {
+        ST_WARNING("Invalid dst row index [%zu/%zu]", dst_row, dst->num_rows);
+        return -1;
+    }
+
+    if (src_row >= src->num_rows) {
+        ST_WARNING("Invalid src row index [%zu/%zu]", src_row, src->num_rows);
+        return -1;
+    }
+
+    if (dst->num_cols != src->num_cols) {
+        ST_WARNING("num_cols not match [%zu/%zu]", dst->num_cols, src->num_cols);
+        return -1;
+    }
+
+    dst_vals = dst->vals + dst_row * dst->stride;
+    src_vals = src->vals + src_row * src->stride;
+    for (j = 0; j < dst->num_cols; j++) {
+        dst_vals[j] += src_vals[j];
+    }
+
+    return 0;
+}
+
 int mat_submat(mat_t *mat, size_t row_s, size_t num_rows,
         size_t col_s, size_t num_cols, mat_t *sub)
 {

@@ -88,7 +88,7 @@ int out_glue_updater_forward(glue_updater_t *glue_updater,
  * @param[in] comp_updater the comp_updater.
  * @param[in] batch input batch.
  * @param[in] in_ac activation of in layer.
- * @param[in] out_er error of out layer.
+ * @param[in] out_er [unused]
  * @param[out] in_er error of in layer.
  * @return non-zero value if any error.
  */

@@ -38,7 +38,7 @@
 typedef struct _ogu_data_t_ {
     int num_nodes;
     mat_t *node_in_acs;
-    mat_t *node_out_ers;
+    mat_t *node_in_ers;
 
     // const variables
     int *node_iters;
@@ -67,11 +67,11 @@ void ogu_data_destroy(ogu_data_t *data)
         safe_st_free(data->node_in_acs);
     }
 
-    if (data->node_out_ers != NULL) {
+    if (data->node_in_ers != NULL) {
         for (i = 0; i < data->num_nodes; i++) {
-            mat_destroy(data->node_out_ers + i);
+            mat_destroy(data->node_in_ers + i);
         }
-        safe_st_free(data->node_out_ers);
+        safe_st_free(data->node_in_ers);
     }
 
     data->num_nodes = 0;
@@ -145,12 +145,12 @@ int ogu_data_setup(ogu_data_t *data, out_updater_t *out_updater, bool backprop)
     memset(data->node_in_acs, 0, sizeof(mat_t) * data->num_nodes);
 
     if (backprop) {
-        data->node_out_ers = (mat_t *)st_malloc(sizeof(mat_t) * data->num_nodes);
-        if (data->node_out_ers == NULL) {
-            ST_WARNING("Failed to st_malloc node_out_ers.");
+        data->node_in_ers = (mat_t *)st_malloc(sizeof(mat_t) * data->num_nodes);
+        if (data->node_in_ers == NULL) {
+            ST_WARNING("Failed to st_malloc node_in_ers.");
             goto ERR;
         }
-        memset(data->node_out_ers, 0, sizeof(mat_t) * data->num_nodes);
+        memset(data->node_in_ers, 0, sizeof(mat_t) * data->num_nodes);
     }
 
     return 0;
@@ -249,11 +249,11 @@ static int prepare_tree_nodes_walker(output_t *output,
         }
 
 
-        if (data->node_out_ers != NULL) {
-            if (mat_resize(data->node_out_ers + node,
-                        data->node_iters[node], child_e - child_s,
+        if (data->node_in_ers != NULL) {
+            if (mat_resize(data->node_in_ers + node,
+                        data->node_iters[node], tnpw_args->in_size,
                         NAN /* no need to init ers. */) < 0) {
-                ST_WARNING("Failed to mat_resize node_out_ers["
+                ST_WARNING("Failed to mat_resize node_in_ers["
                            OUTPUT_NODE_FMT".", node);
                 return -1;
             }
@@ -308,13 +308,12 @@ static int prepare_tree_nodes(output_t *output, egs_batch_t *batch,
 }
 
 typedef struct _tree_nodes_walker_args_t_ {
-    mat_t *in_ac;
-    mat_t *out_er;
+    mat_t *in_vals;
     int batch_i;
     ogu_data_t *data;
 } tree_nodes_walker_args_t;
 
-static int fill_tree_nodes_walker(output_t *output, output_node_id_t node,
+static int fill_tree_node_acs_walker(output_t *output, output_node_id_t node,
         output_node_id_t next_node,
         output_node_id_t child_s, output_node_id_t child_e, void *args)
 {
@@ -324,20 +323,10 @@ static int fill_tree_nodes_walker(output_t *output, output_node_id_t node,
     tnw_args = (tree_nodes_walker_args_t *)args;
     data = tnw_args->data;
 
-    if (tnw_args->in_ac != NULL) {
-        if (mat_cpy_row(data->node_in_acs + node, data->node_iters[node],
-                    tnw_args->in_ac, tnw_args->batch_i) < 0) {
-            ST_WARNING("Failed to mat_cpy_row for node_in_acs.");
-            return -1;
-        }
-    }
-
-    if (tnw_args->out_er != NULL && child_e - child_s - 1 > 0) {
-        if (mat_cpy_row(data->node_out_ers + node, data->node_iters[node],
-                    tnw_args->out_er, tnw_args->batch_i) < 0) {
-            ST_WARNING("Failed to mat_cpy_row for node_out_ers.");
-            return -1;
-        }
+    if (mat_cpy_row(data->node_in_acs + node, data->node_iters[node],
+                tnw_args->in_vals, tnw_args->batch_i) < 0) {
+        ST_WARNING("Failed to mat_cpy_row for node_in_acs.");
+        return -1;
     }
 
     data->node_iters[node]++;
@@ -346,19 +335,18 @@ static int fill_tree_nodes_walker(output_t *output, output_node_id_t node,
 }
 
 // this function fill in the activation into ogu_data_t's buffer
-static int fill_tree_nodes(output_t *output, egs_batch_t *batch,
-        mat_t *in_ac, mat_t *out_er, ogu_data_t *data)
+static int fill_tree_node_acs(output_t *output, egs_batch_t *batch,
+        mat_t *in_ac, ogu_data_t *data)
 {
     tree_nodes_walker_args_t tnw_args;
     int i;
 
-    ST_CHECK_PARAM(output == NULL || data == NULL || batch == NULL, -1);
+    ST_CHECK_PARAM(output == NULL || data == NULL
+            || in_ac == NULL || batch == NULL, -1);
 
     //assert dat->node_iters be cleared
 
-    // fill in buffer with in_ac and out_er if not NULL
-    tnw_args.in_ac = in_ac;
-    tnw_args.out_er = out_er;
+    tnw_args.in_vals = in_ac;
     tnw_args.data = data;
     for (i = 0; i < batch->num_egs; i++) {
         if (batch->targets[i] == PADDING_ID) {
@@ -366,7 +354,7 @@ static int fill_tree_nodes(output_t *output, egs_batch_t *batch,
         }
         tnw_args.batch_i = i;
         if (output_walk_through_path(output, batch->targets[i],
-                    fill_tree_nodes_walker, (void *)&tnw_args) < 0) {
+                    fill_tree_node_acs_walker, (void *)&tnw_args) < 0) {
             ST_WARNING("Failed to output_walk_through_path.");
             return -1;
         }
@@ -481,8 +469,8 @@ int out_glue_updater_forward(glue_updater_t *glue_updater,
         return -1;
     }
 
-    if (fill_tree_nodes(output, batch, in_ac, NULL, data) < 0) {
-        ST_WARNING("Failed to fill_tree_nodes.");
+    if (fill_tree_node_acs(output, batch, in_ac, data) < 0) {
+        ST_WARNING("Failed to fill_tree_node_acs.");
         return -1;
     }
 
@@ -496,12 +484,62 @@ int out_glue_updater_forward(glue_updater_t *glue_updater,
     return 0;
 }
 
+static int export_tree_node_ers_walker(output_t *output, output_node_id_t node,
+        output_node_id_t next_node,
+        output_node_id_t child_s, output_node_id_t child_e, void *args)
+{
+    tree_nodes_walker_args_t *tnw_args;
+    ogu_data_t *data;
+
+    tnw_args = (tree_nodes_walker_args_t *)args;
+    data = tnw_args->data;
+
+    if (mat_acc_row(tnw_args->in_vals, tnw_args->batch_i,
+                data->node_in_ers + node, data->node_iters[node]) < 0) {
+        ST_WARNING("Failed to mat_acc_row for node_in_ers.");
+        return -1;
+    }
+
+    data->node_iters[node]++;
+
+    return 0;
+}
+
+// this function export out in_er from ogu_data_t's buffer
+static int export_tree_node_ers(output_t *output, egs_batch_t *batch,
+        mat_t *in_er, ogu_data_t *data)
+{
+    tree_nodes_walker_args_t tnw_args;
+    int i;
+
+    ST_CHECK_PARAM(output == NULL || data == NULL
+            || in_er == NULL || batch == NULL, -1);
+
+    //assert dat->node_iters be cleared
+
+    tnw_args.in_vals = in_er;
+    tnw_args.data = data;
+    for (i = 0; i < batch->num_egs; i++) {
+        if (batch->targets[i] == PADDING_ID) {
+            continue;
+        }
+        tnw_args.batch_i = i;
+        if (output_walk_through_path(output, batch->targets[i],
+                    export_tree_node_ers_walker, (void *)&tnw_args) < 0) {
+            ST_WARNING("Failed to output_walk_through_path.");
+            return -1;
+        }
+    }
+
+    return 0;
+}
+
 typedef struct _tree_nodes_backprop_args_t_ {
     wt_updater_t **wt_updaters;
     real_t scale;
     mat_t *node_in_acs;
     mat_t *node_out_ers;
-    mat_t *in_er;
+    mat_t *node_in_ers;
 } tree_nodes_bp_walker_args_t;
 
 static int backprop_tree_nodes_walker(output_t *output, output_node_id_t node,
@@ -517,7 +555,7 @@ static int backprop_tree_nodes_walker(output_t *output, output_node_id_t node,
     tnbw_args = (tree_nodes_bp_walker_args_t *)args;
     in_ac = tnbw_args->node_in_acs + node;
     out_er = tnbw_args->node_out_ers + node;
-    in_er = tnbw_args->in_er;
+    in_er = tnbw_args->node_in_ers + node;
     wt_updater = tnbw_args->wt_updaters[node];
 
     // propagate from out_er to in_er
@@ -543,21 +581,21 @@ static int backprop_tree_nodes_walker(output_t *output, output_node_id_t node,
 // this function do back-prop within ogu_data_t's buffer
 static int backprop_tree_nodes(output_t *output, egs_batch_t *batch,
         wt_updater_t **wt_updaters, real_t scale, mat_t *node_in_acs,
-        mat_t *node_out_ers, mat_t *in_er)
+        mat_t *node_out_ers, mat_t *node_in_ers)
 {
     tree_nodes_bp_walker_args_t tnbw_args;
     int i;
 
     ST_CHECK_PARAM(output == NULL || batch == NULL || wt_updaters == NULL
             || node_in_acs == NULL || node_out_ers == NULL
-            || in_er == NULL, -1);
+            || node_in_ers == NULL, -1);
 
     // do matrix multiplication
     tnbw_args.wt_updaters = wt_updaters;
     tnbw_args.scale = scale;
     tnbw_args.node_in_acs = node_in_acs;
     tnbw_args.node_out_ers = node_out_ers;
-    tnbw_args.in_er = in_er;
+    tnbw_args.node_in_ers = node_in_ers;
     for (i = 0; i < batch->num_egs; i++) {
         if (batch->targets[i] == PADDING_ID) {
             continue;
@@ -574,7 +612,7 @@ static int backprop_tree_nodes(output_t *output, egs_batch_t *batch,
 
 int out_glue_updater_backprop(glue_updater_t *glue_updater,
         comp_updater_t *comp_updater, egs_batch_t *batch,
-        mat_t *in_ac, mat_t *out_er, mat_t *in_er)
+        mat_t *in_ac, mat_t *out_er /* unused */, mat_t *in_er)
 {
     output_t *output;
     ogu_data_t *data;
@@ -586,22 +624,22 @@ int out_glue_updater_backprop(glue_updater_t *glue_updater,
     output = comp_updater->out_updater->output;
 
     // prepare_tree_nodes() should be called in out_glue_updater_forward.
+    // which would fill in node_in_acs and resize node_in_ers
+    if (backprop_tree_nodes(output, batch, glue_updater->wt_updaters,
+                comp_updater->comp->comp_scale, data->node_in_acs,
+                comp_updater->out_updater->node_ers,
+                data->node_in_ers) < 0) {
+        ST_WARNING("Failed to backprop_tree_nodes.");
+        return -1;
+    }
+
     if (clear_tree_node_iters(output, batch, data) < 0) {
         ST_WARNING("Failed to clear_tree_node_iters.");
         return -1;
     }
 
-    if (fill_tree_nodes(output, batch,
-                NULL /* in_ac should be filled druing forward pass. */,
-                out_er, data) < 0) {
-        ST_WARNING("Failed to fill_tree_nodes.");
-        return -1;
-    }
-
-    if (backprop_tree_nodes(output, batch, glue_updater->wt_updaters,
-                comp_updater->comp->comp_scale, data->node_in_acs,
-                comp_updater->out_updater->node_ers, in_er) < 0) {
-        ST_WARNING("Failed to backprop_tree_nodes.");
+    if (export_tree_node_ers(output, batch, in_er, data) < 0) {
+        ST_WARNING("Failed to export_tree_node_ers.");
         return -1;
     }
 

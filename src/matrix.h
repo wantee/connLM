@@ -213,9 +213,23 @@ int mat_move_up(mat_t *mat, size_t dst_row, size_t src_row);
  * @param[in] dst_row the row of dst matrix.
  * @param[in] src the src matrix.
  * @param[in] src_row the row of src matrix.
+ * @see mat_acc_row
  * @return non-zero if any error.
  */
 int mat_cpy_row(mat_t *dst, size_t dst_row, mat_t *src, size_t src_row);
+
+/**
+ * Accumulate a row from one matrice onto another.
+ * num_cols of the two matrice must be equal.
+ * @ingroup g_matrix
+ * @param[in] dst the dst matrix.
+ * @param[in] dst_row the row of dst matrix.
+ * @param[in] src the src matrix.
+ * @param[in] src_row the row of src matrix.
+ * @see mat_cpy_row
+ * @return non-zero if any error.
+ */
+int mat_acc_row(mat_t *dst, size_t dst_row, mat_t *src, size_t src_row);
 
 /**
  * Extract a sub-matrix from one matrix.
