@@ -361,13 +361,13 @@ static void* driver_thread(void *args)
 
         if (updater_feed(updater, wp) < 0) {
             ST_WARNING("Failed to updater_feed.");
-            goto ERR;
+            goto RELEASE_WP;
         }
 
         if (driver_steps(driver, tid, &logp, &logp_sent,
                     &num_sents, &num_words) < 0) {
             ST_WARNING("Failed to driver_steps.");
-            goto ERR;
+            goto RELEASE_WP;
         }
 
         thr->stat->num_words = num_words;
@@ -396,6 +396,13 @@ static void* driver_thread(void *args)
     }
 
     return NULL;
+
+RELEASE_WP:
+    if (reader_release_word_pool(reader, wp) < 0) {
+        ST_WARNING("Failed to reader_release_word_pool.");
+        goto ERR;
+    }
+
 ERR:
     driver->err = -1;
 
@@ -479,12 +486,12 @@ static int driver_do_run(driver_t *driver)
         }
     }
 
-    if (driver->err != 0) {
+    if(reader_wait(driver->reader) != 0) {
+        ST_WARNING("Failed to reader_wait.");
         goto ERR;
     }
 
-    if(reader_wait(driver->reader) != 0) {
-        ST_WARNING("Failed to reader_wait.");
+    if (driver->err != 0) {
         goto ERR;
     }
 
