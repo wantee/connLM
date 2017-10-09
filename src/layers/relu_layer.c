@@ -35,7 +35,7 @@ int relu_activate(layer_t *layer, mat_t *ac)
     ST_CHECK_PARAM(layer == NULL || ac == NULL, -1);
 
     for (i = 0; i < ac->num_rows; i++) {
-        for (j = 0; i < ac->num_cols; j++) {
+        for (j = 0; j < ac->num_cols; j++) {
             if (MAT_VAL(ac, i, j) < 0) {
                 MAT_VAL(ac, i, j) = 0.0;
             }
@@ -57,7 +57,7 @@ int relu_deriv(layer_t *layer, mat_t *er, mat_t *ac)
     }
 
     for (i = 0; i < er->num_rows; i++) {
-        for (j = 0; i < er->num_cols; j++) {
+        for (j = 0; j < er->num_cols; j++) {
             if (MAT_VAL(ac, i, j) <= 0) {
                 MAT_VAL(er, i, j) = 0.0;
             }
@@ -74,7 +74,7 @@ int relu_random_state(layer_t *layer, mat_t *state)
     ST_CHECK_PARAM(layer == NULL || state == NULL, -1);
 
     for (i = 0; i < state->num_rows; i++) {
-        for (j = 0; i < state->num_cols; j++) {
+        for (j = 0; j < state->num_cols; j++) {
             MAT_VAL(state, i, j) = st_random(-50.0, 50.0);
             if (MAT_VAL(state, i, j) < 0) {
                 MAT_VAL(state, i, j) = 0.0;

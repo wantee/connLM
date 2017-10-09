@@ -364,7 +364,7 @@ int linear_activate(layer_t *layer, mat_t *ac)
 
     if (param->scale != 1.0) {
         for (i = 0; i < ac->num_rows; i++) {
-            for (j = 0; i < ac->num_cols; j++) {
+            for (j = 0; j < ac->num_cols; j++) {
                 MAT_VAL(ac, i, j) *= param->scale;
             }
         }
@@ -384,7 +384,7 @@ int linear_deriv(layer_t *layer, mat_t *er, mat_t *ac)
 
     if (param->scale != 1.0) {
         for (i = 0; i < er->num_rows; i++) {
-            for (j = 0; i < er->num_cols; j++) {
+            for (j = 0; j < er->num_cols; j++) {
                 MAT_VAL(er, i, j) *= param->scale;
             }
         }
@@ -403,7 +403,7 @@ int linear_random_state(layer_t *layer, mat_t *state)
     param = (linear_data_t *)layer->extra;
 
     for (i = 0; i < state->num_rows; i++) {
-        for (j = 0; i < state->num_cols; j++) {
+        for (j = 0; j < state->num_cols; j++) {
             MAT_VAL(state, i, j) = st_random(-50.0, 50.0) * param->scale;
         }
     }

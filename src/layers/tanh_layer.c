@@ -53,7 +53,7 @@ int tanh_deriv(layer_t *layer, mat_t *er, mat_t *ac)
     }
 
     for (i = 0; i < er->num_rows; i++) {
-        for (j = 0; i < er->num_cols; j++) {
+        for (j = 0; j < er->num_cols; j++) {
             MAT_VAL(er, i, j) *= (1 - MAT_VAL(ac, i, j) * MAT_VAL(ac, i, j));
         }
     }
@@ -68,7 +68,7 @@ int tanh_random_state(layer_t *layer, mat_t *state)
     ST_CHECK_PARAM(layer == NULL || state == NULL, -1);
 
     for (i = 0; i < state->num_rows; i++) {
-        for (j = 0; i < state->num_cols; j++) {
+        for (j = 0; j < state->num_cols; j++) {
             MAT_VAL(state, i, j) = st_random(-1.0, 1.0);
         }
     }
