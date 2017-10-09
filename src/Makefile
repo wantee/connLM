@@ -88,19 +88,18 @@ BINS = bin/connlm-train \
        bin/connlm-draw \
        bin/connlm-merge
 
-#TESTS = tests/maxent-test
 TESTS = tests/utils-test \
         tests/output-test \
         tests/input-test \
         tests/layer-test \
         tests/glue-test \
         tests/comp-test \
-        tests/connlm-test
+        tests/connlm-test \
+        tests/matrix-test
 ifneq (,$(findstring _USE_BLAS_,$(CFLAGS)))
     TESTS += tests/blas-test
 endif
 
-#VAL_TESTS = tests/maxent-test
 VAL_TESTS = tests/utils-test \
             tests/input-test \
             tests/output-test \

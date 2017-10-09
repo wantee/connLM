@@ -187,6 +187,15 @@ int mat_cpy(mat_t *dst, mat_t *src);
 void mat_assign(mat_t *dst, mat_t *src);
 
 /**
+ * Check whether two matrice are equal.
+ * @ingroup g_matrix
+ * @param[in] mat1 the first matrix.
+ * @param[in] mat2 the first matrix.
+ * @return true if equal, false otherwise.
+ */
+bool mat_eq(mat_t *mat1, mat_t *mat2);
+
+/**
  * Move rows in a matrix.
  * @ingroup g_matrix
  * @param[in] mat the matrix.

@@ -199,6 +199,31 @@ void mat_assign(mat_t *dst, mat_t *src)
     dst->is_const = true;
 }
 
+bool mat_eq(mat_t *mat1, mat_t *mat2)
+{
+    size_t i, j;
+
+    ST_CHECK_PARAM(mat1 == NULL || mat2 == NULL, false);
+
+    if (mat1->num_rows != mat2->num_rows) {
+        return false;
+    }
+
+    if (mat1->num_cols != mat2->num_cols) {
+        return false;
+    }
+
+    for (i = 0; i < mat1->num_rows; i++) {
+        for (j = 0; j < mat1->num_cols; j++) {
+            if (MAT_VAL(mat1, i, j) != MAT_VAL(mat2, i, j)) {
+                return false;
+            }
+        }
+    }
+
+    return true;
+}
+
 int mat_move_up(mat_t *mat, size_t dst_row, size_t src_row)
 {
     ST_CHECK_PARAM(mat == NULL, -1);
@@ -516,7 +541,7 @@ int add_mat_mat(real_t alpha, mat_t *A, mat_trans_t trans_A,
     size_t i, j, t;
 
     if (A->stride != A->num_cols || B->stride != B->num_cols
-            || C->stride == C->num_cols) {
+            || C->stride != C->num_cols) {
         ST_WARNING("Do not support num_cols != stride for now");
         return -1;
     }
@@ -539,7 +564,7 @@ int add_mat_mat(real_t alpha, mat_t *A, mat_trans_t trans_A,
                 for (t = 0; t < k; t++) {
                     sum += aa[t] * bb[t*n];
                 }
-                cc[j] = alpha * sum;
+                cc[j] += alpha * sum;
             }
             aa += k;
             cc += n;
@@ -568,7 +593,7 @@ int add_mat_mat(real_t alpha, mat_t *A, mat_trans_t trans_A,
                 for (t = 0; t < k; t++) {
                     sum += aa[t] * bb[t];
                 }
-                cc[j] = alpha * sum;
+                cc[j] += alpha * sum;
                 bb += k;
             }
             aa += k;
@@ -584,7 +609,7 @@ int add_mat_mat(real_t alpha, mat_t *A, mat_trans_t trans_A,
                 for (t = 0; t < k; t++) {
                     sum += aa[t*m] * bb[t];
                 }
-                cc[j] = alpha * sum;
+                cc[j] += alpha * sum;
             }
             bb += k;
             cc += n;
