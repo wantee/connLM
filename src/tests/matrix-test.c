@@ -159,7 +159,7 @@ static int unit_test_one_add_mat_mat(real_t alpha, real_t beta,
 
     if (add_mat_mat(alpha, &A, trans_A,
                 &B, trans_B, beta, &C) < 0) {
-        return -1;
+        goto ERR;
     }
 
     if (!mat_eq(&C, &ref)) {
@@ -173,10 +173,23 @@ static int unit_test_one_add_mat_mat(real_t alpha, real_t beta,
         fprintf(stdout, "\n");
         assert (mat_save_body(&ref, stdout, CONN_FMT_TXT, "REF") == 0);
 #endif
-        return -1;
+        goto ERR;
     }
 
+    mat_destroy(&A);
+    mat_destroy(&B);
+    mat_destroy(&C);
+    mat_destroy(&ref);
+
     return 0;
+
+ERR:
+    mat_destroy(&A);
+    mat_destroy(&B);
+    mat_destroy(&C);
+    mat_destroy(&ref);
+
+    return -1;
 }
 
 static int unit_test_add_mat_mat()
@@ -198,23 +211,27 @@ static int unit_test_add_mat_mat()
     if (unit_test_one_add_mat_mat(alpha, beta, trans_A, trans_B, false) < 0) {
         goto FAILED;
     }
+    fprintf(stderr, "Success\n");
 
     fprintf(stderr, "    Case %d...", ncase++);
     if (unit_test_one_add_mat_mat(alpha, beta, trans_A, trans_B, true) < 0) {
         goto FAILED;
     }
+    fprintf(stderr, "Success\n");
 
     fprintf(stderr, "    Case %d...", ncase++);
     beta = 0.0;
     if (unit_test_one_add_mat_mat(alpha, beta, trans_A, trans_B, false) < 0) {
         goto FAILED;
     }
+    fprintf(stderr, "Success\n");
 
     fprintf(stderr, "    Case %d...", ncase++);
     beta = 2.0;
     if (unit_test_one_add_mat_mat(alpha, beta, trans_A, trans_B, false) < 0) {
         goto FAILED;
     }
+    fprintf(stderr, "Success\n");
 
     /***************************************************/
     /***************************************************/
@@ -226,11 +243,13 @@ static int unit_test_add_mat_mat()
     if (unit_test_one_add_mat_mat(alpha, beta, trans_A, trans_B, false) < 0) {
         goto FAILED;
     }
+    fprintf(stderr, "Success\n");
 
     fprintf(stderr, "    Case %d...", ncase++);
     if (unit_test_one_add_mat_mat(alpha, beta, trans_A, trans_B, true) < 0) {
         goto FAILED;
     }
+    fprintf(stderr, "Success\n");
 
     /***************************************************/
     /***************************************************/
@@ -242,11 +261,13 @@ static int unit_test_add_mat_mat()
     if (unit_test_one_add_mat_mat(alpha, beta, trans_A, trans_B, false) < 0) {
         goto FAILED;
     }
+    fprintf(stderr, "Success\n");
 
     fprintf(stderr, "    Case %d...", ncase++);
     if (unit_test_one_add_mat_mat(alpha, beta, trans_A, trans_B, true) < 0) {
         goto FAILED;
     }
+    fprintf(stderr, "Success\n");
 
     /***************************************************/
     /***************************************************/
@@ -258,13 +279,14 @@ static int unit_test_add_mat_mat()
     if (unit_test_one_add_mat_mat(alpha, beta, trans_A, trans_B, false) < 0) {
         goto FAILED;
     }
+    fprintf(stderr, "Success\n");
 
     fprintf(stderr, "    Case %d...", ncase++);
     if (unit_test_one_add_mat_mat(alpha, beta, trans_A, trans_B, true) < 0) {
         goto FAILED;
     }
+    fprintf(stderr, "Success\n");
 
-    fprintf(stderr, "Passed\n");
     return 0;
 
 FAILED:

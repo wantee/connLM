@@ -106,7 +106,8 @@ VAL_TESTS = tests/utils-test \
             tests/layer-test \
             tests/glue-test \
             tests/comp-test \
-            tests/connlm-test
+            tests/connlm-test \
+            tests/matrix-test
 
 define get_target
 

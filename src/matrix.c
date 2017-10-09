@@ -540,17 +540,15 @@ int add_mat_mat(real_t alpha, mat_t *A, mat_trans_t trans_A,
     real_t *aa, *bb, *cc, sum;
     size_t i, j, t;
 
-    if (A->stride != A->num_cols || B->stride != B->num_cols
-            || C->stride != C->num_cols) {
-        ST_WARNING("Do not support num_cols != stride for now");
-        return -1;
-    }
-
     if (beta == 0.0) {
-        memset(C->vals, 0, sizeof(real_t) * m * n);
+        memset(C->vals, 0, sizeof(real_t) * m * C->stride);
     } else if (beta != 1.0) {
-        for (i = 0; i < m * n; i++) {
-            C->vals[i] *= beta;
+        cc = C->vals;
+        for (i = 0; i < m; i++) {
+            for (j = 0; j < n; j++) {
+                cc[j] *= beta;
+            }
+            cc += C->stride;
         }
     }
 
@@ -562,12 +560,12 @@ int add_mat_mat(real_t alpha, mat_t *A, mat_trans_t trans_A,
                 bb = B->vals + j;
                 sum = 0.0;
                 for (t = 0; t < k; t++) {
-                    sum += aa[t] * bb[t*n];
+                    sum += aa[t] * bb[t * B->stride];
                 }
                 cc[j] += alpha * sum;
             }
-            aa += k;
-            cc += n;
+            aa += A->stride;
+            cc += C->stride;
         }
     } else if (trans_A == MT_Trans && trans_B == MT_NoTrans) {
         aa = A->vals;
@@ -578,10 +576,10 @@ int add_mat_mat(real_t alpha, mat_t *A, mat_trans_t trans_A,
                 for (j = 0; j < n; j++) {
                     cc[j] += alpha * aa[i] * bb[j];
                 }
-                cc += n;
+                cc += C->stride;
             }
-            aa += m;
-            bb += n;
+            aa += A->stride;
+            bb += B->stride;
         }
     } else if (trans_A == MT_NoTrans && trans_B == MT_Trans) {
         aa = A->vals;
@@ -594,25 +592,24 @@ int add_mat_mat(real_t alpha, mat_t *A, mat_trans_t trans_A,
                     sum += aa[t] * bb[t];
                 }
                 cc[j] += alpha * sum;
-                bb += k;
+                bb += B->stride;
             }
-            aa += k;
-            cc += n;
+            aa += A->stride;
+            cc += C->stride;
         }
     } else if (trans_A == MT_Trans && trans_B == MT_Trans) {
         bb = B->vals;
-        cc = C->vals;
-        for (i = 0; i < m; i++) {
-            aa = A->vals + i;
-            for (j = 0; j < n; j++) {
+        for (j = 0; j < n; j++) {
+            cc = C->vals + j;
+            for (i = 0; i < m; i++) {
+                aa = A->vals + i;
                 sum = 0.0;
                 for (t = 0; t < k; t++) {
-                    sum += aa[t*m] * bb[t];
+                    sum += aa[t * A->stride] * bb[t];
                 }
-                cc[j] += alpha * sum;
+                cc[i * C->stride] += alpha * sum;
             }
-            bb += k;
-            cc += n;
+            bb += B->stride;
         }
     }
 #endif
