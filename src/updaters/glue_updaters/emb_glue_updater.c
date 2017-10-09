@@ -87,7 +87,7 @@ int emb_glue_updater_init(glue_updater_t *glue_updater)
 
     ST_CHECK_PARAM(glue_updater == NULL, -1);
 
-    glue= glue_updater->glue;
+    glue = glue_updater->glue;
 
     if (strcasecmp(glue->type, EMB_GLUE_NAME) != 0) {
         ST_WARNING("Not a emb glue_updater. [%s]", glue->type);
@@ -105,6 +105,55 @@ int emb_glue_updater_init(glue_updater_t *glue_updater)
 ERR:
     safe_egu_data_destroy(glue_updater->extra);
     return -1;
+}
+
+int emb_glue_updater_setup(glue_updater_t *glue_updater,
+        comp_updater_t *comp_updater, bool backprop)
+{
+    egu_data_t *data;
+
+    ST_CHECK_PARAM(glue_updater == NULL, -1);
+
+    data = (egu_data_t *)glue_updater->extra;
+
+    if (backprop) {
+        data->word_buf.fmt = SP_MAT_COO;
+    }
+
+    return 0;
+}
+
+int emb_glue_updater_prepare(glue_updater_t *glue_updater,
+        comp_updater_t *comp_updater /* unused */, egs_batch_t *batch)
+{
+    egu_data_t *data;
+    size_t total_words;
+    int b;
+
+    ST_CHECK_PARAM(glue_updater == NULL, -1);
+
+    data = (egu_data_t *)glue_updater->extra;
+
+    if (data->word_buf.fmt != SP_MAT_UNSET) {
+        total_words = 0;
+        for (b = 0; b < batch->num_egs; b++) {
+            total_words += batch->inputs->num_words;
+        }
+
+        if (sp_mat_resize(&data->word_buf, total_words,
+                    batch->num_egs,
+                    glue_updater->wt_updaters[0]->wt.num_rows) < 0) {
+            ST_WARNING("Failed to sp_mat_resize.");
+            return -1;
+        }
+
+        if (sp_mat_clear(&data->word_buf) < 0) {
+            ST_WARNING("Failed to sp_mat_clear.");
+            return -1;
+        }
+    }
+
+    return 0;
 }
 
 int emb_glue_updater_forward(glue_updater_t *glue_updater,

@@ -366,7 +366,8 @@ int add_mat_mat(real_t alpha, mat_t *A, mat_trans_t trans_A,
  * @ingroup g_matrix
  */
 typedef enum _sparse_matrix_format_t_ {
-    SP_MAT_CSR = 0, /**< CSR format. */
+    SP_MAT_UNSET = 0, /**< unset format. */
+    SP_MAT_CSR = 1, /**< CSR format. */
     SP_MAT_CSC, /**< CSC format. */
     SP_MAT_COO, /**< COO format. */
 } sp_mat_fmt_t;

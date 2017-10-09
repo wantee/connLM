@@ -55,6 +55,9 @@ typedef struct _glue_updater_implementation_t_ {
     int (*setup)(glue_updater_t *glue_updater, comp_updater_t *comp_updater,
             bool backprop); /**< setup glue updater.*/
 
+    int (*prepare)(glue_updater_t *glue_updater,
+            comp_updater_t *comp_updater, egs_batch_t *batch); /**< prepare glue updater.*/
+
     int (*forward)(glue_updater_t *glue_updater,
             comp_updater_t *comp_updater, egs_batch_t *batch,
             mat_t *in_ac, mat_t *out_ac); /**< forward glue updater.*/
@@ -172,6 +175,17 @@ int glue_updater_setup_pre_ac_state(glue_updater_t *glue_updater,
  * @return non-zero value if any error.
  */
 int glue_updater_set_rand_seed(glue_updater_t *glue_updater, unsigned int *seed);
+
+/**
+ * Prepare to run for a glue_updater.
+ * @ingroup g_updater_glue
+ * @param[in] glue_updater the glue_updater.
+ * @param[in] comp_updater the comp_updater.
+ * @param[in] batch egs batch.
+ * @return non-zero value if any error.
+ */
+int glue_updater_prepare(glue_updater_t *glue_updater,
+        comp_updater_t *comp_updater, egs_batch_t *batch);
 
 /**
  * Feed-forward a batch for a glue_updater.

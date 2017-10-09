@@ -68,6 +68,17 @@ int out_glue_updater_setup(glue_updater_t *glue_updater,
         comp_updater_t *comp_updater, bool backprop);
 
 /**
+ * Prepare to run for a out_glue_updater.
+ * @ingroup g_glue_updater_out
+ * @param[in] glue_updater glue_updater.
+ * @param[in] comp_updater the comp_updater.
+ * @param[in] batch input batch.
+ * @return non-zero value if any error.
+ */
+int out_glue_updater_prepare(glue_updater_t *glue_updater,
+        comp_updater_t *comp_updater, egs_batch_t *batch);
+
+/**
  * Feed-forward a batch for a out_glue_updater.
  * @ingroup g_glue_updater_out
  * @param[in] glue_updater glue_updater.

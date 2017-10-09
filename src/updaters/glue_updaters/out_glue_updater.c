@@ -307,6 +307,27 @@ static int prepare_tree_nodes(output_t *output, egs_batch_t *batch,
     return 0;
 }
 
+int out_glue_updater_prepare(glue_updater_t *glue_updater,
+        comp_updater_t *comp_updater, egs_batch_t *batch)
+{
+    ogu_data_t *data;
+    output_t *output;
+
+    ST_CHECK_PARAM(glue_updater == NULL || comp_updater == NULL
+            || batch == NULL, -1);
+
+    data = (ogu_data_t *)glue_updater->extra;
+    output = comp_updater->out_updater->output;
+
+    if (prepare_tree_nodes(output, batch,
+                glue_updater->glue->in_length, data) < 0) {
+        ST_WARNING("Failed to prepare_tree_nodes.");
+        return -1;
+    }
+
+    return 0;
+}
+
 typedef struct _tree_nodes_walker_args_t_ {
     mat_t *in_vals;
     int batch_i;
@@ -344,7 +365,10 @@ static int fill_tree_node_acs(output_t *output, egs_batch_t *batch,
     ST_CHECK_PARAM(output == NULL || data == NULL
             || in_ac == NULL || batch == NULL, -1);
 
-    //assert dat->node_iters be cleared
+    if (clear_tree_node_iters(output, batch, data) < 0) {
+        ST_WARNING("Failed to clear_tree_node_iters.");
+        return -1;
+    }
 
     tnw_args.in_vals = in_ac;
     tnw_args.data = data;
@@ -463,12 +487,6 @@ int out_glue_updater_forward(glue_updater_t *glue_updater,
         return -1;
     }
 
-    // resize and clear buffers
-    if (prepare_tree_nodes(output, batch, in_ac->num_cols, data) < 0) {
-        ST_WARNING("Failed to prepare_tree_nodes.");
-        return -1;
-    }
-
     if (fill_tree_node_acs(output, batch, in_ac, data) < 0) {
         ST_WARNING("Failed to fill_tree_node_acs.");
         return -1;
@@ -515,7 +533,10 @@ static int export_tree_node_ers(output_t *output, egs_batch_t *batch,
     ST_CHECK_PARAM(output == NULL || data == NULL
             || in_er == NULL || batch == NULL, -1);
 
-    //assert dat->node_iters be cleared
+    if (clear_tree_node_iters(output, batch, data) < 0) {
+        ST_WARNING("Failed to clear_tree_node_iters.");
+        return -1;
+    }
 
     tnw_args.in_vals = in_er;
     tnw_args.data = data;
@@ -623,18 +644,11 @@ int out_glue_updater_backprop(glue_updater_t *glue_updater,
     data = (ogu_data_t *)glue_updater->extra;
     output = comp_updater->out_updater->output;
 
-    // prepare_tree_nodes() should be called in out_glue_updater_forward.
-    // which would fill in node_in_acs and resize node_in_ers
     if (backprop_tree_nodes(output, batch, glue_updater->wt_updaters,
                 comp_updater->comp->comp_scale, data->node_in_acs,
                 comp_updater->out_updater->node_ers,
                 data->node_in_ers) < 0) {
         ST_WARNING("Failed to backprop_tree_nodes.");
-        return -1;
-    }
-
-    if (clear_tree_node_iters(output, batch, data) < 0) {
-        ST_WARNING("Failed to clear_tree_node_iters.");
         return -1;
     }
 

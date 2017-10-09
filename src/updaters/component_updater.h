@@ -151,13 +151,13 @@ int comp_updater_backprop(comp_updater_t *comp_updater, egs_batch_t *batch);
 int comp_updater_save_state(comp_updater_t *comp_updater);
 
 /**
- * Prepare to forward a word for comp_updater.
+ * Prepare to forward for comp_updater.
  * @ingroup g_updater_comp
  * @param[in] comp_updater comp_updater.
- * @param[in] batch_size batch size.
+ * @param[in] batch input batch.
  * @return non-zero value if any error.
  */
-int comp_updater_prepare(comp_updater_t *comp_updater, int batch_size);
+int comp_updater_prepare(comp_updater_t *comp_updater, egs_batch_t *batch);
 
 /**
  * Finish running for comp_updater.

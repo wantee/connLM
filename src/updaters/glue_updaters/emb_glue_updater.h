@@ -56,6 +56,28 @@ void emb_glue_updater_destroy(glue_updater_t* glue_updater);
 int emb_glue_updater_init(glue_updater_t *glue_updater);
 
 /**
+ * Setup emb_glue_updater for running.
+ * @ingroup g_glue_updater_emb
+ * @param[in] glue_updater glue_updater.
+ * @param[in] comp_updater the comp_updater.
+ * @param[in] backprop whether do backprop.
+ * @return non-zero value if any error.
+ */
+int emb_glue_updater_setup(glue_updater_t *glue_updater,
+        comp_updater_t *comp_updater, bool backprop);
+
+/**
+ * Prepare to run for a emb_glue_updater.
+ * @ingroup g_glue_updater_emb
+ * @param[in] glue_updater glue_updater.
+ * @param[in] comp_updater [unused]
+ * @param[in] batch input batch.
+ * @return non-zero value if any error.
+ */
+int emb_glue_updater_prepare(glue_updater_t *glue_updater,
+        comp_updater_t *comp_updater, egs_batch_t *batch);
+
+/**
  * Feed-forward one word for a emb_glue_updater.
  * @ingroup g_glue_updater_emb
  * @param[in] glue_updater glue_updater.

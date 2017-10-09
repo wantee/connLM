@@ -789,7 +789,7 @@ int comp_updater_save_state(comp_updater_t *comp_updater)
     return 0;
 }
 
-int comp_updater_prepare(comp_updater_t *comp_updater, int batch_size)
+int comp_updater_prepare(comp_updater_t *comp_updater, egs_batch_t *batch)
 {
     int i;
 
@@ -797,13 +797,21 @@ int comp_updater_prepare(comp_updater_t *comp_updater, int batch_size)
 
     for (i = 2; i < comp_updater->comp->num_layer; i++) {
         if (layer_updater_prepare(comp_updater->layer_updaters[i],
-                    batch_size) < 0) {
+                    batch->num_egs) < 0) {
             ST_WARNING("Failed to layer_updater_prepare.[%s]",
                     comp_updater->comp->layers[i]->name);
             return -1;
         }
     }
 
+    for (i = 0; i < comp_updater->comp->num_glue; i++) {
+        if (glue_updater_prepare(comp_updater->glue_updaters[i],
+                    comp_updater, batch) < 0) {
+            ST_WARNING("Failed to glue_updater_prepare.[%s]",
+                    comp_updater->comp->glues[i]->name);
+            return -1;
+        }
+    }
     return 0;
 }
 

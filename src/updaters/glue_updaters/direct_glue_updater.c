@@ -499,6 +499,23 @@ static int reset_node_iters(out_updater_t *out_updater, egs_batch_t *batch)
     return 0;
 }
 
+int direct_glue_updater_prepare(glue_updater_t *glue_updater,
+        comp_updater_t *comp_updater /* unused */, egs_batch_t *batch)
+{
+    dgu_data_t *data;
+
+    ST_CHECK_PARAM(glue_updater == NULL || batch == NULL, -1);
+
+    data = (dgu_data_t *)glue_updater->extra;
+
+    if (dgu_data_resize_batch(data, batch->num_egs) < 0) {
+        ST_WARNING("Failed to dgu_data_resize_batch.");
+        return -1;
+    }
+
+    return 0;
+}
+
 int direct_glue_updater_forward(glue_updater_t *glue_updater,
         comp_updater_t *comp_updater, egs_batch_t *batch,
         mat_t* in_ac /* unused */, mat_t *out_ac /* unused */)
@@ -514,11 +531,6 @@ int direct_glue_updater_forward(glue_updater_t *glue_updater,
 
     data = (dgu_data_t *)glue_updater->extra;
     out_updater = comp_updater->out_updater;
-
-    if (dgu_data_resize_batch(data, batch->num_egs) < 0) {
-        ST_WARNING("Failed to dgu_data_resize_batch.");
-        return -1;
-    }
 
     if (reset_node_iters(out_updater, batch) < 0) {
         ST_WARNING("Failed to reset_node_iters.");
@@ -696,16 +708,10 @@ int direct_glue_updater_forward_util_out(glue_updater_t *glue_updater,
         comp_updater_t *comp_updater, egs_batch_t *batch,
         mat_t* in_ac /* unused */, mat_t* out_ac /* unused */)
 {
-    dgu_data_t *data;
     out_updater_t *out_updater;
     int b;
 
     out_updater = comp_updater->out_updater;
-    data = (dgu_data_t *)glue_updater->extra;
-    if (dgu_data_resize_batch(data, batch->num_egs) < 0) {
-        ST_WARNING("Failed to dgu_data_resize_batch.");
-        return -1;
-    }
 
     for (b = 0; b < batch->num_egs; b++) {
         if (direct_compute_hash(glue_updater, b, batch->inputs + b) < 0) {

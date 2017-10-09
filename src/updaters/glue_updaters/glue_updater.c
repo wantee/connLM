@@ -45,19 +45,20 @@
 
 static glue_updater_impl_t GLUE_UPDATER_IMPL[] = {
     {DIRECT_GLUE_NAME, direct_glue_updater_init, direct_glue_updater_destroy,
-        direct_glue_updater_setup,
+        direct_glue_updater_setup, direct_glue_updater_prepare,
         direct_glue_updater_forward, direct_glue_updater_backprop,
         direct_glue_updater_forward_util_out, direct_glue_updater_forward_out,
         direct_glue_updater_forward_out_words,
         direct_glue_updater_gen_keep_mask},
-    {FC_GLUE_NAME, NULL, NULL,
+    {FC_GLUE_NAME, NULL, NULL, NULL,
         NULL, fc_glue_updater_forward, fc_glue_updater_backprop,
         fc_glue_updater_forward, NULL, NULL},
     {EMB_GLUE_NAME, emb_glue_updater_init, emb_glue_updater_destroy,
-        NULL, emb_glue_updater_forward, emb_glue_updater_backprop,
+        emb_glue_updater_setup, emb_glue_updater_prepare,
+        emb_glue_updater_forward, emb_glue_updater_backprop,
         emb_glue_updater_forward, NULL, NULL},
     {OUT_GLUE_NAME, out_glue_updater_init, out_glue_updater_destroy,
-        out_glue_updater_setup,
+        out_glue_updater_setup, out_glue_updater_prepare,
         out_glue_updater_forward, out_glue_updater_backprop,
         NULL, out_glue_updater_forward_out, out_glue_updater_forward_out_words,
         NULL},
@@ -329,6 +330,23 @@ int glue_updater_gen_keep_mask(glue_updater_t *glue_updater, int batch_size)
                 &glue_updater->keep_mask) < 0) {
         ST_WARNING("Failed to mat_gen_keep_mask.");
         return -1;
+    }
+
+    return 0;
+}
+
+int glue_updater_prepare(glue_updater_t *glue_updater,
+        comp_updater_t *comp_updater, egs_batch_t *batch)
+{
+    ST_CHECK_PARAM(glue_updater == NULL, -1);
+
+    if (glue_updater->impl != NULL && glue_updater->impl->prepare != NULL) {
+        if (glue_updater->impl->prepare(glue_updater, comp_updater,
+                    batch) < 0) {
+            ST_WARNING("Failed to glue_updater->impl->prepare.[%s]",
+                    glue_updater->glue->name);
+            return -1;
+        }
     }
 
     return 0;

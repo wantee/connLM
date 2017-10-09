@@ -50,7 +50,7 @@ static int updater_reset(updater_t *updater)
     return 0;
 }
 
-static int updater_prepare(updater_t *updater, int batch_size)
+static int updater_prepare(updater_t *updater)
 {
     int c;
 
@@ -58,7 +58,7 @@ static int updater_prepare(updater_t *updater, int batch_size)
 
     for (c = 0; c < updater->connlm->num_comp; c++) {
         if (comp_updater_prepare(updater->comp_updaters[c],
-                    batch_size) < 0) {
+                    updater->batches + c) < 0) {
             ST_WARNING("Failed to comp_updater_prepare[%s].",
                     updater->connlm->comps[c]->name);
             return -1;
@@ -418,7 +418,7 @@ int updater_step(updater_t *updater)
             vocab_get_word(updater->connlm->vocab, word), word);
 #endif
 
-    if (updater_prepare(updater, updater->targets.size) < 0) {
+    if (updater_prepare(updater) < 0) {
         ST_WARNING("updater_prepare.");
         return -1;
     }
@@ -556,9 +556,14 @@ int updater_sampling(updater_t *updater, bool startover)
             ST_WARNING("Failed to updater_feed.");
             return -1;
         }
+
+        if (updater_move_input(updater) < 0) {
+            ST_WARNING("Failed to updater_move_input.");
+            return -1;
+        }
     }
 
-    if (updater_prepare(updater, 1) < 0) {
+    if (updater_prepare(updater) < 0) {
         ST_WARNING("updater_prepare.");
         return -1;
     }
@@ -764,7 +769,7 @@ int updater_random_state(updater_t *updater, mat_t *state)
     return 0;
 }
 
-static int updater_cleanup(updater_t *updater, int batch_size)
+static int updater_cleanup(updater_t *updater)
 {
     int c;
 
@@ -781,8 +786,9 @@ static int updater_cleanup(updater_t *updater, int batch_size)
     }
 
     for (c = 0; c < updater->connlm->num_comp; c++) {
-        if (comp_updater_prepare(updater->comp_updaters[c], batch_size) < 0) {
-            ST_WARNING("Failed to comp_updater_clear[%s].",
+        if (comp_updater_prepare(updater->comp_updaters[c],
+                    updater->batches + c) < 0) {
+            ST_WARNING("Failed to comp_updater_prepare[%s].",
                     updater->connlm->comps[c]->name);
             return -1;
         }
@@ -851,7 +857,7 @@ int updater_step_with_state(updater_t *updater, mat_t *state,
 {
     ST_CHECK_PARAM(updater == NULL || state == NULL, -1);
 
-    if (updater_cleanup(updater, state->num_rows) < 0) {
+    if (updater_cleanup(updater) < 0) {
         ST_WARNING("Failed to updater_cleanup.");
         return -1;
     }
@@ -987,9 +993,13 @@ int updater_sampling_state(updater_t *updater, mat_t *state,
             ST_WARNING("Failed to updater_feed.");
             return -1;
         }
+        if (updater_move_input(updater) < 0) {
+            ST_WARNING("Failed to updater_move_input.");
+            return -1;
+        }
     }
 
-    if (updater_prepare(updater, 1) < 0) {
+    if (updater_prepare(updater) < 0) {
         ST_WARNING("updater_prepare.");
         return -1;
     }
@@ -1057,7 +1067,7 @@ int updater_step_state(updater_t *updater,
         return -1;
     }
 
-    if (updater_prepare(updater, updater->targets.size) < 0) {
+    if (updater_prepare(updater) < 0) {
         ST_WARNING("updater_prepare.");
         return -1;
     }
