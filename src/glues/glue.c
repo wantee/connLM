@@ -109,7 +109,7 @@ void glue_destroy(glue_t *glue)
     glue->out_length = -1;
 
     if (glue->wts != NULL) {
-        for (i = 0;i < glue->num_wts; i++) {
+        for (i = 0; i < glue->num_wts; i++) {
             safe_wt_destroy(glue->wts[i]);
         }
         safe_st_free(glue->wts);

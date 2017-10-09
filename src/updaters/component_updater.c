@@ -819,9 +819,11 @@ int comp_updater_finish(comp_updater_t *comp_updater)
     ST_TRACE("Finish: comp[%s]", comp->name);
 #endif
 
-    if (comp_updater_bptt(comp_updater, true) < 0) {
-        ST_WARNING("Failed to clear bptt comp[%s].", comp->name);
-        return -1;
+    if (comp->num_glue_cycle > 0) {
+        if (comp_updater_bptt(comp_updater, true) < 0) {
+            ST_WARNING("Failed to clear bptt comp[%s].", comp->name);
+            return -1;
+        }
     }
 
     return 0;

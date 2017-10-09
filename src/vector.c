@@ -390,7 +390,7 @@ void vec_assign(vec_t *dst, vec_t *src)
 {
     ST_CHECK_PARAM_VOID(dst == NULL || src == NULL);
 
-    dst = src;
+    *dst = *src;
     dst->is_const = true;
 }
 
