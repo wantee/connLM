@@ -397,6 +397,7 @@ bool input_updater_movable(input_updater_t *input_updater, bool finalized)
     num_need_right = 0;
     for (b = 0; b < wp_batch_size(wp); b++) {
         pos = VEC_VAL(&wp->row_starts, b) + input_updater->cur_pos;
+        ++pos; // move pos first, then check
         if (pos >= VEC_VAL(&wp->row_starts, b + 1)) {
             ++num_finished;
             continue;
