@@ -239,9 +239,10 @@ int wt_update(wt_updater_t *wt_updater,
             break;
 
         case WT_UT_ONE_SHOT:
-            if (er->num_cols != wt->num_rows) {
-                ST_WARNING("Error size of er mat.[%zux%zu]",
-                        er->num_rows, er->num_cols);
+            if (er->num_cols != wt->num_cols) {
+                ST_WARNING("Error size of er mat[%zux%zu], wt[%zux%zu]",
+                        er->num_rows, er->num_cols,
+                        wt->num_rows, wt->num_cols);
                 return -1;
             }
             if (sp_mat->fmt != SP_MAT_COO) {
