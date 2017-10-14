@@ -296,7 +296,9 @@ int out_updater_activate(out_updater_t *out_updater,
     ST_CHECK_PARAM(out_updater == NULL || targets == NULL || logps == NULL, -1);
 
 #ifdef _CONNLM_TRACE_PROCEDURE_
-    ST_TRACE("Activate:output: word[%d]", word);
+    char buf[MAX_LINE_LEN];
+    ST_TRACE("Activate:output: words[%s]",
+            ivec_dump(targets, buf, MAX_LINE_LEN));
 #endif
 
     output = out_updater->output;
@@ -370,7 +372,9 @@ int out_updater_loss(out_updater_t *out_updater, ivec_t *targets)
     ST_CHECK_PARAM(out_updater == NULL || targets == NULL, -1);
 
 #ifdef _CONNLM_TRACE_PROCEDURE_
-    ST_TRACE("Loss:output: word[%d]", word);
+    char buf[MAX_LINE_LEN];
+    ST_TRACE("Loss:output: words[%s]",
+            ivec_dump(targets, buf, MAX_LINE_LEN));
 #endif
 
     output = out_updater->output;

@@ -919,7 +919,9 @@ int comp_updater_forward_out_words(comp_updater_t *comp_updater, ivec_t *words)
     comp = comp_updater->comp;
 
 #ifdef _CONNLM_TRACE_PROCEDURE_
-    ST_TRACE("Forward-out-word: comp[%s], word[%d]", comp->name, word);
+    char buf[MAX_LINE_LEN];
+    ST_TRACE("Forward-out-word: comp[%s], words[%s]", comp->name,
+            ivec_dump(words, buf, MAX_LINE_LEN));
 #endif
 
     for (g = 0; g < comp->num_glue; g++) {

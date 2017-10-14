@@ -334,6 +334,16 @@ int ivec_swap(ivec_t *vec1, ivec_t *vec2);
  */
 int ivec_extend(ivec_t *vec, ivec_t *src, size_t start, size_t end);
 
+/**
+ * Dump a int vector into a string.
+ * @ingroup g_vector
+ * @param[in] vec the vector.
+ * @param[out] buf the string buffer.
+ * @param[in] buf_len lengh of buffer.
+ * @return NULL if any error, otherwise the buf pointer.
+ */
+char* ivec_dump(ivec_t *vec, char *buf, size_t buf_len);
+
 #ifdef __cplusplus
 }
 #endif

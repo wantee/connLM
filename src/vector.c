@@ -678,3 +678,21 @@ int ivec_extend(ivec_t *vec, ivec_t *src, size_t start, size_t end)
 
     return 0;
 }
+
+char* ivec_dump(ivec_t *vec, char *buf, size_t buf_len)
+{
+    size_t i;
+
+    const char *sep = ",";
+
+    ST_CHECK_PARAM(vec == NULL || buf == NULL || buf_len <= 0, NULL);
+
+    buf[0] = '\0';
+    st_strncatf(buf, buf_len, "%zu: [", vec->size);
+    for (i = 0; i < vec->size - 1; i++) {
+        st_strncatf(buf, buf_len, "%d%s", VEC_VAL(vec, i), sep);
+    }
+    st_strncatf(buf, buf_len, "%d]", VEC_VAL(vec, i));
+
+    return buf;
+}
