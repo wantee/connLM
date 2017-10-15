@@ -393,7 +393,7 @@ static int forward_one_node(output_norm_t norm, mat_t *wt, vec_t *bias,
         real_t scale, mat_t *in_ac, mat_t *out_ac)
 {
     if (add_mat_mat(scale, in_ac, MT_NoTrans,
-                wt, MT_Trans, 0.0, out_ac) < 0) {
+                wt, MT_Trans, 1.0, out_ac) < 0) {
         ST_WARNING("Failed to add_mat_mat.");
         return -1;
     }
@@ -413,6 +413,7 @@ typedef struct _tree_nodes_forward_args_t_ {
     real_t scale;
     mat_t *node_in_acs;
     mat_t *node_out_acs;
+    int *node_iters;
 } tree_nodes_fwd_walker_args_t;
 
 static int forward_tree_nodes_walker(output_t *output, output_node_id_t node,
@@ -427,6 +428,11 @@ static int forward_tree_nodes_walker(output_t *output, output_node_id_t node,
         return 0;
     }
 
+    if (tnfw_args->node_iters[node] != 0) {
+        // already forwarded
+        return 0;
+    }
+
     if (forward_one_node(output->norm, &tnfw_args->wt_updaters[node]->wt,
                 &tnfw_args->wt_updaters[node]->bias, tnfw_args->scale,
                 tnfw_args->node_in_acs + node,
@@ -435,13 +441,15 @@ static int forward_tree_nodes_walker(output_t *output, output_node_id_t node,
         return -1;
     }
 
+    tnfw_args->node_iters[node] = 1;
+
     return 0;
 }
 
 // this function do forward with ogu_data_t's buffer
 static int forward_tree_nodes(output_t *output, egs_batch_t *batch,
         wt_updater_t **wt_updaters, real_t scale, mat_t *node_in_acs,
-        mat_t *node_out_acs)
+        mat_t *node_out_acs, int *node_iters)
 {
     tree_nodes_fwd_walker_args_t tnfw_args;
     int i;
@@ -449,11 +457,11 @@ static int forward_tree_nodes(output_t *output, egs_batch_t *batch,
     ST_CHECK_PARAM(output == NULL || batch == NULL || wt_updaters == NULL
             || node_in_acs == NULL || node_out_acs == NULL, -1);
 
-    // do matrix multiplication
     tnfw_args.wt_updaters = wt_updaters;
     tnfw_args.scale = scale;
     tnfw_args.node_in_acs = node_in_acs;
     tnfw_args.node_out_acs = node_out_acs;
+    tnfw_args.node_iters = node_iters;
     for (i = 0; i < batch->num_egs; i++) {
         if (batch->targets[i] == PADDING_ID) {
             continue;
@@ -491,9 +499,15 @@ int out_glue_updater_forward(glue_updater_t *glue_updater,
         return -1;
     }
 
+    if (clear_tree_node_iters(output, batch, data) < 0) {
+        ST_WARNING("Failed to clear_tree_node_iters.");
+        return -1;
+    }
+
     if (forward_tree_nodes(output, batch, glue_updater->wt_updaters,
                 comp_updater->comp->comp_scale, data->node_in_acs,
-                comp_updater->out_updater->node_acs) < 0) {
+                comp_updater->out_updater->node_acs,
+                data->node_iters) < 0) {
         ST_WARNING("Failed to forward_tree_nodes.");
         return -1;
     }
@@ -564,6 +578,7 @@ typedef struct _tree_nodes_backprop_args_t_ {
     mat_t *node_in_acs;
     mat_t *node_out_ers;
     mat_t *node_in_ers;
+    int *node_iters;
 } tree_nodes_bp_walker_args_t;
 
 static int backprop_tree_nodes_walker(output_t *output, output_node_id_t node,
@@ -586,6 +601,11 @@ static int backprop_tree_nodes_walker(output_t *output, output_node_id_t node,
         return 0;
     }
 
+    if (tnbw_args->node_iters[node] != 0) {
+        // already backproped
+        return 0;
+    }
+
     // propagate from out_er to in_er
     if (propagate_error(&wt_updater->wt, out_er, tnbw_args->scale,
                 wt_updater->param.er_cutoff, in_er) < 0) {
@@ -599,13 +619,15 @@ static int backprop_tree_nodes_walker(output_t *output, output_node_id_t node,
         return -1;
     }
 
+    tnbw_args->node_iters[node] = 1;
+
     return 0;
 }
 
 // this function do back-prop within ogu_data_t's buffer
 static int backprop_tree_nodes(output_t *output, egs_batch_t *batch,
         wt_updater_t **wt_updaters, real_t scale, mat_t *node_in_acs,
-        mat_t *node_out_ers, mat_t *node_in_ers)
+        mat_t *node_out_ers, mat_t *node_in_ers, int *node_iters)
 {
     tree_nodes_bp_walker_args_t tnbw_args;
     int i;
@@ -614,12 +636,12 @@ static int backprop_tree_nodes(output_t *output, egs_batch_t *batch,
             || node_in_acs == NULL || node_out_ers == NULL
             || node_in_ers == NULL, -1);
 
-    // do matrix multiplication
     tnbw_args.wt_updaters = wt_updaters;
     tnbw_args.scale = scale;
     tnbw_args.node_in_acs = node_in_acs;
     tnbw_args.node_out_ers = node_out_ers;
     tnbw_args.node_in_ers = node_in_ers;
+    tnbw_args.node_iters = node_iters;
     for (i = 0; i < batch->num_egs; i++) {
         if (batch->targets[i] == PADDING_ID) {
             continue;
@@ -647,10 +669,15 @@ int out_glue_updater_backprop(glue_updater_t *glue_updater,
     data = (ogu_data_t *)glue_updater->extra;
     output = comp_updater->out_updater->output;
 
+    if (clear_tree_node_iters(output, batch, data) < 0) {
+        ST_WARNING("Failed to clear_tree_node_iters.");
+        return -1;
+    }
+
     if (backprop_tree_nodes(output, batch, glue_updater->wt_updaters,
                 comp_updater->comp->comp_scale, data->node_in_acs,
                 comp_updater->out_updater->node_ers,
-                data->node_in_ers) < 0) {
+                data->node_in_ers, data->node_iters) < 0) {
         ST_WARNING("Failed to backprop_tree_nodes.");
         return -1;
     }
