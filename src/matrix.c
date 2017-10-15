@@ -752,12 +752,12 @@ int mat_load_body(mat_t *mat, int version, FILE *fp, connlm_fmt_t fmt)
     if (connlm_fmt_is_bin(fmt)) {
         if (fread(&n, sizeof(int), 1, fp) != 1) {
             ST_WARNING("Failed to read magic num.");
-            goto ERR;
+            return -1;
         }
 
         if (n != -MAT_MAGIC_NUM) {
             ST_WARNING("Magic num error.[%d]", n);
-            goto ERR;
+            return -1;
         }
 
         if (fmt == CONN_FMT_BIN) {
@@ -765,7 +765,7 @@ int mat_load_body(mat_t *mat, int version, FILE *fp, connlm_fmt_t fmt)
                 if (fread(MAT_VALP(mat, i, 0), sizeof(real_t),
                             mat->num_cols, fp) != mat->num_cols) {
                     ST_WARNING("Failed to read row[%zu].", i);
-                    goto ERR;
+                    return -1;
                 }
             }
         } else if (fmt & CONN_FMT_SHORT_QUANTIZATION) {
@@ -831,9 +831,10 @@ int mat_load_body(mat_t *mat, int version, FILE *fp, connlm_fmt_t fmt)
             ST_WARNING("']' expected.");
             goto ERR;
         }
+
+        safe_st_free(line);
     }
 
-    safe_st_free(line);
     return 0;
 ERR:
 

@@ -129,19 +129,19 @@ int vec_load_body(vec_t *vec, int version, FILE *fp, connlm_fmt_t fmt)
     if (connlm_fmt_is_bin(fmt)) {
         if (fread(&n, sizeof(int), 1, fp) != 1) {
             ST_WARNING("Failed to read magic num.");
-            goto ERR;
+            return -1;
         }
 
         if (n != -VEC_MAGIC_NUM) {
             ST_WARNING("Magic num error.[%d]", n);
-            goto ERR;
+            return -1;
         }
 
         if (fmt == CONN_FMT_BIN) {
             if (fread(VEC_VALP(vec, 0), sizeof(real_t),
                         vec->size, fp) != vec->size) {
                 ST_WARNING("Failed to read vec.");
-                goto ERR;
+                return -1;
             }
         } else if (fmt & CONN_FMT_SHORT_QUANTIZATION) {
             if (fmt & CONN_FMT_ZEROS_COMPRESSED) {
@@ -192,9 +192,10 @@ int vec_load_body(vec_t *vec, int version, FILE *fp, connlm_fmt_t fmt)
             ST_WARNING("']' expected.");
             goto ERR;
         }
+
+        safe_st_free(line);
     }
 
-    safe_st_free(line);
     return 0;
 ERR:
 

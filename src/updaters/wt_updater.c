@@ -34,6 +34,34 @@
 
 #define REALLOC_NUM 100
 
+#ifdef _CONNLM_TRACE_PROCEDURE_
+static const char *wt_update_type_str[] = {
+    "Full",
+    "Part",
+    "One-shot",
+};
+
+static const char* wutype2str(wt_update_type_t u)
+{
+    return wt_update_type_str[u];
+}
+
+#if 0
+static wt_update_type_t str2wutype(const char *str)
+{
+    int i;
+
+    for (i = 0; i < sizeof(wt_update_type_str) / sizeof(wt_update_type_str[0]); i++) {
+        if (strcasecmp(wt_update_type_str[i], str) == 0) {
+            return (wt_update_type_t)i;
+        }
+    }
+
+    return WT_UT_UNKNOWN;
+}
+#endif
+#endif
+
 void wt_updater_destroy(wt_updater_t *wt_updater)
 {
     if (wt_updater == NULL) {
@@ -121,7 +149,7 @@ int wt_update(wt_updater_t *wt_updater,
     ST_CHECK_PARAM(wt_updater == NULL, -1);
 
 #ifdef _CONNLM_TRACE_PROCEDURE_
-    ST_TRACE("Update weight");
+    ST_TRACE("Update weight[%s].", wutype2str(wt_updater->type));
 #endif
 
     wt = &wt_updater->wt;
