@@ -896,6 +896,10 @@ int mat_save_body(mat_t *mat, FILE *fp, connlm_fmt_t fmt, char *name)
             return -1;
         }
 
+        if (mat->num_rows <= 0 || mat->num_cols <= 0) {
+            return 0;
+        }
+
         if (fmt == CONN_FMT_BIN) {
             for (i = 0; i < mat->num_rows; i++) {
                 if (fwrite(MAT_VALP(mat, i, 0), sizeof(real_t),
@@ -942,16 +946,18 @@ int mat_save_body(mat_t *mat, FILE *fp, connlm_fmt_t fmt, char *name)
             ST_WARNING("Failed to fprintf '['.");
             return -1;
         }
-        for (i = 0; i < mat->num_rows; i++) {
-            for (j = 0; j < mat->num_cols - 1; j++) {
-                if (fprintf(fp, REAL_FMT" ", MAT_VAL(mat, i, j)) < 0) {
-                    ST_WARNING("Failed to fprintf mat[%zu,%zu].", i, j);
+        if (mat->num_rows > 0 && mat->num_cols > 0) {
+            for (i = 0; i < mat->num_rows; i++) {
+                for (j = 0; j < mat->num_cols - 1; j++) {
+                    if (fprintf(fp, REAL_FMT" ", MAT_VAL(mat, i, j)) < 0) {
+                        ST_WARNING("Failed to fprintf mat[%zu,%zu].", i, j);
+                        return -1;
+                    }
+                }
+                if (fprintf(fp, REAL_FMT"\n", MAT_VAL(mat, i, j)) < 0) {
+                    ST_WARNING("Failed to fprintf mat[%zu/%zu].", i, j);
                     return -1;
                 }
-            }
-            if (fprintf(fp, REAL_FMT"\n", MAT_VAL(mat, i, j)) < 0) {
-                ST_WARNING("Failed to fprintf mat[%zu/%zu].", i, j);
-                return -1;
             }
         }
         if (fprintf(fp, "]\n") < 0) {

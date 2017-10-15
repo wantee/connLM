@@ -249,6 +249,10 @@ int vec_save_body(vec_t *vec, FILE *fp, connlm_fmt_t fmt, char *name)
             return -1;
         }
 
+        if (vec->size <= 0) {
+            return 0;
+        }
+
         if (fmt == CONN_FMT_BIN) {
             if (fwrite(VEC_VALP(vec, 0), sizeof(real_t),
                         vec->size, fp) != vec->size) {
@@ -287,15 +291,17 @@ int vec_save_body(vec_t *vec, FILE *fp, connlm_fmt_t fmt, char *name)
             ST_WARNING("Failed to fprintf '['.");
             return -1;
         }
-        for (i = 0; i < vec->size - 1; i++) {
-            if (fprintf(fp, REAL_FMT" ", VEC_VAL(vec, i)) < 0) {
+        if (vec->size > 0) {
+            for (i = 0; i < vec->size - 1; i++) {
+                if (fprintf(fp, REAL_FMT" ", VEC_VAL(vec, i)) < 0) {
+                    ST_WARNING("Failed to fprintf vec[%zu].", i);
+                    return -1;
+                }
+            }
+            if (fprintf(fp, REAL_FMT"\n", VEC_VAL(vec, i)) < 0) {
                 ST_WARNING("Failed to fprintf vec[%zu].", i);
                 return -1;
             }
-        }
-        if (fprintf(fp, REAL_FMT"\n", VEC_VAL(vec, i)) < 0) {
-            ST_WARNING("Failed to fprintf vec[%zu].", i);
-            return -1;
         }
         if (fprintf(fp, "]\n") < 0) {
             ST_WARNING("Failed to fprintf ']'.");
@@ -689,10 +695,13 @@ char* ivec_dump(ivec_t *vec, char *buf, size_t buf_len)
 
     buf[0] = '\0';
     st_strncatf(buf, buf_len, "%zu: [", vec->size);
-    for (i = 0; i < vec->size - 1; i++) {
-        st_strncatf(buf, buf_len, "%d%s", VEC_VAL(vec, i), sep);
+    if (vec->size > 0) {
+        for (i = 0; i < vec->size - 1; i++) {
+            st_strncatf(buf, buf_len, "%d%s", VEC_VAL(vec, i), sep);
+        }
+        st_strncatf(buf, buf_len, "%d", VEC_VAL(vec, i));
     }
-    st_strncatf(buf, buf_len, "%d]", VEC_VAL(vec, i));
+    st_strncatf(buf, buf_len, "]");
 
     return buf;
 }
