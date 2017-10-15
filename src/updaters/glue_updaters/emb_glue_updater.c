@@ -137,7 +137,7 @@ int emb_glue_updater_prepare(glue_updater_t *glue_updater,
     if (data->word_buf.fmt != SP_MAT_UNSET) {
         total_words = 0;
         for (b = 0; b < batch->num_egs; b++) {
-            total_words += batch->inputs->num_words;
+            total_words += batch->inputs[b].num_words;
         }
 
         if (sp_mat_resize(&data->word_buf, total_words,
@@ -181,10 +181,10 @@ int emb_glue_updater_forward(glue_updater_t *glue_updater,
     switch (data->combine) {
         case EC_SUM:
             for (b = 0; b < batch->num_egs; b++) {
-                for (w = 0; w < batch->inputs->num_words; w++) {
-                    scale = batch->inputs->weights[w];
+                for (w = 0; w < batch->inputs[b].num_words; w++) {
+                    scale = batch->inputs[b].weights[w];
 
-                    j = batch->inputs->words[w];
+                    j = batch->inputs[b].words[w];
                     if (glue_updater->keep_mask.num_rows > 0) {
                         scale /= glue_updater->keep_prob;
                         for (i = 0; i < col; i++) {
@@ -209,9 +209,9 @@ int emb_glue_updater_forward(glue_updater_t *glue_updater,
                     }
 
                     ac = 0;
-                    for (w = 0; w < batch->inputs->num_words; w++) {
-                        scale = batch->inputs->weights[w];
-                        j = batch->inputs->words[w];
+                    for (w = 0; w < batch->inputs[b].num_words; w++) {
+                        scale = batch->inputs[b].weights[w];
+                        j = batch->inputs[b].words[w];
 
                         ac += scale * MAT_VAL(wt, j, i);
                     }
@@ -225,13 +225,13 @@ int emb_glue_updater_forward(glue_updater_t *glue_updater,
         case EC_CONCAT:
             for (b = 0; b < batch->num_egs; b++) {
                 pos = 0;
-                for (w = 0; w < batch->inputs->num_words; w++) {
-                    scale = batch->inputs->weights[w];
+                for (w = 0; w < batch->inputs[b].num_words; w++) {
+                    scale = batch->inputs[b].weights[w];
 
-                    j = batch->inputs->words[w];
+                    j = batch->inputs[b].words[w];
 
                     while (pos < input->n_ctx) {
-                        if (input->context[pos].i == batch->inputs->positions[w]) {
+                        if (input->context[pos].i == batch->inputs[b].positions[w]) {
                             break;
                         }
                         pos++;
@@ -300,9 +300,9 @@ int emb_glue_updater_backprop(glue_updater_t *glue_updater,
     if (data->combine == EC_CONCAT) {
         for (j = 0; j < input->n_ctx; j++) {
             for (b = 0; b < batch->num_egs; b++) {
-                i = min(j, batch->inputs->num_words);
+                i = min(j, batch->inputs[b].num_words);
                 while (i >= 0) {
-                    if (input->context[j].i == batch->inputs->positions[i]) {
+                    if (input->context[j].i == batch->inputs[b].positions[i]) {
                         break;
                     }
                     --i;
@@ -317,8 +317,8 @@ int emb_glue_updater_backprop(glue_updater_t *glue_updater,
                     }
                 } else {
                     if (sp_mat_coo_add(&egu_data->word_buf, b,
-                                batch->inputs->words[i],
-                                batch->inputs->weights[i]) < 0) {
+                                batch->inputs[b].words[i],
+                                batch->inputs[b].weights[i]) < 0) {
                         ST_WARNING("Failed to sp_mat_coo_add");
                         return -1;
                     }
@@ -338,10 +338,10 @@ int emb_glue_updater_backprop(glue_updater_t *glue_updater,
         }
     } else {
         for (b = 0; b < batch->num_egs; b++) {
-            for (i = 0; i < batch->inputs->num_words; i++) {
+            for (i = 0; i < batch->inputs[b].num_words; i++) {
                 if (sp_mat_coo_add(&egu_data->word_buf, b,
-                            batch->inputs->words[i],
-                            batch->inputs->weights[i]) < 0) {
+                            batch->inputs[b].words[i],
+                            batch->inputs[b].weights[i]) < 0) {
                     ST_WARNING("Failed to sp_mat_coo_add");
                     return -1;
                 }
