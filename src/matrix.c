@@ -72,7 +72,6 @@ int mat_clear(mat_t *mat)
 int mat_resize(mat_t *mat, size_t num_rows, size_t num_cols, real_t init_val)
 {
     size_t stride;
-    size_t i, j;
 
     ST_CHECK_PARAM(mat == NULL, -1);
 
@@ -101,16 +100,7 @@ int mat_resize(mat_t *mat, size_t num_rows, size_t num_cols, real_t init_val)
     mat->stride = stride;
 
     if (! isnan(init_val)) {
-        if (init_val == 0.0) {
-            memset(mat->vals, 0,
-                    sizeof(real_t) * (mat->num_rows * mat->stride));
-        } else {
-            for (i = 0; i < mat->num_rows; i++) {
-                for (j = 0; j < mat->num_cols; j++) {
-                    mat->vals[i * mat->stride + j] = init_val;
-                }
-            }
-        }
+        mat_set(mat, init_val);
     }
 
     return 0;
@@ -118,8 +108,6 @@ int mat_resize(mat_t *mat, size_t num_rows, size_t num_cols, real_t init_val)
 
 int mat_resize_row(mat_t *mat, size_t num_rows, real_t init_val)
 {
-    size_t i, j;
-
     ST_CHECK_PARAM(mat == NULL || num_rows <= 0, -1);
 
     if (mat->is_const) {
@@ -141,16 +129,7 @@ int mat_resize_row(mat_t *mat, size_t num_rows, real_t init_val)
     mat->num_rows = num_rows;
 
     if (! isnan(init_val)) {
-        if (init_val == 0.0) {
-            memset(mat->vals, 0,
-                    sizeof(real_t) * (mat->num_rows * mat->stride));
-        } else {
-            for (i = 0; i < mat->num_rows; i++) {
-                for (j = 0; j < mat->num_cols; j++) {
-                    mat->vals[i * mat->stride + j] = init_val;
-                }
-            }
-        }
+        mat_set(mat, init_val);
     }
 
     return 0;
@@ -201,6 +180,7 @@ void mat_assign(mat_t *dst, mat_t *src)
 
 bool mat_eq(mat_t *mat1, mat_t *mat2)
 {
+    real_t *vals1, *vals2;
     size_t i, j;
 
     ST_CHECK_PARAM(mat1 == NULL || mat2 == NULL, false);
@@ -213,12 +193,16 @@ bool mat_eq(mat_t *mat1, mat_t *mat2)
         return false;
     }
 
+    vals1 = mat1->vals;
+    vals2 = mat2->vals;
     for (i = 0; i < mat1->num_rows; i++) {
         for (j = 0; j < mat1->num_cols; j++) {
-            if (MAT_VAL(mat1, i, j) != MAT_VAL(mat2, i, j)) {
+            if (vals1[j] != vals2[j]) {
                 return false;
             }
         }
+        vals1 += mat1->stride;
+        vals2 += mat2->stride;
     }
 
     return true;
@@ -360,7 +344,8 @@ int mat_fill(mat_t *mat, size_t row_s, size_t num_rows,
 
 void mat_scale(mat_t *mat, real_t scale)
 {
-    size_t i;
+    real_t *vals;
+    size_t i, j;
 
     ST_CHECK_PARAM_VOID(mat == NULL);
 
@@ -368,28 +353,38 @@ void mat_scale(mat_t *mat, real_t scale)
         return;
     }
 
-    for (i = 0; i < mat->num_rows * mat->stride; i++) {
-        mat->vals[i] *= scale;
+    vals = mat->vals;
+    for (i = 0; i < mat->num_rows; i++) {
+        for (j = 0; j < mat->num_cols; j++) {
+            vals[j] *= scale;
+        }
+        vals += mat->stride;
     }
 }
 
 void mat_cutoff(mat_t *mat, real_t cutoff)
 {
-    size_t i;
+    real_t *vals;
+    size_t i, j;
 
     ST_CHECK_PARAM_VOID(mat == NULL || cutoff < 0);
 
-    for (i = 0; i < mat->num_rows * mat->stride; i++) {
-        if (mat->vals[i] > cutoff) {
-            mat->vals[i] = cutoff;
-        } else if (mat->vals[i] < -cutoff) {
-            mat->vals[i] = -cutoff;
+    vals = mat->vals;
+    for (i = 0; i < mat->num_rows; i++) {
+        for (j = 0; j < mat->num_cols; j++) {
+            if (vals[j] > cutoff) {
+                vals[j] = cutoff;
+            } else if (vals[j] < -cutoff) {
+                vals[j] = -cutoff;
+            }
         }
+        vals += mat->stride;
     }
 }
 
 void mat_set(mat_t *mat, real_t val)
 {
+    real_t *vals;
     size_t i, j;
 
     ST_CHECK_PARAM_VOID(mat == NULL);
@@ -397,16 +392,19 @@ void mat_set(mat_t *mat, real_t val)
     if (val == 0.0) {
         memset(mat->vals, 0, sizeof(real_t) * mat->num_rows * mat->stride);
     } else {
+        vals = mat->vals;
         for (i = 0; i < mat->num_rows; i++) {
             for (j = 0; j < mat->num_cols; j++) {
-                mat->vals[i * mat->stride + j] = val;
+                vals[j] = val;
             }
+            vals += mat->stride;
         }
     }
 }
 
 int mat_set_row(mat_t *mat, size_t row, real_t val)
 {
+    real_t *vals;
     size_t j;
 
     ST_CHECK_PARAM(mat == NULL, -1);
@@ -416,11 +414,12 @@ int mat_set_row(mat_t *mat, size_t row, real_t val)
         return -1;
     }
 
+    vals = mat->vals + row * mat->stride;
     if (val == 0.0) {
-        memset(mat->vals + row * mat->stride, 0, sizeof(real_t) * mat->stride);
+        memset(vals, 0, sizeof(real_t) * mat->num_cols);
     } else {
         for (j = 0; j < mat->num_cols; j++) {
-            mat->vals[row * mat->stride + j] = val;
+            vals[j] = val;
         }
     }
 
@@ -447,8 +446,8 @@ void mat_from_array(mat_t *mat, real_t *arr, size_t len, bool row_vec)
 
 int mat_add_elems(mat_t *mat1, real_t s1, mat_t *mat2, real_t s2, mat_t *out)
 {
-    size_t i;
-    size_t j;
+    real_t *valso, *vals1, *vals2;
+    size_t i, j;
 
     ST_CHECK_PARAM(mat1 == NULL || mat2 == NULL || out == NULL, -1);
 
@@ -459,10 +458,16 @@ int mat_add_elems(mat_t *mat1, real_t s1, mat_t *mat2, real_t s2, mat_t *out)
         return -1;
     }
 
+    valso = out->vals;
+    vals1 = mat1->vals;
+    vals2 = mat2->vals;
     for (i = 0; i < mat1->num_rows; i++) {
         for (j = 0; j < mat1->num_cols; j++) {
-            MAT_VAL(out, i, j) = s1 * MAT_VAL(mat1, i, j) + s2 * MAT_VAL(mat2, i, j);
+            valso[j] = s1 * vals1[j] + s2 * vals2[j];
         }
+        valso += out->stride;
+        vals1 += mat1->stride;
+        vals2 += mat2->stride;
     }
 
     return 0;
@@ -470,7 +475,8 @@ int mat_add_elems(mat_t *mat1, real_t s1, mat_t *mat2, real_t s2, mat_t *out)
 
 int mat_mul_elems(mat_t *mat1, mat_t *mat2, mat_t *out)
 {
-    size_t i;
+    real_t *valso, *vals1, *vals2;
+    size_t i, j;
 
     ST_CHECK_PARAM(mat1 == NULL || mat2 == NULL || out == NULL, -1);
 
@@ -481,8 +487,16 @@ int mat_mul_elems(mat_t *mat1, mat_t *mat2, mat_t *out)
         return -1;
     }
 
-    for (i = 0; i < mat1->num_rows * mat1->stride; i++) {
-        out->vals[i] = mat1->vals[i] * mat2->vals[i];
+    valso = out->vals;
+    vals1 = mat1->vals;
+    vals2 = mat2->vals;
+    for (i = 0; i < mat1->num_rows; i++) {
+        for (j = 0; j < mat1->num_cols; j++) {
+            valso[j] = vals1[j] * vals2[j];
+        }
+        valso += out->stride;
+        vals1 += mat1->stride;
+        vals2 += mat2->stride;
     }
 
     return 0;
@@ -490,6 +504,7 @@ int mat_mul_elems(mat_t *mat1, mat_t *mat2, mat_t *out)
 
 int mat_add_vec(mat_t *mat, vec_t *vec, real_t scale)
 {
+    real_t *vals;
     size_t i, j;
 
     ST_CHECK_PARAM(mat == NULL || vec == NULL, -1);
@@ -500,16 +515,20 @@ int mat_add_vec(mat_t *mat, vec_t *vec, real_t scale)
     }
 
     if (scale != 1.0) {
+        vals = mat->vals;
         for (i = 0; i < mat->num_rows; i++) {
             for (j = 0; j < mat->num_cols; j++) {
-                mat->vals[i * mat->stride + j] += scale * vec->vals[j];
+                vals[j] += scale * vec->vals[j];
             }
+            vals += mat->stride;
         }
     } else {
+        vals = mat->vals;
         for (i = 0; i < mat->num_rows; i++) {
             for (j = 0; j < mat->num_cols; j++) {
-                mat->vals[i * mat->stride + j] += vec->vals[j];
+                vals[j] += vec->vals[j];
             }
+            vals += mat->stride;
         }
     }
 
