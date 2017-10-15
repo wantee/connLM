@@ -301,6 +301,31 @@ void tanH(real_t *vec, int vec_size)
     }
 }
 
+void multi_logit(real_t *vec, int vec_size)
+{
+    double sum;
+    real_t max;
+
+    int i;
+
+    max = 0.0;
+    for (i = 0; i < vec_size; i++) {
+        if (vec[i] > max) {
+            max = vec[i]; //this prevents the need to check for overflow
+        }
+    }
+
+    sum = expr(0.0 - max);;
+    for (i = 0; i < vec_size; i++) {
+        vec[i] = expr(vec[i] - max);
+        sum += vec[i];
+    }
+
+    for (i = 0; i < vec_size; i++) {
+        vec[i] = vec[i] / sum;
+    }
+}
+
 void connlm_show_usage(const char *module_name, const char *header,
         const char *usage, const char *eg,
         st_opt_t *opt, const char *trailer)

@@ -324,53 +324,51 @@ static int forward_one_node(output_norm_t norm, output_node_id_t node,
 
     ST_CHECK_PARAM(out_ac == NULL, -1);
 
-    if (norm == ON_SOFTMAX) {
-        for (a = 0; a < hash_order; a++) {
-            h = hash_vals[a] + child_s;
-            if (h > hash_sz) {
-                h -= hash_sz;
+    for (a = 0; a < hash_order; a++) {
+        h = hash_vals[a] + child_s;
+        if (h > hash_sz) {
+            h -= hash_sz;
+        }
+
+        if (keep_mask != NULL) {
+            for (ch = child_s; ch < child_e - 1; ch++) {
+                p = st_random_r(0, 1, rand_seed);
+                if (p < keep_prob) {
+                    keep_mask[ch] = 1.0;
+                } else {
+                    keep_mask[ch] = 0.0;
+                }
             }
 
-            if (keep_mask != NULL) {
-                for (ch = child_s; ch < child_e - 1; ch++) {
-                    p = st_random_r(0, 1, rand_seed);
-                    if (p < keep_prob) {
-                        keep_mask[ch] = 1.0;
-                    } else {
-                        keep_mask[ch] = 0.0;
+            if (h + child_e - child_s - 1 > hash_sz) {
+                for (ch = child_s; h < hash_sz; ch++, h++) {
+                    if (keep_mask[ch] == 1.0) {
+                        out_ac[ch - child_s] += scale * hash_wt[h] / keep_prob;
                     }
                 }
-
-                if (h + child_e - child_s - 1 > hash_sz) {
-                    for (ch = child_s; h < hash_sz; ch++, h++) {
-                        if (keep_mask[ch] == 1.0) {
-                            out_ac[ch - child_s] += scale * hash_wt[h] / keep_prob;
-                        }
-                    }
-                    for (h = 0; ch < child_e - 1; ch++, h++) {
-                        if (keep_mask[ch] == 1.0) {
-                            out_ac[ch - child_s] += scale * hash_wt[h] / keep_prob;
-                        }
-                    }
-                } else {
-                    for (ch = child_s; ch < child_e - 1; ch++, h++) {
-                        if (keep_mask[ch] == 1.0) {
-                            out_ac[ch - child_s] += scale * hash_wt[h] / keep_prob;
-                        }
+                for (h = 0; ch < child_e - 1; ch++, h++) {
+                    if (keep_mask[ch] == 1.0) {
+                        out_ac[ch - child_s] += scale * hash_wt[h] / keep_prob;
                     }
                 }
             } else {
-                if (h + child_e - child_s - 1 > hash_sz) {
-                    for (ch = child_s; h < hash_sz; ch++, h++) {
-                        out_ac[ch - child_s] += scale * hash_wt[h];
+                for (ch = child_s; ch < child_e - 1; ch++, h++) {
+                    if (keep_mask[ch] == 1.0) {
+                        out_ac[ch - child_s] += scale * hash_wt[h] / keep_prob;
                     }
-                    for (h = 0; ch < child_e - 1; ch++, h++) {
-                        out_ac[ch - child_s] += scale * hash_wt[h];
-                    }
-                } else {
-                    for (ch = child_s; ch < child_e - 1; ch++, h++) {
-                        out_ac[ch - child_s] += scale * hash_wt[h];
-                    }
+                }
+            }
+        } else {
+            if (h + child_e - child_s - 1 > hash_sz) {
+                for (ch = child_s; h < hash_sz; ch++, h++) {
+                    out_ac[ch - child_s] += scale * hash_wt[h];
+                }
+                for (h = 0; ch < child_e - 1; ch++, h++) {
+                    out_ac[ch - child_s] += scale * hash_wt[h];
+                }
+            } else {
+                for (ch = child_s; ch < child_e - 1; ch++, h++) {
+                    out_ac[ch - child_s] += scale * hash_wt[h];
                 }
             }
         }
@@ -402,6 +400,10 @@ static int direct_forward_walker(output_t *output, output_node_id_t node,
     direct_fwd_walker_args_t *dfw_args;
 
     dfw_args = (direct_fwd_walker_args_t *) args;
+
+    if (child_e - child_s <= 1) {
+        return 0;
+    }
 
     if (forward_one_node(output->norm, node,
                 child_s, child_e, dfw_args->hash_wt, dfw_args->hash_sz,
@@ -610,43 +612,41 @@ static int direct_backprop_walker(output_t *output, output_node_id_t node,
 
     dbw_args = (direct_bp_walker_args_t *) args;
 
-    if (child_e <= child_s + 1) {
+    if (child_e - child_s <= 1) {
         return 0;
     }
 
     node_out_er = MAT_VALP(dbw_args->node_out_ers + node, dbw_args->node_iters[node], 0);
 
-    if (output->norm == ON_SOFTMAX) {
-        hash_sz = dbw_args->wt_updater->wt.num_cols;
+    hash_sz = dbw_args->wt_updater->wt.num_cols;
 
-        if (dbw_args->keep_mask != NULL) {
-            out_er = dbw_args->dropout_val + child_s;
-            keep_mask = dbw_args->keep_mask + child_s;
-            for (ch = 0; ch < child_e - child_s - 1; ch++) {
-                if (keep_mask[ch]) {
-                    out_er[ch] = node_out_er[ch];
-                } else {
-                    out_er[ch] = 0.0;
-                }
+    if (dbw_args->keep_mask != NULL) {
+        out_er = dbw_args->dropout_val + child_s;
+        keep_mask = dbw_args->keep_mask + child_s;
+        for (ch = 0; ch < child_e - child_s - 1; ch++) {
+            if (keep_mask[ch]) {
+                out_er[ch] = node_out_er[ch];
+            } else {
+                out_er[ch] = 0.0;
             }
-        } else {
-            out_er = node_out_er;
+        }
+    } else {
+        out_er = node_out_er;
+    }
+
+    for (a = 0; a < dbw_args->hash_order; a++) {
+        h = dbw_args->hash_vals[a] + child_s;
+        if (h >= hash_sz) {
+            h -= hash_sz;
         }
 
-        for (a = 0; a < dbw_args->hash_order; a++) {
-            h = dbw_args->hash_vals[a] + child_s;
-            if (h >= hash_sz) {
-                h -= hash_sz;
-            }
-
-            seg.s = h;
-            seg.n = child_e - child_s - 1;
-            mat_from_array(&out_er_mat, out_er, seg.n, true);
-            if (wt_update(dbw_args->wt_updater, &out_er_mat, dbw_args->scale,
-                        NULL, 1.0, &seg, NULL) < 0) {
-                ST_WARNING("Failed to wt_update.");
-                return -1;
-            }
+        seg.s = h;
+        seg.n = child_e - child_s - 1;
+        mat_from_array(&out_er_mat, out_er, seg.n, true);
+        if (wt_update(dbw_args->wt_updater, &out_er_mat, dbw_args->scale,
+                    NULL, 1.0, &seg, NULL) < 0) {
+            ST_WARNING("Failed to wt_update.");
+            return -1;
         }
     }
 
@@ -748,7 +748,7 @@ int direct_glue_updater_forward_out(glue_updater_t *glue_updater,
     child_s = s_children(output->tree, node);
     child_e = e_children(output->tree, node);
 
-    if (child_s >= child_e) {
+    if (child_e - child_s <= 1) {
         return 0;
     }
 
@@ -780,6 +780,10 @@ static int forward_out_words_walker(output_t *output, output_node_id_t node,
     direct_fwd_walker_args_t *dfw_args;
 
     dfw_args = (direct_fwd_walker_args_t *)args;
+
+    if (child_e - child_s <= 1) {
+        return 0;
+    }
 
     if (dfw_args->node_iters[node] != 0) {
         // already forwarded

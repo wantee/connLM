@@ -90,18 +90,18 @@ static int output_tree_dfs_trav_init_wt(output_tree_t *tree,
         output_node_id_t node, st_stack_t *stack, void *args)
 {
     init_wt_args_t *iw_args;
-    output_node_id_t child_s, chile_e;
+    output_node_id_t child_s, child_e;
 
     iw_args = (init_wt_args_t *) args;
 
     child_s = s_children(tree, node);
-    chile_e = e_children(tree, node);
+    child_e = e_children(tree, node);
 
-    if (chile_e == OUTPUT_NODE_NONE || child_s >= chile_e) {
+    if (child_e == OUTPUT_NODE_NONE || child_e - child_s <= 1) {
         return 0;
     }
 
-    if (wt_init(iw_args->wts[node], chile_e - child_s, iw_args->in_len) < 0) {
+    if (wt_init(iw_args->wts[node], child_e - child_s - 1, iw_args->in_len) < 0) {
         ST_WARNING("Failed to wt_init["OUTPUT_NODE_FMT"].", node);
         return -1;
     }

@@ -235,28 +235,26 @@ static int prepare_tree_nodes_walker(output_t *output,
     tnpw_args = (tree_nodes_prepare_walker_args_t *) args;
     data = tnpw_args->data;
 
-    if (child_s >= child_e || data->node_iters[node] <= 0) {
+    if (child_e - child_s <= 1 || data->node_iters[node] <= 0) {
         return 0;
     }
 
-    if (output->norm == ON_SOFTMAX) {
-        if (mat_resize(data->node_in_acs + node,
+    if (mat_resize(data->node_in_acs + node,
+                data->node_iters[node], tnpw_args->in_size,
+                NAN /* no need to init acs. */) < 0) {
+        ST_WARNING("Failed to mat_resize node_in_acs["OUTPUT_NODE_FMT".",
+                node);
+        return -1;
+    }
+
+
+    if (data->node_in_ers != NULL) {
+        if (mat_resize(data->node_in_ers + node,
                     data->node_iters[node], tnpw_args->in_size,
-                    NAN /* no need to init acs. */) < 0) {
-            ST_WARNING("Failed to mat_resize node_in_acs["OUTPUT_NODE_FMT".",
-                    node);
+                    0.0) < 0) {
+            ST_WARNING("Failed to mat_resize node_in_ers["
+                       OUTPUT_NODE_FMT".", node);
             return -1;
-        }
-
-
-        if (data->node_in_ers != NULL) {
-            if (mat_resize(data->node_in_ers + node,
-                        data->node_iters[node], tnpw_args->in_size,
-                        0.0) < 0) {
-                ST_WARNING("Failed to mat_resize node_in_ers["
-                           OUTPUT_NODE_FMT".", node);
-                return -1;
-            }
         }
     }
 
@@ -344,6 +342,10 @@ static int fill_tree_node_acs_walker(output_t *output, output_node_id_t node,
     tnw_args = (tree_nodes_walker_args_t *)args;
     data = tnw_args->data;
 
+    if (child_e - child_s <= 1) {
+        return 0;
+    }
+
     if (mat_cpy_row(data->node_in_acs + node, data->node_iters[node],
                 tnw_args->in_vals, tnw_args->batch_i) < 0) {
         ST_WARNING("Failed to mat_cpy_row for node_in_acs.");
@@ -390,23 +392,16 @@ static int fill_tree_node_acs(output_t *output, egs_batch_t *batch,
 static int forward_one_node(output_norm_t norm, mat_t *wt, vec_t *bias,
         real_t scale, mat_t *in_ac, mat_t *out_ac)
 {
-    if (wt->num_rows <= 0) {
-        // (child_e - child_s - 1 <= 0)
-        return 0;
+    if (add_mat_mat(scale, in_ac, MT_NoTrans,
+                wt, MT_Trans, 0.0, out_ac) < 0) {
+        ST_WARNING("Failed to add_mat_mat.");
+        return -1;
     }
 
-    if (norm == ON_SOFTMAX) {
-        if (add_mat_mat(scale, in_ac, MT_NoTrans,
-                    wt, MT_Trans, 0.0, out_ac) < 0) {
-            ST_WARNING("Failed to add_mat_mat.");
+    if (bias->size > 0) {
+        if (mat_add_vec(out_ac, bias, scale) < 0) {
+            ST_WARNING("Failed to mat_add_vec.");
             return -1;
-        }
-
-        if (bias->size > 0) {
-            if (mat_add_vec(out_ac, bias, scale) < 0) {
-                ST_WARNING("Failed to mat_add_vec.");
-                return -1;
-            }
         }
     }
 
@@ -427,6 +422,10 @@ static int forward_tree_nodes_walker(output_t *output, output_node_id_t node,
     tree_nodes_fwd_walker_args_t *tnfw_args;
 
     tnfw_args = (tree_nodes_fwd_walker_args_t *)args;
+
+    if (child_e - child_s <= 1) {
+        return 0;
+    }
 
     if (forward_one_node(output->norm, &tnfw_args->wt_updaters[node]->wt,
                 &tnfw_args->wt_updaters[node]->bias, tnfw_args->scale,
@@ -512,6 +511,10 @@ static int export_tree_node_ers_walker(output_t *output, output_node_id_t node,
     tnw_args = (tree_nodes_walker_args_t *)args;
     data = tnw_args->data;
 
+    if (child_e - child_s <= 1) {
+        return 0;
+    }
+
     if (mat_acc_row(tnw_args->in_vals, tnw_args->batch_i,
                 data->node_in_ers + node, data->node_iters[node]) < 0) {
         ST_WARNING("Failed to mat_acc_row for node_in_ers.");
@@ -579,6 +582,10 @@ static int backprop_tree_nodes_walker(output_t *output, output_node_id_t node,
     in_er = tnbw_args->node_in_ers + node;
     wt_updater = tnbw_args->wt_updaters[node];
 
+    if (child_e - child_s <= 1) {
+        return 0;
+    }
+
     // propagate from out_er to in_er
     if (propagate_error(&wt_updater->wt, out_er, tnbw_args->scale,
                 wt_updater->param.er_cutoff, in_er) < 0) {
@@ -586,14 +593,10 @@ static int backprop_tree_nodes_walker(output_t *output, output_node_id_t node,
         return -1;
     }
 
-    if (output->norm == ON_SOFTMAX) {
-        if (child_e - child_s - 1 > 0) {
-            if (wt_update(wt_updater, out_er, tnbw_args->scale,
-                        in_ac, 1.0, NULL, NULL) < 0) {
-                ST_WARNING("Failed to wt_update.");
-                return -1;
-            }
-        }
+    if (wt_update(wt_updater, out_er, tnbw_args->scale,
+                in_ac, 1.0, NULL, NULL) < 0) {
+        ST_WARNING("Failed to wt_update.");
+        return -1;
     }
 
     return 0;
@@ -675,7 +678,7 @@ int out_glue_updater_forward_out(glue_updater_t *glue_updater,
     child_s = s_children(output->tree, node);
     child_e = e_children(output->tree, node);
 
-    if (child_s >= child_e) {
+    if (child_e - child_s <= 1) {
         return 0;
     }
 
@@ -705,6 +708,10 @@ static int forward_out_words_walker(output_t *output, output_node_id_t node,
     forward_out_words_args_t *fow_args;
 
     fow_args = (forward_out_words_args_t *)args;
+
+    if (child_e - child_s <= 1) {
+        return 0;
+    }
 
     if (fow_args->node_iters[node] != 0) {
         // already forwarded

@@ -1975,10 +1975,6 @@ static int output_generate_param_map(output_t *output)
 
     safe_st_free(output->param_map);
 
-    if (output->norm != ON_SOFTMAX) {
-        return 0;
-    }
-
     sz = sizeof(output_node_id_t) * (output->tree->num_node);
     output->param_map = (output_node_id_t *)st_malloc(sz);
     if (output->param_map == NULL) {
@@ -2700,37 +2696,4 @@ int output_walk_through_path(output_t *output, int word,
     }
 
     return 0;
-}
-
-st_int_seg_t* output_gen_segs(output_t *output, int *n_seg)
-{
-    st_int_seg_t *segs = NULL;
-    output_node_id_t n;
-
-    ST_CHECK_PARAM(output == NULL || n_seg == NULL, NULL);
-
-    segs = (st_int_seg_t *)st_malloc(sizeof(st_int_seg_t)*output->tree->num_node);
-    if (segs == NULL) {
-        ST_WARNING("Failed to st_malloc segs.");
-        goto ERR;
-    }
-
-    for (n = 0; n < output->tree->num_node; n++) {
-        if (s_children(output->tree, n) == OUTPUT_NODE_NONE) {
-            segs[n].s = -1;
-        } else {
-            segs[n].s = output_param_idx(output, s_children(output->tree, n));
-        }
-        segs[n].n = e_children(output->tree, n) - s_children(output->tree, n);
-        if (output->norm == ON_SOFTMAX) {
-            segs[n].n -= 1;
-        }
-    }
-
-    *n_seg = output->tree->num_node;
-    return segs;
-
-ERR:
-    safe_st_free(segs);
-    return NULL;
 }

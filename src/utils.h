@@ -79,6 +79,15 @@ void sigmoid(real_t *vec, int vec_size);
 
 void softmax(real_t *vec, int vec_size);
 
+/*
+ * compute multinomial logit.
+ * can be seen as
+ *  full = vec + [0.0]
+ *  softmax(full)
+ *  return vec
+ */
+void multi_logit(real_t *vec, int vec_size);
+
 void tanH(real_t *vec, int vec_size);
 
 void connlm_show_usage(const char *module_name, const char *header,

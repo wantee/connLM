@@ -197,26 +197,24 @@ static int out_prepare_walker(output_t *output, output_node_id_t node,
 
     out_updater = (out_updater_t *)args;
 
-    if (child_s >= child_e || out_updater->node_iters[node] <= 0) {
+    if (child_e - child_s <= 1 || out_updater->node_iters[node] <= 0) {
         return 0;
     }
 
-    if (output->norm == ON_SOFTMAX) {
-        if (mat_resize(out_updater->node_acs + node,
-                    out_updater->node_iters[node], child_e - child_s,
-                    0.0) < 0) {
-            ST_WARNING("Failed to mat_resize node_acs["OUTPUT_NODE_FMT".", node);
+    if (mat_resize(out_updater->node_acs + node,
+                out_updater->node_iters[node], child_e - child_s - 1,
+                0.0) < 0) {
+        ST_WARNING("Failed to mat_resize node_acs["OUTPUT_NODE_FMT".", node);
+        return -1;
+    }
+
+
+    if (out_updater->node_ers != NULL) {
+        if (mat_resize(out_updater->node_ers + node,
+                    out_updater->node_iters[node], child_e - child_s - 1,
+                    NAN /* no need to init ers. */) < 0) {
+            ST_WARNING("Failed to mat_resize node_ers["OUTPUT_NODE_FMT".", node);
             return -1;
-        }
-
-
-        if (out_updater->node_ers != NULL) {
-            if (mat_resize(out_updater->node_ers + node,
-                        out_updater->node_iters[node], child_e - child_s,
-                        NAN /* no need to init ers. */) < 0) {
-                ST_WARNING("Failed to mat_resize node_ers["OUTPUT_NODE_FMT".", node);
-                return -1;
-            }
         }
     }
 
@@ -262,9 +260,11 @@ static int out_act_walker(output_t *output, output_node_id_t node,
 {
     out_act_walker_args_t *oaw_args;
     mat_t *ac;
+    size_t j;
     int this_row;
+    double sum;
 
-    if (child_e <= child_s || child_e == OUTPUT_NODE_NONE) {
+    if (child_e - child_s <= 1 || child_e == OUTPUT_NODE_NONE) {
         return 0;
     }
 
@@ -272,14 +272,19 @@ static int out_act_walker(output_t *output, output_node_id_t node,
     ac = oaw_args->out_updater->node_acs + node;
     this_row = oaw_args->out_updater->node_iters[node];
 
-    assert(ac->num_cols == child_e - child_s);
-    if (output->norm == ON_SOFTMAX) {
-        MAT_VAL(ac, this_row, ac->num_cols - 1) = 0.0;
-        softmax(MAT_VALP(ac, this_row, 0), ac->num_cols);
-    }
+    assert(ac->num_cols == child_e - child_s - 1);
+    multi_logit(MAT_VALP(ac, this_row, 0), ac->num_cols);
 
-    VEC_VAL(oaw_args->logps, oaw_args->batch_i) +=
-        log(MAT_VAL(ac, this_row, next_node - child_s));
+    if (next_node == child_e - 1) {
+        sum = 0.0;
+        for (j = 0; j < ac->num_cols; j++) {
+            sum += MAT_VAL(ac, this_row, j);
+        }
+        VEC_VAL(oaw_args->logps, oaw_args->batch_i) += log(1.0 - sum);
+    } else {
+        VEC_VAL(oaw_args->logps, oaw_args->batch_i) +=
+            log(MAT_VAL(ac, this_row, next_node - child_s));
+    }
     oaw_args->out_updater->node_iters[node]++;
 
     return 0;
@@ -341,7 +346,7 @@ static int out_loss_walker(output_t *output, output_node_id_t node,
     mat_t *er;
     int this_row;
 
-    if (child_e <= child_s || child_e == OUTPUT_NODE_NONE) {
+    if (child_e - child_s <= 1 || child_e == OUTPUT_NODE_NONE) {
         return 0;
     }
 
@@ -350,11 +355,11 @@ static int out_loss_walker(output_t *output, output_node_id_t node,
     er = out_updater->node_ers + node;
     this_row = out_updater->node_iters[node];
 
-    assert(ac->num_cols == child_e - child_s);
-    if (output->norm == ON_SOFTMAX) {
-        for (ch = 0; ch < ac->num_cols; ++ch) {
-            MAT_VAL(er, this_row, ch) = (0 - MAT_VAL(ac, this_row, ch));
-        }
+    assert(ac->num_cols == child_e - child_s - 1);
+    for (ch = 0; ch < ac->num_cols; ++ch) {
+        MAT_VAL(er, this_row, ch) = (0 - MAT_VAL(ac, this_row, ch));
+    }
+    if (next_node < child_e - 1) {
         MAT_VAL(er, this_row, next_node - child_s) =
             (1 - MAT_VAL(ac, this_row, next_node - child_s));
     }
@@ -447,10 +452,7 @@ output_node_id_t out_updater_sample(out_updater_t *out_updater,
 
     ac = out_updater->node_acs + node;
     row = 0; // batch_size == 1
-    if (output->norm == ON_SOFTMAX) {
-        MAT_VAL(ac, row, e - 1) = 0.0;
-        softmax(MAT_VALP(ac, row, s), e - s);
-    }
+    multi_logit(MAT_VALP(ac, row, 0), ac->num_cols);
 
     while (true) {
         u = st_random(0, 1);
@@ -459,7 +461,11 @@ output_node_id_t out_updater_sample(out_updater_t *out_updater,
         p = 0;
 
         for (sampled = s; sampled < e; sampled++) {
-            p += MAT_VAL(ac, row, sampled);
+            if (sampled == e - 1) {
+                p = 1.0;
+            } else {
+                p += MAT_VAL(ac, row, sampled);
+            }
 
             if (p >= u) {
                 break;
