@@ -370,10 +370,6 @@ static void* driver_thread(void *args)
             goto RELEASE_WP;
         }
 
-        thr->stat->num_words = num_words;
-        thr->stat->num_sents = num_sents;
-        thr->stat->logp = logp;
-
         gettimeofday(&tte, NULL);
         ms = TIMEDIFF(tts, tte);
         ms_wait += TIMEDIFF(tts_wait, tte_wait);
@@ -394,6 +390,10 @@ static void* driver_thread(void *args)
             goto ERR;
         }
     }
+
+    thr->stat->num_words = num_words;
+    thr->stat->num_sents = num_sents;
+    thr->stat->logp = logp;
 
     return NULL;
 

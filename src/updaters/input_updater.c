@@ -299,7 +299,7 @@ int input_updater_feed(input_updater_t *input_updater, word_pool_t *new_wp)
             return -1;
         }
 
-        input_updater->cur_pos = 0;
+        input_updater->cur_pos = -1;
     } else {
         // assert batch size is constanst, which is required by stateful network
         if (wp_batch_size(wp) != wp_batch_size(new_wp)) {
