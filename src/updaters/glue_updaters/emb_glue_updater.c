@@ -295,6 +295,8 @@ int emb_glue_updater_backprop(glue_updater_t *glue_updater,
         mat_assign(&er, out_er);
     }
 
+    sp_mat_clear(&egu_data->word_buf);
+
     if (data->combine == EC_CONCAT) {
         for (j = 0; j < input->n_ctx; j++) {
             for (b = 0; b < batch->num_egs; b++) {
@@ -352,8 +354,6 @@ int emb_glue_updater_backprop(glue_updater_t *glue_updater,
             return -1;
         }
     }
-
-    sp_mat_clear(&egu_data->word_buf);
 
     return 0;
 }

@@ -684,17 +684,17 @@ int glue_updater_forward_out_words(glue_updater_t *glue_updater,
     return 0;
 }
 
-int propagate_error(mat_t *wt, mat_t *in_er,
-        real_t scale, real_t er_cutoff, mat_t *out_er)
+int propagate_error(mat_t *wt, mat_t *src_er,
+        real_t scale, real_t er_cutoff, mat_t *dst_er)
 {
-    if (add_mat_mat(scale, in_er, MT_NoTrans,
-                wt, MT_NoTrans, 1.0, out_er) < 0) {
+    if (add_mat_mat(scale, src_er, MT_NoTrans,
+                wt, MT_NoTrans, 1.0, dst_er) < 0) {
         ST_WARNING("Failed to add_mat_mat.");
         return -1;
     }
 
     if (er_cutoff > 0) {
-        mat_cutoff(out_er, er_cutoff);
+        mat_cutoff(dst_er, er_cutoff);
     }
 
     return 0;

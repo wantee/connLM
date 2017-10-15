@@ -252,7 +252,7 @@ static int prepare_tree_nodes_walker(output_t *output,
         if (data->node_in_ers != NULL) {
             if (mat_resize(data->node_in_ers + node,
                         data->node_iters[node], tnpw_args->in_size,
-                        NAN /* no need to init ers. */) < 0) {
+                        0.0) < 0) {
                 ST_WARNING("Failed to mat_resize node_in_ers["
                            OUTPUT_NODE_FMT".", node);
                 return -1;

@@ -247,15 +247,15 @@ int glue_updater_forward_out_words(glue_updater_t *glue_updater,
 /**
  * Propagate error to previous layer.
  * @ingroup g_updater
- * @param[in] in_er error of input layer.
+ * @param[in] src_er error of source layer.
  * @param[in] wt weight matrix.
  * @param[in] scale the scale.
  * @param[in] er_cutoff cutoff of error.
- * @param[out] out_er error of output layer.
- * @return word for this step, -1 if any error.
+ * @param[out] dst_er error of dst layer.
+ * @return non-zero value if any error.
  */
-int propagate_error(mat_t *wt, mat_t *in_er,
-        real_t scale, real_t er_cutoff, mat_t *out_er);
+int propagate_error(mat_t *wt, mat_t *src_er,
+        real_t scale, real_t er_cutoff, mat_t *dst_er);
 
 #ifdef __cplusplus
 }
