@@ -281,7 +281,7 @@ int wt_update(wt_updater_t *wt_updater,
                 for (a = 0; a < sp_mat->size; a++) {
                     i = sp_mat->coo.cols[a]; // sp_mat->coo.cols[a] is word_id
                     for (j = 0; j < wt->num_cols; j++) {
-                        MAT_VAL(delta_wt, i, j) += lr * sp_mat->vals[a]
+                        MAT_VAL(delta_wt, i, j) = lr * sp_mat->vals[a]
                             * MAT_VAL(er, sp_mat->coo.rows[a], j)
                             - l2 * MAT_VAL(wt, i, j)
                             + momentum * MAT_VAL(delta_wt, i, j);
