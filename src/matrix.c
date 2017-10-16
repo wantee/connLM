@@ -287,7 +287,8 @@ int mat_submat(mat_t *mat, size_t row_s, size_t num_rows,
     ST_CHECK_PARAM(mat == NULL || sub == NULL, -1);
 
     if (row_s >= mat->num_rows || col_s >= mat->num_cols) {
-        ST_WARNING("Error row or col index.");
+        ST_WARNING("Error row[%zu/%zu] or col[%zu/%zu] index.",
+                row_s, mat->num_rows, col_s, mat->num_cols);
         return -1;
     }
 
@@ -663,6 +664,29 @@ int add_mat_mat(real_t alpha, mat_t *A, mat_trans_t trans_A,
         }
     }
 #endif
+
+    return 0;
+}
+
+int vec_add_col_sum_mat(vec_t *vec, real_t alpha, mat_t *mat, real_t beta)
+{
+    size_t i, j;
+    double sum;
+
+    ST_CHECK_PARAM(vec == NULL || mat == NULL, -1);
+
+    if (mat->num_cols != vec->size) {
+        ST_WARNING("dimension not match.");
+        return -1;
+    }
+
+    for (j = 0; j < vec->size; j++) {
+        sum = 0.0;
+        for (i = 0; i < mat->num_rows; i++) {
+            sum += MAT_VAL(mat, i, j);
+        }
+        VEC_VAL(vec, j) = alpha * sum + beta * VEC_VAL(vec, j);
+    }
 
     return 0;
 }

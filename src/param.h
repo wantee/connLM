@@ -48,6 +48,11 @@ typedef struct _param_t_ {
     real_t l2_penalty; /**< value of L2 penalty */
     real_t momentum; /**< value of momentum */
     real_t er_cutoff; /**< cutoff of error. */
+
+    real_t learn_rate_coef; /**< coefficient of learning rate for weights. */
+    real_t bias_learn_rate_coef; /**< coefficient of learning rate for bias. */
+    real_t momentum_coef; /**< coefficient of momentum for weights. */
+    real_t bias_momentum_coef; /**< coefficient of momentum for bias. */
 } param_t;
 
 /**

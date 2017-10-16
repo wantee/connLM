@@ -166,6 +166,19 @@ void vec_set(vec_t *vec, real_t val);
  */
 int vec_subvec(vec_t *vec, size_t start, size_t size, vec_t *sub);
 
+/**
+ * Add element-by-element for two vector.
+ * out = s1 * vec1 + s2 * vec2
+ * @ingroup g_matrix
+ * @param[in] vec1 the first vector.
+ * @param[in] s1 the first scale.
+ * @param[in] vec2 the second vector.
+ * @param[in] s2 the second scale.
+ * @param[out] out the output vector.
+ * @return non-zero if any error.
+ */
+int vec_add_elems(vec_t *vec1, real_t s1, vec_t *vec2, real_t s2, vec_t *out);
+
 
 /**
  * Double Vector

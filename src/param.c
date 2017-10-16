@@ -39,6 +39,11 @@ static param_t def_param = {
     .l2_penalty = 0.0,
     .momentum = 0.0,
     .er_cutoff = 50.0,
+
+    .learn_rate_coef = 1.0,
+    .bias_learn_rate_coef = 1.0,
+    .momentum_coef = 1.0,
+    .bias_momentum_coef = 1.0,
 };
 
 void param_show_usage()
@@ -107,6 +112,26 @@ int param_load(param_t *param, st_opt_t *opt, const char *sec_name,
             (double)param->er_cutoff, "Cutoff of error");
     param->er_cutoff = (real_t)d;
 
+    ST_OPT_SEC_GET_DOUBLE(opt, sec_name, "LEARN_RATE_COEF", d,
+            (double)param->learn_rate_coef,
+            "Learning rate coefficient for weights.");
+    param->learn_rate_coef = (real_t)d;
+
+    ST_OPT_SEC_GET_DOUBLE(opt, sec_name, "BIAS_LEARN_RATE_COEF", d,
+            (double)param->bias_learn_rate_coef,
+            "Learning rate coefficient for bias.");
+    param->bias_learn_rate_coef = (real_t)d;
+
+    ST_OPT_SEC_GET_DOUBLE(opt, sec_name, "MOMENTUM_COEF", d,
+            (double)param->momentum_coef,
+            "Momentum coefficient for weights.");
+    param->momentum_coef = (real_t)d;
+
+    ST_OPT_SEC_GET_DOUBLE(opt, sec_name, "BIAS_MOMENTUM_COEF", d,
+            (double)param->bias_momentum_coef,
+            "Momentum coefficient for bias.");
+    param->bias_momentum_coef = (real_t)d;
+
 
     return 0;
 ST_OPT_ERR:
@@ -138,6 +163,22 @@ bool param_equal(param_t *param1, param_t *param2)
     }
 
     if (param1->er_cutoff != param2->er_cutoff) {
+        return false;
+    }
+
+    if (param1->learn_rate_coef != param2->learn_rate_coef) {
+        return false;
+    }
+
+    if (param1->bias_learn_rate_coef != param2->bias_learn_rate_coef) {
+        return false;
+    }
+
+    if (param1->momentum_coef != param2->momentum_coef) {
+        return false;
+    }
+
+    if (param1->bias_momentum_coef != param2->bias_momentum_coef) {
         return false;
     }
 

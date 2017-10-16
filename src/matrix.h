@@ -362,6 +362,19 @@ int add_mat_mat(real_t alpha, mat_t *A, mat_trans_t trans_A,
         mat_t *B, mat_trans_t trans_B, real_t beta, mat_t *C);
 
 /**
+ * Sum the rows of the matrix, add to vector
+ * Does vec = alpha * (sum of rows of mat) + beta * vec.
+ * @ingroup g_vector
+ * @param[out] vec the vector.
+ * @param[in] alpha the vector scale.
+ * @param[in] mat the matrix.
+ * @param[in] beta the matrix scale.
+ * @return non-zero if any error.
+ */
+int vec_add_col_sum_mat(vec_t *vec, real_t alpha, mat_t *mat, real_t beta);
+
+
+/**
  * Sparse matrix format. see https://software.intel.com/en-us/mkl-developer-reference-c-sparse-blas-csr-matrix-storage-format
  * @ingroup g_matrix
  */

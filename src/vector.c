@@ -440,6 +440,24 @@ int vec_subvec(vec_t *vec, size_t start, size_t size, vec_t *sub)
     return 0;
 }
 
+int vec_add_elems(vec_t *vec1, real_t s1, vec_t *vec2, real_t s2, vec_t *out)
+{
+    size_t i;
+
+    ST_CHECK_PARAM(vec1 == NULL || vec2 == NULL || out == NULL, -1);
+
+    if (vec1->size != vec2->size || vec1->size != out->size) {
+        ST_WARNING("Diemension not match.");
+        return -1;
+    }
+
+    for (i = 0; i < vec1->size; i++) {
+        out->vals[i] = s1 * vec1->vals[i] + s2 * vec2->vals[i];
+    }
+
+    return 0;
+}
+
 
 void dvec_destroy(dvec_t *vec)
 {

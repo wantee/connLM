@@ -37,7 +37,6 @@ int fc_glue_updater_forward(glue_updater_t *glue_updater,
         mat_t *in_ac, mat_t *out_ac)
 {
     wt_updater_t *wt_updater;
-    size_t i, j;
 
     ST_CHECK_PARAM(glue_updater == NULL || comp_updater == NULL
             || in_ac == NULL || out_ac == NULL, -1);
@@ -51,10 +50,9 @@ int fc_glue_updater_forward(glue_updater_t *glue_updater,
     }
 
     if (wt_updater->bias.size > 0) {
-        for (i = 0; i < out_ac->num_rows; i++) {
-            for (j = 0; j < out_ac->num_cols; j++) {
-                MAT_VAL(out_ac, i, j) += VEC_VAL(&wt_updater->bias, j);
-            }
+        if (mat_add_vec(out_ac, &wt_updater->bias, 1.0) < 0) {
+            ST_WARNING("Failed to mat_add_vec bias.");
+            return -1;
         }
     }
 
