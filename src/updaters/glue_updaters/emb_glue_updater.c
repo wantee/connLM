@@ -140,11 +140,13 @@ int emb_glue_updater_prepare(glue_updater_t *glue_updater,
             total_words += batch->inputs[b].num_words;
         }
 
-        if (sp_mat_resize(&data->word_buf, total_words,
-                    batch->num_egs,
-                    glue_updater->wt_updaters[0]->wt.num_rows) < 0) {
-            ST_WARNING("Failed to sp_mat_resize.");
-            return -1;
+        if (total_words > 0 && batch->num_egs > 0) {
+            if (sp_mat_resize(&data->word_buf, total_words,
+                        batch->num_egs,
+                        glue_updater->wt_updaters[0]->wt.num_rows) < 0) {
+                ST_WARNING("Failed to sp_mat_resize.");
+                return -1;
+            }
         }
 
         if (sp_mat_clear(&data->word_buf) < 0) {
@@ -308,14 +310,7 @@ int emb_glue_updater_backprop(glue_updater_t *glue_updater,
                     --i;
                 }
 
-                if (i < 0) { // not in batch
-                    if (sp_mat_coo_add(&egu_data->word_buf, b,
-                                0, /* since we set weight to zero, this can be arbitrary word id. */
-                                0.0) < 0) {
-                        ST_WARNING("Failed to sp_mat_coo_add");
-                        return -1;
-                    }
-                } else {
+                if (i >= 0) {
                     if (sp_mat_coo_add(&egu_data->word_buf, b,
                                 batch->inputs[b].words[i],
                                 batch->inputs[b].weights[i]) < 0) {
@@ -324,8 +319,7 @@ int emb_glue_updater_backprop(glue_updater_t *glue_updater,
                     }
                 }
             }
-            if (mat_submat(&er, 0, 0, j * col,
-                        (j + 1) * col, &part_er) < 0) {
+            if (mat_submat(&er, 0, 0, j * col, col, &part_er) < 0) {
                 ST_WARNING("Failed to mat_submat.");
                 return -1;
             }
