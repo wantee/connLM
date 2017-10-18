@@ -266,6 +266,28 @@ int layer_updater_prepare(layer_updater_t *layer_updater, int batch_size)
         layer_updater->derived = false;
     }
 
+    if (layer_updater->ac_state.num_rows > 0) {
+        if (layer_updater->ac_state.num_rows != batch_size) {
+            // init ac_state
+            if (mat_resize(&layer_updater->ac_state, batch_size,
+                        layer_updater->layer->size, 0.0) < 0) {
+                ST_WARNING("Failed to mat_resize ac_state");
+                return -1;
+            }
+        }
+    }
+
+    if (layer_updater->pre_ac_state.num_rows > 0) {
+        if (layer_updater->pre_ac_state.num_rows != batch_size) {
+            // init pre_ac_state
+            if (mat_resize(&layer_updater->pre_ac_state, batch_size,
+                        layer_updater->layer->size, 0.0) < 0) {
+                ST_WARNING("Failed to mat_resize pre_ac_state");
+                return -1;
+            }
+        }
+    }
+
     return 0;
 }
 
