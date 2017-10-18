@@ -621,6 +621,10 @@ static int comp_updater_bptt(comp_updater_t *comp_updater, bool clear)
 
         if (comp_updater->bptt_step % bptt_delay == 0 || clear) {
             for (j = 1; j <= comp->glue_cycles[i][0]; j++) {
+                if (bptt_updater->out_ers[j].num_rows == 0) {
+                    continue;
+                }
+
                 wt_updater = bptt_updater->wt_updaters[j];
 
                 if (wt_update(wt_updater, bptt_updater->out_ers + j, 1.0,

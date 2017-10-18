@@ -141,6 +141,15 @@ int updater_step(updater_t *updater);
 int updater_finalize(updater_t *updater);
 
 /**
+ * Finish running for updater.
+ * Refresh the buffers in bptt into weight matrix.
+ * @ingroup g_updater
+ * @param[in] updater updater.
+ * @return non-zero value if any error.
+ */
+int updater_finish(updater_t *updater);
+
+/**
  * Sampling a word.
  * @ingroup g_updater
  * @param[in] updater the updater.

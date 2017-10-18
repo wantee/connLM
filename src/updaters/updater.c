@@ -162,7 +162,7 @@ static int updater_backprop(updater_t *updater)
     return 0;
 }
 
-static int updater_finish(updater_t *updater)
+int updater_finish(updater_t *updater)
 {
     int c;
 
@@ -448,13 +448,6 @@ int updater_step(updater_t *updater)
     if (updater_reset(updater) < 0) {
         ST_WARNING("Failed to updater_reset.");
         return -1;
-    }
-
-    if (updater->finalized) {
-        if (updater_finish(updater) < 0) {
-            ST_WARNING("Failed to updater_finish.");
-            return -1;
-        }
     }
 
     return 0;
@@ -1111,13 +1104,6 @@ int updater_step_state(updater_t *updater,
     if (updater_reset(updater) < 0) {
         ST_WARNING("Failed to updater_reset.");
         return -1;
-    }
-
-    if (updater->finalized) {
-        if (updater_finish(updater) < 0) {
-            ST_WARNING("Failed to updater_finish.");
-            return -1;
-        }
     }
 
     return 0;

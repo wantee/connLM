@@ -292,6 +292,13 @@ static int driver_steps(driver_t *driver, int tid, double *logp,
         }
     }
 
+    if (updater->finalized && driver->mode == DRIVER_TRAIN) {
+        if (updater_finish(updater) < 0) {
+            ST_WARNING("Failed to updater_finish.");
+            return -1;
+        }
+    }
+
     return 0;
 }
 
