@@ -282,8 +282,8 @@ int wt_update(wt_updater_t *wt_updater,
     lr_bias = lr * wt_updater->param.bias_learn_rate_coef;
     lr = lr * wt_updater->param.learn_rate_coef;
 
-    l1 = lr * batch_size * wt_updater->param.l1_penalty;
-    l2 = lr * batch_size * wt_updater->param.l2_penalty;
+    l1 = lr * wt_updater->param.l1_penalty;
+    l2 = lr * wt_updater->param.l2_penalty;
 
     mmt = wt_updater->param.momentum * wt_updater->param.momentum_coef;
     mmt_bias = wt_updater->param.momentum * wt_updater->param.bias_momentum_coef;
@@ -295,6 +295,9 @@ int wt_update(wt_updater_t *wt_updater,
                         er->num_rows, er->num_cols);
                 return -1;
             }
+
+            l1 *= batch_size;
+            l2 *= batch_size;
 
             if (mmt != 0.0) {
                 if (add_mat_mat(lr, er, MT_Trans, in, MT_NoTrans,
