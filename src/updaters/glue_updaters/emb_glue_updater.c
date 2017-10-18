@@ -23,6 +23,7 @@
  */
 
 #include <string.h>
+#include <assert.h>
 
 #include <stutils/st_macro.h>
 #include <stutils/st_utils.h>
@@ -238,17 +239,18 @@ int emb_glue_updater_forward(glue_updater_t *glue_updater,
                         }
                         pos++;
                     }
+                    assert(pos < inputs->n_ctx);
 
                     if (glue_updater->keep_mask.num_rows > 0) {
                         scale /= glue_updater->keep_prob;
-                        for (i = pos * col; i < (pos + 1) * col; i++) {
-                            if (MAT_VAL(&glue_updater->keep_mask, b, i) == 1.0) {
-                                MAT_VAL(out_ac, b, i) += scale * MAT_VAL(wt, j, i);
+                        for (i = 0; i < col; i++) {
+                            if (MAT_VAL(&glue_updater->keep_mask, b, pos * col + i) == 1.0) {
+                                MAT_VAL(out_ac, b, pos * col + i) += scale * MAT_VAL(wt, j, i);
                             }
                         }
                     } else {
-                        for (i = pos * col; i < (pos + 1) * col; i++) {
-                            MAT_VAL(out_ac, b, i) += scale * MAT_VAL(wt, j, i);
+                        for (i = 0; i < col; i++) {
+                            MAT_VAL(out_ac, b, pos * col + i) += scale * MAT_VAL(wt, j, i);
                         }
                     }
                 }
