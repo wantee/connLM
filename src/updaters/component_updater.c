@@ -324,11 +324,12 @@ static int comp_updater_bptt(comp_updater_t *comp_updater, bool clear)
     bptt_updater_t *bptt_updater;
     real_t keep_prob;
 
-    mat_t in_er = {0};
-    mat_t out_er = {0};
+    mat_t *in_er = NULL;
+    mat_t *out_er = NULL;
+    mat_t *tmp;
     mat_t in_ac = {0};
     mat_t out_ac = {0};
-    mat_t tmp = {0};
+    mat_t sub_er = {0};
     int bptt, bptt_delay, batch_size;
     int i, j, g, t, er_t;
 
@@ -382,7 +383,6 @@ static int comp_updater_bptt(comp_updater_t *comp_updater, bool clear)
                 glue = comp->glues[g];
                 keep_prob = comp_updater->glue_updaters[g]->keep_prob;
 
-                mat_assign(&out_er, &layer_updaters[glue->out_layer]->er_raw);
                 if (keep_prob < 1.0) {
                     // dropout_val should be filled during forward pass
                     mat_assign(&in_ac, &comp_updater->glue_updaters[g]->dropout_val);
@@ -449,14 +449,16 @@ static int comp_updater_bptt(comp_updater_t *comp_updater, bool clear)
 
                     if (mat_fill(bptt_updater->er_bptts + j,
                                 (bptt_updater->num_er_bptts - 1) * batch_size,
-                                batch_size, 0, 0, &out_er) < 0) {
+                                batch_size, 0, 0,
+                                &layer_updaters[glue->out_layer]->er_raw) < 0) {
                         ST_WARNING("Failed to mat_fill for er_bptts.");
                         return -1;
                     }
                 } else {
                     if (mat_fill(bptt_updater->er_bptts + j,
                                 bptt_updater->num_er_bptts * batch_size,
-                                batch_size, 0, 0, &out_er) < 0) {
+                                batch_size, 0, 0,
+                                &layer_updaters[glue->out_layer]->er_raw) < 0) {
                         ST_WARNING("Failed to mat_fill for er_bptts.");
                         return -1;
                     }
@@ -477,8 +479,8 @@ static int comp_updater_bptt(comp_updater_t *comp_updater, bool clear)
         //
         // we directly assign bptt_er0/1, so that they can do resize
         // we will assign them back in order to properly used then outside
-        in_er = comp_updater->bptt_er0;
-        out_er = comp_updater->bptt_er1;
+        in_er = &comp_updater->bptt_er0;
+        out_er = &comp_updater->bptt_er1;
 
         if (comp_updater->bptt_step % bptt_delay == 0 || clear) {
             // backprop through time
@@ -493,16 +495,16 @@ static int comp_updater_bptt(comp_updater_t *comp_updater, bool clear)
                         if (mat_submat(&layer_updaters[glue->out_layer]->ac,
                                     0, 0, glue->out_offset, 0, &out_ac) < 0) {
                             ST_WARNING("Failed to mat_submat out_ac.");
-                            goto ERR;
+                            return -1;
                         }
 
                         layer = layer_updaters[glue->out_layer]->layer;
-                        if (mat_resize(&out_er, batch_size,
+                        if (mat_resize(out_er, batch_size,
                                     layer->size - glue->out_offset, NAN) < 0) {
                             ST_WARNING("Failed to mat_resize out_er");
-                            goto ERR;
+                            return -1;
                         }
-                        mat_set(&out_er, 0.0);
+                        mat_set(out_er, 0.0);
                     } else {
                         // the glues in a cycle is joined one-by-one,
                         // the output of one glue is the input of the prev glue
@@ -517,7 +519,7 @@ static int comp_updater_bptt(comp_updater_t *comp_updater, bool clear)
                                 t * batch_size, batch_size,
                                 0, 0, &in_ac) < 0) {
                         ST_WARNING("Failed to mat_submat in_ac.");
-                        goto ERR;
+                        return -1;
                     }
 
                     er_t = t - bptt_updater->num_ac_bptts
@@ -529,13 +531,13 @@ static int comp_updater_bptt(comp_updater_t *comp_updater, bool clear)
 #endif
                         if (mat_submat(bptt_updater->er_bptts + j,
                                     er_t * batch_size, batch_size,
-                                    0, 0, &tmp) < 0) {
+                                    0, 0, &sub_er) < 0) {
                             ST_WARNING("Failed to mat_submat er_bptts.");
-                            goto ERR;
+                            return -1;
                         }
-                        if (mat_add_elems(&out_er, 1.0, &tmp, 1.0, &out_er) < 0) {
+                        if (mat_add_elems(out_er, 1.0, &sub_er, 1.0, out_er) < 0) {
                             ST_WARNING("Failed to mat_add_elems for out_er");
-                            goto ERR;
+                            return -1;
                         }
                     } else {
 #ifdef _CONNLM_TRACE_PROCEDURE_
@@ -548,36 +550,36 @@ static int comp_updater_bptt(comp_updater_t *comp_updater, bool clear)
                     out_layer_updater = layer_updaters[glue->out_layer];
                     assert (out_layer_updater->deriv != NULL);
                     if (out_layer_updater->deriv(out_layer_updater->layer,
-                                &out_er, &out_ac) < 0) {
+                                out_er, &out_ac) < 0) {
                         ST_WARNING("Failed to deriv.[%s]",
                                 out_layer_updater->layer->name);
-                        goto ERR;
+                        return -1;
                     }
 
                     wt_updater = bptt_updater->wt_updaters[j];
                     // propagate error to next glue
                     if (j < comp->glue_cycles[i][0] || t - 1 >= 0) {
                         layer = layer_updaters[glue->in_layer]->layer;
-                        if (mat_resize(&in_er, batch_size,
+                        if (mat_resize(in_er, batch_size,
                                     layer->size - glue->in_offset, NAN) < 0) {
                             ST_WARNING("Failed to mat_resize in_er");
-                            goto ERR;
+                            return -1;
                         }
-                        mat_set(&in_er, 0.0);
+                        mat_set(in_er, 0.0);
 
-                        if (propagate_error(&wt_updater->wt, &out_er, 1.0,
-                                    wt_updater->param.er_cutoff, &in_er) < 0) {
+                        if (propagate_error(&wt_updater->wt, out_er, 1.0,
+                                    wt_updater->param.er_cutoff, in_er) < 0) {
                             ST_WARNING("Failed to propagate_error.");
-                            goto ERR;
+                            return -1;
                         }
 
                         // dropout in_er
                         if (keep_prob < 1.0) {
-                            if (mat_mul_elems(&in_er,
+                            if (mat_mul_elems(in_er,
                                     &comp_updater->glue_updaters[g]->keep_mask,
-                                    &in_er) < 0) {
+                                    in_er) < 0) {
                                 ST_WARNING("Failed to mat_mul_elems.");
-                                goto ERR;
+                                return -1;
                             }
                         }
                     }
@@ -585,11 +587,11 @@ static int comp_updater_bptt(comp_updater_t *comp_updater, bool clear)
                     // store in_ac and out_er
                     if (mat_append(bptt_updater->in_acs + j, &in_ac) < 0) {
                         ST_WARNING("Failed to mat_append in_ac");
-                        goto ERR;
+                        return -1;
                     }
-                    if (mat_append(bptt_updater->out_ers + j, &out_er) < 0) {
-                        ST_WARNING("Failed to mat_append in_ac");
-                        goto ERR;
+                    if (mat_append(bptt_updater->out_ers + j, out_er) < 0) {
+                        ST_WARNING("Failed to mat_append out_er");
+                        return -1;
                     }
                 }
             }
@@ -609,12 +611,6 @@ static int comp_updater_bptt(comp_updater_t *comp_updater, bool clear)
                 bptt_updater->num_ac_bptts = bptt;
             }
         }
-
-ERR:
-        comp_updater->bptt_er0 = in_er;
-        comp_updater->bptt_er1 = out_er;
-
-        return -1;
     }
 
     for (i = 0; i < comp->num_glue_cycle; i++) {
@@ -633,8 +629,8 @@ ERR:
                     ST_WARNING("Failed to wt_update.");
                     return -1;
                 }
-                mat_resize(bptt_updater->out_ers + j, 0, 0, NAN);
-                mat_resize(bptt_updater->in_acs + j, 0, 0, NAN);
+                mat_clear(bptt_updater->out_ers + j);
+                mat_clear(bptt_updater->in_acs + j);
 
                 g = comp->glue_cycles[i][j];
                 if (glue_updater_gen_keep_mask(comp_updater->glue_updaters[g],
@@ -655,6 +651,10 @@ int comp_updater_reset(comp_updater_t *comp_updater, int batch_i)
     int i, j, g;
 
     ST_CHECK_PARAM(comp_updater == NULL, -1);
+
+    if (comp_updater->bptt_updaters == NULL) {
+        return 0;
+    }
 
     for (g = 0; g < comp_updater->comp->num_glue_cycle; g++) {
         bptt_updater = comp_updater->bptt_updaters[g];

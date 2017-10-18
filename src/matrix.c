@@ -137,20 +137,37 @@ int mat_resize_row(mat_t *mat, size_t num_rows, real_t init_val)
 
 int mat_append(mat_t *dst, mat_t* src)
 {
+    size_t i, dst_row;
+    real_t *src_vals, *dst_vals;
+
     ST_CHECK_PARAM(dst == NULL || src == NULL, -1);
 
-    if (dst->num_cols != src->num_cols) {
-        ST_WARNING("num_cols not match");
-        return -1;
+    dst_row = dst->num_rows;
+
+    if (dst->num_rows == 0 && dst->num_cols == 0) {
+        if (mat_resize(dst, src->num_rows, src->num_cols, NAN) < 0) {
+            ST_WARNING("Failed to mat_resize.");
+            return -1;
+        }
+    } else {
+        if (dst->num_cols != src->num_cols) {
+            ST_WARNING("num_cols not match.[%zu:%zu]", dst->num_cols, src->num_cols);
+            return -1;
+        }
+
+        if (mat_resize_row(dst, dst->num_rows + src->num_rows, NAN) < 0) {
+            ST_WARNING("Failed to mat_resize_row.");
+            return -1;
+        }
     }
 
-    if (mat_resize_row(dst, dst->num_rows + src->num_rows, NAN) < 0) {
-        ST_WARNING("Failed to mat_resize_row.");
+    dst_vals = dst->vals + dst_row * dst->stride;
+    src_vals = src->vals;
+    for (i = 0; i < src->num_rows; i++) {
+        memcpy(dst_vals, src_vals, sizeof(real_t) * src->num_cols);
+        src_vals += src->stride;
+        dst_vals += dst->stride;
     }
-
-    memcpy(dst->vals + dst->num_rows * dst->stride, src->vals,
-            sizeof(real_t) * src->num_rows * src->stride);
-    dst->num_rows += src->num_rows;
 
     return 0;
 }
