@@ -144,8 +144,7 @@ int bptt_updater_reset(bptt_updater_t *bptt_updater)
 {
     ST_CHECK_PARAM(bptt_updater == NULL, -1);
 
-    bptt_updater->num_ac_bptts = 0;
-    bptt_updater->num_er_bptts = 0;
+    bptt_updater->num_bptts = 0;
 
     return 0;
 }

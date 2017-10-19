@@ -330,8 +330,8 @@ static int comp_updater_bptt(comp_updater_t *comp_updater, bool clear)
     mat_t in_ac = {0};
     mat_t out_ac = {0};
     mat_t sub_er = {0};
-    int bptt, bptt_delay, batch_size;
-    int i, j, g, t, er_t;
+    int bptt, batch_size;
+    int i, j, g, t;
 
     ST_CHECK_PARAM(comp_updater == NULL, -1);
 
@@ -366,12 +366,11 @@ static int comp_updater_bptt(comp_updater_t *comp_updater, bool clear)
     for (i = 0; i < comp->num_glue_cycle; i++) {
         g = comp->glue_cycles[i][1];
         bptt = comp->glues[g]->bptt_opt.bptt;
-        bptt_delay = comp->glues[g]->bptt_opt.bptt_delay;
         bptt_updater = comp_updater->bptt_updaters[i];
 
         if (clear) {
             if (comp_updater->bptt_step > 0
-                    && (comp_updater->bptt_step % bptt_delay == 0)) {
+                    && (comp_updater->bptt_step % bptt == 0)) {
                 // we already do BPTT in last call to this function, so skip
                 continue;
             }
@@ -404,7 +403,7 @@ static int comp_updater_bptt(comp_updater_t *comp_updater, bool clear)
 
                 layer = layer_updaters[glue->in_layer]->layer;
                 if (mat_resize(bptt_updater->ac_bptts + j,
-                            batch_size * (bptt + bptt_delay),
+                            batch_size * bptt,
                             layer->size - glue->in_offset, NAN) < 0) {
                     ST_WARNING("Failed to mat_resize ac_bptts");
                     return -1;
@@ -412,85 +411,46 @@ static int comp_updater_bptt(comp_updater_t *comp_updater, bool clear)
 
                 layer = layer_updaters[glue->out_layer]->layer;
                 if (mat_resize(bptt_updater->er_bptts + j,
-                            batch_size * (bptt + bptt_delay),
+                            batch_size * bptt,
                             layer->size - glue->out_offset, NAN) < 0) {
                     ST_WARNING("Failed to mat_resize er_bptts");
                     return -1;
                 }
 
-                if (bptt_updater->num_ac_bptts >= bptt + bptt_delay) {
-                    if (mat_move_up(bptt_updater->ac_bptts + j,
-                                0, batch_size) < 0) {
-                        ST_WARNING("Failed to mat_move_up for ac_bptts.");
-                        return -1;
-                    }
-
-                    if (mat_fill(bptt_updater->ac_bptts + j,
-                                (bptt_updater->num_ac_bptts - 1) * batch_size,
-                                batch_size, 0, 0, &in_ac) < 0) {
-                        ST_WARNING("Failed to mat_fill for ac_bptts.");
-                        return -1;
-                    }
-                } else {
-                    if (mat_fill(bptt_updater->ac_bptts + j,
-                                bptt_updater->num_ac_bptts * batch_size,
-                                batch_size, 0, 0, &in_ac) < 0) {
-                        ST_WARNING("Failed to mat_fill for ac_bptts.");
-                        return -1;
-                    }
+                if (mat_fill(bptt_updater->ac_bptts + j,
+                            bptt_updater->num_bptts * batch_size,
+                            batch_size, 0, 0, &in_ac) < 0) {
+                    ST_WARNING("Failed to mat_fill for ac_bptts.");
+                    return -1;
                 }
 
-                if (bptt_updater->num_er_bptts >= bptt_delay) {
-                    if (mat_move_up(bptt_updater->er_bptts + j,
-                                0, batch_size) < 0) {
-                        ST_WARNING("Failed to mat_move_up for er_bptts.");
-                        return -1;
-                    }
-
-                    if (mat_fill(bptt_updater->er_bptts + j,
-                                (bptt_updater->num_er_bptts - 1) * batch_size,
-                                batch_size, 0, 0,
-                                &layer_updaters[glue->out_layer]->er_raw) < 0) {
-                        ST_WARNING("Failed to mat_fill for er_bptts.");
-                        return -1;
-                    }
-                } else {
-                    if (mat_fill(bptt_updater->er_bptts + j,
-                                bptt_updater->num_er_bptts * batch_size,
-                                batch_size, 0, 0,
-                                &layer_updaters[glue->out_layer]->er_raw) < 0) {
-                        ST_WARNING("Failed to mat_fill for er_bptts.");
-                        return -1;
-                    }
+                if (mat_fill(bptt_updater->er_bptts + j,
+                            bptt_updater->num_bptts * batch_size,
+                            batch_size, 0, 0,
+                            &layer_updaters[glue->out_layer]->er_raw) < 0) {
+                    ST_WARNING("Failed to mat_fill for er_bptts.");
+                    return -1;
                 }
             }
-            if (bptt_updater->num_ac_bptts < bptt + bptt_delay) {
-                bptt_updater->num_ac_bptts++;
-            }
-            if (bptt_updater->num_er_bptts < bptt_delay) {
-                bptt_updater->num_er_bptts++;
-            }
+            bptt_updater->num_bptts++;
         }
 
-        // we can not use in_ or out_layer_updater->er as
-        // buffer, since it could be the case that
-        // glue->in_layer == glue->out_layer, then
-        // in_er and out_er would be the same.
-        //
-        // we directly assign bptt_er0/1, so that they can do resize
-        // we will assign them back in order to properly used then outside
-        in_er = &comp_updater->bptt_er0;
-        out_er = &comp_updater->bptt_er1;
+        if (comp_updater->bptt_step % bptt == 0 || clear) {
+            // we can not use in_ or out_layer_updater->er as
+            // buffer, since it could be the case that
+            // glue->in_layer == glue->out_layer, then
+            // in_er and out_er would be the same.
+            in_er = &comp_updater->bptt_er0;
+            out_er = &comp_updater->bptt_er1;
 
-        if (comp_updater->bptt_step % bptt_delay == 0 || clear) {
             // backprop through time
-            for (t = bptt_updater->num_ac_bptts - 1; t >= 0; t--) {
+            for (t = bptt_updater->num_bptts - 1; t >= 0; t--) {
                 for (j = 1; j <= comp->glue_cycles[i][0]; j++) {
                     g = comp->glue_cycles[i][j];
                     glue = comp->glues[g];
                     keep_prob = comp_updater->glue_updaters[g]->keep_prob;
 
-                    if (t == bptt_updater->num_ac_bptts - 1 && j == 1) {
+                    if (t == bptt_updater->num_bptts - 1 && j == 1) {
                         // using values in current timestep
                         if (mat_submat(&layer_updaters[glue->out_layer]->ac,
                                     0, 0, glue->out_offset, 0, &out_ac) < 0) {
@@ -500,11 +460,10 @@ static int comp_updater_bptt(comp_updater_t *comp_updater, bool clear)
 
                         layer = layer_updaters[glue->out_layer]->layer;
                         if (mat_resize(out_er, batch_size,
-                                    layer->size - glue->out_offset, NAN) < 0) {
+                                    layer->size - glue->out_offset, 0.0) < 0) {
                             ST_WARNING("Failed to mat_resize out_er");
                             return -1;
                         }
-                        mat_set(out_er, 0.0);
                     } else {
                         // the glues in a cycle is joined one-by-one,
                         // the output of one glue is the input of the prev glue
@@ -522,28 +481,19 @@ static int comp_updater_bptt(comp_updater_t *comp_updater, bool clear)
                         return -1;
                     }
 
-                    er_t = t - bptt_updater->num_ac_bptts
-                             + bptt_updater->num_er_bptts;
-                    if (er_t >= 0) {
 #ifdef _CONNLM_TRACE_PROCEDURE_
-                        ST_TRACE("Backprop: BPTT timestep(delayed)[%d], "
-                                "glue[%s]", t, comp->glues[g]->name);
+                    ST_TRACE("Backprop: BPTT timestep(delayed)[%d], "
+                            "glue[%s]", t, comp->glues[g]->name);
 #endif
-                        if (mat_submat(bptt_updater->er_bptts + j,
-                                    er_t * batch_size, batch_size,
-                                    0, 0, &sub_er) < 0) {
-                            ST_WARNING("Failed to mat_submat er_bptts.");
-                            return -1;
-                        }
-                        if (mat_add_elems(out_er, 1.0, &sub_er, 1.0, out_er) < 0) {
-                            ST_WARNING("Failed to mat_add_elems for out_er");
-                            return -1;
-                        }
-                    } else {
-#ifdef _CONNLM_TRACE_PROCEDURE_
-                        ST_TRACE("Backprop: BPTT timestep[%d], glue[%s]",
-                                t, comp->glues[g]->name);
-#endif
+                    if (mat_submat(bptt_updater->er_bptts + j,
+                                t * batch_size, batch_size,
+                                0, 0, &sub_er) < 0) {
+                        ST_WARNING("Failed to mat_submat er_bptts.");
+                        return -1;
+                    }
+                    if (mat_add_elems(out_er, 1.0, &sub_er, 1.0, out_er) < 0) {
+                        ST_WARNING("Failed to mat_add_elems for out_er");
+                        return -1;
                     }
 
                     // deriv
@@ -561,11 +511,10 @@ static int comp_updater_bptt(comp_updater_t *comp_updater, bool clear)
                     if (j < comp->glue_cycles[i][0] || t - 1 >= 0) {
                         layer = layer_updaters[glue->in_layer]->layer;
                         if (mat_resize(in_er, batch_size,
-                                    layer->size - glue->in_offset, NAN) < 0) {
+                                    layer->size - glue->in_offset, 0.0) < 0) {
                             ST_WARNING("Failed to mat_resize in_er");
                             return -1;
                         }
-                        mat_set(in_er, 0.0);
 
                         if (propagate_error(&wt_updater->wt, out_er, 1.0,
                                     wt_updater->param.er_cutoff, in_er) < 0) {
@@ -576,8 +525,8 @@ static int comp_updater_bptt(comp_updater_t *comp_updater, bool clear)
                         // dropout in_er
                         if (keep_prob < 1.0) {
                             if (mat_mul_elems(in_er,
-                                    &comp_updater->glue_updaters[g]->keep_mask,
-                                    in_er) < 0) {
+                                        &comp_updater->glue_updaters[g]->keep_mask,
+                                        in_er) < 0) {
                                 ST_WARNING("Failed to mat_mul_elems.");
                                 return -1;
                             }
@@ -596,30 +545,16 @@ static int comp_updater_bptt(comp_updater_t *comp_updater, bool clear)
                 }
             }
 
-            bptt_updater->num_er_bptts = 0;
-            if (bptt_updater->num_ac_bptts > bptt) {
-                for (j = 1; j <= comp->glue_cycles[i][0]; j++) {
-                    g = comp->glue_cycles[i][j];
-                    glue = comp->glues[g];
-
-                    if (mat_move_up(bptt_updater->ac_bptts + j, 0,
-                                (bptt_updater->num_ac_bptts - bptt) * batch_size) < 0) {
-                        ST_WARNING("Failed to mat_move_up for ac_bptts.");
-                        return -1;
-                    }
-                }
-                bptt_updater->num_ac_bptts = bptt;
-            }
+            bptt_updater->num_bptts = 0;
         }
     }
 
     for (i = 0; i < comp->num_glue_cycle; i++) {
         g = comp->glue_cycles[i][1];
         bptt = comp->glues[g]->bptt_opt.bptt;
-        bptt_delay = comp->glues[g]->bptt_opt.bptt_delay;
         bptt_updater = comp_updater->bptt_updaters[i];
 
-        if (comp_updater->bptt_step % bptt_delay == 0 || clear) {
+        if (comp_updater->bptt_step % bptt == 0 || clear) {
             for (j = 1; j <= comp->glue_cycles[i][0]; j++) {
                 if (bptt_updater->out_ers[j].num_rows == 0) {
                     continue;
@@ -663,7 +598,7 @@ int comp_updater_reset(comp_updater_t *comp_updater, int batch_i)
             for (j = 1; j <= comp_updater->comp->glue_cycles[g][0]; j++) {
                 // </s> should be the last member on ac_bptts and er_bptts
                 // so we reset all time steps on the buffer
-                for (i = 0; i < bptt_updater->num_ac_bptts; i++) {
+                for (i = 0; i < bptt_updater->num_bptts; i++) {
                     if (mat_set_row(bptt_updater->ac_bptts + j,
                                 i * comp_updater->batch_size + batch_i, 0.0) < 0) {
                         ST_WARNING("Failed to mat_set_row ac_bptts.");
@@ -671,7 +606,7 @@ int comp_updater_reset(comp_updater_t *comp_updater, int batch_i)
                     }
                 }
                 // do we need to reset er_bptts?
-                for (i = 0; i < bptt_updater->num_er_bptts; i++) {
+                for (i = 0; i < bptt_updater->num_bptts; i++) {
                     if (mat_set_row(bptt_updater->er_bptts + j,
                                 i * comp_updater->batch_size + batch_i, 0.0) < 0) {
                         ST_WARNING("Failed to mat_set_row er_bptts.");

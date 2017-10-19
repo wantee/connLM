@@ -52,9 +52,8 @@ typedef struct _bptt_updater_t_ {
     mat_t *out_ers; /**< buffer of out_er. */
     int num_glue; /**< number of glue in this cycle. */
     mat_t *ac_bptts; /**< buffer of activation for BPTT in cycle. one-based. */
-    int num_ac_bptts; /**< number time stpes filled in ac_bptt. */
     mat_t *er_bptts; /**< buffer of error for BPTT in cycle. one-based.*/
-    int num_er_bptts; /**< number time stpes filled in er_bptt. */
+    int num_bptts; /**< number time stpes filled in ac_bptt and er_bptt. */
 } bptt_updater_t;
 
 /**

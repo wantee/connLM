@@ -1065,16 +1065,6 @@ bool comp_check_glue_cycles(component_t *comp)
 
     ST_CHECK_PARAM(comp == NULL, false);
 
-    for (i = 0; i < comp->num_glue_cycle; i++) {
-        g = comp->glue_cycles[i][1];
-        glue = comp->glues[g];
-        if (glue->param.dropout > 0.0) {
-            // since we enforce the dropout mask to be constant
-            // within one bptt update, bptt must be 1.
-            glue->bptt_opt.bptt = 1;
-        }
-    }
-
     // check *overlapped* cycles
     for (i = 0; i < comp->num_glue_cycle; i++) {
         g = comp->glue_cycles[i][1];

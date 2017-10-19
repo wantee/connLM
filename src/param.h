@@ -88,7 +88,6 @@ bool param_equal(param_t *param1, param_t *param2);
  */
 typedef struct _bptt_opt_t_ {
     int bptt; /**< time steps for BPTT. */
-    int bptt_delay; /**< if bigger than 0, apply bptt for every bptt_delay steps. */
 } bptt_opt_t;
 
 /**

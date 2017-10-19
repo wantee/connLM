@@ -187,7 +187,6 @@ bool param_equal(param_t *param1, param_t *param2)
 
 static bptt_opt_t def_bptt_opt = {
     .bptt = 0,
-    .bptt_delay = 0,
 };
 
 void bptt_opt_show_usage()
@@ -230,12 +229,6 @@ int bptt_opt_load(bptt_opt_t *bptt_opt, st_opt_t *opt, const char *sec_name,
         bptt_opt->bptt = 1;
     }
 
-    ST_OPT_SEC_GET_INT(opt, sec_name, "BPTT_DELAY", bptt_opt->bptt_delay,
-            bptt_opt->bptt_delay, "delayed step of applying BPTT.");
-    if (bptt_opt->bptt_delay < 1 || bptt_opt->bptt <= 1) {
-        bptt_opt->bptt_delay = 1;
-    }
-
     return 0;
 ST_OPT_ERR:
     return -1;
@@ -246,10 +239,6 @@ bool bptt_opt_equal(bptt_opt_t *bptt_opt1, bptt_opt_t *bptt_opt2)
     ST_CHECK_PARAM(bptt_opt1 == NULL || bptt_opt2 == NULL, false);
 
     if (bptt_opt1->bptt != bptt_opt2->bptt) {
-        return false;
-    }
-
-    if (bptt_opt1->bptt_delay != bptt_opt2->bptt_delay) {
         return false;
     }
 
