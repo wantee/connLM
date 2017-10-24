@@ -49,11 +49,7 @@ while(my $line = <STDIN>) {
     next;
   }
 
-  if ($line =~ m/Row\s*:\s*(.+)/i) {
-    if ($1 > 0) {
-      $wts{$comp."/".$glue} = 1;
-    }
-  }
+  $wts{$comp."/".$glue} = 1;
 }
 
 for my $name (sort keys(%wts)) {
