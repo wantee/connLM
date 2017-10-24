@@ -215,10 +215,12 @@ int wt_parse_topo(weight_t *wt, char *line, size_t line_len)
         if (isnan(wt->init_param)) {
             wt->init_param = 0;
         }
+#if 0
         if (wt->init_param != 0.0) {
             ST_WARNING("WT_INIT_CONST should be 0.0.");
             wt->init_param = 0;
         }
+#endif
     } else if (wt->init_type == WT_INIT_UNIFORM) {
         if (isnan(wt->init_param)) {
             wt->init_param = 0.1;
@@ -957,8 +959,9 @@ int wt_init(weight_t *wt, size_t row, size_t col)
     switch(wt->init_type) {
         case WT_INIT_CONST:
             for (i = 0; i < sz; i++) {
-                wt->mat[i] = 0;
+                wt->mat[i] = wt->init_param;
             }
+            break;
         case WT_INIT_UNIFORM:
             for (i = 0; i < sz; i++) {
                 wt->mat[i] = st_random(-wt->init_param, wt->init_param);
@@ -968,6 +971,7 @@ int wt_init(weight_t *wt, size_t row, size_t col)
             for (i = 0; i < sz; i++) {
                 wt->mat[i] = st_normrand(0, wt->init_param);
             }
+            break;
         case WT_INIT_TRUNC_NORM:
             for (i = 0; i < sz; i++) {
                 wt->mat[i] = st_trunc_normrand(0, wt->init_param, 2.0);
