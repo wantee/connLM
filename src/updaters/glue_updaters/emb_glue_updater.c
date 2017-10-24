@@ -149,11 +149,6 @@ int emb_glue_updater_prepare(glue_updater_t *glue_updater,
                 return -1;
             }
         }
-
-        if (sp_mat_clear(&data->word_buf) < 0) {
-            ST_WARNING("Failed to sp_mat_clear.");
-            return -1;
-        }
     }
 
     return 0;
@@ -239,7 +234,7 @@ int emb_glue_updater_forward(glue_updater_t *glue_updater,
                         }
                         pos++;
                     }
-                    assert(pos < inputs->n_ctx);
+                    assert(pos < input->n_ctx);
 
                     if (glue_updater->keep_mask.num_rows > 0) {
                         scale /= glue_updater->keep_prob;
@@ -299,12 +294,12 @@ int emb_glue_updater_backprop(glue_updater_t *glue_updater,
         mat_assign(&er, out_er);
     }
 
-    sp_mat_clear(&egu_data->word_buf);
-
     if (data->combine == EC_CONCAT) {
         for (j = 0; j < input->n_ctx; j++) {
+            sp_mat_clear(&egu_data->word_buf);
+
             for (b = 0; b < batch->num_egs; b++) {
-                i = min(j, batch->inputs[b].num_words);
+                i = min(j, batch->inputs[b].num_words - 1);
                 while (i >= 0) {
                     if (input->context[j].i == batch->inputs[b].positions[i]) {
                         break;
@@ -333,6 +328,7 @@ int emb_glue_updater_backprop(glue_updater_t *glue_updater,
             }
         }
     } else {
+        sp_mat_clear(&egu_data->word_buf);
         for (b = 0; b < batch->num_egs; b++) {
             for (i = 0; i < batch->inputs[b].num_words; i++) {
                 if (sp_mat_coo_add(&egu_data->word_buf, b,
