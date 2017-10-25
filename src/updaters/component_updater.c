@@ -656,29 +656,27 @@ int comp_updater_reset(comp_updater_t *comp_updater, int batch_i)
 
     ST_CHECK_PARAM(comp_updater == NULL, -1);
 
-    if (comp_updater->bptt_updaters == NULL) {
-        return 0;
-    }
+    if (comp_updater->bptt_updaters != NULL) {
+        for (g = 0; g < comp_updater->comp->num_glue_cycle; g++) {
+            bptt_updater = comp_updater->bptt_updaters[g];
 
-    for (g = 0; g < comp_updater->comp->num_glue_cycle; g++) {
-        bptt_updater = comp_updater->bptt_updaters[g];
-
-        for (j = 1; j <= comp_updater->comp->glue_cycles[g][0]; j++) {
-            // </s> should be the last member on ac_bptts and er_bptts
-            // so we reset all time steps on the buffer
-            for (i = 0; i < bptt_updater->num_ac_bptts; i++) {
-                if (mat_set_row(bptt_updater->ac_bptts + j,
-                            i * comp_updater->batch_size + batch_i, 0.0) < 0) {
-                    ST_WARNING("Failed to mat_set_row ac_bptts.");
-                    return -1;
+            for (j = 1; j <= comp_updater->comp->glue_cycles[g][0]; j++) {
+                // </s> should be the last member on ac_bptts and er_bptts
+                // so we reset all time steps on the buffer
+                for (i = 0; i < bptt_updater->num_ac_bptts; i++) {
+                    if (mat_set_row(bptt_updater->ac_bptts + j,
+                                i * comp_updater->batch_size + batch_i, 0.0) < 0) {
+                        ST_WARNING("Failed to mat_set_row ac_bptts.");
+                        return -1;
+                    }
                 }
-            }
-            // do we need to reset er_bptts?
-            for (i = 0; i < bptt_updater->num_er_bptts; i++) {
-                if (mat_set_row(bptt_updater->er_bptts + j,
-                            i * comp_updater->batch_size + batch_i, 0.0) < 0) {
-                    ST_WARNING("Failed to mat_set_row er_bptts.");
-                    return -1;
+                // do we need to reset er_bptts?
+                for (i = 0; i < bptt_updater->num_er_bptts; i++) {
+                    if (mat_set_row(bptt_updater->er_bptts + j,
+                                i * comp_updater->batch_size + batch_i, 0.0) < 0) {
+                        ST_WARNING("Failed to mat_set_row er_bptts.");
+                        return -1;
+                    }
                 }
             }
         }
