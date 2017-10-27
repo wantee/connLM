@@ -36,7 +36,7 @@ static int updater_reset(updater_t *updater)
     ST_CHECK_PARAM(updater == NULL, -1);
 
     for (i = 0; i < updater->targets.size; i++) {
-        if (VEC_VAL(&updater->targets, i) == SENT_END_ID) {
+        if (VEC_VAL(&updater->targets, i) == PADDING_ID) {
             for (c = 0; c < updater->connlm->num_comp; c++) {
                 if (comp_updater_reset(updater->comp_updaters[c], i) < 0) {
                     ST_WARNING("Failed to comp_updater_reset[%s].",
