@@ -688,7 +688,7 @@ int add_mat_mat(real_t alpha, mat_t *A, mat_trans_t trans_A,
 int vec_add_col_sum_mat(vec_t *vec, real_t alpha, mat_t *mat, real_t beta)
 {
     size_t i, j;
-    double sum;
+    real_t sum;
 
     ST_CHECK_PARAM(vec == NULL || mat == NULL, -1);
 
