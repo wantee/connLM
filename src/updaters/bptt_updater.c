@@ -39,6 +39,8 @@ void bptt_updater_destroy(bptt_updater_t *bptt_updater)
         return;
     }
 
+    mat_destroy(&bptt_updater->cutoffs);
+
     if (bptt_updater->ac_bptts != NULL) {
         for (i = 1; i <= bptt_updater->num_glue; i++) {
             mat_destroy(bptt_updater->ac_bptts + i);
