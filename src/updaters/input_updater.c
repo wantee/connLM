@@ -146,7 +146,7 @@ void input_updater_destroy(input_updater_t *input_updater)
 
     word_pool_destroy(&input_updater->wp);
     word_pool_destroy(&input_updater->tmp_wp);
-    input_updater->cur_pos = 0;
+    ivec_destroy(&input_updater->cursors);
 
     input_updater->ctx_leftmost = 0;
     input_updater->ctx_rightmost = 0;
@@ -176,7 +176,10 @@ int input_updater_clear(input_updater_t *input_updater)
 {
     ST_CHECK_PARAM(input_updater == NULL, -1);
 
-    input_updater->cur_pos = -1;
+    if (ivec_clear(&input_updater->cursors) < 0) {
+        ST_WARNING("Failed to ivec_clear cursors");
+        return -1;
+    }
 
     return 0;
 }
@@ -186,7 +189,10 @@ int input_updater_setup(input_updater_t *input_updater,
 {
     ST_CHECK_PARAM(input_updater == NULL, -1);
 
-    input_updater->cur_pos = -1;
+    if (ivec_clear(&input_updater->cursors) < 0) {
+        ST_WARNING("Failed to ivec_clear cursors");
+        return -1;
+    }
     input_updater->ctx_leftmost = ctx_leftmost;
     input_updater->ctx_rightmost = ctx_rightmost;
 
@@ -206,7 +212,6 @@ int input_updater_update_batch(input_updater_t *input_updater,
     ST_CHECK_PARAM(input_updater == NULL || batch == NULL, -1);
 
     wp = &input_updater->wp;
-    cur_pos = input_updater->cur_pos;
 
     if (input->context[0].i < 0) {
         ctx_leftmost = -input->context[0].i;
@@ -223,6 +228,21 @@ int input_updater_update_batch(input_updater_t *input_updater,
     batch->num_egs = 0;
     for (b = 0; b < wp_batch_size(wp); b++) {
         row_start = VEC_VAL(&wp->row_starts, b);
+        cur_pos = VEC_VAL(&input_updater->cursors, b);
+
+        // add target
+        if (row_start + cur_pos >= VEC_VAL(&wp->row_starts, b + 1)) {
+            // finish this row
+            egs_input = batch->inputs + batch->num_egs;
+            egs_input->num_words = 0;
+            batch->targets[batch->num_egs] = PADDING_ID;
+            batch->num_egs++;
+            continue;
+        }
+
+        // we should skip the <s> in input_updater_move
+        assert(VEC_VAL(&wp->words, row_start + cur_pos) != input_updater->bos_id);
+        batch->targets[batch->num_egs] = VEC_VAL(&wp->words, row_start + cur_pos);
 
         // find sentence boundaries
         i = cur_pos - 1;
@@ -267,15 +287,6 @@ int input_updater_update_batch(input_updater_t *input_updater,
             egs_input->num_words++;
         }
 
-        // add target
-        if (row_start + cur_pos >= VEC_VAL(&wp->row_starts, b + 1)
-                // we never use <s> as target
-                || VEC_VAL(&wp->words, row_start + cur_pos) == input_updater->bos_id) {
-            batch->targets[batch->num_egs] = PADDING_ID;
-        } else {
-            batch->targets[batch->num_egs] = VEC_VAL(&wp->words, row_start + cur_pos);
-        }
-
         batch->num_egs++;
     }
 
@@ -299,7 +310,13 @@ int input_updater_feed(input_updater_t *input_updater, word_pool_t *new_wp)
             return -1;
         }
 
-        input_updater->cur_pos = -1;
+        if (ivec_resize(&input_updater->cursors, wp_batch_size(wp)) < 0) {
+            ST_WARNING("Failed to ivec_resize cursors.");
+            return -1;
+        }
+        for (b = 0; b < input_updater->cursors.size; b++) {
+            VEC_VAL(&input_updater->cursors, b) = -1;
+        }
     } else {
         // assert batch size is constanst, which is required by stateful network
         if (wp_batch_size(wp) != wp_batch_size(new_wp)) {
@@ -316,13 +333,26 @@ int input_updater_feed(input_updater_t *input_updater, word_pool_t *new_wp)
             return -1;
         }
         for (b = 0; b < wp_batch_size(wp); b++) {
-            start = VEC_VAL(&wp->row_starts, b) + input_updater->cur_pos
-                - input_updater->ctx_leftmost;
-            end = VEC_VAL(&wp->row_starts, b + 1);
-            if (start < end) {
-                if (ivec_extend(&tmp_wp->words, &wp->words, start, end) < 0) {
-                    ST_WARNING("Failed to ivec_extend tmp_wp.words from wp.");
-                    return -1;
+            if (VEC_VAL(&input_updater->cursors, b) >= input_updater->ctx_leftmost) {
+                start = VEC_VAL(&wp->row_starts, b)
+                    + VEC_VAL(&input_updater->cursors, b)
+                    - input_updater->ctx_leftmost;
+                end = VEC_VAL(&wp->row_starts, b + 1);
+                if (start < end) {
+                    if (ivec_extend(&tmp_wp->words, &wp->words, start, end) < 0) {
+                        ST_WARNING("Failed to ivec_extend tmp_wp.words from wp.");
+                        return -1;
+                    }
+                }
+                VEC_VAL(&input_updater->cursors, b) = input_updater->ctx_leftmost;
+            } else {
+                start = VEC_VAL(&wp->row_starts, b);
+                end = VEC_VAL(&wp->row_starts, b + 1);
+                if (start < end) {
+                    if (ivec_extend(&tmp_wp->words, &wp->words, start, end) < 0) {
+                        ST_WARNING("Failed to ivec_extend tmp_wp.words from wp.");
+                        return -1;
+                    }
                 }
             }
 
@@ -339,6 +369,7 @@ int input_updater_feed(input_updater_t *input_updater, word_pool_t *new_wp)
                 ST_WARNING("Failed to ivec_append tmp_wp->row_starts.");
                 return -1;
             }
+
             // we do NOT take care of the sent_ends in word_pool any more
         }
 
@@ -346,8 +377,6 @@ int input_updater_feed(input_updater_t *input_updater, word_pool_t *new_wp)
             ST_WARNING("Failed to word_pool_swap.");
             return -1;
         }
-
-        input_updater->cur_pos = input_updater->ctx_leftmost;
     }
 
     return 0;
@@ -355,9 +384,22 @@ int input_updater_feed(input_updater_t *input_updater, word_pool_t *new_wp)
 
 int input_updater_move(input_updater_t *input_updater)
 {
+    word_pool_t *wp;
+    int b;
+
     ST_CHECK_PARAM(input_updater == NULL, -1);
 
-    input_updater->cur_pos++;
+    wp = &input_updater->wp;
+
+    for (b = 0; b < wp_batch_size(wp); b++) {
+        VEC_VAL(&input_updater->cursors, b) += 1;
+        if (VEC_VAL(&wp->words, VEC_VAL(&wp->row_starts, b)
+                    + VEC_VAL(&input_updater->cursors, b))
+                == input_updater->bos_id) {
+            // we never use <s> as target
+            VEC_VAL(&input_updater->cursors, b) += 1;
+        }
+    }
 
     return 0;
 }
@@ -370,13 +412,9 @@ int input_updater_move_to_end(input_updater_t *input_updater)
     ST_CHECK_PARAM(input_updater == NULL, -1);
 
     wp = &input_updater->wp;
-    input_updater->cur_pos = 0;
     for (b = 0; b < wp_batch_size(wp); b++) {
-        if (VEC_VAL(&wp->row_starts, b + 1) - VEC_VAL(&wp->row_starts, b)
-                > input_updater->cur_pos) {
-            input_updater->cur_pos = VEC_VAL(&wp->row_starts, b + 1)
+        VEC_VAL(&input_updater->cursors, b) = VEC_VAL(&wp->row_starts, b + 1)
                 - VEC_VAL(&wp->row_starts, b);
-        }
     }
 
 
@@ -396,8 +434,12 @@ bool input_updater_movable(input_updater_t *input_updater, bool finalized)
     num_finished = 0;
     num_need_right = 0;
     for (b = 0; b < wp_batch_size(wp); b++) {
-        pos = VEC_VAL(&wp->row_starts, b) + input_updater->cur_pos;
+        pos = VEC_VAL(&wp->row_starts, b) + VEC_VAL(&input_updater->cursors, b);
         ++pos; // move pos first, then check
+        if (VEC_VAL(&wp->words, pos) == input_updater->bos_id) {
+            // we never use <s> as target
+            ++pos;
+        }
         if (pos >= VEC_VAL(&wp->row_starts, b + 1)) {
             ++num_finished;
             continue;

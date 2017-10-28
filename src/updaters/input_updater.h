@@ -50,7 +50,7 @@ typedef struct _input_updater_t_ {
     int ctx_rightmost; /**< rightmost for all input contexts. */
 
     word_pool_t wp; /**< buffer for input words. */
-    int cur_pos; /**< position of current word in word buffer. */
+    ivec_t cursors; /**< position of current word for each batch in word buffer. */
 
     word_pool_t tmp_wp; /**< temp buffer for input words. */
 } input_updater_t;
