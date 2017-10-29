@@ -53,7 +53,8 @@ typedef struct _bptt_updater_t_ {
     int num_glue; /**< number of glue in this cycle. */
     mat_t *ac_bptts; /**< buffer of activation for BPTT in cycle. one-based. */
     mat_t *er_bptts; /**< buffer of error for BPTT in cycle. one-based.*/
-    mat_t cutoffs; /**< cut-off time step for BPTT. */
+    ivec_t *cutoffs; /**< cut-off batch id for BPTT of every time steps. */
+    mat_t *cutoff_acs; /**< backup acs for cut-off time step, since they will reset after layer_reset. */
     int num_bptts; /**< number time stpes filled in ac_bptt and er_bptt. */
 } bptt_updater_t;
 
@@ -91,9 +92,20 @@ bptt_updater_t* bptt_updater_create(component_t *comp, int cycle_id,
  * Reset a bptt_updater.
  * @ingroup g_updater_bptt
  * @param[in] bptt_updater the bptt_updater.
+ * @param[in] batch_i index in batch to be reset.
+ * @param[in] in_ac ac buffer of input layer.
  * @return non-zero value if any error.
  */
-int bptt_updater_reset(bptt_updater_t *bptt_updater);
+int bptt_updater_reset(bptt_updater_t *bptt_updater,
+        int batch_i, mat_t *in_ac);
+
+/**
+ * Clear a bptt_updater.
+ * @ingroup g_updater_bptt
+ * @param[in] bptt_updater the bptt_updater.
+ * @return non-zero value if any error.
+ */
+int bptt_updater_clear(bptt_updater_t *bptt_updater);
 
 #ifdef __cplusplus
 }

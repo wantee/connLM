@@ -433,16 +433,6 @@ static int comp_updater_bptt(comp_updater_t *comp_updater, bool clear)
                 }
             }
 
-            if (mat_resize(&bptt_updater->cutoffs,
-                        bptt, batch_size, NAN) < 0) {
-                ST_WARNING("Failed to mat_resize cutoffs");
-                return -1;
-            }
-            if (mat_set_row(&bptt_updater->cutoffs,
-                        bptt_updater->num_bptts, 0.0) < 0) {
-                ST_WARNING("Failed to mat_set_row cutoffs.");
-            }
-
             bptt_updater->num_bptts++;
         }
 
@@ -476,9 +466,24 @@ static int comp_updater_bptt(comp_updater_t *comp_updater, bool clear)
                             return -1;
                         }
                     } else {
+                        ivec_t *cutoffs;
+                        mat_t *cutoff_acs;
+
                         // the glues in a cycle is joined one-by-one,
                         // the output of one glue is the input of the prev glue
                         mat_assign(&out_ac, &in_ac);
+
+                        cutoffs = bptt_updater->cutoffs + t;
+                        cutoff_acs = bptt_updater->cutoff_acs + t;
+                        for (b = 0; b < cutoffs->size; b++) {
+                            int batch_i = VEC_VAL(cutoffs, b);
+                            if (mat_cpy_row(&out_ac, batch_i,
+                                        cutoff_acs, b) < 0) {
+                                ST_WARNING("Failed mat_cpy_row from "
+                                        "cutoff_ac to out_ac.");
+                                return -1;
+                            }
+                        }
 
                         // exchange in_er and out_er
                         tmp = out_er;
@@ -545,12 +550,12 @@ static int comp_updater_bptt(comp_updater_t *comp_updater, bool clear)
 
                         // cutoff error propagation
                         if (t - 1 >= 0) {
-                            for (b = 0; b < batch_size; b++) {
-                                if (MAT_VAL(&bptt_updater->cutoffs, t - 1, b) == 1) {
-                                    if (mat_set_row(in_er, b, 0.0) < 0) {
-                                        ST_WARNING("Failed mat_set_row cutoff in_er.");
-                                        return -1;
-                                    }
+                            ivec_t *cutoffs = bptt_updater->cutoffs + t - 1;
+                            for (b = 0; b < cutoffs->size; b++) {
+                                if (mat_set_row(in_er,
+                                            VEC_VAL(cutoffs, b), 0.0) < 0) {
+                                    ST_WARNING("Failed mat_set_row cutoff in_er.");
+                                    return -1;
                                 }
                             }
                         }
@@ -568,7 +573,10 @@ static int comp_updater_bptt(comp_updater_t *comp_updater, bool clear)
                 }
             }
 
-            bptt_updater->num_bptts = 0;
+            if (bptt_updater_clear(bptt_updater) < 0) {
+                ST_WARNING("Failed to bptt_updater_clear.");
+                return -1;
+            }
         }
     }
 
@@ -609,16 +617,36 @@ static int comp_updater_bptt(comp_updater_t *comp_updater, bool clear)
 
 int comp_updater_reset(comp_updater_t *comp_updater, int batch_i)
 {
+    mat_t in_ac = {0};
     bptt_updater_t *bptt_updater;
+    glue_t *glue;
     int i, g;
 
     ST_CHECK_PARAM(comp_updater == NULL, -1);
 
     if (comp_updater->bptt_updaters != NULL) {
-        for (g = 0; g < comp_updater->comp->num_glue_cycle; g++) {
-            bptt_updater = comp_updater->bptt_updaters[g];
-            MAT_VAL(&bptt_updater->cutoffs,
-                    bptt_updater->num_bptts - 1, batch_i) = 1;
+        // bptt_reset must before layer_reset, since it will use the ac_state.
+        for (i = 0; i < comp_updater->comp->num_glue_cycle; i++) {
+            bptt_updater = comp_updater->bptt_updaters[i];
+
+            g = comp_updater->comp->glue_cycles[i][1];
+            glue = comp_updater->comp->glues[g];
+
+            if (comp_updater->glue_updaters[g]->keep_prob < 1.0) {
+                // dropout_val should be filled during forward pass
+                mat_assign(&in_ac, &comp_updater->glue_updaters[g]->dropout_val);
+            } else {
+                if (mat_submat(&comp_updater->layer_updaters[glue->in_layer]->ac_state,
+                            0, 0, glue->in_offset, 0, &in_ac) < 0) {
+                    ST_WARNING("Failed to mat_submat in_ac.");
+                    return -1;
+                }
+            }
+
+            if (bptt_updater_reset(bptt_updater, batch_i, &in_ac) < 0) {
+                ST_WARNING("Failed to bptt_updater_reset.");
+                return -1;
+            }
         }
     }
 
