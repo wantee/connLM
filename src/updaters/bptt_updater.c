@@ -179,6 +179,9 @@ int bptt_updater_reset(bptt_updater_t *bptt_updater,
 
     ST_CHECK_PARAM(bptt_updater == NULL, -1);
 
+    if (bptt_updater->num_bptts <= 0) {
+        return 0;
+    }
     cutoffs = bptt_updater->cutoffs + bptt_updater->num_bptts - 1;
     if (ivec_append(cutoffs, batch_i) < 0) {
         ST_WARNING("Failed to ivec_append batch_i");
