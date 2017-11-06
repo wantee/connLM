@@ -95,7 +95,7 @@ ST_OPT_ERR:
 void show_usage(const char *module_name)
 {
     connlm_show_usage(module_name,
-            "Test Model",
+            "Evaluate Model",
             "<model> <test-file> [prob-log]",
             "exp/final.clm data/test",
             g_cmd_opt, NULL);
@@ -135,8 +135,13 @@ int main(int argc, const char *argv[])
         goto ERR;
     }
 
+    if (! st_opt_check(g_cmd_opt)) {
+        show_usage(argv[0]);
+        goto ERR;
+    }
+
     ST_CLEAN("Command-line: %s", args);
-    st_opt_show(g_cmd_opt, "connLM Test Options");
+    st_opt_show(g_cmd_opt, "connLM Eval Options");
     ST_CLEAN("Model: '%s', Test: '%s'", argv[1], argv[2]);
 
     fp = st_fopen(argv[1], "rb");

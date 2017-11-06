@@ -107,6 +107,11 @@ int main(int argc, const char *argv[])
         goto ERR;
     }
 
+    if (! st_opt_check(g_cmd_opt)) {
+        show_usage(argv[0]);
+        goto ERR;
+    }
+
     st_opt_show(g_cmd_opt, "Bloom Filter Info Options");
 
     for (i = 1; i < argc; i++) {

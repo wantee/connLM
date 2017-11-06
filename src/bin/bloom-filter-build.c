@@ -133,6 +133,11 @@ int main(int argc, const char *argv[])
         goto ERR;
     }
 
+    if (! st_opt_check(g_cmd_opt)) {
+        show_usage(argv[0]);
+        goto ERR;
+    }
+
     ST_CLEAN("Command-line: %s", args);
     st_opt_show(g_cmd_opt, "Bloom Filter Build Options");
     ST_CLEAN("Vocab: '%s', Text: '%s', Model-out: '%s'", argv[1], argv[2], argv[3]);

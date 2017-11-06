@@ -127,6 +127,11 @@ int main(int argc, const char *argv[])
         goto ERR;
     }
 
+    if (! st_opt_check(g_cmd_opt)) {
+        show_usage(argv[0]);
+        goto ERR;
+    }
+
     ST_CLEAN("Command-line: %s", args);
     st_opt_show(g_cmd_opt, "connLM Merge Options");
     for (i = 1; i < argc - 1; i++) {
