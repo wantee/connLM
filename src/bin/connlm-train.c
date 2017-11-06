@@ -118,9 +118,9 @@ void show_usage(const char *module_name)
     bptt_opt_show_usage();
     fprintf(stderr, "Individual parameter or bptt options can be set with "
             "component and/or glue name,\ne.g.:\n");
-    fprintf(stderr, "  --<comp_name>^<param> "
+    fprintf(stderr, "  --comp-name.param "
             "set param/bptt_opt for a component.\n");
-    fprintf(stderr, "  --<comp_name>^<glue_name>^<param> "
+    fprintf(stderr, "  --comp-name.glue-name.param "
             "set param/bptt_opt for a glue.\n");
 }
 
