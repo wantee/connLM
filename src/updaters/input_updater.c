@@ -431,19 +431,29 @@ bool input_updater_movable(input_updater_t *input_updater, bool finalized)
 
     wp = &input_updater->wp;
 
+    if (wp->row_starts.size == 0 || input_updater->cursors.size == 0) {
+        // this could be occur when there is many threads with few data,
+        // some thread could be called here before input_updater_feed.
+        return false;
+    }
+
     num_finished = 0;
     num_need_right = 0;
     for (b = 0; b < wp_batch_size(wp); b++) {
         pos = VEC_VAL(&wp->row_starts, b) + VEC_VAL(&input_updater->cursors, b);
+        ++pos; // move pos first, then check
         if (pos >= (int)wp->words.size) {
             ++num_finished;
             continue;
         }
 
-        ++pos; // move pos first, then check
         if (VEC_VAL(&wp->words, pos) == input_updater->bos_id) {
             // we never use <s> as target
             ++pos;
+            if (pos >= (int)wp->words.size) {
+                ++num_finished;
+                continue;
+            }
         }
         if (pos >= VEC_VAL(&wp->row_starts, b + 1)) {
             ++num_finished;
