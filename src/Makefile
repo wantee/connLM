@@ -17,6 +17,7 @@ INCS = vector.h \
        component.h \
        input.h \
        weight.h \
+       blas.h \
        layers/layer.h \
        layers/linear_layer.h \
        layers/sigmoid_layer.h \
@@ -53,6 +54,7 @@ SRCS = vector.c \
        component.c \
        input.c \
        weight.c \
+       blas.c \
        layers/layer.c \
        layers/linear_layer.c \
        layers/sigmoid_layer.c \

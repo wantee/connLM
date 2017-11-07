@@ -60,6 +60,10 @@ if [ "`uname`" == "Linux" ]; then
         echo "CFLAGS += -D_HAVE_ATLAS_" >> $mkfile
         echo "CFLAGS += $BLASINC" >> $mkfile
         echo "LDFLAGS += $BLASLIB" >> $mkfile
+
+        if [ "$BLASNAME" == "OpenBLAS" ]; then
+            echo "CFLAGS += -D_HAVE_OPENBLAS_" >> $mkfile
+        fi
     fi
   fi
 elif [ "`uname`" == "Darwin" ]; then

@@ -141,6 +141,13 @@ int main(int argc, const char *argv[])
     st_opt_show(g_cmd_opt, "connLM Gen Options");
     ST_CLEAN("Model: '%s', #Sents: %d", argv[1], num_sents);
 
+#ifdef _USE_BLAS_
+    if (setup_blas()) {
+        ST_WARNING("Failed to setup_blas.");
+        goto ERR;
+    }
+#endif
+
     fp = st_fopen(argv[1], "rb");
     if (fp == NULL) {
         ST_WARNING("Failed to st_fopen. [%s]", argv[1]);

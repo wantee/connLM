@@ -1,7 +1,7 @@
 /*
  * The MIT License (MIT)
  *
- * Copyright (c) 2015 Wang Jian
+ * Copyright (c) 2017 Wang Jian
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,47 +22,17 @@
  * SOFTWARE.
  */
 
-#ifndef  _CONNLM_BLAS_H_
-#define  _CONNLM_BLAS_H_
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-#include <connlm/config.h>
+#include "blas.h"
 
 #ifdef _USE_BLAS_
 
-#ifdef _HAVE_MKL_
-#  include <mkl.h>
-#elif defined(_HAVE_ATLAS_)
-#  include <cblas.h>
-#elif defined(_HAVE_ACCELERATE_)
-#  include <Accelerate/Accelerate.h>
-#else
-#  warn "No MKL or ATLAS included, fallback to Non-Blas"
-#  undef _USE_BLAS_
-#endif
+int setup_blas()
+{
+#  ifdef _HAVE_OPENBLAS_
+    openblas_set_num_threads(1);
+#  endif
 
-#if _USE_DOUBLE_ == 1
-#  define  cblas_gemm cblas_dgemm
-#  define  cblas_gemv cblas_dgemv
-#else
-#  define  cblas_gemm cblas_sgemm
-#  define  cblas_gemv cblas_sgemv
-#endif // _USE_DOUBLE_
-
-/**
- * Setup blas library.
- * @ingroup g_connlm
- * @return non-zero value if any error.
- */
-int setup_blas();
+    return 0;
+}
 
 #endif // _USE_BLAS_
-
-#ifdef __cplusplus
-}
-#endif
-
-#endif

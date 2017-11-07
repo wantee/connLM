@@ -202,6 +202,13 @@ int main(int argc, const char *argv[])
         goto RET;
     }
 
+#ifdef _USE_BLAS_
+    if (setup_blas()) {
+        ST_WARNING("Failed to setup_blas.");
+        goto ERR;
+    }
+#endif
+
     reader = reader_create(&g_reader_opt, g_num_thr, connlm->vocab, argv[2]);
     if (reader == NULL) {
         ST_WARNING("Failed to reader_create.");
