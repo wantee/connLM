@@ -255,7 +255,7 @@ bool emb_glue_check(glue_t *glue, layer_t **layers, int n_layer,
         }
     } else {
         if (data->combine == EC_UNDEFINED) {
-            data->combine = EC_CONCAT;
+            data->combine = EC_SUM;
         }
     }
 
