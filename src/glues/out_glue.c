@@ -40,7 +40,7 @@ int out_glue_parse_topo(glue_t *glue, const char *line)
     p = (char *)line;
     while(*p != '\0') {
         if (*p != ' ' || *p != '\t') {
-            ST_WARNING("out_glue should be empty. [%s]", line);
+            ST_ERROR("out_glue should be empty. [%s]", line);
             return -1;
         }
     }
@@ -54,27 +54,27 @@ bool out_glue_check(glue_t *glue, layer_t **layers, int n_layer,
     ST_CHECK_PARAM(glue == NULL, false);
 
     if (strcasecmp(glue->type, OUT_GLUE_NAME) != 0) {
-        ST_WARNING("Not a out glue. [%s]", glue->type);
+        ST_ERROR("Not a out glue. [%s]", glue->type);
         return false;
     }
 
     if (layers == NULL) {
-        ST_WARNING("No layers.");
+        ST_ERROR("No layers.");
         return false;
     }
 
     if (strcasecmp(layers[glue->in_layer]->type, INPUT_LAYER_NAME) == 0) {
-        ST_WARNING("out glue: in layer should not be input layer.");
+        ST_ERROR("out glue: in layer should not be input layer.");
         return false;
     }
 
     if (strcasecmp(layers[glue->out_layer]->type, OUTPUT_LAYER_NAME) != 0) {
-        ST_WARNING("out glue: out layer should be output layer.");
+        ST_ERROR("out glue: out layer should be output layer.");
         return false;
     }
 
     if (glue->out_offset > 0) {
-        ST_WARNING("out glue: out layer offset must be zero.");
+        ST_ERROR("out glue: out layer offset must be zero.");
         return false;
     }
 
@@ -102,7 +102,7 @@ static int output_tree_dfs_trav_init_wt(output_tree_t *tree,
     }
 
     if (wt_init(iw_args->wts[node], child_e - child_s - 1, iw_args->in_len) < 0) {
-        ST_WARNING("Failed to wt_init["OUTPUT_NODE_FMT"].", node);
+        ST_ERROR("Failed to wt_init["OUTPUT_NODE_FMT"].", node);
         return -1;
     }
 
@@ -119,13 +119,13 @@ int out_glue_init_data(glue_t *glue, input_t *input,
             || input == NULL, -1);
 
     if (strcasecmp(glue->type, OUT_GLUE_NAME) != 0) {
-        ST_WARNING("Not a out glue. [%s]", glue->type);
+        ST_ERROR("Not a out glue. [%s]", glue->type);
         return -1;
     }
 
     dfs_aux = output_tree_dfs_aux_create(output->tree);
     if (dfs_aux == NULL) {
-        ST_WARNING("Failed to output_tree_dfs_aux_create.");
+        ST_ERROR("Failed to output_tree_dfs_aux_create.");
         goto ERR;
     }
 
@@ -133,7 +133,7 @@ int out_glue_init_data(glue_t *glue, input_t *input,
     iw_args.in_len = glue->in_length;
     if (output_tree_dfs(output->tree, dfs_aux,
                 output_tree_dfs_trav_init_wt, (void *)&iw_args) < 0) {
-        ST_WARNING("Failed to output_tree_dfs.");
+        ST_ERROR("Failed to output_tree_dfs.");
         goto ERR;
     }
 

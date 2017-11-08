@@ -95,7 +95,7 @@ bptt_updater_t* bptt_updater_create(component_t *comp, int cycle_id,
 
     bptt_updater = (bptt_updater_t *)st_malloc(sizeof(bptt_updater_t));
     if (bptt_updater == NULL) {
-        ST_WARNING("Failed to st_malloc bptt_updater.");
+        ST_ERROR("Failed to st_malloc bptt_updater.");
         goto ERR;
     }
     memset(bptt_updater, 0, sizeof(bptt_updater_t));
@@ -108,28 +108,28 @@ bptt_updater_t* bptt_updater_create(component_t *comp, int cycle_id,
     sz = sizeof(mat_t) * (bptt_updater->num_glue + 1);
     bptt_updater->ac_bptts = (mat_t *)st_malloc(sz);
     if (bptt_updater->ac_bptts == NULL) {
-        ST_WARNING("Failed to st_malloc ac_bptts.");
+        ST_ERROR("Failed to st_malloc ac_bptts.");
         goto ERR;
     }
     memset(bptt_updater->ac_bptts, 0, sz);
 
     bptt_updater->er_bptts = (mat_t *)st_malloc(sz);
     if (bptt_updater->er_bptts == NULL) {
-        ST_WARNING("Failed to st_malloc er_bptts.");
+        ST_ERROR("Failed to st_malloc er_bptts.");
         goto ERR;
     }
     memset(bptt_updater->er_bptts, 0, sz);
 
     bptt_updater->in_acs = (mat_t *)st_malloc(sz);
     if (bptt_updater->in_acs == NULL) {
-        ST_WARNING("Failed to st_malloc in_acs.");
+        ST_ERROR("Failed to st_malloc in_acs.");
         goto ERR;
     }
     memset(bptt_updater->in_acs, 0, sz);
 
     bptt_updater->out_ers = (mat_t *)st_malloc(sz);
     if (bptt_updater->out_ers == NULL) {
-        ST_WARNING("Failed to st_malloc out_ers.");
+        ST_ERROR("Failed to st_malloc out_ers.");
         goto ERR;
     }
     memset(bptt_updater->out_ers, 0, sz);
@@ -137,7 +137,7 @@ bptt_updater_t* bptt_updater_create(component_t *comp, int cycle_id,
     sz = sizeof(wt_updater_t *) * (bptt_updater->num_glue + 1);
     bptt_updater->wt_updaters = (wt_updater_t **)st_malloc(sz);
     if (bptt_updater->wt_updaters == NULL) {
-        ST_WARNING("Failed to st_malloc wt_updaters.");
+        ST_ERROR("Failed to st_malloc wt_updaters.");
         goto ERR;
     }
     memset(bptt_updater->wt_updaters, 0, sz);
@@ -150,7 +150,7 @@ bptt_updater_t* bptt_updater_create(component_t *comp, int cycle_id,
     sz = sizeof(ivec_t) * bptt_updater->bptt_opt.bptt;
     bptt_updater->cutoffs = (ivec_t *)st_malloc(sz);
     if (bptt_updater->cutoffs == NULL) {
-        ST_WARNING("Failed to st_malloc cutoffs.");
+        ST_ERROR("Failed to st_malloc cutoffs.");
         goto ERR;
     }
     memset(bptt_updater->cutoffs, 0, sz);
@@ -158,7 +158,7 @@ bptt_updater_t* bptt_updater_create(component_t *comp, int cycle_id,
     sz = sizeof(mat_t) * bptt_updater->bptt_opt.bptt;
     bptt_updater->cutoff_acs = (mat_t *)st_malloc(sz);
     if (bptt_updater->cutoff_acs == NULL) {
-        ST_WARNING("Failed to st_malloc cutoff_acs.");
+        ST_ERROR("Failed to st_malloc cutoff_acs.");
         goto ERR;
     }
     memset(bptt_updater->cutoff_acs, 0, sz);
@@ -184,18 +184,18 @@ int bptt_updater_reset(bptt_updater_t *bptt_updater,
     }
     cutoffs = bptt_updater->cutoffs + bptt_updater->num_bptts - 1;
     if (ivec_append(cutoffs, batch_i) < 0) {
-        ST_WARNING("Failed to ivec_append batch_i");
+        ST_ERROR("Failed to ivec_append batch_i");
         return -1;
     }
 
     if (mat_submat(in_ac, batch_i, 1, 0, 0, &row) < 0) {
-        ST_WARNING("Failed to mat_submat in_ac to row.");
+        ST_ERROR("Failed to mat_submat in_ac to row.");
         return -1;
     }
 
     cutoff_acs = bptt_updater->cutoff_acs + bptt_updater->num_bptts - 1;
     if (mat_append(cutoff_acs, &row) < 0) {
-        ST_WARNING("Failed to mat_append cutoff_acs.");
+        ST_ERROR("Failed to mat_append cutoff_acs.");
         return -1;
     }
 
@@ -210,14 +210,14 @@ int bptt_updater_clear(bptt_updater_t *bptt_updater)
 
     for (i = 0; i < bptt_updater->num_bptts; i++) {
         if (ivec_clear(bptt_updater->cutoffs + i) < 0) {
-            ST_WARNING("Failed to ivec_clear cutoffs[%d]", i);
+            ST_ERROR("Failed to ivec_clear cutoffs[%d]", i);
             return -1;
         }
     }
 
     for (i = 0; i < bptt_updater->num_bptts; i++) {
         if (mat_clear(bptt_updater->cutoff_acs + i) < 0) {
-            ST_WARNING("Failed to ivec_clear cutoff_acs[%d]", i);
+            ST_ERROR("Failed to ivec_clear cutoff_acs[%d]", i);
             return -1;
         }
     }

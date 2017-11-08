@@ -39,7 +39,7 @@ static int updater_reset(updater_t *updater)
         if (VEC_VAL(&updater->targets, i) == SENT_END_ID) {
             for (c = 0; c < updater->connlm->num_comp; c++) {
                 if (comp_updater_reset(updater->comp_updaters[c], i) < 0) {
-                    ST_WARNING("Failed to comp_updater_reset[%s].",
+                    ST_ERROR("Failed to comp_updater_reset[%s].",
                             updater->connlm->comps[c]->name);
                     return -1;
                 }
@@ -59,7 +59,7 @@ static int updater_prepare(updater_t *updater)
     for (c = 0; c < updater->connlm->num_comp; c++) {
         if (comp_updater_prepare(updater->comp_updaters[c],
                     updater->batches + c) < 0) {
-            ST_WARNING("Failed to comp_updater_prepare[%s].",
+            ST_ERROR("Failed to comp_updater_prepare[%s].",
                     updater->connlm->comps[c]->name);
             return -1;
         }
@@ -67,7 +67,7 @@ static int updater_prepare(updater_t *updater)
 
     // updater->targets.size == 0 when called in sampling
     if (out_updater_prepare(updater->out_updater, &updater->targets) < 0) {
-        ST_WARNING("Failed to out_updater_prepare.");
+        ST_ERROR("Failed to out_updater_prepare.");
         return -1;
     }
 
@@ -82,7 +82,7 @@ static int updater_save_state(updater_t *updater)
 
     for (c = 0; c < updater->connlm->num_comp; c++) {
         if (comp_updater_save_state(updater->comp_updaters[c]) < 0) {
-            ST_WARNING("Failed to comp_updater_save_state[%s].",
+            ST_ERROR("Failed to comp_updater_save_state[%s].",
                     updater->connlm->comps[c]->name);
             return -1;
         }
@@ -100,7 +100,7 @@ static int updater_forward_comp(updater_t *updater)
     for (c = 0; c < updater->connlm->num_comp; c++) {
         if (comp_updater_forward(updater->comp_updaters[c],
                 updater->batches + c) < 0) {
-            ST_WARNING("Failed to comp_updater_forward[%s].",
+            ST_ERROR("Failed to comp_updater_forward[%s].",
                     updater->connlm->comps[c]->name);
             return -1;
         }
@@ -120,13 +120,13 @@ static int updater_forward(updater_t *updater)
 #endif
 
     if (updater_forward_comp(updater) < 0) {
-        ST_WARNING("Failed to updater_forward_comp.");
+        ST_ERROR("Failed to updater_forward_comp.");
         return -1;
     }
 
     if (out_updater_activate(updater->out_updater,
                 &updater->targets, &updater->logps) < 0) {
-        ST_WARNING("Failed to out_updater_activate.");
+        ST_ERROR("Failed to out_updater_activate.");
         return -1;
     }
 
@@ -146,14 +146,14 @@ static int updater_backprop(updater_t *updater)
 #endif
 
     if (out_updater_loss(updater->out_updater, &updater->targets) < 0) {
-        ST_WARNING("Failed to out_updater_backprop.");
+        ST_ERROR("Failed to out_updater_backprop.");
         return -1;
     }
 
     for (c = 0; c < updater->connlm->num_comp; c++) {
         if (comp_updater_backprop(updater->comp_updaters[c],
                     updater->batches + c) < 0) {
-            ST_WARNING("Failed to comp_updater_backprop[%s].",
+            ST_ERROR("Failed to comp_updater_backprop[%s].",
                     updater->connlm->comps[c]->name);
             return -1;
         }
@@ -170,14 +170,14 @@ int updater_finish(updater_t *updater)
 
     for (c = 0; c < updater->connlm->num_comp; c++) {
         if (comp_updater_finish(updater->comp_updaters[c]) < 0) {
-            ST_WARNING("Failed to comp_updater_finish[%s].",
+            ST_ERROR("Failed to comp_updater_finish[%s].",
                     updater->connlm->comps[c]->name);
             return -1;
         }
     }
 
     if (out_updater_finish(updater->out_updater) < 0) {
-        ST_WARNING("Failed to out_updater_finish.");
+        ST_ERROR("Failed to out_updater_finish.");
         return -1;
     }
 
@@ -225,7 +225,7 @@ updater_t* updater_create(connlm_t *connlm)
 
     updater = (updater_t *)st_malloc(sizeof(updater_t));
     if (updater == NULL) {
-        ST_WARNING("Failed to st_malloc updater.");
+        ST_ERROR("Failed to st_malloc updater.");
         goto ERR;
     }
     memset(updater, 0, sizeof(updater_t));
@@ -235,13 +235,13 @@ updater_t* updater_create(connlm_t *connlm)
     updater->input_updater = input_updater_create(
             vocab_get_id(connlm->vocab, SENT_START));
     if (updater->input_updater == NULL) {
-        ST_WARNING("Failed to input_updater_create.");
+        ST_ERROR("Failed to input_updater_create.");
         goto ERR;
     }
 
     updater->out_updater = out_updater_create(connlm->output);
     if (updater->out_updater == NULL) {
-        ST_WARNING("Failed to out_updater_create.");
+        ST_ERROR("Failed to out_updater_create.");
         goto ERR;
     }
 
@@ -249,7 +249,7 @@ updater_t* updater_create(connlm_t *connlm)
         sz = sizeof(comp_updater_t*)*connlm->num_comp;
         updater->comp_updaters = (comp_updater_t **)st_malloc(sz);
         if (updater->comp_updaters == NULL) {
-            ST_WARNING("Failed to st_malloc comp_updaters.");
+            ST_ERROR("Failed to st_malloc comp_updaters.");
             goto ERR;
         }
 
@@ -257,7 +257,7 @@ updater_t* updater_create(connlm_t *connlm)
             updater->comp_updaters[c] = comp_updater_create(connlm->comps[c],
                     updater->out_updater);
             if (updater->comp_updaters[c] == NULL) {
-                ST_WARNING("Failed to comp_updater_create[%s].",
+                ST_ERROR("Failed to comp_updater_create[%s].",
                         connlm->comps[c]->name);
                 goto ERR;
             }
@@ -266,7 +266,7 @@ updater_t* updater_create(connlm_t *connlm)
         sz = sizeof(egs_batch_t) * connlm->num_comp;
         updater->batches = (egs_batch_t *)st_malloc(sz);
         if (updater->batches == NULL) {
-            ST_WARNING("Failed to st_malloc batches.");
+            ST_ERROR("Failed to st_malloc batches.");
             goto ERR;
         }
         memset(updater->batches, 0, sz);
@@ -293,7 +293,7 @@ int updater_setup(updater_t *updater, bool backprop)
     updater->backprop = backprop;
 
     if (out_updater_setup(updater->out_updater, backprop) < 0) {
-        ST_WARNING("Failed to out_updater_setup.");
+        ST_ERROR("Failed to out_updater_setup.");
         goto ERR;
     }
 
@@ -301,7 +301,7 @@ int updater_setup(updater_t *updater, bool backprop)
     ctx_rightmost = 0;
     for (c = 0; c < updater->connlm->num_comp; c++) {
         if (comp_updater_setup(updater->comp_updaters[c], backprop) < 0) {
-            ST_WARNING("Failed to comp_updater_setup[%s].",
+            ST_ERROR("Failed to comp_updater_setup[%s].",
                     updater->connlm->comps[c]->name);
             goto ERR;
         }
@@ -321,14 +321,14 @@ int updater_setup(updater_t *updater, bool backprop)
 
     if (input_updater_setup(updater->input_updater, ctx_leftmost,
                 ctx_rightmost) < 0) {
-        ST_WARNING("Failed to input_updater_setup.");
+        ST_ERROR("Failed to input_updater_setup.");
         goto ERR;
     }
 
     updater->finalized = false;
 
     if (updater_reset(updater) < 0) {
-        ST_WARNING("Failed to updater_reset.");
+        ST_ERROR("Failed to updater_reset.");
         goto ERR;
     }
 
@@ -349,7 +349,7 @@ int updater_set_rand_seed(updater_t *updater, unsigned int seed)
     for (c = 0; c < updater->connlm->num_comp; c++) {
         if (comp_updater_set_rand_seed(updater->comp_updaters[c],
                     &updater->rand_seed) < 0) {
-            ST_WARNING("Failed to comp_updater_set_rand_seed[%s].",
+            ST_ERROR("Failed to comp_updater_set_rand_seed[%s].",
                     updater->connlm->comps[c]->name);
             return -1;
         }
@@ -363,7 +363,7 @@ int updater_feed(updater_t *updater, word_pool_t *wp)
     ST_CHECK_PARAM(updater == NULL, -1);
 
     if (input_updater_feed(updater->input_updater, wp) < 0) {
-        ST_WARNING("Failed to input_updater_feed.");
+        ST_ERROR("Failed to input_updater_feed.");
         return -1;
     }
 
@@ -384,7 +384,7 @@ int updater_move_input(updater_t *updater)
     ST_CHECK_PARAM(updater == NULL, -1);
 
     if (input_updater_move(updater->input_updater) < 0) {
-        ST_WARNING("Failed to input_updater_move.");
+        ST_ERROR("Failed to input_updater_move.");
         return -1;
     }
 
@@ -392,7 +392,7 @@ int updater_move_input(updater_t *updater)
         if (input_updater_update_batch(updater->input_updater,
                     updater->comp_updaters[c]->comp->input,
                     updater->batches + c) < 0) {
-            ST_WARNING("Failed to input_updater_update_batch[%s].",
+            ST_ERROR("Failed to input_updater_update_batch[%s].",
                     updater->connlm->comps[c]->name);
             return -1;
         }
@@ -401,7 +401,7 @@ int updater_move_input(updater_t *updater)
     if (ivec_set(&updater->targets,
                 updater->batches[0].targets,
                 updater->batches[0].num_egs) < 0) {
-        ST_WARNING("Failed to ivec_set targets.");
+        ST_ERROR("Failed to ivec_set targets.");
         return -1;
     }
 
@@ -413,7 +413,7 @@ int updater_step(updater_t *updater)
     ST_CHECK_PARAM(updater == NULL, -1);
 
     if (updater_move_input(updater) < 0) {
-        ST_WARNING("Failed to updater_move_input.");
+        ST_ERROR("Failed to updater_move_input.");
         return -1;
     }
 
@@ -424,29 +424,29 @@ int updater_step(updater_t *updater)
 #endif
 
     if (updater_prepare(updater) < 0) {
-        ST_WARNING("updater_prepare.");
+        ST_ERROR("Failed to updater_prepare.");
         return -1;
     }
 
     if (updater_forward(updater) < 0) {
-        ST_WARNING("Failed to updater_forward.");
+        ST_ERROR("Failed to updater_forward.");
         return -1;
     }
 
     if (updater->backprop) {
         if (updater_backprop(updater) < 0) {
-            ST_WARNING("Failed to updater_backprop.");
+            ST_ERROR("Failed to updater_backprop.");
             return -1;
         }
     }
 
     if (updater_save_state(updater) < 0) {
-        ST_WARNING("updater_save_state.");
+        ST_ERROR("Failed to updater_save_state.");
         return -1;
     }
 
     if (updater_reset(updater) < 0) {
-        ST_WARNING("Failed to updater_reset.");
+        ST_ERROR("Failed to updater_reset.");
         return -1;
     }
 
@@ -471,7 +471,7 @@ static int updater_forward_util_out(updater_t *updater)
     for (c = 0; c < updater->connlm->num_comp; c++) {
         if (comp_updater_forward_util_out(updater->comp_updaters[c],
                     updater->batches + c) < 0) {
-            ST_WARNING("Failed to comp_updater_forward[%s].",
+            ST_ERROR("Failed to comp_updater_forward[%s].",
                     updater->connlm->comps[c]->name);
             return -1;
         }
@@ -494,19 +494,19 @@ static int updater_sample_out(updater_t *updater)
     while (!is_leaf(output->tree, node)) {
         for (c = 0; c < updater->connlm->num_comp; c++) {
             if (comp_updater_forward_out(updater->comp_updaters[c], node) < 0) {
-                ST_WARNING("Failed to comp_updater_forward[%s].",
+                ST_ERROR("Failed to comp_updater_forward[%s].",
                         updater->connlm->comps[c]->name);
                 return -1;
             }
         }
         node = out_updater_sample(updater->out_updater, node);
         if (node == OUTPUT_NODE_NONE) {
-            ST_WARNING("Failed to out_updater_sample.");
+            ST_ERROR("Failed to out_updater_sample.");
             return -1;
         }
 
         if (out_updater_clear_node(updater->out_updater, node) < 0) {
-            ST_WARNING("Failed to out_updater_clear_node.");
+            ST_ERROR("Failed to out_updater_clear_node.");
             return -1;
         }
     }
@@ -519,15 +519,15 @@ static int wp_set_word(word_pool_t *wp, int word)
     ST_CHECK_PARAM(wp == NULL || word < 0, -1);
 
     if (word_pool_clear(wp) < 0) {
-        ST_WARNING("Failed to word_pool_clear.");
+        ST_ERROR("Failed to word_pool_clear.");
         return -1;
     }
     if (word_pool_append(wp, word) < 0) {
-        ST_WARNING("Failed to word_pool_resize.");
+        ST_ERROR("Failed to word_pool_resize.");
         return -1;
     }
     if (word_pool_build_mini_batch(wp, 1) < 0) {
-        ST_WARNING("Failed to word_pool_build_mini_batch.");
+        ST_ERROR("Failed to word_pool_build_mini_batch.");
         return -1;
     }
 
@@ -547,58 +547,58 @@ int updater_sampling(updater_t *updater, bool startover)
     if (startover) { // feed with <s>
         word = vocab_get_id(updater->connlm->vocab, SENT_START);
         if (wp_set_word(&updater->tmp_wp, word) < 0) {
-            ST_WARNING("Failed to wp_set_word.");
+            ST_ERROR("Failed to wp_set_word.");
             return -1;
         }
         if (updater_feed(updater, &updater->tmp_wp) < 0) {
-            ST_WARNING("Failed to updater_feed.");
+            ST_ERROR("Failed to updater_feed.");
             return -1;
         }
 
         if (updater_move_input(updater) < 0) {
-            ST_WARNING("Failed to updater_move_input.");
+            ST_ERROR("Failed to updater_move_input.");
             return -1;
         }
     }
 
     if (updater_prepare(updater) < 0) {
-        ST_WARNING("updater_prepare.");
+        ST_ERROR("Failed to updater_prepare.");
         return -1;
     }
 
     if (updater_forward_util_out(updater) < 0) {
-        ST_WARNING("Failed to updater_forward_util_out.");
+        ST_ERROR("Failed to updater_forward_util_out.");
         return -1;
     }
 
     word = updater_sample_out(updater);
     if (word < 0) {
-        ST_WARNING("Failed to updater_sample_out.");
+        ST_ERROR("Failed to updater_sample_out.");
         return -1;
     }
 
     if (wp_set_word(&updater->tmp_wp, word) < 0) {
-        ST_WARNING("Failed to wp_set_word.");
+        ST_ERROR("Failed to wp_set_word.");
         return -1;
     }
     if (updater_feed(updater, &updater->tmp_wp) < 0) {
-        ST_WARNING("Failed to updater_feed.");
+        ST_ERROR("Failed to updater_feed.");
         return -1;
     }
 
     if (updater_save_state(updater) < 0) {
-        ST_WARNING("updater_save_state.");
+        ST_ERROR("Failed to updater_save_state.");
         return -1;
     }
 
     if (updater_reset(updater) < 0) {
-        ST_WARNING("Failed to updater_reset.");
+        ST_ERROR("Failed to updater_reset.");
         return -1;
     }
 
     // Move cur_pos to the pos fed into later after sampled out
     if (updater_move_input(updater) < 0) {
-        ST_WARNING("Failed to updater_move_input.");
+        ST_ERROR("Failed to updater_move_input.");
         return -1;
     }
 
@@ -617,7 +617,7 @@ int updater_state_size(updater_t *updater)
     for (c = 0; c < updater->connlm->num_comp; c++) {
         size = comp_updater_state_size(updater->comp_updaters[c]);
         if (size < 0) {
-            ST_WARNING("Failed to comp_updater_state_size[%s].",
+            ST_ERROR("Failed to comp_updater_state_size[%s].",
                     updater->connlm->comps[c]->name);
             return -1;
         }
@@ -641,18 +641,18 @@ int updater_dump_state(updater_t *updater, mat_t *state)
     for (c = 0; c < updater->connlm->num_comp; c++) {
         size = comp_updater_state_size(updater->comp_updaters[c]);
         if (size < 0) {
-            ST_WARNING("Failed to comp_updater_state_size[%s].",
+            ST_ERROR("Failed to comp_updater_state_size[%s].",
                     updater->connlm->comps[c]->name);
             return -1;
         }
 
         if (mat_submat(state, 0, 0, total_size, 0, &sub_state) < 0) {
-            ST_WARNING("Failed to mat_submat state.");
+            ST_ERROR("Failed to mat_submat state.");
             return -1;
         }
         if (comp_updater_dump_state(updater->comp_updaters[c],
                     &sub_state) < 0) {
-            ST_WARNING("Failed to comp_updater_dump_state[%s].",
+            ST_ERROR("Failed to comp_updater_dump_state[%s].",
                     updater->connlm->comps[c]->name);
             return -1;
         }
@@ -676,18 +676,18 @@ int updater_dump_pre_ac_state(updater_t *updater, mat_t *state)
     for (c = 0; c < updater->connlm->num_comp; c++) {
         size = comp_updater_state_size(updater->comp_updaters[c]);
         if (size < 0) {
-            ST_WARNING("Failed to comp_updater_state_size[%s].",
+            ST_ERROR("Failed to comp_updater_state_size[%s].",
                     updater->connlm->comps[c]->name);
             return -1;
         }
 
         if (mat_submat(state, 0, 0, total_size, 0, &sub_state) < 0) {
-            ST_WARNING("Failed to mat_submat state.");
+            ST_ERROR("Failed to mat_submat state.");
             return -1;
         }
         if (comp_updater_dump_pre_ac_state(updater->comp_updaters[c],
                     &sub_state) < 0) {
-            ST_WARNING("Failed to comp_updater_dump_pre_ac_state[%s].",
+            ST_ERROR("Failed to comp_updater_dump_pre_ac_state[%s].",
                     updater->connlm->comps[c]->name);
             return -1;
         }
@@ -711,18 +711,18 @@ int updater_feed_state(updater_t *updater, mat_t *state)
     for (c = 0; c < updater->connlm->num_comp; c++) {
         size = comp_updater_state_size(updater->comp_updaters[c]);
         if (size < 0) {
-            ST_WARNING("Failed to comp_updater_state_size[%s].",
+            ST_ERROR("Failed to comp_updater_state_size[%s].",
                     updater->connlm->comps[c]->name);
             return -1;
         }
 
         if (mat_submat(state, 0, 0, total_size, 0, &sub_state) < 0) {
-            ST_WARNING("Failed to mat_submat state.");
+            ST_ERROR("Failed to mat_submat state.");
             return -1;
         }
         if (comp_updater_feed_state(updater->comp_updaters[c],
                     &sub_state) < 0) {
-            ST_WARNING("Failed to comp_updater_feed_state[%s].",
+            ST_ERROR("Failed to comp_updater_feed_state[%s].",
                     updater->connlm->comps[c]->name);
             return -1;
         }
@@ -746,18 +746,18 @@ int updater_random_state(updater_t *updater, mat_t *state)
     for (c = 0; c < updater->connlm->num_comp; c++) {
         size = comp_updater_state_size(updater->comp_updaters[c]);
         if (size < 0) {
-            ST_WARNING("Failed to comp_updater_state_size[%s].",
+            ST_ERROR("Failed to comp_updater_state_size[%s].",
                     updater->connlm->comps[c]->name);
             return -1;
         }
 
         if (mat_submat(state, 0, 0, total_size, 0, &sub_state) < 0) {
-            ST_WARNING("Failed to mat_submat state.");
+            ST_ERROR("Failed to mat_submat state.");
             return -1;
         }
         if (comp_updater_random_state(updater->comp_updaters[c],
                     &sub_state) < 0) {
-            ST_WARNING("Failed to comp_updater_random_state[%s].",
+            ST_ERROR("Failed to comp_updater_random_state[%s].",
                     updater->connlm->comps[c]->name);
             return -1;
         }
@@ -774,19 +774,19 @@ static int updater_cleanup(updater_t *updater)
     ST_CHECK_PARAM(updater == NULL, -1);
 
     if (input_updater_clear(updater->input_updater) < 0) {
-        ST_WARNING("Failed to input_updater_clear.");
+        ST_ERROR("Failed to input_updater_clear.");
         return -1;
     }
 
     if (updater_reset(updater) < 0) {
-        ST_WARNING("Failed to updater_reset.");
+        ST_ERROR("Failed to updater_reset.");
         return -1;
     }
 
     for (c = 0; c < updater->connlm->num_comp; c++) {
         if (comp_updater_prepare(updater->comp_updaters[c],
                     updater->batches + c) < 0) {
-            ST_WARNING("Failed to comp_updater_prepare[%s].",
+            ST_ERROR("Failed to comp_updater_prepare[%s].",
                     updater->connlm->comps[c]->name);
             return -1;
         }
@@ -803,37 +803,37 @@ static int updater_set_hist(updater_t *updater, ivec_t *hists, int num_hists)
 
     // build mini_batch with hists
     if (word_pool_clear(&updater->tmp_wp) < 0) {
-        ST_WARNING("Failed to word_pool_clear.");
+        ST_ERROR("Failed to word_pool_clear.");
         return -1;
     }
 
     for (i = 0; i < num_hists; i++) {
         if (word_pool_append_ivec(&updater->tmp_wp, hists + i) < 0) {
-            ST_WARNING("Failed to word_pool_append_ivec[%d].", i);
+            ST_ERROR("Failed to word_pool_append_ivec[%d].", i);
             return -1;
         }
 
         // set the sent_ends
         if (ivec_append(&updater->tmp_wp.sent_ends,
                     updater->tmp_wp.words.size) < 0) {
-            ST_WARNING("Failed to ivec_append.");
+            ST_ERROR("Failed to ivec_append.");
             return -1;
         }
     }
 
     if (word_pool_build_mini_batch(&updater->tmp_wp, num_hists) < 0) {
-        ST_WARNING("Failed to word_pool_build_mini_batch for hists.");
+        ST_ERROR("Failed to word_pool_build_mini_batch for hists.");
         return -1;
     }
 
     // feed the word_pool with hists
     if (updater_feed(updater, &updater->tmp_wp) < 0) {
-        ST_WARNING("Failed to updater_feed.");
+        ST_ERROR("Failed to updater_feed.");
         return -1;
     }
 
     if (input_updater_move_to_end(updater->input_updater) < 0) {
-        ST_WARNING("Failed to input_updater_move_to_end.");
+        ST_ERROR("Failed to input_updater_move_to_end.");
         return -1;
     }
 
@@ -841,7 +841,7 @@ static int updater_set_hist(updater_t *updater, ivec_t *hists, int num_hists)
         if (input_updater_update_batch(updater->input_updater,
                     updater->comp_updaters[c]->comp->input,
                     updater->batches + c) < 0) {
-            ST_WARNING("Failed to input_updater_update_batch[%s].",
+            ST_ERROR("Failed to input_updater_update_batch[%s].",
                     updater->connlm->comps[c]->name);
             return -1;
         }
@@ -856,35 +856,35 @@ int updater_step_with_state(updater_t *updater, mat_t *state,
     ST_CHECK_PARAM(updater == NULL || state == NULL, -1);
 
     if (updater_cleanup(updater) < 0) {
-        ST_WARNING("Failed to updater_cleanup.");
+        ST_ERROR("Failed to updater_cleanup.");
         return -1;
     }
 
     if (hists != NULL && num_hists > 0) {
         if (num_hists != state->num_rows) {
-            ST_WARNING("num_hists must be equal to state->num_rows.");
+            ST_ERROR("num_hists must be equal to state->num_rows.");
             return -1;
         }
         if (updater_set_hist(updater, hists, num_hists) < 0) {
-            ST_WARNING("Failed to updater_set_hist.");
+            ST_ERROR("Failed to updater_set_hist.");
             return -1;
         }
     }
 
     if (state != NULL) {
         if (updater_feed_state(updater, state) < 0) {
-            ST_WARNING("Failed to updater_feed_state.");
+            ST_ERROR("Failed to updater_feed_state.");
             return -1;
         }
     }
 
     if (updater_forward_util_out(updater) < 0) {
-        ST_WARNING("Failed to updater_forward_util_out.");
+        ST_ERROR("Failed to updater_forward_util_out.");
         return -1;
     }
 
     if (updater_save_state(updater) < 0) {
-        ST_WARNING("updater_save_state.");
+        ST_ERROR("Failed to updater_save_state.");
         return -1;
     }
 
@@ -899,7 +899,7 @@ int updater_forward_out_words(updater_t *updater, ivec_t *words, dvec_t *logps)
 
     for (c = 0; c < updater->connlm->num_comp; c++) {
         if (comp_updater_forward_out_words(updater->comp_updaters[c], words) < 0) {
-            ST_WARNING("Failed to comp_updater_forward_out_words[%s].",
+            ST_ERROR("Failed to comp_updater_forward_out_words[%s].",
                     updater->connlm->comps[c]->name);
             return -1;
         }
@@ -907,7 +907,7 @@ int updater_forward_out_words(updater_t *updater, ivec_t *words, dvec_t *logps)
 
     if (logps != NULL) {
         if (out_updater_activate(updater->out_updater, words, logps) < 0) {
-            ST_WARNING("Failed to out_updater_activate.");
+            ST_ERROR("Failed to out_updater_activate.");
             return -1;
         }
     }
@@ -929,18 +929,18 @@ int updater_activate_state(updater_t *updater, mat_t *state)
     for (c = 0; c < updater->connlm->num_comp; c++) {
         size = comp_updater_state_size(updater->comp_updaters[c]);
         if (size < 0) {
-            ST_WARNING("Failed to comp_updater_state_size[%s].",
+            ST_ERROR("Failed to comp_updater_state_size[%s].",
                     updater->connlm->comps[c]->name);
             return -1;
         }
 
         if (mat_submat(state, 0, 0, total_size, 0, &sub_state) < 0) {
-            ST_WARNING("Failed to mat_submat state.");
+            ST_ERROR("Failed to mat_submat state.");
             return -1;
         }
         if (comp_updater_activate_state(updater->comp_updaters[c],
                     &sub_state) < 0) {
-            ST_WARNING("Failed to comp_updater_activate_state[%s].",
+            ST_ERROR("Failed to comp_updater_activate_state[%s].",
                     updater->connlm->comps[c]->name);
             return -1;
         }
@@ -958,7 +958,7 @@ int updater_setup_pre_ac_state(updater_t *updater)
 
     for (c = 0; c < updater->connlm->num_comp; c++) {
         if (comp_updater_setup_pre_ac_state(updater->comp_updaters[c]) < 0) {
-            ST_WARNING("Failed to comp_updater_setup_pre_ac_state[%s].",
+            ST_ERROR("Failed to comp_updater_setup_pre_ac_state[%s].",
                     updater->connlm->comps[c]->name);
             return -1;
         }
@@ -977,78 +977,78 @@ int updater_sampling_state(updater_t *updater, mat_t *state,
 
     if ((state != NULL && state->num_rows != 1)
             || (pre_ac_state != NULL && pre_ac_state->num_rows != 1)) {
-        ST_WARNING("num_rows of state/pre_ac_state must be 1.");
+        ST_ERROR("num_rows of state/pre_ac_state must be 1.");
        return -1;
     }
 
     if (startover) { // feed with <s>
         word = vocab_get_id(updater->connlm->vocab, SENT_START);
         if (wp_set_word(&updater->tmp_wp, word) < 0) {
-            ST_WARNING("Failed to wp_set_word.");
+            ST_ERROR("Failed to wp_set_word.");
             return -1;
         }
         if (updater_feed(updater, &updater->tmp_wp) < 0) {
-            ST_WARNING("Failed to updater_feed.");
+            ST_ERROR("Failed to updater_feed.");
             return -1;
         }
         if (updater_move_input(updater) < 0) {
-            ST_WARNING("Failed to updater_move_input.");
+            ST_ERROR("Failed to updater_move_input.");
             return -1;
         }
     }
 
     if (updater_prepare(updater) < 0) {
-        ST_WARNING("updater_prepare.");
+        ST_ERROR("Failed to updater_prepare.");
         return -1;
     }
 
     if (updater_forward_util_out(updater) < 0) {
-        ST_WARNING("Failed to updater_forward_util_out.");
+        ST_ERROR("Failed to updater_forward_util_out.");
         return -1;
     }
 
     word = updater_sample_out(updater);
     if (word < 0) {
-        ST_WARNING("Failed to updater_sample_out.");
+        ST_ERROR("Failed to updater_sample_out.");
         return -1;
     }
 
     if (wp_set_word(&updater->tmp_wp, word) < 0) {
-        ST_WARNING("Failed to wp_set_word.");
+        ST_ERROR("Failed to wp_set_word.");
         return -1;
     }
     if (updater_feed(updater, &updater->tmp_wp) < 0) {
-        ST_WARNING("Failed to updater_feed.");
+        ST_ERROR("Failed to updater_feed.");
         return -1;
     }
 
     if (updater_save_state(updater) < 0) {
-        ST_WARNING("updater_save_state.");
+        ST_ERROR("Failed to updater_save_state.");
         return -1;
     }
 
     if (pre_ac_state != NULL) {
         if (updater_dump_pre_ac_state(updater, pre_ac_state) < 0) {
-            ST_WARNING("updater_dump_pre_ac_state.");
+            ST_ERROR("Failed to updater_dump_pre_ac_state.");
             return -1;
         }
     }
 
     if (state != NULL) {
         if (updater_dump_state(updater, state) < 0) {
-            ST_WARNING("updater_dump_state.");
+            ST_ERROR("Failed to updater_dump_state.");
             return -1;
         }
     }
 
     if (updater_reset(updater) < 0) {
-        ST_WARNING("Failed to updater_reset.");
+        ST_ERROR("Failed to updater_reset.");
         return -1;
     }
 
     // Move cur_pos to the pos fed into later after sampled out
     if (updater_move_input(updater) < 0) {
-        ST_WARNING("Failed to updater_move_input.");
+        ST_ERROR("Failed to updater_move_input.");
         return -1;
     }
 
@@ -1061,48 +1061,48 @@ int updater_step_state(updater_t *updater,
     ST_CHECK_PARAM(updater == NULL, -1);
 
     if (updater_move_input(updater) < 0) {
-        ST_WARNING("Failed to updater_move_input.");
+        ST_ERROR("Failed to updater_move_input.");
         return -1;
     }
 
     if (updater_prepare(updater) < 0) {
-        ST_WARNING("updater_prepare.");
+        ST_ERROR("Failed to updater_prepare.");
         return -1;
     }
 
     if (updater_forward(updater) < 0) {
-        ST_WARNING("Failed to updater_forward.");
+        ST_ERROR("Failed to updater_forward.");
         return -1;
     }
 
     if (updater->backprop) {
         if (updater_backprop(updater) < 0) {
-            ST_WARNING("Failed to updater_backprop.");
+            ST_ERROR("Failed to updater_backprop.");
             return -1;
         }
     }
 
     if (updater_save_state(updater) < 0) {
-        ST_WARNING("updater_save_state.");
+        ST_ERROR("Failed to updater_save_state.");
         return -1;
     }
 
     if (pre_ac_state != NULL) {
         if (updater_dump_pre_ac_state(updater, pre_ac_state) < 0) {
-            ST_WARNING("updater_dump_pre_ac_state.");
+            ST_ERROR("Failed to updater_dump_pre_ac_state.");
             return -1;
         }
     }
 
     if (state != NULL) {
         if (updater_dump_state(updater, state) < 0) {
-            ST_WARNING("updater_dump_state.");
+            ST_ERROR("Failed to updater_dump_state.");
             return -1;
         }
     }
 
     if (updater_reset(updater) < 0) {
-        ST_WARNING("Failed to updater_reset.");
+        ST_ERROR("Failed to updater_reset.");
         return -1;
     }
 

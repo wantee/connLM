@@ -112,46 +112,46 @@ static int fst_conv_args_init(fst_conv_args_t *args,
     args->output_probs = (double *)st_malloc(sizeof(double)
             * get_output_size(conv));
     if (args->output_probs == NULL) {
-        ST_WARNING("Failed to st_malloc output_probs.");
+        ST_ERROR("Failed to st_malloc output_probs.");
         goto ERR;
     }
 
     args->candidate_words = (int *)st_malloc(sizeof(int) * get_output_size(conv));
     if (args->candidate_words == NULL) {
-        ST_WARNING("Failed to st_malloc candidate_words.");
+        ST_ERROR("Failed to st_malloc candidate_words.");
         goto ERR;
     }
 
     args->selected_words = (int *)st_malloc(sizeof(int) * get_output_size(conv));
     if (args->selected_words == NULL) {
-        ST_WARNING("Failed to st_malloc selected_words.");
+        ST_ERROR("Failed to st_malloc selected_words.");
         goto ERR;
     }
     args->num_candidates = 0;
 
     args->word_hist = (int *)st_malloc(sizeof(int) * (conv->conv_opt.max_gram + 1));
     if (args->word_hist == NULL) {
-        ST_WARNING("Failed to st_malloc word_hist");
+        ST_ERROR("Failed to st_malloc word_hist");
         goto ERR;
     }
 
     if (conv->blm_flt != NULL) {
         args->blm_flt_buf = bloom_filter_buf_create(conv->blm_flt);
         if (args->blm_flt_buf == NULL) {
-            ST_WARNING("Failed to bloom_filter_buf_create.");
+            ST_ERROR("Failed to bloom_filter_buf_create.");
             goto ERR;
         }
     }
 
     args->num_grams = (int *)st_malloc(sizeof(int) * conv->conv_opt.max_gram);
     if (args->num_grams == NULL) {
-        ST_WARNING("Failed to st_realloc num_grams.");
+        ST_ERROR("Failed to st_realloc num_grams.");
         return -1;
     }
 
     args->start_sids = (int *)st_malloc(sizeof(int) * conv->conv_opt.max_gram);
     if (args->start_sids == NULL) {
-        ST_WARNING("Failed to st_realloc start_sids.");
+        ST_ERROR("Failed to st_realloc start_sids.");
         return -1;
     }
 
@@ -199,14 +199,14 @@ static fst_conv_args_t* fst_conv_args_list_create(fst_conv_t *conv)
     args = (fst_conv_args_t *)st_malloc(sizeof(fst_conv_args_t)
             * conv->n_thr);
     if (args == NULL) {
-        ST_WARNING("Failed to st_malloc fst_conv_args_t");
+        ST_ERROR("Failed to st_malloc fst_conv_args_t");
         goto ERR;
     }
     memset(args, 0, sizeof(fst_conv_args_t) * conv->n_thr);
 
     for (i = 0; i < conv->n_thr; i++) {
         if (fst_conv_args_init(args + i, conv, i) < 0) {
-            ST_WARNING("Failed to fst_conv_args_init[%d].", i);
+            ST_ERROR("Failed to fst_conv_args_init[%d].", i);
             goto ERR;
         }
     }
@@ -272,14 +272,14 @@ int fst_conv_load_opt(fst_conv_opt_t *conv_opt,
     } else if (strcasecmp(str, "Majority") == 0) {
         conv_opt->wsm = WSM_MAJORITY;
     } else {
-        ST_WARNING("Unknown word selection method[%s].", str);
+        ST_ERROR("Unknown word selection method[%s].", str);
         goto ST_OPT_ERR;
     }
 
     ST_OPT_SEC_GET_DOUBLE(opt, sec_name, "THRESHOLD",
             conv_opt->threshold, 1.0, "threshold for word selection.");
     if (conv_opt->threshold < 0 || conv_opt->threshold > 1) {
-        ST_WARNING("threshold should be in [0.0, 1.0]");
+        ST_ERROR("threshold should be in [0.0, 1.0]");
         goto ST_OPT_ERR;
     }
 
@@ -291,7 +291,7 @@ int fst_conv_load_opt(fst_conv_opt_t *conv_opt,
             "Maximum gram to be expaned(decided by the bloom-filter if "
             "less than or equal to 0).");
     if (conv_opt->max_gram > 0 && conv_opt->max_gram <= 2) {
-        ST_WARNING("MAX_GRAM must be larger than 2.");
+        ST_ERROR("MAX_GRAM must be larger than 2.");
         goto ST_OPT_ERR;
     }
 
@@ -364,7 +364,7 @@ fst_conv_t* fst_conv_create(connlm_t *connlm, int n_thr,
 
     if (conv_opt->max_gram <= 0) {
         if (conv_opt->bloom_filter_file[0] == '\0') {
-            ST_WARNING("Can not determine MAX_GRAM, since BLOOM_FILTER_FILE "
+            ST_ERROR("Can not determine MAX_GRAM, since BLOOM_FILTER_FILE "
                     "not set");
             goto ERR;
         }
@@ -372,7 +372,7 @@ fst_conv_t* fst_conv_create(connlm_t *connlm, int n_thr,
 
     conv = (fst_conv_t *)st_malloc(sizeof(fst_conv_t));
     if (conv == NULL) {
-        ST_WARNING("Failed to st_malloc converter.");
+        ST_ERROR("Failed to st_malloc converter.");
         return NULL;
     }
     memset(conv, 0, sizeof(fst_conv_t));
@@ -383,7 +383,7 @@ fst_conv_t* fst_conv_create(connlm_t *connlm, int n_thr,
 
     conv->updaters = (updater_t **)st_malloc(sizeof(updater_t*)*n_thr);
     if (conv->updaters == NULL) {
-        ST_WARNING("Failed to st_malloc updaters.");
+        ST_ERROR("Failed to st_malloc updaters.");
         goto ERR;
     }
     memset(conv->updaters, 0, sizeof(updater_t*) * n_thr);
@@ -391,33 +391,33 @@ fst_conv_t* fst_conv_create(connlm_t *connlm, int n_thr,
     for (i = 0; i < conv->n_thr; i++) {
         conv->updaters[i] = updater_create(connlm);
         if (conv->updaters[i] == NULL) {
-            ST_WARNING("Failed to updater_create[%d].", i);
+            ST_ERROR("Failed to updater_create[%d].", i);
             goto ERR;
         }
     }
 
     if (conv->updaters[0]->input_updater->ctx_rightmost > 0) {
-        ST_WARNING("Can not converting: future words in input context.");
+        ST_ERROR("Can not converting: future words in input context.");
         goto ERR;
     }
 
     if (conv->conv_opt.bloom_filter_file[0] != '\0') {
         fp = st_fopen(conv->conv_opt.bloom_filter_file, "r");
         if (fp == NULL) {
-            ST_WARNING("Failed to st_fopen bloom_filter_file[%s].",
+            ST_ERROR("Failed to st_fopen bloom_filter_file[%s].",
                     conv->conv_opt.bloom_filter_file);
             goto ERR;
         }
         conv->blm_flt = bloom_filter_load(fp);
         if (conv->blm_flt == NULL) {
-            ST_WARNING("Failed to bloom_filter_load from[%s].",
+            ST_ERROR("Failed to bloom_filter_load from[%s].",
                     conv->conv_opt.bloom_filter_file);
             goto ERR;
         }
         safe_fclose(fp);
 
         if (! vocab_equal(conv->connlm->vocab, conv->blm_flt->vocab)) {
-            ST_WARNING("Vocab of bloom filter and connlm model not match.");
+            ST_ERROR("Vocab of bloom filter and connlm model not match.");
             goto ERR;
         }
 
@@ -429,7 +429,7 @@ fst_conv_t* fst_conv_create(connlm_t *connlm, int n_thr,
     if (conv->conv_opt.wildcard_state_file[0] != '\0') {
         fp = st_fopen(conv->conv_opt.wildcard_state_file, "r");
         if (fp == NULL) {
-            ST_WARNING("Failed to st_fopen wildcard_state_file[%s].",
+            ST_ERROR("Failed to st_fopen wildcard_state_file[%s].",
                     conv->conv_opt.wildcard_state_file);
             goto ERR;
         }
@@ -443,7 +443,7 @@ fst_conv_t* fst_conv_create(connlm_t *connlm, int n_thr,
 
             conv->ws_size = parse_vec(line, &conv->wildcard_state, NULL, 0);
             if (conv->ws_size < 0) {
-                ST_WARNING("Failed to parse_vec. [%s]", line);
+                ST_ERROR("Failed to parse_vec. [%s]", line);
                 goto ERR;
             }
 
@@ -454,7 +454,7 @@ fst_conv_t* fst_conv_create(connlm_t *connlm, int n_thr,
         safe_fclose(fp);
 
         if (err) {
-            ST_WARNING("st_fgets error");
+            ST_ERROR("st_fgets error");
             goto ERR;
         }
 
@@ -482,7 +482,7 @@ static int fst_conv_st_realloc_states(fst_conv_t *conv, int num_extra,
     conv->fst_states = st_realloc(conv->fst_states,
             sizeof(fst_state_t) * num_new_states);
     if (conv->fst_states == NULL) {
-        ST_WARNING("Failed to st_realloc fst_states.");
+        ST_ERROR("Failed to st_realloc fst_states.");
         return -1;
     }
 
@@ -490,7 +490,7 @@ static int fst_conv_st_realloc_states(fst_conv_t *conv, int num_extra,
         conv->fst_children = st_realloc(conv->fst_children,
                 sizeof(fst_state_children_t) * num_new_states);
         if (conv->fst_children == NULL) {
-            ST_WARNING("Failed to st_realloc fst_children.");
+            ST_ERROR("Failed to st_realloc fst_children.");
             return -1;
         }
         for (i = conv->cap_fst_states; i < num_new_states; i++) {
@@ -500,24 +500,24 @@ static int fst_conv_st_realloc_states(fst_conv_t *conv, int num_extra,
         conv->in_probs = st_realloc(conv->in_probs,
                 sizeof(real_t) * num_new_states);
         if (conv->in_probs == NULL) {
-            ST_WARNING("Failed to st_realloc in_probs.");
+            ST_ERROR("Failed to st_realloc in_probs.");
             return -1;
         }
         conv->final_probs = st_realloc(conv->final_probs,
                 sizeof(real_t) * num_new_states);
         if (conv->final_probs == NULL) {
-            ST_WARNING("Failed to st_realloc final_probs.");
+            ST_ERROR("Failed to st_realloc final_probs.");
             return -1;
         }
         conv->backoff_states = st_realloc(conv->backoff_states,
                 sizeof(int) * num_new_states);
         if (conv->backoff_states == NULL) {
-            ST_WARNING("Failed to st_realloc backoff_states.");
+            ST_ERROR("Failed to st_realloc backoff_states.");
             return -1;
         }
         conv->bows = st_realloc(conv->bows, sizeof(real_t) * num_new_states);
         if (conv->bows == NULL) {
-            ST_WARNING("Failed to st_realloc bows.");
+            ST_ERROR("Failed to st_realloc bows.");
             return -1;
         }
         for (i = conv->cap_fst_states; i < num_new_states; i++) {
@@ -545,46 +545,46 @@ static int fst_conv_setup(fst_conv_t *conv, FILE *fst_fp,
     conv->fst_fp = fst_fp;
 
     if (pthread_mutex_init(&conv->fst_fp_lock, NULL) != 0) {
-        ST_WARNING("Failed to pthread_mutex_init fst_fp_lock.");
+        ST_ERROR("Failed to pthread_mutex_init fst_fp_lock.");
         return -1;
     }
 
     if (conv->conv_opt.state_syms_file[0] != '\0') {
         conv->ssyms_fp = st_fopen(conv->conv_opt.state_syms_file, "w");
         if (conv->ssyms_fp == NULL) {
-            ST_WARNING("Failed to st_fopen state syms file[%s]",
+            ST_ERROR("Failed to st_fopen state syms file[%s]",
                     conv->conv_opt.state_syms_file);
             return -1;
         }
 
         if (pthread_mutex_init(&conv->ssyms_fp_lock, NULL) != 0) {
-            ST_WARNING("Failed to pthread_mutex_init ssyms_fp_lock.");
+            ST_ERROR("Failed to pthread_mutex_init ssyms_fp_lock.");
             return -1;
         }
     }
 
     if (connlm_setup(conv->connlm) < 0) {
-        ST_WARNING("Failed to connlm_setup.");
+        ST_ERROR("Failed to connlm_setup.");
         return -1;
     }
 
     for (i = 0; i < conv->n_thr; i++) {
         if (updater_setup_multicall(conv->updaters[i]) < 0) {
-            ST_WARNING("Failed to updater_setup_multicall.");
+            ST_ERROR("Failed to updater_setup_multicall.");
             return -1;
         }
     }
 
     *args = fst_conv_args_list_create(conv);
     if (*args == NULL) {
-        ST_WARNING("Failed to fst_conv_args_list_create.");
+        ST_ERROR("Failed to fst_conv_args_list_create.");
         return -1;
     }
 
     state_size = updater_state_size(conv->updaters[0]);
     if (conv->ws_size > 0) {
         if (state_size != conv->ws_size) {
-            ST_WARNING("wildcard state size not match");
+            ST_ERROR("wildcard state size not match");
             return -1;
         }
     }
@@ -593,7 +593,7 @@ static int fst_conv_setup(fst_conv_t *conv, FILE *fst_fp,
         conv->model_state_cache = st_block_cache_create(
                 sizeof(real_t) * state_size, get_output_size(conv));
         if (conv->model_state_cache == NULL) {
-            ST_WARNING("Failed to st_block_cache_create model_state_cache.");
+            ST_ERROR("Failed to st_block_cache_create model_state_cache.");
             return -1;
         }
     } else {
@@ -602,7 +602,7 @@ static int fst_conv_setup(fst_conv_t *conv, FILE *fst_fp,
     }
 
     if (pthread_mutex_init(&conv->fst_state_lock, NULL) != 0) {
-        ST_WARNING("Failed to pthread_mutex_init fst_state_lock.");
+        ST_ERROR("Failed to pthread_mutex_init fst_state_lock.");
         return -1;
     }
 
@@ -620,12 +620,12 @@ static int fst_conv_add_states(fst_conv_t *conv, int n,
     ST_CHECK_PARAM(conv == NULL || n < 0, -1);
 
     if (pthread_mutex_lock(&conv->fst_state_lock) != 0) {
-        ST_WARNING("Failed to pthread_mutex_lock fst_state_lock.");
+        ST_ERROR("Failed to pthread_mutex_lock fst_state_lock.");
         return -1;
     }
 
     if (conv->n_fst_state + n > conv->cap_fst_states) {
-        ST_WARNING("fst_states overflow");
+        ST_ERROR("fst_states overflow");
         ret = -1;
         goto RET;
     }
@@ -634,7 +634,7 @@ static int fst_conv_add_states(fst_conv_t *conv, int n,
     conv->n_fst_state += n;
 
     if (pthread_mutex_unlock(&conv->fst_state_lock) != 0) {
-        ST_WARNING("Failed to pthread_mutex_unlock fst_state_lock.");
+        ST_ERROR("Failed to pthread_mutex_unlock fst_state_lock.");
         return -1;
     }
 
@@ -646,12 +646,12 @@ static int fst_conv_add_states(fst_conv_t *conv, int n,
 
     if (store_children && parent > 0) {
         if (parent >= conv->cap_fst_children) {
-            ST_WARNING("Invalid parent[%d]", parent);
+            ST_ERROR("Invalid parent[%d]", parent);
             return -1;
         }
 
         if (conv->fst_children[parent].first_child != -1) {
-            ST_WARNING("duplicated parent[%d]", parent);
+            ST_ERROR("duplicated parent[%d]", parent);
             return -1;
         }
         conv->fst_children[parent].first_child = sid;
@@ -662,7 +662,7 @@ static int fst_conv_add_states(fst_conv_t *conv, int n,
 
 RET:
     if (pthread_mutex_unlock(&conv->fst_state_lock) != 0) {
-        ST_WARNING("Failed to pthread_mutex_unlock fst_state_lock.");
+        ST_ERROR("Failed to pthread_mutex_unlock fst_state_lock.");
         return -1;
     }
 
@@ -694,29 +694,29 @@ static int fst_conv_print_ssyms(fst_conv_t *conv, int sid,
     }
 
     if (pthread_mutex_lock(&conv->ssyms_fp_lock) != 0) {
-        ST_WARNING("Failed to pthread_mutex_lock ssyms_fp_lock.");
+        ST_ERROR("Failed to pthread_mutex_lock ssyms_fp_lock.");
         return -1;
     }
     if (fprintf(conv->ssyms_fp, "%d\t", sid) < 0) {
-        ST_WARNING("Failed to write ssyms.(disk full?)");
+        ST_ERROR("Failed to write ssyms.(disk full?)");
         goto UNLOCK_AND_ERR;
     }
     if (word_hist != NULL) {
         for (i = 0; i < num_word_hist; i++) {
             if (fprintf(conv->ssyms_fp, "%s:",
                     fst_conv_get_word(conv, word_hist[i])) < 0) {
-                ST_WARNING("Failed to write ssyms.(disk full?)");
+                ST_ERROR("Failed to write ssyms.(disk full?)");
                 goto UNLOCK_AND_ERR;
             }
         }
     }
     if (fprintf(conv->ssyms_fp, "%s\n", fst_conv_get_word(conv, wid)) < 0) {
-        ST_WARNING("Failed to write ssyms.(disk full?)");
+        ST_ERROR("Failed to write ssyms.(disk full?)");
         goto UNLOCK_AND_ERR;
     }
 
     if (pthread_mutex_unlock(&conv->ssyms_fp_lock) != 0) {
-        ST_WARNING("Failed to pthread_mutex_unlock ssyms_fp_lock.");
+        ST_ERROR("Failed to pthread_mutex_unlock ssyms_fp_lock.");
         return -1;
     }
 
@@ -724,7 +724,7 @@ static int fst_conv_print_ssyms(fst_conv_t *conv, int sid,
 
 UNLOCK_AND_ERR:
     if (pthread_mutex_unlock(&conv->ssyms_fp_lock) != 0) {
-        ST_WARNING("Failed to pthread_mutex_unlock ssyms_fp_lock.");
+        ST_ERROR("Failed to pthread_mutex_unlock ssyms_fp_lock.");
         return -1;
     }
 
@@ -742,7 +742,7 @@ static int fst_conv_print_arc(fst_conv_t *conv,
     ST_CHECK_PARAM(conv == NULL || from < 0 || to < 0 || wid < 0, -1);
 
     if (pthread_mutex_lock(&conv->fst_fp_lock) != 0) {
-        ST_WARNING("Failed to pthread_mutex_lock fst_fp_lock.");
+        ST_ERROR("Failed to pthread_mutex_lock fst_fp_lock.");
         return -1;
     }
     if (conv->conv_opt.print_syms) {
@@ -755,7 +755,7 @@ static int fst_conv_print_arc(fst_conv_t *conv,
         }
         if (fprintf(conv->fst_fp, "%d\t%d\t%s\t%s\t%f\n", from, to,
                 ilab_str, olab_str, -(float)log(weight)) < 0) {
-            ST_WARNING("Failed to write out fst.(disk full?)");
+            ST_ERROR("Failed to write out fst.(disk full?)");
             goto UNLOCK_AND_ERR;
         }
     } else {
@@ -768,13 +768,13 @@ static int fst_conv_print_arc(fst_conv_t *conv,
 
         if (fprintf(conv->fst_fp, "%d\t%d\t%d\t%d\t%f\n", from, to,
                 ilab, olab, -(float)log(weight)) < 0) {
-            ST_WARNING("Failed to write out fst.(disk full?)");
+            ST_ERROR("Failed to write out fst.(disk full?)");
             goto UNLOCK_AND_ERR;
         }
     }
 
     if (pthread_mutex_unlock(&conv->fst_fp_lock) != 0) {
-        ST_WARNING("Failed to pthread_mutex_lock fst_fp_lock.");
+        ST_ERROR("Failed to pthread_mutex_lock fst_fp_lock.");
         return -1;
     }
 
@@ -782,7 +782,7 @@ static int fst_conv_print_arc(fst_conv_t *conv,
 
 UNLOCK_AND_ERR:
     if (pthread_mutex_unlock(&conv->fst_fp_lock) != 0) {
-        ST_WARNING("Failed to pthread_mutex_lock fst_fp_lock.");
+        ST_ERROR("Failed to pthread_mutex_lock fst_fp_lock.");
         return -1;
     }
 
@@ -893,7 +893,7 @@ static int get_condidate_word(fst_conv_t *conv, fst_conv_args_t *args)
         }
     } else {
         if (args->num_word_hist >= conv->conv_opt.max_gram + 1) {
-            ST_WARNING("word_hist overflow");
+            ST_ERROR("word_hist overflow");
             return -1;
         }
         for (word = 0; word < get_output_size(conv); word++) {
@@ -937,19 +937,19 @@ static int select_words(fst_conv_t *conv, fst_conv_args_t *args, double thresh)
         case WSM_BEAM:
             n = select_words_beam(conv, args, thresh);
             if (n < 0) {
-                ST_WARNING("Failed to select_words_beam.");
+                ST_ERROR("Failed to select_words_beam.");
                 return -1;
             }
             break;
         case WSM_MAJORITY:
             n = select_words_majority(conv, args, thresh);
             if (n < 0) {
-                ST_WARNING("Failed to select_words_majority.");
+                ST_ERROR("Failed to select_words_majority.");
                 return -1;
             }
             break;
         default:
-            ST_WARNING("Invalid word selection method");
+            ST_ERROR("Invalid word selection method");
             return -1;
     }
 
@@ -997,7 +997,7 @@ static int fst_conv_find_word_hist(fst_conv_t *conv,
     p = conv->fst_states[sid].parent;
     while (p != -1 && conv->fst_states[p].word_id != -1 /* init state */) {
         if (args->num_word_hist >= conv->conv_opt.max_gram + 1) {
-            ST_WARNING("word_hist overflow");
+            ST_ERROR("word_hist overflow");
             return -1;
         }
         args->word_hist[args->num_word_hist] = conv->fst_states[p].word_id;
@@ -1032,7 +1032,7 @@ static int fst_conv_find_backoff(fst_conv_t *conv, int *word_hist,
             backoff_sid = fst_conv_search_children(conv,
                     backoff_sid, word_hist[j]);
             if (backoff_sid < -1) {
-                ST_WARNING("Failed to fst_conv_search_children.");
+                ST_ERROR("Failed to fst_conv_search_children.");
                 return -1;
             } else if (backoff_sid < 0) { // not found
                 break;
@@ -1057,7 +1057,7 @@ static int fst_conv_get_prob(fst_conv_t *conv, int sid, int word, double *prob)
     ST_CHECK_PARAM(conv == NULL || sid < 0 || word < 0 || prob == NULL, -1);
 
     if (sid >= conv->cap_fst_children) {
-        ST_WARNING("sid not in fst_children cannot get prob");
+        ST_ERROR("sid not in fst_children cannot get prob");
         return -1;
     }
 
@@ -1072,12 +1072,12 @@ static int fst_conv_get_prob(fst_conv_t *conv, int sid, int word, double *prob)
 
             // backoff
             if (conv->backoff_states[sid] < 0) {
-                ST_WARNING("state[%d] has no backoff arc", sid);
+                ST_ERROR("state[%d] has no backoff arc", sid);
                 return -1;
             }
 
             if (isnan(conv->bows[sid])) {
-                ST_WARNING("state[%d]'s backoff_prob is not valid[%f]",
+                ST_ERROR("state[%d]'s backoff_prob is not valid[%f]",
                         sid, conv->bows[sid]);
             }
             *prob += log(conv->bows[sid]);
@@ -1088,11 +1088,11 @@ static int fst_conv_get_prob(fst_conv_t *conv, int sid, int word, double *prob)
         while (true) {
             ch = fst_conv_search_children(conv, sid, word);
             if (ch < -1) {
-                ST_WARNING("Failed to fst_conv_search_children.");
+                ST_ERROR("Failed to fst_conv_search_children.");
                 return -1;
             } else if (ch >= 0) { // found
                 if (isnan(conv->in_probs[ch])) {
-                    ST_WARNING("state[%d]'s in_prob is not valid[%f]",
+                    ST_ERROR("state[%d]'s in_prob is not valid[%f]",
                             ch, conv->in_probs[ch]);
                 }
                 *prob += log(conv->in_probs[ch]);
@@ -1101,12 +1101,12 @@ static int fst_conv_get_prob(fst_conv_t *conv, int sid, int word, double *prob)
 
             // backoff
             if (conv->backoff_states[sid] < 0) {
-                ST_WARNING("state[%d] has no backoff arc", sid);
+                ST_ERROR("state[%d] has no backoff arc", sid);
                 return -1;
             }
 
             if (isnan(conv->bows[sid])) {
-                ST_WARNING("state[%d]'s backoff_prob is not valid[%f]",
+                ST_ERROR("state[%d]'s backoff_prob is not valid[%f]",
                         sid, conv->bows[sid]);
             }
             *prob += log(conv->bows[sid]);
@@ -1150,7 +1150,7 @@ static int fst_conv_expand(fst_conv_t *conv, fst_conv_args_t *args)
     output_probs = args->output_probs;
 
     if (fst_conv_find_word_hist(conv, args, sid) < 0) {
-        ST_WARNING("Failed to fst_conv_find_word_hist");
+        ST_ERROR("Failed to fst_conv_find_word_hist");
         return -1;
     }
 
@@ -1172,13 +1172,13 @@ static int fst_conv_expand(fst_conv_t *conv, fst_conv_args_t *args)
         backoff_sid = fst_conv_find_backoff(conv, args->word_hist,
                 args->num_word_hist);
         if (backoff_sid < 0) {
-            ST_WARNING("Failed to fst_conv_find_backoff.");
+            ST_ERROR("Failed to fst_conv_find_backoff.");
             return -1;
         }
 
         if (sid < conv->cap_fst_children) {
             if (conv->backoff_states[sid] >= 0) {
-                ST_WARNING("state[%d] has multiple backoff states.", sid);
+                ST_ERROR("state[%d] has multiple backoff states.", sid);
                 return -1;
             }
             conv->backoff_states[sid] = backoff_sid;
@@ -1196,7 +1196,7 @@ static int fst_conv_expand(fst_conv_t *conv, fst_conv_args_t *args)
     } else {
         args->num_candidates = get_condidate_word(conv, args);
         if (args->num_candidates < 0) {
-            ST_WARNING("Failed to get_condidate_word.");
+            ST_ERROR("Failed to get_condidate_word.");
             return -1;
         }
     }
@@ -1206,7 +1206,7 @@ static int fst_conv_expand(fst_conv_t *conv, fst_conv_args_t *args)
         state = (real_t *)st_block_cache_read(conv->model_state_cache,
                 conv->fst_states[sid].model_state_id);
         if (state == NULL) {
-            ST_WARNING("Failed to st_block_cache_read state.");
+            ST_ERROR("Failed to st_block_cache_read state.");
             return -1;
         }
     } else {
@@ -1216,13 +1216,13 @@ static int fst_conv_expand(fst_conv_t *conv, fst_conv_args_t *args)
     if (args->word_hist[0] == WILDCARD_ID) {
         if (updater_step_with_state(updater, state, args->word_hist + 1,
                     args->num_word_hist - 1) < 0) {
-            ST_WARNING("Failed to updater_step_with_state.");
+            ST_ERROR("Failed to updater_step_with_state.");
             return -1;
         }
     } else {
         if (updater_step_with_state(updater, state, args->word_hist,
                     args->num_word_hist) < 0) {
-            ST_WARNING("Failed to updater_step_with_state.");
+            ST_ERROR("Failed to updater_step_with_state.");
             return -1;
         }
     }
@@ -1230,7 +1230,7 @@ static int fst_conv_expand(fst_conv_t *conv, fst_conv_args_t *args)
         if (conv->fst_states[sid].model_state_id >= 0) {
             if (st_block_cache_return(conv->model_state_cache,
                         conv->fst_states[sid].model_state_id) < 0) {
-                ST_WARNING("Failed to st_block_cache_return.");
+                ST_ERROR("Failed to st_block_cache_return.");
                 return -1;
             }
             conv->fst_states[sid].model_state_id = -1;
@@ -1240,12 +1240,12 @@ static int fst_conv_expand(fst_conv_t *conv, fst_conv_args_t *args)
         new_state = (real_t *)st_block_cache_fetch(conv->model_state_cache,
                 &model_state_id);
         if (new_state == NULL) {
-            ST_WARNING("Failed to st_block_cache_fetch.");
+            ST_ERROR("Failed to st_block_cache_fetch.");
             return -1;
         }
 
         if (updater_dump_state(updater, new_state) < 0) {
-            ST_WARNING("Failed to updater_dump_state.");
+            ST_ERROR("Failed to updater_dump_state.");
             return -1;
         }
     }
@@ -1253,7 +1253,7 @@ static int fst_conv_expand(fst_conv_t *conv, fst_conv_args_t *args)
     for (i = 0; i < args->num_candidates; i++) {
         word = args->candidate_words[i];
         if (updater_forward_out_word(updater, word, &logp) < 0) {
-            ST_WARNING("Falied to updater_forward_out_word.");
+            ST_ERROR("Failed to updater_forward_out_word.");
             return -1;
         }
         output_probs[word] = exp(logp);
@@ -1267,7 +1267,7 @@ static int fst_conv_expand(fst_conv_t *conv, fst_conv_args_t *args)
     } else {
         n = select_words(conv, args, conv->conv_opt.threshold);
         if (n < 0) {
-            ST_WARNING("Failed to select_words.");
+            ST_ERROR("Failed to select_words.");
             return -1;
         }
     }
@@ -1280,7 +1280,7 @@ static int fst_conv_expand(fst_conv_t *conv, fst_conv_args_t *args)
                 (n > 0 && args->selected_words[0] == SENT_END_ID) ? n - 1 : n,
                 sid, args->store_children);
         if (new_sid < 0) {
-            ST_WARNING("Failed to fst_conv_add_states.");
+            ST_ERROR("Failed to fst_conv_add_states.");
             return -1;
         }
         ret_sid = new_sid;
@@ -1292,7 +1292,7 @@ static int fst_conv_expand(fst_conv_t *conv, fst_conv_args_t *args)
         if (!no_backoff) {
             nominator -= output_probs[word];
             if (fst_conv_get_prob(conv, backoff_sid, word, &backoff_prob) < 0) {
-                ST_WARNING("Failed to fst_conv_get_prob.");
+                ST_ERROR("Failed to fst_conv_get_prob.");
                 return -1;
             }
             denominator -= backoff_prob;
@@ -1303,21 +1303,21 @@ static int fst_conv_expand(fst_conv_t *conv, fst_conv_args_t *args)
 
             if (sid < conv->cap_fst_children) {
                 if (! isnan(conv->final_probs[sid])) {
-                    ST_WARNING("state[%d] has multiple final probs.", sid);
+                    ST_ERROR("state[%d] has multiple final probs.", sid);
                     return -1;
                 }
                 conv->final_probs[sid] = (real_t)output_probs[word];
             }
         } else if (highest_order) {
             if (args->num_word_hist >= conv->conv_opt.max_gram + 1) {
-                ST_WARNING("word_hist overflow");
+                ST_ERROR("word_hist overflow");
                 return -1;
             }
             args->word_hist[args->num_word_hist] = word;
             to_sid = fst_conv_find_backoff(conv, args->word_hist,
                 args->num_word_hist + 1);
             if (to_sid < 0) {
-                ST_WARNING("Failed to fst_conv_find_backoff for highest ngram.");
+                ST_ERROR("Failed to fst_conv_find_backoff for highest ngram.");
                 return -1;
             }
         } else {
@@ -1328,7 +1328,7 @@ static int fst_conv_expand(fst_conv_t *conv, fst_conv_args_t *args)
                 // hold state_cache
                 if (st_block_cache_fetch(conv->model_state_cache,
                             &model_state_id) == NULL) {
-                    ST_WARNING("Failed to st_block_cache_fetch.");
+                    ST_ERROR("Failed to st_block_cache_fetch.");
                     return -1;
                 }
                 assert(conv->fst_states[to_sid].model_state_id
@@ -1337,13 +1337,13 @@ static int fst_conv_expand(fst_conv_t *conv, fst_conv_args_t *args)
 
             if (fst_conv_print_ssyms(conv, to_sid, args->word_hist,
                         args->num_word_hist, word) < 0) {
-                ST_WARNING("Failed to fst_conv_print_ssyms.");
+                ST_ERROR("Failed to fst_conv_print_ssyms.");
                 return -1;
             }
 
             if (to_sid < conv->cap_fst_children) {
                 if (! isnan(conv->in_probs[to_sid])) {
-                    ST_WARNING("state[%d] has multiple in_probs.", to_sid);
+                    ST_ERROR("state[%d] has multiple in_probs.", to_sid);
                     return -1;
                 }
                 conv->in_probs[to_sid] = (real_t)output_probs[word];
@@ -1352,7 +1352,7 @@ static int fst_conv_expand(fst_conv_t *conv, fst_conv_args_t *args)
 
         if (fst_conv_print_arc(conv, sid, to_sid, word,
                     output_probs[word]) < 0) {
-            ST_WARNING("Failed to fst_conv_print_arc.");
+            ST_ERROR("Failed to fst_conv_print_arc.");
             return -1;
         }
 
@@ -1367,24 +1367,24 @@ static int fst_conv_expand(fst_conv_t *conv, fst_conv_args_t *args)
     if (conv->model_state_cache != NULL) {
         if (st_block_cache_return(conv->model_state_cache,
                     model_state_id) < 0) {
-            ST_WARNING("Failed to st_block_cache_return.");
+            ST_ERROR("Failed to st_block_cache_return.");
             return -1;
         }
     }
 
     if (!no_backoff) {
         if (nominator < 0.0 || nominator > 1.0) {
-            ST_WARNING("nominator is invalid[%f]", nominator);
+            ST_ERROR("nominator is invalid[%f]", nominator);
             return -1;
         }
         if (denominator < 0.0 || denominator > 1.0) {
-            ST_WARNING("denominator is invalid[%f]", denominator);
+            ST_ERROR("denominator is invalid[%f]", denominator);
             return -1;
         }
 
         if (sid < conv->cap_fst_children) {
             if (! isnan(conv->bows[sid])) {
-                ST_WARNING("state[%d] has multiple bows.", sid);
+                ST_ERROR("state[%d] has multiple bows.", sid);
                 return -1;
             }
             conv->bows[sid] = (real_t)(nominator / denominator);
@@ -1392,7 +1392,7 @@ static int fst_conv_expand(fst_conv_t *conv, fst_conv_args_t *args)
 
         if (fst_conv_print_arc(conv, sid, backoff_sid,
                     phi_id(conv), nominator / denominator) < 0) {
-            ST_WARNING("Failed to fst_conv_print_arc.");
+            ST_ERROR("Failed to fst_conv_print_arc.");
             return -1;
         }
 
@@ -1418,7 +1418,7 @@ static void* conv_worker(void *args)
     conv = cargs->conv;
 
     if (fst_conv_expand(conv, cargs) < 0) {
-        ST_WARNING("Failed to fst_conv_expand.");
+        ST_ERROR("Failed to fst_conv_expand.");
         goto ERR;
     }
 
@@ -1436,58 +1436,58 @@ static int fst_conv_prepare_build(fst_conv_t *conv)
 
     if (fst_conv_st_realloc_states(conv,
                 10 * conv->n_thr * get_output_size(conv), true) < 0) {
-        ST_WARNING("Failed to fst_conv_st_realloc_states.");
+        ST_ERROR("Failed to fst_conv_st_realloc_states.");
         return -1;
     }
 
     if (fst_conv_add_states(conv, 1, -1, false) != FST_INIT_STATE) {
-        ST_WARNING("Failed to fst_conv_add_states init state.");
+        ST_ERROR("Failed to fst_conv_add_states init state.");
         return -1;
     }
     if (fst_conv_add_states(conv, 1, -1, false) != FST_FINAL_STATE) {
-        ST_WARNING("Failed to fst_conv_add_states final state.");
+        ST_ERROR("Failed to fst_conv_add_states final state.");
         return -1;
     }
     conv->fst_states[FST_FINAL_STATE].word_id = SENT_END_ID;
     if (fst_conv_add_states(conv, 1, -1, false) != FST_SENT_START_STATE) {
-        ST_WARNING("Failed to fst_conv_add_states for <s>.");
+        ST_ERROR("Failed to fst_conv_add_states for <s>.");
         return -1;
     }
     conv->fst_states[FST_SENT_START_STATE].word_id = bos_id(conv);
     if (fst_conv_add_states(conv, 1, -1, false) != FST_WILDCARD_STATE) {
-        ST_WARNING("Failed to fst_conv_add_states for <wildcard>.");
+        ST_ERROR("Failed to fst_conv_add_states for <wildcard>.");
         return -1;
     }
     conv->fst_states[FST_WILDCARD_STATE].word_id = WILDCARD_ID;
 
     if (fst_conv_print_ssyms(conv, FST_INIT_STATE, NULL, 0,  -1) < 0) {
-        ST_WARNING("Failed to fst_conv_print_ssyms.");
+        ST_ERROR("Failed to fst_conv_print_ssyms.");
         return -1;
     }
     if (fst_conv_print_ssyms(conv, FST_FINAL_STATE, NULL, 0,
                 SENT_END_ID) < 0) {
-        ST_WARNING("Failed to fst_conv_print_ssyms.");
+        ST_ERROR("Failed to fst_conv_print_ssyms.");
         return -1;
     }
     if (fst_conv_print_ssyms(conv, FST_SENT_START_STATE, NULL, 0,
                 bos_id(conv)) < 0) {
-        ST_WARNING("Failed to fst_conv_print_ssyms.");
+        ST_ERROR("Failed to fst_conv_print_ssyms.");
         return -1;
     }
     if (fst_conv_print_ssyms(conv, FST_WILDCARD_STATE, NULL, 0,
                 WILDCARD_ID) < 0) {
-        ST_WARNING("Failed to fst_conv_print_ssyms.");
+        ST_ERROR("Failed to fst_conv_print_ssyms.");
         return -1;
     }
 
     if (fst_conv_print_arc(conv, FST_INIT_STATE, FST_SENT_START_STATE,
                 bos_id(conv), 1.0) < 0) {
-        ST_WARNING("Failed to fst_conv_print_arc for <s>.");
+        ST_ERROR("Failed to fst_conv_print_arc for <s>.");
         return -1;
     }
 
     if (fprintf(conv->fst_fp, "%d\n", FST_FINAL_STATE) < 0) {
-        ST_WARNING("Failed to print final_state.(disk full?)");
+        ST_ERROR("Failed to print final_state.(disk full?)");
         return -1;
     }
 
@@ -1510,7 +1510,7 @@ static int fst_conv_build(fst_conv_t *conv, fst_conv_args_t *args,
 
     pts = (pthread_t *)st_malloc(sizeof(pthread_t) * conv->n_thr);
     if (pts == NULL) {
-        ST_WARNING("Failed to st_malloc pts");
+        ST_ERROR("Failed to st_malloc pts");
         goto ERR;
     }
 
@@ -1518,7 +1518,7 @@ static int fst_conv_build(fst_conv_t *conv, fst_conv_args_t *args,
     num_states_needed = conv->n_thr * get_output_size(conv);
     if (fst_conv_st_realloc_states(conv, num_states_needed,
                 store_children) < 0) {
-        ST_WARNING("Failed to fst_conv_st_realloc_states.");
+        ST_ERROR("Failed to fst_conv_st_realloc_states.");
         goto ERR;
     }
 
@@ -1536,7 +1536,7 @@ static int fst_conv_build(fst_conv_t *conv, fst_conv_args_t *args,
         if (conv->n_fst_state + num_states_needed > conv->cap_fst_states) {
             if (fst_conv_st_realloc_states(conv, num_states_needed,
                         store_children) < 0) {
-                ST_WARNING("Failed to fst_conv_st_realloc_states.");
+                ST_ERROR("Failed to fst_conv_st_realloc_states.");
                 goto ERR;
             }
         }
@@ -1556,20 +1556,20 @@ static int fst_conv_build(fst_conv_t *conv, fst_conv_args_t *args,
             args[n].sid = sid;
             if (pthread_create(pts + n, NULL, conv_worker,
                         (void *)(args + n)) != 0) {
-                ST_WARNING("Failed to pthread_create.");
+                ST_ERROR("Failed to pthread_create.");
                 goto ERR;
             }
         }
 
         for (i = 0; i < n; i++) {
             if (pthread_join(pts[i], NULL) != 0) {
-                ST_WARNING("Failed to pthread_join.");
+                ST_ERROR("Failed to pthread_join.");
                 goto ERR;
             }
         }
 
         if (conv->err != 0) {
-            ST_WARNING("Error in worker threads");
+            ST_ERROR("Error in worker threads");
             goto ERR;
         }
 
@@ -1602,7 +1602,7 @@ static int fst_conv_build_wildcard(fst_conv_t *conv, fst_conv_args_t *args)
         state = (real_t *)st_block_cache_fetch(conv->model_state_cache,
                 &conv->fst_states[FST_WILDCARD_STATE].model_state_id);
         if (state == NULL) {
-            ST_WARNING("Failed to st_block_cache_fetch.");
+            ST_ERROR("Failed to st_block_cache_fetch.");
             return -1;
         }
 
@@ -1611,20 +1611,20 @@ static int fst_conv_build_wildcard(fst_conv_t *conv, fst_conv_args_t *args)
 
     sid = fst_conv_expand(conv, args + 0);
     if (sid < 0) {
-        ST_WARNING("Failed to fst_conv_expand <wildcard>.");
+        ST_ERROR("Failed to fst_conv_expand <wildcard>.");
         return -1;
     }
 
     sid = fst_conv_build(conv, args, sid, 1, conv->conv_opt.max_gram - 1,
                 true);
     if (sid < 0) {
-        ST_WARNING("Failed to fst_conv_build");
+        ST_ERROR("Failed to fst_conv_build");
         return -1;
     }
 
     if (fst_conv_build(conv, args, sid, conv->conv_opt.max_gram,
                 INT_MAX, true) < 0) {
-        ST_WARNING("Failed to fst_conv_build");
+        ST_ERROR("Failed to fst_conv_build");
         return -1;
     }
 
@@ -1642,20 +1642,20 @@ static int fst_conv_build_bos(fst_conv_t *conv, fst_conv_args_t *args)
 
     sid = fst_conv_expand(conv, args + 0);
     if (sid < 0) {
-        ST_WARNING("Failed to fst_conv_expand <s>.");
+        ST_ERROR("Failed to fst_conv_expand <s>.");
         return -1;
     }
 
     sid = fst_conv_build(conv, args, sid, 2, conv->conv_opt.max_gram - 1,
                 false);
     if (sid < 0) {
-        ST_WARNING("Failed to fst_conv_build");
+        ST_ERROR("Failed to fst_conv_build");
         return -1;
     }
 
     if (fst_conv_build(conv, args, sid, conv->conv_opt.max_gram,
                 INT_MAX, false) < 0) {
-        ST_WARNING("Failed to fst_conv_build");
+        ST_ERROR("Failed to fst_conv_build");
         return -1;
     }
 
@@ -1676,26 +1676,26 @@ int fst_conv_convert(fst_conv_t *conv, FILE *fst_fp)
     ST_CHECK_PARAM(conv == NULL || fst_fp == NULL, -1);
 
     if (fst_conv_setup(conv, fst_fp, &args) < 0) {
-        ST_WARNING("Failed to fst_conv_setup.");
+        ST_ERROR("Failed to fst_conv_setup.");
         goto ERR;
     }
 
     ST_TRACE("Building FST...")
     gettimeofday(&tt1, NULL);
     if (fst_conv_prepare_build(conv) < 0) {
-        ST_WARNING("Failed to fst_conv_prepare_build.");
+        ST_ERROR("Failed to fst_conv_prepare_build.");
         goto ERR;
     }
 
     ST_TRACE("  Building wildcard subFST...")
     if (fst_conv_build_wildcard(conv, args) < 0) {
-        ST_WARNING("Failed to fst_conv_build_wildcard.");
+        ST_ERROR("Failed to fst_conv_build_wildcard.");
         goto ERR;
     }
 
     ST_TRACE("  Building bos subFST...")
     if (fst_conv_build_bos(conv, args) < 0) {
-        ST_WARNING("Failed to fst_conv_build_bos.");
+        ST_ERROR("Failed to fst_conv_build_bos.");
         goto ERR;
     }
     gettimeofday(&tt2, NULL);
@@ -1722,17 +1722,17 @@ int fst_conv_convert(fst_conv_t *conv, FILE *fst_fp)
     if (conv->conv_opt.word_syms_file[0] != '\0') {
         fp = st_fopen(conv->conv_opt.word_syms_file, "w");
         if (fp == NULL) {
-            ST_WARNING("Failed to st_fopen word syms file[%s]",
+            ST_ERROR("Failed to st_fopen word syms file[%s]",
                     conv->conv_opt.word_syms_file);
             goto ERR;
         }
         if (vocab_save_syms(conv->connlm->vocab, fp, true) < 0) {
-            ST_WARNING("Failed to vocab_save_syms to file[%s]",
+            ST_ERROR("Failed to vocab_save_syms to file[%s]",
                     conv->conv_opt.word_syms_file);
             goto ERR;
         }
         if (fprintf(fp, "%s\t%d\n", PHI, phi_id(conv) + 1) < 0) {
-            ST_WARNING("Failed to write out %s.(disk full?)", PHI);
+            ST_ERROR("Failed to write out %s.(disk full?)", PHI);
             goto ERR;
         }
         safe_fclose(fp);

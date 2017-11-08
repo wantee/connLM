@@ -87,7 +87,7 @@ static int comp_dup_glue_cycles(component_t *comp, int **cycles, int num_cycle)
     if (comp->num_glue_cycle > 0) {
         comp->glue_cycles = (int **)st_malloc(sizeof(int *)*comp->num_glue_cycle);
         if (comp->glue_cycles == NULL) {
-            ST_WARNING("Failed to st_malloc comp->glue_cycles.");
+            ST_ERROR("Failed to st_malloc comp->glue_cycles.");
             goto ERR;
         }
 
@@ -95,7 +95,7 @@ static int comp_dup_glue_cycles(component_t *comp, int **cycles, int num_cycle)
             n = cycles[i][0] + 1;
             comp->glue_cycles[i] = (int *)st_malloc(sizeof(int) * n);
             if (comp->glue_cycles[i] == NULL) {
-                ST_WARNING("Failed to st_malloc comp->glue_cycles[%d].", i);
+                ST_ERROR("Failed to st_malloc comp->glue_cycles[%d].", i);
                 goto ERR;
             }
             memcpy(comp->glue_cycles[i], cycles[i], sizeof(int) * n);
@@ -120,7 +120,7 @@ component_t* comp_dup(component_t *c)
 
     comp = (component_t *)st_malloc(sizeof(component_t));
     if (comp == NULL) {
-        ST_WARNING("Failed to st_malloc component_t.");
+        ST_ERROR("Failed to st_malloc component_t.");
         goto ERR;
     }
     memset(comp, 0, sizeof(component_t));
@@ -132,7 +132,7 @@ component_t* comp_dup(component_t *c)
 
     comp->input = input_dup(c->input);
     if (comp->input == NULL) {
-        ST_WARNING("Failed to input_dup.");
+        ST_ERROR("Failed to input_dup.");
         goto ERR;
     }
 
@@ -140,14 +140,14 @@ component_t* comp_dup(component_t *c)
         comp->layers = (layer_t **)st_malloc(sizeof(layer_t *)
                 * c->num_layer);
         if (comp->layers == NULL) {
-            ST_WARNING("Failed to st_malloc layers.");
+            ST_ERROR("Failed to st_malloc layers.");
             goto ERR;
         }
 
         for (l = 0; l < c->num_layer; l++) {
             comp->layers[l] = layer_dup(c->layers[l]);
             if (comp->layers[l] == NULL) {
-                ST_WARNING("Failed to layer_dup.");
+                ST_ERROR("Failed to layer_dup.");
                 goto ERR;
             }
         }
@@ -161,14 +161,14 @@ component_t* comp_dup(component_t *c)
         comp->glues = (glue_t **)st_malloc(sizeof(glue_t *)
                 * c->num_glue);
         if (comp->glues == NULL) {
-            ST_WARNING("Failed to st_malloc glues.");
+            ST_ERROR("Failed to st_malloc glues.");
             goto ERR;
         }
 
         for (g = 0; g < c->num_glue; g++) {
             comp->glues[g] = glue_dup(c->glues[g]);
             if (comp->glues[g] == NULL) {
-                ST_WARNING("Failed to glue_dup.");
+                ST_ERROR("Failed to glue_dup.");
                 goto ERR;
             }
         }
@@ -179,7 +179,7 @@ component_t* comp_dup(component_t *c)
     }
 
     if (comp_dup_glue_cycles(comp, c->glue_cycles, c->num_glue_cycle) < 0) {
-        ST_WARNING("Failed to comp_dup_glue_cycles.");
+        ST_ERROR("Failed to comp_dup_glue_cycles.");
         goto ERR;
     }
 
@@ -201,7 +201,7 @@ static int comp_parse_topo(component_t *comp, const char *line)
 
     p = get_next_token(p, token);
     if (strcasecmp("property", token) != 0) {
-        ST_WARNING("Not property line.");
+        ST_ERROR("Not property line.");
         return -1;
     }
 
@@ -212,7 +212,7 @@ static int comp_parse_topo(component_t *comp, const char *line)
         }
 
         if (split_line(token, keyvalue, 2, MAX_LINE_LEN, "=") < 0) {
-            ST_WARNING("Failed to split key/value. [%s]", token);
+            ST_ERROR("Failed to split key/value. [%s]", token);
             return -1;
         }
 
@@ -222,11 +222,11 @@ static int comp_parse_topo(component_t *comp, const char *line)
         } else if (strcasecmp("scale", keyvalue) == 0) {
             comp->comp_scale = atof(keyvalue + MAX_LINE_LEN);
             if (comp->comp_scale == 0) {
-                ST_WARNING("Error comp_scale[%s]", keyvalue + MAX_LINE_LEN);
+                ST_ERROR("Error comp_scale[%s]", keyvalue + MAX_LINE_LEN);
                 return -1;
             }
         } else {
-            ST_WARNING("Unknown key[%s].", keyvalue);
+            ST_ERROR("Unknown key[%s].", keyvalue);
         }
     }
 
@@ -242,18 +242,18 @@ static int comp_sort_glue(component_t *comp)
     graph = graph_construct(comp->layers, comp->num_layer,
             comp->glues, comp->num_glue);
     if (graph == NULL) {
-        ST_WARNING("Failed to graph_construct.");
+        ST_ERROR("Failed to graph_construct.");
         goto ERR;
     }
 
     comp->fwd_order = graph_sort(graph);
     if (comp->fwd_order == NULL) {
-        ST_WARNING("Failed to graph_sort.");
+        ST_ERROR("Failed to graph_sort.");
         goto ERR;
     }
 
     if (comp_dup_glue_cycles(comp, graph->cycles, graph->num_cycle) < 0) {
-        ST_WARNING("Failed to comp_dup_cycles.");
+        ST_ERROR("Failed to comp_dup_cycles.");
         goto ERR;
     }
 
@@ -285,7 +285,7 @@ component_t *comp_init_from_topo(const char* topo_content,
 
     comp = (component_t *)st_malloc(sizeof(component_t));
     if (comp == NULL) {
-        ST_WARNING("Failed to st_malloc comp.");
+        ST_ERROR("Failed to st_malloc comp.");
         goto ERR;
     }
     memset(comp, 0, sizeof(component_t));
@@ -294,17 +294,17 @@ component_t *comp_init_from_topo(const char* topo_content,
     comp->layers = (layer_t **)st_realloc(comp->layers,
             sizeof(layer_t *) * (comp->num_layer + 1));
     if (comp->layers == NULL) {
-        ST_WARNING("Failed to alloc layers.");
+        ST_ERROR("Failed to alloc layers.");
         goto ERR;
     }
 
     if (comp->num_layer != OUTPUT_LAYER_ID) {
-        ST_WARNING("output layer must be the 0-layer.");
+        ST_ERROR("output layer must be the 0-layer.");
         goto ERR;
     }
     comp->layers[comp->num_layer] = output_get_layer(output);
     if (comp->layers[comp->num_layer] == NULL) {
-        ST_WARNING("Failed to output_get_layer.");
+        ST_ERROR("Failed to output_get_layer.");
         goto ERR;
     }
     comp->num_layer++;
@@ -317,7 +317,7 @@ component_t *comp_init_from_topo(const char* topo_content,
                 line_cap += 1024;
                 line = (char *)st_realloc(line, line_cap);
                 if (line == NULL) {
-                    ST_WARNING("Failed to st_realloc line.");
+                    ST_ERROR("Failed to st_realloc line.");
                     goto ERR;
                 }
             }
@@ -333,70 +333,70 @@ component_t *comp_init_from_topo(const char* topo_content,
         (void)get_next_token(line, token);
         if (strcasecmp("property", token) == 0) {
             if(comp_parse_topo(comp, line) < 0) {
-                ST_WARNING("Failed to comp_parse_prop.");
+                ST_ERROR("Failed to comp_parse_prop.");
                 goto ERR;
             }
         } else if (strcasecmp("input", token) == 0) {
             if (comp->input != NULL) {
-                ST_WARNING("Too many input layers.");
+                ST_ERROR("Too many input layers.");
                 goto ERR;
             }
             comp->input = input_parse_topo(line, input_size);
             if (comp->input == NULL) {
-                ST_WARNING("Failed to input_parse_topo.");
+                ST_ERROR("Failed to input_parse_topo.");
                 goto ERR;
             }
             comp->layers = (layer_t **)st_realloc(comp->layers,
                     sizeof(layer_t *) * (comp->num_layer + 1));
             if (comp->layers == NULL) {
-                ST_WARNING("Failed to alloc layers.");
+                ST_ERROR("Failed to alloc layers.");
                 goto ERR;
             }
 
             if (comp->num_layer != INPUT_LAYER_ID) {
-                ST_WARNING("input layer must be the 1-layer.");
+                ST_ERROR("input layer must be the 1-layer.");
                 goto ERR;
             }
             comp->layers[comp->num_layer] = input_get_layer(comp->input);
             if (comp->layers[comp->num_layer] == NULL) {
-                ST_WARNING("Failed to input_get_layer.");
+                ST_ERROR("Failed to input_get_layer.");
                 goto ERR;
             }
             comp->num_layer++;
         } else if (strcasecmp("layer", token) == 0) {
             if (comp->input == NULL) {
-                ST_WARNING("input definition should place before layer.");
+                ST_ERROR("input definition should place before layer.");
                 goto ERR;
             }
             comp->layers = (layer_t **)st_realloc(comp->layers,
                     sizeof(layer_t *) * (comp->num_layer + 1));
             if (comp->layers == NULL) {
-                ST_WARNING("Failed to alloc layers.");
+                ST_ERROR("Failed to alloc layers.");
                 goto ERR;
             }
 
             comp->layers[comp->num_layer] = layer_parse_topo(line);
             if (comp->layers[comp->num_layer] == NULL) {
-                ST_WARNING("Failed to layer_parse_topo.");
+                ST_ERROR("Failed to layer_parse_topo.");
                 goto ERR;
             }
             comp->num_layer++;
         } else if (strcasecmp("glue", token) == 0) {
             if (comp->input == NULL) {
-                ST_WARNING("input definition should place before glue.");
+                ST_ERROR("input definition should place before glue.");
                 goto ERR;
             }
             comp->glues = (glue_t **)st_realloc(comp->glues,
                     sizeof(glue_t *) * (comp->num_glue + 1));
             if (comp->glues == NULL) {
-                ST_WARNING("Failed to alloc glues.");
+                ST_ERROR("Failed to alloc glues.");
                 goto ERR;
             }
 
             comp->glues[comp->num_glue] = glue_parse_topo(line,
                     comp->layers, comp->num_layer, comp->input, output);
             if (comp->glues[comp->num_glue] == NULL) {
-                ST_WARNING("Failed to glue_parse_topo.");
+                ST_ERROR("Failed to glue_parse_topo.");
                 goto ERR;
             }
             comp->num_glue++;
@@ -406,24 +406,24 @@ component_t *comp_init_from_topo(const char* topo_content,
     safe_st_free(line);
 
     if (comp->input == NULL) {
-        ST_WARNING("NO input layer.");
+        ST_ERROR("NO input layer.");
         goto ERR;
     }
 
     if (comp->num_glue == 0) {
-        ST_WARNING("NO glues.");
+        ST_ERROR("NO glues.");
         goto ERR;
     }
 
     if (comp->num_layer == 0) {
-        ST_WARNING("NO layers.");
+        ST_ERROR("NO layers.");
         goto ERR;
     }
 
     for (l = 0; l < comp->num_layer - 1; l++) {
         for (m = l+1; m < comp->num_layer; m++) {
             if (strcmp(comp->layers[l]->name, comp->layers[m]->name) == 0) {
-                ST_WARNING("Duplicated layer name[%s]",
+                ST_ERROR("Duplicated layer name[%s]",
                         comp->layers[l]->name);
                 goto ERR;
             }
@@ -433,7 +433,7 @@ component_t *comp_init_from_topo(const char* topo_content,
     for (g = 0; g < comp->num_glue - 1; g++) {
         for (h = g+1; h < comp->num_glue; h++) {
             if (strcmp(comp->glues[g]->name, comp->glues[h]->name) == 0) {
-                ST_WARNING("Duplicated glue name[%s]",
+                ST_ERROR("Duplicated glue name[%s]",
                         comp->glues[g]->name);
                 goto ERR;
             }
@@ -441,14 +441,14 @@ component_t *comp_init_from_topo(const char* topo_content,
     }
 
     if (comp_sort_glue(comp) < 0) {
-        ST_WARNING("Failed to comp_sort_glue component [%s]", comp->name);
+        ST_ERROR("Failed to comp_sort_glue component [%s]", comp->name);
         goto ERR;
     }
 
     for (g = 0; g < comp->num_glue; g++) {
         if (glue_init_data(comp->glues[g], comp->input,
                     comp->layers, output) < 0) {
-            ST_WARNING("Failed to glue_init_data.");
+            ST_ERROR("Failed to glue_init_data.");
             goto ERR;
         }
     }
@@ -479,18 +479,18 @@ int comp_load_train_opt(component_t *comp, st_opt_t *opt, const char *sec_name,
                 comp->name);
     }
     if (param_load(&param, opt, name, parent_param) < 0) {
-        ST_WARNING("Failed to param_load.");
+        ST_ERROR("Failed to param_load.");
         goto ST_OPT_ERR;
     }
     if (bptt_opt_load(&bptt_opt, opt, name, parent_bptt_opt) < 0) {
-        ST_WARNING("Failed to param_load.");
+        ST_ERROR("Failed to param_load.");
         goto ST_OPT_ERR;
     }
 
     for (g = 0; g < comp->num_glue; g++) {
         if (glue_load_train_opt(comp->glues[g], opt, name,
                     &param, &bptt_opt) < 0) {
-            ST_WARNING("Failed to glue_load_train_opt.");
+            ST_ERROR("Failed to glue_load_train_opt.");
             goto ST_OPT_ERR;
         }
     }
@@ -506,12 +506,12 @@ int comp_load_train_opt(component_t *comp, st_opt_t *opt, const char *sec_name,
                 // bptt already be set, which implies this glue lies on
                 // multiple cycles
                 if (!bptt_opt_equal(&comp->glues[g]->bptt_opt, &bptt_opt)) {
-                    ST_WARNING("recur glue[%s] in multiple cycles must have "
+                    ST_ERROR("recur glue[%s] in multiple cycles must have "
                             "same bptt hyperparames.", comp->glues[g]);
                     goto ST_OPT_ERR;
                 }
                 if (!param_equal(&comp->glues[g]->param, &param)) {
-                    ST_WARNING("recur glue[%s] in multiple cycles must have "
+                    ST_ERROR("recur glue[%s] in multiple cycles must have "
                             "same hyperparames.", comp->glues[g]);
                     goto ST_OPT_ERR;
                 }
@@ -550,12 +550,12 @@ int comp_load_header(component_t **comp, int version,
             || fmt == NULL, -1);
 
     if (version < 3) {
-        ST_WARNING("Too old version of connlm file");
+        ST_ERROR("Too old version of connlm file");
         return -1;
     }
 
     if (fread(&flag.magic_num, sizeof(int), 1, fp) != 1) {
-        ST_WARNING("Failed to load magic num.");
+        ST_ERROR("Failed to load magic num.");
         return -1;
     }
 
@@ -563,7 +563,7 @@ int comp_load_header(component_t **comp, int version,
     if (strncmp(flag.str, "    ", 4) == 0) {
         *fmt = CONN_FMT_TXT;
     } else if (COMP_MAGIC_NUM != flag.magic_num) {
-        ST_WARNING("magic num wrong.");
+        ST_ERROR("magic num wrong.");
         return -2;
     }
 
@@ -574,7 +574,7 @@ int comp_load_header(component_t **comp, int version,
     if (*fmt != CONN_FMT_TXT) {
         if (version >= 12) {
             if (fread(fmt, sizeof(connlm_fmt_t), 1, fp) != 1) {
-                ST_WARNING("Failed to read fmt.");
+                ST_ERROR("Failed to read fmt.");
                 goto ERR;
             }
         } else {
@@ -582,53 +582,53 @@ int comp_load_header(component_t **comp, int version,
         }
 
         if (fread(name, sizeof(char), MAX_NAME_LEN, fp) != MAX_NAME_LEN) {
-            ST_WARNING("Failed to read name.");
+            ST_ERROR("Failed to read name.");
             return -1;
         }
         name[MAX_NAME_LEN - 1] = '\0';
 
         if (fread(&num_layer, sizeof(int), 1, fp) != 1) {
-            ST_WARNING("Failed to read num_layer.");
+            ST_ERROR("Failed to read num_layer.");
             return -1;
         }
 
         if (fread(&num_glue, sizeof(int), 1, fp) != 1) {
-            ST_WARNING("Failed to read num_glue.");
+            ST_ERROR("Failed to read num_glue.");
             return -1;
         }
 
         if (fread(&scale, sizeof(real_t), 1, fp) != 1) {
-            ST_WARNING("Failed to read scale.");
+            ST_ERROR("Failed to read scale.");
             return -1;
         }
     } else {
         if (st_readline(fp, "") != 0) {
-            ST_WARNING("tag error.");
+            ST_ERROR("tag error.");
             goto ERR;
         }
         if (st_readline(fp, "<COMPONENT>") != 0) {
-            ST_WARNING("tag error.");
+            ST_ERROR("tag error.");
             goto ERR;
         }
 
         if (st_readline(fp, "Name: %"xSTR(MAX_NAME_LEN)"s", name) != 1) {
-            ST_WARNING("Failed to parse name.");
+            ST_ERROR("Failed to parse name.");
             goto ERR;
         }
         name[MAX_NAME_LEN - 1] = '\0';
 
         if (st_readline(fp, "Num layer: %d", &num_layer) != 1) {
-            ST_WARNING("Failed to parse num_layer.");
+            ST_ERROR("Failed to parse num_layer.");
             return -1;
         }
 
         if (st_readline(fp, "Num glue: %d", &num_glue) != 1) {
-            ST_WARNING("Failed to parse num_glue.");
+            ST_ERROR("Failed to parse num_glue.");
             return -1;
         }
 
         if (st_readline(fp, "Scale: "REAL_FMT, &scale) != 1) {
-            ST_WARNING("Failed to parse scale.");
+            ST_ERROR("Failed to parse scale.");
             return -1;
         }
     }
@@ -636,7 +636,7 @@ int comp_load_header(component_t **comp, int version,
     if (comp != NULL) {
         *comp = (component_t *)st_malloc(sizeof(component_t));
         if (*comp == NULL) {
-            ST_WARNING("Failed to st_malloc component_t");
+            ST_ERROR("Failed to st_malloc component_t");
             goto ERR;
         }
         memset(*comp, 0, sizeof(component_t));
@@ -647,7 +647,7 @@ int comp_load_header(component_t **comp, int version,
         sz = sizeof(layer_t *)*num_layer;
         (*comp)->layers = (layer_t **)st_malloc(sz);
         if ((*comp)->layers == NULL) {
-            ST_WARNING("Failed to alloc layers.");
+            ST_ERROR("Failed to alloc layers.");
             goto ERR;
         }
         memset((*comp)->layers, 0, sz);
@@ -656,7 +656,7 @@ int comp_load_header(component_t **comp, int version,
         sz = sizeof(glue_t *)*num_glue;
         (*comp)->glues = (glue_t **)st_malloc(sz);
         if ((*comp)->glues == NULL) {
-            ST_WARNING("Failed to alloc glues.");
+            ST_ERROR("Failed to alloc glues.");
             goto ERR;
         }
         memset((*comp)->glues, 0, sz);
@@ -674,22 +674,22 @@ int comp_load_header(component_t **comp, int version,
 
     if (input_load_header(comp != NULL ? &((*comp)->input) : NULL,
                 version, fp, &f, fo_info) < 0) {
-        ST_WARNING("Failed to input_load_header.");
+        ST_ERROR("Failed to input_load_header.");
         goto ERR;
     }
     if (*fmt != f) {
-        ST_WARNING("Multiple formats in one file.");
+        ST_ERROR("Multiple formats in one file.");
         return -1;
     }
 
     for (l = 0; l < num_layer; l++) {
         if (layer_load_header(comp != NULL ? &((*comp)->layers[l]) : NULL,
                     version, fp, &f, fo_info) < 0) {
-            ST_WARNING("Failed to layer_load_header[%d].", l);
+            ST_ERROR("Failed to layer_load_header[%d].", l);
             goto ERR;
         }
         if (*fmt != f) {
-            ST_WARNING("Multiple formats in one file.");
+            ST_ERROR("Multiple formats in one file.");
             return -1;
         }
     }
@@ -697,11 +697,11 @@ int comp_load_header(component_t **comp, int version,
     for (g = 0; g < num_glue; g++) {
         if (glue_load_header(comp != NULL ? &((*comp)->glues[g]) : NULL,
                     version, fp, &f, fo_info) < 0) {
-            ST_WARNING("Failed to glue_load_header[%d].", g);
+            ST_ERROR("Failed to glue_load_header[%d].", g);
             goto ERR;
         }
         if (*fmt != f) {
-            ST_WARNING("Multiple formats in one file.");
+            ST_ERROR("Multiple formats in one file.");
             return -1;
         }
     }
@@ -724,49 +724,49 @@ int comp_load_body(component_t *comp, int version, FILE *fp, connlm_fmt_t fmt)
     ST_CHECK_PARAM(comp == NULL || fp == NULL, -1);
 
     if (version < 3) {
-        ST_WARNING("Too old version of connlm file");
+        ST_ERROR("Too old version of connlm file");
         return -1;
     }
 
     if (connlm_fmt_is_bin(fmt)) {
         if (fread(&n, sizeof(int), 1, fp) != 1) {
-            ST_WARNING("Failed to read magic num.");
+            ST_ERROR("Failed to read magic num.");
             goto ERR;
         }
 
         if (n != -COMP_MAGIC_NUM) {
-            ST_WARNING("Magic num error.");
+            ST_ERROR("Magic num error.");
             goto ERR;
         }
 
     } else {
         if (st_readline(fp, "<COMPONENT-DATA>") != 0) {
-            ST_WARNING("body flag error.");
+            ST_ERROR("body flag error.");
             goto ERR;
         }
     }
 
     if (input_load_body(comp->input, version, fp, fmt) < 0) {
-        ST_WARNING("Failed to input_load_body.");
+        ST_ERROR("Failed to input_load_body.");
         goto ERR;
     }
 
     for (l = 0; l < comp->num_layer; l++) {
         if (layer_load_body(comp->layers[l], version, fp, fmt) < 0) {
-            ST_WARNING("Failed to layer_load_body[%d].", l);
+            ST_ERROR("Failed to layer_load_body[%d].", l);
             goto ERR;
         }
     }
 
     for (g = 0; g < comp->num_glue; g++) {
         if (glue_load_body(comp->glues[g], version, fp, fmt) < 0) {
-            ST_WARNING("Failed to glue_load_body[%d].", g);
+            ST_ERROR("Failed to glue_load_body[%d].", g);
             goto ERR;
         }
     }
 
     if (comp_sort_glue(comp) < 0) {
-        ST_WARNING("Failed to comp_sort_glue component [%s]", comp->name);
+        ST_ERROR("Failed to comp_sort_glue component [%s]", comp->name);
         goto ERR;
     }
 
@@ -795,73 +795,73 @@ int comp_save_header(component_t *comp, FILE *fp, connlm_fmt_t fmt)
 
     if (connlm_fmt_is_bin(fmt)) {
         if (fwrite(&COMP_MAGIC_NUM, sizeof(int), 1, fp) != 1) {
-            ST_WARNING("Failed to write magic num.");
+            ST_ERROR("Failed to write magic num.");
             return -1;
         }
         if (fwrite(&fmt, sizeof(connlm_fmt_t), 1, fp) != 1) {
-            ST_WARNING("Failed to write fmt.");
+            ST_ERROR("Failed to write fmt.");
             return -1;
         }
 
         if (fwrite(comp->name, sizeof(char), MAX_NAME_LEN, fp)
                 != MAX_NAME_LEN) {
-            ST_WARNING("Failed to write name.");
+            ST_ERROR("Failed to write name.");
             return -1;
         }
 
         if (fwrite(&comp->num_layer, sizeof(int), 1, fp) != 1) {
-            ST_WARNING("Failed to write num_layer.");
+            ST_ERROR("Failed to write num_layer.");
             return -1;
         }
 
         if (fwrite(&comp->num_glue, sizeof(int), 1, fp) != 1) {
-            ST_WARNING("Failed to write num_glue.");
+            ST_ERROR("Failed to write num_glue.");
             return -1;
         }
 
         if (fwrite(&comp->comp_scale, sizeof(int), 1, fp) != 1) {
-            ST_WARNING("Failed to write scale.");
+            ST_ERROR("Failed to write scale.");
             return -1;
         }
     } else {
         if (fprintf(fp, "    \n<COMPONENT>\n") < 0) {
-            ST_WARNING("Failed to fprintf header.");
+            ST_ERROR("Failed to fprintf header.");
             return -1;
         }
 
         if (fprintf(fp, "Name: %s\n", comp->name) < 0) {
-            ST_WARNING("Failed to fprintf name.");
+            ST_ERROR("Failed to fprintf name.");
             return -1;
         }
         if (fprintf(fp, "Num layer: %d\n", comp->num_layer) < 0) {
-            ST_WARNING("Failed to fprintf num layer.");
+            ST_ERROR("Failed to fprintf num layer.");
             return -1;
         }
         if (fprintf(fp, "Num glue: %d\n", comp->num_glue) < 0) {
-            ST_WARNING("Failed to fprintf num glue.");
+            ST_ERROR("Failed to fprintf num glue.");
             return -1;
         }
         if (fprintf(fp, "Scale: "REAL_FMT"\n", comp->comp_scale) < 0) {
-            ST_WARNING("Failed to fprintf scale.");
+            ST_ERROR("Failed to fprintf scale.");
             return -1;
         }
     }
 
     if (input_save_header(comp->input, fp, fmt) < 0) {
-        ST_WARNING("Failed to input_save_header.");
+        ST_ERROR("Failed to input_save_header.");
         return -1;
     }
 
     for (l = 0; l < comp->num_layer; l++) {
         if (layer_save_header(comp->layers[l], fp, fmt) < 0) {
-            ST_WARNING("Failed to layer_save_header[%d].", l);
+            ST_ERROR("Failed to layer_save_header[%d].", l);
             return -1;
         }
     }
 
     for (g = 0; g < comp->num_glue; g++) {
         if (glue_save_header(comp->glues[g], fp, fmt) < 0) {
-            ST_WARNING("Failed to glue_save_header[%d].", g);
+            ST_ERROR("Failed to glue_save_header[%d].", g);
             return -1;
         }
     }
@@ -884,31 +884,31 @@ int comp_save_body(component_t *comp, FILE *fp, connlm_fmt_t fmt)
     if (connlm_fmt_is_bin(fmt)) {
         n = -COMP_MAGIC_NUM;
         if (fwrite(&n, sizeof(int), 1, fp) != 1) {
-            ST_WARNING("Failed to write magic num.");
+            ST_ERROR("Failed to write magic num.");
             return -1;
         }
     } else {
         if (fprintf(fp, "<COMPONENT-DATA>\n") < 0) {
-            ST_WARNING("Failed to fprintf header.");
+            ST_ERROR("Failed to fprintf header.");
             return -1;
         }
     }
 
     if (input_save_body(comp->input, fp, fmt) < 0) {
-        ST_WARNING("Failed to input_save_body.");
+        ST_ERROR("Failed to input_save_body.");
         return -1;
     }
 
     for (l = 0; l < comp->num_layer; l++) {
         if (layer_save_body(comp->layers[l], fp, fmt) < 0) {
-            ST_WARNING("Failed to layer_save_body[%d].", l);
+            ST_ERROR("Failed to layer_save_body[%d].", l);
             return -1;
         }
     }
 
     for (g = 0; g < comp->num_glue; g++) {
         if (glue_save_body(comp->glues[g], fp, fmt) < 0) {
-            ST_WARNING("Failed to glue_save_body[%d].", g);
+            ST_ERROR("Failed to glue_save_body[%d].", g);
             return -1;
         }
     }
@@ -1080,7 +1080,7 @@ bool comp_check_glue_cycles(component_t *comp)
                     gg = comp->glue_cycles[ii][jj];
                     if (g == gg) {
                         if (d != dd) {
-                            ST_WARNING("glue[%s] is in two cycles whose heads "
+                            ST_ERROR("glue[%s] is in two cycles whose heads "
                                        "is [%s] and [%s], but with different "
                                        "dropout.");
                             return false;

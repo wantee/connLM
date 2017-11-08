@@ -45,13 +45,13 @@ int fc_glue_updater_forward(glue_updater_t *glue_updater,
 
     if (add_mat_mat(1.0, in_ac, MT_NoTrans,
                 &wt_updater->wt, MT_Trans, 1.0, out_ac) < 0) {
-        ST_WARNING("Failed to add_mat_mat.");
+        ST_ERROR("Failed to add_mat_mat.");
         return -1;
     }
 
     if (wt_updater->bias.size > 0) {
         if (mat_add_vec(out_ac, &wt_updater->bias, 1.0) < 0) {
-            ST_WARNING("Failed to mat_add_vec bias.");
+            ST_ERROR("Failed to mat_add_vec bias.");
             return -1;
         }
     }
@@ -72,7 +72,7 @@ int fc_glue_updater_backprop(glue_updater_t *glue_updater,
     if (in_er != NULL && in_er->num_rows > 0) {
         if (propagate_error(&wt_updater->wt, out_er, 1.0,
                     wt_updater->param.er_cutoff, in_er) < 0) {
-            ST_WARNING("Failed to propagate_error.");
+            ST_ERROR("Failed to propagate_error.");
             return -1;
         }
     }
@@ -80,7 +80,7 @@ int fc_glue_updater_backprop(glue_updater_t *glue_updater,
     if (in_ac != NULL && in_ac->num_rows > 0) {
         if (wt_update(wt_updater, out_er, 1.0,
                     in_ac, 1.0, NULL, NULL) < 0) {
-            ST_WARNING("Failed to wt_update.");
+            ST_ERROR("Failed to wt_update.");
             return -1;
         }
     }

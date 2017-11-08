@@ -49,7 +49,7 @@ int vec_load_header(vec_t *vec, int version,
     ST_CHECK_PARAM(fp == NULL || fmt == NULL, -1);
 
     if (fread(&flag.magic_num, sizeof(int), 1, fp) != 1) {
-        ST_WARNING("Failed to load magic num.");
+        ST_ERROR("Failed to load magic num.");
         return -1;
     }
 
@@ -57,7 +57,7 @@ int vec_load_header(vec_t *vec, int version,
     if (strncmp(flag.str, "    ", 4) == 0) {
         *fmt = CONN_FMT_TXT;
     } else if (VEC_MAGIC_NUM != flag.magic_num) {
-        ST_WARNING("magic num wrong.");
+        ST_ERROR("magic num wrong.");
         return -2;
     }
 
@@ -67,33 +67,33 @@ int vec_load_header(vec_t *vec, int version,
 
     if (*fmt != CONN_FMT_TXT) {
         if (fread(fmt, sizeof(connlm_fmt_t), 1, fp) != 1) {
-            ST_WARNING("Failed to read fmt.");
+            ST_ERROR("Failed to read fmt.");
             goto ERR;
         }
 
         if (fread(&size, sizeof(size_t), 1, fp) != 1) {
-            ST_WARNING("Failed to read size.");
+            ST_ERROR("Failed to read size.");
             goto ERR;
         }
     } else {
         if (st_readline(fp, "") != 0) {
-            ST_WARNING("tag error.");
+            ST_ERROR("tag error.");
             goto ERR;
         }
         if (st_readline(fp, "<VECTOR>") != 0) {
-            ST_WARNING("tag error.");
+            ST_ERROR("tag error.");
             goto ERR;
         }
 
         if (st_readline(fp, "Size: %zu", &size) != 1) {
-            ST_WARNING("Failed to parse size.");
+            ST_ERROR("Failed to parse size.");
             goto ERR;
         }
     }
 
     if (vec != NULL) {
         if (vec_resize(vec, size, NAN) < 0) {
-            ST_WARNING("Failed to vec_resize.");
+            ST_ERROR("Failed to vec_resize.");
             goto ERR;
         }
     }
@@ -128,68 +128,68 @@ int vec_load_body(vec_t *vec, int version, FILE *fp, connlm_fmt_t fmt)
 
     if (connlm_fmt_is_bin(fmt)) {
         if (fread(&n, sizeof(int), 1, fp) != 1) {
-            ST_WARNING("Failed to read magic num.");
+            ST_ERROR("Failed to read magic num.");
             return -1;
         }
 
         if (n != -VEC_MAGIC_NUM) {
-            ST_WARNING("Magic num error.[%d]", n);
+            ST_ERROR("Magic num error.[%d]", n);
             return -1;
         }
 
         if (fmt == CONN_FMT_BIN) {
             if (fread(VEC_VALP(vec, 0), sizeof(real_t),
                         vec->size, fp) != vec->size) {
-                ST_WARNING("Failed to read vec.");
+                ST_ERROR("Failed to read vec.");
                 return -1;
             }
         } else if (fmt & CONN_FMT_SHORT_QUANTIZATION) {
             if (fmt & CONN_FMT_ZEROS_COMPRESSED) {
                 if (load_sq_zc(VEC_VALP(vec, 0), vec->size, fp) < 0) {
-                    ST_WARNING("Failed to load_sq_zc for vec.");
+                    ST_ERROR("Failed to load_sq_zc for vec.");
                     return -1;
                 }
             } else {
                 if (load_sq(VEC_VALP(vec, 0), vec->size, fp) < 0) {
-                    ST_WARNING("Failed to load_sq for vec.");
+                    ST_ERROR("Failed to load_sq for vec.");
                     return -1;
                 }
             }
         } else if (fmt & CONN_FMT_ZEROS_COMPRESSED) {
             if (load_zc(VEC_VALP(vec, 0), vec->size, fp) < 0) {
-                ST_WARNING("Failed to load_zc for vec.");
+                ST_ERROR("Failed to load_zc for vec.");
                 return -1;
             }
         }
     } else {
         if (st_readline(fp, "<VECTOR-DATA>") != 0) {
-            ST_WARNING("body flag error.");
+            ST_ERROR("body flag error.");
             goto ERR;
         }
         if (st_readline(fp, "%"xSTR(MAX_NAME_LEN)"s", name) != 1) {
-            ST_WARNING("name error.");
+            ST_ERROR("name error.");
             goto ERR;
         }
 
         if (st_fgets(&line, &line_sz, fp, &err) == NULL || err) {
-            ST_WARNING("Failed to parse vec.");
+            ST_ERROR("Failed to parse vec.");
         }
         p = get_next_token(line, token);
         if (p == NULL || ! (p[0] == '[' && p[1] == '\0')) {
-            ST_WARNING("'[' expected.");
+            ST_ERROR("'[' expected.");
             goto ERR;
         }
         for (i = 0; i < vec->size; i++) {
             p = get_next_token(p, token);
             if (p == NULL || sscanf(token, REAL_FMT,
                         VEC_VALP(vec, i)) != 1) {
-                ST_WARNING("Failed to parse elem[%zu].", i);
+                ST_ERROR("Failed to parse elem[%zu].", i);
                 goto ERR;
             }
         }
         p = get_next_token(p, token);
         if (p == NULL || ! (p[0] == ']' && p[1] == '\0')) {
-            ST_WARNING("']' expected.");
+            ST_ERROR("']' expected.");
             goto ERR;
         }
 
@@ -209,26 +209,26 @@ int vec_save_header(vec_t *vec, FILE *fp, connlm_fmt_t fmt)
 
     if (connlm_fmt_is_bin(fmt)) {
         if (fwrite(&VEC_MAGIC_NUM, sizeof(int), 1, fp) != 1) {
-            ST_WARNING("Failed to write magic num.");
+            ST_ERROR("Failed to write magic num.");
             return -1;
         }
         if (fwrite(&fmt, sizeof(connlm_fmt_t), 1, fp) != 1) {
-            ST_WARNING("Failed to write fmt.");
+            ST_ERROR("Failed to write fmt.");
             return -1;
         }
 
         if (fwrite(&vec->size, sizeof(size_t), 1, fp) != 1) {
-            ST_WARNING("Failed to write size.");
+            ST_ERROR("Failed to write size.");
             return -1;
         }
     } else {
         if (fprintf(fp, "    \n<VECTOR>\n") < 0) {
-            ST_WARNING("Failed to fprintf header.");
+            ST_ERROR("Failed to fprintf header.");
             return -1;
         }
 
         if (fprintf(fp, "Size: %zu\n", vec->size) < 0) {
-            ST_WARNING("Failed to fprintf size.");
+            ST_ERROR("Failed to fprintf size.");
             return -1;
         }
     }
@@ -246,7 +246,7 @@ int vec_save_body(vec_t *vec, FILE *fp, connlm_fmt_t fmt, char *name)
     if (connlm_fmt_is_bin(fmt)) {
         n = -VEC_MAGIC_NUM;
         if (fwrite(&n, sizeof(int), 1, fp) != 1) {
-            ST_WARNING("Failed to write magic num.");
+            ST_ERROR("Failed to write magic num.");
             return -1;
         }
 
@@ -257,55 +257,55 @@ int vec_save_body(vec_t *vec, FILE *fp, connlm_fmt_t fmt, char *name)
         if (fmt == CONN_FMT_BIN) {
             if (fwrite(VEC_VALP(vec, 0), sizeof(real_t),
                         vec->size, fp) != vec->size) {
-                ST_WARNING("Failed to write vec.");
+                ST_ERROR("Failed to write vec.");
                 return -1;
             }
         } else if (fmt & CONN_FMT_SHORT_QUANTIZATION) {
             if (fmt & CONN_FMT_ZEROS_COMPRESSED) {
                 if (save_sq_zc(VEC_VALP(vec, 0), vec->size, fp) < 0) {
-                    ST_WARNING("Failed to save_sq_zc for vec.");
+                    ST_ERROR("Failed to save_sq_zc for vec.");
                     return -1;
                 }
             } else {
                 if (save_sq(VEC_VALP(vec, 0), vec->size, fp) < 0) {
-                    ST_WARNING("Failed to save_sq for vec.");
+                    ST_ERROR("Failed to save_sq for vec.");
                     return -1;
                 }
             }
         } else if (fmt & CONN_FMT_ZEROS_COMPRESSED) {
             if (save_zc(VEC_VALP(vec, 0), vec->size, fp) < 0) {
-                ST_WARNING("Failed to save_zc for vec.");
+                ST_ERROR("Failed to save_zc for vec.");
                 return -1;
             }
         }
     } else {
         if (fprintf(fp, "<VECTOR-DATA>\n") < 0) {
-            ST_WARNING("Failed to fprintf header.");
+            ST_ERROR("Failed to fprintf header.");
             return -1;
         }
         if (fprintf(fp, "%s\n", name != NULL ? name : "") < 0) {
-            ST_WARNING("Failed to fprintf name.");
+            ST_ERROR("Failed to fprintf name.");
             return -1;
         }
 
         if (fprintf(fp, "[\n") < 0) {
-            ST_WARNING("Failed to fprintf '['.");
+            ST_ERROR("Failed to fprintf '['.");
             return -1;
         }
         if (vec->size > 0) {
             for (i = 0; i < vec->size - 1; i++) {
                 if (fprintf(fp, REAL_FMT" ", VEC_VAL(vec, i)) < 0) {
-                    ST_WARNING("Failed to fprintf vec[%zu].", i);
+                    ST_ERROR("Failed to fprintf vec[%zu].", i);
                     return -1;
                 }
             }
             if (fprintf(fp, REAL_FMT"\n", VEC_VAL(vec, i)) < 0) {
-                ST_WARNING("Failed to fprintf vec[%zu].", i);
+                ST_ERROR("Failed to fprintf vec[%zu].", i);
                 return -1;
             }
         }
         if (fprintf(fp, "]\n") < 0) {
-            ST_WARNING("Failed to fprintf ']'.");
+            ST_ERROR("Failed to fprintf ']'.");
             return -1;
         }
     }
@@ -332,7 +332,7 @@ int vec_clear(vec_t *vec)
 
     if (vec->is_const) {
         if (vec->size != 0) {
-            ST_WARNING("Can not clear a const vector.");
+            ST_ERROR("Can not clear a const vector.");
             return -1;
         }
     }
@@ -350,7 +350,7 @@ int vec_resize(vec_t *vec, size_t size, real_t init_val)
 
     if (vec->is_const) {
         if (vec->size != size) {
-            ST_WARNING("Can not resize a const vector.");
+            ST_ERROR("Can not resize a const vector.");
             return -1;
         }
     }
@@ -359,7 +359,7 @@ int vec_resize(vec_t *vec, size_t size, real_t init_val)
         vec->vals = (real_t *)st_aligned_realloc(vec->vals,
                 sizeof(real_t) * size, ALIGN_SIZE);
         if (vec->vals == NULL) {
-            ST_WARNING("Failed to st_aligned_realloc vec->vals.");
+            ST_ERROR("Failed to st_aligned_realloc vec->vals.");
             return -1;
         }
         if (! isnan(init_val)) {
@@ -384,7 +384,7 @@ int vec_cpy(vec_t *dst, vec_t *src)
     ST_CHECK_PARAM(dst == NULL || src == NULL, -1);
 
     if (vec_resize(dst, src->size, NAN) < 0) {
-        ST_WARNING("Failed to vec_resize.");
+        ST_ERROR("Failed to vec_resize.");
         return -1;
     }
 
@@ -417,7 +417,7 @@ int vec_subvec(vec_t *vec, size_t start, size_t size, vec_t *sub)
     ST_CHECK_PARAM(vec == NULL || sub == NULL, -1);
 
     if (start >= vec->size) {
-        ST_WARNING("Error start index.");
+        ST_ERROR("Error start index.");
         return -1;
     }
 
@@ -425,7 +425,7 @@ int vec_subvec(vec_t *vec, size_t start, size_t size, vec_t *sub)
         size = vec->size - start;
     } else {
         if (start + size > vec->size) {
-            ST_WARNING("Not enough elems to extract [%d + %d > %d].",
+            ST_ERROR("Not enough elems to extract [%d + %d > %d].",
                     start, size, vec->size);
             return -1;
         }
@@ -447,7 +447,7 @@ int vec_add_elems(vec_t *vec1, real_t s1, vec_t *vec2, real_t s2, vec_t *out)
     ST_CHECK_PARAM(vec1 == NULL || vec2 == NULL || out == NULL, -1);
 
     if (vec1->size != vec2->size || vec1->size != out->size) {
-        ST_WARNING("Diemension not match.");
+        ST_ERROR("Diemension not match.");
         return -1;
     }
 
@@ -478,7 +478,7 @@ int dvec_clear(dvec_t *vec)
 
     if (vec->is_const) {
         if (vec->size != 0) {
-            ST_WARNING("Can not clear a const vector.");
+            ST_ERROR("Can not clear a const vector.");
             return -1;
         }
     }
@@ -496,7 +496,7 @@ int dvec_resize(dvec_t *vec, size_t size, double init_val)
 
     if (vec->is_const) {
         if (vec->size != size) {
-            ST_WARNING("Can not resize a const vector.");
+            ST_ERROR("Can not resize a const vector.");
             return -1;
         }
     }
@@ -505,7 +505,7 @@ int dvec_resize(dvec_t *vec, size_t size, double init_val)
         vec->vals = (double *)st_aligned_realloc(vec->vals,
                 sizeof(double) * size, ALIGN_SIZE);
         if (vec->vals == NULL) {
-            ST_WARNING("Failed to st_aligned_realloc vec->vals.");
+            ST_ERROR("Failed to st_aligned_realloc vec->vals.");
             return -1;
         }
         if (! isnan(init_val)) {
@@ -565,7 +565,7 @@ int ivec_reserve(ivec_t *vec, size_t capacity)
         vec->vals = (int *)st_aligned_realloc(vec->vals,
                 sizeof(int) * capacity, ALIGN_SIZE);
         if (vec->vals == NULL) {
-            ST_WARNING("Failed to st_aligned_realloc vec->vals.");
+            ST_ERROR("Failed to st_aligned_realloc vec->vals.");
             return -1;
         }
         vec->capacity = capacity;
@@ -579,7 +579,7 @@ int ivec_ext_reserve(ivec_t *vec, size_t ext_capacity)
     ST_CHECK_PARAM(vec == NULL || ext_capacity < 0, -1);
 
     if (ivec_reserve(vec, vec->size + ext_capacity) < 0) {
-        ST_WARNING("Failed to ivec_reserve.");
+        ST_ERROR("Failed to ivec_reserve.");
         return -1;
     }
 
@@ -591,7 +591,7 @@ int ivec_resize(ivec_t *vec, size_t size)
     ST_CHECK_PARAM(vec == NULL || size <= 0, -1);
 
     if (ivec_reserve(vec, size) < 0) {
-        ST_WARNING("Failed to ivec_reserve.");
+        ST_ERROR("Failed to ivec_reserve.");
         return -1;
     }
     vec->size = size;
@@ -604,7 +604,7 @@ int ivec_extsize(ivec_t *vec, size_t ext_size)
     ST_CHECK_PARAM(vec == NULL || ext_size <= 0, -1);
 
     if (ivec_resize(vec, ext_size + vec->size) < 0) {
-        ST_WARNING("Failed to ivec_resize.");
+        ST_ERROR("Failed to ivec_resize.");
         return -1;
     }
 
@@ -614,7 +614,7 @@ int ivec_extsize(ivec_t *vec, size_t ext_size)
 int ivec_append(ivec_t *vec, int n)
 {
     if (ivec_reserve(vec, vec->size + NUM_IVEC_RESIZE) < 0) {
-        ST_WARNING("Failed to ivec_reserve.");
+        ST_ERROR("Failed to ivec_reserve.");
         return -1;
     }
 
@@ -631,12 +631,12 @@ int ivec_insert(ivec_t *vec, int n)
     ST_CHECK_PARAM(vec == NULL, -1);
 
     if (ivec_reserve(vec, NUM_IVEC_RESIZE) < 0) {
-        ST_WARNING("Failed to ivec_reserve.");
+        ST_ERROR("Failed to ivec_reserve.");
         return -1;
     }
 
     if (st_int_insert(vec->vals, vec->capacity, &vec->size, &pos, n) < 0) {
-        ST_WARNING("Failed to st_int_insert.");
+        ST_ERROR("Failed to st_int_insert.");
         return -1;
     }
 
@@ -648,7 +648,7 @@ int ivec_set(ivec_t *vec, int *vals, size_t n)
     ST_CHECK_PARAM(vec == NULL || vals == NULL, -1);
 
     if (ivec_resize(vec, n) < 0) {
-        ST_WARNING("Failed to ivec_resize.");
+        ST_ERROR("Failed to ivec_resize.");
         return -1;
     }
 
@@ -663,7 +663,7 @@ int ivec_cpy(ivec_t *dst, ivec_t *src)
     ST_CHECK_PARAM(dst == NULL || src == NULL, -1);
 
     if (ivec_resize(dst, src->size) < 0) {
-        ST_WARNING("Failed to ivec_resize.");
+        ST_ERROR("Failed to ivec_resize.");
         return -1;
     }
 
@@ -693,7 +693,7 @@ int ivec_extend(ivec_t *vec, ivec_t *src, size_t start, size_t end)
     ST_CHECK_PARAM(vec == NULL || src == NULL, -1);
 
     if (ivec_ext_reserve(vec, end - start) < 0) {
-        ST_WARNING("Failed to ivec_ext_reserve.");
+        ST_ERROR("Failed to ivec_ext_reserve.");
         return -1;
     }
 

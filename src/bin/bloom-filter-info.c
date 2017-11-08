@@ -43,22 +43,22 @@ int bloom_filter_info_parse_opt(int *argc, const char *argv[])
 
     g_cmd_opt = st_opt_create();
     if (g_cmd_opt == NULL) {
-        ST_WARNING("Failed to st_opt_create.");
+        ST_ERROR("Failed to st_opt_create.");
         goto ST_OPT_ERR;
     }
 
     if (st_opt_parse(g_cmd_opt, argc, argv) < 0) {
-        ST_WARNING("Failed to st_opt_parse.");
+        ST_ERROR("Failed to st_opt_parse.");
         goto ST_OPT_ERR;
     }
 
     if (st_log_load_opt(&log_opt, g_cmd_opt, NULL) < 0) {
-        ST_WARNING("Failed to st_log_load_opt");
+        ST_ERROR("Failed to st_log_load_opt");
         goto ST_OPT_ERR;
     }
 
     if (st_log_open(&log_opt) != 0) {
-        ST_WARNING("Failed to open log");
+        ST_ERROR("Failed to open log");
         goto ST_OPT_ERR;
     }
 
@@ -117,13 +117,13 @@ int main(int argc, const char *argv[])
     for (i = 1; i < argc; i++) {
         fp = st_fopen(argv[i], "rb");
         if (fp == NULL) {
-            ST_WARNING("Failed to st_fopen. [%s]", argv[i]);
+            ST_ERROR("Failed to st_fopen. [%s]", argv[i]);
             goto ERR;
         }
 
         fprintf(stdout, "\nModel \"%s\":\n", argv[i]);
         if (bloom_filter_print_info(fp, stdout) < 0) {
-            ST_WARNING("Failed to bloom_filter_print_info. [%s]", argv[i]);
+            ST_ERROR("Failed to bloom_filter_print_info. [%s]", argv[i]);
             goto ERR;
         }
 
@@ -132,7 +132,7 @@ int main(int argc, const char *argv[])
 
             blm_flt = bloom_filter_load(fp);
             if (blm_flt == NULL) {
-                ST_WARNING("Failed to bloom_filter_load. [%s]", argv[i]);
+                ST_ERROR("Failed to bloom_filter_load. [%s]", argv[i]);
                 goto ERR;
             }
 

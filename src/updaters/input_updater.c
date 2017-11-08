@@ -53,7 +53,7 @@ static int egs_input_resize(egs_input_t *input, int n_ctx)
         input->words = (int *)st_realloc(input->words,
                 sizeof(int) * n_ctx);
         if (input->words == NULL) {
-            ST_WARNING("Failed to st_realloc input->words.");
+            ST_ERROR("Failed to st_realloc input->words.");
             return -1;
         }
         memset(input->words, 0, sizeof(int) * (n_ctx - input->cap_words));
@@ -61,7 +61,7 @@ static int egs_input_resize(egs_input_t *input, int n_ctx)
         input->positions = (int *)st_realloc(input->positions,
                 sizeof(int) * n_ctx);
         if (input->positions == NULL) {
-            ST_WARNING("Failed to st_realloc input->positions.");
+            ST_ERROR("Failed to st_realloc input->positions.");
             return -1;
         }
         memset(input->positions, 0, sizeof(int) * (n_ctx - input->cap_words));
@@ -69,7 +69,7 @@ static int egs_input_resize(egs_input_t *input, int n_ctx)
         input->weights = (real_t *)st_realloc(input->weights,
                 sizeof(real_t) * n_ctx);
         if (input->weights == NULL) {
-            ST_WARNING("Failed to st_realloc input->weights.");
+            ST_ERROR("Failed to st_realloc input->weights.");
             return -1;
         }
         memset(input->weights, 0, sizeof(real_t) * (n_ctx - input->cap_words));
@@ -110,7 +110,7 @@ static int egs_batch_resize(egs_batch_t *batch, int batch_size, int n_ctx)
         batch->inputs = (egs_input_t *)st_realloc(batch->inputs,
                 sizeof(egs_input_t) * batch_size);
         if (batch->inputs == NULL) {
-            ST_WARNING("Failed to st_realloc batch->inputs.");
+            ST_ERROR("Failed to st_realloc batch->inputs.");
             return -1;
         }
         memset(batch->inputs, 0,
@@ -119,7 +119,7 @@ static int egs_batch_resize(egs_batch_t *batch, int batch_size, int n_ctx)
         batch->targets = (int *)st_realloc(batch->targets,
                 sizeof(int) * batch_size);
         if (batch->targets == NULL) {
-            ST_WARNING("Failed to st_realloc batch->targets.");
+            ST_ERROR("Failed to st_realloc batch->targets.");
             return -1;
         }
         memset(batch->targets, 0,
@@ -130,7 +130,7 @@ static int egs_batch_resize(egs_batch_t *batch, int batch_size, int n_ctx)
 
     for (i = 0; i < batch->cap_egs; i++) {
         if (egs_input_resize(batch->inputs + i, n_ctx) < 0) {
-            ST_WARNING("Failed to egs_input_resize [%d].", i);
+            ST_ERROR("Failed to egs_input_resize [%d].", i);
             return -1;
         }
     }
@@ -158,7 +158,7 @@ input_updater_t* input_updater_create(int bos_id)
 
     input_updater = (input_updater_t *)st_malloc(sizeof(input_updater_t));
     if (input_updater == NULL) {
-        ST_WARNING("Failed to st_malloc input_updater.");
+        ST_ERROR("Failed to st_malloc input_updater.");
         goto ERR;
     }
     memset(input_updater, 0, sizeof(input_updater_t));
@@ -177,7 +177,7 @@ int input_updater_clear(input_updater_t *input_updater)
     ST_CHECK_PARAM(input_updater == NULL, -1);
 
     if (ivec_clear(&input_updater->cursors) < 0) {
-        ST_WARNING("Failed to ivec_clear cursors");
+        ST_ERROR("Failed to ivec_clear cursors");
         return -1;
     }
 
@@ -190,7 +190,7 @@ int input_updater_setup(input_updater_t *input_updater,
     ST_CHECK_PARAM(input_updater == NULL, -1);
 
     if (ivec_clear(&input_updater->cursors) < 0) {
-        ST_WARNING("Failed to ivec_clear cursors");
+        ST_ERROR("Failed to ivec_clear cursors");
         return -1;
     }
     input_updater->ctx_leftmost = ctx_leftmost;
@@ -221,7 +221,7 @@ int input_updater_update_batch(input_updater_t *input_updater,
     }
 
     if (egs_batch_resize(batch, wp_batch_size(wp), input->n_ctx) < 0) {
-        ST_WARNING("Failed to egs_batch_resize.");
+        ST_ERROR("Failed to egs_batch_resize.");
         return -1;
     }
 
@@ -306,12 +306,12 @@ int input_updater_feed(input_updater_t *input_updater, word_pool_t *new_wp)
 
     if (wp->words.size == 0) {
         if (word_pool_copy(wp, new_wp) < 0) {
-            ST_WARNING("Failed to word_pool_copy.");
+            ST_ERROR("Failed to word_pool_copy.");
             return -1;
         }
 
         if (ivec_resize(&input_updater->cursors, wp_batch_size(wp)) < 0) {
-            ST_WARNING("Failed to ivec_resize cursors.");
+            ST_ERROR("Failed to ivec_resize cursors.");
             return -1;
         }
         for (b = 0; b < input_updater->cursors.size; b++) {
@@ -320,16 +320,16 @@ int input_updater_feed(input_updater_t *input_updater, word_pool_t *new_wp)
     } else {
         // assert batch size is constanst, which is required by stateful network
         if (wp_batch_size(wp) != wp_batch_size(new_wp)) {
-            ST_WARNING("Batch size can not be changed.");
+            ST_ERROR("Batch size can not be changed.");
             return -1;
         }
 
         if (word_pool_clear(tmp_wp) < 0) {
-            ST_WARNING("Failed to word_pool_clear tmp_wp.");
+            ST_ERROR("Failed to word_pool_clear tmp_wp.");
             return -1;
         }
         if (ivec_append(&tmp_wp->row_starts, 0) < 0) {
-            ST_WARNING("Failed to ivec_append first of tmp_wp->row_starts.");
+            ST_ERROR("Failed to ivec_append first of tmp_wp->row_starts.");
             return -1;
         }
         for (b = 0; b < wp_batch_size(wp); b++) {
@@ -340,7 +340,7 @@ int input_updater_feed(input_updater_t *input_updater, word_pool_t *new_wp)
                 end = VEC_VAL(&wp->row_starts, b + 1);
                 if (start < end) {
                     if (ivec_extend(&tmp_wp->words, &wp->words, start, end) < 0) {
-                        ST_WARNING("Failed to ivec_extend tmp_wp.words from wp.");
+                        ST_ERROR("Failed to ivec_extend tmp_wp.words from wp.");
                         return -1;
                     }
                 }
@@ -350,7 +350,7 @@ int input_updater_feed(input_updater_t *input_updater, word_pool_t *new_wp)
                 end = VEC_VAL(&wp->row_starts, b + 1);
                 if (start < end) {
                     if (ivec_extend(&tmp_wp->words, &wp->words, start, end) < 0) {
-                        ST_WARNING("Failed to ivec_extend tmp_wp.words from wp.");
+                        ST_ERROR("Failed to ivec_extend tmp_wp.words from wp.");
                         return -1;
                     }
                 }
@@ -360,13 +360,13 @@ int input_updater_feed(input_updater_t *input_updater, word_pool_t *new_wp)
             end = VEC_VAL(&new_wp->row_starts, b + 1);
             if (start < end) {
                 if (ivec_extend(&tmp_wp->words, &new_wp->words, start, end) < 0) {
-                    ST_WARNING("Failed to ivec_extend tmp_wp.words from new_wp.");
+                    ST_ERROR("Failed to ivec_extend tmp_wp.words from new_wp.");
                     return -1;
                 }
             }
 
             if (ivec_append(&tmp_wp->row_starts, tmp_wp->words.size) < 0) {
-                ST_WARNING("Failed to ivec_append tmp_wp->row_starts.");
+                ST_ERROR("Failed to ivec_append tmp_wp->row_starts.");
                 return -1;
             }
 
@@ -374,7 +374,7 @@ int input_updater_feed(input_updater_t *input_updater, word_pool_t *new_wp)
         }
 
         if (word_pool_swap(wp, tmp_wp) < 0) {
-            ST_WARNING("Failed to word_pool_swap.");
+            ST_ERROR("Failed to word_pool_swap.");
             return -1;
         }
     }

@@ -45,22 +45,22 @@ int connlm_merge_parse_opt(int *argc, const char *argv[])
 
     g_cmd_opt = st_opt_create();
     if (g_cmd_opt == NULL) {
-        ST_WARNING("Failed to st_opt_create.");
+        ST_ERROR("Failed to st_opt_create.");
         goto ST_OPT_ERR;
     }
 
     if (st_opt_parse(g_cmd_opt, argc, argv) < 0) {
-        ST_WARNING("Failed to st_opt_parse.");
+        ST_ERROR("Failed to st_opt_parse.");
         goto ST_OPT_ERR;
     }
 
     if (st_log_load_opt(&log_opt, g_cmd_opt, NULL) < 0) {
-        ST_WARNING("Failed to st_log_load_opt");
+        ST_ERROR("Failed to st_log_load_opt");
         goto ST_OPT_ERR;
     }
 
     if (st_log_open(&log_opt) != 0) {
-        ST_WARNING("Failed to open log");
+        ST_ERROR("Failed to open log");
         goto ST_OPT_ERR;
     }
 
@@ -68,7 +68,7 @@ int connlm_merge_parse_opt(int *argc, const char *argv[])
             "storage format(Txt/Bin/Zeros-Compress/Short-Q)");
     g_fmt = connlm_format_parse(str);
     if (g_fmt == CONN_FMT_UNKNOWN) {
-        ST_WARNING("Unknown format[%s]", str);
+        ST_ERROR("Unknown format[%s]", str);
         goto ST_OPT_ERR;
     }
 
@@ -103,7 +103,7 @@ int main(int argc, const char *argv[])
     int i, c;
 
     if (st_mem_usage_init() < 0) {
-        ST_WARNING("Failed to st_mem_usage_init.");
+        ST_ERROR("Failed to st_mem_usage_init.");
         goto ERR;
     }
 
@@ -141,24 +141,24 @@ int main(int argc, const char *argv[])
 
     mfs = (model_filter_t *)st_malloc(sizeof(model_filter_t) * (argc - 2));
     if (mfs == NULL) {
-        ST_WARNING("Failed to st_malloc mfs.");
+        ST_ERROR("Failed to st_malloc mfs.");
         goto ERR;
     }
 
     fnames = (char *)st_malloc(sizeof(char) * MAX_DIR_LEN * (argc - 2));
     if (fnames == NULL) {
-        ST_WARNING("Failed to st_malloc fnames.");
+        ST_ERROR("Failed to st_malloc fnames.");
         goto ERR;
     }
 
     comp_names = (char **)st_malloc(sizeof(char*) * (argc - 2));
     if (comp_names == NULL) {
-        ST_WARNING("Failed to st_malloc comp_names.");
+        ST_ERROR("Failed to st_malloc comp_names.");
         goto ERR;
     }
     num_comp = (int *)st_malloc(sizeof(int) * (argc - 2));
     if (num_comp == NULL) {
-        ST_WARNING("Failed to st_malloc num_comp.");
+        ST_ERROR("Failed to st_malloc num_comp.");
         goto ERR;
     }
     for (i = 0; i < argc - 2; i++) {
@@ -171,44 +171,44 @@ int main(int argc, const char *argv[])
                 fnames + i * MAX_DIR_LEN, MAX_DIR_LEN,
                 comp_names + i, num_comp + i);
         if (mfs[i] == MF_ERR) {
-            ST_WARNING("Failed to parse_model_filter. [%s]", argv[i]);
+            ST_ERROR("Failed to parse_model_filter. [%s]", argv[i]);
             goto ERR;
         }
     }
 
     fp = st_fopen(fnames, "rb");
     if (fp == NULL) {
-        ST_WARNING("Failed to st_fopen. [%s]", fnames);
+        ST_ERROR("Failed to st_fopen. [%s]", fnames);
         goto ERR;
     }
 
     connlm1 = connlm_load(fp);
     if (connlm1 == NULL) {
-        ST_WARNING("Failed to connlm_load. [%s]", fnames);
+        ST_ERROR("Failed to connlm_load. [%s]", fnames);
         goto ERR;
     }
     safe_st_fclose(fp);
 
     if (connlm1->vocab == NULL || connlm1->output == NULL) {
-        ST_WARNING("Can't merge: No vocab or output for model[%s].", fnames);
+        ST_ERROR("Can't merge: No vocab or output for model[%s].", fnames);
         goto ERR;
     }
 
     connlm = connlm_new(connlm1->vocab, connlm1->output, NULL, -1);
     if (connlm == NULL) {
-        ST_WARNING("Failed to connlm_new.");
+        ST_ERROR("Failed to connlm_new.");
         goto ERR;
     }
 
     i = 0;
     ST_NOTICE("Merging Model %d(%s)...", i, argv[i + 1]);
     if (connlm_filter(connlm1, mfs[i], comp_names[i], num_comp[i]) < 0) {
-        ST_WARNING("Failed to connlm_filter for model [%d/%s]", i, argv[i + 1]);
+        ST_ERROR("Failed to connlm_filter for model [%d/%s]", i, argv[i + 1]);
         goto ERR;
     }
     for (c = 0; c < connlm1->num_comp; c++) {
         if (connlm_add_comp(connlm, connlm1->comps[c]) < 0) {
-            ST_WARNING("Failed to connlm_add_comp. [%s]",
+            ST_ERROR("Failed to connlm_add_comp. [%s]",
                     connlm1->comps[c]->name);
             goto ERR;
         }
@@ -219,43 +219,43 @@ int main(int argc, const char *argv[])
     for (i = 1; i < argc - 2; i++) {
         fp = st_fopen(fnames + i * MAX_DIR_LEN, "rb");
         if (fp == NULL) {
-            ST_WARNING("Failed to st_fopen. [%s]", fnames + i*MAX_DIR_LEN);
+            ST_ERROR("Failed to st_fopen. [%s]", fnames + i*MAX_DIR_LEN);
             goto ERR;
         }
 
         connlm1 = connlm_load(fp);
         if (connlm1 == NULL) {
-            ST_WARNING("Failed to connlm_load. [%s]", fnames + i*MAX_DIR_LEN);
+            ST_ERROR("Failed to connlm_load. [%s]", fnames + i*MAX_DIR_LEN);
             goto ERR;
         }
         safe_st_fclose(fp);
 
         if (connlm1->vocab == NULL || connlm1->output == NULL) {
-            ST_WARNING("Can't merge: No vocab or output for model[%s].",
+            ST_ERROR("Can't merge: No vocab or output for model[%s].",
                     fnames + i * MAX_DIR_LEN);
             goto ERR;
         }
 
         ST_NOTICE("Merging Model %d(%s)...", i, argv[i + 1]);
         if (!vocab_equal(connlm->vocab, connlm1->vocab)) {
-            ST_WARNING("Can't merge: Vocab not equal. [%s].",
+            ST_ERROR("Can't merge: Vocab not equal. [%s].",
                     fnames + i * MAX_DIR_LEN);
             goto ERR;
         }
 
         if (!output_equal(connlm->output, connlm1->output)) {
-            ST_WARNING("Can't merge: Output not equal. [%s].",
+            ST_ERROR("Can't merge: Output not equal. [%s].",
                     fnames + i * MAX_DIR_LEN);
             goto ERR;
         }
 
         if (connlm_filter(connlm1, mfs[i], comp_names[i], num_comp[i]) < 0) {
-            ST_WARNING("Failed to connlm_filter for model [%d/%s]", i, argv[i + 1]);
+            ST_ERROR("Failed to connlm_filter for model [%d/%s]", i, argv[i + 1]);
             goto ERR;
         }
         for (c = 0; c < connlm1->num_comp; c++) {
             if (connlm_add_comp(connlm, connlm1->comps[c]) < 0) {
-                ST_WARNING("Failed to connlm_add_comp. [%s]",
+                ST_ERROR("Failed to connlm_add_comp. [%s]",
                         connlm1->comps[c]->name);
                 goto ERR;
             }
@@ -266,12 +266,12 @@ int main(int argc, const char *argv[])
 
     fp = st_fopen(argv[argc - 1], "wb");
     if (fp == NULL) {
-        ST_WARNING("Failed to st_fopen. [%s]", argv[argc - 1]);
+        ST_ERROR("Failed to st_fopen. [%s]", argv[argc - 1]);
         goto ERR;
     }
 
     if (connlm_save(connlm, fp, g_fmt) < 0) {
-        ST_WARNING("Failed to connlm_save. [%s]", argv[argc - 1]);
+        ST_ERROR("Failed to connlm_save. [%s]", argv[argc - 1]);
         goto ERR;
     }
 

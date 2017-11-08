@@ -72,7 +72,7 @@ static int vocab_load_wordlist(vocab_t *vocab)
 
     fp = st_fopen(vocab->vocab_opt.wordlist, "r");
     if (fp == NULL) {
-        ST_WARNING("Failed to open wordlist[%s].", vocab->vocab_opt.wordlist);
+        ST_ERROR("Failed to open wordlist[%s].", vocab->vocab_opt.wordlist);
         goto ERR;
     }
 
@@ -85,7 +85,7 @@ static int vocab_load_wordlist(vocab_t *vocab)
         }
 
         if (strchr(line, ' ') != NULL || strchr(line, '\t') != NULL) {
-            ST_WARNING("words should not contain whitespaces, line[%s]", line);
+            ST_ERROR("words should not contain whitespaces, line[%s]", line);
             goto ERR;
         }
 
@@ -95,7 +95,7 @@ static int vocab_load_wordlist(vocab_t *vocab)
         }
 
         if (vocab_add_word(vocab, line) < 0) {
-            ST_WARNING("Failed to vocab_add_word.");
+            ST_ERROR("Failed to vocab_add_word.");
             goto ERR;
         }
     }
@@ -123,7 +123,7 @@ vocab_t *vocab_create(vocab_opt_t *vocab_opt)
 
     vocab = (vocab_t *)st_malloc(sizeof(vocab_t));
     if (vocab == NULL) {
-        ST_WARNING("Failed to st_malloc vocab_t.");
+        ST_ERROR("Failed to st_malloc vocab_t.");
         goto ERR;
     }
     memset(vocab, 0, sizeof(vocab_t));
@@ -134,7 +134,7 @@ vocab_t *vocab_create(vocab_opt_t *vocab_opt)
         vocab->vocab_opt.max_alphabet_size = (int)st_count_lines(
                 vocab->vocab_opt.wordlist);
         if (vocab->vocab_opt.max_alphabet_size < 0) {
-            ST_WARNING("Failed to st_count_lines for wordlist[%s].",
+            ST_ERROR("Failed to st_count_lines for wordlist[%s].",
                     vocab->vocab_opt.wordlist);
             goto ERR;
         }
@@ -143,25 +143,25 @@ vocab_t *vocab_create(vocab_opt_t *vocab_opt)
 
     vocab->alphabet = st_alphabet_create(vocab->vocab_opt.max_alphabet_size);
     if (vocab->alphabet == NULL) {
-        ST_WARNING("Failed to st_alphabet_create.");
+        ST_ERROR("Failed to st_alphabet_create.");
         goto ERR;
     }
 
     if (st_alphabet_add_label(vocab->alphabet, SENT_END) != SENT_END_ID) {
-        ST_WARNING("Failed to add sent_end[%s].", SENT_END);
+        ST_ERROR("Failed to add sent_end[%s].", SENT_END);
         goto ERR;
     }
 
     // <unk> must be the last special word, since we will use 'UNK_ID + 1'
     // in sorting vocab
     if (st_alphabet_add_label(vocab->alphabet, UNK) != UNK_ID) {
-        ST_WARNING("Failed to add unk[%s].", UNK);
+        ST_ERROR("Failed to add unk[%s].", UNK);
         goto ERR;
     }
 
     if (vocab->vocab_opt.wordlist[0] != '\0') {
         if (vocab_load_wordlist(vocab) < 0) {
-            ST_WARNING("Failed to st_vocab_load_wordlist.");
+            ST_ERROR("Failed to st_vocab_load_wordlist.");
             goto ERR;
         }
     }
@@ -190,7 +190,7 @@ vocab_t* vocab_dup(vocab_t *v)
 
     vocab = (vocab_t *)st_malloc(sizeof(vocab_t));
     if (vocab == NULL) {
-        ST_WARNING("Failed to st_malloc vocab_t.");
+        ST_ERROR("Failed to st_malloc vocab_t.");
         goto ERR;
     }
     memset(vocab, 0, sizeof(vocab_t));
@@ -200,13 +200,13 @@ vocab_t* vocab_dup(vocab_t *v)
 
     vocab->alphabet = st_alphabet_dup(v->alphabet);
     if (vocab->alphabet == NULL) {
-        ST_WARNING("Failed to st_alphabet_dup.");
+        ST_ERROR("Failed to st_alphabet_dup.");
         goto ERR;
     }
 
     vocab->cnts = (count_t *)st_malloc(sizeof(count_t) * v->vocab_size);
     if (vocab->cnts == NULL) {
-        ST_WARNING("Failed to st_malloc cnts.");
+        ST_ERROR("Failed to st_malloc cnts.");
         goto ERR;
     }
     memcpy(vocab->cnts, v->cnts, sizeof(count_t)*v->vocab_size);
@@ -232,13 +232,13 @@ int vocab_load_header(vocab_t **vocab, int version, FILE *fp,
             || fmt == NULL, -1);
 
     if (version < 11) {
-        ST_WARNING("File versoin[%d] less than 11 is not supported, "
+        ST_ERROR("File versoin[%d] less than 11 is not supported, "
                 "please downgrade connlm toolkit", version);
         return -1;
     }
 
     if (fread(&flag.magic_num, sizeof(int), 1, fp) != 1) {
-        ST_WARNING("Failed to load magic num.");
+        ST_ERROR("Failed to load magic num.");
         return -1;
     }
 
@@ -246,7 +246,7 @@ int vocab_load_header(vocab_t **vocab, int version, FILE *fp,
     if (strncmp(flag.str, "    ", 4) == 0) {
         *fmt = CONN_FMT_TXT;
     } else if (VOCAB_MAGIC_NUM != flag.magic_num) {
-        ST_WARNING("magic num wrong.");
+        ST_ERROR("magic num wrong.");
         return -2;
     }
 
@@ -257,7 +257,7 @@ int vocab_load_header(vocab_t **vocab, int version, FILE *fp,
     if (*fmt != CONN_FMT_TXT) {
         if (version >= 12) {
             if (fread(fmt, sizeof(connlm_fmt_t), 1, fp) != 1) {
-                ST_WARNING("Failed to read fmt.");
+                ST_ERROR("Failed to read fmt.");
                 goto ERR;
             }
         } else {
@@ -265,7 +265,7 @@ int vocab_load_header(vocab_t **vocab, int version, FILE *fp,
         }
 
         if (fread(&vocab_size, sizeof(int), 1, fp) != 1) {
-            ST_WARNING("Failed to read vocab size.");
+            ST_ERROR("Failed to read vocab size.");
             return -1;
         }
 
@@ -277,16 +277,16 @@ int vocab_load_header(vocab_t **vocab, int version, FILE *fp,
         }
     } else {
         if (st_readline(fp, "") != 0) {
-            ST_WARNING("flag error.");
+            ST_ERROR("flag error.");
             return -1;
         }
         if (st_readline(fp, "<VOCAB>") != 0) {
-            ST_WARNING("flag error.");
+            ST_ERROR("flag error.");
             return -1;
         }
 
         if (st_readline(fp, "Vocab size: %d", &vocab_size) != 1) {
-            ST_WARNING("Failed to parse vocab_size.[%d]", vocab_size);
+            ST_ERROR("Failed to parse vocab_size.[%d]", vocab_size);
             return -1;
         }
 
@@ -301,7 +301,7 @@ int vocab_load_header(vocab_t **vocab, int version, FILE *fp,
     if (vocab != NULL) {
         *vocab = (vocab_t *)st_malloc(sizeof(vocab_t));
         if (*vocab == NULL) {
-            ST_WARNING("Failed to st_malloc vocab_t");
+            ST_ERROR("Failed to st_malloc vocab_t");
             goto ERR;
         }
         memset(*vocab, 0, sizeof(vocab_t));
@@ -340,58 +340,58 @@ int vocab_load_body(vocab_t *vocab, int version, FILE *fp, connlm_fmt_t fmt)
 
     if (connlm_fmt_is_bin(fmt)) {
         if (fread(&n, sizeof(int), 1, fp) != 1) {
-            ST_WARNING("Failed to read magic num.");
+            ST_ERROR("Failed to read magic num.");
             goto ERR;
         }
 
         if (n != -VOCAB_MAGIC_NUM) {
-            ST_WARNING("Magic num error.");
+            ST_ERROR("Magic num error.");
             goto ERR;
         }
 
         vocab->alphabet = st_alphabet_load_from_bin(fp);
         if (vocab->alphabet == NULL) {
-            ST_WARNING("Failed to st_alphabet_load_from_bin.");
+            ST_ERROR("Failed to st_alphabet_load_from_bin.");
             goto ERR;
         }
 
         vocab->cnts = (count_t *)st_malloc(sizeof(count_t)*vocab->vocab_size);
         if (vocab->cnts == NULL) {
-            ST_WARNING("Failed to st_malloc cnts.");
+            ST_ERROR("Failed to st_malloc cnts.");
             goto ERR;
         }
 
         if (fread(vocab->cnts, sizeof(count_t),
                     vocab->vocab_size, fp) != vocab->vocab_size) {
-            ST_WARNING("Failed to read word cnts.");
+            ST_ERROR("Failed to read word cnts.");
             goto ERR;
         }
     } else {
         if (st_readline(fp, "<VOCAB-DATA>") != 0) {
-            ST_WARNING("body flag error.");
+            ST_ERROR("body flag error.");
             goto ERR;
         }
 
         vocab->alphabet = st_alphabet_load_from_txt(fp, vocab->vocab_size);
         if (vocab->alphabet == NULL) {
-            ST_WARNING("Failed to st_alphabet_load_from_txt.");
+            ST_ERROR("Failed to st_alphabet_load_from_txt.");
             goto ERR;
         }
 
         vocab->cnts = (count_t *)st_malloc(sizeof(count_t)*vocab->vocab_size);
         if (vocab->cnts == NULL) {
-            ST_WARNING("Failed to st_malloc cnts.");
+            ST_ERROR("Failed to st_malloc cnts.");
             goto ERR;
         }
 
         if (st_readline(fp, "Word Counts:") != 0) {
-            ST_WARNING("word cnts flag error.");
+            ST_ERROR("word cnts flag error.");
             goto ERR;
         }
 
         for (i = 0; i < vocab->vocab_size; i++) {
             if (st_readline(fp, "\t%*d\t%lu\n", vocab->cnts + i) != 1) {
-                ST_WARNING("Failed to parse word cnts.");
+                ST_ERROR("Failed to parse word cnts.");
                 goto ERR;
             }
         }
@@ -412,19 +412,19 @@ int vocab_save_header(vocab_t *vocab, FILE *fp, connlm_fmt_t fmt)
 
     if (connlm_fmt_is_bin(fmt)) {
         if (fwrite(&VOCAB_MAGIC_NUM, sizeof(int), 1, fp) != 1) {
-            ST_WARNING("Failed to write magic num.");
+            ST_ERROR("Failed to write magic num.");
             return -1;
         }
 
         if (fwrite(&fmt, sizeof(connlm_fmt_t), 1, fp) != 1) {
-            ST_WARNING("Failed to write fmt.");
+            ST_ERROR("Failed to write fmt.");
             return -1;
         }
 
         if (vocab == NULL) {
             sz = 0;
             if (fwrite(&sz, sizeof(int), 1, fp) != 1) {
-                ST_WARNING("Failed to write vocab size.");
+                ST_ERROR("Failed to write vocab size.");
                 return -1;
             }
 
@@ -432,25 +432,25 @@ int vocab_save_header(vocab_t *vocab, FILE *fp, connlm_fmt_t fmt)
         }
 
         if (fwrite(&vocab->vocab_size, sizeof(int), 1, fp) != 1) {
-            ST_WARNING("Failed to write vocab size.");
+            ST_ERROR("Failed to write vocab size.");
             return -1;
         }
     } else {
         if (fprintf(fp, "    \n<VOCAB>\n") < 0) {
-            ST_WARNING("Failed to fprintf header.");
+            ST_ERROR("Failed to fprintf header.");
             return -1;
         }
 
         if (vocab == NULL) {
             if (fprintf(fp, "Vocab size: %d\n", 0) < 0) {
-                ST_WARNING("Failed to fprintf vocab size.");
+                ST_ERROR("Failed to fprintf vocab size.");
                 return -1;
             }
             return 0;
         }
 
         if (fprintf(fp, "Vocab size: %d\n", vocab->vocab_size) < 0) {
-            ST_WARNING("Failed to fprintf vocab size.");
+            ST_ERROR("Failed to fprintf vocab size.");
             return -1;
         }
     }
@@ -472,38 +472,38 @@ int vocab_save_body(vocab_t *vocab, FILE *fp, connlm_fmt_t fmt)
     if (connlm_fmt_is_bin(fmt)) {
         n = -VOCAB_MAGIC_NUM;
         if (fwrite(&n, sizeof(int), 1, fp) != 1) {
-            ST_WARNING("Failed to write magic num.");
+            ST_ERROR("Failed to write magic num.");
             return -1;
         }
 
         if (st_alphabet_save_bin(vocab->alphabet, fp) < 0) {
-            ST_WARNING("Failed to st_alphabet_save_bin.");
+            ST_ERROR("Failed to st_alphabet_save_bin.");
             return -1;
         }
 
         if (fwrite(vocab->cnts, sizeof(count_t),
                     vocab->vocab_size, fp) != vocab->vocab_size) {
-            ST_WARNING("Failed to write word cnts.");
+            ST_ERROR("Failed to write word cnts.");
             return -1;
         }
     } else {
         if (fprintf(fp, "<VOCAB-DATA>\n") < 0) {
-            ST_WARNING("Failed to fprintf header.");
+            ST_ERROR("Failed to fprintf header.");
             return -1;
         }
 
         if (st_alphabet_save_txt(vocab->alphabet, fp) < 0) {
-            ST_WARNING("Failed to st_alphabet_save_txt.");
+            ST_ERROR("Failed to st_alphabet_save_txt.");
             return -1;
         }
 
         if (fprintf(fp, "Word Counts:\n") < 0) {
-            ST_WARNING("Failed to fprintf word count.");
+            ST_ERROR("Failed to fprintf word count.");
             return -1;
         }
         for (i = 0; i < vocab->vocab_size; i++) {
             if (fprintf(fp, "\t%d\t%lu\n", i, vocab->cnts[i]) < 0) {
-                ST_WARNING("Failed to fprintf cnt[%d]", i);
+                ST_ERROR("Failed to fprintf cnt[%d]", i);
                 return -1;
             }
         }
@@ -570,32 +570,32 @@ static int vocab_sort(vocab_t *vocab, word_info_t *word_infos,
     vocab->vocab_size += 1/* <s> */;
     cnts = (count_t *)st_malloc(sizeof(count_t)*vocab->vocab_size);
     if (cnts == NULL) {
-        ST_WARNING("Failed to st_malloc cnts");
+        ST_ERROR("Failed to st_malloc cnts");
         goto ERR;
     }
 
     alphabet = st_alphabet_create(vocab->vocab_size);
     if (alphabet == NULL) {
-        ST_WARNING("Failed to st_alphabet_create alphabet.");
+        ST_ERROR("Failed to st_alphabet_create alphabet.");
         goto ERR;
     }
 
     for (a = 0; a < vocab->vocab_size - 1; a++) {
         word = st_alphabet_get_label(vocab->alphabet, word_infos[a].id);
         if (word == NULL) {
-            ST_WARNING("Failed to st_alphabet_get_label[%d].",
+            ST_ERROR("Failed to st_alphabet_get_label[%d].",
                        word_infos[a].id);
             goto ERR;
         }
 
         if (st_alphabet_add_label(alphabet, word) != a) {
-            ST_WARNING("Failed to st_alphabet_add_label[%d/%s].", a, word);
+            ST_ERROR("Failed to st_alphabet_add_label[%d/%s].", a, word);
             goto ERR;
         }
         cnts[a] = word_infos[a].cnt;
     }
     if (st_alphabet_add_label(alphabet, SENT_START) != a) {
-        ST_WARNING("Failed to st_alphabet_add_label[%d/%s].", a, SENT_START);
+        ST_ERROR("Failed to st_alphabet_add_label[%d/%s].", a, SENT_START);
         goto ERR;
     }
     cnts[a] = 0;
@@ -697,7 +697,7 @@ int vocab_learn(vocab_t *vocab, FILE *fp, vocab_learn_opt_t *lr_opt)
     word_infos = (word_info_t *)st_malloc(sizeof(word_info_t)
             * vocab->vocab_opt.max_alphabet_size);
     if (word_infos == NULL) {
-        ST_WARNING("Failed to st_malloc word_infos.");
+        ST_ERROR("Failed to st_malloc word_infos.");
         goto ERR;
     }
 
@@ -709,7 +709,7 @@ int vocab_learn(vocab_t *vocab, FILE *fp, vocab_learn_opt_t *lr_opt)
     words = 0;
     while (1) {
         if (vocab_read_word(word, MAX_SYM_LEN, fp) < 0) {
-            ST_WARNING("Failed to vocab_read_word.");
+            ST_ERROR("Failed to vocab_read_word.");
             goto ERR;
         }
 
@@ -724,7 +724,7 @@ int vocab_learn(vocab_t *vocab, FILE *fp, vocab_learn_opt_t *lr_opt)
             } else {
                 id = vocab_add_word(vocab, word);
                 if (id < 0) {
-                    ST_WARNING("Failed to vocab_add_word.");
+                    ST_ERROR("Failed to vocab_add_word.");
                     goto ERR;
                 }
             }
@@ -738,7 +738,7 @@ int vocab_learn(vocab_t *vocab, FILE *fp, vocab_learn_opt_t *lr_opt)
     }
 
     if (vocab_sort(vocab, word_infos, lr_opt) < 0) {
-        ST_WARNING("Failed to vocab_sort.");
+        ST_ERROR("Failed to vocab_sort.");
         goto ERR;
     }
 

@@ -56,7 +56,7 @@ sigmoid_data_t* sigmoid_data_init()
 
     data = (sigmoid_data_t *)st_malloc(sizeof(sigmoid_data_t));
     if (data == NULL) {
-        ST_WARNING("Failed to st_malloc sigmoid_data.");
+        ST_ERROR("Failed to st_malloc sigmoid_data.");
         goto ERR;
     }
     memset(data, 0, sizeof(sigmoid_data_t));
@@ -77,7 +77,7 @@ sigmoid_data_t* sigmoid_data_dup(sigmoid_data_t *src)
 
     dst = sigmoid_data_init();
     if (dst == NULL) {
-        ST_WARNING("Failed to sigmoid_data_init.");
+        ST_ERROR("Failed to sigmoid_data_init.");
         goto ERR;
     }
 
@@ -103,13 +103,13 @@ int sigmoid_init(layer_t *layer)
     ST_CHECK_PARAM(layer == NULL, -1);
 
     if (strcasecmp(layer->type, SIGMOID_NAME) != 0) {
-        ST_WARNING("Not a sigmoid layer. [%s]", layer->type);
+        ST_ERROR("Not a sigmoid layer. [%s]", layer->type);
         return -1;
     }
 
     layer->extra = (void *)sigmoid_data_init();
     if (layer->extra == NULL) {
-        ST_WARNING("Failed to sigmoid_data_init.");
+        ST_ERROR("Failed to sigmoid_data_init.");
         goto ERR;
     }
 
@@ -125,18 +125,18 @@ int sigmoid_dup(layer_t *dst, layer_t *src)
     ST_CHECK_PARAM(dst == NULL || src == NULL, -1);
 
     if (strcasecmp(dst->type, SIGMOID_NAME) != 0) {
-        ST_WARNING("dst is Not a sigmoid layer. [%s]", dst->type);
+        ST_ERROR("dst is Not a sigmoid layer. [%s]", dst->type);
         return -1;
     }
 
     if (strcasecmp(src->type, SIGMOID_NAME) != 0) {
-        ST_WARNING("src is Not a sigmoid layer. [%s]", src->type);
+        ST_ERROR("src is Not a sigmoid layer. [%s]", src->type);
         return -1;
     }
 
     dst->extra = (void *)sigmoid_data_dup((sigmoid_data_t *)src->extra);
     if (dst->extra == NULL) {
-        ST_WARNING("Failed to sigmoid_data_dup.");
+        ST_ERROR("Failed to sigmoid_data_dup.");
         goto ERR;
     }
 
@@ -168,18 +168,18 @@ int sigmoid_parse_topo(layer_t *layer, const char *line)
         }
 
         if (split_line(token, keyvalue, 2, MAX_LINE_LEN, "=") != 2) {
-            ST_WARNING("Failed to split key/value. [%s]", token);
+            ST_ERROR("Failed to split key/value. [%s]", token);
             goto ERR;
         }
 
         if (strcasecmp("steepness", keyvalue) == 0) {
             data->steepness = atof(keyvalue + MAX_LINE_LEN);
             if (data->steepness <= 0) {
-                ST_WARNING("Stepness should not be non-positive.");
+                ST_ERROR("Stepness should not be non-positive.");
                 goto ERR;
             }
         } else {
-            ST_WARNING("Unknown key/value[%s]", token);
+            ST_ERROR("Unknown key/value[%s]", token);
         }
     }
 
@@ -205,12 +205,12 @@ int sigmoid_load_header(void **extra, int version,
             || fmt == NULL, -1);
 
     if (version < 3) {
-        ST_WARNING("Too old version of connlm file");
+        ST_ERROR("Too old version of connlm file");
         return -1;
     }
 
     if (fread(&flag.magic_num, sizeof(int), 1, fp) != 1) {
-        ST_WARNING("Failed to load magic num.");
+        ST_ERROR("Failed to load magic num.");
         return -1;
     }
 
@@ -218,7 +218,7 @@ int sigmoid_load_header(void **extra, int version,
     if (strncmp(flag.str, "    ", 4) == 0) {
         *fmt = CONN_FMT_TXT;
     } else if (SIGMOID_LAYER_MAGIC_NUM != flag.magic_num) {
-        ST_WARNING("magic num wrong.");
+        ST_ERROR("magic num wrong.");
         return -2;
     }
 
@@ -229,7 +229,7 @@ int sigmoid_load_header(void **extra, int version,
     if (*fmt != CONN_FMT_TXT) {
         if (version >= 12) {
             if (fread(fmt, sizeof(connlm_fmt_t), 1, fp) != 1) {
-                ST_WARNING("Failed to read fmt.");
+                ST_ERROR("Failed to read fmt.");
                 goto ERR;
             }
         } else {
@@ -237,21 +237,21 @@ int sigmoid_load_header(void **extra, int version,
         }
 
         if (fread(&steepness, sizeof(real_t), 1, fp) != 1) {
-            ST_WARNING("Failed to read steepness.");
+            ST_ERROR("Failed to read steepness.");
             return -1;
         }
     } else {
         if (st_readline(fp, "") != 0) {
-            ST_WARNING("tag error.");
+            ST_ERROR("tag error.");
             goto ERR;
         }
         if (st_readline(fp, "<SIGMOID-LAYER>") != 0) {
-            ST_WARNING("tag error.");
+            ST_ERROR("tag error.");
             goto ERR;
         }
 
         if (st_readline(fp, "Stepness: "REAL_FMT, &steepness) != 1) {
-            ST_WARNING("Failed to parse steepness.");
+            ST_ERROR("Failed to parse steepness.");
             goto ERR;
         }
     }
@@ -259,7 +259,7 @@ int sigmoid_load_header(void **extra, int version,
     if (extra != NULL) {
         data = sigmoid_data_init();
         if (data == NULL) {
-            ST_WARNING("Failed to sigmoid_data_init.");
+            ST_ERROR("Failed to sigmoid_data_init.");
             goto ERR;
         }
 
@@ -288,7 +288,7 @@ int sigmoid_load_body(void *extra, int version, FILE *fp, connlm_fmt_t fmt)
     ST_CHECK_PARAM(extra == NULL || fp == NULL, -1);
 
     if (version < 3) {
-        ST_WARNING("Too old version of connlm file");
+        ST_ERROR("Too old version of connlm file");
         return -1;
     } else if (version >= 4) { // Remove this empty body from version 4
         return 0;
@@ -296,17 +296,17 @@ int sigmoid_load_body(void *extra, int version, FILE *fp, connlm_fmt_t fmt)
 
     if (connlm_fmt_is_bin(fmt)) {
         if (fread(&n, sizeof(int), 1, fp) != 1) {
-            ST_WARNING("Failed to read magic num.");
+            ST_ERROR("Failed to read magic num.");
             goto ERR;
         }
 
         if (n != -SIGMOID_LAYER_MAGIC_NUM) {
-            ST_WARNING("Magic num error.");
+            ST_ERROR("Magic num error.");
             goto ERR;
         }
     } else {
         if (st_readline(fp, "<SIGMOID-LAYER-DATA>") != 0) {
-            ST_WARNING("body flag error.");
+            ST_ERROR("body flag error.");
             goto ERR;
         }
     }
@@ -327,26 +327,26 @@ int sigmoid_save_header(void *extra, FILE *fp, connlm_fmt_t fmt)
 
     if (connlm_fmt_is_bin(fmt)) {
         if (fwrite(&SIGMOID_LAYER_MAGIC_NUM, sizeof(int), 1, fp) != 1) {
-            ST_WARNING("Failed to write magic num.");
+            ST_ERROR("Failed to write magic num.");
             return -1;
         }
         if (fwrite(&fmt, sizeof(connlm_fmt_t), 1, fp) != 1) {
-            ST_WARNING("Failed to write fmt.");
+            ST_ERROR("Failed to write fmt.");
             return -1;
         }
 
         if (fwrite(&(data->steepness), sizeof(real_t), 1, fp) != 1) {
-            ST_WARNING("Failed to write steepness.");
+            ST_ERROR("Failed to write steepness.");
             return -1;
         }
     } else {
         if (fprintf(fp, "    \n<SIGMOID-LAYER>\n") < 0) {
-            ST_WARNING("Failed to fprintf header.");
+            ST_ERROR("Failed to fprintf header.");
             return -1;
         }
 
         if (fprintf(fp, "Stepness: "REAL_FMT"\n", data->steepness) < 0) {
-            ST_WARNING("Failed to fprintf steepness.");
+            ST_ERROR("Failed to fprintf steepness.");
             return -1;
         }
     }
@@ -388,7 +388,7 @@ int sigmoid_deriv(layer_t *layer, mat_t *er, mat_t *ac)
     param = (sigmoid_data_t *)layer->extra;
 
     if (er->num_rows != ac->num_rows || er->num_cols != ac->num_cols) {
-        ST_WARNING("er and ac size not match");
+        ST_ERROR("er and ac size not match");
         return -1;
     }
 

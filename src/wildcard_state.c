@@ -65,7 +65,7 @@ int wildcard_state_load_opt(wildcard_state_opt_t *ws_opt,
 
     if ( ! ws_opt->random &&  ws_opt->num_samplings <= 0
             && ws_opt->eval_text_file[0] == '\0') {
-        ST_WARNING("You must set at least one of RANDOM or NUM_SAMPLINGS "
+        ST_ERROR("You must set at least one of RANDOM or NUM_SAMPLINGS "
                 "or EVAL_TEXT_FILE");
         goto ST_OPT_ERR;
     }
@@ -105,7 +105,7 @@ wildcard_state_t* wildcard_state_create(connlm_t *connlm,
 
     ws = (wildcard_state_t *)st_malloc(sizeof(wildcard_state_t));
     if (ws == NULL) {
-        ST_WARNING("Failed to st_malloc wildcard_state_t.");
+        ST_ERROR("Failed to st_malloc wildcard_state_t.");
         return NULL;
     }
     memset(ws, 0, sizeof(wildcard_state_t));
@@ -114,23 +114,23 @@ wildcard_state_t* wildcard_state_create(connlm_t *connlm,
     ws->ws_opt = *ws_opt;
 
     if (connlm_setup(connlm) < 0) {
-        ST_WARNING("Failed to connlm_setup.");
+        ST_ERROR("Failed to connlm_setup.");
         goto ERR;
     }
 
     ws->updater = updater_create(connlm);
     if (ws->updater == NULL) {
-        ST_WARNING("Failed to updater_create.");
+        ST_ERROR("Failed to updater_create.");
         goto ERR;
     }
 
     if (updater_setup(ws->updater, false) < 0) {
-        ST_WARNING("Failed to updater_setup.");
+        ST_ERROR("Failed to updater_setup.");
         goto ERR;
     }
 
     if (updater_setup_pre_ac_state(ws->updater) < 0) {
-        ST_WARNING("Failed to updater_setup_pre_ac_state.");
+        ST_ERROR("Failed to updater_setup_pre_ac_state.");
         goto ERR;
     }
 
@@ -138,7 +138,7 @@ wildcard_state_t* wildcard_state_create(connlm_t *connlm,
 
     ws->state = (real_t *)st_malloc(sizeof(real_t) * ws->state_size);
     if (ws->state == NULL) {
-        ST_WARNING("Failed to st_malloc state");
+        ST_ERROR("Failed to st_malloc state");
         goto ERR;
     }
     memset(ws->state, 0, sizeof(real_t) * ws->state_size);
@@ -147,14 +147,14 @@ wildcard_state_t* wildcard_state_create(connlm_t *connlm,
         ws->tmp_pre_ac_state = (real_t *)st_malloc(
                 sizeof(real_t) * ws->state_size);
         if (ws->tmp_pre_ac_state == NULL) {
-            ST_WARNING("Failed to st_malloc tmp_pre_ac_state");
+            ST_ERROR("Failed to st_malloc tmp_pre_ac_state");
             goto ERR;
         }
         memset(ws->tmp_pre_ac_state, 0, sizeof(real_t) * ws->state_size);
     } else {
         ws->tmp_state = (real_t *)st_malloc(sizeof(real_t) * ws->state_size);
         if (ws->tmp_state == NULL) {
-            ST_WARNING("Failed to st_malloc tmp_state");
+            ST_ERROR("Failed to st_malloc tmp_state");
             goto ERR;
         }
         memset(ws->tmp_state, 0, sizeof(real_t) * ws->state_size);
@@ -207,13 +207,13 @@ static int generate_random_state(wildcard_state_t *ws)
 {
     ws->random_state = (real_t *)st_malloc(sizeof(real_t)*ws->state_size);
     if (ws->random_state == NULL) {
-        ST_WARNING("Failed to st_malloc random_state");
+        ST_ERROR("Failed to st_malloc random_state");
         return -1;
     }
     memset(ws->random_state, 0, sizeof(real_t) * ws->state_size);
 
     if (updater_random_state(ws->updater, ws->random_state) < 0) {
-        ST_WARNING("Failed to updater_random_state.");
+        ST_ERROR("Failed to updater_random_state.");
         return -1;
     }
 
@@ -229,7 +229,7 @@ static int generate_sampling_state(wildcard_state_t *ws)
 
     ws->sampling_state = (real_t *)st_malloc(sizeof(real_t)*ws->state_size);
     if (ws->sampling_state == NULL) {
-        ST_WARNING("Failed to st_malloc sampling_state");
+        ST_ERROR("Failed to st_malloc sampling_state");
         return -1;
     }
     memset(ws->sampling_state, 0, sizeof(real_t) * ws->state_size);
@@ -242,7 +242,7 @@ static int generate_sampling_state(wildcard_state_t *ws)
             word = updater_sampling_state(ws->updater, ws->tmp_state,
                     ws->tmp_pre_ac_state, startover);
             if (word < 0) {
-                ST_WARNING("Failed to updater_sampling_state.");
+                ST_ERROR("Failed to updater_sampling_state.");
                 return -1;
             }
             startover = false;
@@ -266,7 +266,7 @@ static int generate_sampling_state(wildcard_state_t *ws)
 
     if (ws->ws_opt.pre_activation) {
         if (updater_activate_state(ws->updater, ws->sampling_state)) {
-            ST_WARNING("Failed to updater_activate_state.");
+            ST_ERROR("Failed to updater_activate_state.");
             return -1;
         }
     }
@@ -287,14 +287,14 @@ static int generate_eval_state(wildcard_state_t *ws)
 
     ws->eval_state = (real_t *)st_malloc(sizeof(real_t) * ws->state_size);
     if (ws->eval_state == NULL) {
-        ST_WARNING("Failed to st_malloc eval_state");
+        ST_ERROR("Failed to st_malloc eval_state");
         goto ERR;
     }
     memset(ws->eval_state, 0, sizeof(real_t) * ws->state_size);
 
     text_fp = st_fopen(ws->ws_opt.eval_text_file, "rb");
     if (text_fp == NULL) {
-        ST_WARNING("Failed to open text file[%s]", ws->ws_opt.eval_text_file);
+        ST_ERROR("Failed to open text file[%s]", ws->ws_opt.eval_text_file);
         goto ERR;
     }
 
@@ -302,12 +302,12 @@ static int generate_eval_state(wildcard_state_t *ws)
     while (! feof(text_fp)) {
         if (word_pool_read(&wp, NULL, 1, text_fp,
                     ws->connlm->vocab, NULL, true) < 0) {
-            ST_WARNING("Failed to word_pool_read.");
+            ST_ERROR("Failed to word_pool_read.");
             goto ERR;
         }
 
         if (updater_feed(ws->updater, wp.words, wp.size) < 0) {
-            ST_WARNING("Failed to updater_feed.");
+            ST_ERROR("Failed to updater_feed.");
             goto ERR;
         }
 
@@ -315,7 +315,7 @@ static int generate_eval_state(wildcard_state_t *ws)
             word = updater_step_state(ws->updater, ws->tmp_state,
                     ws->tmp_pre_ac_state);
             if (word < 0) {
-                ST_WARNING("Failed to updater_step_state.");
+                ST_ERROR("Failed to updater_step_state.");
                 goto ERR;
             }
             if (ws->tmp_state != NULL) {
@@ -340,7 +340,7 @@ static int generate_eval_state(wildcard_state_t *ws)
 
     if (ws->ws_opt.pre_activation) {
         if (updater_activate_state(ws->updater, ws->eval_state)) {
-            ST_WARNING("Failed to updater_activate_state.");
+            ST_ERROR("Failed to updater_activate_state.");
             goto ERR;
         }
     }
@@ -363,27 +363,27 @@ int wildcard_state_generate(wildcard_state_t *ws)
 
     if (ws->ws_opt.random) {
         if (generate_random_state(ws) < 0) {
-            ST_WARNING("Failed to generate_random_state.");
+            ST_ERROR("Failed to generate_random_state.");
             return -1;
         }
     }
 
     if (ws->ws_opt.num_samplings > 0) {
         if (generate_sampling_state(ws) < 0) {
-            ST_WARNING("Failed to generate_sampling_state.");
+            ST_ERROR("Failed to generate_sampling_state.");
             return -1;
         }
     }
 
     if (ws->ws_opt.eval_text_file[0] != '\0') {
         if (generate_eval_state(ws) < 0) {
-            ST_WARNING("Failed to generate_eval_state.");
+            ST_ERROR("Failed to generate_eval_state.");
             return -1;
         }
     }
 
     if (wildcard_state_summary(ws) < 0) {
-        ST_WARNING("Failed to wildcard_state_summary.");
+        ST_ERROR("Failed to wildcard_state_summary.");
         return -1;
     }
 
@@ -403,7 +403,7 @@ int wildcard_state_save(wildcard_state_t *ws, FILE *fp)
     if (ws->random_state != NULL) {
         if (print_vec(fp, ws->random_state, ws->state_size,
                     "# Random state") < 0) {
-            ST_WARNING("Failed to print_vec for random_state.");
+            ST_ERROR("Failed to print_vec for random_state.");
             return -1;
         }
     }
@@ -411,7 +411,7 @@ int wildcard_state_save(wildcard_state_t *ws, FILE *fp)
     if (ws->sampling_state != NULL) {
         if (print_vec(fp, ws->sampling_state, ws->state_size,
                     "# Sampling state") < 0) {
-            ST_WARNING("Failed to print_vec for sampling_state.");
+            ST_ERROR("Failed to print_vec for sampling_state.");
             return -1;
         }
     }
@@ -419,13 +419,13 @@ int wildcard_state_save(wildcard_state_t *ws, FILE *fp)
     if (ws->eval_state != NULL) {
         if (print_vec(fp, ws->eval_state, ws->state_size,
                     "# Eval state") < 0) {
-            ST_WARNING("Failed to print_vec for eval_state.");
+            ST_ERROR("Failed to print_vec for eval_state.");
             return -1;
         }
     }
 
     if (print_vec(fp, ws->state, ws->state_size, NULL) < 0) {
-        ST_WARNING("Failed to print_vec for state.");
+        ST_ERROR("Failed to print_vec for state.");
         return -1;
     }
 

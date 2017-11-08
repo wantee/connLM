@@ -68,7 +68,7 @@ out_updater_t* out_updater_create(output_t *output)
 
     out_updater = (out_updater_t *)st_malloc(sizeof(out_updater_t));
     if (out_updater == NULL) {
-        ST_WARNING("Failed to st_malloc out_updater.");
+        ST_ERROR("Failed to st_malloc out_updater.");
         goto ERR;
     }
     memset(out_updater, 0, sizeof(out_updater_t));
@@ -91,14 +91,14 @@ int out_updater_setup(out_updater_t *out_updater, bool backprop)
     num_nodes = out_updater->output->tree->num_node;
     out_updater->node_iters = (int *)st_malloc(sizeof(int) * num_nodes);
     if (out_updater->node_iters == NULL) {
-        ST_WARNING("Failed to st_malloc node_iters.");
+        ST_ERROR("Failed to st_malloc node_iters.");
         goto ERR;
     }
     memset(out_updater->node_iters, 0, sizeof(int) * num_nodes);
 
     out_updater->node_acs = (mat_t *)st_malloc(sizeof(mat_t) * num_nodes);
     if (out_updater->node_acs == NULL) {
-        ST_WARNING("Failed to st_malloc node_acs.");
+        ST_ERROR("Failed to st_malloc node_acs.");
         goto ERR;
     }
     memset(out_updater->node_acs, 0, sizeof(mat_t) * num_nodes);
@@ -106,7 +106,7 @@ int out_updater_setup(out_updater_t *out_updater, bool backprop)
     if (backprop) {
         out_updater->node_ers = (mat_t *)st_malloc(sizeof(mat_t) * num_nodes);
         if (out_updater->node_ers == NULL) {
-            ST_WARNING("Failed to st_malloc node_ers.");
+            ST_ERROR("Failed to st_malloc node_ers.");
             goto ERR;
         }
         memset(out_updater->node_ers, 0, sizeof(mat_t) * num_nodes);
@@ -143,7 +143,7 @@ int out_updater_reset_iters(out_updater_t *out_updater, ivec_t *targets)
         }
         if (output_walk_through_path(out_updater->output, VEC_VAL(targets, i),
                     out_reset_walker, (void *)out_updater->node_iters) < 0) {
-            ST_WARNING("Failed to output_walk_through_path.");
+            ST_ERROR("Failed to output_walk_through_path.");
             return -1;
         }
     }
@@ -171,7 +171,7 @@ static int out_updater_acc_iters(out_updater_t *out_updater, ivec_t *targets)
     ST_CHECK_PARAM(out_updater == NULL, -1);
 
     if (out_updater_reset_iters(out_updater, targets) < 0) {
-        ST_WARNING("Failed to out_updater_reset_iters.");
+        ST_ERROR("Failed to out_updater_reset_iters.");
         return -1;
     }
 
@@ -181,7 +181,7 @@ static int out_updater_acc_iters(out_updater_t *out_updater, ivec_t *targets)
         }
         if (output_walk_through_path(out_updater->output, VEC_VAL(targets, i),
                     out_acc_iter_walker, (void *)out_updater->node_iters) < 0) {
-            ST_WARNING("Failed to output_walk_through_path.");
+            ST_ERROR("Failed to output_walk_through_path.");
             return -1;
         }
     }
@@ -204,7 +204,7 @@ static int out_prepare_walker(output_t *output, output_node_id_t node,
     if (mat_resize(out_updater->node_acs + node,
                 out_updater->node_iters[node], child_e - child_s - 1,
                 0.0) < 0) {
-        ST_WARNING("Failed to mat_resize node_acs["OUTPUT_NODE_FMT".", node);
+        ST_ERROR("Failed to mat_resize node_acs["OUTPUT_NODE_FMT".", node);
         return -1;
     }
 
@@ -213,7 +213,7 @@ static int out_prepare_walker(output_t *output, output_node_id_t node,
         if (mat_resize(out_updater->node_ers + node,
                     out_updater->node_iters[node], child_e - child_s - 1,
                     NAN /* no need to init ers. */) < 0) {
-            ST_WARNING("Failed to mat_resize node_ers["OUTPUT_NODE_FMT".", node);
+            ST_ERROR("Failed to mat_resize node_ers["OUTPUT_NODE_FMT".", node);
             return -1;
         }
     }
@@ -230,7 +230,7 @@ int out_updater_prepare(out_updater_t *out_updater, ivec_t *targets)
     ST_CHECK_PARAM(out_updater == NULL, -1);
 
     if (out_updater_acc_iters(out_updater, targets) < 0) {
-        ST_WARNING("Failed to out_updater_acc_iters.");
+        ST_ERROR("Failed to out_updater_acc_iters.");
         return -1;
     }
 
@@ -240,7 +240,7 @@ int out_updater_prepare(out_updater_t *out_updater, ivec_t *targets)
         }
         if (output_walk_through_path(out_updater->output, VEC_VAL(targets, i),
                     out_prepare_walker, (void *)out_updater) < 0) {
-            ST_WARNING("Failed to output_walk_through_path.");
+            ST_ERROR("Failed to output_walk_through_path.");
             return -1;
         }
     }
@@ -309,13 +309,13 @@ int out_updater_activate(out_updater_t *out_updater,
     output = out_updater->output;
 
     if (dvec_resize(logps, targets->size, 0.0) < 0) {
-        ST_WARNING("Failed to dvec_resize");
+        ST_ERROR("Failed to dvec_resize");
         return -1;
     }
     dvec_set(logps, 0.0);
 
     if (out_updater_reset_iters(out_updater, targets) < 0) {
-        ST_WARNING("Failed to out_updater_reset_iters.");
+        ST_ERROR("Failed to out_updater_reset_iters.");
         return -1;
     }
 
@@ -328,7 +328,7 @@ int out_updater_activate(out_updater_t *out_updater,
         oaw_args.batch_i = i;
         if (output_walk_through_path(output, VEC_VAL(targets, i),
                     out_act_walker, (void *)&oaw_args) < 0) {
-            ST_WARNING("Failed to output_walk_through_path.");
+            ST_ERROR("Failed to output_walk_through_path.");
             return -1;
         }
     }
@@ -385,7 +385,7 @@ int out_updater_loss(out_updater_t *out_updater, ivec_t *targets)
     output = out_updater->output;
 
     if (out_updater_reset_iters(out_updater, targets) < 0) {
-        ST_WARNING("Failed to out_updater_reset_iters.");
+        ST_ERROR("Failed to out_updater_reset_iters.");
         return -1;
     }
 
@@ -395,7 +395,7 @@ int out_updater_loss(out_updater_t *out_updater, ivec_t *targets)
         }
         if (output_walk_through_path(output, VEC_VAL(targets, i),
                     out_loss_walker, (void *)out_updater) < 0) {
-            ST_WARNING("Failed to output_walk_through_path.");
+            ST_ERROR("Failed to output_walk_through_path.");
             return -1;
         }
     }
@@ -429,7 +429,7 @@ output_node_id_t out_updater_sample(out_updater_t *out_updater,
     s = s_children(output->tree, node);
     e = e_children(output->tree, node);
     if (s >= e) {
-        ST_WARNING("No children to be sampled.");
+        ST_ERROR("No children to be sampled.");
         return OUTPUT_NODE_NONE;
     }
 
@@ -444,7 +444,7 @@ output_node_id_t out_updater_sample(out_updater_t *out_updater,
             }
         }
         if (sampled == e) {
-            ST_WARNING("Can't sample from node["OUTPUT_NODE_FMT"], "
+            ST_ERROR("Can't sample from node["OUTPUT_NODE_FMT"], "
                    "because all its children are <unk>.", node);
             return OUTPUT_NODE_NONE;
         }

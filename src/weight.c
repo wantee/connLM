@@ -77,13 +77,13 @@ static int wt_resize(weight_t *wt, size_t row, size_t col)
     ST_CHECK_PARAM(wt == NULL || row <= 0 || col <= 0, -1);
 
     if (mat_resize(&wt->w, row, col, NAN) < 0) {
-        ST_WARNING("Failed to mat_resize w.");
+        ST_ERROR("Failed to mat_resize w.");
         return -1;
     }
 
     if (! isinf(wt->init_bias)) {
         if (vec_resize(&wt->bias, row, NAN) < 0) {
-            ST_WARNING("Failed to vec_resize bias.");
+            ST_ERROR("Failed to vec_resize bias.");
             return -1;
         }
     }
@@ -99,7 +99,7 @@ weight_t* wt_dup(weight_t *src)
 
     dst = (weight_t *)st_malloc(sizeof(weight_t));
     if (dst == NULL) {
-        ST_WARNING("Failed to st_malloc weight_t.");
+        ST_ERROR("Failed to st_malloc weight_t.");
         return NULL;
     }
     memset(dst, 0, sizeof(weight_t));
@@ -109,12 +109,12 @@ weight_t* wt_dup(weight_t *src)
     dst->init_bias = src->init_bias;
 
     if (mat_cpy(&dst->w, &src->w) < 0) {
-        ST_WARNING("Failed to mat_cpy.");
+        ST_ERROR("Failed to mat_cpy.");
         goto ERR;
     }
 
     if (vec_cpy(&dst->bias, &src->bias) < 0) {
-        ST_WARNING("Failed to vec_cpy.");
+        ST_ERROR("Failed to vec_cpy.");
         goto ERR;
     }
 
@@ -148,29 +148,29 @@ int wt_parse_topo(weight_t *wt, char *line, size_t line_len)
         }
 
         if (split_line(token, keyvalue, 2, MAX_LINE_LEN, "=") != 2) {
-            ST_WARNING("Failed to split key/value. [%s]", token);
+            ST_ERROR("Failed to split key/value. [%s]", token);
             goto ERR;
         }
 
         if (strcasecmp("init", keyvalue) == 0) {
             if (wt->init_type != WT_INIT_UNKNOWN) {
-                ST_WARNING("Duplicated init tag");
+                ST_ERROR("Duplicated init tag");
                 goto ERR;
             }
             wt->init_type = str2init(keyvalue + MAX_LINE_LEN);
             if (wt->init_type == WT_INIT_UNKNOWN) {
-                ST_WARNING("Unknown init type.");
+                ST_ERROR("Unknown init type.");
                 goto ERR;
             }
         } else if (strcasecmp("init_param", keyvalue) == 0) {
             if (! isnan(wt->init_param)) {
-                ST_WARNING("Duplicated init_param tag");
+                ST_ERROR("Duplicated init_param tag");
                 goto ERR;
             }
             wt->init_param = atof(keyvalue + MAX_LINE_LEN);
         } else if (strcasecmp("bias", keyvalue) == 0) {
             if (! isnan(wt->init_bias)) {
-               ST_WARNING("Duplicated bias tag");
+               ST_ERROR("Duplicated bias tag");
                 goto ERR;
             }
 
@@ -208,7 +208,7 @@ int wt_parse_topo(weight_t *wt, char *line, size_t line_len)
             wt->init_param = 0.1;
         }
         if (wt->init_param <= 0) {
-            ST_WARNING("Error init_param[%g]", wt->init_param);
+            ST_ERROR("Error init_param[%g]", wt->init_param);
             goto ERR;
         }
     } else if (wt->init_type == WT_INIT_NORM) {
@@ -216,7 +216,7 @@ int wt_parse_topo(weight_t *wt, char *line, size_t line_len)
             wt->init_param = 0.1;
         }
         if (wt->init_param <= 0) {
-            ST_WARNING("Error init_param[%g]", wt->init_param);
+            ST_ERROR("Error init_param[%g]", wt->init_param);
             goto ERR;
         }
     } else if (wt->init_type == WT_INIT_TRUNC_NORM) {
@@ -224,7 +224,7 @@ int wt_parse_topo(weight_t *wt, char *line, size_t line_len)
             wt->init_param = 0.1;
         }
         if (wt->init_param <= 0) {
-            ST_WARNING("Error init_param[%g]", wt->init_param);
+            ST_ERROR("Error init_param[%g]", wt->init_param);
             goto ERR;
         }
     } else if (wt->init_type == WT_INIT_IDENTITY) {
@@ -263,12 +263,12 @@ int wt_load_header(weight_t **wt, int version,
     ST_CHECK_PARAM(fp == NULL || fmt == NULL, -1);
 
     if (version < 20) {
-        ST_WARNING("Too old version of connlm file");
+        ST_ERROR("Too old version of connlm file");
         return -1;
     }
 
     if (fread(&flag.magic_num, sizeof(int), 1, fp) != 1) {
-        ST_WARNING("Failed to load magic num.");
+        ST_ERROR("Failed to load magic num.");
         return -1;
     }
 
@@ -276,7 +276,7 @@ int wt_load_header(weight_t **wt, int version,
     if (strncmp(flag.str, "    ", 4) == 0) {
         *fmt = CONN_FMT_TXT;
     } else if (WT_MAGIC_NUM != flag.magic_num) {
-        ST_WARNING("magic num wrong.");
+        ST_ERROR("magic num wrong.");
         return -2;
     }
 
@@ -286,50 +286,50 @@ int wt_load_header(weight_t **wt, int version,
 
     if (*fmt != CONN_FMT_TXT) {
         if (fread(fmt, sizeof(connlm_fmt_t), 1, fp) != 1) {
-            ST_WARNING("Failed to read fmt.");
+            ST_ERROR("Failed to read fmt.");
             goto ERR;
         }
 
         if (fread(&i, sizeof(int), 1, fp) != 1) {
-            ST_WARNING("Failed to read init.");
+            ST_ERROR("Failed to read init.");
             goto ERR;
         }
         if (fread(&init_param, sizeof(real_t), 1, fp) != 1) {
-            ST_WARNING("Failed to read init_param.");
+            ST_ERROR("Failed to read init_param.");
             goto ERR;
         }
         if (fread(&init_bias, sizeof(real_t), 1, fp) != 1) {
-            ST_WARNING("Failed to read init_bias.");
+            ST_ERROR("Failed to read init_bias.");
             goto ERR;
         }
     } else {
         if (st_readline(fp, "") != 0) {
-            ST_WARNING("tag error.");
+            ST_ERROR("tag error.");
             goto ERR;
         }
         if (st_readline(fp, "<WEIGHT>") != 0) {
-            ST_WARNING("tag error.");
+            ST_ERROR("tag error.");
             goto ERR;
         }
 
         if (st_readline(fp, "Init: %"xSTR(MAX_LINE_LEN)"s", sym) != 1) {
-            ST_WARNING("Failed to parse init.");
+            ST_ERROR("Failed to parse init.");
             goto ERR;
         }
         sym[MAX_LINE_LEN - 1] = '\0';
         i = (int)str2init(sym);
         if (i == (int)WT_INIT_UNKNOWN) {
-            ST_WARNING("Unknown init[%s]", sym);
+            ST_ERROR("Unknown init[%s]", sym);
             goto ERR;
         }
 
         if (st_readline(fp, "Init param: "REAL_FMT, &init_param) != 1) {
-            ST_WARNING("Failed to parse init param.");
+            ST_ERROR("Failed to parse init param.");
             goto ERR;
         }
 
         if (st_readline(fp, "Bias: %"xSTR(MAX_LINE_LEN)"s", sym) != 1) {
-            ST_WARNING("Failed to parse init.");
+            ST_ERROR("Failed to parse init.");
             goto ERR;
         }
         sym[MAX_LINE_LEN - 1] = '\0';
@@ -343,7 +343,7 @@ int wt_load_header(weight_t **wt, int version,
     if (wt != NULL) {
         *wt = (weight_t *)st_malloc(sizeof(weight_t));
         if (*wt == NULL) {
-            ST_WARNING("Failed to st_malloc weight_t");
+            ST_ERROR("Failed to st_malloc weight_t");
             goto ERR;
         }
         memset(*wt, 0, sizeof(weight_t));
@@ -366,22 +366,22 @@ int wt_load_header(weight_t **wt, int version,
 
     if (mat_load_header((wt == NULL) ? NULL : &((*wt)->w),
                 version, fp, &f, fo_info) < 0) {
-        ST_WARNING("Failed to mat_load_header.");
+        ST_ERROR("Failed to mat_load_header.");
         return -1;
     }
     if (*fmt != f) {
-        ST_WARNING("Multiple formats in one file.");
+        ST_ERROR("Multiple formats in one file.");
         return -1;
     }
 
     if (! isinf(init_bias)) {
         if (vec_load_header((wt == NULL) ? NULL : &((*wt)->bias),
                     version, fp, &f, fo_info) < 0) {
-            ST_WARNING("Failed to vec_load_header.");
+            ST_ERROR("Failed to vec_load_header.");
             return -1;
         }
         if (*fmt != f) {
-            ST_WARNING("Multiple formats in one file.");
+            ST_ERROR("Multiple formats in one file.");
             return -1;
         }
     }
@@ -402,35 +402,35 @@ int wt_load_body(weight_t *wt, int version, FILE *fp, connlm_fmt_t fmt)
     ST_CHECK_PARAM(wt == NULL || fp == NULL, -1);
 
     if (version < 20) {
-        ST_WARNING("Too old version of connlm file");
+        ST_ERROR("Too old version of connlm file");
         return -1;
     }
 
     if (connlm_fmt_is_bin(fmt)) {
         if (fread(&n, sizeof(int), 1, fp) != 1) {
-            ST_WARNING("Failed to read magic num.");
+            ST_ERROR("Failed to read magic num.");
             return -1;
         }
 
         if (n != -WT_MAGIC_NUM) {
-            ST_WARNING("Magic num error.[%d]", n);
+            ST_ERROR("Magic num error.[%d]", n);
             return -1;
         }
     } else {
         if (st_readline(fp, "<WEIGHT-DATA>") != 0) {
-            ST_WARNING("body flag error.");
+            ST_ERROR("body flag error.");
             return -1;
         }
     }
 
     if (mat_load_body(&wt->w, version, fp, fmt) < 0) {
-        ST_WARNING("Failed to mat_load_body w");
+        ST_ERROR("Failed to mat_load_body w");
         return -1;
     }
 
     if (! isinf(wt->init_bias)) {
         if (vec_load_body(&wt->bias, version, fp, fmt) < 0) {
-            ST_WARNING("Failed to vec_load_body bias");
+            ST_ERROR("Failed to vec_load_body bias");
             return -1;
         }
     }
@@ -446,63 +446,63 @@ int wt_save_header(weight_t *wt, FILE *fp, connlm_fmt_t fmt)
 
     if (connlm_fmt_is_bin(fmt)) {
         if (fwrite(&WT_MAGIC_NUM, sizeof(int), 1, fp) != 1) {
-            ST_WARNING("Failed to write magic num.");
+            ST_ERROR("Failed to write magic num.");
             return -1;
         }
         if (fwrite(&fmt, sizeof(connlm_fmt_t), 1, fp) != 1) {
-            ST_WARNING("Failed to write fmt.");
+            ST_ERROR("Failed to write fmt.");
             return -1;
         }
 
         n = (int)wt->init_type;
         if (fwrite(&n, sizeof(int), 1, fp) != 1) {
-            ST_WARNING("Failed to write init_type.");
+            ST_ERROR("Failed to write init_type.");
             return -1;
         }
         if (fwrite(&wt->init_param, sizeof(real_t), 1, fp) != 1) {
-            ST_WARNING("Failed to write init_param.");
+            ST_ERROR("Failed to write init_param.");
             return -1;
         }
 
         if (fwrite(&wt->init_bias, sizeof(real_t), 1, fp) != 1) {
-            ST_WARNING("Failed to write init_bias.");
+            ST_ERROR("Failed to write init_bias.");
             return -1;
         }
     } else {
         if (fprintf(fp, "    \n<WEIGHT>\n") < 0) {
-            ST_WARNING("Failed to fprintf header.");
+            ST_ERROR("Failed to fprintf header.");
             return -1;
         }
 
         if (fprintf(fp, "Init: %s\n", init2str(wt->init_type)) < 0) {
-            ST_WARNING("Failed to fprintf init type.");
+            ST_ERROR("Failed to fprintf init type.");
             return -1;
         }
         if (fprintf(fp, "Init param: %f\n", wt->init_param) < 0) {
-            ST_WARNING("Failed to fprintf init param.");
+            ST_ERROR("Failed to fprintf init param.");
             return -1;
         }
         if (isinf(wt->init_bias)) {
             if (fprintf(fp, "Bias: None\n") < 0) {
-                ST_WARNING("Failed to fprintf init bias.");
+                ST_ERROR("Failed to fprintf init bias.");
                 return -1;
             }
         } else {
             if (fprintf(fp, "Bias: %f\n", wt->init_bias) < 0) {
-                ST_WARNING("Failed to fprintf init bias.");
+                ST_ERROR("Failed to fprintf init bias.");
                 return -1;
             }
         }
     }
 
     if (mat_save_header(&wt->w, fp, fmt) < 0) {
-        ST_WARNING("Failed to mat_save_header.");
+        ST_ERROR("Failed to mat_save_header.");
         return -1;
     }
 
     if (! isinf(wt->init_bias)) {
         if (vec_save_header(&wt->bias, fp, fmt) < 0) {
-            ST_WARNING("Failed to vec_save_header.");
+            ST_ERROR("Failed to vec_save_header.");
             return -1;
         }
     }
@@ -519,25 +519,25 @@ int wt_save_body(weight_t *wt, FILE *fp, connlm_fmt_t fmt, char *name)
     if (connlm_fmt_is_bin(fmt)) {
         n = -WT_MAGIC_NUM;
         if (fwrite(&n, sizeof(int), 1, fp) != 1) {
-            ST_WARNING("Failed to write magic num.");
+            ST_ERROR("Failed to write magic num.");
             return -1;
         }
 
     } else {
         if (fprintf(fp, "<WEIGHT-DATA>\n") < 0) {
-            ST_WARNING("Failed to fprintf header.");
+            ST_ERROR("Failed to fprintf header.");
             return -1;
         }
     }
 
     if (mat_save_body(&wt->w, fp, fmt, name) < 0) {
-        ST_WARNING("Failed to mat_save_body w");
+        ST_ERROR("Failed to mat_save_body w");
         return -1;
     }
 
     if (! isinf(wt->init_bias)) {
         if (vec_save_body(&wt->bias, fp, fmt, NULL) < 0) {
-            ST_WARNING("Failed to vec_save_body bias");
+            ST_ERROR("Failed to vec_save_body bias");
             return -1;
         }
     }
@@ -553,7 +553,7 @@ int wt_init(weight_t *wt, size_t row, size_t col)
     ST_CHECK_PARAM(wt == NULL || row <= 0, -1);
 
     if (wt_resize(wt, row, col) < 0) {
-        ST_WARNING("Failed to wt_resize.");
+        ST_ERROR("Failed to wt_resize.");
         return -1;
     }
 
@@ -586,7 +586,7 @@ int wt_init(weight_t *wt, size_t row, size_t col)
             break;
         case WT_INIT_IDENTITY:
             if (wt->w.num_rows != wt->w.num_cols) {
-                ST_WARNING("Identity initialization: row and col must be equal.");
+                ST_ERROR("Identity initialization: row and col must be equal.");
                 return -1;
             }
             mat_set(&wt->w, 0.0);
@@ -595,7 +595,7 @@ int wt_init(weight_t *wt, size_t row, size_t col)
             }
             break;
         default:
-            ST_WARNING("Unknown init type[%d]", wt->init_type);
+            ST_ERROR("Unknown init type[%d]", wt->init_type);
             return -1;
     }
 

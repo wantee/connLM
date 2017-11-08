@@ -57,7 +57,7 @@ int mat_clear(mat_t *mat)
 
     if (mat->is_const) {
         if (mat->num_rows != 0 || mat->num_cols != 0) {
-            ST_WARNING("Can not clear a const mat.");
+            ST_ERROR("Can not clear a const mat.");
             return -1;
         }
     }
@@ -77,7 +77,7 @@ int mat_resize(mat_t *mat, size_t num_rows, size_t num_cols, real_t init_val)
 
     if (mat->is_const) {
         if (mat->num_rows != num_rows || mat->num_cols != num_cols) {
-            ST_WARNING("Can not resize a const matrix.");
+            ST_ERROR("Can not resize a const matrix.");
             return -1;
         }
     }
@@ -90,7 +90,7 @@ int mat_resize(mat_t *mat, size_t num_rows, size_t num_cols, real_t init_val)
         mat->vals = (real_t *)st_aligned_realloc(mat->vals,
                 sizeof(real_t) * num_rows * stride, ALIGN_SIZE);
         if (mat->vals == NULL) {
-            ST_WARNING("Failed to st_aligned_realloc mat->vals.");
+            ST_ERROR("Failed to st_aligned_realloc mat->vals.");
             return -1;
         }
         mat->capacity = num_rows * stride;
@@ -112,7 +112,7 @@ int mat_resize_row(mat_t *mat, size_t num_rows, real_t init_val)
 
     if (mat->is_const) {
         if (mat->num_rows != num_rows) {
-            ST_WARNING("Can not resize a const matrix.");
+            ST_ERROR("Can not resize a const matrix.");
             return -1;
         }
     }
@@ -121,7 +121,7 @@ int mat_resize_row(mat_t *mat, size_t num_rows, real_t init_val)
         mat->vals = (real_t *)st_aligned_realloc(mat->vals,
                 sizeof(real_t) * num_rows * mat->stride, ALIGN_SIZE);
         if (mat->vals == NULL) {
-            ST_WARNING("Failed to st_aligned_realloc mat->vals.");
+            ST_ERROR("Failed to st_aligned_realloc mat->vals.");
             return -1;
         }
         mat->capacity = num_rows * mat->stride;
@@ -146,17 +146,17 @@ int mat_append(mat_t *dst, mat_t* src)
 
     if (dst->num_rows == 0 && dst->num_cols == 0) {
         if (mat_resize(dst, src->num_rows, src->num_cols, NAN) < 0) {
-            ST_WARNING("Failed to mat_resize.");
+            ST_ERROR("Failed to mat_resize.");
             return -1;
         }
     } else {
         if (dst->num_cols != src->num_cols) {
-            ST_WARNING("num_cols not match.[%zu:%zu]", dst->num_cols, src->num_cols);
+            ST_ERROR("num_cols not match.[%zu:%zu]", dst->num_cols, src->num_cols);
             return -1;
         }
 
         if (mat_resize_row(dst, dst->num_rows + src->num_rows, NAN) < 0) {
-            ST_WARNING("Failed to mat_resize_row.");
+            ST_ERROR("Failed to mat_resize_row.");
             return -1;
         }
     }
@@ -177,7 +177,7 @@ int mat_cpy(mat_t *dst, mat_t *src)
     ST_CHECK_PARAM(dst == NULL || src == NULL, -1);
 
     if (mat_resize(dst, src->num_rows, src->num_cols, NAN) < 0) {
-        ST_WARNING("Failed to mat_resize.");
+        ST_ERROR("Failed to mat_resize.");
         return -1;
     }
 
@@ -230,7 +230,7 @@ int mat_move_up(mat_t *mat, size_t dst_row, size_t src_row)
     ST_CHECK_PARAM(mat == NULL, -1);
 
     if (dst_row >= src_row) {
-        ST_WARNING("dst_row must be larger than src_row.");
+        ST_ERROR("dst_row must be larger than src_row.");
         return -1;
     }
 
@@ -246,17 +246,17 @@ int mat_cpy_row(mat_t *dst, size_t dst_row, mat_t *src, size_t src_row)
     ST_CHECK_PARAM(dst == NULL || src == NULL, -1);
 
     if (dst_row >= dst->num_rows) {
-        ST_WARNING("Invalid dst row index [%zu/%zu]", dst_row, dst->num_rows);
+        ST_ERROR("Invalid dst row index [%zu/%zu]", dst_row, dst->num_rows);
         return -1;
     }
 
     if (src_row >= src->num_rows) {
-        ST_WARNING("Invalid src row index [%zu/%zu]", src_row, src->num_rows);
+        ST_ERROR("Invalid src row index [%zu/%zu]", src_row, src->num_rows);
         return -1;
     }
 
     if (dst->num_cols != src->num_cols) {
-        ST_WARNING("num_cols not match [%zu/%zu]", dst->num_cols, src->num_cols);
+        ST_ERROR("num_cols not match [%zu/%zu]", dst->num_cols, src->num_cols);
         return -1;
     }
 
@@ -275,17 +275,17 @@ int mat_acc_row(mat_t *dst, size_t dst_row, mat_t *src, size_t src_row)
     ST_CHECK_PARAM(dst == NULL || src == NULL, -1);
 
     if (dst_row >= dst->num_rows) {
-        ST_WARNING("Invalid dst row index [%zu/%zu]", dst_row, dst->num_rows);
+        ST_ERROR("Invalid dst row index [%zu/%zu]", dst_row, dst->num_rows);
         return -1;
     }
 
     if (src_row >= src->num_rows) {
-        ST_WARNING("Invalid src row index [%zu/%zu]", src_row, src->num_rows);
+        ST_ERROR("Invalid src row index [%zu/%zu]", src_row, src->num_rows);
         return -1;
     }
 
     if (dst->num_cols != src->num_cols) {
-        ST_WARNING("num_cols not match [%zu/%zu]", dst->num_cols, src->num_cols);
+        ST_ERROR("num_cols not match [%zu/%zu]", dst->num_cols, src->num_cols);
         return -1;
     }
 
@@ -304,7 +304,7 @@ int mat_submat(mat_t *mat, size_t row_s, size_t num_rows,
     ST_CHECK_PARAM(mat == NULL || sub == NULL, -1);
 
     if (row_s >= mat->num_rows || col_s >= mat->num_cols) {
-        ST_WARNING("Error row[%zu/%zu] or col[%zu/%zu] index.",
+        ST_ERROR("Error row[%zu/%zu] or col[%zu/%zu] index.",
                 row_s, mat->num_rows, col_s, mat->num_cols);
         return -1;
     }
@@ -313,7 +313,7 @@ int mat_submat(mat_t *mat, size_t row_s, size_t num_rows,
         num_rows = mat->num_rows - row_s;
     } else {
         if (row_s + num_rows > mat->num_rows) {
-            ST_WARNING("Not enough rows to extract [%zu + %zu > %zu].",
+            ST_ERROR("Not enough rows to extract [%zu + %zu > %zu].",
                     row_s, num_rows, mat->num_rows);
             return -1;
         }
@@ -323,7 +323,7 @@ int mat_submat(mat_t *mat, size_t row_s, size_t num_rows,
         num_cols = mat->num_cols - col_s;
     } else {
         if (col_s + num_cols > mat->num_cols) {
-            ST_WARNING("Not enough cols to extract [%zu + %zu > %zu].",
+            ST_ERROR("Not enough cols to extract [%zu + %zu > %zu].",
                     col_s, num_cols, mat->num_cols);
             return -1;
         }
@@ -348,12 +348,12 @@ int mat_fill(mat_t *mat, size_t row_s, size_t num_rows,
     ST_CHECK_PARAM(mat == NULL || val == NULL, -1);
 
     if (mat_submat(mat, row_s, num_rows, col_s, num_cols, &sub) < 0) {
-        ST_WARNING("Failed to mat_submat.");
+        ST_ERROR("Failed to mat_submat.");
         return -1;
     }
 
     if (mat_cpy(&sub, val) < 0) {
-        ST_WARNING("Failed to mat_cpy");
+        ST_ERROR("Failed to mat_cpy");
         return -1;
     }
 
@@ -428,7 +428,7 @@ int mat_set_row(mat_t *mat, size_t row, real_t val)
     ST_CHECK_PARAM(mat == NULL, -1);
 
     if (row >= mat->num_rows) {
-        ST_WARNING("Invalid row index [%zu/%zu]", row, mat->num_rows);
+        ST_ERROR("Invalid row index [%zu/%zu]", row, mat->num_rows);
         return -1;
     }
 
@@ -472,7 +472,7 @@ int mat_add_elems(mat_t *mat1, real_t s1, mat_t *mat2, real_t s2, mat_t *out)
     if (mat1->num_rows != mat2->num_rows || mat1->num_cols != mat2->num_cols
             || mat1->num_rows != out->num_rows
             || mat1->num_cols != out->num_cols) {
-        ST_WARNING("Diemension not match.");
+        ST_ERROR("Diemension not match.");
         return -1;
     }
 
@@ -501,7 +501,7 @@ int mat_mul_elems(mat_t *mat1, mat_t *mat2, mat_t *out)
     if (mat1->num_rows != mat2->num_rows || mat1->num_cols != mat2->num_cols
             || mat1->num_rows != out->num_rows
             || mat1->num_cols != out->num_cols) {
-        ST_WARNING("Diemension not match.");
+        ST_ERROR("Diemension not match.");
         return -1;
     }
 
@@ -528,7 +528,7 @@ int mat_add_vec(mat_t *mat, vec_t *vec, real_t scale)
     ST_CHECK_PARAM(mat == NULL || vec == NULL, -1);
 
     if (mat->num_cols != vec->size) {
-        ST_WARNING("Diemension not match.");
+        ST_ERROR("Diemension not match.");
         return -1;
     }
 
@@ -563,25 +563,25 @@ int add_mat_mat(real_t alpha, mat_t *A, mat_trans_t trans_A,
     if (trans_A == MT_NoTrans && trans_B == MT_NoTrans) {
         if (A->num_cols != B->num_rows || A->num_rows != C->num_rows
                 || B->num_cols != C->num_cols) {
-            ST_WARNING("diemensions not match.");
+            ST_ERROR("diemensions not match.");
             return -1;
         }
     } else if (trans_A == MT_Trans && trans_B == MT_NoTrans) {
         if (A->num_rows != B->num_rows || A->num_cols != C->num_rows
                 || B->num_cols != C->num_cols) {
-            ST_WARNING("diemensions not match.");
+            ST_ERROR("diemensions not match.");
             return -1;
         }
     } else if (trans_A == MT_NoTrans && trans_B == MT_Trans) {
         if (A->num_cols != B->num_cols || A->num_rows != C->num_rows
                 || B->num_rows != C->num_cols) {
-            ST_WARNING("diemensions not match.");
+            ST_ERROR("diemensions not match.");
             return -1;
         }
     } else if (trans_A == MT_Trans && trans_B == MT_Trans) {
         if (A->num_rows != B->num_cols || A->num_cols != C->num_rows
                 || B->num_rows != C->num_cols) {
-            ST_WARNING("diemensions not match.");
+            ST_ERROR("diemensions not match.");
             return -1;
         }
     }
@@ -693,7 +693,7 @@ int vec_add_col_sum_mat(vec_t *vec, real_t alpha, mat_t *mat, real_t beta)
     ST_CHECK_PARAM(vec == NULL || mat == NULL, -1);
 
     if (mat->num_cols != vec->size) {
-        ST_WARNING("dimension not match.");
+        ST_ERROR("dimension not match.");
         return -1;
     }
 
@@ -722,7 +722,7 @@ int mat_load_header(mat_t *mat, int version,
     ST_CHECK_PARAM(fp == NULL || fmt == NULL, -1);
 
     if (fread(&flag.magic_num, sizeof(int), 1, fp) != 1) {
-        ST_WARNING("Failed to load magic num.");
+        ST_ERROR("Failed to load magic num.");
         return -1;
     }
 
@@ -730,7 +730,7 @@ int mat_load_header(mat_t *mat, int version,
     if (strncmp(flag.str, "    ", 4) == 0) {
         *fmt = CONN_FMT_TXT;
     } else if (MAT_MAGIC_NUM != flag.magic_num) {
-        ST_WARNING("magic num wrong.");
+        ST_ERROR("magic num wrong.");
         return -2;
     }
 
@@ -740,42 +740,42 @@ int mat_load_header(mat_t *mat, int version,
 
     if (*fmt != CONN_FMT_TXT) {
         if (fread(fmt, sizeof(connlm_fmt_t), 1, fp) != 1) {
-            ST_WARNING("Failed to read fmt.");
+            ST_ERROR("Failed to read fmt.");
             goto ERR;
         }
 
         if (fread(&num_rows, sizeof(size_t), 1, fp) != 1) {
-            ST_WARNING("Failed to read num_rows.");
+            ST_ERROR("Failed to read num_rows.");
             goto ERR;
         }
         if (fread(&num_cols, sizeof(size_t), 1, fp) != 1) {
-            ST_WARNING("Failed to read num_cols.");
+            ST_ERROR("Failed to read num_cols.");
             goto ERR;
         }
     } else {
         if (st_readline(fp, "") != 0) {
-            ST_WARNING("tag error.");
+            ST_ERROR("tag error.");
             goto ERR;
         }
         if (st_readline(fp, "<MATRIX>") != 0) {
-            ST_WARNING("tag error.");
+            ST_ERROR("tag error.");
             goto ERR;
         }
 
         if (st_readline(fp, "Row: %zu", &num_rows) != 1) {
-            ST_WARNING("Failed to parse num_rows.");
+            ST_ERROR("Failed to parse num_rows.");
             goto ERR;
         }
 
         if (st_readline(fp, "Col: %zu", &num_cols) != 1) {
-            ST_WARNING("Failed to parse num_cols.");
+            ST_ERROR("Failed to parse num_cols.");
             goto ERR;
         }
     }
 
     if (mat != NULL) {
         if (mat_resize(mat, num_rows, num_cols, NAN) < 0) {
-            ST_WARNING("Failed to mat_resize.");
+            ST_ERROR("Failed to mat_resize.");
             goto ERR;
         }
     }
@@ -811,12 +811,12 @@ int mat_load_body(mat_t *mat, int version, FILE *fp, connlm_fmt_t fmt)
 
     if (connlm_fmt_is_bin(fmt)) {
         if (fread(&n, sizeof(int), 1, fp) != 1) {
-            ST_WARNING("Failed to read magic num.");
+            ST_ERROR("Failed to read magic num.");
             return -1;
         }
 
         if (n != -MAT_MAGIC_NUM) {
-            ST_WARNING("Magic num error.[%d]", n);
+            ST_ERROR("Magic num error.[%d]", n);
             return -1;
         }
 
@@ -824,7 +824,7 @@ int mat_load_body(mat_t *mat, int version, FILE *fp, connlm_fmt_t fmt)
             for (i = 0; i < mat->num_rows; i++) {
                 if (fread(MAT_VALP(mat, i, 0), sizeof(real_t),
                             mat->num_cols, fp) != mat->num_cols) {
-                    ST_WARNING("Failed to read row[%zu].", i);
+                    ST_ERROR("Failed to read row[%zu].", i);
                     return -1;
                 }
             }
@@ -832,14 +832,14 @@ int mat_load_body(mat_t *mat, int version, FILE *fp, connlm_fmt_t fmt)
             if (fmt & CONN_FMT_ZEROS_COMPRESSED) {
                 for (i = 0; i < mat->num_rows; i++) {
                     if (load_sq_zc(MAT_VALP(mat, i, 0), mat->num_cols, fp) < 0) {
-                        ST_WARNING("Failed to load_sq_zc for row[%zu].", i);
+                        ST_ERROR("Failed to load_sq_zc for row[%zu].", i);
                         return -1;
                     }
                 }
             } else {
                 for (i = 0; i < mat->num_rows; i++) {
                     if (load_sq(MAT_VALP(mat, i, 0), mat->num_cols, fp) < 0) {
-                        ST_WARNING("Failed to load_sq for row[%zu].", i);
+                        ST_ERROR("Failed to load_sq for row[%zu].", i);
                         return -1;
                     }
                 }
@@ -847,33 +847,33 @@ int mat_load_body(mat_t *mat, int version, FILE *fp, connlm_fmt_t fmt)
         } else if (fmt & CONN_FMT_ZEROS_COMPRESSED) {
             for (i = 0; i < mat->num_rows; i++) {
                 if (load_zc(MAT_VALP(mat, i, 0), mat->num_cols, fp) < 0) {
-                    ST_WARNING("Failed to load_zc for row[%zu].", i);
+                    ST_ERROR("Failed to load_zc for row[%zu].", i);
                     return -1;
                 }
             }
         }
     } else {
         if (st_readline(fp, "<MATRIX-DATA>") != 0) {
-            ST_WARNING("body flag error.");
+            ST_ERROR("body flag error.");
             goto ERR;
         }
         if (st_readline(fp, "%"xSTR(MAX_NAME_LEN)"s", name) != 1) {
-            ST_WARNING("name error.");
+            ST_ERROR("name error.");
             goto ERR;
         }
 
         if (st_fgets(&line, &line_sz, fp, &err) == NULL || err) {
-            ST_WARNING("'[' expected.");
+            ST_ERROR("'[' expected.");
             goto ERR;
         }
         p = get_next_token(line, token);
         if (p == NULL || ! (p[0] == '[' && p[1] == '\0')) {
-            ST_WARNING("'[' expected.");
+            ST_ERROR("'[' expected.");
             goto ERR;
         }
         for (i = 0; i < mat->num_rows; i++) {
             if (st_fgets(&line, &line_sz, fp, &err) == NULL || err) {
-                ST_WARNING("Failed to parse row[%zu].", i);
+                ST_ERROR("Failed to parse row[%zu].", i);
                 goto ERR;
             }
             p = line;
@@ -881,14 +881,14 @@ int mat_load_body(mat_t *mat, int version, FILE *fp, connlm_fmt_t fmt)
                 p = get_next_token(p, token);
                 if (p == NULL || sscanf(token, REAL_FMT,
                             MAT_VALP(mat, i, j)) != 1) {
-                    ST_WARNING("Failed to parse elem[%zu, %zu].", i, j);
+                    ST_ERROR("Failed to parse elem[%zu, %zu].", i, j);
                     goto ERR;
                 }
             }
         }
         p = get_next_token(p, token);
         if (p == NULL || ! (p[0] == ']' && p[1] == '\0')) {
-            ST_WARNING("']' expected.");
+            ST_ERROR("']' expected.");
             goto ERR;
         }
 
@@ -908,34 +908,34 @@ int mat_save_header(mat_t *mat, FILE *fp, connlm_fmt_t fmt)
 
     if (connlm_fmt_is_bin(fmt)) {
         if (fwrite(&MAT_MAGIC_NUM, sizeof(int), 1, fp) != 1) {
-            ST_WARNING("Failed to write magic num.");
+            ST_ERROR("Failed to write magic num.");
             return -1;
         }
         if (fwrite(&fmt, sizeof(connlm_fmt_t), 1, fp) != 1) {
-            ST_WARNING("Failed to write fmt.");
+            ST_ERROR("Failed to write fmt.");
             return -1;
         }
 
         if (fwrite(&mat->num_rows, sizeof(size_t), 1, fp) != 1) {
-            ST_WARNING("Failed to write num_rows.");
+            ST_ERROR("Failed to write num_rows.");
             return -1;
         }
         if (fwrite(&mat->num_cols, sizeof(size_t), 1, fp) != 1) {
-            ST_WARNING("Failed to write num_cols.");
+            ST_ERROR("Failed to write num_cols.");
             return -1;
         }
     } else {
         if (fprintf(fp, "    \n<MATRIX>\n") < 0) {
-            ST_WARNING("Failed to fprintf header.");
+            ST_ERROR("Failed to fprintf header.");
             return -1;
         }
 
         if (fprintf(fp, "Row: %zu\n", mat->num_rows) < 0) {
-            ST_WARNING("Failed to fprintf num_rows.");
+            ST_ERROR("Failed to fprintf num_rows.");
             return -1;
         }
         if (fprintf(fp, "Col: %zu\n", mat->num_cols) < 0) {
-            ST_WARNING("Failed to fprintf num_cols.");
+            ST_ERROR("Failed to fprintf num_cols.");
             return -1;
         }
     }
@@ -953,7 +953,7 @@ int mat_save_body(mat_t *mat, FILE *fp, connlm_fmt_t fmt, char *name)
     if (connlm_fmt_is_bin(fmt)) {
         n = -MAT_MAGIC_NUM;
         if (fwrite(&n, sizeof(int), 1, fp) != 1) {
-            ST_WARNING("Failed to write magic num.");
+            ST_ERROR("Failed to write magic num.");
             return -1;
         }
 
@@ -965,7 +965,7 @@ int mat_save_body(mat_t *mat, FILE *fp, connlm_fmt_t fmt, char *name)
             for (i = 0; i < mat->num_rows; i++) {
                 if (fwrite(MAT_VALP(mat, i, 0), sizeof(real_t),
                             mat->num_cols, fp) != mat->num_cols) {
-                    ST_WARNING("Failed to write row[%zu].", i);
+                    ST_ERROR("Failed to write row[%zu].", i);
                     return -1;
                 }
             }
@@ -973,14 +973,14 @@ int mat_save_body(mat_t *mat, FILE *fp, connlm_fmt_t fmt, char *name)
             if (fmt & CONN_FMT_ZEROS_COMPRESSED) {
                 for (i = 0; i < mat->num_rows; i++) {
                     if (save_sq_zc(MAT_VALP(mat, i, 0), mat->num_cols, fp) < 0) {
-                        ST_WARNING("Failed to save_sq_zc for row[%zu].", i);
+                        ST_ERROR("Failed to save_sq_zc for row[%zu].", i);
                         return -1;
                     }
                 }
             } else {
                 for (i = 0; i < mat->num_rows; i++) {
                     if (save_sq(MAT_VALP(mat, i, 0), mat->num_cols, fp) < 0) {
-                        ST_WARNING("Failed to save_sq for row[%zu].", i);
+                        ST_ERROR("Failed to save_sq for row[%zu].", i);
                         return -1;
                     }
                 }
@@ -988,41 +988,41 @@ int mat_save_body(mat_t *mat, FILE *fp, connlm_fmt_t fmt, char *name)
         } else if (fmt & CONN_FMT_ZEROS_COMPRESSED) {
             for (i = 0; i < mat->num_rows; i++) {
                 if (save_zc(MAT_VALP(mat, i, 0), mat->num_cols, fp) < 0) {
-                    ST_WARNING("Failed to save_zc for row[%zu].", i);
+                    ST_ERROR("Failed to save_zc for row[%zu].", i);
                     return -1;
                 }
             }
         }
     } else {
         if (fprintf(fp, "<MATRIX-DATA>\n") < 0) {
-            ST_WARNING("Failed to fprintf header.");
+            ST_ERROR("Failed to fprintf header.");
             return -1;
         }
         if (fprintf(fp, "%s\n", name != NULL ? name : "") < 0) {
-            ST_WARNING("Failed to fprintf name.");
+            ST_ERROR("Failed to fprintf name.");
             return -1;
         }
 
         if (fprintf(fp, "[\n") < 0) {
-            ST_WARNING("Failed to fprintf '['.");
+            ST_ERROR("Failed to fprintf '['.");
             return -1;
         }
         if (mat->num_rows > 0 && mat->num_cols > 0) {
             for (i = 0; i < mat->num_rows; i++) {
                 for (j = 0; j < mat->num_cols - 1; j++) {
                     if (fprintf(fp, REAL_FMT" ", MAT_VAL(mat, i, j)) < 0) {
-                        ST_WARNING("Failed to fprintf mat[%zu,%zu].", i, j);
+                        ST_ERROR("Failed to fprintf mat[%zu,%zu].", i, j);
                         return -1;
                     }
                 }
                 if (fprintf(fp, REAL_FMT"\n", MAT_VAL(mat, i, j)) < 0) {
-                    ST_WARNING("Failed to fprintf mat[%zu/%zu].", i, j);
+                    ST_ERROR("Failed to fprintf mat[%zu/%zu].", i, j);
                     return -1;
                 }
             }
         }
         if (fprintf(fp, "]\n") < 0) {
-            ST_WARNING("Failed to fprintf ']'.");
+            ST_ERROR("Failed to fprintf ']'.");
             return -1;
         }
     }
@@ -1066,7 +1066,7 @@ static int sp_mat_resize_elems(sp_mat_t *sp_mat, size_t size)
         sp_mat->vals = (real_t *)st_aligned_realloc(sp_mat->vals,
                 sizeof(real_t) * size, ALIGN_SIZE);
         if (sp_mat->vals == NULL) {
-            ST_WARNING("Failed to st_aligned_realloc sp_mat->vals.");
+            ST_ERROR("Failed to st_aligned_realloc sp_mat->vals.");
             return -1;
         }
 
@@ -1074,13 +1074,13 @@ static int sp_mat_resize_elems(sp_mat_t *sp_mat, size_t size)
             sp_mat->coo.rows = (size_t *)st_aligned_realloc(sp_mat->coo.rows,
                     sizeof(size_t) * size, ALIGN_SIZE);
             if (sp_mat->coo.rows == NULL) {
-                ST_WARNING("Failed to st_aligned_realloc sp_mat->coo.rows.");
+                ST_ERROR("Failed to st_aligned_realloc sp_mat->coo.rows.");
                 return -1;
             }
             sp_mat->coo.cols = (size_t *)st_aligned_realloc(sp_mat->coo.cols,
                     sizeof(size_t) * size, ALIGN_SIZE);
             if (sp_mat->coo.cols == NULL) {
-                ST_WARNING("Failed to st_aligned_realloc sp_mat->coo.cols.");
+                ST_ERROR("Failed to st_aligned_realloc sp_mat->coo.cols.");
                 return -1;
             }
         }
@@ -1099,7 +1099,7 @@ int sp_mat_resize(sp_mat_t *sp_mat, size_t size,
             || num_cols <= 0, -1);
 
     if (sp_mat_resize_elems(sp_mat, size) < 0) {
-        ST_WARNING("Failed to sp_mat_resize_elems.");
+        ST_ERROR("Failed to sp_mat_resize_elems.");
         return -1;
     }
 
@@ -1108,14 +1108,14 @@ int sp_mat_resize(sp_mat_t *sp_mat, size_t size,
             sp_mat->csc.col_s = (size_t *)st_aligned_realloc(sp_mat->csc.col_s,
                     sizeof(size_t) * num_cols, ALIGN_SIZE);
             if (sp_mat->csc.col_s == NULL) {
-                ST_WARNING("Failed to st_aligned_realloc sp_mat->csc.col_s.");
+                ST_ERROR("Failed to st_aligned_realloc sp_mat->csc.col_s.");
                 return -1;
             }
 
             sp_mat->csc.col_e = (size_t *)st_aligned_realloc(sp_mat->csc.col_e,
                     sizeof(size_t) * num_cols, ALIGN_SIZE);
             if (sp_mat->csc.col_e == NULL) {
-                ST_WARNING("Failed to st_aligned_realloc sp_mat->csc.col_e.");
+                ST_ERROR("Failed to st_aligned_realloc sp_mat->csc.col_e.");
                 return -1;
             }
 
@@ -1126,14 +1126,14 @@ int sp_mat_resize(sp_mat_t *sp_mat, size_t size,
             sp_mat->csr.row_s = (size_t *)st_aligned_realloc(sp_mat->csr.row_s,
                     sizeof(size_t) * num_rows, ALIGN_SIZE);
             if (sp_mat->csr.row_s == NULL) {
-                ST_WARNING("Failed to st_aligned_realloc sp_mat->csr.row_s.");
+                ST_ERROR("Failed to st_aligned_realloc sp_mat->csr.row_s.");
                 return -1;
             }
 
             sp_mat->csr.row_e = (size_t *)st_aligned_realloc(sp_mat->csr.row_e,
                     sizeof(size_t) * num_rows, ALIGN_SIZE);
             if (sp_mat->csr.row_e == NULL) {
-                ST_WARNING("Failed to st_aligned_realloc sp_mat->csr.row_e.");
+                ST_ERROR("Failed to st_aligned_realloc sp_mat->csr.row_e.");
                 return -1;
             }
 
@@ -1160,22 +1160,22 @@ int sp_mat_coo_add(sp_mat_t *sp_mat, size_t row, size_t col, real_t val)
     ST_CHECK_PARAM(sp_mat == NULL, -1);
 
     if (sp_mat->fmt != SP_MAT_COO) {
-        ST_WARNING("Format not COO");
+        ST_ERROR("Format not COO");
         return -1;
     }
 
     if (row >= sp_mat->num_rows) {
-        ST_WARNING("row overflow[%zu/%zu].", row, sp_mat->num_rows);
+        ST_ERROR("row overflow[%zu/%zu].", row, sp_mat->num_rows);
         return -1;
     }
 
     if (col >= sp_mat->num_cols) {
-        ST_WARNING("col overflow[%zu/%zu].", col, sp_mat->num_cols);
+        ST_ERROR("col overflow[%zu/%zu].", col, sp_mat->num_cols);
         return -1;
     }
 
     if (sp_mat_resize_elems(sp_mat, sp_mat->size + 1) < 0) {
-        ST_WARNING("Failed to sp_mat_resize_elems.");
+        ST_ERROR("Failed to sp_mat_resize_elems.");
         return -1;
     }
 

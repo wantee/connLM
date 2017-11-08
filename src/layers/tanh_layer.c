@@ -48,7 +48,7 @@ int tanh_deriv(layer_t *layer, mat_t *er, mat_t *ac)
     ST_CHECK_PARAM(layer == NULL || er == NULL || ac == NULL, -1);
 
     if (er->num_rows != ac->num_rows || er->num_cols != ac->num_cols) {
-        ST_WARNING("er and ac size not match");
+        ST_ERROR("er and ac size not match");
         return -1;
     }
 

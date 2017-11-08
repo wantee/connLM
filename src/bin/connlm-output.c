@@ -47,27 +47,27 @@ int connlm_output_parse_opt(int *argc, const char *argv[])
 
     g_cmd_opt = st_opt_create();
     if (g_cmd_opt == NULL) {
-        ST_WARNING("Failed to st_opt_create.");
+        ST_ERROR("Failed to st_opt_create.");
         goto ST_OPT_ERR;
     }
 
     if (st_opt_parse(g_cmd_opt, argc, argv) < 0) {
-        ST_WARNING("Failed to st_opt_parse.");
+        ST_ERROR("Failed to st_opt_parse.");
         goto ST_OPT_ERR;
     }
 
     if (st_log_load_opt(&log_opt, g_cmd_opt, NULL) < 0) {
-        ST_WARNING("Failed to st_log_load_opt");
+        ST_ERROR("Failed to st_log_load_opt");
         goto ST_OPT_ERR;
     }
 
     if (st_log_open(&log_opt) != 0) {
-        ST_WARNING("Failed to open log");
+        ST_ERROR("Failed to open log");
         goto ST_OPT_ERR;
     }
 
     if (output_load_opt(&g_output_opt, g_cmd_opt, NULL) < 0) {
-        ST_WARNING("Failed to output_load_opt");
+        ST_ERROR("Failed to output_load_opt");
         goto ST_OPT_ERR;
     }
 
@@ -75,7 +75,7 @@ int connlm_output_parse_opt(int *argc, const char *argv[])
             "storage format(Txt/Bin/Zeros-Compress/Short-Q)");
     g_fmt = connlm_format_parse(str);
     if (g_fmt == CONN_FMT_UNKNOWN) {
-        ST_WARNING("Unknown format[%s]", str);
+        ST_ERROR("Unknown format[%s]", str);
         goto ST_OPT_ERR;
     }
 
@@ -108,7 +108,7 @@ int main(int argc, const char *argv[])
     output_t *output = NULL;
 
     if (st_mem_usage_init() < 0) {
-        ST_WARNING("Failed to st_mem_usage_init.");
+        ST_ERROR("Failed to st_mem_usage_init.");
         goto ERR;
     }
 
@@ -144,19 +144,19 @@ int main(int argc, const char *argv[])
     ST_NOTICE("Loading vocab model..");
     fp = st_fopen(argv[1], "rb");
     if (fp == NULL) {
-        ST_WARNING("Failed to st_fopen. [%s]", argv[1]);
+        ST_ERROR("Failed to st_fopen. [%s]", argv[1]);
         goto ERR;
     }
 
     connlm_in = connlm_load(fp);
     if (connlm_in == NULL) {
-        ST_WARNING("Failed to connlm_load. [%s]", argv[1]);
+        ST_ERROR("Failed to connlm_load. [%s]", argv[1]);
         goto ERR;
     }
     safe_st_fclose(fp);
 
     if (connlm_in->vocab == NULL) {
-        ST_WARNING("No vocab loaded from [%s].", argv[1]);
+        ST_ERROR("No vocab loaded from [%s].", argv[1]);
         goto ERR;
     }
 
@@ -164,24 +164,24 @@ int main(int argc, const char *argv[])
     output = output_generate(&g_output_opt, connlm_in->vocab->cnts,
             connlm_in->vocab->vocab_size - 1/* <s> */);
     if (output == NULL) {
-        ST_WARNING("Failed to output_generate.");
+        ST_ERROR("Failed to output_generate.");
         goto ERR;
     }
 
     connlm_out = connlm_new(connlm_in->vocab, output, NULL, -1);
     if (connlm_out == NULL) {
-        ST_WARNING("Failed to connlm_new.");
+        ST_ERROR("Failed to connlm_new.");
         goto ERR;
     }
 
     fp = st_fopen(argv[2], "wb");
     if (fp == NULL) {
-        ST_WARNING("Failed to st_fopen. [%s]", argv[2]);
+        ST_ERROR("Failed to st_fopen. [%s]", argv[2]);
         goto ERR;
     }
 
     if (connlm_save(connlm_out, fp, g_fmt) < 0) {
-        ST_WARNING("Failed to connlm_save. [%s]", argv[2]);
+        ST_ERROR("Failed to connlm_save. [%s]", argv[2]);
         goto ERR;
     }
 

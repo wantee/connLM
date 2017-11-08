@@ -83,7 +83,7 @@ static emb_glue_data_t* emb_glue_data_init()
 
     data = (emb_glue_data_t *)st_malloc(sizeof(emb_glue_data_t));
     if (data == NULL) {
-        ST_WARNING("Failed to st_malloc emb_glue_data.");
+        ST_ERROR("Failed to st_malloc emb_glue_data.");
         goto ERR;
     }
     memset(data, 0, sizeof(emb_glue_data_t));
@@ -102,7 +102,7 @@ static emb_glue_data_t* emb_glue_data_dup(emb_glue_data_t *src)
 
     dst = emb_glue_data_init();
     if (dst == NULL) {
-        ST_WARNING("Failed to emb_glue_data_init.");
+        ST_ERROR("Failed to emb_glue_data_init.");
         goto ERR;
     }
     dst->combine = ((emb_glue_data_t *)src)->combine;
@@ -127,13 +127,13 @@ int emb_glue_init(glue_t *glue)
     ST_CHECK_PARAM(glue == NULL, -1);
 
     if (strcasecmp(glue->type, EMB_GLUE_NAME) != 0) {
-        ST_WARNING("Not a sum glue. [%s]", glue->type);
+        ST_ERROR("Not a sum glue. [%s]", glue->type);
         return -1;
     }
 
     glue->extra = (void *)emb_glue_data_init();
     if (glue->extra == NULL) {
-        ST_WARNING("Failed to emb_glue_data_init.");
+        ST_ERROR("Failed to emb_glue_data_init.");
         goto ERR;
     }
 
@@ -149,18 +149,18 @@ int emb_glue_dup(glue_t *dst, glue_t *src)
     ST_CHECK_PARAM(dst == NULL || src == NULL, -1);
 
     if (strcasecmp(dst->type, EMB_GLUE_NAME) != 0) {
-        ST_WARNING("dst is Not a emb glue. [%s]", dst->type);
+        ST_ERROR("dst is Not a emb glue. [%s]", dst->type);
         return -1;
     }
 
     if (strcasecmp(src->type, EMB_GLUE_NAME) != 0) {
-        ST_WARNING("src is Not a emb glue. [%s]", src->type);
+        ST_ERROR("src is Not a emb glue. [%s]", src->type);
         return -1;
     }
 
     dst->extra = (void *)emb_glue_data_dup((emb_glue_data_t *)src->extra);
     if (dst->extra == NULL) {
-        ST_WARNING("Failed to emb_glue_data_dup.");
+        ST_ERROR("Failed to emb_glue_data_dup.");
         goto ERR;
     }
 
@@ -191,22 +191,22 @@ int emb_glue_parse_topo(glue_t *glue, const char *line)
         }
 
         if (split_line(token, keyvalue, 2, MAX_LINE_LEN, "=") != 2) {
-            ST_WARNING("Failed to split key/value. [%s]", token);
+            ST_ERROR("Failed to split key/value. [%s]", token);
             goto ERR;
         }
 
         if (strcasecmp("combine", keyvalue) == 0) {
             if (data->combine != EC_UNDEFINED) {
-                ST_WARNING("Duplicated combine.");
+                ST_ERROR("Duplicated combine.");
             }
             data->combine = str2combine(keyvalue + MAX_LINE_LEN);
             if (data->combine == EC_UNKNOWN) {
-                ST_WARNING("Failed to parse combine string.[%s]",
+                ST_ERROR("Failed to parse combine string.[%s]",
                         keyvalue + MAX_LINE_LEN);
                 goto ERR;
             }
         } else {
-            ST_WARNING("Unknown key/value[%s]", token);
+            ST_ERROR("Unknown key/value[%s]", token);
         }
     }
 
@@ -227,30 +227,30 @@ bool emb_glue_check(glue_t *glue, layer_t **layers, int n_layer,
     data = (emb_glue_data_t *)glue->extra;
 
     if (strcasecmp(glue->type, EMB_GLUE_NAME) != 0) {
-        ST_WARNING("Not a emb glue. [%s]", glue->type);
+        ST_ERROR("Not a emb glue. [%s]", glue->type);
         return false;
     }
 
     if (layers == NULL) {
-        ST_WARNING("No layers.");
+        ST_ERROR("No layers.");
         return false;
     }
 
     if (strcasecmp(layers[glue->in_layer]->type,
                 INPUT_LAYER_NAME) != 0) {
-        ST_WARNING("emb glue: in layer should be input layer.");
+        ST_ERROR("emb glue: in layer should be input layer.");
         return false;
     }
 
     if (strcasecmp(layers[glue->out_layer]->type,
                 OUTPUT_LAYER_NAME) == 0) {
-        ST_WARNING("emb glue: out layer should not be output layer.");
+        ST_ERROR("emb glue: out layer should not be output layer.");
         return false;
     }
 
     if (input->n_ctx > 1) {
         if (data->combine == EC_UNDEFINED) {
-            ST_WARNING("emb glue: No combine specified in input.");
+            ST_ERROR("emb glue: No combine specified in input.");
             return false;
         }
     } else {
@@ -261,7 +261,7 @@ bool emb_glue_check(glue_t *glue, layer_t **layers, int n_layer,
 
     if (data->combine == EC_CONCAT) {
         if (glue->out_length % input->n_ctx != 0) {
-            ST_WARNING("emb glue: can not apply CONCAT combination. "
+            ST_ERROR("emb glue: can not apply CONCAT combination. "
                     "out layer length can not divided by context number.");
             return false;
         }
@@ -304,12 +304,12 @@ int emb_glue_load_header(void **extra, int version,
             || fmt == NULL, -1);
 
     if (version < 15) {
-        ST_WARNING("Too old version of connlm file");
+        ST_ERROR("Too old version of connlm file");
         return -1;
     }
 
     if (fread(&flag.magic_num, sizeof(int), 1, fp) != 1) {
-        ST_WARNING("Failed to load magic num.");
+        ST_ERROR("Failed to load magic num.");
         return -1;
     }
 
@@ -317,7 +317,7 @@ int emb_glue_load_header(void **extra, int version,
     if (strncmp(flag.str, "    ", 4) == 0) {
         *fmt = CONN_FMT_TXT;
     } else if (EMB_GLUE_MAGIC_NUM != flag.magic_num) {
-        ST_WARNING("magic num wrong.");
+        ST_ERROR("magic num wrong.");
         return -2;
     }
 
@@ -328,7 +328,7 @@ int emb_glue_load_header(void **extra, int version,
     if (*fmt != CONN_FMT_TXT) {
         if (version >= 12) {
             if (fread(fmt, sizeof(connlm_fmt_t), 1, fp) != 1) {
-                ST_WARNING("Failed to read fmt.");
+                ST_ERROR("Failed to read fmt.");
                 goto ERR;
             }
         } else {
@@ -336,27 +336,27 @@ int emb_glue_load_header(void **extra, int version,
         }
 
         if (fread(&c, sizeof(int), 1, fp) != 1) {
-            ST_WARNING("Failed to read combine.");
+            ST_ERROR("Failed to read combine.");
             return -1;
         }
     } else {
         if (st_readline(fp, "") != 0) {
-            ST_WARNING("tag error.");
+            ST_ERROR("tag error.");
             goto ERR;
         }
         if (st_readline(fp, "<EMB-GLUE>") != 0) {
-            ST_WARNING("tag error.");
+            ST_ERROR("tag error.");
             goto ERR;
         }
 
         if (st_readline(fp, "Combine: %"xSTR(MAX_LINE_LEN)"s", sym) != 1) {
-            ST_WARNING("Failed to parse combine.");
+            ST_ERROR("Failed to parse combine.");
             goto ERR;
         }
         sym[MAX_LINE_LEN - 1] = '\0';
         c = (int)str2combine(sym);
         if (c == (int)EC_UNKNOWN) {
-            ST_WARNING("Unknown combine[%s]", sym);
+            ST_ERROR("Unknown combine[%s]", sym);
             goto ERR;
         }
     }
@@ -364,7 +364,7 @@ int emb_glue_load_header(void **extra, int version,
     if (extra != NULL) {
         data = emb_glue_data_init();
         if (data == NULL) {
-            ST_WARNING("Failed to emb_glue_data_init.");
+            ST_ERROR("Failed to emb_glue_data_init.");
             goto ERR;
         }
 
@@ -397,27 +397,27 @@ int emb_glue_save_header(void *extra, FILE *fp, connlm_fmt_t fmt)
 
     if (connlm_fmt_is_bin(fmt)) {
         if (fwrite(&EMB_GLUE_MAGIC_NUM, sizeof(int), 1, fp) != 1) {
-            ST_WARNING("Failed to write magic num.");
+            ST_ERROR("Failed to write magic num.");
             return -1;
         }
         if (fwrite(&fmt, sizeof(connlm_fmt_t), 1, fp) != 1) {
-            ST_WARNING("Failed to write fmt.");
+            ST_ERROR("Failed to write fmt.");
             return -1;
         }
 
         i = (int)data->combine;
         if (fwrite(&i, sizeof(int), 1, fp) != 1) {
-            ST_WARNING("Failed to write combine.");
+            ST_ERROR("Failed to write combine.");
             return -1;
         }
     } else {
         if (fprintf(fp, "    \n<EMB-GLUE>\n") < 0) {
-            ST_WARNING("Failed to fprintf header.");
+            ST_ERROR("Failed to fprintf header.");
             return -1;
         }
 
         if (fprintf(fp, "Combine: %s\n", emb_combine2str(data->combine)) < 0) {
-            ST_WARNING("Failed to fprintf combine.");
+            ST_ERROR("Failed to fprintf combine.");
             return -1;
         }
     }
@@ -435,7 +435,7 @@ int emb_glue_init_data(glue_t *glue, input_t *input,
             || input == NULL, -1);
 
     if (strcasecmp(glue->type, EMB_GLUE_NAME) != 0) {
-        ST_WARNING("Not a emb glue. [%s]", glue->type);
+        ST_ERROR("Not a emb glue. [%s]", glue->type);
         return -1;
     }
 
@@ -448,7 +448,7 @@ int emb_glue_init_data(glue_t *glue, input_t *input,
 
     for (i = 0; i < glue->num_wts; i++) {
         if (wt_init(glue->wts[i], input->input_size, col) < 0) {
-            ST_WARNING("Failed to wt_init[%d].", i);
+            ST_ERROR("Failed to wt_init[%d].", i);
             return -1;
         }
     }

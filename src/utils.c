@@ -435,12 +435,12 @@ model_filter_t parse_model_filter(const char *mdl_filter,
                         *comp_names = st_realloc(*comp_names,
                                 MAX_NAME_LEN*(*num_comp + 1));
                         if (*comp_names == NULL) {
-                            ST_WARNING("Failed to st_realloc comp_names");
+                            ST_ERROR("Failed to st_realloc comp_names");
                             goto ERR;
                         }
 
                         if (ptr - ptr_comp >= MAX_NAME_LEN) {
-                            ST_WARNING("Too long name[%s]", ptr_comp);
+                            ST_ERROR("Too long name[%s]", ptr_comp);
                             goto ERR;
                         }
                         strncpy(*comp_names + MAX_NAME_LEN*(*num_comp),
@@ -464,7 +464,7 @@ model_filter_t parse_model_filter(const char *mdl_filter,
 
 RET:
     if (strlen(ptr_fname) >= mdl_file_len) {
-        ST_WARNING("mdl_file_len too small.[%zu/%zu]",
+        ST_ERROR("mdl_file_len too small.[%zu/%zu]",
                 mdl_file_len, strlen(ptr_fname));
         goto ERR;
     }
@@ -534,7 +534,7 @@ int concat_mat_add_row(concat_mat_t *mat, real_t *vec, int vec_size)
     if (mat->col == 0) {
         mat->col = vec_size;
     } else if (mat->col != vec_size) {
-        ST_WARNING("col not match.");
+        ST_ERROR("col not match.");
         return -1;
     }
 
@@ -543,7 +543,7 @@ int concat_mat_add_row(concat_mat_t *mat, real_t *vec, int vec_size)
         sz = mat->cap_row * mat->col * sizeof(real_t);
         mat->val = (real_t *)st_aligned_realloc(mat->val, sz, ALIGN_SIZE);
         if (mat->val == NULL) {
-            ST_WARNING("Failed to st_realloc val");
+            ST_ERROR("Failed to st_realloc val");
             return -1;
         }
     }
@@ -561,7 +561,7 @@ int concat_mat_add_mat(concat_mat_t *dst, concat_mat_t *src)
     ST_CHECK_PARAM(dst == NULL || src == NULL, -1);
 
     if (src->col != dst->col) {
-        ST_WARNING("col not match.");
+        ST_ERROR("col not match.");
         return -1;
     }
 
@@ -570,7 +570,7 @@ int concat_mat_add_mat(concat_mat_t *dst, concat_mat_t *src)
         sz = dst->cap_row * dst->col * sizeof(real_t);
         dst->val = (real_t *)st_aligned_realloc(dst->val, sz, ALIGN_SIZE);
         if (dst->val == NULL) {
-            ST_WARNING("Failed to st_realloc val");
+            ST_ERROR("Failed to st_realloc val");
             return -1;
         }
     }
@@ -598,7 +598,7 @@ connlm_fmt_t connlm_format_parse(const char *str)
         i = 0;
         while (*p != '|' && *p != '\0') {
             if (i >= MAX_LINE_LEN - 1) {
-                ST_WARNING("Too long name");
+                ST_ERROR("Too long name");
                 return CONN_FMT_UNKNOWN;
             }
             buf[i] = *p;
@@ -612,7 +612,7 @@ connlm_fmt_t connlm_format_parse(const char *str)
                 || strcasecmp(buf, "Txt") == 0
                 || strcasecmp(buf, "T") == 0) {
             if (connlm_fmt_is_bin(fmt)) {
-                ST_WARNING("Text and Binary format can't exist simultaneously");
+                ST_ERROR("Text and Binary format can't exist simultaneously");
                 return CONN_FMT_UNKNOWN;
             }
             fmt = CONN_FMT_TXT;
@@ -620,7 +620,7 @@ connlm_fmt_t connlm_format_parse(const char *str)
         }
 
         if (fmt == CONN_FMT_TXT) {
-            ST_WARNING("Text and Binary format can't exist simultaneously");
+            ST_ERROR("Text and Binary format can't exist simultaneously");
             return CONN_FMT_UNKNOWN;
         }
 
@@ -665,7 +665,7 @@ int load_sq_zc(real_t *a, size_t sz, FILE *fp)
     i = 0;
     while (i < sz) {
         if (fread(&si, sizeof(int16_t), 1, fp) != 1) {
-            ST_WARNING("Failed to read short.");
+            ST_ERROR("Failed to read short.");
             return -1;
         }
 
@@ -676,7 +676,7 @@ int load_sq_zc(real_t *a, size_t sz, FILE *fp)
         }
 
         if (st_varint_decode_stream_uint64(fp, &num_zeros) < 0) {
-            ST_WARNING("Failed to st_varint_decode_stream_uint64");
+            ST_ERROR("Failed to st_varint_decode_stream_uint64");
             return -1;
         }
 
@@ -695,7 +695,7 @@ int load_sq(real_t *a, size_t sz, FILE *fp)
 
     for (i = 0; i < sz; i++) {
         if (fread(&si, sizeof(int16_t), 1, fp) != 1) {
-            ST_WARNING("Failed to read short.");
+            ST_ERROR("Failed to read short.");
             return -1;
         }
 
@@ -714,7 +714,7 @@ int load_zc(real_t *a, size_t sz, FILE *fp)
     i = 0;
     while (i < sz) {
         if (fread(&r, sizeof(real_t), 1, fp) != 1) {
-            ST_WARNING("Failed to read real_t.");
+            ST_ERROR("Failed to read real_t.");
             return -1;
         }
 
@@ -725,7 +725,7 @@ int load_zc(real_t *a, size_t sz, FILE *fp)
         }
 
         if (st_varint_decode_stream_uint64(fp, &num_zeros) < 0) {
-            ST_WARNING("Failed to st_varint_decode_stream_uint64");
+            ST_ERROR("Failed to st_varint_decode_stream_uint64");
             return -1;
         }
 
@@ -742,11 +742,11 @@ static int write_zeros_int16(uint64_t num_zeros, FILE *fp)
     int16_t zero = 0;
 
     if (fwrite(&zero, sizeof(int16_t), 1, fp) != 1) {
-        ST_WARNING("Failed to write zero.");
+        ST_ERROR("Failed to write zero.");
         return -1;
     }
     if (st_varint_encode_stream_uint64(num_zeros, fp) < 0) {
-        ST_WARNING("Failed to st_varint_encode_stream_uint64[%"PRIu64"]",
+        ST_ERROR("Failed to st_varint_encode_stream_uint64[%"PRIu64"]",
                 num_zeros);
         return -1;
     }
@@ -770,20 +770,20 @@ int save_sq_zc(real_t *a, size_t sz, FILE *fp)
 
         if (num_zeros > 0) {
             if (write_zeros_int16(num_zeros, fp) < 0) {
-                ST_WARNING("Failed to write_zeros_int16.");
+                ST_ERROR("Failed to write_zeros_int16.");
                 return -1;
             }
             num_zeros = 0;
         }
 
         if (fwrite(&si, sizeof(int16_t), 1, fp) != 1) {
-            ST_WARNING("Failed to write short.");
+            ST_ERROR("Failed to write short.");
             return -1;
         }
     }
     if (num_zeros > 0) {
         if (write_zeros_int16(num_zeros, fp) < 0) {
-            ST_WARNING("Failed to write_zeros_int16.");
+            ST_ERROR("Failed to write_zeros_int16.");
             return -1;
         }
     }
@@ -799,7 +799,7 @@ int save_sq(real_t *a, size_t sz, FILE *fp)
     for (i = 0; i < sz; i++) {
         si = quantify_int16(a[i], SQ_MULTIPLE);
         if (fwrite(&si, sizeof(int16_t), 1, fp) != 1) {
-            ST_WARNING("Failed to write short.");
+            ST_ERROR("Failed to write short.");
             return -1;
         }
     }
@@ -812,11 +812,11 @@ static int write_zeros_real(uint64_t num_zeros, FILE *fp)
     real_t zero = 0;
 
     if (fwrite(&zero, sizeof(real_t), 1, fp) != 1) {
-        ST_WARNING("Failed to write zero.");
+        ST_ERROR("Failed to write zero.");
         return -1;
     }
     if (st_varint_encode_stream_uint64(num_zeros, fp) < 0) {
-        ST_WARNING("Failed to st_varint_encode_stream_uint64[%"PRIu64"]",
+        ST_ERROR("Failed to st_varint_encode_stream_uint64[%"PRIu64"]",
                 num_zeros);
         return -1;
     }
@@ -838,20 +838,20 @@ int save_zc(real_t *a, size_t sz, FILE *fp)
 
         if (num_zeros > 0) {
             if (write_zeros_real(num_zeros, fp) < 0) {
-                ST_WARNING("Failed to write_zeros_real.");
+                ST_ERROR("Failed to write_zeros_real.");
                 return -1;
             }
             num_zeros = 0;
         }
 
         if (fwrite(a + i, sizeof(real_t), 1, fp) != 1) {
-            ST_WARNING("Failed to write real_t.");
+            ST_ERROR("Failed to write real_t.");
             return -1;
         }
     }
     if (num_zeros > 0) {
         if (write_zeros_real(num_zeros, fp) < 0) {
-            ST_WARNING("Failed to write_zeros_real.");
+            ST_ERROR("Failed to write_zeros_real.");
             return -1;
         }
     }
@@ -867,24 +867,24 @@ int print_vec(FILE *fp, real_t *vec, size_t size, const char *name)
 
     if (name != NULL) {
         if (fprintf(fp, "%s: ", name) < 0) {
-            ST_WARNING("Failed to fprintf name, Disk full?");
+            ST_ERROR("Failed to fprintf name, Disk full?");
             return -1;
         }
     }
     if (fprintf(fp, "[ ") < 0) {
-        ST_WARNING("Failed to fprintf, Disk full?");
+        ST_ERROR("Failed to fprintf, Disk full?");
         return -1;
     }
 
     for (i = 0; i < size; i++) {
         if (fprintf(fp, REAL_FMT" ", vec[i]) < 0) {
-            ST_WARNING("Failed to fprintf, Disk full?");
+            ST_ERROR("Failed to fprintf, Disk full?");
             return -1;
         }
     }
 
     if (fprintf(fp, "]\n") < 0) {
-        ST_WARNING("Failed to fprintf, Disk full?");
+        ST_ERROR("Failed to fprintf, Disk full?");
         return -1;
     }
 
@@ -905,7 +905,7 @@ int parse_vec(const char *line, real_t **vec, char *name, size_t name_len)
 
     p = strchr(line, '[');
     if (p == NULL) {
-        ST_WARNING("Error vector format: '[' expected.");
+        ST_ERROR("Error vector format: '[' expected.");
         return -1;
     }
 
@@ -934,7 +934,7 @@ int parse_vec(const char *line, real_t **vec, char *name, size_t name_len)
 
     *vec = (real_t *)st_malloc(sizeof(real_t) * cap);
     if (*vec == NULL) {
-        ST_WARNING("Failed to st_malloc vec");
+        ST_ERROR("Failed to st_malloc vec");
         goto ERR;
     }
 
@@ -951,21 +951,21 @@ int parse_vec(const char *line, real_t **vec, char *name, size_t name_len)
         if (size >= cap) {
             *vec = (real_t *)st_realloc(*vec, sizeof(real_t) * (cap + 128));
             if (*vec == NULL) {
-                ST_WARNING("Failed to st_realloc vec");
+                ST_ERROR("Failed to st_realloc vec");
                 goto ERR;
             }
             cap += 128;
         }
 
         if (sscanf(token, REAL_FMT, *vec + size) != 1) {
-            ST_WARNING("Error vector format: Not a float numbers[%s]", token);
+            ST_ERROR("Error vector format: Not a float numbers[%s]", token);
             goto ERR;
         }
         ++size;
     }
 
     if (token[0] != ']') {
-        ST_WARNING("Error vector format: ']' expected.");
+        ST_ERROR("Error vector format: ']' expected.");
         goto ERR;
     }
 

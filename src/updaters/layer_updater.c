@@ -87,7 +87,7 @@ layer_updater_t* layer_updater_create(layer_t *layer)
 
     layer_updater = (layer_updater_t *)st_malloc(sizeof(layer_updater_t));
     if (layer_updater == NULL) {
-        ST_WARNING("Failed to st_malloc layer_updater.");
+        ST_ERROR("Failed to st_malloc layer_updater.");
         goto ERR;
     }
     memset(layer_updater, 0, sizeof(layer_updater_t));
@@ -110,7 +110,7 @@ int layer_updater_setup(layer_updater_t *layer_updater, bool backprop)
 
     if (mat_resize(&layer_updater->ac, 1,
                 layer_updater->layer->size, 0.0) < 0) {
-        ST_WARNING("Failed to mat_resize ac");
+        ST_ERROR("Failed to mat_resize ac");
         return -1;
     }
     layer_updater->activated = false;
@@ -118,7 +118,7 @@ int layer_updater_setup(layer_updater_t *layer_updater, bool backprop)
     if (backprop) {
         if (mat_resize(&layer_updater->er, 1,
                 layer_updater->layer->size, 0.0) < 0) {
-            ST_WARNING("Failed to mat_resize er");
+            ST_ERROR("Failed to mat_resize er");
             return -1;
         }
         layer_updater->derived = false;
@@ -133,7 +133,7 @@ int layer_updater_setup_state(layer_updater_t *layer_updater, bool backprop)
 
     if (mat_resize(&layer_updater->ac_state, 1,
                 layer_updater->layer->size, 0.0) < 0) {
-        ST_WARNING("Failed to mat_resize ac_state.");
+        ST_ERROR("Failed to mat_resize ac_state.");
         return -1;
     }
 
@@ -146,7 +146,7 @@ int layer_updater_setup_er_raw(layer_updater_t *layer_updater)
 
     if (mat_resize(&layer_updater->er_raw, 1,
                 layer_updater->layer->size, 0.0) < 0) {
-        ST_WARNING("Failed to mat_resize ac_state.");
+        ST_ERROR("Failed to mat_resize ac_state.");
         return -1;
     }
 
@@ -159,7 +159,7 @@ int layer_updater_setup_pre_ac_state(layer_updater_t *layer_updater)
 
     if (mat_resize(&layer_updater->pre_ac_state, 1,
                 layer_updater->layer->size, 0.0) < 0) {
-        ST_WARNING("Failed to mat_resize ac_state.");
+        ST_ERROR("Failed to mat_resize ac_state.");
         return -1;
     }
 
@@ -180,7 +180,7 @@ int layer_updater_activate(layer_updater_t *layer_updater)
 
     if (layer_updater->pre_ac_state.num_rows > 0) {
         if (mat_cpy(&layer_updater->pre_ac_state, &layer_updater->ac) < 0) {
-            ST_WARNING("Failed to mat_cpy ac to pre_ac_state.");
+            ST_ERROR("Failed to mat_cpy ac to pre_ac_state.");
             return -1;
         }
     }
@@ -188,7 +188,7 @@ int layer_updater_activate(layer_updater_t *layer_updater)
     if (layer_updater->activate != NULL) {
         if (layer_updater->activate(layer_updater->layer,
                     &layer_updater->ac) < 0) {
-            ST_WARNING("Failed to layer_updater->activate.[%s]",
+            ST_ERROR("Failed to layer_updater->activate.[%s]",
                     layer_updater->layer->name);
             return -1;
         }
@@ -213,7 +213,7 @@ int layer_updater_deriv(layer_updater_t *layer_updater)
 
     if (layer_updater->er_raw.num_rows > 0) {
         if (mat_cpy(&layer_updater->er_raw, &layer_updater->er) < 0) {
-            ST_WARNING("Failed to mat_cpy er to er_raw");
+            ST_ERROR("Failed to mat_cpy er to er_raw");
             return -1;
         }
     }
@@ -221,7 +221,7 @@ int layer_updater_deriv(layer_updater_t *layer_updater)
     if (layer_updater->deriv != NULL) {
         if (layer_updater->deriv(layer_updater->layer, &layer_updater->er,
                     &layer_updater->ac) < 0) {
-            ST_WARNING("Failed to layer_updater->deriv.[%s]",
+            ST_ERROR("Failed to layer_updater->deriv.[%s]",
                     layer_updater->layer->name);
             return -1;
         }
@@ -238,7 +238,7 @@ int layer_updater_save_state(layer_updater_t *layer_updater)
 
     if (layer_updater->ac_state.num_rows > 0) {
         if (mat_cpy(&layer_updater->ac_state, &layer_updater->ac) < 0) {
-            ST_WARNING("Failed to mat_cpy ac to ac_state");
+            ST_ERROR("Failed to mat_cpy ac to ac_state");
             return -1;
         }
     }
@@ -252,7 +252,7 @@ int layer_updater_prepare(layer_updater_t *layer_updater, int batch_size)
 
     if (mat_resize(&layer_updater->ac, batch_size,
                 layer_updater->layer->size, 0.0) < 0) {
-        ST_WARNING("Failed to mat_resize ac");
+        ST_ERROR("Failed to mat_resize ac");
         return -1;
     }
     layer_updater->activated = false;
@@ -260,7 +260,7 @@ int layer_updater_prepare(layer_updater_t *layer_updater, int batch_size)
     if (layer_updater->er.num_rows > 0) {
         if (mat_resize(&layer_updater->er, batch_size,
                 layer_updater->layer->size, 0.0) < 0) {
-            ST_WARNING("Failed to mat_resize er");
+            ST_ERROR("Failed to mat_resize er");
             return -1;
         }
         layer_updater->derived = false;
@@ -271,7 +271,7 @@ int layer_updater_prepare(layer_updater_t *layer_updater, int batch_size)
             // init ac_state
             if (mat_resize(&layer_updater->ac_state, batch_size,
                         layer_updater->layer->size, 0.0) < 0) {
-                ST_WARNING("Failed to mat_resize ac_state");
+                ST_ERROR("Failed to mat_resize ac_state");
                 return -1;
             }
         }
@@ -282,7 +282,7 @@ int layer_updater_prepare(layer_updater_t *layer_updater, int batch_size)
             // init pre_ac_state
             if (mat_resize(&layer_updater->pre_ac_state, batch_size,
                         layer_updater->layer->size, 0.0) < 0) {
-                ST_WARNING("Failed to mat_resize pre_ac_state");
+                ST_ERROR("Failed to mat_resize pre_ac_state");
                 return -1;
             }
         }
@@ -320,12 +320,12 @@ int layer_updater_dump_state(layer_updater_t *layer_updater, mat_t *state)
     if (layer_updater->ac_state.num_rows > 0) {
         if (state->num_rows != layer_updater->ac_state.num_rows
                 || state->num_cols != layer_updater->ac_state.num_cols) {
-            ST_WARNING("output buffer size not match.");
+            ST_ERROR("output buffer size not match.");
             return -1;
         }
 
         if (mat_cpy(state, &layer_updater->ac_state) < 0) {
-            ST_WARNING("Failed to mat_cpy ac_state to state.");
+            ST_ERROR("Failed to mat_cpy ac_state to state.");
             return -1;
         }
     }
@@ -341,12 +341,12 @@ int layer_updater_dump_pre_ac_state(layer_updater_t *layer_updater,
     if (layer_updater->pre_ac_state.num_rows > 0) {
         if (state->num_rows != layer_updater->pre_ac_state.num_rows
                 || state->num_cols != layer_updater->pre_ac_state.num_cols) {
-            ST_WARNING("output buffer size not match.");
+            ST_ERROR("output buffer size not match.");
             return -1;
         }
 
         if (mat_cpy(state, &layer_updater->pre_ac_state) < 0) {
-            ST_WARNING("Failed to mat_cpy pre_ac_state to state");
+            ST_ERROR("Failed to mat_cpy pre_ac_state to state");
             return -1;
         }
     }
@@ -361,12 +361,12 @@ int layer_updater_feed_state(layer_updater_t *layer_updater, mat_t *state)
     if (layer_updater->ac_state.num_rows > 0) {
         if (state->num_rows != layer_updater->ac_state.num_rows
                 || state->num_cols != layer_updater->ac_state.num_cols) {
-            ST_WARNING("input buffer size not match.");
+            ST_ERROR("input buffer size not match.");
             return -1;
         }
 
         if (mat_cpy(&layer_updater->ac_state, state) < 0) {
-            ST_WARNING("Failed to mat_cpy state to ac_state");
+            ST_ERROR("Failed to mat_cpy state to ac_state");
             return -1;
         }
     }
@@ -381,12 +381,12 @@ int layer_updater_random_state(layer_updater_t *layer_updater, mat_t *state)
 
     if (layer_updater->ac_state.num_rows > 0 && layer_updater->random_state != NULL) {
         if (state->num_cols != layer_updater->layer->size) {
-            ST_WARNING("output buffer col not match.");
+            ST_ERROR("output buffer col not match.");
             return -1;
         }
 
         if (layer_updater->random_state(layer_updater->layer, state) < 0) {
-            ST_WARNING("Failed to layer_updater->random_state.[%s]",
+            ST_ERROR("Failed to layer_updater->random_state.[%s]",
                     layer_updater->layer->name);
             return -1;
         }
@@ -402,11 +402,11 @@ int layer_updater_activate_state(layer_updater_t *layer_updater, mat_t *state)
 
     if (layer_updater->activate != NULL) {
         if (state->num_cols != layer_updater->layer->size) {
-            ST_WARNING("output buffer col not match.");
+            ST_ERROR("output buffer col not match.");
             return -1;
         }
         if (layer_updater->activate(layer_updater->layer, state) < 0) {
-            ST_WARNING("Failed to layer_updater->activate.[%s]",
+            ST_ERROR("Failed to layer_updater->activate.[%s]",
                     layer_updater->layer->name);
             return -1;
         }

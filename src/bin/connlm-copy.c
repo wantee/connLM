@@ -45,22 +45,22 @@ int connlm_copy_parse_opt(int *argc, const char *argv[])
 
     g_cmd_opt = st_opt_create();
     if (g_cmd_opt == NULL) {
-        ST_WARNING("Failed to st_opt_create.");
+        ST_ERROR("Failed to st_opt_create.");
         goto ST_OPT_ERR;
     }
 
     if (st_opt_parse(g_cmd_opt, argc, argv) < 0) {
-        ST_WARNING("Failed to st_opt_parse.");
+        ST_ERROR("Failed to st_opt_parse.");
         goto ST_OPT_ERR;
     }
 
     if (st_log_load_opt(&log_opt, g_cmd_opt, NULL) < 0) {
-        ST_WARNING("Failed to st_log_load_opt");
+        ST_ERROR("Failed to st_log_load_opt");
         goto ST_OPT_ERR;
     }
 
     if (st_log_open(&log_opt) != 0) {
-        ST_WARNING("Failed to open log");
+        ST_ERROR("Failed to open log");
         goto ST_OPT_ERR;
     }
 
@@ -68,7 +68,7 @@ int connlm_copy_parse_opt(int *argc, const char *argv[])
             "storage format(Txt/Bin/Zeros-Compress/Short-Q)");
     g_fmt = connlm_format_parse(str);
     if (g_fmt == CONN_FMT_UNKNOWN) {
-        ST_WARNING("Unknown format[%s]", str);
+        ST_ERROR("Unknown format[%s]", str);
         goto ST_OPT_ERR;
     }
 
@@ -102,7 +102,7 @@ int main(int argc, const char *argv[])
     int ret;
 
     if (st_mem_usage_init() < 0) {
-        ST_WARNING("Failed to st_mem_usage_init.");
+        ST_ERROR("Failed to st_mem_usage_init.");
         goto ERR;
     }
 
@@ -138,36 +138,36 @@ int main(int argc, const char *argv[])
     mf = parse_model_filter(argv[1], fname, MAX_DIR_LEN,
             &comp_names, &num_comp);
     if (mf == MF_ERR) {
-        ST_WARNING("Failed to parse_model_filter.");
+        ST_ERROR("Failed to parse_model_filter.");
         goto ERR;
     }
 
     fp = st_fopen(fname, "rb");
     if (fp == NULL) {
-        ST_WARNING("Failed to st_fopen. [%s]", fname);
+        ST_ERROR("Failed to st_fopen. [%s]", fname);
         goto ERR;
     }
 
     connlm = connlm_load(fp);
     if (connlm == NULL) {
-        ST_WARNING("Failed to connlm_load. [%s]", argv[1]);
+        ST_ERROR("Failed to connlm_load. [%s]", argv[1]);
         goto ERR;
     }
     safe_st_fclose(fp);
 
     fp = st_fopen(argv[2], "wb");
     if (fp == NULL) {
-        ST_WARNING("Failed to st_fopen. [%s]", fname);
+        ST_ERROR("Failed to st_fopen. [%s]", fname);
         goto ERR;
     }
 
     if (connlm_filter(connlm, mf, comp_names, num_comp) < 0) {
-        ST_WARNING("Failed to connlm_filter.");
+        ST_ERROR("Failed to connlm_filter.");
         goto ERR;
     }
 
     if (connlm_save(connlm, fp, g_fmt) < 0) {
-        ST_WARNING("Failed to connlm_save. [%s]", fname);
+        ST_ERROR("Failed to connlm_save. [%s]", fname);
         goto ERR;
     }
 

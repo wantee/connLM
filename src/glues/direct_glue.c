@@ -56,7 +56,7 @@ static direct_glue_data_t* direct_glue_data_init()
 
     data = (direct_glue_data_t *)st_malloc(sizeof(direct_glue_data_t));
     if (data == NULL) {
-        ST_WARNING("Failed to st_malloc direct_glue_data.");
+        ST_ERROR("Failed to st_malloc direct_glue_data.");
         goto ERR;
     }
     memset(data, 0, sizeof(direct_glue_data_t));
@@ -75,7 +75,7 @@ static direct_glue_data_t* direct_glue_data_dup(direct_glue_data_t *src)
 
     dst = direct_glue_data_init();
     if (dst == NULL) {
-        ST_WARNING("Failed to direct_glue_data_init.");
+        ST_ERROR("Failed to direct_glue_data_init.");
         goto ERR;
     }
     dst->hash_sz = ((direct_glue_data_t *)src)->hash_sz;
@@ -100,13 +100,13 @@ int direct_glue_init(glue_t *glue)
     ST_CHECK_PARAM(glue == NULL, -1);
 
     if (strcasecmp(glue->type, DIRECT_GLUE_NAME) != 0) {
-        ST_WARNING("Not a sum glue. [%s]", glue->type);
+        ST_ERROR("Not a sum glue. [%s]", glue->type);
         return -1;
     }
 
     glue->extra = (void *)direct_glue_data_init();
     if (glue->extra == NULL) {
-        ST_WARNING("Failed to direct_glue_data_init.");
+        ST_ERROR("Failed to direct_glue_data_init.");
         goto ERR;
     }
 
@@ -122,18 +122,18 @@ int direct_glue_dup(glue_t *dst, glue_t *src)
     ST_CHECK_PARAM(dst == NULL || src == NULL, -1);
 
     if (strcasecmp(dst->type, DIRECT_GLUE_NAME) != 0) {
-        ST_WARNING("dst is Not a direct glue. [%s]", dst->type);
+        ST_ERROR("dst is Not a direct glue. [%s]", dst->type);
         return -1;
     }
 
     if (strcasecmp(src->type, DIRECT_GLUE_NAME) != 0) {
-        ST_WARNING("src is Not a direct glue. [%s]", src->type);
+        ST_ERROR("src is Not a direct glue. [%s]", src->type);
         return -1;
     }
 
     dst->extra = (void *)direct_glue_data_dup((direct_glue_data_t *)src->extra);
     if (dst->extra == NULL) {
-        ST_WARNING("Failed to direct_glue_data_dup.");
+        ST_ERROR("Failed to direct_glue_data_dup.");
         goto ERR;
     }
 
@@ -164,23 +164,23 @@ int direct_glue_parse_topo(glue_t *glue, const char *line)
         }
 
         if (split_line(token, keyvalue, 2, MAX_LINE_LEN, "=") != 2) {
-            ST_WARNING("Failed to split key/value. [%s]", token);
+            ST_ERROR("Failed to split key/value. [%s]", token);
             goto ERR;
         }
 
         if (strcasecmp("size", keyvalue) == 0) {
             data->hash_sz = st_str2ll(keyvalue + MAX_LINE_LEN);
             if (data->hash_sz <= 0) {
-                ST_WARNING("Illegal size[%s]", keyvalue + MAX_LINE_LEN);
+                ST_ERROR("Illegal size[%s]", keyvalue + MAX_LINE_LEN);
                 goto ERR;
             }
         } else {
-            ST_WARNING("Unknown key/value[%s]", token);
+            ST_ERROR("Unknown key/value[%s]", token);
         }
     }
 
     if (data->hash_sz <= 0) {
-        ST_WARNING("Hash size not set");
+        ST_ERROR("Hash size not set");
         goto ERR;
     }
 
@@ -201,22 +201,22 @@ bool direct_glue_check(glue_t *glue, layer_t **layers, int n_layer,
     data = (direct_glue_data_t *)glue->extra;
 
     if (strcasecmp(glue->type, DIRECT_GLUE_NAME) != 0) {
-        ST_WARNING("Not a direct glue. [%s]", glue->type);
+        ST_ERROR("Not a direct glue. [%s]", glue->type);
         return false;
     }
 
     if (strcasecmp(layers[glue->in_layer]->type, INPUT_LAYER_NAME) != 0) {
-        ST_WARNING("direct_wt glue: in layer should be input layer.");
+        ST_ERROR("direct_wt glue: in layer should be input layer.");
         return false;
     }
 
     if (strcasecmp(layers[glue->out_layer]->type, OUTPUT_LAYER_NAME) != 0) {
-        ST_WARNING("direct_wt glue: out layer should be output layer.");
+        ST_ERROR("direct_wt glue: out layer should be output layer.");
         return false;
     }
 
     if (data->hash_sz <= output->tree->num_node) {
-        ST_WARNING("Hash size should NOT less than output tree nodes.");
+        ST_ERROR("Hash size should NOT less than output tree nodes.");
         return false;
     }
 
@@ -263,12 +263,12 @@ int direct_glue_load_header(void **extra, int version,
             || fmt == NULL, -1);
 
     if (version < 9) {
-        ST_WARNING("Too old version of connlm file");
+        ST_ERROR("Too old version of connlm file");
         return -1;
     }
 
     if (fread(&flag.magic_num, sizeof(int), 1, fp) != 1) {
-        ST_WARNING("Failed to load magic num.");
+        ST_ERROR("Failed to load magic num.");
         return -1;
     }
 
@@ -276,7 +276,7 @@ int direct_glue_load_header(void **extra, int version,
     if (strncmp(flag.str, "    ", 4) == 0) {
         *fmt = CONN_FMT_TXT;
     } else if (DIRECT_GLUE_MAGIC_NUM != flag.magic_num) {
-        ST_WARNING("magic num wrong.");
+        ST_ERROR("magic num wrong.");
         return -2;
     }
 
@@ -287,7 +287,7 @@ int direct_glue_load_header(void **extra, int version,
     if (*fmt != CONN_FMT_TXT) {
         if (version >= 12) {
             if (fread(fmt, sizeof(connlm_fmt_t), 1, fp) != 1) {
-                ST_WARNING("Failed to read fmt.");
+                ST_ERROR("Failed to read fmt.");
                 goto ERR;
             }
         } else {
@@ -295,21 +295,21 @@ int direct_glue_load_header(void **extra, int version,
         }
 
         if (fread(&hash_sz, sizeof(size_t), 1, fp) != 1) {
-            ST_WARNING("Failed to read hash_sz.");
+            ST_ERROR("Failed to read hash_sz.");
             return -1;
         }
     } else {
         if (st_readline(fp, "") != 0) {
-            ST_WARNING("tag error.");
+            ST_ERROR("tag error.");
             goto ERR;
         }
         if (st_readline(fp, "<DIRECT-GLUE>") != 0) {
-            ST_WARNING("tag error.");
+            ST_ERROR("tag error.");
             goto ERR;
         }
 
         if (st_readline(fp, "Hash size: %zu", &hash_sz) != 1) {
-            ST_WARNING("Failed to parse hash_sz.");
+            ST_ERROR("Failed to parse hash_sz.");
             goto ERR;
         }
     }
@@ -317,7 +317,7 @@ int direct_glue_load_header(void **extra, int version,
     if (extra != NULL) {
         data = direct_glue_data_init();
         if (data == NULL) {
-            ST_WARNING("Failed to direct_glue_data_init.");
+            ST_ERROR("Failed to direct_glue_data_init.");
             goto ERR;
         }
 
@@ -349,26 +349,26 @@ int direct_glue_save_header(void *extra, FILE *fp, connlm_fmt_t fmt)
 
     if (connlm_fmt_is_bin(fmt)) {
         if (fwrite(&DIRECT_GLUE_MAGIC_NUM, sizeof(int), 1, fp) != 1) {
-            ST_WARNING("Failed to write magic num.");
+            ST_ERROR("Failed to write magic num.");
             return -1;
         }
         if (fwrite(&fmt, sizeof(connlm_fmt_t), 1, fp) != 1) {
-            ST_WARNING("Failed to write fmt.");
+            ST_ERROR("Failed to write fmt.");
             return -1;
         }
 
         if (fwrite(&(data->hash_sz), sizeof(size_t), 1, fp) != 1) {
-            ST_WARNING("Failed to write hash_sz.");
+            ST_ERROR("Failed to write hash_sz.");
             return -1;
         }
     } else {
         if (fprintf(fp, "    \n<DIRECT-GLUE>\n") < 0) {
-            ST_WARNING("Failed to fprintf header.");
+            ST_ERROR("Failed to fprintf header.");
             return -1;
         }
 
         if (fprintf(fp, "Hash size: %zu\n", data->hash_sz) < 0) {
-            ST_WARNING("Failed to fprintf hash_sz.");
+            ST_ERROR("Failed to fprintf hash_sz.");
             return -1;
         }
     }
@@ -386,7 +386,7 @@ int direct_glue_init_data(glue_t *glue, input_t *input,
             || input == NULL || output == NULL, -1);
 
     if (strcasecmp(glue->type, DIRECT_GLUE_NAME) != 0) {
-        ST_WARNING("Not a direct glue. [%s]", glue->type);
+        ST_ERROR("Not a direct glue. [%s]", glue->type);
         return -1;
     }
 
@@ -394,7 +394,7 @@ int direct_glue_init_data(glue_t *glue, input_t *input,
 
     for (i = 0; i < glue->num_wts; i++) {
         if (wt_init(glue->wts[i], 1, data->hash_sz) < 0) {
-            ST_WARNING("Failed to wt_init[%d].", i);
+            ST_ERROR("Failed to wt_init[%d].", i);
             return -1;
         }
     }

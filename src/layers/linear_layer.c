@@ -55,7 +55,7 @@ linear_data_t* linear_data_init()
 
     data = (linear_data_t *)st_malloc(sizeof(linear_data_t));
     if (data == NULL) {
-        ST_WARNING("Failed to st_malloc linear_data.");
+        ST_ERROR("Failed to st_malloc linear_data.");
         goto ERR;
     }
     memset(data, 0, sizeof(linear_data_t));
@@ -76,7 +76,7 @@ linear_data_t* linear_data_dup(linear_data_t *src)
 
     dst = linear_data_init();
     if (dst == NULL) {
-        ST_WARNING("Failed to linear_data_init.");
+        ST_ERROR("Failed to linear_data_init.");
         goto ERR;
     }
 
@@ -102,13 +102,13 @@ int linear_init(layer_t *layer)
     ST_CHECK_PARAM(layer == NULL, -1);
 
     if (strcasecmp(layer->type, LINEAR_NAME) != 0) {
-        ST_WARNING("Not a linear layer. [%s]", layer->type);
+        ST_ERROR("Not a linear layer. [%s]", layer->type);
         return -1;
     }
 
     layer->extra = (void *)linear_data_init();
     if (layer->extra == NULL) {
-        ST_WARNING("Failed to linear_data_init.");
+        ST_ERROR("Failed to linear_data_init.");
         goto ERR;
     }
 
@@ -124,18 +124,18 @@ int linear_dup(layer_t *dst, layer_t *src)
     ST_CHECK_PARAM(dst == NULL || src == NULL, -1);
 
     if (strcasecmp(dst->type, LINEAR_NAME) != 0) {
-        ST_WARNING("dst is Not a linear layer. [%s]", dst->type);
+        ST_ERROR("dst is Not a linear layer. [%s]", dst->type);
         return -1;
     }
 
     if (strcasecmp(src->type, LINEAR_NAME) != 0) {
-        ST_WARNING("src is Not a linear layer. [%s]", src->type);
+        ST_ERROR("src is Not a linear layer. [%s]", src->type);
         return -1;
     }
 
     dst->extra = (void *)linear_data_dup((linear_data_t *)src->extra);
     if (dst->extra == NULL) {
-        ST_WARNING("Failed to linear_data_dup.");
+        ST_ERROR("Failed to linear_data_dup.");
         goto ERR;
     }
 
@@ -167,18 +167,18 @@ int linear_parse_topo(layer_t *layer, const char *line)
         }
 
         if (split_line(token, keyvalue, 2, MAX_LINE_LEN, "=") != 2) {
-            ST_WARNING("Failed to split key/value. [%s]", token);
+            ST_ERROR("Failed to split key/value. [%s]", token);
             goto ERR;
         }
 
         if (strcasecmp("scale", keyvalue) == 0) {
             data->scale = atof(keyvalue + MAX_LINE_LEN);
             if (data->scale == 0) {
-                ST_WARNING("Scale should not be zero.");
+                ST_ERROR("Scale should not be zero.");
                 goto ERR;
             }
         } else {
-            ST_WARNING("Unknown key/value[%s]", token);
+            ST_ERROR("Unknown key/value[%s]", token);
         }
     }
 
@@ -204,12 +204,12 @@ int linear_load_header(void **extra, int version,
             || fmt == NULL, -1);
 
     if (version < 3) {
-        ST_WARNING("Too old version of connlm file");
+        ST_ERROR("Too old version of connlm file");
         return -1;
     }
 
     if (fread(&flag.magic_num, sizeof(int), 1, fp) != 1) {
-        ST_WARNING("Failed to load magic num.");
+        ST_ERROR("Failed to load magic num.");
         return -1;
     }
 
@@ -217,7 +217,7 @@ int linear_load_header(void **extra, int version,
     if (strncmp(flag.str, "    ", 4) == 0) {
         *fmt = CONN_FMT_TXT;
     } else if (LINEAR_LAYER_MAGIC_NUM != flag.magic_num) {
-        ST_WARNING("magic num wrong.");
+        ST_ERROR("magic num wrong.");
         return -2;
     }
 
@@ -228,7 +228,7 @@ int linear_load_header(void **extra, int version,
     if (*fmt != CONN_FMT_TXT) {
         if (version >= 12) {
             if (fread(fmt, sizeof(connlm_fmt_t), 1, fp) != 1) {
-                ST_WARNING("Failed to read fmt.");
+                ST_ERROR("Failed to read fmt.");
                 goto ERR;
             }
         } else {
@@ -236,21 +236,21 @@ int linear_load_header(void **extra, int version,
         }
 
         if (fread(&scale, sizeof(real_t), 1, fp) != 1) {
-            ST_WARNING("Failed to read scale.");
+            ST_ERROR("Failed to read scale.");
             return -1;
         }
     } else {
         if (st_readline(fp, "") != 0) {
-            ST_WARNING("tag error.");
+            ST_ERROR("tag error.");
             goto ERR;
         }
         if (st_readline(fp, "<LINEAR-LAYER>") != 0) {
-            ST_WARNING("tag error.");
+            ST_ERROR("tag error.");
             goto ERR;
         }
 
         if (st_readline(fp, "Scale: "REAL_FMT, &scale) != 1) {
-            ST_WARNING("Failed to parse scale.");
+            ST_ERROR("Failed to parse scale.");
             goto ERR;
         }
     }
@@ -258,7 +258,7 @@ int linear_load_header(void **extra, int version,
     if (extra != NULL) {
         data = linear_data_init();
         if (data == NULL) {
-            ST_WARNING("Failed to linear_data_init.");
+            ST_ERROR("Failed to linear_data_init.");
             goto ERR;
         }
 
@@ -287,7 +287,7 @@ int linear_load_body(void *extra, int version, FILE *fp, connlm_fmt_t fmt)
     ST_CHECK_PARAM(extra == NULL || fp == NULL, -1);
 
     if (version < 3) {
-        ST_WARNING("Too old version of connlm file");
+        ST_ERROR("Too old version of connlm file");
         return -1;
     } else if (version >= 4) { // Remove this empty body from version 4
         return 0;
@@ -295,17 +295,17 @@ int linear_load_body(void *extra, int version, FILE *fp, connlm_fmt_t fmt)
 
     if (connlm_fmt_is_bin(fmt)) {
         if (fread(&n, sizeof(int), 1, fp) != 1) {
-            ST_WARNING("Failed to read magic num.");
+            ST_ERROR("Failed to read magic num.");
             goto ERR;
         }
 
         if (n != -LINEAR_LAYER_MAGIC_NUM) {
-            ST_WARNING("Magic num error.");
+            ST_ERROR("Magic num error.");
             goto ERR;
         }
     } else {
         if (st_readline(fp, "<LINEAR-LAYER-DATA>") != 0) {
-            ST_WARNING("body flag error.");
+            ST_ERROR("body flag error.");
             goto ERR;
         }
     }
@@ -326,26 +326,26 @@ int linear_save_header(void *extra, FILE *fp, connlm_fmt_t fmt)
 
     if (connlm_fmt_is_bin(fmt)) {
         if (fwrite(&LINEAR_LAYER_MAGIC_NUM, sizeof(int), 1, fp) != 1) {
-            ST_WARNING("Failed to write magic num.");
+            ST_ERROR("Failed to write magic num.");
             return -1;
         }
         if (fwrite(&fmt, sizeof(connlm_fmt_t), 1, fp) != 1) {
-            ST_WARNING("Failed to write fmt.");
+            ST_ERROR("Failed to write fmt.");
             return -1;
         }
 
         if (fwrite(&(data->scale), sizeof(real_t), 1, fp) != 1) {
-            ST_WARNING("Failed to write scale.");
+            ST_ERROR("Failed to write scale.");
             return -1;
         }
     } else {
         if (fprintf(fp, "    \n<LINEAR-LAYER>\n") < 0) {
-            ST_WARNING("Failed to fprintf header.");
+            ST_ERROR("Failed to fprintf header.");
             return -1;
         }
 
         if (fprintf(fp, "Scale: "REAL_FMT"\n", data->scale) < 0) {
-            ST_WARNING("Failed to fprintf scale.");
+            ST_ERROR("Failed to fprintf scale.");
             return -1;
         }
     }

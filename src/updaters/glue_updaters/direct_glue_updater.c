@@ -98,7 +98,7 @@ dgu_data_t* dgu_data_init(glue_updater_t *glue_updater)
 
     data = (dgu_data_t *)st_malloc(sizeof(dgu_data_t));
     if (data == NULL) {
-        ST_WARNING("Failed to st_malloc dgu_data.");
+        ST_ERROR("Failed to st_malloc dgu_data.");
         goto ERR;
     }
     memset(data, 0, sizeof(dgu_data_t));
@@ -117,14 +117,14 @@ int dgu_data_resize_batch(dgu_data_t *data, int batch_size)
         data->hash_orders = (int *)st_realloc(data->hash_orders,
                 sizeof(int) * batch_size);
         if (data->hash_orders == NULL) {
-            ST_WARNING("Failed to st_malloc hash_orders.");
+            ST_ERROR("Failed to st_malloc hash_orders.");
             return -1;
         }
 
         data->hash_vals = (hash_t **)st_realloc(data->hash_vals,
                 sizeof(hash_t *) * batch_size);
         if (data->hash_vals == NULL) {
-            ST_WARNING("Failed to st_malloc hash_vals.");
+            ST_ERROR("Failed to st_malloc hash_vals.");
             return -1;
         }
 
@@ -132,7 +132,7 @@ int dgu_data_resize_batch(dgu_data_t *data, int batch_size)
             data->hash_vals[b] = (hash_t *)st_malloc(
                     sizeof(hash_t) * (data->num_feats + 1));
             if (data->hash_vals[b] == NULL) {
-                ST_WARNING("Failed to st_malloc hash_vals[%d].", b);
+                ST_ERROR("Failed to st_malloc hash_vals[%d].", b);
                 return -1;
             }
 
@@ -159,7 +159,7 @@ int dgu_data_setup(dgu_data_t *data, st_wt_int_t *features, int num_feats)
 
     data->P = (unsigned int **)st_malloc(sizeof(unsigned *)*num_feats);
     if (data->P == NULL) {
-        ST_WARNING("Failed to st_malloc P.");
+        ST_ERROR("Failed to st_malloc P.");
         goto ERR;
     }
     positive = num_feats;
@@ -173,7 +173,7 @@ int dgu_data_setup(dgu_data_t *data, st_wt_int_t *features, int num_feats)
     for (i = 0; i < positive; i++) {
         data->P[i] = (unsigned int *)st_malloc(sizeof(unsigned)*(i + 1));
         if (data->P[i] == NULL) {
-            ST_WARNING("Failed to st_malloc P[%d].", i);
+            ST_ERROR("Failed to st_malloc P[%d].", i);
             goto ERR;
         }
 
@@ -194,7 +194,7 @@ int dgu_data_setup(dgu_data_t *data, st_wt_int_t *features, int num_feats)
         data->P[i] = (unsigned int *)st_malloc(sizeof(unsigned)
                 * (i - positive + 1));
         if (data->P[i] == NULL) {
-            ST_WARNING("Failed to st_malloc P[%d].", i);
+            ST_ERROR("Failed to st_malloc P[%d].", i);
             goto ERR;
         }
 
@@ -234,13 +234,13 @@ int direct_glue_updater_init(glue_updater_t *glue_updater)
     glue= glue_updater->glue;
 
     if (strcasecmp(glue->type, DIRECT_GLUE_NAME) != 0) {
-        ST_WARNING("Not a direct glue_updater. [%s]", glue->type);
+        ST_ERROR("Not a direct glue_updater. [%s]", glue->type);
         return -1;
     }
 
     glue_updater->extra = (void *)dgu_data_init(glue_updater);
     if (glue_updater->extra == NULL) {
-        ST_WARNING("Failed to dgu_data_init.");
+        ST_ERROR("Failed to dgu_data_init.");
         goto ERR;
     }
 
@@ -304,7 +304,7 @@ int direct_glue_updater_setup(glue_updater_t *glue_updater,
     if (dgu_data_setup((dgu_data_t *)glue_updater->extra,
                 comp_updater->comp->input->context,
                 comp_updater->comp->input->n_ctx) < 0) {
-        ST_WARNING("Failed to dgu_data_setup");
+        ST_ERROR("Failed to dgu_data_setup");
         return -1;
     }
 
@@ -411,7 +411,7 @@ static int direct_forward_walker(output_t *output, output_node_id_t node,
                 MAT_VALP(dfw_args->node_out_acs + node, dfw_args->node_iters[node], 0),
                 dfw_args->scale, dfw_args->keep_mask, dfw_args->keep_prob,
                 dfw_args->rand_seed) < 0) {
-        ST_WARNING("Failed to forward_one_node");
+        ST_ERROR("Failed to forward_one_node");
         return -1;
     }
 
@@ -442,7 +442,7 @@ static int direct_compute_hash(glue_updater_t *glue_updater, int batch_id,
             data->hash_vals[batch_id] + 1, data->hash_vals[batch_id][0],
             data->P, input->words, positive);
     if (data->hash_orders < 0) {
-        ST_WARNING("Failed to direct_wt_get_hash history.");
+        ST_ERROR("Failed to direct_wt_get_hash history.");
         return -1;
     }
 
@@ -455,7 +455,7 @@ static int direct_compute_hash(glue_updater_t *glue_updater, int batch_id,
                 input->words + positive,
                 input->num_words - positive);
         if (future_order < 0) {
-            ST_WARNING("Failed to direct_wt_get_hash future.");
+            ST_ERROR("Failed to direct_wt_get_hash future.");
             return -1;
         }
         data->hash_orders[batch_id] += future_order;
@@ -493,7 +493,7 @@ static int reset_node_iters(out_updater_t *out_updater, egs_batch_t *batch)
         }
         if (output_walk_through_path(out_updater->output, batch->targets[b],
                     reset_node_iters_walker, (void *)out_updater->node_iters) < 0) {
-            ST_WARNING("Failed to output_walk_through_path.");
+            ST_ERROR("Failed to output_walk_through_path.");
             return -1;
         }
     }
@@ -511,7 +511,7 @@ int direct_glue_updater_prepare(glue_updater_t *glue_updater,
     data = (dgu_data_t *)glue_updater->extra;
 
     if (dgu_data_resize_batch(data, batch->num_egs) < 0) {
-        ST_WARNING("Failed to dgu_data_resize_batch.");
+        ST_ERROR("Failed to dgu_data_resize_batch.");
         return -1;
     }
 
@@ -535,7 +535,7 @@ int direct_glue_updater_forward(glue_updater_t *glue_updater,
     out_updater = comp_updater->out_updater;
 
     if (reset_node_iters(out_updater, batch) < 0) {
-        ST_WARNING("Failed to reset_node_iters.");
+        ST_ERROR("Failed to reset_node_iters.");
         return -1;
     }
 
@@ -560,7 +560,7 @@ int direct_glue_updater_forward(glue_updater_t *glue_updater,
         //       with node_id as init_val, so that we can get different
         //       hash_vals on different tree nodes.
         if (direct_compute_hash(glue_updater, b, batch->inputs + b) < 0) {
-            ST_WARNING("Failed to direct_compute_hash.");
+            ST_ERROR("Failed to direct_compute_hash.");
             return -1;
         }
 
@@ -572,7 +572,7 @@ int direct_glue_updater_forward(glue_updater_t *glue_updater,
         if (output_walk_through_path(out_updater->output,
                     batch->targets[b],
                     direct_forward_walker, (void *)&dfw_args) < 0) {
-            ST_WARNING("Failed to output_walk_through_path.");
+            ST_ERROR("Failed to output_walk_through_path.");
             return -1;
         }
     }
@@ -645,7 +645,7 @@ static int direct_backprop_walker(output_t *output, output_node_id_t node,
         mat_from_array(&out_er_mat, out_er, seg.n, true);
         if (wt_update(dbw_args->wt_updater, &out_er_mat, dbw_args->scale,
                     NULL, 1.0, &seg, NULL) < 0) {
-            ST_WARNING("Failed to wt_update.");
+            ST_ERROR("Failed to wt_update.");
             return -1;
         }
     }
@@ -672,7 +672,7 @@ int direct_glue_updater_backprop(glue_updater_t *glue_updater,
     out_updater = comp_updater->out_updater;
 
     if (reset_node_iters(out_updater, batch) < 0) {
-        ST_WARNING("Failed to reset_node_iters.");
+        ST_ERROR("Failed to reset_node_iters.");
         return -1;
     }
 
@@ -696,7 +696,7 @@ int direct_glue_updater_backprop(glue_updater_t *glue_updater,
         if (output_walk_through_path(out_updater->output,
                     batch->targets[b],
                     direct_backprop_walker, (void *)&dbw_args) < 0) {
-            ST_WARNING("Failed to output_walk_through_path.");
+            ST_ERROR("Failed to output_walk_through_path.");
             return -1;
         }
     }
@@ -715,13 +715,13 @@ int direct_glue_updater_forward_util_out(glue_updater_t *glue_updater,
 
     for (b = 0; b < batch->num_egs; b++) {
         if (direct_compute_hash(glue_updater, b, batch->inputs + b) < 0) {
-            ST_WARNING("Failed to direct_compute_hash.");
+            ST_ERROR("Failed to direct_compute_hash.");
             return -1;
         }
     }
 
     if (reset_node_iters(out_updater, batch) < 0) {
-        ST_WARNING("Failed to reset_node_iters.");
+        ST_ERROR("Failed to reset_node_iters.");
         return -1;
     }
 
@@ -764,7 +764,7 @@ int direct_glue_updater_forward_out(glue_updater_t *glue_updater,
                         out_updater->node_iters[node], 0),
                     comp_updater->comp->comp_scale,
                     NULL, 0.0, NULL) < 0) {
-            ST_WARNING("Failed to forward_one_node");
+            ST_ERROR("Failed to forward_one_node");
             return -1;
         }
     }
@@ -795,7 +795,7 @@ static int forward_out_words_walker(output_t *output, output_node_id_t node,
                 dfw_args->hash_vals, dfw_args->hash_order,
                 MAT_VALP(dfw_args->node_out_acs + node, 0, 0),
                 dfw_args->scale, NULL, 0.0, NULL) < 0) {
-        ST_WARNING("Failed to forward_one_node["OUTPUT_NODE_FMT"]", node);
+        ST_ERROR("Failed to forward_one_node["OUTPUT_NODE_FMT"]", node);
         return -1;
     }
 
@@ -822,12 +822,12 @@ int direct_glue_updater_forward_out_words(glue_updater_t *glue_updater,
     data = (dgu_data_t *)glue_updater->extra;
 
     if (in_ac->num_rows != 1) {
-        ST_WARNING("Only support batch_size == 1.");
+        ST_ERROR("Only support batch_size == 1.");
         return -1;
     }
 
     if (out_updater_reset_iters(out_updater, words) < 0) {
-        ST_WARNING("Failed to out_updater_reset_iters.");
+        ST_ERROR("Failed to out_updater_reset_iters.");
         return -1;
     }
 
@@ -845,7 +845,7 @@ int direct_glue_updater_forward_out_words(glue_updater_t *glue_updater,
         }
         if (output_walk_through_path(out_updater->output, VEC_VAL(words, i),
                     forward_out_words_walker, (void *)&dfw_args) < 0) {
-            ST_WARNING("Failed to output_walk_through_path for forward_out_words.");
+            ST_ERROR("Failed to output_walk_through_path for forward_out_words.");
             return -1;
         }
     }
@@ -856,13 +856,13 @@ int direct_glue_updater_forward_out_words(glue_updater_t *glue_updater,
 int direct_glue_updater_gen_keep_mask(glue_updater_t *glue_updater, int batch_size)
 {
     if (mat_resize_row(&glue_updater->keep_mask, batch_size, NAN) < 0) {
-        ST_WARNING("Failed to mat_resize_row for keep_mask.");
+        ST_ERROR("Failed to mat_resize_row for keep_mask.");
         return -1;
     }
     if (mat_resize(&glue_updater->dropout_val,
                 glue_updater->keep_mask.num_rows,
                 glue_updater->keep_mask.num_cols, NAN) < 0) {
-        ST_WARNING("Failed to mat_resize for dropout_val.");
+        ST_ERROR("Failed to mat_resize for dropout_val.");
         return -1;
     }
     /* keep_mask will be generated on the fly. */

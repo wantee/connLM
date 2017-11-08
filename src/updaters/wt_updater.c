@@ -82,13 +82,13 @@ wt_updater_t* wt_updater_create(param_t *param, mat_t *wt, vec_t *bias,
     ST_CHECK_PARAM(param == NULL || wt == NULL || bias == NULL, NULL);
 
     if (bias->size > 0 && wt->num_rows != bias->size) {
-        ST_WARNING("weight matrix and bias not match");
+        ST_ERROR("weight matrix and bias not match");
         return NULL;
     }
 
     wt_updater = (wt_updater_t *)st_malloc(sizeof(wt_updater_t));
     if (wt_updater == NULL) {
-        ST_WARNING("Failed to st_malloc wt_updater.");
+        ST_ERROR("Failed to st_malloc wt_updater.");
         goto ERR;
     }
     memset(wt_updater, 0, sizeof(wt_updater_t));
@@ -101,7 +101,7 @@ wt_updater_t* wt_updater_create(param_t *param, mat_t *wt, vec_t *bias,
     if (wt_updater->param.momentum * wt_updater->param.momentum_coef != 0.0) {
         if (mat_resize(&wt_updater->delta_wt,
                     wt->num_rows, wt->num_cols, 0.0) < 0) {
-            ST_WARNING("Failed to mat_resize delta_wt.");
+            ST_ERROR("Failed to mat_resize delta_wt.");
             goto ERR;
         }
     }
@@ -109,7 +109,7 @@ wt_updater_t* wt_updater_create(param_t *param, mat_t *wt, vec_t *bias,
     if (wt_updater->param.momentum * wt_updater->param.bias_momentum_coef != 0.0) {
         if (wt_updater->bias.size > 0) {
             if (vec_resize(&wt_updater->delta_bias, bias->size, 0.0) < 0) {
-                ST_WARNING("Failed to mat_resize delta_bias.");
+                ST_ERROR("Failed to mat_resize delta_bias.");
                 goto ERR;
             }
         }
@@ -196,51 +196,51 @@ static int update_part(size_t num_rows, size_t num_cols,
 
     if (mmt != 0.0) {
         if (mat_submat(wt, wt_row, num_rows, wt_col, num_cols, &sub_wt) < 0) {
-            ST_WARNING("Failed to mat_submat wt.");
+            ST_ERROR("Failed to mat_submat wt.");
             return -1;
         }
 
         if (mat_regularize_l1_l2(&sub_wt, l1, l2) < 0) {
-            ST_WARNING("Failed to mat_regularize_l1_l2 sub_wt.");
+            ST_ERROR("Failed to mat_regularize_l1_l2 sub_wt.");
             return -1;
         }
 
         if (mat_submat(er, er_row, num_rows, er_col, num_cols, &sub_er) < 0) {
-            ST_WARNING("Failed to mat_submat er.");
+            ST_ERROR("Failed to mat_submat er.");
             return -1;
         }
 
         if (mat_submat(delta_wt, wt_row, num_rows, wt_col, num_cols, &sub_delta_wt) < 0) {
-            ST_WARNING("Failed to mat_submat delta_wt.");
+            ST_ERROR("Failed to mat_submat delta_wt.");
             return -1;
         }
         if (mat_add_elems(&sub_delta_wt, mmt, &sub_er, lr, &sub_delta_wt) < 0) {
-            ST_WARNING("Failed to mat_add_elems sub_er to sub_delta_wt.");
+            ST_ERROR("Failed to mat_add_elems sub_er to sub_delta_wt.");
             return -1;
         }
 
         if (mat_add_elems(&sub_delta_wt, 1.0, &sub_wt, 1.0, &sub_wt) < 0) {
-            ST_WARNING("Failed to mat_add_elems sub_delta_wt to sub_wt.");
+            ST_ERROR("Failed to mat_add_elems sub_delta_wt to sub_wt.");
             return -1;
         }
     } else {
         if (mat_submat(wt, wt_row, num_rows, wt_col, num_cols, &sub_wt) < 0) {
-            ST_WARNING("Failed to mat_submat wt.");
+            ST_ERROR("Failed to mat_submat wt.");
             return -1;
         }
 
         if (mat_regularize_l1_l2(&sub_wt, l1, l2) < 0) {
-            ST_WARNING("Failed to mat_regularize_l1_l2 sub_wt.");
+            ST_ERROR("Failed to mat_regularize_l1_l2 sub_wt.");
             return -1;
         }
 
         if (mat_submat(er, er_row, num_rows, er_col, num_cols, &sub_er) < 0) {
-            ST_WARNING("Failed to mat_submat er.");
+            ST_ERROR("Failed to mat_submat er.");
             return -1;
         }
 
         if (mat_add_elems(&sub_wt, 1.0, &sub_er, lr, &sub_wt) < 0) {
-            ST_WARNING("Failed to mat_add_elems sub_wt vs sub_er.");
+            ST_ERROR("Failed to mat_add_elems sub_wt vs sub_er.");
             return -1;
         }
     }
@@ -291,7 +291,7 @@ int wt_update(wt_updater_t *wt_updater,
     switch (wt_updater->type) {
         case WT_UT_FULL:
             if (er->num_cols != wt->num_rows) {
-                ST_WARNING("Error size of er mat.[%zux%zu]",
+                ST_ERROR("Error size of er mat.[%zux%zu]",
                         er->num_rows, er->num_cols);
                 return -1;
             }
@@ -302,28 +302,28 @@ int wt_update(wt_updater_t *wt_updater,
             if (mmt != 0.0) {
                 if (add_mat_mat(lr, er, MT_Trans, in, MT_NoTrans,
                             mmt, delta_wt) < 0) {
-                    ST_WARNING("Failed to add_mat_mat for in and er");
+                    ST_ERROR("Failed to add_mat_mat for in and er");
                     return -1;
                 }
 
                 if (mat_regularize_l1_l2(wt, l1, l2) < 0) {
-                    ST_WARNING("Failed to mat_regularize_l1_l2 wt.");
+                    ST_ERROR("Failed to mat_regularize_l1_l2 wt.");
                     return -1;
                 }
 
                 if (mat_add_elems(wt, 1.0, delta_wt, 1.0, wt) < 0) {
-                    ST_WARNING("Failed to mat_add_elems for wt.");
+                    ST_ERROR("Failed to mat_add_elems for wt.");
                     return -1;
                 }
             } else {
                 if (mat_regularize_l1_l2(wt, l1, l2) < 0) {
-                    ST_WARNING("Failed to mat_regularize_l1_l2 wt.");
+                    ST_ERROR("Failed to mat_regularize_l1_l2 wt.");
                     return -1;
                 }
 
                 if (add_mat_mat(lr, er, MT_Trans, in, MT_NoTrans,
                             1.0, wt) < 0) {
-                    ST_WARNING("Failed to add_mat_mat for in and er");
+                    ST_ERROR("Failed to add_mat_mat for in and er");
                     return -1;
                 }
             }
@@ -332,17 +332,17 @@ int wt_update(wt_updater_t *wt_updater,
                 if (mmt_bias != 0.0) {
                     if (vec_add_col_sum_mat(delta_bias, lr_bias,
                                 er, mmt_bias) < 0) {
-                        ST_WARNING("Failed to vec_add_col_sum_mat bias");
+                        ST_ERROR("Failed to vec_add_col_sum_mat bias");
                         return -1;
                     }
 
                     if (vec_add_elems(bias, 1.0, delta_bias, 1.0, bias) < 0) {
-                        ST_WARNING("Failed to vec_add_elems bias");
+                        ST_ERROR("Failed to vec_add_elems bias");
                         return -1;
                     }
                 } else {
                     if (vec_add_col_sum_mat(bias, lr_bias, er, 1.0) < 0) {
-                        ST_WARNING("Failed to vec_add_col_sum_mat bias");
+                        ST_ERROR("Failed to vec_add_col_sum_mat bias");
                         return -1;
                     }
                 }
@@ -351,7 +351,7 @@ int wt_update(wt_updater_t *wt_updater,
 
         case WT_UT_PART:
             if (er->num_rows != 1 || er->num_cols != part->n) {
-                ST_WARNING("Error size of er mat.[%zux%zu]",
+                ST_ERROR("Error size of er mat.[%zux%zu]",
                         er->num_rows, er->num_cols);
                 return -1;
             }
@@ -360,18 +360,18 @@ int wt_update(wt_updater_t *wt_updater,
                 a = wt->num_cols - part->s;
                 if (update_part(1, a, wt, 0, part->s, er, 0, 0, lr, l1, l2,
                             mmt, delta_wt) < 0) {
-                    ST_WARNING("Failed to update_part first part");
+                    ST_ERROR("Failed to update_part first part");
                     return -1;
                 }
                 if (update_part(1, part->n - a, wt, 0, 0,
                             er, 0, a, lr, l1, l2, mmt, delta_wt) < 0) {
-                    ST_WARNING("Failed to update_part second part");
+                    ST_ERROR("Failed to update_part second part");
                     return -1;
                 }
             } else {
                 if (update_part(1, part->n, wt, 0, part->s, er, 0, 0,
                             lr, l1, l2, mmt, delta_wt) < 0) {
-                    ST_WARNING("Failed to update_part whole part");
+                    ST_ERROR("Failed to update_part whole part");
                     return -1;
                 }
             }
@@ -379,13 +379,13 @@ int wt_update(wt_updater_t *wt_updater,
 
         case WT_UT_ONE_SHOT:
             if (er->num_cols != wt->num_cols) {
-                ST_WARNING("Error size of er mat[%zux%zu], wt[%zux%zu]",
+                ST_ERROR("Error size of er mat[%zux%zu], wt[%zux%zu]",
                         er->num_rows, er->num_cols,
                         wt->num_rows, wt->num_cols);
                 return -1;
             }
             if (sp_mat->fmt != SP_MAT_COO) {
-                ST_WARNING("Error format of sp_mat.[%d]", sp_mat->fmt);
+                ST_ERROR("Error format of sp_mat.[%d]", sp_mat->fmt);
                 return -1;
             }
             for (a = 0; a < sp_mat->size; a++) {
@@ -396,14 +396,14 @@ int wt_update(wt_updater_t *wt_updater,
                             er, sp_mat->coo.rows[a], 0,
                             lr * sp_mat->vals[a], l1, l2,
                             mmt, delta_wt) < 0) {
-                    ST_WARNING("Failed to update_part one-shot");
+                    ST_ERROR("Failed to update_part one-shot");
                     return -1;
                 }
             }
             break;
 
         default:
-            ST_WARNING("Unknown updating type[%d].", wt_updater->type);
+            ST_ERROR("Unknown updating type[%d].", wt_updater->type);
             return -1;
     }
 

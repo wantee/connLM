@@ -49,27 +49,27 @@ int connlm_tofst_parse_opt(int *argc, const char *argv[])
 
     g_cmd_opt = st_opt_create();
     if (g_cmd_opt == NULL) {
-        ST_WARNING("Failed to st_opt_create.");
+        ST_ERROR("Failed to st_opt_create.");
         goto ST_OPT_ERR;
     }
 
     if (st_opt_parse(g_cmd_opt, argc, argv) < 0) {
-        ST_WARNING("Failed to st_opt_parse.");
+        ST_ERROR("Failed to st_opt_parse.");
         goto ST_OPT_ERR;
     }
 
     if (st_log_load_opt(&log_opt, g_cmd_opt, NULL) < 0) {
-        ST_WARNING("Failed to st_log_load_opt");
+        ST_ERROR("Failed to st_log_load_opt");
         goto ST_OPT_ERR;
     }
 
     if (st_log_open_mt(&log_opt) != 0) {
-        ST_WARNING("Failed to open log");
+        ST_ERROR("Failed to open log");
         goto ST_OPT_ERR;
     }
 
     if (fst_conv_load_opt(&g_conv_opt, g_cmd_opt, NULL) < 0) {
-        ST_WARNING("Failed to fst_conv_load_opt");
+        ST_ERROR("Failed to fst_conv_load_opt");
         goto ST_OPT_ERR;
     }
 
@@ -104,7 +104,7 @@ int main(int argc, const char *argv[])
     int ret;
 
     if (st_mem_usage_init() < 0) {
-        ST_WARNING("Failed to st_mem_usage_init.");
+        ST_ERROR("Failed to st_mem_usage_init.");
         goto ERR;
     }
 
@@ -139,38 +139,38 @@ int main(int argc, const char *argv[])
 
 #ifdef _USE_BLAS_
     if (setup_blas()) {
-        ST_WARNING("Failed to setup_blas.");
+        ST_ERROR("Failed to setup_blas.");
         goto ERR;
     }
 #endif
 
     fp = st_fopen(argv[1], "rb");
     if (fp == NULL) {
-        ST_WARNING("Failed to st_fopen. [%s]", argv[1]);
+        ST_ERROR("Failed to st_fopen. [%s]", argv[1]);
         goto ERR;
     }
 
     connlm = connlm_load(fp);
     if (connlm == NULL) {
-        ST_WARNING("Failed to connlm_load. [%s]", argv[1]);
+        ST_ERROR("Failed to connlm_load. [%s]", argv[1]);
         goto ERR;
     }
     safe_st_fclose(fp);
 
     conv = fst_conv_create(connlm, g_num_thr, &g_conv_opt);
     if (conv == NULL) {
-        ST_WARNING("Failed to fst_conv_create.");
+        ST_ERROR("Failed to fst_conv_create.");
         goto ERR;
     }
 
     fp = st_fopen(argv[2], "wb");
     if (fp == NULL) {
-        ST_WARNING("Failed to st_fopen. [%s]", argv[2]);
+        ST_ERROR("Failed to st_fopen. [%s]", argv[2]);
         goto ERR;
     }
 
     if (fst_conv_convert(conv, fp) < 0) {
-        ST_WARNING("Failed to fst_conv_convert.");
+        ST_ERROR("Failed to fst_conv_convert.");
         goto ERR;
     }
 

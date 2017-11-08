@@ -123,7 +123,7 @@ driver_t* driver_create(connlm_t *connlm, reader_t *reader, int n_thr)
 
     driver = (driver_t *)st_malloc(sizeof(driver_t));
     if (driver == NULL) {
-        ST_WARNING("Failed to st_malloc driver.");
+        ST_ERROR("Failed to st_malloc driver.");
         return NULL;
     }
     memset(driver, 0, sizeof(driver_t));
@@ -134,7 +134,7 @@ driver_t* driver_create(connlm_t *connlm, reader_t *reader, int n_thr)
 
     driver->updaters = (updater_t **)st_malloc(sizeof(updater_t*)*n_thr);
     if (driver->updaters == NULL) {
-        ST_WARNING("Failed to st_malloc updaters.");
+        ST_ERROR("Failed to st_malloc updaters.");
         goto ERR;
     }
     memset(driver->updaters, 0, sizeof(updater_t*) * n_thr);
@@ -142,7 +142,7 @@ driver_t* driver_create(connlm_t *connlm, reader_t *reader, int n_thr)
     for (i = 0; i < driver->n_thr; i++) {
         driver->updaters[i] = updater_create(connlm);
         if (driver->updaters[i] == NULL) {
-            ST_WARNING("Failed to st_malloc updater[%d].", i);
+            ST_ERROR("Failed to st_malloc updater[%d].", i);
             goto ERR;
         }
     }
@@ -173,7 +173,7 @@ int driver_setup(driver_t *driver, driver_mode_t mode)
     driver->mode = mode;
 
     if (connlm_setup(driver->connlm) < 0) {
-        ST_WARNING("Failed to connlm_setup.");
+        ST_ERROR("Failed to connlm_setup.");
         return -1;
     }
 
@@ -181,20 +181,20 @@ int driver_setup(driver_t *driver, driver_mode_t mode)
         if (mode == DRIVER_TRAIN) {
             if (updater_set_rand_seed(driver->updaters[i],
                         driver->train_opt.rand_seed + i) < 0) {
-                ST_WARNING("Failed to updater_set_rand_seed.");
+                ST_ERROR("Failed to updater_set_rand_seed.");
                 return -1;
             }
         }
 
         if (updater_setup(driver->updaters[i], backprop) < 0) {
-            ST_WARNING("Failed to updater_setup.");
+            ST_ERROR("Failed to updater_setup.");
             return -1;
         }
     }
 
     if (mode == DRIVER_GEN) {
         if (connlm_need_future_input(driver->connlm)) {
-            ST_WARNING("Can not generating: future words in input context.");
+            ST_ERROR("Can not generating: future words in input context.");
             return -1;
         }
     }
@@ -247,7 +247,7 @@ static int driver_steps(driver_t *driver, int tid, double *logp,
 
     while (updater_steppable(updater)) {
         if (updater_step(updater) < 0) {
-            ST_WARNING("Failed to updater_step.");
+            ST_ERROR("Failed to updater_step.");
             return -1;
         }
 
@@ -266,7 +266,7 @@ static int driver_steps(driver_t *driver, int tid, double *logp,
             }
 
             if ((*logp != *logp) || (isinf(*logp))) {
-                ST_WARNING("Numerical error. tid[%d], log(p_word(%d)) = %g",
+                ST_ERROR("Numerical error. tid[%d], log(p_word(%d)) = %g",
                         tid, word, this_logp);
                 return -1;
             }
@@ -294,7 +294,7 @@ static int driver_steps(driver_t *driver, int tid, double *logp,
 
     if (updater->finalized && driver->mode == DRIVER_TRAIN) {
         if (updater_finish(updater) < 0) {
-            ST_WARNING("Failed to updater_finish.");
+            ST_ERROR("Failed to updater_finish.");
             return -1;
         }
     }
@@ -354,26 +354,26 @@ static void* driver_thread(void *args)
 
         if (wp == NULL) { // finish
             if (updater_finalize(updater) < 0) {
-                ST_WARNING("Failed to updater_finalize.");
+                ST_ERROR("Failed to updater_finalize.");
                 goto ERR;
             }
 
             if (driver_steps(driver, tid, &logp, &logp_sent,
                         &num_sents, &num_words) < 0) {
-                ST_WARNING("Failed to driver_steps.");
+                ST_ERROR("Failed to driver_steps.");
                 goto ERR;
             }
             break;
         }
 
         if (updater_feed(updater, wp) < 0) {
-            ST_WARNING("Failed to updater_feed.");
+            ST_ERROR("Failed to updater_feed.");
             goto RELEASE_WP;
         }
 
         if (driver_steps(driver, tid, &logp, &logp_sent,
                     &num_sents, &num_words) < 0) {
-            ST_WARNING("Failed to driver_steps.");
+            ST_ERROR("Failed to driver_steps.");
             goto RELEASE_WP;
         }
 
@@ -393,7 +393,7 @@ static void* driver_thread(void *args)
                 TIMEDIFF(tts_wait, tte_wait) / 1000.0);
 
         if (reader_release_word_pool(reader, wp) < 0) {
-            ST_WARNING("Failed to reader_release_word_pool.");
+            ST_ERROR("Failed to reader_release_word_pool.");
             goto ERR;
         }
     }
@@ -406,7 +406,7 @@ static void* driver_thread(void *args)
 
 RELEASE_WP:
     if (reader_release_word_pool(reader, wp) < 0) {
-        ST_WARNING("Failed to reader_release_word_pool.");
+        ST_ERROR("Failed to reader_release_word_pool.");
         goto ERR;
     }
 
@@ -450,13 +450,13 @@ static int driver_do_run(driver_t *driver)
     n_thr = driver->n_thr;
     pts = (pthread_t *)st_malloc(n_thr * sizeof(pthread_t));
     if (pts == NULL) {
-        ST_WARNING("Failed to st_malloc pts");
+        ST_ERROR("Failed to st_malloc pts");
         goto ERR;
     }
 
     thrs = (driver_thr_t *)st_malloc(sizeof(driver_thr_t) * n_thr);
     if (thrs == NULL) {
-        ST_WARNING("Failed to st_malloc thrs");
+        ST_ERROR("Failed to st_malloc thrs");
         goto ERR;
     }
     memset(thrs, 0, sizeof(driver_thr_t) * n_thr);
@@ -465,13 +465,13 @@ static int driver_do_run(driver_t *driver)
 
     stats = (thr_stat_t *)st_malloc(sizeof(thr_stat_t) * n_thr);
     if (stats == NULL) {
-        ST_WARNING("Failed to st_malloc stats");
+        ST_ERROR("Failed to st_malloc stats");
         goto ERR;
     }
     memset(stats, 0, sizeof(thr_stat_t) * n_thr);
 
     if (reader_read(driver->reader, stats, &driver->err) < 0) {
-        ST_WARNING("Failed to reader_read.");
+        ST_ERROR("Failed to reader_read.");
         goto ERR;
     }
 
@@ -481,20 +481,20 @@ static int driver_do_run(driver_t *driver)
         thrs[i].stat = stats + i;
         if (pthread_create(pts + i, NULL, driver_thread,
                     (void *)(thrs + i)) != 0) {
-            ST_WARNING("Failed to pthread_create driver_thread.");
+            ST_ERROR("Failed to pthread_create driver_thread.");
             goto ERR;
         }
     }
 
     for (i = 0; i < n_thr; i++) {
         if (pthread_join(pts[i], NULL) != 0) {
-            ST_WARNING("Failed to pthread_join.");
+            ST_ERROR("Failed to pthread_join.");
             goto ERR;
         }
     }
 
     if(reader_wait(driver->reader) != 0) {
-        ST_WARNING("Failed to reader_wait.");
+        ST_ERROR("Failed to reader_wait.");
         goto ERR;
     }
 
@@ -586,7 +586,7 @@ static int driver_gen(driver_t *driver)
     if (driver->gen_opt.prefix_file[0] != '\0') {
         text_fp = st_fopen(driver->gen_opt.prefix_file, "rb");
         if (text_fp == NULL) {
-            ST_WARNING("Failed to open prefix file[%s]",
+            ST_ERROR("Failed to open prefix file[%s]",
                     driver->gen_opt.prefix_file);
             goto ERR;
         }
@@ -599,7 +599,7 @@ static int driver_gen(driver_t *driver)
         first = true;
         if (text_fp != NULL && !feof(text_fp)) {
             if (word_pool_read(&wp, 1, text_fp, vocab, NULL, true) < 0) {
-                ST_WARNING("Failed to word_pool_read.");
+                ST_ERROR("Failed to word_pool_read.");
                 goto ERR;
             }
 
@@ -615,7 +615,7 @@ static int driver_gen(driver_t *driver)
 
                 word_pool_pop(&wp); // remove </s> at the end
                 if (updater_feed(updater, &wp) < 0) {
-                    ST_WARNING("Failed to updater_feed.");
+                    ST_ERROR("Failed to updater_feed.");
                     goto ERR;
                 }
 
@@ -623,7 +623,7 @@ static int driver_gen(driver_t *driver)
                 while (updater_steppable(updater)) {
                     word = updater_step(updater);
                     if (word < 0) {
-                        ST_WARNING("Failed to updater_step.");
+                        ST_ERROR("Failed to updater_step.");
                         goto ERR;
                     }
                     first = false;
@@ -637,7 +637,7 @@ static int driver_gen(driver_t *driver)
         while (word != SENT_END_ID) {
             word = updater_sampling(updater, first);
             if (word < 0) {
-                ST_WARNING("Failed to updater_sampling.");
+                ST_ERROR("Failed to updater_sampling.");
                 goto ERR;
             }
 
@@ -691,16 +691,16 @@ int driver_run(driver_t *driver)
 
     if (driver->mode == DRIVER_EVAL || driver->mode == DRIVER_TRAIN) {
         if (driver_do_run(driver) < 0) {
-            ST_WARNING("Failed to driver_do_run.");
+            ST_ERROR("Failed to driver_do_run.");
             return -1;
         }
     } else if (driver->mode == DRIVER_GEN) {
         if (driver_gen(driver) < 0) {
-            ST_WARNING("Failed to driver_gen.");
+            ST_ERROR("Failed to driver_gen.");
             return -1;
         }
     } else {
-        ST_WARNING("Unknown mode[%d]", driver->mode);
+        ST_ERROR("Unknown mode[%d]", driver->mode);
         return -1;
     }
 

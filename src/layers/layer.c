@@ -99,14 +99,14 @@ layer_t* layer_parse_topo(const char *line)
 
     layer = (layer_t *)st_malloc(sizeof(layer_t));
     if (layer == NULL) {
-        ST_WARNING("Failed to st_malloc layer_t.");
+        ST_ERROR("Failed to st_malloc layer_t.");
         goto ERR;
     }
     memset(layer, 0, sizeof(layer_t));
 
     p = get_next_token(line, token);
     if (strcasecmp("layer", token) != 0) {
-        ST_WARNING("Not layer line.");
+        ST_ERROR("Not layer line.");
         goto ERR;
     }
 
@@ -118,41 +118,41 @@ layer_t* layer_parse_topo(const char *line)
         }
 
         if (split_line(token, keyvalue, 2, MAX_LINE_LEN, "=") != 2) {
-            ST_WARNING("Failed to split key/value. [%s][%s]", line, token);
+            ST_ERROR("Failed to split key/value. [%s][%s]", line, token);
             goto ERR;
         }
 
         if (strcasecmp("name", keyvalue) == 0) {
             if (layer->name[0] != '\0') {
-                ST_WARNING("Duplicated name.");
+                ST_ERROR("Duplicated name.");
             }
             strncpy(layer->name, keyvalue + MAX_LINE_LEN, MAX_NAME_LEN);
             layer->name[MAX_NAME_LEN - 1] = '\0';
         } else if (strcasecmp("type", keyvalue) == 0) {
             if (layer->type[0] != '\0') {
-                ST_WARNING("Duplicated type.");
+                ST_ERROR("Duplicated type.");
             }
             strncpy(layer->type, keyvalue + MAX_LINE_LEN, MAX_NAME_LEN);
             layer->type[MAX_NAME_LEN - 1] = '\0';
 
             layer->impl = layer_get_impl(layer->type);
             if (layer->impl == NULL) {
-                ST_WARNING("Unknown type of layer [%s].", layer->type);
+                ST_ERROR("Unknown type of layer [%s].", layer->type);
                 goto ERR;
             }
             if (layer->impl->init != NULL) {
                 if (layer->impl->init(layer) < 0) {
-                    ST_WARNING("Failed to layer->impl->init.");
+                    ST_ERROR("Failed to layer->impl->init.");
                     goto ERR;
                 }
             }
         } else if (strcasecmp("size", keyvalue) == 0) {
             if (layer->size != 0) {
-                ST_WARNING("Duplicated size.");
+                ST_ERROR("Duplicated size.");
             }
             layer->size = atoi(keyvalue + MAX_LINE_LEN);
             if (layer->size <= 0) {
-                ST_WARNING("Invalid layer size[%s].",
+                ST_ERROR("Invalid layer size[%s].",
                         keyvalue + MAX_LINE_LEN);
                 goto ERR;
             }
@@ -167,20 +167,20 @@ layer_t* layer_parse_topo(const char *line)
     }
 
     if (layer->name[0] == '\0') {
-        ST_WARNING("No layer name found.");
+        ST_ERROR("No layer name found.");
         goto ERR;
     }
     if (layer->impl == NULL) {
-        ST_WARNING("No layer type found.");
+        ST_ERROR("No layer type found.");
         goto ERR;
     }
     if (layer->size <= 0) {
-        ST_WARNING("No layer size found.");
+        ST_ERROR("No layer size found.");
         goto ERR;
     }
     if (layer->impl->parse_topo != NULL) {
         if (layer->impl->parse_topo(layer, impl_topo) < 0) {
-            ST_WARNING("Failed to parse_topo for layer->impl layer.");
+            ST_ERROR("Failed to parse_topo for layer->impl layer.");
             goto ERR;
         }
     }
@@ -200,7 +200,7 @@ layer_t* layer_dup(layer_t *l)
 
     layer = (layer_t *)st_malloc(sizeof(layer_t));
     if (layer == NULL) {
-        ST_WARNING("Failed to st_malloc layer_t.");
+        ST_ERROR("Failed to st_malloc layer_t.");
         goto ERR;
     }
     memset(layer, 0, sizeof(layer_t));
@@ -214,7 +214,7 @@ layer_t* layer_dup(layer_t *l)
     layer->impl = l->impl;
     if (layer->impl != NULL && layer->impl->dup != NULL) {
         if (layer->impl->dup(layer, l) < 0) {
-            ST_WARNING("Failed to layer->impl->dup[%s].", layer->name);
+            ST_ERROR("Failed to layer->impl->dup[%s].", layer->name);
             goto ERR;
         }
     }
@@ -245,12 +245,12 @@ int layer_load_header(layer_t **layer, int version,
             || fmt == NULL, -1);
 
     if (version < 3) {
-        ST_WARNING("Too old version of connlm file");
+        ST_ERROR("Too old version of connlm file");
         return -1;
     }
 
     if (fread(&flag.magic_num, sizeof(int), 1, fp) != 1) {
-        ST_WARNING("Failed to load magic num.");
+        ST_ERROR("Failed to load magic num.");
         return -1;
     }
 
@@ -258,7 +258,7 @@ int layer_load_header(layer_t **layer, int version,
     if (strncmp(flag.str, "    ", 4) == 0) {
         *fmt = CONN_FMT_TXT;
     } else if (LAYER_MAGIC_NUM != flag.magic_num) {
-        ST_WARNING("magic num wrong.");
+        ST_ERROR("magic num wrong.");
         return -2;
     }
 
@@ -269,7 +269,7 @@ int layer_load_header(layer_t **layer, int version,
     if (*fmt != CONN_FMT_TXT) {
         if (version >= 12) {
             if (fread(fmt, sizeof(connlm_fmt_t), 1, fp) != 1) {
-                ST_WARNING("Failed to read fmt.");
+                ST_ERROR("Failed to read fmt.");
                 goto ERR;
             }
         } else {
@@ -277,56 +277,56 @@ int layer_load_header(layer_t **layer, int version,
         }
 
         if (fread(name, sizeof(char), MAX_NAME_LEN, fp) != MAX_NAME_LEN) {
-            ST_WARNING("Failed to read name.");
+            ST_ERROR("Failed to read name.");
             return -1;
         }
         name[MAX_NAME_LEN - 1] = '\0';
         if (fread(type, sizeof(char), MAX_NAME_LEN, fp) != MAX_NAME_LEN) {
-            ST_WARNING("Failed to read type.");
+            ST_ERROR("Failed to read type.");
             return -1;
         }
         type[MAX_NAME_LEN - 1] = '\0';
         if (fread(&size, sizeof(int), 1, fp) != 1) {
-            ST_WARNING("Failed to read size.");
+            ST_ERROR("Failed to read size.");
             return -1;
         }
     } else {
         if (st_readline(fp, "") != 0) {
-            ST_WARNING("tag error.");
+            ST_ERROR("tag error.");
             goto ERR;
         }
         if (st_readline(fp, "<LAYER>") != 0) {
-            ST_WARNING("tag error.");
+            ST_ERROR("tag error.");
             goto ERR;
         }
 
         if (st_readline(fp, "Name: %"xSTR(MAX_NAME_LEN)"s", name) != 1) {
-            ST_WARNING("Failed to parse name.");
+            ST_ERROR("Failed to parse name.");
             goto ERR;
         }
         name[MAX_NAME_LEN - 1] = '\0';
         if (st_readline(fp, "Type: %"xSTR(MAX_NAME_LEN)"s", type) != 1) {
-            ST_WARNING("Failed to parse type.");
+            ST_ERROR("Failed to parse type.");
             goto ERR;
         }
         type[MAX_NAME_LEN - 1] = '\0';
 
         if (st_readline(fp, "Size: %d", &size) != 1) {
-            ST_WARNING("Failed to parse size.");
+            ST_ERROR("Failed to parse size.");
             goto ERR;
         }
     }
 
     impl = layer_get_impl(type);
     if (impl == NULL) {
-        ST_WARNING("Unknown layer type[%s].", type);
+        ST_ERROR("Unknown layer type[%s].", type);
         goto ERR;
     }
 
     if (layer != NULL) {
         *layer = (layer_t *)st_malloc(sizeof(layer_t));
         if (*layer == NULL) {
-            ST_WARNING("Failed to st_malloc layer_t");
+            ST_ERROR("Failed to st_malloc layer_t");
             goto ERR;
         }
         memset(*layer, 0, sizeof(layer_t));
@@ -346,12 +346,12 @@ int layer_load_header(layer_t **layer, int version,
     if (impl->load_header != NULL) {
         if (impl->load_header(layer != NULL ? &((*layer)->extra) : NULL,
                     version, fp, &f, fo_info) < 0) {
-            ST_WARNING("Failed to impl->load_header.");
+            ST_ERROR("Failed to impl->load_header.");
             goto ERR;
         }
 
         if (*fmt != f) {
-            ST_WARNING("Multiple formats in one file.");
+            ST_ERROR("Multiple formats in one file.");
             return -1;
         }
     }
@@ -372,30 +372,30 @@ int layer_load_body(layer_t *layer, int version, FILE *fp, connlm_fmt_t fmt)
     ST_CHECK_PARAM(layer == NULL || fp == NULL, -1);
 
     if (version < 3) {
-        ST_WARNING("Too old version of connlm file");
+        ST_ERROR("Too old version of connlm file");
         return -1;
     }
 
     if (connlm_fmt_is_bin(fmt)) {
         if (fread(&n, sizeof(int), 1, fp) != 1) {
-            ST_WARNING("Failed to read magic num.");
+            ST_ERROR("Failed to read magic num.");
             goto ERR;
         }
 
         if (n != -LAYER_MAGIC_NUM) {
-            ST_WARNING("Magic num error.");
+            ST_ERROR("Magic num error.");
             goto ERR;
         }
     } else {
         if (st_readline(fp, "<LAYER-DATA>") != 0) {
-            ST_WARNING("body flag error.");
+            ST_ERROR("body flag error.");
             goto ERR;
         }
     }
 
     if (layer->impl->load_body != NULL) {
         if (layer->impl->load_body(layer->extra, version, fp, fmt) < 0) {
-            ST_WARNING("Failed to glue->impl->load_body.");
+            ST_ERROR("Failed to glue->impl->load_body.");
             goto ERR;
         }
     }
@@ -412,51 +412,51 @@ int layer_save_header(layer_t *layer, FILE *fp, connlm_fmt_t fmt)
 
     if (connlm_fmt_is_bin(fmt)) {
         if (fwrite(&LAYER_MAGIC_NUM, sizeof(int), 1, fp) != 1) {
-            ST_WARNING("Failed to write magic num.");
+            ST_ERROR("Failed to write magic num.");
             return -1;
         }
         if (fwrite(&fmt, sizeof(connlm_fmt_t), 1, fp) != 1) {
-            ST_WARNING("Failed to write fmt.");
+            ST_ERROR("Failed to write fmt.");
             return -1;
         }
 
         if (fwrite(layer->name, sizeof(char), MAX_NAME_LEN,
                     fp) != MAX_NAME_LEN) {
-            ST_WARNING("Failed to write name.");
+            ST_ERROR("Failed to write name.");
             return -1;
         }
         if (fwrite(layer->type, sizeof(char), MAX_NAME_LEN,
                     fp) != MAX_NAME_LEN) {
-            ST_WARNING("Failed to write type.");
+            ST_ERROR("Failed to write type.");
             return -1;
         }
         if (fwrite(&layer->size, sizeof(int), 1, fp) != 1) {
-            ST_WARNING("Failed to write size.");
+            ST_ERROR("Failed to write size.");
             return -1;
         }
     } else {
         if (fprintf(fp, "    \n<LAYER>\n") < 0) {
-            ST_WARNING("Failed to fprintf header.");
+            ST_ERROR("Failed to fprintf header.");
             return -1;
         }
 
         if (fprintf(fp, "Name: %s\n", layer->name) < 0) {
-            ST_WARNING("Failed to fprintf name.");
+            ST_ERROR("Failed to fprintf name.");
             return -1;
         }
         if (fprintf(fp, "Type: %s\n", layer->type) < 0) {
-            ST_WARNING("Failed to fprintf type.");
+            ST_ERROR("Failed to fprintf type.");
             return -1;
         }
         if (fprintf(fp, "Size: %d\n", layer->size) < 0) {
-            ST_WARNING("Failed to fprintf size.");
+            ST_ERROR("Failed to fprintf size.");
             return -1;
         }
     }
 
     if (layer->impl != NULL && layer->impl->save_header != NULL) {
         if (layer->impl->save_header(layer->extra, fp, fmt) < 0) {
-            ST_WARNING("Failed to glue->impl->save_header.");
+            ST_ERROR("Failed to glue->impl->save_header.");
             return -1;
         }
     }
@@ -473,20 +473,20 @@ int layer_save_body(layer_t *layer, FILE *fp, connlm_fmt_t fmt)
     if (connlm_fmt_is_bin(fmt)) {
         n = -LAYER_MAGIC_NUM;
         if (fwrite(&n, sizeof(int), 1, fp) != 1) {
-            ST_WARNING("Failed to write magic num.");
+            ST_ERROR("Failed to write magic num.");
             return -1;
         }
 
     } else {
         if (fprintf(fp, "<LAYER-DATA>\n") < 0) {
-            ST_WARNING("Failed to fprintf header.");
+            ST_ERROR("Failed to fprintf header.");
             return -1;
         }
     }
 
     if (layer->impl != NULL && layer->impl->save_body != NULL) {
         if (layer->impl->save_body(layer->extra, fp, fmt) < 0) {
-            ST_WARNING("Failed to layer->impl->save_body.");
+            ST_ERROR("Failed to layer->impl->save_body.");
             return -1;
         }
     }

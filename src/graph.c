@@ -90,7 +90,7 @@ static int node_add_link(node_t *node, int lk)
     node->links = (int *)st_realloc(node->links, sizeof(int)
             * (node->num_link + 1));
     if (node->links == NULL) {
-        ST_WARNING("Failed to st_realloc node links.");
+        ST_ERROR("Failed to st_realloc node links.");
         return -1;
     }
     node->links[node->num_link] = lk;
@@ -121,7 +121,7 @@ static int elem_set_init(elem_set_t* set, int cap)
 
     set->elems = (int *)st_malloc(sizeof(int) * cap);
     if (set->elems == NULL) {
-        ST_WARNING("Failed to st_malloc ->elems.");
+        ST_ERROR("Failed to st_malloc ->elems.");
         goto ERR;
     }
     set->num = 0;
@@ -138,7 +138,7 @@ static int elem_set_add(elem_set_t* set, int elem)
     ST_CHECK_PARAM(set == NULL, -1);
 
     if (set->num >= set->cap) {
-        ST_WARNING("elem set overflow.");
+        ST_ERROR("elem set overflow.");
         return -1;
     }
 
@@ -181,35 +181,35 @@ static int dfs_args_init(dfs_args_t *args, graph_t *graph)
 
     args->on_stack = (bool *)st_malloc(sizeof(bool) * graph->num_node);
     if (args->on_stack == NULL) {
-        ST_WARNING("Failed to st_malloc on_stack");
+        ST_ERROR("Failed to st_malloc on_stack");
         goto ERR;
     }
     memset(args->on_stack, 0, sizeof(bool) * graph->num_node);
 
     args->visited = (bool *)st_malloc(sizeof(bool) * graph->num_node);
     if (args->visited == NULL) {
-        ST_WARNING("Failed to st_malloc visited");
+        ST_ERROR("Failed to st_malloc visited");
         goto ERR;
     }
     memset(args->visited, 0, sizeof(bool) * graph->num_node);
 
     args->link_stack = st_stack_create((st_stack_id_t)graph->num_link);
     if (args->link_stack == NULL) {
-        ST_WARNING("Failed to st_stack_create link_stack.");
+        ST_ERROR("Failed to st_stack_create link_stack.");
         goto ERR;
     }
     (void)st_stack_clear(args->link_stack);
 
     args->passed = (bool *)st_malloc(sizeof(bool) * graph->num_link);
     if (args->passed == NULL) {
-        ST_WARNING("Failed to st_malloc passed");
+        ST_ERROR("Failed to st_malloc passed");
         goto ERR;
     }
     memset(args->passed, 0, sizeof(bool) * graph->num_link);
 
     args->recur_to = (int *)st_malloc(sizeof(int) * graph->num_link);
     if (args->recur_to == NULL) {
-        ST_WARNING("Failed to st_malloc recur_to");
+        ST_ERROR("Failed to st_malloc recur_to");
         goto ERR;
     }
     for (i = 0; i < graph->num_link; i++) {
@@ -218,7 +218,7 @@ static int dfs_args_init(dfs_args_t *args, graph_t *graph)
 
     args->node_order = (int *)st_malloc(sizeof(int) * graph->num_node);
     if (args->node_order == NULL) {
-        ST_WARNING("Failed to st_malloc node_order");
+        ST_ERROR("Failed to st_malloc node_order");
         goto ERR;
     }
     for (i = 0; i < graph->num_node; i++) {
@@ -262,19 +262,19 @@ static int graph_dfs(graph_t *graph, int start, dfs_args_t *args)
         if(!args->visited[to]) {
             if (st_stack_push(args->link_stack, (void *)(long)lk)
                     != ST_STACK_OK) {
-                ST_WARNING("Failed to st_stack_push link[%d].", lk);
+                ST_ERROR("Failed to st_stack_push link[%d].", lk);
                 return -1;
             }
 #ifdef _GRAPH_DEBUG_
             ST_DEBUG("Link push: %d", lk);
 #endif
             if (graph_dfs(graph, to, args) < 0) {
-                ST_WARNING("Failed to graph_dfs[%d].", to);
+                ST_ERROR("Failed to graph_dfs[%d].", to);
                 return -1;
             }
 
             if (st_stack_pop(args->link_stack, &tmp) != ST_STACK_OK) {
-                ST_WARNING("Failed to st_stack_pop link.");
+                ST_ERROR("Failed to st_stack_pop link.");
                 return -1;
             }
 #ifdef _GRAPH_DEBUG_
@@ -288,14 +288,14 @@ static int graph_dfs(graph_t *graph, int start, dfs_args_t *args)
 #endif
             cycle = (int *)st_malloc(sizeof(int) * (args->link_stack->top + 2));
             if (cycle == NULL) {
-                ST_WARNING("Failed to st_malloc cycle.");
+                ST_ERROR("Failed to st_malloc cycle.");
                 return -1;
             }
             cycle[1] = lk;
 
             for(s = 1; s <= args->link_stack->top; s++) {
                 if (st_stack_topn(args->link_stack, s, &tmp) != ST_STACK_OK) {
-                    ST_WARNING("Failed to st_stack_topn link.[%d]", s);
+                    ST_ERROR("Failed to st_stack_topn link.[%d]", s);
                     return -1;
                 }
 
@@ -314,7 +314,7 @@ static int graph_dfs(graph_t *graph, int start, dfs_args_t *args)
             graph->cycles = (int **)st_realloc(graph->cycles,
                     sizeof(int*)*(graph->num_cycle + 1));
             if (graph->cycles == NULL) {
-                ST_WARNING("Failed to st_realloc cycles.");
+                ST_ERROR("Failed to st_realloc cycles.");
                 return -1;
             }
             graph->cycles[graph->num_cycle] = cycle;
@@ -349,7 +349,7 @@ static int* node2link_order(int *node_order, graph_t *graph, int *recur_to)
 
     link_order = (int *)st_malloc(sizeof(int) * graph->num_link);
     if (link_order == NULL) {
-        ST_WARNING("Failed to st_malloc link_order");
+        ST_ERROR("Failed to st_malloc link_order");
         goto ERR;
     }
 
@@ -362,13 +362,13 @@ static int* node2link_order(int *node_order, graph_t *graph, int *recur_to)
     sz = sizeof(elem_set_t) * graph->num_node;
     recur_links_for_node = (elem_set_t *)st_malloc(sz);
     if (recur_links_for_node == NULL) {
-        ST_WARNING("Failed to st_malloc recur_pos");
+        ST_ERROR("Failed to st_malloc recur_pos");
         goto ERR;
     }
     memset(recur_links_for_node, 0, sz);
     for (i = 0; i < graph->num_node; i++) {
         if (elem_set_init(recur_links_for_node + i, graph->num_link) < 0) {
-            ST_WARNING("Failed to elem_set_init recur_links_for_node.");
+            ST_ERROR("Failed to elem_set_init recur_links_for_node.");
             goto ERR;
         }
     }
@@ -381,7 +381,7 @@ static int* node2link_order(int *node_order, graph_t *graph, int *recur_to)
             }
 
             if (recur_to[lk] < 0) {
-                ST_WARNING("No recur_to for recur_link[%d]", lk);
+                ST_ERROR("No recur_to for recur_link[%d]", lk);
                 goto ERR;
             }
 
@@ -394,13 +394,13 @@ static int* node2link_order(int *node_order, graph_t *graph, int *recur_to)
                 }
             }
             if (pos >= graph->num_node) {
-                ST_WARNING("dest node[%d] not found in node order",
+                ST_ERROR("dest node[%d] not found in node order",
                         recur_to[lk]);
                 goto ERR;
             }
 
             if (elem_set_add(recur_links_for_node + pos, lk) < 0) {
-                ST_WARNING("Failed to elem_set_add for recur_links_for_node.");
+                ST_ERROR("Failed to elem_set_add for recur_links_for_node.");
                 goto ERR;
             }
         }
@@ -410,7 +410,7 @@ static int* node2link_order(int *node_order, graph_t *graph, int *recur_to)
     // the recur_link_pos stores the final position of all recur_links
     recur_link_pos = (int *)st_malloc(sizeof(int) * graph->num_link);
     if (recur_link_pos == NULL) {
-        ST_WARNING("Failed to st_malloc recur_link_pos.");
+        ST_ERROR("Failed to st_malloc recur_link_pos.");
         goto ERR;
     }
     for (i = 0; i < graph->num_link; i++) {
@@ -436,7 +436,7 @@ static int* node2link_order(int *node_order, graph_t *graph, int *recur_to)
                     continue;
                 }
                 if (recur_link_pos[lk] < 0) {
-                    ST_WARNING("recur link[%d] did not find its own "
+                    ST_ERROR("recur link[%d] did not find its own "
                                "position.", lk);
                     goto ERR;
                 }
@@ -447,7 +447,7 @@ static int* node2link_order(int *node_order, graph_t *graph, int *recur_to)
 
             // place the recur links first
             if (num_lk + recur_links_for_node[n].num >= graph->num_link) {
-                ST_WARNING("num_lk[%d + %d > %d] overflow.", num_lk,
+                ST_ERROR("num_lk[%d + %d > %d] overflow.", num_lk,
                         recur_links_for_node[n].num, graph->num_link);
                 goto ERR;
             }
@@ -480,7 +480,7 @@ static int* node2link_order(int *node_order, graph_t *graph, int *recur_to)
             }
 
             if (num_lk >= graph->num_link) {
-                ST_WARNING("num_lk overflow");
+                ST_ERROR("num_lk overflow");
                 goto ERR;
             }
             link_order[num_lk] = node->links[l];
@@ -489,7 +489,7 @@ static int* node2link_order(int *node_order, graph_t *graph, int *recur_to)
     }
 
     if (num_lk != graph->num_link) {
-        ST_WARNING("Some links are missing.");
+        ST_ERROR("Some links are missing.");
         goto ERR;
     }
 
@@ -529,31 +529,31 @@ int* graph_sort(graph_t *graph)
     memset(&args, 0, sizeof(dfs_args_t));
 
     if (dfs_args_init(&args, graph) < 0) {
-        ST_WARNING("Failed to dfs_args_init.");
+        ST_ERROR("Failed to dfs_args_init.");
         goto ERR;
     }
 
     if (graph_dfs(graph, graph->root, &args) < 0) {
-        ST_WARNING("Failed to dfs.");
+        ST_ERROR("Failed to dfs.");
         goto ERR;
     }
 
     for (n = 0; n < graph->num_node; n++) {
         if (!args.visited[n]) {
-            ST_WARNING("Node[%d] not visited.", n);
+            ST_ERROR("Node[%d] not visited.", n);
             goto ERR;
         }
     }
 
     for (l = 0; l < graph->num_link; l++) {
         if (!args.passed[l]) {
-            ST_WARNING("link[%d] not visited.", l);
+            ST_ERROR("link[%d] not visited.", l);
             goto ERR;
         }
     }
 
     if (args.node_i != graph->num_node) {
-        ST_WARNING("post order not finished.");
+        ST_ERROR("post order not finished.");
         goto ERR;
     }
 
@@ -573,7 +573,7 @@ int* graph_sort(graph_t *graph)
 
     link_order = node2link_order(args.node_order, graph, args.recur_to);
     if (link_order == NULL) {
-        ST_WARNING("Failed to node2link_order.");
+        ST_ERROR("Failed to node2link_order.");
         goto ERR;
     }
 
@@ -607,14 +607,14 @@ graph_t* graph_construct(layer_t **layers, int n_layer,
 
     graph = (graph_t *)st_malloc(sizeof(graph_t));
     if (graph == NULL) {
-        ST_WARNING("Failed to st_malloc graph_t.");
+        ST_ERROR("Failed to st_malloc graph_t.");
         goto ERR;
     }
     memset(graph, 0, sizeof(graph_t));
 
     graph->nodes = (node_t *)st_malloc(sizeof(node_t) * n_layer);
     if (graph->nodes == NULL) {
-        ST_WARNING("Failed to st_malloc nodes.");
+        ST_ERROR("Failed to st_malloc nodes.");
         goto ERR;
     }
     graph->root = -1;
@@ -623,7 +623,7 @@ graph_t* graph_construct(layer_t **layers, int n_layer,
         graph->nodes[l].num_link = 0;
         if (strcasecmp(layers[l]->type, INPUT_LAYER_NAME) == 0) {
             if (graph->root != -1) {
-                ST_WARNING("Too many input layer.");
+                ST_ERROR("Too many input layer.");
                 goto ERR;
             }
             graph->root = l;
@@ -633,7 +633,7 @@ graph_t* graph_construct(layer_t **layers, int n_layer,
 
     graph->links = (link_t *)st_malloc(sizeof(link_t) * n_glue);
     if (graph->links == NULL) {
-        ST_WARNING("Failed to st_malloc links.");
+        ST_ERROR("Failed to st_malloc links.");
         goto ERR;
     }
     graph->num_link = n_glue;
@@ -642,7 +642,7 @@ graph_t* graph_construct(layer_t **layers, int n_layer,
         graph->links[g].to = glues[g]->out_layer;
 
         if (node_add_link(graph->nodes + glues[g]->in_layer, g) == -1) {
-            ST_WARNING("Failed to node_add_link.");
+            ST_ERROR("Failed to node_add_link.");
             goto ERR;
         }
     }

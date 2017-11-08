@@ -52,32 +52,32 @@ int connlm_eval_parse_opt(int *argc, const char *argv[])
 
     g_cmd_opt = st_opt_create();
     if (g_cmd_opt == NULL) {
-        ST_WARNING("Failed to st_opt_create.");
+        ST_ERROR("Failed to st_opt_create.");
         goto ST_OPT_ERR;
     }
 
     if (st_opt_parse(g_cmd_opt, argc, argv) < 0) {
-        ST_WARNING("Failed to st_opt_parse.");
+        ST_ERROR("Failed to st_opt_parse.");
         goto ST_OPT_ERR;
     }
 
     if (st_log_load_opt(&log_opt, g_cmd_opt, NULL) < 0) {
-        ST_WARNING("Failed to st_log_load_opt");
+        ST_ERROR("Failed to st_log_load_opt");
         goto ST_OPT_ERR;
     }
 
     if (st_log_open_mt(&log_opt) != 0) {
-        ST_WARNING("Failed to open log");
+        ST_ERROR("Failed to open log");
         goto ST_OPT_ERR;
     }
 
     if (reader_load_opt(&g_reader_opt, g_cmd_opt, NULL) < 0) {
-        ST_WARNING("Failed to reader_load_opt");
+        ST_ERROR("Failed to reader_load_opt");
         goto ST_OPT_ERR;
     }
 
     if (driver_load_eval_opt(&g_eval_opt, g_cmd_opt, NULL) < 0) {
-        ST_WARNING("Failed to driver_load_eval_opt");
+        ST_ERROR("Failed to driver_load_eval_opt");
         goto ST_OPT_ERR;
     }
 
@@ -111,7 +111,7 @@ int main(int argc, const char *argv[])
     int ret;
 
     if (st_mem_usage_init() < 0) {
-        ST_WARNING("Failed to st_mem_usage_init.");
+        ST_ERROR("Failed to st_mem_usage_init.");
         goto ERR;
     }
 
@@ -146,20 +146,20 @@ int main(int argc, const char *argv[])
 
 #ifdef _USE_BLAS_
     if (setup_blas()) {
-        ST_WARNING("Failed to setup_blas.");
+        ST_ERROR("Failed to setup_blas.");
         goto ERR;
     }
 #endif
 
     fp = st_fopen(argv[1], "rb");
     if (fp == NULL) {
-        ST_WARNING("Failed to st_fopen. [%s]", argv[1]);
+        ST_ERROR("Failed to st_fopen. [%s]", argv[1]);
         goto ERR;
     }
 
     connlm = connlm_load(fp);
     if (connlm == NULL) {
-        ST_WARNING("Failed to connlm_load. [%s]", argv[1]);
+        ST_ERROR("Failed to connlm_load. [%s]", argv[1]);
         goto ERR;
     }
     safe_st_fclose(fp);
@@ -168,20 +168,20 @@ int main(int argc, const char *argv[])
     g_reader_opt.rand_seed = 0;
     reader = reader_create(&g_reader_opt, g_num_thr, connlm->vocab, argv[2]);
     if (reader == NULL) {
-        ST_WARNING("Failed to reader_create.");
+        ST_ERROR("Failed to reader_create.");
         goto ERR;
     }
 
     driver = driver_create(connlm, reader, g_num_thr);
     if (driver == NULL) {
-        ST_WARNING("Failed to driver_create.");
+        ST_ERROR("Failed to driver_create.");
         goto ERR;
     }
 
     if (argc > 3) {
         fp = st_fopen(argv[3], "wb");
         if (fp == NULL) {
-            ST_WARNING("Failed to st_fopen. [%s]", argv[3]);
+            ST_ERROR("Failed to st_fopen. [%s]", argv[3]);
             goto ERR;
         }
     } else {
@@ -189,17 +189,17 @@ int main(int argc, const char *argv[])
     }
 
     if (driver_set_eval(driver, &g_eval_opt, fp) < 0) {
-        ST_WARNING("Failed to driver_set_eval.");
+        ST_ERROR("Failed to driver_set_eval.");
         goto ERR;
     }
 
     if (driver_setup(driver, DRIVER_EVAL) < 0) {
-        ST_WARNING("Failed to driver_setup.");
+        ST_ERROR("Failed to driver_setup.");
         goto ERR;
     }
 
     if (driver_run(driver) < 0) {
-        ST_WARNING("Failed to driver_run.");
+        ST_ERROR("Failed to driver_run.");
         goto ERR;
     }
 

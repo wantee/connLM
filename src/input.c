@@ -58,7 +58,7 @@ input_t* input_parse_topo(const char *line, int input_size)
 
     input = (input_t *)st_malloc(sizeof(input_t));
     if (input == NULL) {
-        ST_WARNING("Failed to st_malloc input_t.");
+        ST_ERROR("Failed to st_malloc input_t.");
         goto ERR;
     }
     memset(input, 0, sizeof(input_t));
@@ -69,7 +69,7 @@ input_t* input_parse_topo(const char *line, int input_size)
 
     p = get_next_token(p, token);
     if (strcasecmp("input", token) != 0) {
-        ST_WARNING("Not input line.");
+        ST_ERROR("Not input line.");
         goto ERR;
     }
 
@@ -82,33 +82,33 @@ input_t* input_parse_topo(const char *line, int input_size)
         }
 
         if (split_line(token, keyvalue, 2, MAX_LINE_LEN, "=") != 2) {
-            ST_WARNING("Failed to split key/value. [%s][%s]", line, token);
+            ST_ERROR("Failed to split key/value. [%s][%s]", line, token);
             goto ERR;
         }
 
         if (strcasecmp("context", keyvalue) == 0) {
             if (input->n_ctx != 0) {
-                ST_WARNING("Duplicated context.");
+                ST_ERROR("Duplicated context.");
             }
             if (st_parse_wt_int_array(keyvalue + MAX_LINE_LEN,
                         &input->context, &input->n_ctx, 1.0f) < 0) {
-                ST_WARNING("Failed to parse context string.[%s]",
+                ST_ERROR("Failed to parse context string.[%s]",
                         keyvalue + MAX_LINE_LEN);
                 goto ERR;
             }
         } else {
-            ST_WARNING("Unknown key/value[%s]", token);
+            ST_ERROR("Unknown key/value[%s]", token);
         }
     }
 
     if (input->n_ctx == 0) {
-        ST_WARNING("No context found.");
+        ST_ERROR("No context found.");
         goto ERR;
     }
 
     for (i = 0; i < input->n_ctx; i++) {
         if (input->context[i].i == 0) {
-            ST_WARNING("Context should not contain 0.");
+            ST_ERROR("Context should not contain 0.");
             goto ERR;
         }
     }
@@ -132,7 +132,7 @@ input_t* input_dup(input_t *in)
 
     input = (input_t *)st_malloc(sizeof(input_t));
     if (input == NULL) {
-        ST_WARNING("Failed to st_malloc input_t.");
+        ST_ERROR("Failed to st_malloc input_t.");
         goto ERR;
     }
     memset(input, 0, sizeof(input_t));
@@ -141,7 +141,7 @@ input_t* input_dup(input_t *in)
 
     input->context = (st_wt_int_t *)st_malloc(sizeof(st_wt_int_t)*in->n_ctx);
     if (input->context == NULL) {
-        ST_WARNING("Failed to st_malloc context.");
+        ST_ERROR("Failed to st_malloc context.");
         goto ERR;
     }
     for (i = 0; i < in->n_ctx; i++) {
@@ -164,7 +164,7 @@ layer_t* input_get_layer(input_t *input)
 
     layer = (layer_t *)st_malloc(sizeof(layer_t));
     if (layer == NULL) {
-        ST_WARNING("Failed to st_malloc layer.");
+        ST_ERROR("Failed to st_malloc layer.");
         goto ERR;
     }
     memset(layer, 0, sizeof(layer_t));
@@ -194,12 +194,12 @@ int input_load_header(input_t **input, int version,
             || fmt == NULL, -1);
 
     if (version < 15) {
-        ST_WARNING("Too old version of connlm file");
+        ST_ERROR("Too old version of connlm file");
         return -1;
     }
 
     if (fread(&flag.magic_num, sizeof(int), 1, fp) != 1) {
-        ST_WARNING("Failed to load magic num.");
+        ST_ERROR("Failed to load magic num.");
         return -1;
     }
 
@@ -207,7 +207,7 @@ int input_load_header(input_t **input, int version,
     if (strncmp(flag.str, "    ", 4) == 0) {
         *fmt = CONN_FMT_TXT;
     } else if (INPUT_MAGIC_NUM != flag.magic_num) {
-        ST_WARNING("magic num wrong.");
+        ST_ERROR("magic num wrong.");
         return -2;
     }
 
@@ -218,7 +218,7 @@ int input_load_header(input_t **input, int version,
     if (*fmt != CONN_FMT_TXT) {
         if (version >= 12) {
             if (fread(fmt, sizeof(connlm_fmt_t), 1, fp) != 1) {
-                ST_WARNING("Failed to read fmt.");
+                ST_ERROR("Failed to read fmt.");
                 goto ERR;
             }
         } else {
@@ -226,29 +226,29 @@ int input_load_header(input_t **input, int version,
         }
 
         if (fread(&input_size, sizeof(int), 1, fp) != 1) {
-            ST_WARNING("Failed to read input_size.");
+            ST_ERROR("Failed to read input_size.");
             return -1;
         }
         if (fread(&n_ctx, sizeof(int), 1, fp) != 1) {
-            ST_WARNING("Failed to read n_ctx.");
+            ST_ERROR("Failed to read n_ctx.");
             return -1;
         }
     } else {
         if (st_readline(fp, "") != 0) {
-            ST_WARNING("tag error.");
+            ST_ERROR("tag error.");
             goto ERR;
         }
         if (st_readline(fp, "<INPUT>") != 0) {
-            ST_WARNING("tag error.");
+            ST_ERROR("tag error.");
             goto ERR;
         }
 
         if (st_readline(fp, "Input size: %d", &input_size) != 1) {
-            ST_WARNING("Failed to parse input_size.");
+            ST_ERROR("Failed to parse input_size.");
             goto ERR;
         }
         if (st_readline(fp, "Num context: %d", &n_ctx) != 1) {
-            ST_WARNING("Failed to parse n_ctx.");
+            ST_ERROR("Failed to parse n_ctx.");
             goto ERR;
         }
     }
@@ -256,7 +256,7 @@ int input_load_header(input_t **input, int version,
     if (input != NULL) {
         *input = (input_t *)st_malloc(sizeof(input_t));
         if (*input == NULL) {
-            ST_WARNING("Failed to st_malloc input_t");
+            ST_ERROR("Failed to st_malloc input_t");
             goto ERR;
         }
         memset(*input, 0, sizeof(input_t));
@@ -289,7 +289,7 @@ int input_load_body(input_t *input, int version, FILE *fp, connlm_fmt_t fmt)
     ST_CHECK_PARAM(input == NULL || fp == NULL, -1);
 
     if (version < 3) {
-        ST_WARNING("Too old version of connlm file");
+        ST_ERROR("Too old version of connlm file");
         return -1;
     }
 
@@ -298,41 +298,41 @@ int input_load_body(input_t *input, int version, FILE *fp, connlm_fmt_t fmt)
     sz = sizeof(st_wt_int_t) * input->n_ctx;
     input->context = (st_wt_int_t *)st_malloc(sz);
     if (input->context == NULL) {
-        ST_WARNING("Failed to st_malloc context.");
+        ST_ERROR("Failed to st_malloc context.");
         goto ERR;
     }
     memset(input->context, 0, sz);
 
     if (connlm_fmt_is_bin(fmt)) {
         if (fread(&n, sizeof(int), 1, fp) != 1) {
-            ST_WARNING("Failed to read magic num.");
+            ST_ERROR("Failed to read magic num.");
             goto ERR;
         }
 
         if (n != -INPUT_MAGIC_NUM) {
-            ST_WARNING("Magic num error.");
+            ST_ERROR("Magic num error.");
             goto ERR;
         }
 
         if (fread(input->context, sizeof(st_wt_int_t), input->n_ctx, fp)
                 != input->n_ctx) {
-            ST_WARNING("Failed to read context.");
+            ST_ERROR("Failed to read context.");
             goto ERR;
         }
     } else {
         if (st_readline(fp, "<INPUT-DATA>") != 0) {
-            ST_WARNING("body flag error.");
+            ST_ERROR("body flag error.");
             goto ERR;
         }
 
         if (st_readline(fp, "Context:") != 0) {
-            ST_WARNING("context flag error.");
+            ST_ERROR("context flag error.");
             goto ERR;
         }
         for (i = 0; i < input->n_ctx; i++) {
             if (st_readline(fp, "\t%*d\t%d\t%f", &(input->context[i].i),
                         &(input->context[i].w)) != 2) {
-                ST_WARNING("Failed to parse context.");
+                ST_ERROR("Failed to parse context.");
                 goto ERR;
             }
         }
@@ -353,43 +353,43 @@ int input_save_header(input_t *input, FILE *fp, connlm_fmt_t fmt)
 
     if (connlm_fmt_is_bin(fmt)) {
         if (fwrite(&INPUT_MAGIC_NUM, sizeof(int), 1, fp) != 1) {
-            ST_WARNING("Failed to write magic num.");
+            ST_ERROR("Failed to write magic num.");
             return -1;
         }
         if (fwrite(&fmt, sizeof(connlm_fmt_t), 1, fp) != 1) {
-            ST_WARNING("Failed to write fmt.");
+            ST_ERROR("Failed to write fmt.");
             return -1;
         }
 
         if (input == NULL) {
             n = 0;
             if (fwrite(&n, sizeof(int), 1, fp) != 1) {
-                ST_WARNING("Failed to write input size.");
+                ST_ERROR("Failed to write input size.");
                 return -1;
             }
             return 0;
         }
 
         if (fwrite(&input->input_size, sizeof(int), 1, fp) != 1) {
-            ST_WARNING("Failed to write input_size.");
+            ST_ERROR("Failed to write input_size.");
             return -1;
         }
         if (fwrite(&input->n_ctx, sizeof(int), 1, fp) != 1) {
-            ST_WARNING("Failed to write n_ctx.");
+            ST_ERROR("Failed to write n_ctx.");
             return -1;
         }
     } else {
         if (fprintf(fp, "    \n<INPUT>\n") < 0) {
-            ST_WARNING("Failed to fprintf header.");
+            ST_ERROR("Failed to fprintf header.");
             return -1;
         }
 
         if (fprintf(fp, "Input size: %d\n", input->input_size) < 0) {
-            ST_WARNING("Failed to fprintf input_size.");
+            ST_ERROR("Failed to fprintf input_size.");
             return -1;
         }
         if (fprintf(fp, "Num context: %d\n", input->n_ctx) < 0) {
-            ST_WARNING("Failed to fprintf num ctx.");
+            ST_ERROR("Failed to fprintf num ctx.");
             return -1;
         }
     }
@@ -407,29 +407,29 @@ int input_save_body(input_t *input, FILE *fp, connlm_fmt_t fmt)
     if (connlm_fmt_is_bin(fmt)) {
         n = -INPUT_MAGIC_NUM;
         if (fwrite(&n, sizeof(int), 1, fp) != 1) {
-            ST_WARNING("Failed to write magic num.");
+            ST_ERROR("Failed to write magic num.");
             return -1;
         }
 
         if (fwrite(input->context, sizeof(st_wt_int_t), input->n_ctx, fp)
                 != input->n_ctx) {
-            ST_WARNING("Failed to write context.");
+            ST_ERROR("Failed to write context.");
             return -1;
         }
     } else {
         if (fprintf(fp, "<INPUT-DATA>\n") < 0) {
-            ST_WARNING("Failed to fprintf header.");
+            ST_ERROR("Failed to fprintf header.");
             return -1;
         }
 
         if (fprintf(fp, "Context:\n") < 0) {
-            ST_WARNING("Failed to fprintf context.");
+            ST_ERROR("Failed to fprintf context.");
             return -1;
         }
         for (i = 0; i < input->n_ctx; i++) {
             if (fprintf(fp, "\t%d\t%d\t%f\n", i, input->context[i].i,
                         input->context[i].w) < 0) {
-                ST_WARNING("Failed to fprintf context[%d].", i);
+                ST_ERROR("Failed to fprintf context[%d].", i);
                 return -1;
             }
         }

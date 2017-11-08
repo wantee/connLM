@@ -83,7 +83,7 @@ ogu_data_t* ogu_data_init(glue_updater_t *glue_updater)
 
     data = (ogu_data_t *)st_malloc(sizeof(ogu_data_t));
     if (data == NULL) {
-        ST_WARNING("Failed to st_malloc ogu_data.");
+        ST_ERROR("Failed to st_malloc ogu_data.");
         goto ERR;
     }
     memset(data, 0, sizeof(ogu_data_t));
@@ -112,13 +112,13 @@ int out_glue_updater_init(glue_updater_t *glue_updater)
     glue= glue_updater->glue;
 
     if (strcasecmp(glue->type, OUT_GLUE_NAME) != 0) {
-        ST_WARNING("Not a out glue_updater. [%s]", glue->type);
+        ST_ERROR("Not a out glue_updater. [%s]", glue->type);
         return -1;
     }
 
     glue_updater->extra = (void *)ogu_data_init(glue_updater);
     if (glue_updater->extra == NULL) {
-        ST_WARNING("Failed to ogu_data_init.");
+        ST_ERROR("Failed to ogu_data_init.");
         goto ERR;
     }
 
@@ -139,7 +139,7 @@ int ogu_data_setup(ogu_data_t *data, out_updater_t *out_updater, bool backprop)
 
     data->node_in_acs = (mat_t *)st_malloc(sizeof(mat_t) * data->num_nodes);
     if (data->node_in_acs == NULL) {
-        ST_WARNING("Failed to st_malloc node_in_acs.");
+        ST_ERROR("Failed to st_malloc node_in_acs.");
         goto ERR;
     }
     memset(data->node_in_acs, 0, sizeof(mat_t) * data->num_nodes);
@@ -147,7 +147,7 @@ int ogu_data_setup(ogu_data_t *data, out_updater_t *out_updater, bool backprop)
     if (backprop) {
         data->node_in_ers = (mat_t *)st_malloc(sizeof(mat_t) * data->num_nodes);
         if (data->node_in_ers == NULL) {
-            ST_WARNING("Failed to st_malloc node_in_ers.");
+            ST_ERROR("Failed to st_malloc node_in_ers.");
             goto ERR;
         }
         memset(data->node_in_ers, 0, sizeof(mat_t) * data->num_nodes);
@@ -166,7 +166,7 @@ int out_glue_updater_setup(glue_updater_t *glue_updater,
 
     if (ogu_data_setup((ogu_data_t *)glue_updater->extra,
                 comp_updater->out_updater, backprop) < 0) {
-        ST_WARNING("Failed to ogu_data_setup");
+        ST_ERROR("Failed to ogu_data_setup");
         return -1;
     }
 
@@ -198,7 +198,7 @@ static int clear_tree_node_iters(output_t *output, egs_batch_t *batch,
         if (output_walk_through_path(output, batch->targets[i],
                     clear_tree_node_iters_walker,
                     (void *)data->node_iters) < 0) {
-            ST_WARNING("Failed to output_walk_through_path "
+            ST_ERROR("Failed to output_walk_through_path "
                        "clear_tree_node_iters_walker.");
             return -1;
         }
@@ -242,7 +242,7 @@ static int prepare_tree_nodes_walker(output_t *output,
     if (mat_resize(data->node_in_acs + node,
                 data->node_iters[node], tnpw_args->in_size,
                 NAN /* no need to init acs. */) < 0) {
-        ST_WARNING("Failed to mat_resize node_in_acs["OUTPUT_NODE_FMT".",
+        ST_ERROR("Failed to mat_resize node_in_acs["OUTPUT_NODE_FMT".",
                 node);
         return -1;
     }
@@ -252,7 +252,7 @@ static int prepare_tree_nodes_walker(output_t *output,
         if (mat_resize(data->node_in_ers + node,
                     data->node_iters[node], tnpw_args->in_size,
                     0.0) < 0) {
-            ST_WARNING("Failed to mat_resize node_in_ers["
+            ST_ERROR("Failed to mat_resize node_in_ers["
                        OUTPUT_NODE_FMT".", node);
             return -1;
         }
@@ -272,7 +272,7 @@ static int prepare_tree_nodes(output_t *output, egs_batch_t *batch,
     ST_CHECK_PARAM(output == NULL || batch == NULL || data == NULL, -1);
 
     if (clear_tree_node_iters(output, batch, data) < 0) {
-        ST_WARNING("Failed to clear_tree_node_iters.");
+        ST_ERROR("Failed to clear_tree_node_iters.");
         return -1;
     }
 
@@ -282,7 +282,7 @@ static int prepare_tree_nodes(output_t *output, egs_batch_t *batch,
         }
         if (output_walk_through_path(output, batch->targets[i],
                     acc_tree_node_iters_walker, (void *)data->node_iters) < 0) {
-            ST_WARNING("Failed to output_walk_through_path "
+            ST_ERROR("Failed to output_walk_through_path "
                        "acc_tree_node_iters_walker.");
             return -1;
         }
@@ -296,7 +296,7 @@ static int prepare_tree_nodes(output_t *output, egs_batch_t *batch,
         }
         if (output_walk_through_path(output, batch->targets[i],
                     prepare_tree_nodes_walker, (void *)&tnpw_args) < 0) {
-            ST_WARNING("Failed to output_walk_through_path "
+            ST_ERROR("Failed to output_walk_through_path "
                        "prepare_tree_nodes_walker.");
             return -1;
         }
@@ -319,7 +319,7 @@ int out_glue_updater_prepare(glue_updater_t *glue_updater,
 
     if (prepare_tree_nodes(output, batch,
                 glue_updater->glue->in_length, data) < 0) {
-        ST_WARNING("Failed to prepare_tree_nodes.");
+        ST_ERROR("Failed to prepare_tree_nodes.");
         return -1;
     }
 
@@ -348,7 +348,7 @@ static int fill_tree_node_acs_walker(output_t *output, output_node_id_t node,
 
     if (mat_cpy_row(data->node_in_acs + node, data->node_iters[node],
                 tnw_args->in_vals, tnw_args->batch_i) < 0) {
-        ST_WARNING("Failed to mat_cpy_row for node_in_acs.");
+        ST_ERROR("Failed to mat_cpy_row for node_in_acs.");
         return -1;
     }
 
@@ -368,7 +368,7 @@ static int fill_tree_node_acs(output_t *output, egs_batch_t *batch,
             || in_ac == NULL || batch == NULL, -1);
 
     if (clear_tree_node_iters(output, batch, data) < 0) {
-        ST_WARNING("Failed to clear_tree_node_iters.");
+        ST_ERROR("Failed to clear_tree_node_iters.");
         return -1;
     }
 
@@ -381,7 +381,7 @@ static int fill_tree_node_acs(output_t *output, egs_batch_t *batch,
         tnw_args.batch_i = i;
         if (output_walk_through_path(output, batch->targets[i],
                     fill_tree_node_acs_walker, (void *)&tnw_args) < 0) {
-            ST_WARNING("Failed to output_walk_through_path.");
+            ST_ERROR("Failed to output_walk_through_path.");
             return -1;
         }
     }
@@ -394,13 +394,13 @@ static int forward_one_node(output_norm_t norm, mat_t *wt, vec_t *bias,
 {
     if (add_mat_mat(scale, in_ac, MT_NoTrans,
                 wt, MT_Trans, 1.0, out_ac) < 0) {
-        ST_WARNING("Failed to add_mat_mat.");
+        ST_ERROR("Failed to add_mat_mat.");
         return -1;
     }
 
     if (bias->size > 0) {
         if (mat_add_vec(out_ac, bias, scale) < 0) {
-            ST_WARNING("Failed to mat_add_vec.");
+            ST_ERROR("Failed to mat_add_vec.");
             return -1;
         }
     }
@@ -437,7 +437,7 @@ static int forward_tree_nodes_walker(output_t *output, output_node_id_t node,
                 &tnfw_args->wt_updaters[node]->bias, tnfw_args->scale,
                 tnfw_args->node_in_acs + node,
                 tnfw_args->node_out_acs + node) < 0) {
-        ST_WARNING("Failed to forward_one_node["OUTPUT_NODE_FMT"]", node);
+        ST_ERROR("Failed to forward_one_node["OUTPUT_NODE_FMT"]", node);
         return -1;
     }
 
@@ -468,7 +468,7 @@ static int forward_tree_nodes(output_t *output, egs_batch_t *batch,
         }
         if (output_walk_through_path(output, batch->targets[i],
                     forward_tree_nodes_walker, (void *)&tnfw_args) < 0) {
-            ST_WARNING("Failed to output_walk_through_path.");
+            ST_ERROR("Failed to output_walk_through_path.");
             return -1;
         }
     }
@@ -490,17 +490,17 @@ int out_glue_updater_forward(glue_updater_t *glue_updater,
     data = (ogu_data_t *)glue_updater->extra;
 
     if (batch->num_egs != in_ac->num_rows) {
-        ST_WARNING("batch->num_egs and in_ac->num_rows not match");
+        ST_ERROR("batch->num_egs and in_ac->num_rows not match");
         return -1;
     }
 
     if (fill_tree_node_acs(output, batch, in_ac, data) < 0) {
-        ST_WARNING("Failed to fill_tree_node_acs.");
+        ST_ERROR("Failed to fill_tree_node_acs.");
         return -1;
     }
 
     if (clear_tree_node_iters(output, batch, data) < 0) {
-        ST_WARNING("Failed to clear_tree_node_iters.");
+        ST_ERROR("Failed to clear_tree_node_iters.");
         return -1;
     }
 
@@ -508,7 +508,7 @@ int out_glue_updater_forward(glue_updater_t *glue_updater,
                 comp_updater->comp->comp_scale, data->node_in_acs,
                 comp_updater->out_updater->node_acs,
                 data->node_iters) < 0) {
-        ST_WARNING("Failed to forward_tree_nodes.");
+        ST_ERROR("Failed to forward_tree_nodes.");
         return -1;
     }
 
@@ -531,7 +531,7 @@ static int export_tree_node_ers_walker(output_t *output, output_node_id_t node,
 
     if (mat_acc_row(tnw_args->in_vals, tnw_args->batch_i,
                 data->node_in_ers + node, data->node_iters[node]) < 0) {
-        ST_WARNING("Failed to mat_acc_row for node_in_ers.");
+        ST_ERROR("Failed to mat_acc_row for node_in_ers.");
         return -1;
     }
 
@@ -551,7 +551,7 @@ static int export_tree_node_ers(output_t *output, egs_batch_t *batch,
             || in_er == NULL || batch == NULL, -1);
 
     if (clear_tree_node_iters(output, batch, data) < 0) {
-        ST_WARNING("Failed to clear_tree_node_iters.");
+        ST_ERROR("Failed to clear_tree_node_iters.");
         return -1;
     }
 
@@ -564,7 +564,7 @@ static int export_tree_node_ers(output_t *output, egs_batch_t *batch,
         tnw_args.batch_i = i;
         if (output_walk_through_path(output, batch->targets[i],
                     export_tree_node_ers_walker, (void *)&tnw_args) < 0) {
-            ST_WARNING("Failed to output_walk_through_path.");
+            ST_ERROR("Failed to output_walk_through_path.");
             return -1;
         }
     }
@@ -609,13 +609,13 @@ static int backprop_tree_nodes_walker(output_t *output, output_node_id_t node,
     // propagate from out_er to in_er
     if (propagate_error(&wt_updater->wt, out_er, tnbw_args->scale,
                 wt_updater->param.er_cutoff, in_er) < 0) {
-        ST_WARNING("Failed to propagate_error.");
+        ST_ERROR("Failed to propagate_error.");
         return -1;
     }
 
     if (wt_update(wt_updater, out_er, tnbw_args->scale,
                 in_ac, 1.0, NULL, NULL) < 0) {
-        ST_WARNING("Failed to wt_update.");
+        ST_ERROR("Failed to wt_update.");
         return -1;
     }
 
@@ -648,7 +648,7 @@ static int backprop_tree_nodes(output_t *output, egs_batch_t *batch,
         }
         if (output_walk_through_path(output, batch->targets[i],
                     backprop_tree_nodes_walker, (void *)&tnbw_args) < 0) {
-            ST_WARNING("Failed to output_walk_through_path.");
+            ST_ERROR("Failed to output_walk_through_path.");
             return -1;
         }
     }
@@ -670,7 +670,7 @@ int out_glue_updater_backprop(glue_updater_t *glue_updater,
     output = comp_updater->out_updater->output;
 
     if (clear_tree_node_iters(output, batch, data) < 0) {
-        ST_WARNING("Failed to clear_tree_node_iters.");
+        ST_ERROR("Failed to clear_tree_node_iters.");
         return -1;
     }
 
@@ -678,12 +678,12 @@ int out_glue_updater_backprop(glue_updater_t *glue_updater,
                 comp_updater->comp->comp_scale, data->node_in_acs,
                 comp_updater->out_updater->node_ers,
                 data->node_in_ers, data->node_iters) < 0) {
-        ST_WARNING("Failed to backprop_tree_nodes.");
+        ST_ERROR("Failed to backprop_tree_nodes.");
         return -1;
     }
 
     if (export_tree_node_ers(output, batch, in_er, data) < 0) {
-        ST_WARNING("Failed to export_tree_node_ers.");
+        ST_ERROR("Failed to export_tree_node_ers.");
         return -1;
     }
 
@@ -713,7 +713,7 @@ int out_glue_updater_forward_out(glue_updater_t *glue_updater,
                 &glue_updater->wt_updaters[node]->bias,
                 comp_updater->comp->comp_scale, in_ac,
                 comp_updater->out_updater->node_acs + node) < 0) {
-        ST_WARNING("Failed to forward_one_node["OUTPUT_NODE_FMT"]", node);
+        ST_ERROR("Failed to forward_one_node["OUTPUT_NODE_FMT"]", node);
         return -1;
     }
 
@@ -749,7 +749,7 @@ static int forward_out_words_walker(output_t *output, output_node_id_t node,
                 &fow_args->wt_updaters[node]->bias, fow_args->scale,
                 fow_args->in_ac,
                 fow_args->node_out_acs + node) < 0) {
-        ST_WARNING("Failed to forward_one_node["OUTPUT_NODE_FMT"]", node);
+        ST_ERROR("Failed to forward_one_node["OUTPUT_NODE_FMT"]", node);
         return -1;
     }
 
@@ -772,7 +772,7 @@ int out_glue_updater_forward_out_words(glue_updater_t *glue_updater,
             || words == NULL, -1);
 
     if (in_ac->num_rows != 1) {
-        ST_WARNING("Only support batch_size == 1.");
+        ST_ERROR("Only support batch_size == 1.");
         return -1;
     }
 
@@ -786,7 +786,7 @@ int out_glue_updater_forward_out_words(glue_updater_t *glue_updater,
         }
         if (output_walk_through_path(output, VEC_VAL(words, i),
                     clear_tree_node_iters_walker, (void *)data->node_iters) < 0) {
-            ST_WARNING("Failed to output_walk_through_path "
+            ST_ERROR("Failed to output_walk_through_path "
                        "clear_tree_node_iters_walker.");
             return -1;
         }
@@ -803,7 +803,7 @@ int out_glue_updater_forward_out_words(glue_updater_t *glue_updater,
         }
         if (output_walk_through_path(output, VEC_VAL(words, i),
                     forward_out_words_walker, (void *)&fow_args) < 0) {
-            ST_WARNING("Failed to output_walk_through_path for forward_out_words.");
+            ST_ERROR("Failed to output_walk_through_path for forward_out_words.");
             return -1;
         }
     }

@@ -53,12 +53,12 @@ void param_show_usage()
 
     opt = st_opt_create();
     if (opt == NULL) {
-        ST_WARNING("Failed to st_opt_create.");
+        ST_ERROR("Failed to st_opt_create.");
         goto ST_OPT_ERR;
     }
 
     if (param_load(&param, opt, NULL, NULL) < 0) {
-        ST_WARNING("Failed to param_load");
+        ST_ERROR("Failed to param_load");
         goto ST_OPT_ERR;
     }
 
@@ -196,12 +196,12 @@ void bptt_opt_show_usage()
 
     opt = st_opt_create();
     if (opt == NULL) {
-        ST_WARNING("Failed to st_opt_create.");
+        ST_ERROR("Failed to st_opt_create.");
         goto ST_OPT_ERR;
     }
 
     if (bptt_opt_load(&bptt_opt, opt, NULL, NULL) < 0) {
-        ST_WARNING("Failed to bptt_opt_load");
+        ST_ERROR("Failed to bptt_opt_load");
         goto ST_OPT_ERR;
     }
 

@@ -613,12 +613,12 @@ static int check_output(output_t *output, count_t *cnts,
 
     fp = tmpfile();
     if (fp == NULL) {
-        ST_WARNING("Failed to tmpfile.");
+        ST_ERROR("Failed to tmpfile.");
         goto ERR;
     }
 
     if (output_draw(output, fp, cnts, vocab) < 0) {
-        ST_WARNING("Failed to output_draw.");
+        ST_ERROR("Failed to output_draw.");
         goto ERR;
     }
 
@@ -626,14 +626,14 @@ static int check_output(output_t *output, count_t *cnts,
 
     buf = st_malloc(sz + 1);
     if (buf == NULL) {
-        ST_WARNING("Failed to st_malloc buf.");
+        ST_ERROR("Failed to st_malloc buf.");
         goto ERR;
     }
 
     rewind(fp);
 
     if (fread(buf, 1, sz, fp) != sz) {
-        ST_WARNING("Failed to read back buf.");
+        ST_ERROR("Failed to read back buf.");
         goto ERR;
     }
     buf[sz] = '\0';
