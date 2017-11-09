@@ -492,6 +492,11 @@ static int updater_sample_out(updater_t *updater)
     node = output->tree->root;
 
     while (!is_leaf(output->tree, node)) {
+        if (out_updater_prepare_node(updater->out_updater, node, 1) < 0) {
+            ST_ERROR("Failed to out_updater_prepare_node.");
+            return -1;
+        }
+
         for (c = 0; c < updater->connlm->num_comp; c++) {
             if (comp_updater_forward_out(updater->comp_updaters[c], node) < 0) {
                 ST_ERROR("Failed to comp_updater_forward[%s].",

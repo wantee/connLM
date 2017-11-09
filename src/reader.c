@@ -119,9 +119,6 @@ int word_pool_build_mini_batch(word_pool_t *wp, int batch_size)
         return -1;
     }
 
-    num_sents_per_batch = wp->sent_ends.size / batch_size;
-    extras = wp->sent_ends.size % batch_size;
-
     if (ivec_clear(&wp->row_starts) < 0) {
         ST_ERROR("Failed to ivec_clear row_starts.");
         return -1;
@@ -131,16 +128,26 @@ int word_pool_build_mini_batch(word_pool_t *wp, int batch_size)
         return -1;
     }
 
-    n = 0;
-    for (i = 0; i < batch_size; i++) {
-        if (i < extras) {
-            n += num_sents_per_batch + 1;
-        } else {
-            n += num_sents_per_batch;
-        }
-        if (ivec_append(&wp->row_starts, VEC_VAL(&wp->sent_ends, n - 1)) < 0) {
+    if (wp->sent_ends.size == 0) { // mostly when used in sampling
+        if (ivec_append(&wp->row_starts, wp->words.size) < 0) {
             ST_ERROR("Failed to ivec_append mid row_starts.");
             return -1;
+        }
+    } else {
+        num_sents_per_batch = wp->sent_ends.size / batch_size;
+        extras = wp->sent_ends.size % batch_size;
+
+        n = 0;
+        for (i = 0; i < batch_size; i++) {
+            if (i < extras) {
+                n += num_sents_per_batch + 1;
+            } else {
+                n += num_sents_per_batch;
+            }
+            if (ivec_append(&wp->row_starts, VEC_VAL(&wp->sent_ends, n - 1)) < 0) {
+                ST_ERROR("Failed to ivec_append mid row_starts.");
+                return -1;
+            }
         }
     }
 
@@ -302,9 +309,11 @@ int word_pool_copy(word_pool_t *dst_wp, word_pool_t *src_wp)
         return -1;
     }
 
-    if (ivec_cpy(&dst_wp->sent_ends, &src_wp->sent_ends) < 0) {
-        ST_ERROR("Failed to ivec_cpy sent_ends.");
-        return -1;
+    if (src_wp->sent_ends.size > 0) {
+        if (ivec_cpy(&dst_wp->sent_ends, &src_wp->sent_ends) < 0) {
+            ST_ERROR("Failed to ivec_cpy sent_ends.");
+            return -1;
+        }
     }
 
     if (ivec_cpy(&dst_wp->row_starts, &src_wp->row_starts) < 0) {

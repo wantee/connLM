@@ -189,6 +189,28 @@ static int out_updater_acc_iters(out_updater_t *out_updater, ivec_t *targets)
     return 0;
 }
 
+static int out_prepare_node_buf(out_updater_t *out_updater,
+        output_node_id_t node, int node_batch_size, int num_children)
+{
+    if (mat_resize(out_updater->node_acs + node, node_batch_size,
+                num_children, 0.0) < 0) {
+        ST_ERROR("Failed to mat_resize node_acs["OUTPUT_NODE_FMT".", node);
+        return -1;
+    }
+
+
+    if (out_updater->node_ers != NULL) {
+        if (mat_resize(out_updater->node_ers + node,
+                    node_batch_size, num_children,
+                    NAN /* no need to init ers. */) < 0) {
+            ST_ERROR("Failed to mat_resize node_ers["OUTPUT_NODE_FMT".", node);
+            return -1;
+        }
+    }
+
+    return 0;
+}
+
 static int out_prepare_walker(output_t *output, output_node_id_t node,
         output_node_id_t next_node,
         output_node_id_t child_s, output_node_id_t child_e, void *args)
@@ -201,21 +223,10 @@ static int out_prepare_walker(output_t *output, output_node_id_t node,
         return 0;
     }
 
-    if (mat_resize(out_updater->node_acs + node,
-                out_updater->node_iters[node], child_e - child_s - 1,
-                0.0) < 0) {
-        ST_ERROR("Failed to mat_resize node_acs["OUTPUT_NODE_FMT".", node);
+    if (out_prepare_node_buf(out_updater, node,
+                out_updater->node_iters[node], child_e - child_s - 1) < 0) {
+        ST_ERROR("Failed to out_prepare_node_buf.");
         return -1;
-    }
-
-
-    if (out_updater->node_ers != NULL) {
-        if (mat_resize(out_updater->node_ers + node,
-                    out_updater->node_iters[node], child_e - child_s - 1,
-                    NAN /* no need to init ers. */) < 0) {
-            ST_ERROR("Failed to mat_resize node_ers["OUTPUT_NODE_FMT".", node);
-            return -1;
-        }
     }
 
     out_updater->node_iters[node] = 0;
@@ -410,6 +421,28 @@ int out_updater_finish(out_updater_t *out_updater)
     return 0;
 }
 
+int out_updater_prepare_node(out_updater_t *out_updater, output_node_id_t node,
+        int node_batch_size)
+{
+    output_t *output;
+    output_node_id_t child_s, child_e;
+
+    ST_CHECK_PARAM(out_updater == NULL || node == OUTPUT_NODE_NONE, -1);
+
+    output = out_updater->output;
+
+    child_s = s_children(output->tree, node);
+    child_e = e_children(output->tree, node);
+
+    if (out_prepare_node_buf(out_updater, node,
+                node_batch_size, child_e - child_s - 1) < 0) {
+        ST_ERROR("Failed to out_prepare_node_buf.");
+        return -1;
+    }
+
+    return 0;
+}
+
 output_node_id_t out_updater_sample(out_updater_t *out_updater,
         output_node_id_t node)
 {
@@ -464,7 +497,7 @@ output_node_id_t out_updater_sample(out_updater_t *out_updater,
             if (sampled == e - 1) {
                 p = 1.0;
             } else {
-                p += MAT_VAL(ac, row, sampled);
+                p += MAT_VAL(ac, row, sampled - s);
             }
 
             if (p >= u) {

@@ -563,25 +563,45 @@ int add_mat_mat(real_t alpha, mat_t *A, mat_trans_t trans_A,
     if (trans_A == MT_NoTrans && trans_B == MT_NoTrans) {
         if (A->num_cols != B->num_rows || A->num_rows != C->num_rows
                 || B->num_cols != C->num_cols) {
-            ST_ERROR("diemensions not match.");
+            ST_ERROR("diemensions not match. A[%zux%zu]:%s, "
+                    "B[%zux%zu]:%s, C[%zux%zu]", A->num_rows, A->num_cols,
+                    trans_A == MT_Trans ? "Trans" : "NoTrans",
+                    B->num_rows, B->num_cols,
+                    trans_B == MT_Trans ? "Trans" : "NoTrans",
+                    C->num_rows, C->num_cols);
             return -1;
         }
     } else if (trans_A == MT_Trans && trans_B == MT_NoTrans) {
         if (A->num_rows != B->num_rows || A->num_cols != C->num_rows
                 || B->num_cols != C->num_cols) {
-            ST_ERROR("diemensions not match.");
+            ST_ERROR("diemensions not match. A[%zux%zu]:%s, "
+                    "B[%zux%zu]:%s, C[%zux%zu]", A->num_rows, A->num_cols,
+                    trans_A == MT_Trans ? "Trans" : "NoTrans",
+                    B->num_rows, B->num_cols,
+                    trans_B == MT_Trans ? "Trans" : "NoTrans",
+                    C->num_rows, C->num_cols);
             return -1;
         }
     } else if (trans_A == MT_NoTrans && trans_B == MT_Trans) {
         if (A->num_cols != B->num_cols || A->num_rows != C->num_rows
                 || B->num_rows != C->num_cols) {
-            ST_ERROR("diemensions not match.");
+            ST_ERROR("diemensions not match. A[%zux%zu]:%s, "
+                    "B[%zux%zu]:%s, C[%zux%zu]", A->num_rows, A->num_cols,
+                    trans_A == MT_Trans ? "Trans" : "NoTrans",
+                    B->num_rows, B->num_cols,
+                    trans_B == MT_Trans ? "Trans" : "NoTrans",
+                    C->num_rows, C->num_cols);
             return -1;
         }
     } else if (trans_A == MT_Trans && trans_B == MT_Trans) {
         if (A->num_rows != B->num_cols || A->num_cols != C->num_rows
                 || B->num_rows != C->num_cols) {
-            ST_ERROR("diemensions not match.");
+            ST_ERROR("diemensions not match. A[%zux%zu]:%s, "
+                    "B[%zux%zu]:%s, C[%zux%zu]", A->num_rows, A->num_cols,
+                    trans_A == MT_Trans ? "Trans" : "NoTrans",
+                    B->num_rows, B->num_cols,
+                    trans_B == MT_Trans ? "Trans" : "NoTrans",
+                    C->num_rows, C->num_cols);
             return -1;
         }
     }

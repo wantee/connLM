@@ -139,12 +139,15 @@ int out_updater_loss(out_updater_t *out_updater, ivec_t *targets);
 int out_updater_finish(out_updater_t *out_updater);
 
 /**
- * Sample a node from children.
- * @ingroup g_updater_output
- * @param[in] out_updater the out_updater.
- * @param[in] node the parent node.
- * @return sampled child, OUTPUT_NODE_NONE if any error.
+ * Prepare to a node in the tree.
+ * @ingroup g_updater_out
+ * @param[in] out_updater out_updater.
+ * @param[in] node the node.
+ * @return non-zero value if any error.
  */
+int out_updater_prepare_node(out_updater_t *out_updater, output_node_id_t node,
+        int node_batch_size);
+
 output_node_id_t out_updater_sample(out_updater_t *out_updater,
         output_node_id_t node);
 

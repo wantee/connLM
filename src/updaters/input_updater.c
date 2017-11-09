@@ -385,7 +385,7 @@ int input_updater_feed(input_updater_t *input_updater, word_pool_t *new_wp)
 int input_updater_move(input_updater_t *input_updater)
 {
     word_pool_t *wp;
-    int b;
+    int b, pos;
 
     ST_CHECK_PARAM(input_updater == NULL, -1);
 
@@ -393,9 +393,10 @@ int input_updater_move(input_updater_t *input_updater)
 
     for (b = 0; b < wp_batch_size(wp); b++) {
         VEC_VAL(&input_updater->cursors, b) += 1;
-        if (VEC_VAL(&wp->words, VEC_VAL(&wp->row_starts, b)
-                    + VEC_VAL(&input_updater->cursors, b))
-                == input_updater->bos_id) {
+        pos = VEC_VAL(&wp->row_starts, b) + VEC_VAL(&input_updater->cursors, b);
+
+        if (pos < (int)wp->words.size
+                && VEC_VAL(&wp->words, pos) == input_updater->bos_id) {
             // we never use <s> as target
             VEC_VAL(&input_updater->cursors, b) += 1;
         }
