@@ -26,6 +26,17 @@
 
   @section training_param Parameters
 
+  Each glue in network could be updated by a different set of parameters, which
+  could be set by @c \-\-\<comp_name\>.\<glue_name\>.\<param_name\>. Parent's parameter
+  will be inherited by default.
+
+  @subsection training_param_lr Learning Rate
+
+  @c \-\-learn-rate-coef and @c \-\-bias-learn-rate-coef can be used to set
+  extra coefficient for weight and bias respectively.
+
+  Learning rate can be set to zero to indicate a fixed weight matrix.
+
   @subsection training_param_dropout Dropout
 
   Dropout is proposed in <a href=https://arxiv.org/abs/1207.0580> this paper </a>

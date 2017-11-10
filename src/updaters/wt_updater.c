@@ -266,6 +266,11 @@ int wt_update(wt_updater_t *wt_updater,
 
     ST_CHECK_PARAM(wt_updater == NULL, -1);
 
+    if (wt_updater->param.learn_rate == 0.0) {
+        // fixed weight
+        return 0;
+    }
+
 #ifdef _CONNLM_TRACE_PROCEDURE_
     ST_TRACE("Update weight[%s].", wutype2str(wt_updater->type));
 #endif
