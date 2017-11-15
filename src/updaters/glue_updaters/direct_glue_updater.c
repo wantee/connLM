@@ -22,6 +22,7 @@
  * SOFTWARE.
  */
 
+#include <assert.h>
 #include <string.h>
 
 #include <stutils/st_macro.h>
@@ -737,7 +738,6 @@ int direct_glue_updater_forward_out(glue_updater_t *glue_updater,
     dgu_data_t *data;
 
     output_node_id_t child_s, child_e;
-    int b;
 
     ST_CHECK_PARAM(glue_updater == NULL || comp_updater == NULL
             || node == OUTPUT_NODE_NONE, -1);
@@ -753,22 +753,19 @@ int direct_glue_updater_forward_out(glue_updater_t *glue_updater,
     }
 
     data = (dgu_data_t *)glue_updater->extra;
+    assert(data->batch_size == 1);
 
-    for (b = 0; b < data->batch_size; b++) {
-        if (forward_one_node(output->norm, node,
-                    child_s, child_e,
-                    MAT_VALP(&glue_updater->wt_updaters[0]->wt, 0, 0),
-                    glue_updater->wt_updaters[0]->wt.num_cols,
-                    data->hash_vals[b], data->hash_orders[b],
-                    MAT_VALP(out_updater->node_acs + node,
-                        out_updater->node_iters[node], 0),
-                    comp_updater->comp->comp_scale,
-                    NULL, 0.0, NULL) < 0) {
-            ST_ERROR("Failed to forward_one_node");
-            return -1;
-        }
+    if (forward_one_node(output->norm, node,
+                child_s, child_e,
+                MAT_VALP(&glue_updater->wt_updaters[0]->wt, 0, 0),
+                glue_updater->wt_updaters[0]->wt.num_cols,
+                data->hash_vals[0], data->hash_orders[0],
+                MAT_VALP(out_updater->node_acs + node, 0, 0),
+                comp_updater->comp->comp_scale,
+                NULL, 0.0, NULL) < 0) {
+        ST_ERROR("Failed to forward_one_node");
+        return -1;
     }
-    out_updater->node_iters[node]++;
 
     return 0;
 }

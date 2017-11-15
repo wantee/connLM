@@ -88,7 +88,8 @@ BINS = bin/connlm-train \
        bin/connlm-output \
        bin/connlm-gen \
        bin/connlm-draw \
-       bin/connlm-merge
+       bin/connlm-merge \
+       bin/connlm-extract-syms
 
 TESTS = tests/utils-test \
         tests/output-test \

@@ -1,8 +1,8 @@
-name="CBOW with minibatch & sync"
+name="RNN with minibatch"
 
-before="./test/test_model_before.sh cbow mini+sync"
+before="./test/test_model_before.sh rnn mini"
 
-script="./test/test_model_script.sh 3"
+script="./test/test_model_script.sh 5"
 
 normalize="./test/normalize_log.sh"
 compare_normalize=("expected/case-$SHU_CASE.out:test/output/case-$SHU_CASE.out")

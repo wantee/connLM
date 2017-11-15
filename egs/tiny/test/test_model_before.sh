@@ -13,7 +13,7 @@ if [ -z "$SHU_CASE"  ]; then
 fi
 
 if [ $# -lt 1 ]; then
-  echo "Usage: $0 <model> [mini|sync|mini+sync]"
+  echo "Usage: $0 <model> [mini]"
   exit 1
 fi
 
@@ -25,11 +25,6 @@ cp -r "conf" "test/tmp/case-$SHU_CASE"
 model=$1
 
 if [[ "$2" =~ "mini" ]]; then
-  perl -i -pe 's/MINI_BATCH[[:space:]]*:[[:space:]]*0/MINI_BATCH : 1/' \
-       "test/tmp/case-$SHU_CASE/conf/$model/train.conf"
-fi
-
-if [[ "$2" =~ "sync" ]]; then
-  perl -i -pe 's/SYNC_SIZE[[:space:]]*:[[:space:]]*0/SYNC_SIZE : 1/' \
-       "test/tmp/case-$SHU_CASE/conf/$model/train.conf"
+  echo "[READER]" >> "test/tmp/case-$SHU_CASE/conf/$model/train.conf"
+  echo "MINI_BATCH_SIZE : 10" >> "test/tmp/case-$SHU_CASE/conf/$model/train.conf"
 fi

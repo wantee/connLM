@@ -1,7 +1,7 @@
-name="FFNN"
+name="crossing-RNN"
 
-_model=ffnn
-_step=4
+_model=crossing-rnn
+_step=6
 
 before="./test/test_model_before.sh ${_model}"
 

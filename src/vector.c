@@ -172,23 +172,35 @@ int vec_load_body(vec_t *vec, int version, FILE *fp, connlm_fmt_t fmt)
         }
 
         if (st_fgets(&line, &line_sz, fp, &err) == NULL || err) {
-            ST_ERROR("Failed to parse vec.");
-        }
-        p = get_next_token(line, token);
-        if (p == NULL || ! (p[0] == '[' && p[1] == '\0')) {
             ST_ERROR("'[' expected.");
             goto ERR;
         }
-        for (i = 0; i < vec->size; i++) {
-            p = get_next_token(p, token);
-            if (p == NULL || sscanf(token, REAL_FMT,
-                        VEC_VALP(vec, i)) != 1) {
-                ST_ERROR("Failed to parse elem[%zu].", i);
+        p = get_next_token(line, token);
+        if (p == NULL || ! (token[0] == '[' && token[1] == '\0')) {
+            ST_ERROR("'[' expected.");
+            goto ERR;
+        }
+        if (vec->size > 0) {
+            if (st_fgets(&line, &line_sz, fp, &err) == NULL || err) {
+                ST_ERROR("Failed to parse vec.");
                 goto ERR;
             }
+            p = line;
+            for (i = 0; i < vec->size; i++) {
+                p = get_next_token(p, token);
+                if (p == NULL || sscanf(token, REAL_FMT,
+                            VEC_VALP(vec, i)) != 1) {
+                    ST_ERROR("Failed to parse elem[%zu].", i);
+                    goto ERR;
+                }
+            }
         }
-        p = get_next_token(p, token);
-        if (p == NULL || ! (p[0] == ']' && p[1] == '\0')) {
+        if (st_fgets(&line, &line_sz, fp, &err) == NULL || err) {
+            ST_ERROR("']' expected.");
+            goto ERR;
+        }
+        p = get_next_token(line, token);
+        if (p == NULL || ! (token[0] == ']' && token[1] == '\0')) {
             ST_ERROR("']' expected.");
             goto ERR;
         }

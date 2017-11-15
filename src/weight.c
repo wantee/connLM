@@ -536,7 +536,7 @@ int wt_save_body(weight_t *wt, FILE *fp, connlm_fmt_t fmt, char *name)
     }
 
     if (! isinf(wt->init_bias)) {
-        if (vec_save_body(&wt->bias, fp, fmt, NULL) < 0) {
+        if (vec_save_body(&wt->bias, fp, fmt, name) < 0) {
             ST_ERROR("Failed to vec_save_body bias");
             return -1;
         }

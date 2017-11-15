@@ -823,7 +823,7 @@ int mat_load_body(mat_t *mat, int version, FILE *fp, connlm_fmt_t fmt)
 
     char *line = NULL;
     size_t line_sz = 0;
-    bool err;
+    bool err = false;
     const char *p;
     char token[MAX_NAME_LEN];
 
@@ -887,7 +887,7 @@ int mat_load_body(mat_t *mat, int version, FILE *fp, connlm_fmt_t fmt)
             goto ERR;
         }
         p = get_next_token(line, token);
-        if (p == NULL || ! (p[0] == '[' && p[1] == '\0')) {
+        if (p == NULL || ! (token[0] == '[' && token[1] == '\0')) {
             ST_ERROR("'[' expected.");
             goto ERR;
         }
@@ -906,8 +906,12 @@ int mat_load_body(mat_t *mat, int version, FILE *fp, connlm_fmt_t fmt)
                 }
             }
         }
-        p = get_next_token(p, token);
-        if (p == NULL || ! (p[0] == ']' && p[1] == '\0')) {
+        if (st_fgets(&line, &line_sz, fp, &err) == NULL || err) {
+            ST_ERROR("']' expected.");
+            goto ERR;
+        }
+        p = get_next_token(line, token);
+        if (p == NULL || ! (token[0] == ']' && token[1] == '\0')) {
             ST_ERROR("']' expected.");
             goto ERR;
         }

@@ -1,8 +1,13 @@
-name="MaxEnt with sync"
+name="CBOW"
 
-before="./test/test_model_before.sh maxent sync"
+_model=cbow
+_step=3
 
-script="./test/test_model_script.sh 2"
+before="./test/test_model_before.sh ${_model}"
+
+script="./test/test_model_script.sh ${_step}"
+
+after="./test/test_model_after.sh ${_model}"
 
 normalize="./test/normalize_log.sh"
 compare_normalize=("expected/case-$SHU_CASE.out:test/output/case-$SHU_CASE.out")

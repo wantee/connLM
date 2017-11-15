@@ -1,7 +1,7 @@
 /*
  * The MIT License (MIT)
  *
- * Copyright (c) 2017 Wang Jian
+ * Copyright (c) 2015 Wang Jian
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,31 +22,19 @@
  * SOFTWARE.
  */
 
-#include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
 
-#include <stutils/st_opt.h>
 #include <stutils/st_log.h>
-#include <stutils/st_string.h>
 #include <stutils/st_io.h>
-#include <stutils/st_mem.h>
 
 #include <connlm/utils.h>
 #include <connlm/connlm.h>
-#include <connlm/bloom_filter.h>
-
-bloom_filter_format_t g_fmt;
 
 st_opt_t *g_cmd_opt;
-bloom_filter_opt_t g_blm_flt_opt;
 
-int bloom_filter_parse_opt(int *argc, const char *argv[])
+int connlm_extract_syms_parse_opt(int *argc, const char *argv[])
 {
     st_log_opt_t log_opt;
-
-    char str[MAX_ST_CONF_LEN];
     bool b;
 
     g_cmd_opt = st_opt_create();
@@ -65,21 +53,8 @@ int bloom_filter_parse_opt(int *argc, const char *argv[])
         goto ST_OPT_ERR;
     }
 
-    if (st_log_open_mt(&log_opt) != 0) {
+    if (st_log_open(&log_opt) != 0) {
         ST_ERROR("Failed to open log");
-        goto ST_OPT_ERR;
-    }
-
-    if (bloom_filter_load_opt(&g_blm_flt_opt, g_cmd_opt, NULL) < 0) {
-        ST_ERROR("Failed to bloom_filter_load_opt");
-        goto ST_OPT_ERR;
-    }
-
-    ST_OPT_GET_STR(g_cmd_opt, "FORMAT", str, MAX_ST_CONF_LEN, "Compress",
-            "storage format(Txt/Bin/Compress)");
-    g_fmt = bloom_filter_format_parse(str);
-    if (g_fmt == BF_FMT_UNKNOWN) {
-        ST_ERROR("Unknown format[%s]", str);
         goto ST_OPT_ERR;
     }
 
@@ -94,28 +69,19 @@ ST_OPT_ERR:
 void show_usage(const char *module_name)
 {
     connlm_show_usage(module_name,
-            "Build N-gram Bloom Filter",
-            "<vocab> <text-file> <model-out>",
-            "exp/vocab.clm data/train exp/train.blmflt",
+            "Print Information",
+            "<model0> [<model1> <model2> ...]",
+            NULL,
             g_cmd_opt, NULL);
 }
 
 int main(int argc, const char *argv[])
 {
-    char args[1024] = "";
     FILE *fp = NULL;
     connlm_t *connlm = NULL;
-    bloom_filter_t *blm_flt = NULL;
     int ret;
 
-    if (st_mem_usage_init() < 0) {
-        ST_ERROR("Failed to st_mem_usage_init.");
-        goto ERR;
-    }
-
-    (void)st_escape_args(argc, argv, args, 1024);
-
-    ret = bloom_filter_parse_opt(&argc, argv);
+    ret = connlm_extract_syms_parse_opt(&argc, argv);
     if (ret < 0) {
         goto ERR;
     } if (ret == 1) {
@@ -128,7 +94,7 @@ int main(int argc, const char *argv[])
                 CONNLM_GIT_COMMIT, connlm_revision());
     }
 
-    if (argc < 4) {
+    if (argc < 3) {
         show_usage(argv[0]);
         goto ERR;
     }
@@ -138,73 +104,43 @@ int main(int argc, const char *argv[])
         goto ERR;
     }
 
-    ST_CLEAN("Command-line: %s", args);
-    st_opt_show(g_cmd_opt, "Bloom Filter Build Options");
-    ST_CLEAN("Vocab: '%s', Text: '%s', Model-out: '%s'", argv[1], argv[2], argv[3]);
+    st_opt_show(g_cmd_opt, "connLM Extract Syms Options");
 
     fp = st_fopen(argv[1], "rb");
     if (fp == NULL) {
-        ST_ERROR("Failed to st_fopen vocab[%s]", argv[1]);
+        ST_ERROR("Failed to st_fopen. [%s]", argv[1]);
         goto ERR;
     }
 
     connlm = connlm_load(fp);
     if (connlm == NULL) {
-        ST_ERROR("Failed to connlm_load from [%s]", argv[1]);
+        ST_ERROR("Failed to connlm_load. [%s]", argv[1]);
         goto ERR;
     }
     safe_st_fclose(fp);
 
-    blm_flt = bloom_filter_create(&g_blm_flt_opt, connlm->vocab);
-    if (blm_flt == NULL) {
-        ST_ERROR("Failed to bloom_filter_create.");
-        goto ERR;
-    }
-
-    safe_connlm_destroy(connlm);
-
-    fp = st_fopen(argv[2], "rb");
+    fp = st_fopen(argv[2], "wb");
     if (fp == NULL) {
-        ST_ERROR("Failed to st_fopen text file[%s].", argv[2]);
+        ST_ERROR("Failed to st_fopen. [%s]", argv[2]);
         goto ERR;
     }
 
-    if (bloom_filter_build(blm_flt, fp) < 0) {
-        ST_ERROR("Failed to bloom_filter_build.");
-        goto ERR;
-    }
-    safe_st_fclose(fp);
-
-    fp = st_fopen(argv[3], "wb");
-    if (fp == NULL) {
-        ST_ERROR("Failed to st_fopen out model file[%s]", argv[3]);
-        goto ERR;
-    }
-
-    if (bloom_filter_save(blm_flt, fp, g_fmt) < 0) {
-        ST_ERROR("Failed to bloom_filter_save.");
+    if (st_alphabet_save_txt(connlm->vocab->alphabet, fp) < 0) {
+        ST_ERROR("Failed to st_alphabet_save_txt.");
         goto ERR;
     }
 
     safe_st_fclose(fp);
-
     safe_st_opt_destroy(g_cmd_opt);
-    safe_bloom_filter_destroy(blm_flt);
 
-    st_mem_usage_report();
-    st_mem_usage_destroy();
     st_log_close(0);
-
     return 0;
 
 ERR:
     safe_st_fclose(fp);
     safe_connlm_destroy(connlm);
-
     safe_st_opt_destroy(g_cmd_opt);
-    safe_bloom_filter_destroy(blm_flt);
 
-    st_mem_usage_destroy();
     st_log_close(1);
     return -1;
 }
