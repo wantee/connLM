@@ -14,55 +14,39 @@ if [ $TRAVIS_BRANCH == 'master' ] || [ $TRAVIS_BRANCH == 'develop' ]; then
 
   if [ $CASE -eq 2 ]; then
     echo "Testing MaxEnt related cases"
-    (cd egs/tiny; shu-testing 3-6);
+    (cd egs/tiny; shu-testing 3-4);
   fi
 
   if [ $CASE -eq 3 ]; then
     echo "Testing CBOW related cases"
-    (cd egs/tiny; shu-testing 7-10);
+    (cd egs/tiny; shu-testing 5-6);
   fi
 
   if [ $CASE -eq 4 ]; then
     echo "Testing FFNN related cases"
-    (cd egs/tiny; shu-testing 11-14);
+    (cd egs/tiny; shu-testing 7-8);
   fi
 
   if [ $CASE -eq 5 ]; then
     echo "Testing RNN related cases"
-    (cd egs/tiny; shu-testing 15-18);
+    (cd egs/tiny; shu-testing 9-10);
   fi
 
   if [ $CASE -eq 6 ]; then
     echo "Testing crossing-RNN related cases"
-    (cd egs/tiny; shu-testing 19-22);
+    (cd egs/tiny; shu-testing 11-12);
   fi
 
   if [ $CASE -eq 7 ]; then
     echo "Testing RNN+MaxEnt related cases"
-    (cd egs/tiny; shu-testing 23-26);
+    (cd egs/tiny; shu-testing 13-14);
   fi
 
   if [ $CASE -eq 8 ]; then
     echo "Testing MaxEnt~RNN related cases"
-    (cd egs/tiny; shu-testing 27-30);
+    (cd egs/tiny; shu-testing 15-16);
   fi
 
-  if [ $CASE -eq 9 ]; then
-    echo "Testing FST converter related cases"
-    # install numpy on travis
-    if [ "$CI" == "true" ] && [ "$TRAVIS" == "true" ]; then
-      wget http://repo.continuum.io/miniconda/Miniconda2-latest-Linux-x86_64.sh -O miniconda.sh || exit 1
-      chmod +x miniconda.sh && ./miniconda.sh -b -p /home/travis/mc || exit 1
-      export PATH=/home/travis/mc/bin:$PATH
-      conda install --yes numpy>=1.7.0 || exit 1
-    fi
-    (cd egs/tiny; shu-testing 31);
-  fi
-
-  if [ $CASE -eq 10 ]; then
-    echo "Testing convert_to_fst related cases"
-    (cd egs/tiny; shu-testing 32);
-  fi
 elif [ $TRAVIS_BRANCH == 'legacy' ]; then
   if [ $CASE -eq 2 ]; then
     make -C src test
