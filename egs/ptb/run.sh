@@ -14,7 +14,7 @@ conf_dir=./conf/
 exp_dir=./exp/
 
 tr_thr=16
-eval_thr=16
+eval_thr=4
 
 realtype="float"
 
